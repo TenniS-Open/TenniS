@@ -1,0 +1,68 @@
+cmake_minimum_required(VERSION 2.7)
+project(TensorStack)
+
+# global root dir
+set(SOLUTION_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
+# dir for common cmake files
+list(APPEND CMAKE_MODULE_PATH ${SOLUTION_DIR}/cmake)
+list(APPEND CMAKE_PREFIX_PATH ${SOLUTION_DIR}/cmake)
+
+# option for platform
+set(PLATFORM "auto" CACHE STRING "auto, x86 or x64")
+set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Debug or Release")
+set(CONFIGURATION ${CMAKE_BUILD_TYPE})
+
+# set common compiler flags
+include(LOCAL_FLAGS)
+
+set(CMAKE_INSTALL_PREFIX ${PROJECT_BINARY_DIR}/build CACHE STRING "set install prefix" FORCE)
+
+set(LOCAL_OUTPUT_DIR ${PROJECT_SOURCE_DIR})
+
+if (LOCAL_OUTPUT_DIR)
+    set(EXECUTABLE_OUTPUT_PATH ${LOCAL_OUTPUT_DIR}/bin)
+    set(LIBRARY_OUTPUT_PATH ${LOCAL_OUTPUT_DIR}/lib)
+endif ()
+
+include_directories(${SOLUTION_DIR}/include)
+include_directories(${SOLUTION_DIR}/src)
+
+FILE(GLOB_RECURSE INCLUDE_FILES ${SOLUTION_DIR}/include/*.h)
+
+FILE(GLOB_RECURSE INCLUDE_SRC_FILES ${SOLUTION_DIR}/src/*.h)
+
+FILE(GLOB_RECURSE SRC_FILES ${SOLUTION_DIR}/src/*.cpp)
+
+
+add_library(${PROJECT_NAME}_STATIC STATIC ${INCLUDE_FILES} ${INCLUDE_SRC_FILES} ${SRC_FILES})
+add_library(${PROJECT_NAME}_SHARED SHARED ${INCLUDE_FILES} ${INCLUDE_SRC_FILES} ${SRC_FILES})
+
+# 4 types of achive
+# blas
+# Eigen
+# Ordinary
+# Ordinary with chipset result
+
+# project files for clion
+FILE(GLOB_RECURSE TEST_FILES ${PROJECT_SOURCE_DIR}/test/*.cpp)
+FILE(GLOB_RECURSE TOOL_FILES ${PROJECT_SOURCE_DIR}/tools/*.cpp)
+
+include_directories(${PROJECT_SOURCE_DIR}/include)
+
+foreach (path ${TEST_FILES})
+    string(REGEX MATCH "[^/]*.[(c)|(cc)|(cpp)]$" file_ext ${path})
+    string(REGEX MATCH "^[^.]*" file ${file_ext})
+    add_executable(test_${file} ${path})
+    target_link_libraries(test_${file} ${PROJECT_NAME}_STATIC)
+    # set_target_properties(test_${file} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${LOCAL_OUTPUT_DIR}/lib)
+endforeach ()
+
+foreach (path ${TOOL_FILES})
+    string(REGEX MATCH "[^/]*.[(c)|(cc)|(cpp)]$" file_ext ${path})
+    string(REGEX MATCH "^[^.]*" file ${file_ext})
+    add_executable(tool_${file} ${path})
+    set_target_properties(tool_${file} PROPERTIES OUTPUT_NAME ${file})
+    target_link_libraries(tool_${file} ${PROJECT_NAME}_STATIC)
+    install(TARGETS tool_${file} DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+endforeach ()
