@@ -60,6 +60,18 @@ namespace ts {
         DeviceType m_type = CPU;  ///< Hardware device @see Device
         int m_id = 0; ///< Device type's id, 0, 1, or ...
     };
+
+    bool operator==(const Device &lhs, const Device &rhs);
+
+    bool operator!=(const Device &lhs, const Device &rhs);
+
+    bool operator<(const Device &lhs, const Device &rhs);
+
+    bool operator>(const Device &lhs, const Device &rhs);
+
+    bool operator<=(const Device &lhs, const Device &rhs);
+
+    bool operator>=(const Device &lhs, const Device &rhs);
 }
 
 #endif //TENSORSTACK_GLOBAL_DEVICE_H

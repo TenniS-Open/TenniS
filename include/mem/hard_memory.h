@@ -117,6 +117,20 @@ namespace ts {
          */
         const void *data() const { return m_data; }
 
+        /**
+         * Get memory start pointer
+         * @return memory start pointer
+         */
+        template<typename T>
+        T *data() { return reinterpret_cast<T *>(self::data()); }
+
+        /**
+         * Get memory start pointer
+         * @return memory start pointer
+         */
+        template<typename T>
+        const T *data() const { return reinterpret_cast<const T *>(self::data()); }
+
     private:
         Device m_device;                         ///< running device
         size_t m_capacity = 0;                   ///< memory capacity
