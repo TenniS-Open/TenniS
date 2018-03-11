@@ -6,34 +6,17 @@
 
 #include <cstdlib>
 #include <utility>
+#include <cassert>
 
 namespace ts {
-
-    static void *cpu_allocator(size_t size, void *mem) {
-        if (size == 0) {
-            std::free(mem);
-            return nullptr;
-        } else if (mem != nullptr) {
-            return std::realloc(mem, size);
-        } else {
-            return std::malloc(size);
-        }
-    }
-
-    static HardAllocator *default_allocator(Device device) {
-        switch (device.type) {
-            case CPU:
-                return cpu_allocator;
-            case GPU:
-                throw "Unsupported device.";
-            default:
-                throw "Unknown device type.";
-        }
-    }
-
     HardMemory::HardMemory(const Device &device)
             : m_device(device) {
-        m_allocator = default_allocator(device);
+        m_allocator = QueryAllocator(device);
+        assert(m_allocator != nullptr);
+    }
+
+    HardMemory::HardMemory(const HardAllocator &allocator) {
+        m_allocator = allocator;
     }
 
     HardMemory::~HardMemory() {
@@ -65,19 +48,23 @@ namespace ts {
         }
     }
 
-    void HardMemory::swap(HardMemory::self &other) {
+    void HardMemory::swap(self &other) {
         std::swap(self::m_device, other.m_device);
         std::swap(self::m_capacity, other.m_capacity);
         std::swap(self::m_data, other.m_data);
         std::swap(self::m_allocator, other.m_allocator);
     }
 
-    HardMemory::HardMemory(HardMemory::self &&other) noexcept {
+    HardMemory::HardMemory(self &&other) noexcept {
         self::swap(other);
     }
 
-    HardMemory &HardMemory::operator=(HardMemory::self &&other) noexcept {
+    HardMemory &HardMemory::operator=(self &&other) noexcept {
         self::swap(other);
         return *this;
+    }
+
+    void swap(HardMemory &mem1, HardMemory &mem2) {
+        mem1.swap(mem2);
     }
 }

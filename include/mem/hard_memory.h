@@ -2,33 +2,15 @@
 // Created by lby on 2018/2/11.
 //
 
-#ifndef TENSORSTACK_MEM_SYSTEM_MEMORY_H
-#define TENSORSTACK_MEM_SYSTEM_MEMORY_H
+#ifndef TENSORSTACK_MEM_HARD_MEMORY_H
+#define TENSORSTACK_MEM_HARD_MEMORY_H
 
 #include <cstddef>
 
+#include "global/device.h"
+#include "global/allocator.h"
+
 namespace ts {
-    enum DeviceType {
-        CPU,
-        GPU
-    };
-
-    class Device {
-    public:
-        using self = Device;
-
-        Device(DeviceType type, int id) : type(type), id(id) {}
-
-        Device(DeviceType type) : self(type, 0) {}
-
-        Device() : self(CPU, 0) {}
-
-        DeviceType type = CPU;
-        int id = 0;
-    };
-
-    typedef void *HardAllocator(size_t, void *);
-
     class HardMemory {
     public:
         using self = HardMemory;
@@ -38,6 +20,8 @@ namespace ts {
         const HardMemory &operator=(const self &) = delete;
 
         explicit HardMemory(const Device &device);
+
+        explicit HardMemory(const HardAllocator &allocator);
 
         ~HardMemory();
 
@@ -67,14 +51,11 @@ namespace ts {
         Device m_device;
         size_t m_capacity = 0;
         void *m_data = nullptr;
-        HardAllocator *m_allocator = nullptr;
+        HardAllocator m_allocator = nullptr;
     };
 
-    void swap(HardMemory &mem1, HardMemory mem2) {
-        mem1.swap(mem2);
-    }
+    void swap(HardMemory &mem1, HardMemory &mem2);
 }
 
 
-
-#endif //TENSORSTACK_MEM_SYSTEM_MEMORY_H
+#endif //TENSORSTACK_MEM_HARD_MEMORY_H
