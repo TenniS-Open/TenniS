@@ -14,8 +14,7 @@ namespace ts {
     }
 
     Memory::Memory(const Device &device, size_t size)
-            : m_device(device), m_size(size), m_hard(new HardMemory(device)), m_shift(0){
-        m_hard->expect(size);
+            : m_device(device), m_size(size), m_hard(new HardMemory(device, size)), m_shift(0){
     }
 
     Memory::Memory(size_t size)

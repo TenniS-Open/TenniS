@@ -15,8 +15,19 @@ namespace ts {
         assert(m_allocator != nullptr);
     }
 
-    HardMemory::HardMemory(const HardAllocator &allocator) {
-        m_allocator = allocator;
+    HardMemory::HardMemory(const Device &device, size_t size)
+            : HardMemory(device) {
+        self::resize(size);
+    }
+
+    HardMemory::HardMemory(const Device &device, const HardAllocator &allocator)
+        : m_device(device), m_allocator(allocator){
+        assert(m_allocator != nullptr);
+    }
+
+    HardMemory::HardMemory(const Device &device, const HardAllocator &allocator, size_t size)
+            : HardMemory(device, allocator) {
+        self::resize(size);
     }
 
     HardMemory::~HardMemory() {
