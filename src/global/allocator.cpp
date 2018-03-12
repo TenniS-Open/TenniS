@@ -7,27 +7,27 @@
 
 #include <map>
 #include <cstdlib>
+#include <iostream>
 
 namespace ts {
-    static std::map<DeviceType, HardAllocator> map_device_allocator;
-    static std::map<DeviceType, std::map<int, HardAllocator>> map_device_id_allocator;
+    static std::map<DeviceType, HardAllocator> &MapDeviceAllocator() {
+        static std::map<DeviceType, HardAllocator> map_device_allocator;
+        return map_device_allocator;
+    };
 
-    static void *cpu_allocator(size_t size, void *mem) {
-        if (size == 0) {
-            std::free(mem);
-            return nullptr;
-        } else if (mem != nullptr) {
-            return std::realloc(mem, size);
-        } else {
-            return std::malloc(size);
-        }
-    }
+    static std::map<DeviceType, std::map<int, HardAllocator>> &MapDeviceIDAllocator() {
+        static std::map<DeviceType, std::map<int, HardAllocator>> map_device_id_allocator;
+        return map_device_id_allocator;
+
+    };
 
     HardAllocator QueryAllocator(const Device &device) noexcept {
+        auto &map_device_allocator = MapDeviceAllocator();
         auto device_allocator = map_device_allocator.find(device.type());
         if (device_allocator != map_device_allocator.end()) {
             return device_allocator->second;
         }
+        auto &map_device_id_allocator = MapDeviceIDAllocator();
         auto device_id_allocator = map_device_id_allocator.find(device.type());
         if (device_id_allocator != map_device_id_allocator.end()) {
             auto &map_id_allocator = device_id_allocator->second;
@@ -40,6 +40,7 @@ namespace ts {
     }
 
     void RegisterDeviceAllocator(const Device &device, const HardAllocator &allocator) noexcept {
+        auto &map_device_id_allocator = MapDeviceIDAllocator();
         auto device_id_allocator = map_device_id_allocator.find(device.type());
         if (device_id_allocator != map_device_id_allocator.end()) {
             auto &map_id_allocator = device_id_allocator->second;
@@ -52,8 +53,7 @@ namespace ts {
     }
 
     void RegisterAllocator(const DeviceType &device_type, const HardAllocator &allocator) noexcept {
+        auto &map_device_allocator = MapDeviceAllocator();
         map_device_allocator.insert(std::make_pair(device_type, allocator));
     }
 }
-
-TS_STATIC_ACTION(ts::RegisterAllocator, ts::CPU, ts::cpu_allocator)
