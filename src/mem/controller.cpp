@@ -10,7 +10,7 @@ namespace ts {
     BaseMemoryController::BaseMemoryController(const Device &device)
             : m_device(device) {
         m_allocator = QueryAllocator(device);
-        assert(m_allocator);
+        assert(m_allocator != nullptr);
     }
 
     Memory BaseMemoryController::alloc(size_t size) {

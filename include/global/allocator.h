@@ -11,7 +11,6 @@
 namespace ts {
     /**
      * Memory allocator type, allocate memory from specific device
-     * TODO: may need this API support same device but different id memory allocate
      */
     using HardAllocator = std::function<void *(size_t, void *)>;
 
@@ -19,45 +18,25 @@ namespace ts {
      * Query memory allocator
      * @param device querying device
      * @return allocator
+     * @note supporting called by threads without calling @sa RegisterDeviceAllocator or @sa RegisterAllocator
      */
     HardAllocator QueryAllocator(const Device &device) noexcept;
+
+    /**
+     * Register allocator for specific device type and id
+     * @param device specific @sa Device
+     * @param allocator setting allocator
+     * @note only can be called before running
+     */
+    void RegisterDeviceAllocator(const Device &device, const HardAllocator &allocator) noexcept;
 
     /**
      * Register allocator for specific device type
      * @param device_type specific @sa DeviceType
      * @param allocator setting allocator
+     * @note only can be called before running
      */
     void RegisterAllocator(const DeviceType &device_type, const HardAllocator &allocator) noexcept;
-
-    /**
-     * StaticAction: for supporting static initialization
-     */
-    class StaticAction {
-    public:
-        template <typename FUNC, typename... Args>
-        explicit StaticAction(FUNC func, Args&&... args) noexcept {
-            func(std::forward<Args>(args)...);
-        }
-    };
 }
-
-#define _ts_concat_name_core(x,y) (x##y)
-
-#define _ts_concat_name(x, y) _ts_concat_name_core(x,y)
-
-/**
- * generate an serial name by line
- */
-#define ts_serial_name(x) _ts_concat_name(x, __LINE__)
-
-/**
- * Static action
- */
-#define TS_STATIC_ACTION(func, args...) \
-    namespace \
-    { \
-         ts::StaticAction ts_serial_name(_ts_static_action_)(func, ##args); \
-    }
-
 
 #endif //TENSORSTACK_GLOBAL_ALLOCATOR_H

@@ -37,7 +37,7 @@ namespace ts {
          * @param type Hardware device @see Device
          * @note Default id is 0
          */
-        Device(DeviceType type) : self(type, 0) {}
+        explicit Device(DeviceType type) : self(type, 0) {}
 
         /**
          * Initialize device like CPU:0

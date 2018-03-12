@@ -8,8 +8,16 @@
 #include "memory.h"
 
 namespace ts {
+    /**
+     * MemoryController: Malloc memory and control them
+     */
     class MemoryController {
     public:
+        /**
+         * alloc memory with size
+         * @param size memory size (bytes)
+         * @return allocated memory
+         */
         virtual Memory alloc(size_t size) = 0;
     };
 

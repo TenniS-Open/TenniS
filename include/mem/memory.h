@@ -48,6 +48,30 @@ namespace ts {
          */
         explicit Memory(size_t size);
 
+
+
+        /**
+         * Moving constructed function
+         * @param other other object
+         */
+        Memory(self &&other) noexcept;
+
+        /**
+         * Moving assignment function
+         * @param other other object
+         */
+        Memory &operator=(self &&other) noexcept;
+
+        /**
+         * Swap to other object
+         * @param other
+         */
+        void swap(self &other);
+
+        /**
+         * Get size of memory
+         * @return size of memory
+         */
         size_t size() const { return m_size; }
 
         /**
@@ -76,11 +100,26 @@ namespace ts {
         template<typename T>
         const T *data() const { return reinterpret_cast<const T *>(self::data()); }
 
+        /**
+         * Set callback when memory will be free
+         * @param dtor destructor
+         * @param data param will pass to destructor
+         */
+        void destructor(const std::function<void(void*)> &dtor, void *data);
+
     private:
-        std::shared_ptr<HardMemory> m_hard; ///< hardware memory
-        size_t m_size;  ///< sizeof this memory block
-        size_t m_shift; ///< shift from start pointer
+        std::shared_ptr<HardMemory> m_hard = nullptr;  ///< hardware memory
+        size_t m_size = 0;                              ///< sizeof this memory block
+        size_t m_shift = 0;                             ///< shift from start pointer
+        std::shared_ptr<void> m_usage = nullptr;      ///< for memory usage count
     };
+
+    /**
+     * Swap two objects
+     * @param obj1 first object
+     * @param obj2 second object
+     */
+    inline void swap(Memory &obj1, Memory &obj2) {obj1.swap(obj2);}
 
     void memcpy(const Memory &dst, const Memory &src, size_t size);
 

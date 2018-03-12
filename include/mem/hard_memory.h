@@ -143,7 +143,7 @@ namespace ts {
      * @param mem1 first object
      * @param mem2 second object
      */
-    void swap(HardMemory &mem1, HardMemory &mem2);
+    inline void swap(HardMemory &mem1, HardMemory &mem2) { mem1.swap(mem2); }
 }
 
 

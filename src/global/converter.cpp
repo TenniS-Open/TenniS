@@ -3,7 +3,11 @@
 //
 
 #include "global/converter.h"
+#include "utils/static.h"
+
 #include <map>
+#include <cassert>
+#include <cstring>
 
 namespace ts {
     static std::map<DeviceType, std::map<DeviceType, HardConverter>> map_dst_src_converter;
@@ -32,4 +36,12 @@ namespace ts {
             map_dst_src_converter.insert(std::make_pair(dst_device_type, std::move(map_src_converter)));
         }
     }
+
+    static void cpu_converter(const Device &dst_device, void *dst, const Device &src_device, const void *src, size_t size) {
+        assert(dst_device.type() == ts::CPU);
+        assert(src_device.type() == ts::CPU);
+        std::memcpy(dst, src, size);
+    }
 }
+
+TS_STATIC_ACTION(ts::RegisterConverter, ts::CPU, ts::CPU, ts::cpu_converter)

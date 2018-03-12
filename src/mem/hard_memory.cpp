@@ -74,8 +74,4 @@ namespace ts {
         self::swap(other);
         return *this;
     }
-
-    void swap(HardMemory &mem1, HardMemory &mem2) {
-        mem1.swap(mem2);
-    }
 }

@@ -20,6 +20,7 @@ namespace ts {
      * @param dst_device_type querying dst device
      * @param src_device_type querying src device
      * @return converter
+     * @note supporting called by threads without calling @sa RegisterConverter
      */
     HardConverter QueryConverter(DeviceType dst_device_type, DeviceType src_device_type) noexcept;
 
@@ -28,6 +29,7 @@ namespace ts {
      * @param dst_device_type registering dst device
      * @param src_device_type registering src device
      * @param converter registering converter
+     * @note only can be called before running
      */
     void RegisterConverter(DeviceType dst_device_type, DeviceType src_device_type, const HardConverter &converter) noexcept;
 }
