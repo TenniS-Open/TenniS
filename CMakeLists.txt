@@ -38,6 +38,8 @@ FILE(GLOB_RECURSE SRC_FILES ${SOLUTION_DIR}/src/*.cpp)
 add_library(${PROJECT_NAME}_STATIC STATIC ${INCLUDE_FILES} ${INCLUDE_SRC_FILES} ${SRC_FILES})
 add_library(${PROJECT_NAME}_SHARED SHARED ${INCLUDE_FILES} ${INCLUDE_SRC_FILES} ${SRC_FILES})
 
+set_target_properties(${PROJECT_NAME}_SHARED PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${LOCAL_OUTPUT_DIR}/bin)
+
 # 4 types of achive
 # blas
 # Eigen
@@ -54,7 +56,7 @@ foreach (path ${TEST_FILES})
     string(REGEX MATCH "[^/]*.[(c)|(cc)|(cpp)]$" file_ext ${path})
     string(REGEX MATCH "^[^.]*" file ${file_ext})
     add_executable(test_${file} ${path})
-    target_link_libraries(test_${file} ${PROJECT_NAME}_STATIC)
+    target_link_libraries(test_${file} ${PROJECT_NAME}_SHARED)
     # set_target_properties(test_${file} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${LOCAL_OUTPUT_DIR}/lib)
 endforeach ()
 
@@ -63,6 +65,6 @@ foreach (path ${TOOL_FILES})
     string(REGEX MATCH "^[^.]*" file ${file_ext})
     add_executable(tool_${file} ${path})
     set_target_properties(tool_${file} PROPERTIES OUTPUT_NAME ${file})
-    target_link_libraries(tool_${file} ${PROJECT_NAME}_STATIC)
+    target_link_libraries(tool_${file} ${PROJECT_NAME}_SHARED)
     install(TARGETS tool_${file} DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 endforeach ()
