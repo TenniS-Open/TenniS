@@ -34,7 +34,7 @@
 #endif
 
 #ifndef TS_UNUSED
-#   define TS_UNUSED(x) ((void)x)
+#   define TS_UNUSED(x) ((void)(x))
 #endif
 
 #endif //TENSORSTACK_UTILS_API_H
