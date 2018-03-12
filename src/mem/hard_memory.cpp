@@ -66,11 +66,11 @@ namespace ts {
         std::swap(self::m_allocator, other.m_allocator);
     }
 
-    HardMemory::HardMemory(self &&other) noexcept {
+	HardMemory::HardMemory(self &&other) TS_NOEXCEPT{
         self::swap(other);
     }
 
-    HardMemory &HardMemory::operator=(self &&other) noexcept {
+    HardMemory &HardMemory::operator=(self &&other) TS_NOEXCEPT {
         self::swap(other);
         return *this;
     }

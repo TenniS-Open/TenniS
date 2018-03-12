@@ -32,11 +32,11 @@ namespace ts {
         std::swap(self::m_usage, other.m_usage);
     }
 
-    Memory::Memory(Memory::self &&other) noexcept {
+	Memory::Memory(Memory::self &&other) TS_NOEXCEPT{
         self::swap(other);
     }
 
-    Memory &Memory::operator=(Memory::self &&other) noexcept {
+    Memory &Memory::operator=(Memory::self &&other) TS_NOEXCEPT {
         self ::swap(other);
         return *this;
     }

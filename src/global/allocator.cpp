@@ -21,7 +21,7 @@ namespace ts {
 
     };
 
-    HardAllocator QueryAllocator(const Device &device) noexcept {
+	HardAllocator QueryAllocator(const Device &device) TS_NOEXCEPT{
         auto &map_device_allocator = MapDeviceAllocator();
         auto device_allocator = map_device_allocator.find(device.type());
         if (device_allocator != map_device_allocator.end()) {
@@ -39,7 +39,7 @@ namespace ts {
         return HardAllocator(nullptr);
     }
 
-    void RegisterDeviceAllocator(const Device &device, const HardAllocator &allocator) noexcept {
+    void RegisterDeviceAllocator(const Device &device, const HardAllocator &allocator) TS_NOEXCEPT {
         auto &map_device_id_allocator = MapDeviceIDAllocator();
         auto device_id_allocator = map_device_id_allocator.find(device.type());
         if (device_id_allocator != map_device_id_allocator.end()) {
@@ -52,7 +52,7 @@ namespace ts {
         }
     }
 
-    void RegisterAllocator(const DeviceType &device_type, const HardAllocator &allocator) noexcept {
+    void RegisterAllocator(const DeviceType &device_type, const HardAllocator &allocator) TS_NOEXCEPT {
         auto &map_device_allocator = MapDeviceAllocator();
         map_device_allocator.insert(std::make_pair(device_type, allocator));
     }

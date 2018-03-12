@@ -56,13 +56,13 @@ namespace ts {
          * Moving constructed function
          * @param other other memory
          */
-        HardMemory(self &&other) noexcept;
+        HardMemory(self &&other) TS_NOEXCEPT;
 
         /**
          * Moving assignment function
          * @param other other memory
          */
-        HardMemory &operator=(self &&other) noexcept;
+		HardMemory &operator=(self &&other) TS_NOEXCEPT;
 
         /**
          * Swap to other object

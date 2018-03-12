@@ -54,13 +54,13 @@ namespace ts {
          * Moving constructed function
          * @param other other object
          */
-        Memory(self &&other) noexcept;
+		Memory(self &&other) TS_NOEXCEPT;
 
         /**
          * Moving assignment function
          * @param other other object
          */
-        Memory &operator=(self &&other) noexcept;
+		Memory &operator=(self &&other) TS_NOEXCEPT;
 
         /**
          * Swap to other object

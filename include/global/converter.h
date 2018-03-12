@@ -7,6 +7,7 @@
 
 
 #include "device.h"
+#include "utils/except.h"
 #include <functional>
 
 namespace ts {
@@ -22,7 +23,7 @@ namespace ts {
      * @return converter
      * @note supporting called by threads without calling @sa RegisterConverter
      */
-    HardConverter QueryConverter(DeviceType dst_device_type, DeviceType src_device_type) noexcept;
+	HardConverter QueryConverter(DeviceType dst_device_type, DeviceType src_device_type) TS_NOEXCEPT;
 
     /**
      * Register converter
@@ -31,7 +32,7 @@ namespace ts {
      * @param converter registering converter
      * @note only can be called before running
      */
-    void RegisterConverter(DeviceType dst_device_type, DeviceType src_device_type, const HardConverter &converter) noexcept;
+	void RegisterConverter(DeviceType dst_device_type, DeviceType src_device_type, const HardConverter &converter) TS_NOEXCEPT;
 }
 
 #endif //TENSORSTACK_GLOBAL_CONVERTER_H

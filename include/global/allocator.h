@@ -6,6 +6,7 @@
 #define TENSORSTACK_GLOBAL_ALLOCATOR_H
 
 #include "device.h"
+#include "utils/except.h"
 #include <functional>
 
 namespace ts {
@@ -20,7 +21,7 @@ namespace ts {
      * @return allocator
      * @note supporting called by threads without calling @sa RegisterDeviceAllocator or @sa RegisterAllocator
      */
-    HardAllocator QueryAllocator(const Device &device) noexcept;
+    HardAllocator QueryAllocator(const Device &device) TS_NOEXCEPT;
 
     /**
      * Register allocator for specific device type and id
@@ -28,7 +29,7 @@ namespace ts {
      * @param allocator setting allocator
      * @note only can be called before running
      */
-    void RegisterDeviceAllocator(const Device &device, const HardAllocator &allocator) noexcept;
+	void RegisterDeviceAllocator(const Device &device, const HardAllocator &allocator) TS_NOEXCEPT;
 
     /**
      * Register allocator for specific device type
@@ -36,7 +37,7 @@ namespace ts {
      * @param allocator setting allocator
      * @note only can be called before running
      */
-    void RegisterAllocator(const DeviceType &device_type, const HardAllocator &allocator) noexcept;
+	void RegisterAllocator(const DeviceType &device_type, const HardAllocator &allocator) TS_NOEXCEPT;
 }
 
 #endif //TENSORSTACK_GLOBAL_ALLOCATOR_H

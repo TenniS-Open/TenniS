@@ -15,7 +15,7 @@ namespace ts {
         return map_dst_src_converter;
     };
 
-    HardConverter QueryConverter(DeviceType dst_device_type, DeviceType src_device_type) noexcept {
+	HardConverter QueryConverter(DeviceType dst_device_type, DeviceType src_device_type) TS_NOEXCEPT{
         auto &map_dst_src_converter = MapDstSrcConverter();
         auto dst_src_converter = map_dst_src_converter.find(dst_device_type);
         if (dst_src_converter != map_dst_src_converter.end()) {
@@ -29,7 +29,7 @@ namespace ts {
     }
 
     void
-    RegisterConverter(DeviceType dst_device_type, DeviceType src_device_type, const HardConverter &converter) noexcept {
+	RegisterConverter(DeviceType dst_device_type, DeviceType src_device_type, const HardConverter &converter) TS_NOEXCEPT{
         auto &map_dst_src_converter = MapDstSrcConverter();
         auto dst_src_converter = map_dst_src_converter.find(dst_device_type);
         if (dst_src_converter != map_dst_src_converter.end()) {
