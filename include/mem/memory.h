@@ -37,6 +37,22 @@ namespace ts {
 
         /**
          * Initialize Memory
+         * @param hard ready memory
+         * @param size sizeof the memory block
+         * @param shift shift from start pointer
+         */
+        Memory(const std::shared_ptr<HardMemory> &hard);
+
+        /**
+         * Initialize Memory
+         * @param hard ready memory
+         * @param size sizeof the memory block
+         * @param shift shift from start pointer
+         */
+        Memory(std::shared_ptr<HardMemory> &&hard);
+
+        /**
+         * Initialize Memory
          * @param device running device
          * @param size sizeof this memory block
          */
@@ -47,8 +63,6 @@ namespace ts {
          * @param size sizeof the memory block
          */
         explicit Memory(size_t size);
-
-
 
         /**
          * Moving constructed function

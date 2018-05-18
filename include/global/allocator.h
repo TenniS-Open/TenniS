@@ -12,8 +12,21 @@
 namespace ts {
     /**
      * Memory allocator type, allocate memory from specific device
+     * @see HardAllocatorDeclaration
      */
-    using HardAllocator = std::function<void *(size_t, void *)>;
+    using HardAllocator = std::function<void *(int, size_t, void *)>;
+
+    /**
+     * Example of HardAllocator
+     * @param id the allocating device id
+     * @param size the new size of memory
+     * @param mem the older memory
+     * @return a pointer to new memory
+     * @note if size == 0: free(mem),
+     *        else if mem == nullptr: return malloc(size)
+     *        else: return realloc(mem, size)
+     */
+    void *HardAllocatorDeclaration(int id, size_t size, void *mem);
 
     /**
      * Query memory allocator
@@ -22,14 +35,6 @@ namespace ts {
      * @note supporting called by threads without calling @sa RegisterDeviceAllocator or @sa RegisterAllocator
      */
     HardAllocator QueryAllocator(const Device &device) TS_NOEXCEPT;
-
-    /**
-     * Register allocator for specific device type and id
-     * @param device specific @sa Device
-     * @param allocator setting allocator
-     * @note only can be called before running
-     */
-	void RegisterDeviceAllocator(const Device &device, const HardAllocator &allocator) TS_NOEXCEPT;
 
     /**
      * Register allocator for specific device type

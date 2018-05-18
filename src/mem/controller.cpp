@@ -14,6 +14,6 @@ namespace ts {
     }
 
     Memory BaseMemoryController::alloc(size_t size) {
-        return Memory(std::make_shared<HardMemory>(m_device, m_allocator, size), size);
+        return Memory(std::make_shared<HardMemory>(m_device, m_allocator, size));
     }
 }

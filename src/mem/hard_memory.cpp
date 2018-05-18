@@ -17,7 +17,7 @@ namespace ts {
 
     HardMemory::HardMemory(const Device &device, size_t size)
             : HardMemory(device) {
-        self::resize(size);
+        this->resize(size);
     }
 
     HardMemory::HardMemory(const Device &device, const HardAllocator &allocator)
@@ -27,51 +27,51 @@ namespace ts {
 
     HardMemory::HardMemory(const Device &device, const HardAllocator &allocator, size_t size)
             : HardMemory(device, allocator) {
-        self::resize(size);
+        this->resize(size);
     }
 
     HardMemory::~HardMemory() {
-        if (m_allocator) m_allocator(0, m_data);
+        if (m_allocator) m_allocator(m_device.id(), 0, m_data);
     }
 
     void HardMemory::dispose() {
-        m_allocator(0, m_data);
+        m_allocator(m_device.id(), 0, m_data);
     }
 
     void HardMemory::expect(size_t size) {
         if (size > m_capacity) {
-            m_allocator(size, m_data);
+            m_allocator(m_device.id(), size, m_data);
             m_capacity = size;
         }
     }
 
     void HardMemory::shrink(size_t size) {
         if (size < m_capacity) {
-            m_allocator(size, m_data);
+            m_allocator(m_device.id(), size, m_data);
             m_capacity = size;
         }
     }
 
     void HardMemory::resize(size_t size) {
         if (size != m_capacity) {
-            m_allocator(size, m_data);
+            m_allocator(m_device.id(), size, m_data);
             m_capacity = size;
         }
     }
 
     void HardMemory::swap(self &other) {
-        std::swap(self::m_device, other.m_device);
-        std::swap(self::m_capacity, other.m_capacity);
-        std::swap(self::m_data, other.m_data);
-        std::swap(self::m_allocator, other.m_allocator);
+        std::swap(this->m_device, other.m_device);
+        std::swap(this->m_capacity, other.m_capacity);
+        std::swap(this->m_data, other.m_data);
+        std::swap(this->m_allocator, other.m_allocator);
     }
 
 	HardMemory::HardMemory(self &&other) TS_NOEXCEPT{
-        self::swap(other);
+        this->swap(other);
     }
 
     HardMemory &HardMemory::operator=(self &&other) TS_NOEXCEPT {
-        self::swap(other);
+        this->swap(other);
         return *this;
     }
 }

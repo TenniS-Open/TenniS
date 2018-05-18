@@ -13,7 +13,8 @@
 #include <cstring>
 
 namespace ts {
-    static void *cpu_allocator(size_t size, void *mem) {
+    static void *cpu_allocator(int id, size_t size, void *mem) {
+        TS_UNUSED(id);
         if (size == 0) {
             std::free(mem);
             return nullptr;
