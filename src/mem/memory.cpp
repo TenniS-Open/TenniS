@@ -2,7 +2,9 @@
 // Created by lby on 2018/3/11.
 //
 
+#include <cassert>
 #include "mem/memory.h"
+#include "global/converter.h"
 
 namespace ts {
 
@@ -62,5 +64,15 @@ namespace ts {
 
     long Memory::use_count() const {
         return m_usage.use_count();
+    }
+
+    const Device &Memory::device() const {
+        return this->m_hard->device();
+    }
+
+    void memcpy(Memory &dst, const Memory &src, size_t size) {
+        HardConverter converter = QueryConverter(dst.device().type(), src.device().type());
+        assert(converter != nullptr);
+        converter(dst.device().id(), dst.data(), src.device().id(), src.data(), size);
     }
 }

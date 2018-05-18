@@ -14,7 +14,18 @@ namespace ts {
     /**
      * HardConverter, convert memory between devices
      */
-    using HardConverter = std::function<void(const Device &, void *, const Device &, const void *, size_t)>;
+	using HardConverter = std::function<void(int, void *, int, const void *, size_t)>;
+
+	/**
+     * example of HardConverter
+     * @param dst_id the dst device id
+     * @param dst the dst memory pointer
+     * @param src_id the src device id
+     * @param src the dst memory pointer
+     * @param size the copy size
+     * @note the src and dst device type was specific given by register
+     */
+	void HardConverterDeclaration(int dst_id, void *dst, int src_id, const void *src, size_t size);
 
     /**
      * Query memory converter

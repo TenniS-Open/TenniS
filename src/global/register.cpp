@@ -26,9 +26,9 @@ namespace ts {
     }
 
     static void
-    cpu_converter(const Device &dst_device, void *dst, const Device &src_device, const void *src, size_t size) {
-        assert(dst_device.type() == ts::CPU);
-        assert(src_device.type() == ts::CPU);
+    cpu_converter(int dst_id, void *dst, int src_id, const void *src, size_t size) {
+        TS_UNUSED(dst_id);
+        TS_UNUSED(src_id);
         std::memcpy(dst, src, size);
     }
 

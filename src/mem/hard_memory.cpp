@@ -36,25 +36,26 @@ namespace ts {
 
     void HardMemory::dispose() {
         m_allocator(m_device.id(), 0, m_data);
+        m_data = nullptr;
     }
 
     void HardMemory::expect(size_t size) {
         if (size > m_capacity) {
-            m_allocator(m_device.id(), size, m_data);
+            m_data = m_allocator(m_device.id(), size, m_data);
             m_capacity = size;
         }
     }
 
     void HardMemory::shrink(size_t size) {
         if (size < m_capacity) {
-            m_allocator(m_device.id(), size, m_data);
+            m_data = m_allocator(m_device.id(), size, m_data);
             m_capacity = size;
         }
     }
 
     void HardMemory::resize(size_t size) {
         if (size != m_capacity) {
-            m_allocator(m_device.id(), size, m_data);
+            m_data = m_allocator(m_device.id(), size, m_data);
             m_capacity = size;
         }
     }

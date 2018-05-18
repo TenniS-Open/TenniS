@@ -122,14 +122,14 @@ namespace ts {
          * @return memory start pointer
          */
         template<typename T>
-        T *data() { return reinterpret_cast<T *>(self::data()); }
+        T *data() { return reinterpret_cast<T *>(this->data()); }
 
         /**
          * Get memory start pointer
          * @return memory start pointer
          */
         template<typename T>
-        const T *data() const { return reinterpret_cast<const T *>(self::data()); }
+        const T *data() const { return reinterpret_cast<const T *>(this->data()); }
 
     private:
         Device m_device;                         ///< running device

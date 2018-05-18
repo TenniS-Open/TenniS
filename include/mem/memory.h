@@ -117,14 +117,14 @@ namespace ts {
          * @return memory pointer
          */
         template<typename T>
-        T *data() { return reinterpret_cast<T *>(self::data()); }
+        T *data() { return reinterpret_cast<T *>(this->data()); }
 
         /**
          * Get memory pointer
          * @return memory pointer
          */
         template<typename T>
-        const T *data() const { return reinterpret_cast<const T *>(self::data()); }
+        const T *data() const { return reinterpret_cast<const T *>(this->data()); }
 
         /**
          * Set callback when memory will be free
@@ -150,6 +150,12 @@ namespace ts {
          */
         long use_count() const;
 
+        /**
+         * return Device of this memory
+         * @return @see Device
+         */
+        const Device &device() const;
+
     private:
         std::shared_ptr<HardMemory> m_hard = nullptr;  ///< hardware memory
         size_t m_size = 0;                              ///< sizeof this memory block
@@ -164,9 +170,7 @@ namespace ts {
      */
     inline void swap(Memory &obj1, Memory &obj2) {obj1.swap(obj2);}
 
-    void memcpy(const Memory &dst, const Memory &src, size_t size);
-
-    void memset(Memory &mem, int val, size_t size);
+    void memcpy(Memory &dst, const Memory &src, size_t size);
 
 }
 
