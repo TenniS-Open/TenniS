@@ -68,13 +68,25 @@ namespace ts {
          * Moving constructed function
          * @param other other object
          */
-		Memory(self &&other) TS_NOEXCEPT;
+        Memory(const self &other) TS_NOEXCEPT = default;
 
         /**
          * Moving assignment function
          * @param other other object
          */
-		Memory &operator=(self &&other) TS_NOEXCEPT;
+        Memory &operator=(const self &other) TS_NOEXCEPT = default;
+
+        /**
+         * Moving constructed function
+         * @param other other object
+         */
+        Memory(self &&other) TS_NOEXCEPT;
+
+        /**
+         * Moving assignment function
+         * @param other other object
+         */
+        Memory &operator=(self &&other) TS_NOEXCEPT;
 
         /**
          * Swap to other object
@@ -118,8 +130,25 @@ namespace ts {
          * Set callback when memory will be free
          * @param dtor destructor
          * @param data param will pass to destructor
+         * @note the use_count will reset after this API
+         * @note use one of use_count or this API to control memory, do not use them both
          */
         void destructor(const std::function<void(void*)> &dtor, void *data);
+
+        /**
+         * Set callback when memory will be free
+         * @param dtor destructor
+         * @param data param will pass to destructor
+         * @note the use_count will reset after this API
+         * @note use one of use_count or this API to control memory, do not use them both
+         */
+        void destructor(const std::function<void(void)> &dtor);
+
+        /**
+         * return use count of this memory block
+         * @return use count
+         */
+        long use_count() const;
 
     private:
         std::shared_ptr<HardMemory> m_hard = nullptr;  ///< hardware memory

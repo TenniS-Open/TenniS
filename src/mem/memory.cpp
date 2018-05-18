@@ -5,24 +5,35 @@
 #include "mem/memory.h"
 
 namespace ts {
+
+    static void default_usage_destructor(void *) {}
+
+    static std::shared_ptr<void> default_usage() {
+        return std::shared_ptr<void>((void *) (0x19910929), default_usage_destructor);
+    }
+
     Memory::Memory(const std::shared_ptr<HardMemory> &hard, size_t size, size_t shift)
-            : m_hard(hard), m_size(size), m_shift(shift) {
+            : m_hard(hard), m_size(size), m_shift(shift), m_usage(default_usage()) {
     }
 
     Memory::Memory(std::shared_ptr<HardMemory> &&hard, size_t size, size_t shift)
-            : m_hard(std::move(hard)), m_size(size), m_shift(shift) {
+            : m_hard(std::move(hard)), m_size(size), m_shift(shift), m_usage(default_usage()) {
     }
 
     Memory::Memory(const Device &device, size_t size)
-            : m_hard(new HardMemory(device, size)), m_size(size), m_shift(0) {
+            : m_hard(new HardMemory(device, size)), m_size(size), m_shift(0), m_usage(default_usage()) {
     }
 
     Memory::Memory(size_t size)
-            : m_hard(new HardMemory(Device(), size)), m_size(size), m_shift(0) {
+            : m_hard(new HardMemory(Device(), size)), m_size(size), m_shift(0), m_usage(default_usage()) {
     }
 
     void Memory::destructor(const std::function<void(void *)> &dtor, void *data) {
         m_usage.reset(data, dtor);
+    }
+
+    void Memory::destructor(const std::function<void(void)> &dtor) {
+        m_usage.reset((void *) (0x19910929), [dtor](void *) -> void { dtor(); });
     }
 
     void Memory::swap(Memory::self &other) {
@@ -47,5 +58,9 @@ namespace ts {
 
     Memory::Memory(std::shared_ptr<HardMemory> &&hard)
             : Memory(std::move(hard), hard->capacity()) {
+    }
+
+    long Memory::use_count() const {
+        return m_usage.use_count();
     }
 }
