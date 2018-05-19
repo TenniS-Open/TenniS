@@ -25,7 +25,7 @@ namespace ts {
         return Device(QueryMemoryDevice(compute_device.type()), compute_device.id());
     }
 
-    void RegisterMemoryDevice(const DeviceType &compute_device_type, const DeviceType &memory_device_type) {
+    void RegisterMemoryDevice(const DeviceType &compute_device_type, const DeviceType &memory_device_type) TS_NOEXCEPT {
         auto &map_device_memory = MapDeviceMemory();
         map_device_memory.insert(std::make_pair(compute_device_type, memory_device_type));
     }

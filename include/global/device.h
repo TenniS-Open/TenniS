@@ -101,4 +101,17 @@ namespace ts {
     bool operator>=(const Device &lhs, const Device &rhs);
 }
 
+namespace std {
+    template<>
+    struct hash<ts::Device> {
+        std::size_t operator()(const ts::Device &key) const {
+            using std::size_t;
+            using std::hash;
+
+            return hash<ts::DeviceType>()(key.type())
+                   ^ hash<int>()(key.id());
+        }
+    };
+}
+
 #endif //TENSORSTACK_GLOBAL_DEVICE_H
