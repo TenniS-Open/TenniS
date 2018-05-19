@@ -18,6 +18,7 @@ namespace ts {
     class Memory {
     public:
         using self = Memory;    ///< self class
+        using shared = std::shared_ptr<self>;  ///< smart pointer
 
         /**
          * Initialize Memory
@@ -25,7 +26,7 @@ namespace ts {
          * @param size sizeof the memory block
          * @param shift shift from start pointer
          */
-        Memory(const std::shared_ptr<HardMemory> &hard, size_t size, size_t shift = 0);
+        Memory(const HardMemory::shared &hard, size_t size, size_t shift = 0);
 
         /**
          * Initialize Memory
@@ -33,7 +34,7 @@ namespace ts {
          * @param size sizeof the memory block
          * @param shift shift from start pointer
          */
-        Memory(std::shared_ptr<HardMemory> &&hard, size_t size, size_t shift = 0);
+        Memory(HardMemory::shared &&hard, size_t size, size_t shift = 0);
 
         /**
          * Initialize Memory
@@ -41,7 +42,7 @@ namespace ts {
          * @param size sizeof the memory block
          * @param shift shift from start pointer
          */
-        Memory(const std::shared_ptr<HardMemory> &hard);
+        Memory(const HardMemory::shared &hard);
 
         /**
          * Initialize Memory
@@ -49,7 +50,7 @@ namespace ts {
          * @param size sizeof the memory block
          * @param shift shift from start pointer
          */
-        Memory(std::shared_ptr<HardMemory> &&hard);
+        Memory(HardMemory::shared &&hard);
 
         /**
          * Initialize Memory
@@ -157,7 +158,7 @@ namespace ts {
         const Device &device() const;
 
     private:
-        std::shared_ptr<HardMemory> m_hard = nullptr;  ///< hardware memory
+        HardMemory::shared m_hard = nullptr;  ///< hardware memory
         size_t m_size = 0;                              ///< sizeof this memory block
         size_t m_shift = 0;                             ///< shift from start pointer
         std::shared_ptr<void> m_usage = nullptr;      ///< for memory usage count

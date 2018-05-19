@@ -17,6 +17,7 @@ namespace ts {
     class HardMemory {
     public:
         using self = HardMemory;    ///< self class
+        using shared = std::shared_ptr<self>;  ///< smart pointer
 
         HardMemory(const self &) = delete;
 

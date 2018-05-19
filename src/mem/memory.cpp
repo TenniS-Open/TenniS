@@ -15,11 +15,11 @@ namespace ts {
         return std::shared_ptr<void>(FakeUsagePtr, default_usage_destructor);
     }
 
-    Memory::Memory(const std::shared_ptr<HardMemory> &hard, size_t size, size_t shift)
+    Memory::Memory(const HardMemory::shared &hard, size_t size, size_t shift)
             : m_hard(hard), m_size(size), m_shift(shift), m_usage(default_usage()) {
     }
 
-    Memory::Memory(std::shared_ptr<HardMemory> &&hard, size_t size, size_t shift)
+    Memory::Memory(HardMemory::shared &&hard, size_t size, size_t shift)
             : m_hard(std::move(hard)), m_size(size), m_shift(shift), m_usage(default_usage()) {
     }
 
@@ -55,11 +55,11 @@ namespace ts {
         return *this;
     }
 
-    Memory::Memory(const std::shared_ptr<HardMemory> &hard)
+    Memory::Memory(const HardMemory::shared &hard)
             : Memory(hard, hard->capacity()) {
     }
 
-    Memory::Memory(std::shared_ptr<HardMemory> &&hard)
+    Memory::Memory(HardMemory::shared &&hard)
             : Memory(std::move(hard), hard->capacity()) {
     }
 

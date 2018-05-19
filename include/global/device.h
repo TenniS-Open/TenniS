@@ -8,6 +8,7 @@
 #include <string>
 #include <ostream>
 #include <utils/api.h>
+#include <memory>
 
 namespace ts {
     /**
@@ -27,6 +28,7 @@ namespace ts {
     class Device {
     public:
         using self = Device;    ///< self class
+        using shared = std::shared_ptr<self>;  ///< smart pointer
 
         /**
          * Initialize device

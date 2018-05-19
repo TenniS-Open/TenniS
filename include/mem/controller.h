@@ -13,6 +13,8 @@ namespace ts {
      */
     class MemoryController {
     public:
+        using self = MemoryController;
+        using shared = std::shared_ptr<self>;  ///< smart pointer
         /**
          * alloc memory with size
          * @param size memory size (bytes)
@@ -23,6 +25,9 @@ namespace ts {
 
     class BaseMemoryController : public MemoryController {
     public:
+        using self = BaseMemoryController;
+        using shared = std::shared_ptr<self>;  ///< smart pointer
+        using supper = MemoryController;
         /**
          * @param device the memory device
          */
