@@ -53,7 +53,7 @@ namespace ts {
 
         /**
          * Initialize Memory
-         * @param device running device
+         * @param device memory device
          * @param size sizeof this memory block
          */
         Memory(const Device &device, size_t size);
@@ -170,6 +170,12 @@ namespace ts {
      */
     inline void swap(Memory &obj1, Memory &obj2) {obj1.swap(obj2);}
 
+    /**
+     * copy memory in device or cross devices
+     * @param dst the dst memory
+     * @param src the src memory
+     * @param size copy size
+     */
     void memcpy(Memory &dst, const Memory &src, size_t size);
 
 }

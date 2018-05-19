@@ -8,6 +8,7 @@
 
 #include "global/allocator.h"
 #include "global/converter.h"
+#include "global/memory_device.h"
 
 #include <cassert>
 #include <cstring>
@@ -39,3 +40,5 @@ namespace ts {
 TS_STATIC_ACTION(ts::RegisterAllocator, ts::CPU, ts::cpu_allocator)
 
 TS_STATIC_ACTION(ts::RegisterConverter, ts::CPU, ts::CPU, ts::cpu_converter)
+
+TS_STATIC_ACTION(ts::RegisterMemoryDevice, ts::CPU, ts::CPU);

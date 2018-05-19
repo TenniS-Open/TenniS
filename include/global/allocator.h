@@ -33,6 +33,7 @@ namespace ts {
      * @param device querying device
      * @return allocator
      * @note supporting called by threads without calling @sa RegisterDeviceAllocator or @sa RegisterAllocator
+     * @note the query device should be memory device, you may call @sa QueryMemoryDevice to get memory device by compute device
      */
     HardAllocator QueryAllocator(const Device &device) TS_NOEXCEPT;
 
@@ -42,7 +43,7 @@ namespace ts {
      * @param allocator setting allocator
      * @note only can be called before running
      */
-	void RegisterAllocator(const DeviceType &device_type, const HardAllocator &allocator) TS_NOEXCEPT;
+    void RegisterAllocator(const DeviceType &device_type, const HardAllocator &allocator) TS_NOEXCEPT;
 }
 
 #endif //TENSORSTACK_GLOBAL_ALLOCATOR_H

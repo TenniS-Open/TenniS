@@ -24,27 +24,27 @@ namespace ts {
 
         /**
          * Initialize hardware memory
-         * @param device running @sa Device
+         * @param device memory @sa Device
          */
         explicit HardMemory(const Device &device);
 
         /**
          * Initialize hardware memory
-         * @param device running @sa Device
+         * @param device memory @sa Device
          * @param size expected size
          */
         explicit HardMemory(const Device &device, size_t size);
 
         /**
          * Initialize hardware memory
-         * @param device running @sa Device
+         * @param device memory @sa Device
          * @param allocator memory allocator @see HardAllocator
          */
         explicit HardMemory(const Device &device, const HardAllocator &allocator);
 
         /**
          * Initialize hardware memory
-         * @param device running @sa Device
+         * @param device memory @sa Device
          * @param allocator memory allocator @see HardAllocator
          * @param size expected size
          */

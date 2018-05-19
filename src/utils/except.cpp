@@ -11,4 +11,8 @@ namespace ts {
     const char *Exception::what() const TS_NOEXCEPT {
         return m_message.c_str();
     }
+
+    Exception::Exception()
+            : m_message("Unknown exception.") {
+    }
 }

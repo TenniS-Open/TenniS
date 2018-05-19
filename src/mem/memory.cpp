@@ -7,11 +7,12 @@
 #include "global/converter.h"
 
 namespace ts {
+    static void *const FakeUsagePtr = (void *) (0x19910929);
 
     static void default_usage_destructor(void *) {}
 
     static std::shared_ptr<void> default_usage() {
-        return std::shared_ptr<void>((void *) (0x19910929), default_usage_destructor);
+        return std::shared_ptr<void>(FakeUsagePtr, default_usage_destructor);
     }
 
     Memory::Memory(const std::shared_ptr<HardMemory> &hard, size_t size, size_t shift)
@@ -35,7 +36,7 @@ namespace ts {
     }
 
     void Memory::destructor(const std::function<void(void)> &dtor) {
-        m_usage.reset((void *) (0x19910929), [dtor](void *) -> void { dtor(); });
+        m_usage.reset(FakeUsagePtr, [dtor](void *) -> void { dtor(); });
     }
 
     void Memory::swap(Memory::self &other) {
@@ -71,6 +72,8 @@ namespace ts {
     }
 
     void memcpy(Memory &dst, const Memory &src, size_t size) {
+        assert(dst.size() >= size);
+        assert(src.size() >= size);
         HardConverter converter = QueryConverter(dst.device().type(), src.device().type());
         assert(converter != nullptr);
         converter(dst.device().id(), dst.data(), src.device().id(), src.data(), size);

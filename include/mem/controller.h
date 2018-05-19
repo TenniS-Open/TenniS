@@ -23,6 +23,9 @@ namespace ts {
 
     class BaseMemoryController : public MemoryController {
     public:
+        /**
+         * @param device the memory device
+         */
         explicit BaseMemoryController(const Device &device);
 
         Memory alloc(size_t size) override;

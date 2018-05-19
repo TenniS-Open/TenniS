@@ -19,6 +19,7 @@ namespace ts {
     static const char *EIGEN = "eigen";
     static const char *BLAS = "blas";
     static const char *CUDNN = "cudnn";
+    static const char *CUBLAS = "cublas";
 
     /**
      * Device: Sepcific device
@@ -81,6 +82,7 @@ namespace ts {
         TS_UNUSED(EIGEN);
         TS_UNUSED(BLAS);
         TS_UNUSED(CUDNN);
+        TS_UNUSED(CUBLAS);
         return out << device.str();
     }
 

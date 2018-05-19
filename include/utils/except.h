@@ -19,6 +19,7 @@
 namespace ts {
     class Exception : public std::exception {
     public:
+        Exception();
         explicit Exception(const std::string &message);
 
         const char *what() const TS_NOEXCEPT override;
