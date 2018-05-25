@@ -44,6 +44,11 @@ namespace ts {
      * @note only can be called before running
      */
     void RegisterAllocator(const DeviceType &device_type, const HardAllocator &allocator) TS_NOEXCEPT;
+
+    /**
+     * No details for this API, so DO NOT call it
+     */
+    void ClearRegisteredAllocator();
 }
 
 #endif //TENSORSTACK_GLOBAL_ALLOCATOR_H

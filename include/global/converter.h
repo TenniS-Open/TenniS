@@ -44,6 +44,12 @@ namespace ts {
      * @note only can be called before running
      */
 	void RegisterConverter(DeviceType dst_device_type, DeviceType src_device_type, const HardConverter &converter) TS_NOEXCEPT;
+
+	/**
+     * No details for this API, so DO NOT call it
+     */
+	void ClearRegisteredConverter();
+
 }
 
 #endif //TENSORSTACK_GLOBAL_CONVERTER_H

@@ -41,4 +41,9 @@ namespace ts {
             map_dst_src_converter.insert(std::make_pair(dst_device_type, std::move(map_src_converter)));
         }
     }
+
+    void ClearRegisteredConverter() {
+        auto &map_dst_src_converter = MapDstSrcConverter();
+        map_dst_src_converter.clear();
+    }
 }

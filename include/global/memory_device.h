@@ -54,6 +54,11 @@ namespace ts {
      * @param memory_device_type the memory device, such as CPU and GPU.
      */
     void RegisterMemoryDevice(const DeviceType &compute_device_type, const DeviceType &memory_device_type) TS_NOEXCEPT;
+
+    /**
+     * No details for this API, so DO NOT call it
+     */
+    void ClearRegisteredMemoryDevice();
 }
 
 

@@ -28,4 +28,9 @@ namespace ts {
         auto &map_device_allocator = MapDeviceAllocator();
         map_device_allocator.insert(std::make_pair(device_type, allocator));
     }
+
+    void ClearRegisteredAllocator() {
+        auto &map_device_allocator = MapDeviceAllocator();
+        map_device_allocator.clear();
+    }
 }
