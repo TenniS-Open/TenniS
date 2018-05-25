@@ -7,6 +7,9 @@
 #include <iostream>
 #include <global/memory_device.h>
 
+#include <map>
+#include <unordered_map>
+
 int main()
 {
     ts::HardMemory mem({ts::CPU, 0});
@@ -35,6 +38,8 @@ int main()
         std::cout << e.what() << std::endl;
     }
 
+    std::map<ts::Device, int> aa;
+    std::unordered_map<ts::Device, int> bb;
 
     return 0;
 }
