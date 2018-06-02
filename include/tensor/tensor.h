@@ -12,7 +12,7 @@
 
 namespace ts {
     using Shape = std::vector<int>;
-    class tensor {
+    class Tensor {
     public:
         class Prototype {
         public:
@@ -46,18 +46,18 @@ namespace ts {
             // std::string m_layout; ///< NCHW or NHWC
         };
 
-        tensor(MemoryController::shared &controller, TYPE type,
+        Tensor(MemoryController::shared &controller, TYPE type,
                const Shape &_shape);   // allocate memory from controller
 
-        tensor(const Device &device, TYPE type, const Shape &_shape);
+        Tensor(const Device &device, TYPE type, const Shape &_shape);
 
-        tensor(TYPE type, const Shape &_shape);
+        Tensor(TYPE type, const Shape &_shape);
 
-        tensor(MemoryController::shared &controller, const Prototype &proto);   // allocate memory from controller
+        Tensor(MemoryController::shared &controller, const Prototype &proto);   // allocate memory from controller
 
-        tensor(const Device &device, const Prototype &proto);
+        Tensor(const Device &device, const Prototype &proto);
 
-        explicit tensor(const Prototype &proto);
+        explicit Tensor(const Prototype &proto);
 
         const Device &device() const { return m_memory.device(); }
 
