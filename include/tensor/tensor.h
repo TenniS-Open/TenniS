@@ -13,38 +13,68 @@
 namespace ts {
     class tensor {
     public:
-        class shape {
+        class prototype {
         public:
-            shape() {}
-            shape(const std::vector<int> &sizes) : m_sizes(sizes) {}
-            shape(const std::vector<int> &sizes, const std::string &layout) : m_sizes(sizes), m_layout(layout) {}
+            prototype() {}
 
-            size_t dims() const {return m_sizes.size();}
-            const std::vector<int> &sizes() const {return m_sizes;}
-            int operator[](size_t axis) const {return m_sizes[axis];}
-            const std::string &layout() const {return m_layout;}
+            prototype(const std::vector<int> &sizes) : m_sizes(sizes) {}
+
+            prototype(TYPE type, const std::vector<int> &sizes) : m_type(type), m_sizes(sizes) {}
+
+            explicit prototype(TYPE type) : m_type(type) {}
+
+            TYPE type() const { return m_type; }
+
+            size_t dims() const { return m_sizes.size(); }
+
+            const std::vector<int> &sizes() const { return m_sizes; }
+
+            int type_bytes() const { return ts::type_bytes(m_type); }
+
+            int count() const { return count(m_sizes); };
+
+            static int count(const std::vector<int> &_shape) {
+                int prod = 1;
+                for (int _size : _shape) prod *= _size;
+                return prod;
+            }
 
         private:
+            TYPE m_type = VOID;
             std::vector<int> m_sizes = {};
-            std::string m_layout; ///< NCHW or NHWC
+            // std::string m_layout; ///< NCHW or NHWC
         };
-        tensor(MemoryController::shared &controller);   // allocate memory from controller
-        tensor(const Device &device, const std::vector<int> &shape) : m_memory(device, (size_t)(count(shape))), m_shape(shape) {};   // allocate memory from device
+
+        tensor(MemoryController::shared &controller, TYPE type,
+               const std::vector<int> &_shape);   // allocate memory from controller
+
+        tensor(const Device &device, TYPE type, const std::vector<int> &_shape);
+
+        tensor(TYPE type, const std::vector<int> &_shape);
+
+        tensor(MemoryController::shared &controller, const prototype &proto);   // allocate memory from controller
+
+        tensor(const Device &device, const prototype &proto);
+
+        explicit tensor(const prototype &proto);
 
         const Device &device() const { return m_memory.device(); }
 
-        TYPE type() const { return m_type; }
+        TYPE type() const { return m_proto.type(); }
 
-        int count() const;
-        static int count(const std::vector<int> &shape);
+        void *data() { return m_memory.data(); }
+
+        const void *data() const { return m_memory.data(); }
+
+        template<typename T>
+        void *data() { return m_memory.data<T>(); }
+
+        template<typename T>
+        const void *data() const { return m_memory.data<T>(); }
 
     private:
-
         Memory m_memory;
-        TYPE m_type;
-        shape m_shape;
-
-        friend class stack;
+        prototype m_proto;
     };
 }
 

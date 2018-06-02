@@ -71,6 +71,9 @@ namespace ts {
         return this->m_hard->device();
     }
 
+    Memory::Memory() {
+    }
+
     void memcpy(Memory &dst, const Memory &src, size_t size) {
         assert(dst.size() >= size);
         assert(src.size() >= size);

@@ -65,6 +65,8 @@ namespace ts {
          */
         explicit Memory(size_t size);
 
+        Memory();
+
         /**
          * Moving constructed function
          * @param other other object
