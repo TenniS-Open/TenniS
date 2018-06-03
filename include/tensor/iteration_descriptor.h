@@ -10,6 +10,7 @@
 #include <climits>
 #include <memory>
 #include <iostream>
+#include <utility>
 
 namespace ts {
     class Iteration {
@@ -138,31 +139,113 @@ namespace ts {
         }
     }
 
-    class IterationDescrptor {
+    class IterationDescriptor {
     public:
-        using self = IterationDescrptor;
+        using self = IterationDescriptor;
 
-        IterationDescrptor(Iteration::times_t times, Iteration::step_t step) : base(new_iteration(times, step)) {}
+        class Group {
+        public:
+            template <typename Arg0>
+            static void try_insert_group_rape(std::vector<Iteration*> &group, Arg0&& arg0) {
+                group.push_back(try_rape(std::forward<Arg0>(arg0)));
+            };
 
-        IterationDescrptor(Iteration::times_t times, const IterationDescrptor &descrptor);
+            template <typename Arg0, typename... Args>
+            static void try_insert_group_rape(std::vector<Iteration*> &group, Arg0&& arg0, Args&&... args) {
+                group.push_back(try_rape(std::forward<Arg0>(arg0)));
+                try_insert_group_rape(group, std::forward<Args>(args)...);
+            };
 
-        IterationDescrptor(Iteration::times_t times, IterationDescrptor &&descrptor);
+            template <typename... Args>
+            static std::vector<Iteration*> try_return_group_rape(Args&&... args) {
+                std::vector<Iteration*> group;
+                try_insert_group_rape(group, std::forward<Args>(args)...);
+                return std::move(group);
+            };
 
-        IterationDescrptor(Iteration::times_t times, std::initializer_list<IterationDescrptor> list);
+            template <typename... Args>
+            Group(Args&&... args) : base(try_return_group_rape(std::forward<Args>(args)...)) {}
 
-        ~IterationDescrptor();
+            ~Group() {
+                for (auto &iter : base) delete_iteration(iter);
+            }
 
-        self &operator=(const IterationDescrptor &descrptor);
+        private:
+            std::vector<Iteration *> base;
 
-        self &operator=(IterationDescrptor &&descrptor);
+            friend class IterationDescriptor;
+        };
+
+        IterationDescriptor(Iteration::times_t times, Iteration::step_t step) : base(new_iteration(times, step)) {}
+
+        IterationDescriptor(Iteration::times_t times, const IterationDescriptor &descriptor)
+                : base(new_iteration(times, try_rape(descriptor))) {}
+
+        IterationDescriptor(Iteration::times_t times, IterationDescriptor &&descriptor)
+                : base(new_iteration(times, try_rape(std::move(descriptor)))) {}
+
+        IterationDescriptor(Iteration::times_t times, const Group &group) : base(
+                new_iteration(times, try_rape(group))) {}
+
+        IterationDescriptor(Iteration::times_t times, Group &&group) : base(
+                new_iteration(times, try_rape(std::move(group)))) {}
+
+        IterationDescriptor(const IterationDescriptor &descriptor) : base(try_rape(descriptor)) {}
+
+        IterationDescriptor(IterationDescriptor &&descriptor) : base(try_rape(std::move(descriptor))) {}
+
+        ~IterationDescriptor() { delete_iteration(base); }
+
+        self &operator=(const IterationDescriptor &descrptor) = delete;
+
+        self &operator=(IterationDescriptor &&descrptor) {
+            this->swap(descrptor);
+            return *this;
+        }
+
+        IterationDescriptor clone() const {
+            IterationDescriptor doly;
+            doly.base = clone_iteration(this->base);
+            return std::move(doly);
+        }
 
     private:
-        IterationDescrptor(const IterationDescrptor &descrptor);
+        IterationDescriptor() = default;
 
-        IterationDescrptor(IterationDescrptor &&descrptor);
+        static Iteration *reap(IterationDescriptor &descrptor) {
+            Iteration *raw_iter = nullptr;
+            std::swap(raw_iter, descrptor.base);
+            return raw_iter;
+        }
+
+        static Iteration *try_rape(const IterationDescriptor &descrptor) {
+            return clone_iteration(descrptor.base);
+        }
+
+        static Iteration *try_rape(IterationDescriptor &&descrptor) {
+            return reap(descrptor);
+        }
+
+        static std::vector<Iteration *> try_rape(const Group &group) {
+            std::vector<Iteration *> raw_iters = group.base;
+            for (auto &iter : raw_iters) iter = clone_iteration(iter);
+            return std::move(raw_iters);
+        }
+
+        static std::vector<Iteration *> try_rape(Group &&group) {
+            std::vector<Iteration *> raw_iters;
+            std::swap(raw_iters, group.base);
+            return std::move(raw_iters);
+        }
+
+        void swap(IterationDescriptor &descrptor) {
+            std::swap(base, descrptor.base);
+        }
 
         Iteration *base = nullptr;
     };
+
+    using Flow = IterationDescriptor;
 
 }
 
