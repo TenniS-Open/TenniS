@@ -11,6 +11,7 @@
 #include <memory>
 #include <iostream>
 #include <utility>
+#include <stack>
 
 namespace ts {
     class Iteration {
@@ -139,62 +140,102 @@ namespace ts {
         }
     }
 
+    // return all iteration may size, and remove all zero times iteration
+    // if return zero, iteration should be deleted
+    Iteration::times_t update_iteration(Iteration *iteration) {
+        if (iteration == nullptr) return 0;
+        if (iteration->times == 0) {
+            delete_iteration(iteration);
+            return 0;
+        }
+        if (iteration->type == Iteration::ITERS) {
+            Iteration::times_t times = 0;
+            using ThisIteration = IterationIters;
+            auto iteration_iters = reinterpret_cast<ThisIteration *>(iteration);
+            auto iter = iteration_iters->iters.begin();
+            while(iter != iteration_iters->iters.end()) {
+                Iteration::times_t local_times = update_iteration(*iter);
+                if (local_times == 0) {
+                    iter = iteration_iters->iters.erase(iter);
+                } else {
+                    times += local_times;
+                    ++iter;
+                }
+            }
+            if (times == 0) delete_iteration(iteration);
+            return iteration->times * times;
+        }
+        return iteration->times;
+    }
+
+    Iteration::times_t update_iteration(Iteration **piteration) {
+        if (piteration == nullptr) return 0;
+        Iteration::times_t times = update_iteration(*piteration);
+        if (times == 0) *piteration = nullptr;
+        return times;
+    }
+
     class IterationDescriptor {
     public:
         using self = IterationDescriptor;
 
+        static const auto outer = Iteration::outer;
+        static const auto finish = Iteration::finish;
+        using times_t = Iteration::times_t;
+        using step_t = Iteration::step_t;
+
         class Group {
         public:
-            template <typename Arg0>
-            static void try_insert_group_rape(std::vector<Iteration*> &group, Arg0&& arg0) {
+            template<typename Arg0>
+            static void try_insert_group_rape(std::vector<Iteration *> &group, Arg0 &&arg0) {
                 group.push_back(try_rape(std::forward<Arg0>(arg0)));
             };
 
-            template <typename Arg0, typename... Args>
-            static void try_insert_group_rape(std::vector<Iteration*> &group, Arg0&& arg0, Args&&... args) {
+            template<typename Arg0, typename... Args>
+            static void try_insert_group_rape(std::vector<Iteration *> &group, Arg0 &&arg0, Args &&... args) {
                 group.push_back(try_rape(std::forward<Arg0>(arg0)));
                 try_insert_group_rape(group, std::forward<Args>(args)...);
             };
 
-            template <typename... Args>
-            static std::vector<Iteration*> try_return_group_rape(Args&&... args) {
-                std::vector<Iteration*> group;
+            template<typename... Args>
+            static std::vector<Iteration *> try_return_group_rape(Args &&... args) {
+                std::vector<Iteration *> group;
                 try_insert_group_rape(group, std::forward<Args>(args)...);
                 return std::move(group);
             };
 
-            template <typename... Args>
-            Group(Args&&... args) : base(try_return_group_rape(std::forward<Args>(args)...)) {}
+            template<typename... Args>
+            Group(Args &&... args) : m_proto_group(try_return_group_rape(std::forward<Args>(args)...)) {}
 
             ~Group() {
-                for (auto &iter : base) delete_iteration(iter);
+                for (auto &iter : m_proto_group) delete_iteration(iter);
             }
 
         private:
-            std::vector<Iteration *> base;
+            std::vector<Iteration *> m_proto_group;
 
             friend class IterationDescriptor;
         };
 
-        IterationDescriptor(Iteration::times_t times, Iteration::step_t step) : base(new_iteration(times, step)) {}
+        IterationDescriptor(times_t times, step_t step) : m_proto(new_iteration(times, step)) {}
 
-        IterationDescriptor(Iteration::times_t times, const IterationDescriptor &descriptor)
-                : base(new_iteration(times, try_rape(descriptor))) {}
+        IterationDescriptor(times_t times, const IterationDescriptor &descriptor)
+                : m_proto(new_iteration(times, try_rape(descriptor))) {}
 
-        IterationDescriptor(Iteration::times_t times, IterationDescriptor &&descriptor)
-                : base(new_iteration(times, try_rape(std::move(descriptor)))) {}
+        IterationDescriptor(times_t times, IterationDescriptor &&descriptor)
+                : m_proto(new_iteration(times, try_rape(std::move(descriptor)))) {}
 
-        IterationDescriptor(Iteration::times_t times, const Group &group) : base(
+        IterationDescriptor(times_t times, const Group &group) : m_proto(
                 new_iteration(times, try_rape(group))) {}
 
-        IterationDescriptor(Iteration::times_t times, Group &&group) : base(
+        IterationDescriptor(times_t times, Group &&group) : m_proto(
                 new_iteration(times, try_rape(std::move(group)))) {}
 
-        IterationDescriptor(const IterationDescriptor &descriptor) : base(try_rape(descriptor)) {}
+        IterationDescriptor(const IterationDescriptor &descriptor) : m_proto(try_rape(descriptor)) {}
 
-        IterationDescriptor(IterationDescriptor &&descriptor) : base(try_rape(std::move(descriptor))) {}
+        IterationDescriptor(IterationDescriptor &&descriptor) : m_proto(try_rape(std::move(descriptor))) {}
 
-        ~IterationDescriptor() { delete_iteration(base); }
+        ~IterationDescriptor() { delete_iteration(m_proto); }
 
         self &operator=(const IterationDescriptor &descrptor) = delete;
 
@@ -205,21 +246,23 @@ namespace ts {
 
         IterationDescriptor clone() const {
             IterationDescriptor doly;
-            doly.base = clone_iteration(this->base);
+            doly.m_proto = clone_iteration(this->m_proto);
             return std::move(doly);
         }
+
+        const Iteration*proto() const {return m_proto;}
 
     private:
         IterationDescriptor() = default;
 
         static Iteration *reap(IterationDescriptor &descrptor) {
             Iteration *raw_iter = nullptr;
-            std::swap(raw_iter, descrptor.base);
+            std::swap(raw_iter, descrptor.m_proto);
             return raw_iter;
         }
 
         static Iteration *try_rape(const IterationDescriptor &descrptor) {
-            return clone_iteration(descrptor.base);
+            return clone_iteration(descrptor.m_proto);
         }
 
         static Iteration *try_rape(IterationDescriptor &&descrptor) {
@@ -227,25 +270,75 @@ namespace ts {
         }
 
         static std::vector<Iteration *> try_rape(const Group &group) {
-            std::vector<Iteration *> raw_iters = group.base;
+            std::vector<Iteration *> raw_iters = group.m_proto_group;
             for (auto &iter : raw_iters) iter = clone_iteration(iter);
             return std::move(raw_iters);
         }
 
         static std::vector<Iteration *> try_rape(Group &&group) {
             std::vector<Iteration *> raw_iters;
-            std::swap(raw_iters, group.base);
+            std::swap(raw_iters, group.m_proto_group);
             return std::move(raw_iters);
         }
 
         void swap(IterationDescriptor &descrptor) {
-            std::swap(base, descrptor.base);
+            std::swap(m_proto, descrptor.m_proto);
         }
 
-        Iteration *base = nullptr;
+        Iteration *m_proto = nullptr;
     };
 
     using Flow = IterationDescriptor;
+
+    class IterationInterpreter {
+    public:
+        static const auto outer = Iteration::outer;
+        static const auto finish = Iteration::finish;
+        using times_t = Iteration::times_t;
+        using step_t = Iteration::step_t;
+        using count_t = Iteration::times_t;
+
+        class Status {
+        public:
+            Iteration *proto;
+            count_t count;
+
+            explicit Status(Iteration *proto) : proto(proto), count(proto->times) {}
+
+            bool finished() const { return count == 0; }
+
+            void next() { --count; }
+
+            Iteration::Type type() const {return proto->type;}
+
+            Iteration::step_t step() const {return reinterpret_cast<IterationStep*>(proto)->step;}
+            const std::vector<Iteration*> iters() const {return reinterpret_cast<IterationIters*>(proto)->iters;}
+        };
+
+        void bind(Iteration *proto) {
+            this->m_proto = proto;
+        }
+
+        void rewind() {
+            m_status = decltype(m_status)();
+            if (m_proto == nullptr) return;
+            m_status.emplace(m_proto);
+            deploy();
+        }
+
+        // set status to situation of after next and before step
+        void deploy();
+
+        // set iteration to next, may call deploy, return just step
+        size_t next();
+
+        // get this time step
+        step_t step() const;
+
+    private:
+        Iteration *m_proto;
+        std::stack<Status> m_status;
+    };
 
 }
 
