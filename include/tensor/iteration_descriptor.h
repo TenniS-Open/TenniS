@@ -252,6 +252,10 @@ namespace ts {
 
         const Iteration*proto() const {return m_proto;}
 
+        Iteration*proto() {return m_proto;}
+
+        times_t update() { return update_iteration(&m_proto);}
+
     private:
         IterationDescriptor() = default;
 
@@ -300,10 +304,10 @@ namespace ts {
 
         class Status {
         public:
-            Iteration *proto;
+            const Iteration *proto;
             count_t count;
 
-            explicit Status(Iteration *proto) : proto(proto), count(proto->times) {}
+            explicit Status(const Iteration *proto) : proto(proto), count(proto->times) {}
 
             bool finished() const { return count == 0; }
 
@@ -311,12 +315,18 @@ namespace ts {
 
             Iteration::Type type() const {return proto->type;}
 
-            Iteration::step_t step() const {return reinterpret_cast<IterationStep*>(proto)->step;}
-            const std::vector<Iteration*> iters() const {return reinterpret_cast<IterationIters*>(proto)->iters;}
+            Iteration::step_t step() const {return reinterpret_cast<const IterationStep*>(proto)->step;}
+            const std::vector<Iteration*> iters() const {return reinterpret_cast<const IterationIters*>(proto)->iters;}
         };
 
         void bind(Iteration *proto) {
             this->m_proto = proto;
+            rewind();
+        }
+
+        void bind(IterationDescriptor &descriptor) {
+            this->m_proto = descriptor.proto();
+            rewind();
         }
 
         void rewind() {
@@ -327,18 +337,51 @@ namespace ts {
         }
 
         // set status to situation of after next and before step
-        void deploy();
+        void deploy() {
+            while (!m_status.empty()) {
+                auto &top = m_status.top();
+                if (top.finished()) {
+                    m_status.pop();
+                    continue;
+                }
+                if (top.type() == Iteration::ITERS) {
+                    top.next();
+                    auto iters = top.iters();
+                    auto it = iters.rbegin();
+                    while (it != iters.rend()) {
+                        m_status.emplace(*it);
+                        ++it;
+                    }
+                    continue;
+                }
+                break;
+            }
+        }
 
         // set iteration to next, may call deploy, return just step
-        size_t next();
+        step_t next() {
+            if (m_status.empty()) return finish;
+            auto &top = m_status.top();
+            auto step = top.step();
+            top.next();
+            deploy();
+            return step;
+        }
 
         // get this time step
-        step_t step() const;
+        step_t step() const {
+            if (m_status.empty()) return finish;
+            auto &top = m_status.top();
+            auto step = top.step();
+            return step;
+        }
 
     private:
-        Iteration *m_proto;
+        const Iteration *m_proto = nullptr;
         std::stack<Status> m_status;
     };
+
+    using Bed = IterationInterpreter;
 
 }
 
