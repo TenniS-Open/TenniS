@@ -2,8 +2,8 @@
 // Created by seeta on 2018/6/3.
 //
 
-#ifndef TENSORSTACK_TENSOR_ITERATION_DESCRIPTOR_H
-#define TENSORSTACK_TENSOR_ITERATION_DESCRIPTOR_H
+#ifndef TENSORSTACK_TENSOR_SCAN_H
+#define TENSORSTACK_TENSOR_SCAN_H
 
 #include <vector>
 #include <cstdint>
@@ -27,11 +27,11 @@ namespace ts {
             ITERS
         };
 
-        explicit Iteration(Type type) : type(type) { std::cout << "+"; }
+        explicit Iteration(Type type) : type(type) {}
 
-        Iteration(Type type, times_t times) : type(type), times(times) { std::cout << "+"; }
+        Iteration(Type type, times_t times) : type(type), times(times) {}
 
-        virtual ~Iteration() { std::cout << "-"; };
+        virtual ~Iteration() {};
 
         Type type;
         times_t times = 0;
@@ -153,7 +153,7 @@ namespace ts {
             using ThisIteration = IterationIters;
             auto iteration_iters = reinterpret_cast<ThisIteration *>(iteration);
             auto iter = iteration_iters->iters.begin();
-            while(iter != iteration_iters->iters.end()) {
+            while (iter != iteration_iters->iters.end()) {
                 Iteration::times_t local_times = update_iteration(*iter);
                 if (local_times == 0) {
                     iter = iteration_iters->iters.erase(iter);
@@ -237,10 +237,15 @@ namespace ts {
 
         ~IterationDescriptor() { delete_iteration(m_proto); }
 
-        self &operator=(const IterationDescriptor &descrptor) = delete;
+        self &operator=(const IterationDescriptor &descriptor) {
+            auto new_iteration = clone_iteration(descriptor.m_proto);
+            std::swap(m_proto, new_iteration);
+            delete_iteration(new_iteration);
+            return *this;
+        };
 
-        self &operator=(IterationDescriptor &&descrptor) {
-            this->swap(descrptor);
+        self &operator=(IterationDescriptor &&descriptor) {
+            this->swap(descriptor);
             return *this;
         }
 
@@ -250,27 +255,27 @@ namespace ts {
             return std::move(doly);
         }
 
-        const Iteration*proto() const {return m_proto;}
+        const Iteration *proto() const { return m_proto; }
 
-        Iteration*proto() {return m_proto;}
+        Iteration *proto() { return m_proto; }
 
-        times_t update() { return update_iteration(&m_proto);}
+        times_t update() { return update_iteration(&m_proto); }
 
     private:
         IterationDescriptor() = default;
 
-        static Iteration *reap(IterationDescriptor &descrptor) {
+        static Iteration *reap(IterationDescriptor &descriptor) {
             Iteration *raw_iter = nullptr;
-            std::swap(raw_iter, descrptor.m_proto);
+            std::swap(raw_iter, descriptor.m_proto);
             return raw_iter;
         }
 
-        static Iteration *try_rape(const IterationDescriptor &descrptor) {
-            return clone_iteration(descrptor.m_proto);
+        static Iteration *try_rape(const IterationDescriptor &descriptor) {
+            return clone_iteration(descriptor.m_proto);
         }
 
-        static Iteration *try_rape(IterationDescriptor &&descrptor) {
-            return reap(descrptor);
+        static Iteration *try_rape(IterationDescriptor &&descriptor) {
+            return reap(descriptor);
         }
 
         static std::vector<Iteration *> try_rape(const Group &group) {
@@ -285,14 +290,12 @@ namespace ts {
             return std::move(raw_iters);
         }
 
-        void swap(IterationDescriptor &descrptor) {
-            std::swap(m_proto, descrptor.m_proto);
+        void swap(IterationDescriptor &descriptor) {
+            std::swap(m_proto, descriptor.m_proto);
         }
 
         Iteration *m_proto = nullptr;
     };
-
-    using Flow = IterationDescriptor;
 
     class IterationInterpreter {
     public:
@@ -313,10 +316,12 @@ namespace ts {
 
             void next() { --count; }
 
-            Iteration::Type type() const {return proto->type;}
+            Iteration::Type type() const { return proto->type; }
 
-            Iteration::step_t step() const {return reinterpret_cast<const IterationStep*>(proto)->step;}
-            const std::vector<Iteration*> iters() const {return reinterpret_cast<const IterationIters*>(proto)->iters;}
+            Iteration::step_t step() const { return reinterpret_cast<const IterationStep *>(proto)->step; }
+
+            const std::vector<Iteration *>
+            iters() const { return reinterpret_cast<const IterationIters *>(proto)->iters; }
         };
 
         void bind(Iteration *proto) {
@@ -381,9 +386,10 @@ namespace ts {
         std::stack<Status> m_status;
     };
 
-    using Bed = IterationInterpreter;
+    using Scan = IterationDescriptor;
+    using Loop = IterationInterpreter;
 
 }
 
 
-#endif //TENSORSTACK_TENSOR_ITERATION_DESCRIPTOR_H
+#endif //TENSORSTACK_TENSOR_SCAN_H
