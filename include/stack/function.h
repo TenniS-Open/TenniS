@@ -11,6 +11,7 @@
 
 namespace ts {
     class Stack;
+
     class Function {
     public:
         using self = Function;    ///< self class
@@ -23,10 +24,15 @@ namespace ts {
         virtual int infer(Stack &stack, std::vector<Tensor::Prototype> &output) = 0;
 
         void set(const std::string &param, const Tensor &value);
+
         Tensor &get(const std::string &param);
+
         const Tensor &get(const std::string &param) const;
+
         void clear(const std::string &param);
+
         void clear_params();
+
     private:
         std::map<std::string, Tensor> m_params;
     };

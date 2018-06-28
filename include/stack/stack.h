@@ -11,6 +11,8 @@
 #include <tensor/type.h>
 #include <tensor/tensor.h>
 #include <deque>
+#include <stack>
+#include <cassert>
 
 namespace ts {
 
@@ -59,12 +61,39 @@ namespace ts {
 
         size_t size() const { return m_stack.size() - m_base; }
 
+        void erase(int i) {
+            auto it = this->m_stack.begin() + relative2absolute(i);
+            this->m_stack.erase(it);
+        }
+
+        // remove [beg, end)
+        void erase(int beg, int end) {
+            auto beg_it = this->m_stack.begin() + relative2absolute(beg);
+            auto end_it = this->m_stack.begin() + relative2absolute(end);
+            // assert(end_it - beg_it >= 0);
+            this->m_stack.erase(beg_it, end_it);
+        }
+
+        void clear() {this->erase(0, static_cast<int>(this->size()));}
+
         size_t base() const { return m_base; }
 
         // return old base
         size_t rebase(size_t new_base) {
             std::swap(m_base, new_base);
             return new_base;
+        }
+
+        void push_base(int i) {
+            this->m_base_stack.push(this->rebase(relative2absolute(i)));
+        }
+        void pop_base() {
+            if (this->m_base_stack.empty()){
+                this->rebase(0);
+            } else {
+                this->rebase(this->m_base_stack.top());
+                this->m_base_stack.pop();
+            }
         }
 
     private:
@@ -76,6 +105,7 @@ namespace ts {
         MemoryController::shared m_controller;    ///< tensor memory backend
         std::deque<Tensor> m_stack;               ///< saving all tensor
         size_t m_base = 0;                        ///< the running control base
+        std::stack<size_t> m_base_stack;          ///< save each call base
     };
 }
 
