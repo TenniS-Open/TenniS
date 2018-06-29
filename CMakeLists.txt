@@ -15,14 +15,16 @@ set(CONFIGURATION ${CMAKE_BUILD_TYPE})
 
 # set common compiler flags
 include(LOCAL_FLAGS)
+include(LOCAL_ENV)
 
 set(CMAKE_INSTALL_PREFIX ${PROJECT_BINARY_DIR}/build CACHE STRING "set install prefix" FORCE)
+install(CODE "MESSAGE(\"Installing into ${CMAKE_INSTALL_PREFIX}\")")
 
 set(LOCAL_OUTPUT_DIR ${PROJECT_SOURCE_DIR})
 
 if (LOCAL_OUTPUT_DIR)
-    set(EXECUTABLE_OUTPUT_PATH ${LOCAL_OUTPUT_DIR}/bin)
-    set(LIBRARY_OUTPUT_PATH ${LOCAL_OUTPUT_DIR}/lib)
+    set(EXECUTABLE_OUTPUT_PATH ${LOCAL_OUTPUT_DIR}/${ENV_RUNTIME_DIR})
+    set(LIBRARY_OUTPUT_PATH ${LOCAL_OUTPUT_DIR}/${ENV_LIBRARY_DIR})
 endif ()
 
 include_directories(${SOLUTION_DIR}/include)
@@ -38,7 +40,21 @@ FILE(GLOB_RECURSE SRC_FILES ${SOLUTION_DIR}/src/*.cpp)
 add_library(${PROJECT_NAME}_STATIC STATIC ${INCLUDE_FILES} ${INCLUDE_SRC_FILES} ${SRC_FILES})
 add_library(${PROJECT_NAME}_SHARED SHARED ${INCLUDE_FILES} ${INCLUDE_SRC_FILES} ${SRC_FILES})
 
-set_target_properties(${PROJECT_NAME}_SHARED PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${LOCAL_OUTPUT_DIR}/bin)
+set_target_properties(${PROJECT_NAME}_SHARED PROPERTIES OUTPUT_NAME ${PROJECT_NAME}${ENV_SUFFIX})
+set_target_properties(${PROJECT_NAME}_STATIC PROPERTIES OUTPUT_NAME ${PROJECT_NAME}_static${ENV_SUFFIX})
+
+set_target_properties(${PROJECT_NAME}_SHARED PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${LOCAL_OUTPUT_DIR}/${ENV_RUNTIME_DIR})
+
+install(TARGETS ${PROJECT_NAME}_SHARED ${PROJECT_NAME}_STATIC
+        RUNTIME DESTINATION ${ENV_RUNTIME_DIR}
+        LIBRARY DESTINATION ${ENV_LIBRARY_DIR}
+        ARCHIVE DESTINATION ${ENV_ARCHIVE_DIR}
+        )
+
+# TODO: update headers install script
+install(DIRECTORY ${SOLUTION_DIR}/include/
+        DESTINATION ${ENV_HEADER_DIR}
+        )
 
 # 4 types of achive
 # blas
@@ -66,5 +82,7 @@ foreach (path ${TOOL_FILES})
     add_executable(tool_${file} ${path})
     set_target_properties(tool_${file} PROPERTIES OUTPUT_NAME ${file})
     target_link_libraries(tool_${file} ${PROJECT_NAME}_SHARED)
-    install(TARGETS tool_${file} DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+    install(TARGETS tool_${file}
+            RUNTIME DESTINATION ${ENV_RUNTIME_DIR}
+            )
 endforeach ()
