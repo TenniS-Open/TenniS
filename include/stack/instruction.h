@@ -20,13 +20,13 @@ namespace ts {
         virtual void run(Workbench &workbench) = 0;
     };
 
-    class FunctionInstruction : public Instruction {
+    class OperatorInstruction : public Instruction {
     public:
-        using self = FunctionInstruction;    ///< self class
+        using self = OperatorInstruction;    ///< self class
         using shared = std::shared_ptr<self>;  ///< smart pointer
         using supper = Instruction;
 
-        explicit FunctionInstruction(const Operator::shared &func, int nargs, int nresults);
+        explicit OperatorInstruction(const Operator::shared &func, int nargs, int nresults);
 
         void run(Workbench &workbench) override ;
 

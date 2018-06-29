@@ -9,12 +9,12 @@
 
 namespace ts {
 
-    FunctionInstruction::FunctionInstruction(const Operator::shared &func, int nargs, int nresults)
+    OperatorInstruction::OperatorInstruction(const Operator::shared &func, int nargs, int nresults)
             : m_func(func), m_nargs(nargs), m_nresults(nresults) {
         assert(m_func != nullptr);
     }
 
-    void FunctionInstruction::run(Workbench &workbench) {
+    void OperatorInstruction::run(Workbench &workbench) {
         auto &stack = workbench.stack();
 
         assert(stack.size() >= static_cast<size_t>(m_nargs));
