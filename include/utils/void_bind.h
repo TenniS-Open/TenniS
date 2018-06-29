@@ -12,13 +12,13 @@ namespace ts {
     using VoidOperator = std::function<void()>;
 
     template<typename Ret, typename FUNC>
-    class _Operator {
+    class _VoidOperatorBinder {
     public:
         static VoidOperator bind(FUNC func) { return [func]() -> void { func(); }; }
     };
 
     template<typename FUNC>
-    class _Operator<void, FUNC> {
+    class _VoidOperatorBinder<void, FUNC> {
     public:
         static VoidOperator bind(FUNC func) { return func; }
     };
@@ -27,7 +27,7 @@ namespace ts {
     static VoidOperator void_bind(FUNC func, Args &&... args) {
         auto inner_func = std::bind(func, std::forward<Args>(args)...);
         using Ret = decltype(inner_func());
-        using RetOperator = _Operator<Ret, decltype(inner_func)>;
+        using RetOperator = _VoidOperatorBinder<Ret, decltype(inner_func)>;
         return RetOperator::bind(inner_func);
     }
 }

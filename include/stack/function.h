@@ -17,6 +17,8 @@ namespace ts {
         using self = Function;    ///< self class
         using shared = std::shared_ptr<self>;  ///< smart pointer
 
+        // explicit Function(const std::string &name) : m_name(name) {}
+
         // work on tensor stack, same as call
         virtual int run(Stack &stack) = 0;
 
@@ -35,8 +37,8 @@ namespace ts {
 
     private:
         std::map<std::string, Tensor> m_params;
+        // std::string m_name;
     };
-
 }
 
 

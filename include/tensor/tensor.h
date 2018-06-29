@@ -12,6 +12,7 @@
 
 namespace ts {
     using Shape = std::vector<int>;
+
     class Tensor {
     public:
         class Prototype {
@@ -42,7 +43,7 @@ namespace ts {
 
         private:
             TYPE m_type = VOID;
-            std::vector<int> m_sizes = {};  ///< in reversed mode
+            std::vector<int> m_sizes = {};  ///< ?in reversed mode?
             // std::string m_layout; ///< NCHW or NHWC
         };
 
@@ -69,7 +70,7 @@ namespace ts {
 
         int count() const { return m_proto.count(); };
 
-        const Prototype &proto() const {return m_proto;}
+        const Prototype &proto() const { return m_proto; }
 
         void *data() { return m_memory.data(); }
 
