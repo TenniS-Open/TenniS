@@ -7,7 +7,7 @@
 
 #include <memory>
 #include <queue>
-#include "function.h"
+#include "operator.h"
 #include "stack.h"
 #include "tensor/tensor.h"
 #include "instruction.h"

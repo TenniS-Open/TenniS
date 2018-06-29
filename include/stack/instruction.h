@@ -6,7 +6,7 @@
 #define TENSORSTACK_STACK_INSTRUCTION_H
 
 #include <memory>
-#include "function.h"
+#include "operator.h"
 
 namespace ts {
 
@@ -26,12 +26,12 @@ namespace ts {
         using shared = std::shared_ptr<self>;  ///< smart pointer
         using supper = Instruction;
 
-        explicit FunctionInstruction(const Function::shared &func, int nargs, int nresults);
+        explicit FunctionInstruction(const Operator::shared &func, int nargs, int nresults);
 
         void run(Workbench &workbench) override ;
 
     private:
-        Function::shared m_func = nullptr;
+        Operator::shared m_func = nullptr;
         int m_nargs = 0;
         int m_nresults = 0;
     };

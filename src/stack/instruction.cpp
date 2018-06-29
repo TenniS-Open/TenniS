@@ -9,7 +9,7 @@
 
 namespace ts {
 
-    FunctionInstruction::FunctionInstruction(const Function::shared &func, int nargs, int nresults)
+    FunctionInstruction::FunctionInstruction(const Operator::shared &func, int nargs, int nresults)
             : m_func(func), m_nargs(nargs), m_nresults(nresults) {
         assert(m_func != nullptr);
     }

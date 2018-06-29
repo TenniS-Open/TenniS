@@ -12,12 +12,12 @@
 namespace ts {
     class Stack;
 
-    class Function {
+    class Operator {
     public:
-        using self = Function;    ///< self class
+        using self = Operator;    ///< self class
         using shared = std::shared_ptr<self>;  ///< smart pointer
 
-        // explicit Function(const std::string &name) : m_name(name) {}
+        // explicit Operator(const std::string &name) : m_name(name) {}
 
         // work on tensor stack, same as call
         virtual int run(Stack &stack) = 0;
