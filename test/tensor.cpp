@@ -2,11 +2,10 @@
 // Created by seeta on 2018/5/25.
 //
 
-#include <tensor/tensor.h>
-#include <tensor/type.h>
-#include <tensor/itrator.h>
+#include <core/tensor.h>
+#include <core/type.h>
 #include <iostream>
-#include <tensor/scan.h>
+#include <core/scan.h>
 
 int main() {
     using namespace ts;

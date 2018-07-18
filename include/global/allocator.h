@@ -5,7 +5,7 @@
 #ifndef TENSORSTACK_GLOBAL_ALLOCATOR_H
 #define TENSORSTACK_GLOBAL_ALLOCATOR_H
 
-#include "device.h"
+#include "core/device.h"
 #include "utils/except.h"
 #include <functional>
 

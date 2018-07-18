@@ -17,6 +17,7 @@ namespace ts {
 
     void Workbench::run() {
         // clear pre output
+        this->m_pointer = 0;
         this->m_stack->rebase(0);
         this->m_stack->clear();
         this->m_output->clear();
@@ -24,19 +25,20 @@ namespace ts {
         // set input
         for (int i = 0; static_cast<size_t >(i) < this->m_input->size(); ++i) {
             auto &arg = *this->m_input->index(i);
-            this->m_stack->push(arg);
+            this->m_stack->clone_push(arg);
         }
 
         // run
         while (m_pointer < m_program.size()) {
             auto &inst = m_program[m_pointer];
+            m_pointer++;
             inst->run(*this);
         }
 
         // set output
         for (int i = 0; static_cast<size_t >(i) < this->m_stack->size(); ++i) {
             auto &arg = *this->m_stack->index(i);
-            this->m_output->push(arg);
+            this->m_output->clone_push(arg);
         }
     }
 
@@ -54,5 +56,18 @@ namespace ts {
 
     const Tensor &Workbench::input(int i) const {
         return *this->m_input->index(i);
+    }
+
+    Workbench::shared Workbench::clone() const {
+        Workbench::shared dolly = std::make_shared<Workbench>(this->m_device);
+        dolly->m_pointer = this->m_pointer;
+        dolly->m_program = this->m_program;
+        return dolly;
+    }
+
+    Workbench::shared Workbench::Load(const Device &device) {
+        auto bench = std::make_shared<Workbench>(device);
+        // convert module to bench
+        return bench;
     }
 }

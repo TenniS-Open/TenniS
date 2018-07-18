@@ -2,7 +2,7 @@
 // Created by seeta on 2018/5/25.
 //
 
-#include "tensor/tensor.h"
+#include "core/tensor.h"
 
 namespace ts {
     Tensor::Tensor(MemoryController::shared &controller, TYPE type, const Shape &_shape)

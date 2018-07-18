@@ -6,7 +6,7 @@
 #define TENSORSTACK_GLOBAL_CONVERTER_H
 
 
-#include "device.h"
+#include "core/device.h"
 #include "utils/except.h"
 #include <functional>
 

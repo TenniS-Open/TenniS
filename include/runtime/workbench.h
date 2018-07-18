@@ -9,7 +9,7 @@
 #include <queue>
 #include "operator.h"
 #include "stack.h"
-#include "tensor/tensor.h"
+#include "core/tensor.h"
 #include "instruction.h"
 
 namespace ts {
@@ -32,14 +32,22 @@ namespace ts {
         void clear() {this->m_stack->clear();}
 
         // set input
+        Stack &input() {return *this->m_input;}
+        const Stack &input() const {return *this->m_input;}
         Tensor &input(int i);
         const Tensor &input(int i) const;
 
         void run();
 
         // set output
+        Stack &output() {return *this->m_output;}
+        const Stack &output() const {return *this->m_output;}
         Tensor &output(int i);
         const Tensor &output(int i) const;
+
+        Workbench::shared clone() const;
+
+        static Workbench::shared Load(/*Module, */const Device &device);
 
     private:
         Device m_device;

@@ -7,7 +7,7 @@
 
 #include <sstream>
 #include "utils/except.h"
-#include "device.h"
+#include "core/device.h"
 
 namespace ts {
     class NoMemoryDeviceException : public Exception {

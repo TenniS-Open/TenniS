@@ -2,7 +2,7 @@
 // Created by lby on 2018/3/11.
 //
 
-#include "global/device.h"
+#include "core/device.h"
 
 namespace ts {
     bool operator<(const Device &lhs, const Device &rhs) {

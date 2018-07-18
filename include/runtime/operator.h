@@ -7,7 +7,7 @@
 
 #include <map>
 #include <string>
-#include <tensor/tensor.h>
+#include <core/tensor.h>
 
 namespace ts {
     class Stack;

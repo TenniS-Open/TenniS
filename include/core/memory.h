@@ -5,7 +5,7 @@
 #ifndef TENSORSTACK_MEM_MEMORY_H
 #define TENSORSTACK_MEM_MEMORY_H
 
-#include "global/device.h"
+#include "device.h"
 #include "hard_memory.h"
 
 #include <memory>

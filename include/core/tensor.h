@@ -5,10 +5,10 @@
 #ifndef TENSORSTACK_TENSOR_TENSOR_H
 #define TENSORSTACK_TENSOR_TENSOR_H
 
-#include "mem/memory.h"
+#include "memory.h"
 #include "type.h"
 #include <vector>
-#include <mem/controller.h>
+#include <core/controller.h>
 
 namespace ts {
     using Shape = std::vector<int>;

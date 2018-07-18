@@ -7,7 +7,7 @@
 
 #include <cstddef>
 
-#include "global/device.h"
+#include "device.h"
 #include "global/allocator.h"
 
 namespace ts {
