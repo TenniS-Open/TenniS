@@ -11,6 +11,7 @@
 #include "stack.h"
 #include "core/tensor.h"
 #include "instruction.h"
+#include "module/module.h"
 
 namespace ts {
     class Workbench {
@@ -47,7 +48,7 @@ namespace ts {
 
         Workbench::shared clone() const;
 
-        static Workbench::shared Load(/*Module, */const Device &device);
+        static shared Load(const Module::shared &module, const Device &device);
 
     private:
         Device m_device;

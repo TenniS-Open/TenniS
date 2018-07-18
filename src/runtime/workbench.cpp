@@ -2,6 +2,8 @@
 // Created by seeta on 2018/5/25.
 //
 
+#include <module/module.h>
+#include <core/device.h>
 #include "runtime/workbench.h"
 #include "global/memory_device.h"
 
@@ -67,7 +69,7 @@ namespace ts {
         return dolly;
     }
 
-    Workbench::shared Workbench::Load(const Device &device) {
+    Workbench::shared Workbench::Load(const Module::shared &module, const Device &device) {
         auto bench = std::make_shared<Workbench>(device);
         // convert module to bench
         return bench;
