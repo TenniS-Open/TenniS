@@ -2,8 +2,8 @@
 // Created by seeta on 2018/5/25.
 //
 
-#ifndef TENSORSTACK_TENSOR_TYPE_H
-#define TENSORSTACK_TENSOR_TYPE_H
+#ifndef TENSORSTACK_CORE_TYPE_H
+#define TENSORSTACK_CORE_TYPE_H
 
 #include <cstdint>
 
@@ -96,4 +96,4 @@ namespace ts {
 }
 
 
-#endif //TENSORSTACK_TENSOR_TYPE_H
+#endif //TENSORSTACK_CORE_TYPE_H

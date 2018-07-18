@@ -2,12 +2,13 @@
 // Created by lby on 2018/3/11.
 //
 
-#ifndef TENSORSTACK_GLOBAL_DEVICE_H
-#define TENSORSTACK_GLOBAL_DEVICE_H
+#ifndef TENSORSTACK_CORE_DEVICE_H
+#define TENSORSTACK_CORE_DEVICE_H
+
+#include "utils/api.h"
 
 #include <string>
 #include <ostream>
-#include <utils/api.h>
 #include <memory>
 
 namespace ts {
@@ -114,4 +115,4 @@ namespace std {
     };
 }
 
-#endif //TENSORSTACK_GLOBAL_DEVICE_H
+#endif //TENSORSTACK_CORE_DEVICE_H

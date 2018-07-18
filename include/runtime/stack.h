@@ -2,8 +2,8 @@
 // Created by seeta on 2018/5/25.
 //
 
-#ifndef TENSORSTACK_STACK_STACK_H
-#define TENSORSTACK_STACK_STACK_H
+#ifndef TENSORSTACK_RUNTIME_STACK_H
+#define TENSORSTACK_RUNTIME_STACK_H
 
 #include "core/device.h"
 #include "core/controller.h"
@@ -150,4 +150,4 @@ namespace ts {
 }
 
 
-#endif //TENSORSTACK_STACK_STACK_H
+#endif //TENSORSTACK_RUNTIME_STACK_H

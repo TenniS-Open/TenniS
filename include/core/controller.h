@@ -2,8 +2,8 @@
 // Created by lby on 2018/3/11.
 //
 
-#ifndef TENSORSTACK_MEM_CONTROLLER_H
-#define TENSORSTACK_MEM_CONTROLLER_H
+#ifndef TENSORSTACK_CORE_CONTROLLER_H
+#define TENSORSTACK_CORE_CONTROLLER_H
 
 #include "memory.h"
 
@@ -42,4 +42,4 @@ namespace ts {
 }
 
 
-#endif //TENSORSTACK_MEM_CONTROLLER_H
+#endif //TENSORSTACK_CORE_CONTROLLER_H

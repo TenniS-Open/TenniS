@@ -2,8 +2,8 @@
 // Created by seeta on 2018/6/3.
 //
 
-#ifndef TENSORSTACK_TENSOR_SCAN_H
-#define TENSORSTACK_TENSOR_SCAN_H
+#ifndef TENSORSTACK_CORE_SCAN_H
+#define TENSORSTACK_CORE_SCAN_H
 
 #include <vector>
 #include <cstdint>
@@ -392,4 +392,4 @@ namespace ts {
 }
 
 
-#endif //TENSORSTACK_TENSOR_SCAN_H
+#endif //TENSORSTACK_CORE_SCAN_H

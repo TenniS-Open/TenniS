@@ -2,8 +2,8 @@
 // Created by seeta on 2018/6/28.
 //
 
-#ifndef TENSORSTACK_STACK_INSTRUCTION_H
-#define TENSORSTACK_STACK_INSTRUCTION_H
+#ifndef TENSORSTACK_RUNTIME_INSTRUCTION_H
+#define TENSORSTACK_RUNTIME_INSTRUCTION_H
 
 #include <memory>
 #include "operator.h"
@@ -39,4 +39,4 @@ namespace ts {
 }
 
 
-#endif //TENSORSTACK_STACK_INSTRUCTION_H
+#endif //TENSORSTACK_RUNTIME_INSTRUCTION_H

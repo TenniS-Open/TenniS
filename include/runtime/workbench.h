@@ -2,8 +2,8 @@
 // Created by seeta on 2018/5/25.
 //
 
-#ifndef TENSORSTACK_STACK_WORKBENCH_H
-#define TENSORSTACK_STACK_WORKBENCH_H
+#ifndef TENSORSTACK_RUNTIME_WORKBENCH_H
+#define TENSORSTACK_RUNTIME_WORKBENCH_H
 
 #include <memory>
 #include <queue>
@@ -64,4 +64,4 @@ namespace ts {
 }
 
 
-#endif //TENSORSTACK_STACK_WORKBENCH_H
+#endif //TENSORSTACK_RUNTIME_WORKBENCH_H

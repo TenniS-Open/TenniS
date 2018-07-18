@@ -2,8 +2,8 @@
 // Created by lby on 2018/3/11.
 //
 
-#ifndef TENSORSTACK_MEM_MEMORY_H
-#define TENSORSTACK_MEM_MEMORY_H
+#ifndef TENSORSTACK_CORE_MEMORY_H
+#define TENSORSTACK_CORE_MEMORY_H
 
 #include "device.h"
 #include "hard_memory.h"
@@ -191,4 +191,4 @@ namespace ts {
 }
 
 
-#endif //TENSORSTACK_MEM_MEMORY_H
+#endif //TENSORSTACK_CORE_MEMORY_H

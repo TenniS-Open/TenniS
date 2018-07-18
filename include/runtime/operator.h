@@ -2,8 +2,8 @@
 // Created by seeta on 2018/5/19.
 //
 
-#ifndef TENSORSTACK_STACK_FUNCTION_H
-#define TENSORSTACK_STACK_FUNCTION_H
+#ifndef TENSORSTACK_RUNTIME_OPERATOR_H
+#define TENSORSTACK_RUNTIME_OPERATOR_H
 
 #include <map>
 #include <string>
@@ -42,4 +42,4 @@ namespace ts {
 }
 
 
-#endif //TENSORSTACK_STACK_FUNCTION_H
+#endif //TENSORSTACK_RUNTIME_OPERATOR_H

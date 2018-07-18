@@ -2,8 +2,8 @@
 // Created by seeta on 2018/5/25.
 //
 
-#ifndef TENSORSTACK_TENSOR_TENSOR_H
-#define TENSORSTACK_TENSOR_TENSOR_H
+#ifndef TENSORSTACK_CORE_TENSOR_H
+#define TENSORSTACK_CORE_TENSOR_H
 
 #include "memory.h"
 #include "type.h"
@@ -96,4 +96,4 @@ namespace ts {
 }
 
 
-#endif //TENSORSTACK_TENSOR_TENSOR_H
+#endif //TENSORSTACK_CORE_TENSOR_H
