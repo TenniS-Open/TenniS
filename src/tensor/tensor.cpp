@@ -25,4 +25,16 @@ namespace ts {
     Tensor::Tensor(const Tensor::Prototype &proto)
             : m_memory(static_cast<size_t>(proto.count() * proto.type_bytes()))
             , m_proto(proto) {}
+
+    Tensor Tensor::clone(MemoryController::shared &controller) const {
+        Tensor dolly(controller, this->m_proto);
+        memcpy(dolly.m_memory, this->m_memory, size_t(this->m_proto.count() * this->m_proto.type_bytes()));
+        return std::move(dolly);
+    }
+
+    Tensor::shared Tensor::clone_shared(MemoryController::shared &controller) const {
+        Tensor::shared dolly = std::make_shared<Tensor>(controller, this->m_proto);
+        memcpy(dolly->m_memory, this->m_memory, size_t(this->m_proto.count() * this->m_proto.type_bytes()));
+        return std::move(dolly);
+    }
 }

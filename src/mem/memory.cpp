@@ -81,4 +81,12 @@ namespace ts {
         assert(converter != nullptr);
         converter(dst.device().id(), dst.data(), src.device().id(), src.data(), size);
     }
+
+    void memcpy(Memory &dst, const Memory &src) {
+        assert(dst.size() >= src.size());
+        auto size = src.size();
+        HardConverter converter = QueryConverter(dst.device().type(), src.device().type());
+        assert(converter != nullptr);
+        converter(dst.device().id(), dst.data(), src.device().id(), src.data(), size);
+    }
 }

@@ -181,6 +181,13 @@ namespace ts {
      */
     void memcpy(Memory &dst, const Memory &src, size_t size);
 
+    /**
+     * copy memory in device or cross devices, copy src size
+     * @param dst the dst memory
+     * @param src the src memory
+     */
+    void memcpy(Memory &dst, const Memory &src);
+
 }
 
 

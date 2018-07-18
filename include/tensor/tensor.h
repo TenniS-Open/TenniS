@@ -47,6 +47,9 @@ namespace ts {
             // std::string m_layout; ///< NCHW or NHWC
         };
 
+        using self = Tensor;    ///< self class
+        using shared = std::shared_ptr<self>;  ///< smart pointer
+
         Tensor(MemoryController::shared &controller, TYPE type,
                const Shape &_shape);   // allocate memory from controller
 
@@ -81,6 +84,10 @@ namespace ts {
 
         template<typename T>
         const T *data() const { return m_memory.data<T>(); }
+
+        Tensor clone(MemoryController::shared &controller) const;
+
+        Tensor::shared clone_shared(MemoryController::shared &controller) const;
 
     private:
         Memory m_memory;

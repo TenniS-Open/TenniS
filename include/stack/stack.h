@@ -6,6 +6,7 @@
 #define TENSORSTACK_STACK_STACK_H
 
 #include <global/device.h>
+#include <global/converter.h>
 #include <mem/controller.h>
 #include <vector>
 #include <tensor/type.h>
@@ -18,6 +19,9 @@ namespace ts {
 
     class Stack {
     public:
+        using self = Stack;    ///< self class
+        using shared = std::shared_ptr<self>;  ///< smart pointer
+
         explicit Stack(const Device &device)
                 : Stack(device, std::make_shared<BaseMemoryController>(device)) {}
 
@@ -33,13 +37,38 @@ namespace ts {
             return this->push(this->make(type, shape));
         }
 
+        Tensor *push(const Tensor::Prototype &proto) {
+            return this->push(proto.type(), proto.sizes());
+        }
+
         Tensor *push(const Tensor &tensor) {
+            assert(tensor.device() == this->m_device);
             this->m_stack.push_back(tensor);
             return &this->m_stack.back();
         }
 
         Tensor *push(int i) {
             return this->push(*this->index(i));
+        }
+
+        /**
+         * clone_push means push an clone of tensor
+         * @param tensor param to clone
+         * @return return cloned tensor
+         */
+        Tensor *clone_push(const Tensor &tensor) {
+            return this->push(tensor.clone(this->m_controller));
+        }
+
+        Tensor *clone(int i) {
+            auto &tensor = *this->index(i);
+            auto &proto = tensor.proto();
+            auto dolly = this->push(proto.type(), proto.sizes());
+            auto copy_converter = this->converter();
+            copy_converter(m_device.id(), dolly->data(),
+                           m_device.id(), tensor.data(),
+                           size_t(tensor.proto().count() * tensor.proto().type_bytes()));
+            return dolly;
         }
 
         // if i >= 0, then i is bottom_up_index; else if i < 0, the i is top_down_index
@@ -96,6 +125,14 @@ namespace ts {
             }
         }
 
+        HardConverter converter() const {
+            if (this->m_converter == nullptr) {
+                this->m_converter = QueryConverter(m_device.type(), m_device.type());
+                assert(this->m_converter != nullptr);
+            }
+            return this->m_converter;
+        }
+
     private:
         size_t relative2absolute(int i) const {
             return i >= 0 ? m_base + i : m_stack.size() + i;
@@ -106,6 +143,8 @@ namespace ts {
         std::deque<Tensor> m_stack;               ///< saving all tensor
         size_t m_base = 0;                        ///< the running control base
         std::stack<size_t> m_base_stack;          ///< save each call base
+
+        mutable HardConverter m_converter = nullptr;    ///< convert memory in stack
     };
 }
 
