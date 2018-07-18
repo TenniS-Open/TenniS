@@ -3,7 +3,7 @@
 //
 
 #include <cassert>
-#include "mem/memory.h"
+#include "core/memory.h"
 #include "global/converter.h"
 
 namespace ts {

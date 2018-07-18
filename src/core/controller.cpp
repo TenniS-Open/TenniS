@@ -3,7 +3,7 @@
 //
 
 #include <cassert>
-#include "mem/controller.h"
+#include "core/controller.h"
 
 namespace ts {
 

@@ -5,12 +5,13 @@
 #ifndef TENSORSTACK_STACK_STACK_H
 #define TENSORSTACK_STACK_STACK_H
 
-#include <core/device.h>
-#include <global/converter.h>
-#include <mem/controller.h>
+#include "core/device.h"
+#include "core/controller.h"
+#include "core/type.h"
+#include "core/tensor.h"
+#include "global/converter.h"
+
 #include <vector>
-#include <core/type.h>
-#include <core/tensor.h>
 #include <deque>
 #include <stack>
 #include <cassert>

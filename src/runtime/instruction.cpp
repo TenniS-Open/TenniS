@@ -4,8 +4,8 @@
 
 #include <cassert>
 #include "utils/need.h"
-#include "stack/instruction.h"
-#include "stack/workbench.h"
+#include "runtime/instruction.h"
+#include "runtime/workbench.h"
 
 namespace ts {
 

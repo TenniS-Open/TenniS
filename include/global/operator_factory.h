@@ -6,7 +6,7 @@
 #define TENSORSTACK_OPERATOR_FACTORY_H
 
 #include <functional>
-#include "stack/operator.h"
+#include "runtime/operator.h"
 #include "utils/static.h"
 
 namespace ts {
