@@ -3,16 +3,18 @@
 //
 
 #include "runtime/workbench.h"
+#include "global/memory_device.h"
 
 namespace ts {
     Workbench::Workbench(const Device &device)
             : m_device(device) {
-        this->m_static_memory = std::make_shared<BaseMemoryController>(device);
-        this->m_flow_memory = std::make_shared<BaseMemoryController>(device);   // TODO: Make real flow memory controller
-        this->m_dynamic_memory = std::make_shared<BaseMemoryController>(device);
-        this->m_stack = std::make_shared<Stack>(device, this->m_flow_memory);
-        this->m_input = std::make_shared<Stack>(device, this->m_dynamic_memory);
-        this->m_output = std::make_shared<Stack>(device, this->m_dynamic_memory);
+        auto memory_device = QueryMemoryDevice(device);
+        this->m_static_memory = std::make_shared<BaseMemoryController>(memory_device);
+        this->m_flow_memory = std::make_shared<BaseMemoryController>(memory_device);   // TODO: Make real flow memory controller
+        this->m_dynamic_memory = std::make_shared<BaseMemoryController>(memory_device);
+        this->m_stack = std::make_shared<Stack>(memory_device, this->m_flow_memory);
+        this->m_input = std::make_shared<Stack>(memory_device, this->m_dynamic_memory);
+        this->m_output = std::make_shared<Stack>(memory_device, this->m_dynamic_memory);
     }
 
     void Workbench::run() {
