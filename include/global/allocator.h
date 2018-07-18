@@ -7,9 +7,40 @@
 
 #include "core/device.h"
 #include "utils/except.h"
+
 #include <functional>
+#include <sstream>
+#include <cmath>
+
+#include <iomanip>
 
 namespace ts {
+    class OutOfMemoryException : public Exception {
+    public:
+        explicit OutOfMemoryException(const Device &device, size_t failed_size)
+                : Exception(OutOfMemoryMessage(device, failed_size)), m_device(device), m_failed_size(failed_size) {
+        }
+
+        static std::string OutOfMemoryMessage(const Device &device, size_t failed_size) {
+            std::ostringstream oss;
+            oss << "No enough memory on " << device
+                << ", " << failed_size << "B needed.";
+            return oss.str();
+        }
+
+        const Device &device() const {
+            return m_device;
+        }
+
+        size_t failed_size() const {
+            return m_failed_size;
+        }
+
+    private:
+        Device m_device;
+        size_t m_failed_size;
+    };
+
     /**
      * Memory allocator type, allocate memory from specific device
      * @see HardAllocatorDeclaration

@@ -2,8 +2,8 @@
 // Created by lby on 2018/2/11.
 //
 
-#include <mem/hard_memory.h>
-#include <mem/controller.h>
+#include <core/hard_memory.h>
+#include <core/controller.h>
 #include <iostream>
 #include <global/memory_device.h>
 
@@ -13,7 +13,14 @@
 int main()
 {
     ts::HardMemory mem({ts::CPU, 0});
+    try {
+        mem.resize(10000000000000000000UL);
+    } catch (const ts::Exception &e) {
+        std::cout << e.what() << std::endl;
+    }
     mem.resize(10);
+    mem.data<int>()[0] = 10;
+    std::cout << mem.data<int>()[0] << std::endl;
     mem.dispose();
 
     ts::BaseMemoryController c({ts::CPU, 0});

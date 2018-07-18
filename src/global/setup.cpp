@@ -4,11 +4,9 @@
 
 #include "global/setup.h"
 
-#include "global/register.h"
-
 namespace ts {
     void setup() {
-        RegisterGlobal();
+        // may do some setup
     }
 }
 

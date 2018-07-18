@@ -1,0 +1,18 @@
+//
+// Created by seeta on 2018/7/18.
+//
+
+#ifndef TENSORSTACK_KERNELS_CPU_MEMORY_CPU_H
+#define TENSORSTACK_KERNELS_CPU_MEMORY_CPU_H
+
+#include "global/allocator.h"
+#include "global/converter.h"
+
+namespace ts {
+    void *cpu_allocator(int id, size_t size, void *mem);
+
+    void cpu_converter(int dst_id, void *dst, int src_id, const void *src, size_t size);
+}
+
+
+#endif //TENSORSTACK_KERNELS_CPU_MEMORY_CPU_H
