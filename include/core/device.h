@@ -6,7 +6,9 @@
 #define TENSORSTACK_CORE_DEVICE_H
 
 #include "utils/api.h"
+#include "utils/except.h"
 
+#include <sstream>
 #include <string>
 #include <ostream>
 #include <memory>
@@ -100,6 +102,21 @@ namespace ts {
     bool operator<=(const Device &lhs, const Device &rhs);
 
     bool operator>=(const Device &lhs, const Device &rhs);
+
+    class DeviceMismatchException : public Exception {
+    public:
+        explicit DeviceMismatchException(const Device &needed, const Device &given);
+
+        static std::string DeviceMismatchMessage(const Device &needed, const Device &given);
+
+        const Device &needed() const { return m_needed; }
+
+        const Device &given() const { return m_given; }
+
+    private:
+        Device m_needed;
+        Device m_given;
+    };
 }
 
 namespace std {

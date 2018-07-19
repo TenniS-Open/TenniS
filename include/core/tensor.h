@@ -7,8 +7,9 @@
 
 #include "memory.h"
 #include "type.h"
+#include "core/controller.h"
+
 #include <vector>
-#include <core/controller.h>
 
 namespace ts {
     using Shape = std::vector<int>;
