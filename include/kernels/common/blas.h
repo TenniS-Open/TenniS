@@ -17,8 +17,6 @@ namespace ts {
             NoTrans = 111,
             Trans = 112
         };
-        inline Order transpose(Order o) {return o == RowMajor ? ColMajor : RowMajor;}
-        inline Order transpose(Order o, Transpose t) {return t == NoTrans ? o : transpose(o);}
     }
 }
 

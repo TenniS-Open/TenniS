@@ -56,6 +56,7 @@ install(DIRECTORY ${SOLUTION_DIR}/include/
         DESTINATION ${ENV_HEADER_DIR}
         )
 
+add_definitions(-DTS_USE_SSE)
 # 4 types of achive
 # blas
 # Eigen
@@ -72,7 +73,7 @@ foreach (path ${TEST_FILES})
     string(REGEX MATCH "[^/]*.[(c)|(cc)|(cpp)]$" file_ext ${path})
     string(REGEX MATCH "^[^.]*" file ${file_ext})
     add_executable(test_${file} ${path})
-    target_link_libraries(test_${file} ${PROJECT_NAME}_SHARED)
+    target_link_libraries(test_${file} ${PROJECT_NAME}_SHARED -lopenblas)
     # set_target_properties(test_${file} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${LOCAL_OUTPUT_DIR}/lib)
 endforeach ()
 

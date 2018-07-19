@@ -3,15 +3,20 @@
 //
 
 #include "kernels/cpu/math_cpu.h"
+#include "kernels/common/math.h"
 
 #include <iostream>
 #include <cassert>
 #include <cmath>
 
+#ifdef TS_USE_SSE
+#include <immintrin.h>
+#endif
+
 namespace ts {
     namespace cpu {
         template<typename T>
-        static inline T inline_dot(int N, const T *x, int incx, const T *y, int incy) {
+        inline T inline_dot(int N, const T *x, int incx, const T *y, int incy) {
             T sum = 0;
             // block: 4
             int i = 0;
@@ -28,9 +33,66 @@ namespace ts {
             }
             return sum;
         }
+#ifdef TS_USE_SSE
+
+        inline float inline_dot_conitnous_float(int N, const float *x, const float *y) {
+            float sum = 0;
+            // block: 4
+            int i = 0;
+            static const int block_size = 4;
+            int blocked_N = N % block_size ? N - block_size : N;
+            __m128 simdX, simdY;
+            __m128 simdSUM = _mm_setzero_ps();
+            float simdBuffer[4];
+            for (; i < blocked_N; i += block_size) {
+                simdX = _mm_loadu_ps(x);
+                simdY = _mm_loadu_ps(y);
+                x += 4;
+                y += 4;
+                simdSUM = _mm_add_ps(simdSUM, _mm_mul_ps(simdX, simdY));
+            }
+            _mm_storeu_ps(simdBuffer, simdSUM);
+            sum = simdBuffer[0] + simdBuffer[1] + simdBuffer[2] + simdBuffer[3];
+            for (; i < N; ++i) {
+                sum += *x * *y; x += 1; y += 1;
+            }
+            return sum;
+        }
+        template <>
+        inline float inline_dot<float>(int N, const float *x, int incx, const float *y, int incy) {
+            if (incx == 1 && incy == 1) return inline_dot_conitnous_float(N, x, y);
+            float sum = 0;
+            // block: 4
+            int i = 0;
+            static const int block_size = 4;
+            int blocked_N = N % block_size ? N - block_size : N;
+            __m128 simdX, simdY;
+            __m128 simdSUM = _mm_setzero_ps();
+            float simdBuffer[4];
+            for (; i < blocked_N; i += block_size) {
+                simdBuffer[0] = *x; x += incx;
+                simdBuffer[1] = *x; x += incx;
+                simdBuffer[2] = *x; x += incx;
+                simdBuffer[3] = *x; x += incx;
+                simdX = _mm_loadu_ps(simdBuffer);
+                simdBuffer[0] = *y; y += incy;
+                simdBuffer[1] = *y; y += incy;
+                simdBuffer[2] = *y; y += incy;
+                simdBuffer[3] = *y; y += incy;
+                simdY = _mm_loadu_ps(simdBuffer);
+                simdSUM = _mm_add_ps(simdSUM, _mm_mul_ps(simdX, simdY));
+            }
+            _mm_storeu_ps(simdBuffer, simdSUM);
+            sum = simdBuffer[0] + simdBuffer[1] + simdBuffer[2] + simdBuffer[3];
+            for (; i < N; ++i) {
+                sum += *x * *y; x += incx; y += incy;
+            }
+            return sum;
+        }
+#endif
 
         template<typename T>
-        static inline void inline_zero(int N, T *x, int incx) {
+        inline void inline_zero(int N, T *x, int incx) {
             // block: 4
             int i = 0;
             static const int block_size = 4;
@@ -47,9 +109,9 @@ namespace ts {
         }
 
         template<typename T>
-        static inline void inline_scal(int N, T alpha, T *x, int incx) {
-            if (alpha == 1) return; // TODO: update float number equal check method
-            if (alpha == 0) {
+        inline void inline_scal(int N, T alpha, T *x, int incx) {
+            if (ts::near(alpha, 1)) return; // TODO: update float number equal check method
+            if (ts::near(alpha, 0)) {
                 inline_zero<T>(N, x, incx);
                 return;
             }
@@ -75,7 +137,7 @@ namespace ts {
         }
 
         template<typename T>
-        static inline void inline_gemm_row_major(
+        inline void inline_gemm_row_major(
                 blas::Transpose TransA,
                 blas::Transpose TransB,
                 int M, int N, int K,
@@ -97,7 +159,7 @@ namespace ts {
                 for (int i = 0; i < M; ++i, C += ldc) inline_scal(N, beta, C_anchor, 1);
             }
 
-            if (alpha == 0) return;
+            if (ts::near(alpha, 0)) return;
 
             unsigned int condition = (TransA == blas::NoTrans ? 0U : 1U) | ((TransB == blas::NoTrans ? 0U : 2U));
             switch (condition) {

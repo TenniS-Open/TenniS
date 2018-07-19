@@ -12,11 +12,11 @@
 
 void test_blas(ts::Random &rand)
 {
-    using T = double;
+    using T = float;
 
     // ts::Random rand(4481);
-    int M = rand.next(1000, 10000);
-    int N = rand.next(1000, 10000);
+    int M = rand.next(100, 1000);
+    int N = rand.next(100, 1000);
     int K = rand.next(10, 100);
     std::unique_ptr<T[]> A(new T[M * K]);
     std::unique_ptr<T[]> B(new T[K * N]);
@@ -27,12 +27,8 @@ void test_blas(ts::Random &rand)
     ts::blas::Transpose TransA = rand.u() > 0.5 ? ts::blas::NoTrans : ts::blas::Trans;
     ts::blas::Transpose TransB = rand.u() > 0.5 ? ts::blas::NoTrans : ts::blas::Trans;
 
-
-    ts::blas::Order OrderA = ts::blas::transpose(order, TransA);
-    ts::blas::Order OrderB = ts::blas::transpose(order, TransB);
-
-    int lda = (OrderA == ts::blas::RowMajor ? K : M);
-    int ldb = (OrderB == ts::blas::RowMajor ? N : K);
+    int lda = (TransA == ts::blas::NoTrans ? K : M);
+    int ldb = (TransB == ts::blas::NoTrans ? N : K);
     int ldc = N;
 
     CBLAS_ORDER cblas_order = order == ts::blas::RowMajor ? CblasRowMajor : CblasColMajor;
@@ -55,7 +51,7 @@ void test_blas(ts::Random &rand)
 
     duration = microseconds(0);
     start = system_clock::now();
-    cblas_dgemm(cblas_order, cblas_TransA, cblas_TransB, M, N, K, alpha, A.get(), lda, B.get(), ldb, beta, cblas_C.get(), ldc);
+    cblas_sgemm(cblas_order, cblas_TransA, cblas_TransB, M, N, K, alpha, A.get(), lda, B.get(), ldb, beta, cblas_C.get(), ldc);
     end = system_clock::now();
     duration += duration_cast<microseconds>(end - start);
     double spent2 = 1.0 * duration.count() / 1000;
@@ -64,7 +60,7 @@ void test_blas(ts::Random &rand)
     for (int i = 0; i < M * N; ++i) sum += fabs(C[i] - cblas_C[i]);
     sum /= (M * N);
 
-    std::cout << sum << " " << spent << "ms vs. " << spent2 << "ms" << std::endl;
+    std::cout << sum << " " << spent << "ms vs. " << spent2 << "ms, " << spent / spent2 << std::endl;
 
 }
 
@@ -87,8 +83,6 @@ int main() {
     test_blas(rand);
 
     std::cout << "Finished" << std::flush;
-    int i;
-    std::cin >> i;
 
     return 0;
 }
