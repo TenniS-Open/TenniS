@@ -25,6 +25,8 @@ namespace ts {
                     int incy
                     );
 
+            static T dot(int N, const T *x, const T *y);
+
             static void gemm(
                     blas::Order Order,
                     blas::Transpose TransA,
@@ -35,6 +37,13 @@ namespace ts {
                     const T *B, int ldb,
                     T beta,
                     T *C, int ldc);
+
+            static void gemm(
+                    blas::Transpose TransA,
+                    blas::Transpose TransB,
+                    int M, int N, int K,
+                    T alpha, const T *A, const T *B,
+                    T beta, T *C);
         };
 
 

@@ -3,6 +3,7 @@
 //
 
 #include <kernels/cpu/math_cpu.h>
+#include <OpenBLAS/cblas.h>
 
 int main() {
     using namespace ts;

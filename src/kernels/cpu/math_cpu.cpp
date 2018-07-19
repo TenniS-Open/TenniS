@@ -88,9 +88,9 @@ namespace ts {
             blas::Order OrderA = blas::transpose(Order, TransA);
             blas::Order OrderB = blas::transpose(Order, TransB);
 
-            assert(ldc >= N);
             assert(lda >= (OrderA == blas::RowMajor ? K : M));
             assert(ldb >= (OrderB == blas::RowMajor ? N : K));
+            assert(ldc >= N);
 
             // calculate beta * C
             // C is RowMajor
@@ -108,18 +108,53 @@ namespace ts {
                     for (int i = 0; i < M; ++i) {
                         T *C_anchor = &C[i * ldc];
                         for (int j = 0; j < N; ++j) {
-                            *C_anchor += inline_dot(K, &A[i * lda], 1, &B[j], ldb);
+                            *C_anchor += alpha * inline_dot(K, &A[i * lda], 1, &B[j], ldb);
                             C_anchor++;
                         }
                     }
                     break;
                 case 1: // A: ColMajor, B: RowMajor
+                    for (int i = 0; i < M; ++i) {
+                        T *C_anchor = &C[i * ldc];
+                        for (int j = 0; j < N; ++j) {
+                            *C_anchor += alpha * inline_dot(K, &A[i], lda, &B[j], ldb);
+                            C_anchor++;
+                        }
+                    }
                     break;
                 case 2: // A: RowMajor, B: ColMajor
+                    for (int i = 0; i < M; ++i) {
+                        T *C_anchor = &C[i * ldc];
+                        for (int j = 0; j < N; ++j) {
+                            *C_anchor += alpha * inline_dot(K, &A[i * lda], 1, &B[j * ldb], 1);
+                            C_anchor++;
+                        }
+                    }
                     break;
                 default: // A: ColMajor, B: ColMajor
+                    for (int i = 0; i < M; ++i) {
+                        T *C_anchor = &C[i * ldc];
+                        for (int j = 0; j < N; ++j) {
+                            *C_anchor += alpha * inline_dot(K, &A[i], lda, &B[j * ldb], 1);
+                            C_anchor++;
+                        }
+                    }
                     break;
             }
+        }
+
+        template<typename T>
+        T math<T>::dot(int N, const T *x, const T *y) {
+            return dot(N, x, 1, y, 1);
+        }
+
+        template<typename T>
+        void math<T>::gemm(blas::Transpose TransA, blas::Transpose TransB, int M, int N, int K, T alpha, const T *A,
+                           const T *B, T beta, T *C) {
+            int lda = (TransA == blas::NoTrans ? K : M);
+            int ldb = (TransB == blas::NoTrans ? N : K);
+            int ldc = N;
+            gemm(blas::RowMajor, TransA, TransB, M, N, K, alpha, A, lda, B, ldb, beta, C, ldc);
         }
     }
 }
