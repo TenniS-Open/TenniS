@@ -2,9 +2,11 @@
 // Created by seeta on 2018/7/19.
 //
 
+#include "kernels/cpu/math_cpu.h"
+
 #include <iostream>
 #include <cassert>
-#include "kernels/cpu/math_cpu.h"
+#include <cmath>
 
 namespace ts {
     namespace cpu {
@@ -73,9 +75,7 @@ namespace ts {
         }
 
         template<typename T>
-        void
-        math<T>::gemm(
-                blas::Order Order,
+        static inline void inline_gemm_row_major(
                 blas::Transpose TransA,
                 blas::Transpose TransB,
                 int M, int N, int K,
@@ -84,12 +84,9 @@ namespace ts {
                 const T *B, int ldb,
                 T beta,
                 T *C, int ldc) {
-            // TODO: Check if lda, ldb, ldc use correct
-            blas::Order OrderA = blas::transpose(Order, TransA);
-            blas::Order OrderB = blas::transpose(Order, TransB);
-
-            assert(lda >= (OrderA == blas::RowMajor ? K : M));
-            assert(ldb >= (OrderB == blas::RowMajor ? N : K));
+            // TODO: check if lda, ldb, ldc use correct
+            assert(lda >= (TransA == blas::NoTrans ? K : M));
+            assert(ldb >= (TransB == blas::NoTrans ? N : K));
             assert(ldc >= N);
 
             // calculate beta * C
@@ -102,9 +99,9 @@ namespace ts {
 
             if (alpha == 0) return;
 
-            unsigned int condition = (OrderA == blas::RowMajor ? 0U : 1U) | ((OrderB == blas::RowMajor ? 0U : 2U));
+            unsigned int condition = (TransA == blas::NoTrans ? 0U : 1U) | ((TransB == blas::NoTrans ? 0U : 2U));
             switch (condition) {
-                case 0: // A: RowMajor, B: RowMajor
+                case 0: // A: NoTrans, B: NoTrans
                     for (int i = 0; i < M; ++i) {
                         T *C_anchor = &C[i * ldc];
                         for (int j = 0; j < N; ++j) {
@@ -113,7 +110,7 @@ namespace ts {
                         }
                     }
                     break;
-                case 1: // A: ColMajor, B: RowMajor
+                case 1: // A: Trans, B: NoTrans
                     for (int i = 0; i < M; ++i) {
                         T *C_anchor = &C[i * ldc];
                         for (int j = 0; j < N; ++j) {
@@ -122,7 +119,7 @@ namespace ts {
                         }
                     }
                     break;
-                case 2: // A: RowMajor, B: ColMajor
+                case 2: // A: NoTrans, B: Trans
                     for (int i = 0; i < M; ++i) {
                         T *C_anchor = &C[i * ldc];
                         for (int j = 0; j < N; ++j) {
@@ -131,7 +128,7 @@ namespace ts {
                         }
                     }
                     break;
-                default: // A: ColMajor, B: ColMajor
+                default: // A: Trans, B: Trans
                     for (int i = 0; i < M; ++i) {
                         T *C_anchor = &C[i * ldc];
                         for (int j = 0; j < N; ++j) {
@@ -140,6 +137,25 @@ namespace ts {
                         }
                     }
                     break;
+            }
+        }
+
+        template<typename T>
+        void
+        math<T>::gemm(
+                blas::Order Order,
+                blas::Transpose TransA,
+                blas::Transpose TransB,
+                int M, int N, int K,
+                T alpha,
+                const T *A, int lda,
+                const T *B, int ldb,
+                T beta,
+                T *C, int ldc) {
+            if (Order == blas::ColMajor) {
+                inline_gemm_row_major<T>(TransB, TransA, N, M, K, alpha, B, ldb, A, lda, beta, C, ldc);
+            } else {
+                inline_gemm_row_major<T>(TransA, TransB, M, N, K, alpha, A, lda, B, ldb, beta, C, ldc);
             }
         }
 
@@ -154,7 +170,31 @@ namespace ts {
             int lda = (TransA == blas::NoTrans ? K : M);
             int ldb = (TransB == blas::NoTrans ? N : K);
             int ldc = N;
-            gemm(blas::RowMajor, TransA, TransB, M, N, K, alpha, A, lda, B, ldb, beta, C, ldc);
+            inline_gemm_row_major<T>(TransA, TransB, M, N, K, alpha, A, lda, B, ldb, beta, C, ldc);
+        }
+
+        template<typename T>
+        T math<T>::asum(int N, const T *x, int incx) {
+            T sum = 0;
+            // block: 4
+            int i = 0;
+            static const int block_size = 4;
+            int blocked_N = N % block_size ? N - block_size : N;
+            for (; i < blocked_N; i += block_size) {
+                sum += abs(*x); x += incx;
+                sum += abs(*x); x += incx;
+                sum += abs(*x); x += incx;
+                sum += abs(*x); x += incx;
+            }
+            for (; i < N; ++i) {
+                sum += abs(*x); x += incx;
+            }
+            return sum;
+        }
+
+        template<typename T>
+        T math<T>::abs(T val) {
+            return std::fabs(val);
         }
     }
 }

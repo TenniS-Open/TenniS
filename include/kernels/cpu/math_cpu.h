@@ -17,6 +17,8 @@ namespace ts {
                 if (tensor.device().type() != CPU) throw DeviceMismatchException(Device(CPU), tensor.device());
             }
 
+            static T abs(T val);
+
             static T dot(
                     int N,
                     const T *x,
@@ -44,6 +46,12 @@ namespace ts {
                     int M, int N, int K,
                     T alpha, const T *A, const T *B,
                     T beta, T *C);
+
+            static T asum(
+                    int N,
+                    const T *x,
+                    int incx
+                    );
         };
 
 
