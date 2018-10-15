@@ -17,11 +17,11 @@
 namespace ts {
     class OutOfMemoryException : public Exception {
     public:
-        explicit OutOfMemoryException(const Device &device, size_t failed_size)
+        explicit OutOfMemoryException(const MemoryDevice &device, size_t failed_size)
                 : Exception(OutOfMemoryMessage(device, failed_size)), m_device(device), m_failed_size(failed_size) {
         }
 
-        static std::string OutOfMemoryMessage(const Device &device, size_t failed_size) {
+        static std::string OutOfMemoryMessage(const MemoryDevice &device, size_t failed_size) {
             std::ostringstream oss;
             oss << "No enough memory on " << device
                 << ", " << failed_size << "B needed.";
@@ -37,7 +37,7 @@ namespace ts {
         }
 
     private:
-        Device m_device;
+        MemoryDevice m_device;
         size_t m_failed_size;
     };
 
@@ -66,7 +66,7 @@ namespace ts {
      * @note supporting called by threads without calling @sa RegisterDeviceAllocator or @sa RegisterAllocator
      * @note the query device should be memory device, you may call @sa QueryMemoryDevice to get memory device by compute device
      */
-    HardAllocator QueryAllocator(const Device &device) TS_NOEXCEPT;
+    HardAllocator QueryAllocator(const MemoryDevice &device) TS_NOEXCEPT;
 
     /**
      * Register allocator for specific device type

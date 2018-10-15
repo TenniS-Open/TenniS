@@ -54,13 +54,13 @@ namespace ts {
         Tensor(MemoryController::shared &controller, TYPE type,
                const Shape &_shape);   // allocate memory from controller
 
-        Tensor(const Device &device, TYPE type, const Shape &_shape);
+        Tensor(const MemoryDevice &device, TYPE type, const Shape &_shape);
 
         Tensor(TYPE type, const Shape &_shape);
 
         Tensor(MemoryController::shared &controller, const Prototype &proto);   // allocate memory from controller
 
-        Tensor(const Device &device, const Prototype &proto);
+        Tensor(const MemoryDevice &device, const Prototype &proto);
 
         explicit Tensor(const Prototype &proto);
 

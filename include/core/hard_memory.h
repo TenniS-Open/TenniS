@@ -27,21 +27,21 @@ namespace ts {
          * Initialize hardware memory
          * @param device memory @sa Device
          */
-        explicit HardMemory(const Device &device);
+        explicit HardMemory(const MemoryDevice &device);
 
         /**
          * Initialize hardware memory
          * @param device memory @sa Device
          * @param size expected size
          */
-        explicit HardMemory(const Device &device, size_t size);
+        explicit HardMemory(const MemoryDevice &device, size_t size);
 
         /**
          * Initialize hardware memory
          * @param device memory @sa Device
          * @param allocator memory allocator @see HardAllocator
          */
-        explicit HardMemory(const Device &device, const HardAllocator &allocator);
+        explicit HardMemory(const MemoryDevice &device, const HardAllocator &allocator);
 
         /**
          * Initialize hardware memory
@@ -49,7 +49,7 @@ namespace ts {
          * @param allocator memory allocator @see HardAllocator
          * @param size expected size
          */
-        explicit HardMemory(const Device &device, const HardAllocator &allocator, size_t size);
+        explicit HardMemory(const MemoryDevice &device, const HardAllocator &allocator, size_t size);
 
         ~HardMemory();
 
@@ -98,7 +98,7 @@ namespace ts {
          * Runing deivce
          * @return running @sa Device
          */
-        const Device &device() const { return m_device; }
+        const MemoryDevice &device() const { return m_device; }
 
         /**
          * Get memory capacity on hardware
@@ -133,7 +133,7 @@ namespace ts {
         const T *data() const { return reinterpret_cast<const T *>(this->data()); }
 
     private:
-        Device m_device;                         ///< running device
+        MemoryDevice m_device;                         ///< running device
         size_t m_capacity = 0;                   ///< memory capacity
         void *m_data = nullptr;                ///< memory start pointer
         HardAllocator m_allocator = nullptr;    ///< memory allocator

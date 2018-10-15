@@ -31,12 +31,12 @@ namespace ts {
         /**
          * @param device the memory device
          */
-        explicit BaseMemoryController(const Device &device);
+        explicit BaseMemoryController(const MemoryDevice &device);
 
         Memory alloc(size_t size) override;
 
     private:
-        Device m_device;
+        MemoryDevice m_device;
         HardAllocator m_allocator;
     };
 }

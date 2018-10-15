@@ -23,10 +23,10 @@ namespace ts {
         using self = Stack;    ///< self class
         using shared = std::shared_ptr<self>;  ///< smart pointer
 
-        explicit Stack(const Device &device)
+        explicit Stack(const MemoryDevice &device)
                 : Stack(device, std::make_shared<BaseMemoryController>(device)) {}
 
-        explicit Stack(const Device &device, const MemoryController::shared &controller)
+        explicit Stack(const MemoryDevice &device, const MemoryController::shared &controller)
                 : m_device(device), m_controller(controller) {}
 
         // return new Tensor, but not in stack

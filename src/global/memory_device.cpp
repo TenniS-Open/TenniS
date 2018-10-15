@@ -21,8 +21,8 @@ namespace ts {
         throw NoMemoryDeviceException(compute_device_type);
     }
 
-    Device QueryMemoryDevice(const Device &compute_device) {
-        return Device(QueryMemoryDevice(compute_device.type()), compute_device.id());
+    MemoryDevice QueryMemoryDevice(const Device &compute_device) {
+        return MemoryDevice(QueryMemoryDevice(compute_device.type()), compute_device.id());
     }
 
     void RegisterMemoryDevice(const DeviceType &compute_device_type, const DeviceType &memory_device_type) TS_NOEXCEPT {

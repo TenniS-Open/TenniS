@@ -57,7 +57,7 @@ namespace ts {
          * @param device memory device
          * @param size sizeof this memory block
          */
-        Memory(const Device &device, size_t size);
+        Memory(const MemoryDevice &device, size_t size);
 
         /**
          * Initialize Memory, with cpu zero memory
@@ -157,7 +157,7 @@ namespace ts {
          * return Device of this memory
          * @return @see Device
          */
-        const Device &device() const;
+        const MemoryDevice &device() const;
 
     private:
         HardMemory::shared m_hard = nullptr;  ///< hardware memory

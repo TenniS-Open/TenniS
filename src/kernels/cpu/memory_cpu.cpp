@@ -20,7 +20,7 @@ namespace ts {
         } else {
             new_mem = std::malloc(size);
         }
-        if (new_mem == nullptr) throw OutOfMemoryException(Device(CPU, id), size);
+        if (new_mem == nullptr) throw OutOfMemoryException(MemoryDevice(CPU, id), size);
         return new_mem;
     }
 

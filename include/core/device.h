@@ -117,6 +117,16 @@ namespace ts {
         Device m_needed;
         Device m_given;
     };
+
+    class MemoryDevice : public Device {
+    public:
+        using Device::Device;
+    };
+    class ComputingDevice : public Device {
+    public:
+        using Device::Device;
+    };
+
 }
 
 namespace std {

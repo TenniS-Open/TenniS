@@ -23,12 +23,12 @@ namespace ts {
             : m_hard(std::move(hard)), m_size(size), m_shift(shift), m_usage(default_usage()) {
     }
 
-    Memory::Memory(const Device &device, size_t size)
+    Memory::Memory(const MemoryDevice &device, size_t size)
             : m_hard(new HardMemory(device, size)), m_size(size), m_shift(0), m_usage(default_usage()) {
     }
 
     Memory::Memory(size_t size)
-            : m_hard(new HardMemory(Device(), size)), m_size(size), m_shift(0), m_usage(default_usage()) {
+            : m_hard(new HardMemory(MemoryDevice(), size)), m_size(size), m_shift(0), m_usage(default_usage()) {
     }
 
     void Memory::destructor(const std::function<void(void *)> &dtor, void *data) {
@@ -67,7 +67,7 @@ namespace ts {
         return m_usage.use_count();
     }
 
-    const Device &Memory::device() const {
+    const MemoryDevice &Memory::device() const {
         return this->m_hard->device();
     }
 

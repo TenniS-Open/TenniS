@@ -53,8 +53,6 @@ namespace ts {
                     int incx
                     );
         };
-
-
     }
 }
 

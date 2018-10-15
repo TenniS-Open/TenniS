@@ -9,23 +9,23 @@
 #include <cassert>
 
 namespace ts {
-    HardMemory::HardMemory(const Device &device)
+    HardMemory::HardMemory(const MemoryDevice &device)
             : m_device(device) {
         m_allocator = QueryAllocator(device);
         assert(m_allocator != nullptr);
     }
 
-    HardMemory::HardMemory(const Device &device, size_t size)
+    HardMemory::HardMemory(const MemoryDevice &device, size_t size)
             : HardMemory(device) {
         this->resize(size);
     }
 
-    HardMemory::HardMemory(const Device &device, const HardAllocator &allocator)
+    HardMemory::HardMemory(const MemoryDevice &device, const HardAllocator &allocator)
         : m_device(device), m_allocator(allocator){
         assert(m_allocator != nullptr);
     }
 
-    HardMemory::HardMemory(const Device &device, const HardAllocator &allocator, size_t size)
+    HardMemory::HardMemory(const MemoryDevice &device, const HardAllocator &allocator, size_t size)
             : HardMemory(device, allocator) {
         this->resize(size);
     }

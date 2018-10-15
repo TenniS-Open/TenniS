@@ -46,7 +46,7 @@ namespace ts {
      * @note May throw NoMemoryDeviceException
      * @note The returned device id is same with querying device
      */
-    Device QueryMemoryDevice(const Device &compute_device);
+    MemoryDevice QueryMemoryDevice(const Device &compute_device);
 
     /**
      * register an map of compute device and memory device
