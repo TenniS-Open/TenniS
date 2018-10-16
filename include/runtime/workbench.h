@@ -19,7 +19,7 @@ namespace ts {
         using self = Workbench;    ///< self class
         using shared = std::shared_ptr<self>;  ///< smart pointer
 
-        explicit Workbench(const Device &device);
+        explicit Workbench(const ComputingDevice &device);
 
         Stack &stack() {return *this->m_stack;}
 
@@ -51,7 +51,7 @@ namespace ts {
         static shared Load(const Module::shared &module, const ComputingDevice &device);
 
     private:
-        Device m_device;
+        ComputingDevice m_device;
         size_t m_pointer = 0;   // pointer to running function
         std::vector<Instruction::shared> m_program; // running function, program area
         MemoryController::shared m_static_memory;

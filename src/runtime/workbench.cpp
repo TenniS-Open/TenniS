@@ -8,7 +8,7 @@
 #include "global/memory_device.h"
 
 namespace ts {
-    Workbench::Workbench(const Device &device)
+    Workbench::Workbench(const ComputingDevice &device)
             : m_device(device) {
         auto memory_device = QueryMemoryDevice(device);
         this->m_static_memory = std::make_shared<BaseMemoryController>(memory_device);
