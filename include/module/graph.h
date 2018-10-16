@@ -55,15 +55,15 @@ namespace ts {
     };
 
     template<typename T>
-    class NodeWithValue : public _RawNode {
+    class _RawNodeWithValue : public _RawNode {
     public:
-        using self = NodeWithValue;
+        using self = _RawNodeWithValue;
         using supper = _RawNode;
 
         using _RawNode::_RawNode;
 
         template<typename... Args>
-        explicit NodeWithValue(Args &&...args)
+        explicit _RawNodeWithValue(Args &&...args)
                 : m_value(std::forward<Args>(args)...) {}
 
         T &value() { return m_value; }
@@ -76,7 +76,7 @@ namespace ts {
 
     template<typename T>
     T *_RawNode::ptr() {
-        auto value_ptr = dynamic_cast<NodeWithValue<T> *>(this);
+        auto value_ptr = dynamic_cast<_RawNodeWithValue<T> *>(this);
         if (value_ptr == nullptr) return nullptr;
         return &value_ptr->value();
     }
@@ -114,6 +114,8 @@ namespace ts {
             for (auto &node : raw_vector) out_vector.emplace_back(Node(node));
             return std::move(out_vector);
         }
+
+        void *ptr() const { return m_ptr.lock().get(); }
 
         template<typename T>
         T *ptr() {
@@ -157,13 +159,44 @@ namespace ts {
 
         template<typename T, typename... Args>
         Node make(Args &&...args) {
-            auto node = std::make_shared<NodeWithValue<T>>(std::forward<Args>(args)...);
+            auto node = std::make_shared<_RawNodeWithValue<T>>(std::forward<Args>(args)...);
             m_nodes.push_back(node);
             return Node(node);
         }
 
+        std::vector<Node> nodes() const {
+            std::vector<Node> out_vector;
+            out_vector.reserve(m_nodes.size());
+            for (auto &node : m_nodes) out_vector.emplace_back(Node(node));
+            return std::move(out_vector);
+        }
+
     private:
         std::vector<_RawNode::shared> m_nodes;
+    };
+
+    inline bool operator==(const Node &lhs, const Node &rhs) { return lhs.ptr() == rhs.ptr(); }
+
+    inline bool operator!=(const Node &lhs, const Node &rhs) { return lhs.ptr() != rhs.ptr(); }
+
+    inline bool operator<(const Node &lhs, const Node &rhs) { return lhs.ptr() < rhs.ptr(); }
+
+    inline bool operator>(const Node &lhs, const Node &rhs) { return lhs.ptr() > rhs.ptr(); }
+
+    inline bool operator<=(const Node &lhs, const Node &rhs) { return lhs.ptr() <= rhs.ptr(); }
+
+    inline bool operator>=(const Node &lhs, const Node &rhs) { return lhs.ptr() >= rhs.ptr(); }
+}
+
+namespace std {
+    template<>
+    struct hash<ts::Node> {
+        std::size_t operator()(const ts::Node &key) const {
+            using std::size_t;
+            using std::hash;
+
+            return hash<void *>()(key.ptr());
+        }
     };
 }
 

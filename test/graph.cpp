@@ -19,11 +19,14 @@ public:
 
 int main()
 {
-    ts::Graph g;
-    auto a = g.make<int>(10);
-    auto b = g.make<int>(20);
-    auto c = g.make<Add<int>>();
-    ts::Node::Link(c, {a, b});
-    auto sum = c.ptr<Add<int>>()->forward(c.inputs());
-    std::cout << "sum: " << sum << std::endl;
+    int N= 1000;
+    for (int i = 0; i < N; ++i) {
+        ts::Graph g;
+        auto a = g.make<int>(10);
+        auto b = g.make<int>(20);
+        auto c = g.make<Add<int>>();
+        ts::Node::Link(c, {a, b});
+        auto sum = c.ptr<Add<int>>()->forward(c.inputs());
+        std::cout << "sum: " << sum << std::endl;
+    }
 }
