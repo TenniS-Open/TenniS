@@ -69,7 +69,7 @@ namespace ts {
         return dolly;
     }
 
-    Workbench::shared Workbench::Load(const Module::shared &module, const Device &device) {
+    Workbench::shared Workbench::Load(const Module::shared &module, const ComputingDevice &device) {
         auto bench = std::make_shared<Workbench>(device);
         // convert module to bench
         return bench;

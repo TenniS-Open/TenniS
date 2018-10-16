@@ -48,7 +48,7 @@ namespace ts {
 
         Workbench::shared clone() const;
 
-        static shared Load(const Module::shared &module, const Device &device);
+        static shared Load(const Module::shared &module, const ComputingDevice &device);
 
     private:
         Device m_device;
