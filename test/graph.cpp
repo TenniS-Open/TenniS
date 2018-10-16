@@ -26,6 +26,4 @@ int main()
     ts::Node::Link(c, {a, b});
     auto sum = c.ptr<Add<int>>()->forward(c.inputs());
     std::cout << "sum: " << sum << std::endl;
-    auto i = ts::make_int(g);
-    std::cout << "sum: " << i.ref<int>() << std::endl;
 }
