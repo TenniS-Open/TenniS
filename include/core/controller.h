@@ -15,6 +15,8 @@ namespace ts {
     public:
         using self = MemoryController;
         using shared = std::shared_ptr<self>;  ///< smart pointer
+
+        virtual ~MemoryController() = default;
         /**
          * alloc memory with size
          * @param size memory size (bytes)
