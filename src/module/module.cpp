@@ -47,5 +47,6 @@ namespace ts {
         }
         m_inputs.insert(m_inputs.end(), inputs.begin(), inputs.end());
         m_outputs.insert(m_outputs.end(), outputs.begin(), outputs.end());
+        m_graphs.push_back(g);
     }
 }
