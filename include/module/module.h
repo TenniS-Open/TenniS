@@ -23,6 +23,10 @@ namespace ts {
         static const char *const IN;
     };
 
+    inline std::ostream &operator<<(std::ostream &out, const OP &op) {
+        return out << op.op << ", " << op.name;
+    }
+
     class Module {
     public:
         using self = Module;    ///< self class

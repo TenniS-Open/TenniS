@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <sstream>
 
 #include "utils/except.h"
 
@@ -49,6 +50,14 @@ namespace ts {
             }
         }
 
+        virtual std::string str() const {
+            std::ostringstream oss;
+            oss << "<Node: " << this << ">";
+            return oss.str();
+        }
+
+        virtual std::string repr() const { return this->str(); }
+
     private:
         std::vector<weak> m_inputs;
         std::vector<weak> m_outputs;
@@ -69,6 +78,12 @@ namespace ts {
         T &value() { return m_value; }
 
         const T &value() const { return m_value; }
+
+        std::string str() const override {
+            std::ostringstream oss;
+            oss << "<Node: " << this->value() << ">";
+            return oss.str();
+        }
 
     private:
         T m_value;
@@ -144,6 +159,18 @@ namespace ts {
             _RawNode::Link(node.m_ptr, raw_inputs);
         }
 
+        std::string str() const {
+            auto raw_ptr = m_ptr.lock();
+            if (!raw_ptr) return "<Node: nil>";
+            return raw_ptr->str();
+        }
+
+        std::string repr() const {
+            auto raw_ptr = m_ptr.lock();
+            if (!raw_ptr) return "<Node: nil>";
+            return raw_ptr->repr();
+        }
+
     private:
         explicit Node(const _RawNode::weak &ptr) : m_ptr(ptr) {}
 
@@ -151,6 +178,10 @@ namespace ts {
 
         _RawNode::weak m_ptr;
     };
+
+    inline std::ostream &operator<<(std::ostream &out, const Node &node) {
+        return out << node.str();
+    }
 
     class Graph {
     public:

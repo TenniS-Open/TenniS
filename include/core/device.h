@@ -68,13 +68,13 @@ namespace ts {
          * return repr string
          * @return repr string
          */
-        const std::string repr() const { return std::move(m_type + ":" + std::to_string(m_id)); }
+        const std::string repr() const { return m_type + ":" + std::to_string(m_id); }
 
         /**
          * return string show the content
          * @return string
          */
-        const std::string str() const { return std::move(m_type + ":" + std::to_string(m_id)); }
+        const std::string str() const { return m_type + ":" + std::to_string(m_id); }
 
     private:
         DeviceType m_type = CPU;  ///< Hardware device @see Device
