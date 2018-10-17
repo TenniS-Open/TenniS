@@ -15,6 +15,7 @@ namespace ts {
             static Instruction::shared clone(int i);
             static Instruction::shared erase(int i);
             static Instruction::shared ring_shift_left();
+            static Instruction::shared swap(int i, int j);
         };
     }
 }
