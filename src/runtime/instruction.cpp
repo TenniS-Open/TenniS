@@ -3,6 +3,8 @@
 //
 
 #include <cassert>
+#include <runtime/instruction.h>
+
 #include "utils/need.h"
 #include "runtime/instruction.h"
 #include "runtime/workbench.h"
@@ -31,5 +33,17 @@ namespace ts {
 
         // add base
         stack.erase(0, -m_nresults);
+    }
+
+    void StackInstruction::run(Workbench &workbench) {
+        this->run(workbench.stack());
+    }
+
+    LambdaInstruction::LambdaInstruction(const LambdaInstruction::Lambda &lambda)
+            : m_lambda(lambda) {
+    }
+
+    void LambdaInstruction::run(Workbench &workbench) {
+        m_lambda(workbench);
     }
 }
