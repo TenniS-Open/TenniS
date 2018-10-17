@@ -17,6 +17,8 @@ namespace ts {
         using self = Operator;    ///< self class
         using shared = std::shared_ptr<self>;  ///< smart pointer
 
+        virtual ~Operator() = default;
+
         // explicit Operator(const std::string &name) : m_name(name) {}
 
         // work on tensor stack, same as call
