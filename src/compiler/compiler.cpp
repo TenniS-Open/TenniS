@@ -17,7 +17,6 @@ namespace ts {
 
     Compiler::Compiler(const ComputingDevice &computing_device)
         : m_computing_device(computing_device) {
-
     }
 
     InstructionBlock Compiler::compile(const std::vector<Node> &inputs, const std::vector<Node> &outputs) {
@@ -58,7 +57,7 @@ namespace ts {
         };
 
         while (!simulator.empty()) {
-            if (simulator.size() == working_inptus.size()) {
+            if (simulator.size() == working_inptus.size()) {    // check to all inputs
                 // check if all reminds node are input nodes
                 std::set<Node> simulator_nodes;
                 for (auto &node : simulator) simulator_nodes.insert(node);
@@ -81,11 +80,13 @@ namespace ts {
                 }
             }
             // query operator
-            auto creator = QueryOperatorCreator(op.op);
+            auto creator = QueryOperatorCreator(m_computing_device.type(), op.op);
             if (creator == nullptr) throw Exception("Not supported operator " + op.op);
             block.instructions.push_back(std::make_shared<OperatorInstruction>(creator(), node.inputs().size(), node.outputs().size()));
+            pop_simulator();
             for (auto &input : node.inputs()) add_node_to_simulator(input);
         }
+        // check inputs
 
         return block;
     }
