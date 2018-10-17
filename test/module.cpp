@@ -5,6 +5,20 @@
 #include <module/graph.h>
 #include <module/module.h>
 #include <global/setup.h>
+#include <runtime/workbench.h>
+#include <global/operator_factory.h>
+
+class Add : public ts::Operator {
+public:
+    virtual int run(ts::Stack &stack) {
+        return 0;
+    }
+    virtual int infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output) {
+        return 0;
+    }
+};
+
+TS_REGISTER_OPERATOR(Add, ts::CPU, "add")
 
 int main()
 {
@@ -19,18 +33,22 @@ int main()
     Node::Link(c, {a, b});
 
     // setup module
-    Module m;
-    m.load(g);
+    std::shared_ptr<Module> m = std::make_shared<Module>();
+    m->load(g);
 
     std::cout << "Input nodes:" << std::endl;
-    for (auto &node : m.inputs()) {
+    for (auto &node : m->inputs()) {
         std::cout << node.ref<OP>().op << ":" << node.ref<OP>().name << std::endl;
     }
 
     std::cout << "Output nodes:" << std::endl;
-    for (auto &node : m.outputs()) {
+    for (auto &node : m->outputs()) {
         std::cout << node.ref<OP>().op << ":" << node.ref<OP>().name << std::endl;
     }
 
     // run workbench
+    ComputingDevice device(CPU, 0);
+    // Workbench bench(device);
+
+    auto bench = Workbench::Load(m, device);
 }
