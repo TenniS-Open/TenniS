@@ -6,6 +6,7 @@
 #include <core/device.h>
 #include "runtime/workbench.h"
 #include "global/memory_device.h"
+#include "compiler/compiler.h"
 
 namespace ts {
     Workbench::Workbench(const ComputingDevice &device)
@@ -72,6 +73,11 @@ namespace ts {
     Workbench::shared Workbench::Load(const Module::shared &module, const ComputingDevice &device) {
         auto bench = std::make_shared<Workbench>(device);
         // convert module to bench
+        // here running compilation codes
+        // TODO: support RNN
+        Compiler compiler(device);
+        auto block = compiler.compile(module->inputs(), module->outputs());
+        bench->m_program = block.instructions;
         return bench;
     }
 }
