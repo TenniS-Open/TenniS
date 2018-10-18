@@ -45,6 +45,7 @@ namespace ts {
                 walker.push(input);
             }
         }
+        // TODO: check if there are some duplicate inputs
         m_inputs.insert(m_inputs.end(), inputs.begin(), inputs.end());
         m_outputs.insert(m_outputs.end(), outputs.begin(), outputs.end());
         m_graphs.push_back(g);
