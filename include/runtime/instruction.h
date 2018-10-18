@@ -20,6 +20,10 @@ namespace ts {
         virtual ~Instruction() = default;
 
         virtual void run(Workbench &workbench) = 0;
+
+        virtual std::string str() const;
+
+        virtual std::string repr() const;
     };
 
     class LambdaInstruction : public Instruction {
@@ -32,10 +36,15 @@ namespace ts {
 
         LambdaInstruction(const Lambda &lambda);
 
+        LambdaInstruction(const Lambda &lambda, const std::string &description);
+
         void run(Workbench &workbench) final;
+
+        std::string str() const final;
 
     private:
         Lambda m_lambda;
+        std::string m_description;
     };
 
     class StackInstruction : public Instruction {
@@ -56,13 +65,17 @@ namespace ts {
         using supper = Instruction;
 
         explicit OperatorInstruction(const Operator::shared &func, int nargs, int nresults);
+        explicit OperatorInstruction(const Operator::shared &func, int nargs, int nresults, const std::string &description);
 
         void run(Workbench &workbench) final ;
+
+        std::string str() const final;
 
     private:
         Operator::shared m_func = nullptr;
         int m_nargs = 0;
         int m_nresults = 0;
+        std::string m_description;
     };
 
 }

@@ -35,6 +35,19 @@ namespace ts {
         stack.erase(0, -m_nresults);
     }
 
+    OperatorInstruction::OperatorInstruction(const Operator::shared &func, int nargs, int nresults,
+                                             const std::string &description)
+            : m_func(func), m_nargs(nargs), m_nresults(nresults), m_description(description) {
+        assert(m_func != nullptr);
+    }
+
+    std::string OperatorInstruction::str() const {
+        if (m_description.empty()) return supper::str();
+        std::ostringstream oss;
+        oss << "<Operator: " << m_description << ">";
+        return oss.str();
+    }
+
     void StackInstruction::run(Workbench &workbench) {
         this->run(workbench.stack());
     }
@@ -45,5 +58,27 @@ namespace ts {
 
     void LambdaInstruction::run(Workbench &workbench) {
         m_lambda(workbench);
+    }
+
+    LambdaInstruction::LambdaInstruction(const LambdaInstruction::Lambda &lambda, const std::string &description)
+            : m_lambda(lambda), m_description(description) {
+
+    }
+
+    std::string LambdaInstruction::str() const {
+        if (m_description.empty()) return supper::str();
+        std::ostringstream oss;
+        oss << "<Lambda: " << m_description << ">";
+        return oss.str();
+    }
+
+    std::string Instruction::str() const {
+        std::ostringstream oss;
+        oss << "<Instruction: " << this << ">";
+        return oss.str();
+    }
+
+    std::string Instruction::repr() const {
+        return this->str();
     }
 }
