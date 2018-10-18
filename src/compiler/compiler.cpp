@@ -27,6 +27,7 @@ namespace ts {
         // transform graph, make other graph from different framework to TS framework
 
         // compile graph, check node to computing device support nodes
+        // 考虑处理inplace操作符，加入copy节点，保证inplace操作不会对其他节点造成影响
 
         // convert graph to instructions
         std::deque<Node> simulator;
@@ -146,10 +147,42 @@ namespace ts {
             for (auto &input : node.inputs()) simulator_push(input);
         }
         // check inputs
+        std::set<Node> have_inputs(inputs.begin(), inputs.end());
+        for (auto &node : simulator) {
+            if (have_inputs.find(node) == have_inputs.end()) {
+                throw Exception("Can not access input node: " + node.str());
+            }
+        }
+        // build inputs
+        // -.1 check if inputs satisfied
+        bool satisfied = true;
+        if (simulator.size() == inputs.size()) {
+            for (size_t i = 0; i < simulator.size(); ++i) {
+                if (simulator[i] != inputs[i]) {
+                    satisfied = false;
+                    break;
+                }
+            }
+        }
+        if (!satisfied) {
+            std::map<Node, size_t> working_input_nodes;
+            for (auto &node : inputs) working_input_nodes.insert(std::make_pair(node, working_input_nodes.size()));
+            block.instructions.push_back(instruction::Stack::erase(0, -int(simulator.size())));
+            for (auto it = simulator.rbegin(); it != simulator.rend(); ++it) {
+                block.instructions.push_back(instruction::Stack::push(int(working_input_nodes[*it])));
+            }
+            simulator.clear();
+            simulator.insert(simulator.begin(), inputs.begin(), inputs.end());
+        }
 
         for (auto node : simulator) {
             std::cout << node << std::endl;
         }
+
+        // reduce
+        // 删除冗余的push，是否有必要，push的成本很低
+        // inplace operator 是不是可以检测operator，如果是inplace操作，就把push换成clone。或者不支持inplace操作，最简单了。
+        // 思考一下怎么处理额，可以在图的编译阶段，如果支持inplace操作，就插入一个copy节点。
 
         // inverse
 

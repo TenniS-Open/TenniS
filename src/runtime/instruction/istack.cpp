@@ -43,6 +43,12 @@ namespace ts {
                 *stack.index(j) = ti;
             });
         }
+
+        Instruction::shared Stack::erase(int beg, int end) {
+            return std::make_shared<LambdaInstruction>([=](Workbench &workbench){
+                workbench.stack().erase(beg, end);
+            });
+        }
     }
 }
 
