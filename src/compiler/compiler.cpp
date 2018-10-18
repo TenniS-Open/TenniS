@@ -87,11 +87,11 @@ namespace ts {
 
             auto nodei_it = working_nodes.find(nodei);
             if (nodei_it != working_nodes.end() && nodei_it->second == index_i) {
-                nodei_it->second = index_i;
+                nodei_it->second = index_j;
             }
             auto nodej_it = working_nodes.find(nodej);
             if (nodej_it != working_nodes.end() && nodej_it->second == index_j) {
-                nodej_it->second = index_j;
+                nodej_it->second = index_i;
             }
 
             simulator[index_i] = nodej;
@@ -109,6 +109,7 @@ namespace ts {
                 auto &node = simulator[i];
                 auto &op = node.ref<OP>();
                 if (op.op != OP::IN) return i;
+                --i;
             }
             return -1;
         };
@@ -116,6 +117,7 @@ namespace ts {
         for (auto &node : outputs) simulator_push(node);
 
         // TODO: checking inplace operator converting
+        // TODO: check if there are some repeating computing brach
         while (unsolved_node_count) {
             auto node = simulator.back();
             auto op = node.ref<OP>();
@@ -141,8 +143,10 @@ namespace ts {
             // query operator
             auto creator = QueryOperatorCreator(m_computing_device.type(), op.op);
             if (creator == nullptr) throw Exception("Not supported operator " + op.op);
+            std::string description = op.op + "(in=" + std::to_string(node.inputs().size()) + ", out=" +
+                                      std::to_string(1) + ")";
             block.instructions.push_back(
-                    std::make_shared<OperatorInstruction>(creator(), node.inputs().size(), node.outputs().size()));
+                    std::make_shared<OperatorInstruction>(creator(), node.inputs().size(), 1, description));
             simulator_pop();
             for (auto &input : node.inputs()) simulator_push(input);
         }
@@ -155,8 +159,9 @@ namespace ts {
         }
         // build inputs
         // -.1 check if inputs satisfied
-        bool satisfied = true;
+        bool satisfied = false;
         if (simulator.size() == inputs.size()) {
+            satisfied = true;
             for (size_t i = 0; i < simulator.size(); ++i) {
                 if (simulator[i] != inputs[i]) {
                     satisfied = false;
@@ -175,8 +180,15 @@ namespace ts {
             simulator.insert(simulator.begin(), inputs.begin(), inputs.end());
         }
 
+        std::cout << "===========================" << std::endl;
+        std::cout << "Simulator: " << std::endl;
         for (auto node : simulator) {
             std::cout << node << std::endl;
+        }
+
+        std::cout << "Instructions: " << std::endl;
+        for (auto it = block.instructions.rbegin(); it != block.instructions.rend(); ++it) {
+            std::cout << (*it)->str() << std::endl;
         }
 
         // reduce
