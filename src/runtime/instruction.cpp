@@ -27,6 +27,7 @@ namespace ts {
 
         // call function
         auto return_size = m_func->run(stack);
+        (void)(return_size);
 
         assert(return_size == m_nresults);  // must return given sizes
         assert(stack.size() >= static_cast<size_t>(return_size));    // must have enough returns

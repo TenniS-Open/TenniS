@@ -9,6 +9,8 @@
 #include <deque>
 #include <set>
 #include <map>
+#include <cassert>
+
 #include "runtime/instruction/istack.h"
 #include "global/operator_factory.h"
 
