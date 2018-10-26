@@ -139,6 +139,20 @@ namespace ts {
             }
         }
 
+        static void push(const std::type_index &type, void *ctx) {
+            auto &local_thread_context = __global_thread_context[type];
+            return local_thread_context.push(ctx);
+        }
+
+        static void pop(const std::type_index &type) {
+            auto &local_thread_context = __global_thread_context[type];
+            auto id = std::this_thread::get_id();
+            local_thread_context.pop(id);
+            if (local_thread_context.size(id) == 0) {
+                local_thread_context.clear(id);
+            }
+        }
+
         static void *top(const std::type_index &type) {
             auto &local_thread_context = __global_thread_context[type];
             return local_thread_context.top();
@@ -153,6 +167,7 @@ namespace ts {
         __thread_context *m_context = nullptr;
     };
 
+    // TODO: 考虑线程安全问题，多线程初始化会发生什么事情呢~
     namespace ctx {
         template<typename T>
         class bind {
@@ -176,6 +191,21 @@ namespace ts {
         private:
             __context m_ctx;
         };
+
+        template<typename T>
+        inline void push(T *ctx) {
+            __context::push(std::type_index(typeid(T)), ctx);
+        }
+
+        template<typename T>
+        inline void push(T &ctx_ref) {
+            push<T>(&ctx_ref);
+        }
+
+        template<typename T>
+        inline void pop() {
+            __context::pop(std::type_index(typeid(T)));
+        }
 
         template<typename T>
         inline T *get() {
