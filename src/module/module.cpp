@@ -45,8 +45,10 @@ namespace ts {
                 walker.push(input);
             }
         }
-        // TODO: check if there are some duplicate inputs
-        m_inputs.insert(m_inputs.end(), inputs.begin(), inputs.end());
+        // remove duplicate inputs
+        std::set<Node> input_nodes_set;
+        for (auto &input : inputs) input_nodes_set.insert(input);
+        m_inputs.insert(m_inputs.end(), input_nodes_set.begin(), input_nodes_set.end());
         m_outputs.insert(m_outputs.end(), outputs.begin(), outputs.end());
         m_graphs.push_back(g);
     }
