@@ -24,12 +24,17 @@ namespace ts {
     };
 
     template<typename FUNC, typename... Args>
-    static VoidOperator void_bind(FUNC func, Args &&... args) {
+    inline VoidOperator void_bind(FUNC func, Args &&... args) {
         auto inner_func = std::bind(func, std::forward<Args>(args)...);
         using Ret = decltype(inner_func());
         using RetOperator = _VoidOperatorBinder<Ret, decltype(inner_func)>;
         return RetOperator::bind(inner_func);
     }
+
+    template<typename FUNC, typename... Args>
+    inline void void_call(FUNC func, Args &&... args) {
+        void_bind(func, std::forward<Args>(args)...)();
+    };
 }
 
 #endif //TENSORSTACK_UTILS__VOID_BIND_H
