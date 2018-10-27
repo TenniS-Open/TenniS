@@ -14,18 +14,11 @@
 
 #include "except.h"
 
-
-namespace std {
-    template<>
-    struct hash<std::type_info> {
-        std::size_t operator()(const std::type_info &key) const {
-            using std::size_t;
-            using std::hash;
-
-            return key.hash_code();
-        }
-    };
-}
+#if defined(_MSC_VER) && _MSC_VER < 1900 // lower then VS2015
+#    define TS_THREAD_LOCAL __declspec(thread)
+#else
+#    define TS_THREAD_LOCAL thread_local
+#endif
 
 namespace ts {
 
@@ -49,125 +42,87 @@ namespace ts {
         std::thread::id m_thread_id;
     };
 
-
-    class __thread_context {
+    class __thread_local_context {
     public:
-        using self = __thread_context;
-        using stack = std::stack<void *>;
+        using self = __thread_local_context;
 
-        void push(const std::thread::id &id, void *ctx) {
-            auto &local_ctx = this->m_ctx[id];
-            local_ctx.push(ctx);
+        using context = void *;
+
+        context swap(context ctx) {
+            auto pre_ctx = this->m_ctx;
+            this->m_ctx = ctx;
+            return pre_ctx;
         }
 
-        void push(void *ctx) {
-            auto id = std::this_thread::get_id();
-            this->push(id, ctx);
+        void set(context ctx) {
+            this->m_ctx = ctx;
         }
 
-        const void *top(const std::thread::id &id) const {
-            auto it = this->m_ctx.find(id);
-            if (it == this->m_ctx.end()) throw NoContextException(id);
-            auto &local_ctx = it->second;
-            if (local_ctx.empty()) throw NoContextException();
-            return local_ctx.top();
+        const context get() const {
+            if (m_ctx == nullptr) throw NoContextException();
+            return m_ctx;
         }
 
-        const void *top() const {
-            auto id = std::this_thread::get_id();
-            return this->top(id);
+        context get() {
+            return reinterpret_cast<context>(reinterpret_cast<const self *>(this)->get());
         }
 
-        void *top(const std::thread::id &id) {
-            return const_cast<void *>(const_cast<const self *>(this)->top(id));
-        }
+        const context try_get() const { return this->m_ctx; }
 
-        void *top() {
-            return const_cast<void *>(const_cast<const self *>(this)->top());
-        }
-
-        void pop(const std::thread::id &id) {
-            auto it = this->m_ctx.find(id);
-            if (it == this->m_ctx.end()) return;
-            auto &local_ctx = it->second;
-            if (!local_ctx.empty()) local_ctx.pop();
-        }
-
-        void pop() {
-            auto id = std::this_thread::get_id();
-            this->pop(id);
-        }
-
-        size_t size(const std::thread::id &id) const {
-            auto it = this->m_ctx.find(id);
-            if (it == this->m_ctx.end()) return 0;
-            auto &local_ctx = it->second;
-            return local_ctx.size();
-        }
-
-        size_t size() const {
-            auto id = std::this_thread::get_id();
-            return this->size(id);
-        }
-
-        void clear(const std::thread::id &id) {
-            m_ctx.erase(id);
-        }
+        context try_get() { return this->m_ctx; }
 
     private:
-        std::unordered_map<std::thread::id, stack> m_ctx;
+        context m_ctx = nullptr;
     };
 
-
-    extern std::unordered_map<std::type_index, __thread_context> __global_thread_context;
+    extern TS_THREAD_LOCAL
+    std::unordered_map<std::type_index, __thread_local_context> __thread_local_type_context;
 
     class __context {
     public:
         using self = __context;
+        using context = void *;
 
-        explicit __context(const std::type_index &type, void *ctx) {
-            auto &local_thread_context = __global_thread_context[type];
-            this->m_id = std::this_thread::get_id();
-            this->m_context = &local_thread_context;
-            this->m_context->push(this->m_id, ctx);
+        explicit __context(const std::type_index &type, context ctx) {
+            auto &thread_local_context = __thread_local_type_context[type];
+            this->m_context = &thread_local_context;
+            this->m_now_ctx = ctx;
+            this->m_pre_ctx = thread_local_context.swap(ctx);
         }
 
         ~__context() {
-            this->m_context->pop(this->m_id);
-            if (this->m_context->size(this->m_id) == 0) {
-                this->m_context->clear(this->m_id);
-            }
+            this->m_context->set(this->m_pre_ctx);
         }
 
-        static void push(const std::type_index &type, void *ctx) {
-            auto &local_thread_context = __global_thread_context[type];
-            return local_thread_context.push(ctx);
+        static void set(const std::type_index &type, context ctx) {
+            auto &thread_local_context = __thread_local_type_context[type];
+            thread_local_context.set(ctx);
         }
 
-        static void pop(const std::type_index &type) {
-            auto &local_thread_context = __global_thread_context[type];
-            auto id = std::this_thread::get_id();
-            local_thread_context.pop(id);
-            if (local_thread_context.size(id) == 0) {
-                local_thread_context.clear(id);
-            }
+        static context get(const std::type_index &type) {
+            auto &thread_local_context = __thread_local_type_context[type];
+            return thread_local_context.get();
         }
 
-        static void *top(const std::type_index &type) {
-            auto &local_thread_context = __global_thread_context[type];
-            return local_thread_context.top();
+        static context try_get(const std::type_index &type) {
+            auto &thread_local_context = __thread_local_type_context[type];
+            return thread_local_context.try_get();
         }
 
         __context(const self &) = delete;
 
         self &operator=(const self &) = delete;
 
+        context ctx() { return m_now_ctx; }
+
+        const context ctx() const { return m_now_ctx; }
+
     private:
-        std::thread::id m_id;
-        __thread_context *m_context = nullptr;
+        context m_pre_ctx = nullptr;
+        context m_now_ctx = nullptr;
+        __thread_local_context *m_context = nullptr;
     };
 
-    // TODO: 考虑线程安全问题，多线程初始化会发生什么事情呢~
     namespace ctx {
         template<typename T>
         class bind {
@@ -193,30 +148,54 @@ namespace ts {
         };
 
         template<typename T>
-        inline void push(T *ctx) {
-            __context::push(std::type_index(typeid(T)), ctx);
-        }
-
-        template<typename T>
-        inline void push(T &ctx_ref) {
-            push<T>(&ctx_ref);
-        }
-
-        template<typename T>
-        inline void pop() {
-            __context::pop(std::type_index(typeid(T)));
-        }
-
-        template<typename T>
         inline T *get() {
-            return reinterpret_cast<T *>(__context::top(std::type_index(typeid(T))));
+            return reinterpret_cast<T *>(__context::try_get(std::type_index(typeid(T))));
         }
 
         template<typename T>
-        inline T *ptr() { return get<T>(); }
+        inline T *ptr() {
+            return reinterpret_cast<T *>(__context::try_get(std::type_index(typeid(T))));
+        }
 
         template<typename T>
-        inline T &ref() { return *get<T>(); }
+        inline T &ref() {
+            return *reinterpret_cast<T *>(__context::get(std::type_index(typeid(T))));
+        }
+
+        template<typename T, typename... Args>
+        inline void initialize(Args &&...args) {
+            auto ctx = new T(std::forward<Args>(args)...);
+            __context::set(std::type_index(typeid(T)), ctx);
+        }
+
+        template<typename T>
+        inline void finalize() {
+            delete ptr<T>();
+        }
+
+        template<typename T>
+        class bind_new {
+        public:
+            using self = bind_new;
+
+            template<typename... Args>
+            explicit bind_new(Args &&...args)
+                    : m_ctx(std::type_index(typeid(T)), new T(std::forward<Args>(args)...)) {
+                m_object = m_ctx.ctx();
+            }
+
+            ~bind_new() {
+                delete m_object;
+            }
+
+            bind_new(const self &) = delete;
+
+            self &operator=(const self &) = delete;
+
+        private:
+            __context m_ctx;
+            T *m_object;
+        };
     }
 }
 

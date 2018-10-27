@@ -5,5 +5,5 @@
 #include "utils/ctxmgr.h"
 
 namespace ts {
-    std::unordered_map<std::type_index, __thread_context> __global_thread_context;
+    TS_THREAD_LOCAL std::unordered_map<std::type_index, __thread_local_context>  __thread_local_type_context;
 }
