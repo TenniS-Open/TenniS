@@ -14,11 +14,7 @@
 
 #include "except.h"
 
-#if defined(_MSC_VER) && _MSC_VER < 1900 // lower then VS2015
-#    define TS_THREAD_LOCAL __declspec(thread)
-#else
-#    define TS_THREAD_LOCAL thread_local
-#endif
+#define TS_THREAD_LOCAL thread_local
 
 namespace ts {
 
