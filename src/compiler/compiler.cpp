@@ -21,6 +21,7 @@ namespace ts {
             : m_computing_device(computing_device) {
     }
 
+    // TODO: speed this function up
     static std::map<Node, std::set<Node>> build_node_refs(const std::vector<Node> &nodes) {
         std::map<Node, int> map_node_depth;
         std::deque<Node> node_walker; // top_down
@@ -198,10 +199,10 @@ namespace ts {
                 std::cout << node << std::endl;
             }
 
-            std::cout << "Instructions: " << std::endl;
-            for (auto it = block.instructions.rbegin(); it != block.instructions.rend(); ++it) {
-                std::cout << (*it)->str() << std::endl;
-            }
+//            std::cout << "Instructions: " << std::endl;
+//            for (auto it = block.instructions.rbegin(); it != block.instructions.rend(); ++it) {
+//                std::cout << (*it)->str() << std::endl;
+//            }
 
             auto node = simulator.back();
             auto op = node.ref<OP>();
@@ -260,10 +261,10 @@ namespace ts {
             std::cout << node << std::endl;
         }
 
-        std::cout << "Instructions: " << std::endl;
-        for (auto it = block.instructions.rbegin(); it != block.instructions.rend(); ++it) {
-            std::cout << (*it)->str() << std::endl;
-        }
+//        std::cout << "Instructions: " << std::endl;
+//        for (auto it = block.instructions.rbegin(); it != block.instructions.rend(); ++it) {
+//            std::cout << (*it)->str() << std::endl;
+//        }
 
         // build inputs
         // -.1 check if inputs satisfied
@@ -294,10 +295,10 @@ namespace ts {
             std::cout << node << std::endl;
         }
 
-        std::cout << "Instructions: " << std::endl;
-        for (auto it = block.instructions.rbegin(); it != block.instructions.rend(); ++it) {
-            std::cout << (*it)->str() << std::endl;
-        }
+//        std::cout << "Instructions: " << std::endl;
+//        for (auto it = block.instructions.rbegin(); it != block.instructions.rend(); ++it) {
+//            std::cout << (*it)->str() << std::endl;
+//        }
 
         // reduce
         // 删除冗余的push，是否有必要，push的成本很低
