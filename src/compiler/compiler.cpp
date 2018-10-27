@@ -64,7 +64,7 @@ namespace ts {
             auto &op = node.ref<OP>();
             size_t i = simulator.size() - 1;
             auto it = working_nodes.find(node);
-            if (it == working_nodes.end() && it->second == i) {
+            if (it != working_nodes.end() && it->second == i) {
                 working_nodes.erase(node);
             }
             if (op.op != OP::IN) {
