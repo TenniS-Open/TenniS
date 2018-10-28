@@ -9,6 +9,8 @@
 #include <deque>
 #include <set>
 #include <map>
+#include <unordered_map>
+#include <unordered_set>
 #include <cassert>
 
 #include "runtime/instruction/istack.h"
@@ -16,14 +18,19 @@
 
 
 namespace ts {
+    template <typename K, typename V>
+    using map = std::unordered_map<K, V>;
+    template <typename K>
+    using set = std::unordered_set<K>;
+
 
     Compiler::Compiler(const ComputingDevice &computing_device)
             : m_computing_device(computing_device) {
     }
 
     // TODO: speed this function up
-    static std::map<Node, std::set<Node>> build_node_refs(const std::vector<Node> &nodes) {
-        std::map<Node, int> map_node_depth;
+    static map<Node, set<Node>> build_node_refs(const std::vector<Node> &nodes) {
+        map<Node, int> map_node_depth;
         std::deque<Node> node_walker; // top_down
 
         for (auto &node : nodes) {
@@ -58,9 +65,9 @@ namespace ts {
         });
 
         // build refs
-        std::map<Node, std::set<Node>> map_node_refs;
+        map<Node, set<Node>> map_node_refs;
         for (auto &node : computation_schedule) {
-            std::set<Node> refs;
+            set<Node> refs;
             for (auto &input : node.first.inputs()) {
                 refs.insert(input);
                 auto &input_refs = map_node_refs[input];
@@ -84,11 +91,11 @@ namespace ts {
 
         // build refs
         // save if compile a node, whose nodes needed directly or indirectly
-        std::map<Node, std::set<Node>> map_node_refs = build_node_refs(outputs);
+        map<Node, set<Node>> map_node_refs = build_node_refs(outputs);
 
         // convert graph to instructions
         std::deque<Node> simulator;
-        std::map<Node, size_t> working_nodes;
+        map<Node, size_t> working_nodes;
         size_t unsolved_node_count = 0;
 
         /**
@@ -199,10 +206,10 @@ namespace ts {
                 std::cout << node << std::endl;
             }
 
-//            std::cout << "Instructions: " << std::endl;
-//            for (auto it = block.instructions.rbegin(); it != block.instructions.rend(); ++it) {
-//                std::cout << (*it)->str() << std::endl;
-//            }
+            std::cout << "Instructions: " << std::endl;
+            for (auto it = block.instructions.rbegin(); it != block.instructions.rend(); ++it) {
+                std::cout << (*it)->str() << std::endl;
+            }
 
             auto node = simulator.back();
             auto op = node.ref<OP>();
@@ -246,7 +253,7 @@ namespace ts {
             for (auto &input : node.inputs()) simulator_push(input);
         }
         // check inputs
-        std::set<Node> have_inputs(inputs.begin(), inputs.end());
+        set<Node> have_inputs(inputs.begin(), inputs.end());
         for (auto &node : simulator) {
             if (have_inputs.find(node) == have_inputs.end()) {
                 throw Exception("Can not access input node: " + node.str());
@@ -261,10 +268,10 @@ namespace ts {
             std::cout << node << std::endl;
         }
 
-//        std::cout << "Instructions: " << std::endl;
-//        for (auto it = block.instructions.rbegin(); it != block.instructions.rend(); ++it) {
-//            std::cout << (*it)->str() << std::endl;
-//        }
+        std::cout << "Instructions: " << std::endl;
+        for (auto it = block.instructions.rbegin(); it != block.instructions.rend(); ++it) {
+            std::cout << (*it)->str() << std::endl;
+        }
 
         // build inputs
         // -.1 check if inputs satisfied
@@ -279,7 +286,7 @@ namespace ts {
             }
         }
         if (!satisfied) {
-            std::map<Node, size_t> working_input_nodes;
+            map<Node, size_t> working_input_nodes;
             for (auto &node : inputs) working_input_nodes.insert(std::make_pair(node, working_input_nodes.size()));
             block.instructions.push_back(instruction::Stack::erase(0, -int(simulator.size())));
             for (auto it = simulator.rbegin(); it != simulator.rend(); ++it) {
@@ -295,10 +302,10 @@ namespace ts {
             std::cout << node << std::endl;
         }
 
-//        std::cout << "Instructions: " << std::endl;
-//        for (auto it = block.instructions.rbegin(); it != block.instructions.rend(); ++it) {
-//            std::cout << (*it)->str() << std::endl;
-//        }
+        std::cout << "Instructions: " << std::endl;
+        for (auto it = block.instructions.rbegin(); it != block.instructions.rend(); ++it) {
+            std::cout << (*it)->str() << std::endl;
+        }
 
         // reduce
         // 删除冗余的push，是否有必要，push的成本很低
