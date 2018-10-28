@@ -79,6 +79,7 @@ namespace ts {
         return map_node_refs;
     }
 
+    // TODO: inputs only support Parameter, try support other op
     InstructionBlock Compiler::compile(const std::vector<Node> &inputs, const std::vector<Node> &outputs) {
         InstructionBlock block;
         block.nargs = int(inputs.size());
@@ -111,7 +112,7 @@ namespace ts {
             } else {
                 if (i < it->second) it->second = i;
             }
-            if (op.op != OP::IN) {
+            if (op.op != OP::Parameter) {
                 ++unsolved_node_count;
             }
             simulator.push_back(node);
@@ -129,7 +130,7 @@ namespace ts {
             if (it != working_nodes.end() && it->second == i) {
                 working_nodes.erase(node);
             }
-            if (op.op != OP::IN) {
+            if (op.op != OP::Parameter) {
                 --unsolved_node_count;
             }
             simulator.pop_back();
@@ -172,7 +173,7 @@ namespace ts {
             while (i >= 0) {
                 auto &node = simulator[i];
                 auto &op = node.ref<OP>();
-                if (op.op != OP::IN) return i;
+                if (op.op != OP::Parameter) return i;
                 --i;
             }
             return -1;
@@ -213,8 +214,18 @@ namespace ts {
                 }
             }
 
+            // case2-0: use Const
+            if (op.op == OP::Const) {
+                // TODO: add const getter
+            }
+
+            // case2-1: use Variable
+            if (op.op == OP::Variable) {
+                throw Exception(std::string("Not support ") + OP::Variable + " in this version.");
+            }
+
             // case2: save input nodes, move last unsolved node to top
-            if (op.op == OP::IN) {
+            if (op.op == OP::Parameter) {
                 auto j = simulator_find_last_unsolved_node_index();
                 assert(j >= 0);
                 block.instructions.push_back(instruction::Stack::swap(int(i), int(j)));

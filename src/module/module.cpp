@@ -5,9 +5,18 @@
 #include <unordered_set>
 #include <queue>
 #include "module/module.h"
+#include <unordered_set>
+#include <module/module.h>
 
 namespace ts {
-    const char *const OP::IN = "<in>";
+    const char *const OP::Parameter = "<param>";
+    const char *const OP::Const = "<const>";
+    const char *const OP::Variable = "<var>";
+    static const std::unordered_set<std::string> EndPoints = {OP::Parameter, OP::Const, OP::Variable};
+
+    bool OP::IsEndPoint(const std::string &op) {
+        return EndPoints.find(op) != EndPoints.end();
+    }
 
     void Module::load(Graph g) {
         // calculate inputs and outputs
@@ -34,7 +43,7 @@ namespace ts {
                 throw ts::Exception("Found unlinked node in graph");
             }
             auto &op = node.ref<OP>();
-            if (op.op == OP::IN) {
+            if (op.op == OP::Parameter) {
                 inputs.push_back(node);
                 continue;
             }
