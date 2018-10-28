@@ -312,7 +312,8 @@ namespace ts {
         // inplace operator 是不是可以检测operator，如果是inplace操作，就把push换成clone。或者不支持inplace操作，最简单了。
         // 思考一下怎么处理额，可以在图的编译阶段，如果支持inplace操作，就插入一个copy节点。
 
-        // inverse
+        // reverse
+        std::reverse(block.instructions.begin(), block.instructions.end());
 
         return block;
     }
