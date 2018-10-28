@@ -200,17 +200,6 @@ namespace ts {
         // TODO: checking inplace operator converting
         // TODO: check if there are some repeating computing brach
         while (unsolved_node_count) {
-            std::cout << "===========================" << std::endl;
-            std::cout << "Simulator: " << std::endl;
-            for (auto node : simulator) {
-                std::cout << node << std::endl;
-            }
-
-            std::cout << "Instructions: " << std::endl;
-            for (auto it = block.instructions.rbegin(); it != block.instructions.rend(); ++it) {
-                std::cout << (*it)->str() << std::endl;
-            }
-
             auto node = simulator.back();
             auto op = node.ref<OP>();
             // case1: check if node are same node
@@ -260,19 +249,6 @@ namespace ts {
             }
         }
 
-
-
-        std::cout << "===========================" << std::endl;
-        std::cout << "Simulator: " << std::endl;
-        for (auto node : simulator) {
-            std::cout << node << std::endl;
-        }
-
-        std::cout << "Instructions: " << std::endl;
-        for (auto it = block.instructions.rbegin(); it != block.instructions.rend(); ++it) {
-            std::cout << (*it)->str() << std::endl;
-        }
-
         // build inputs
         // -.1 check if inputs satisfied
         bool satisfied = false;
@@ -294,17 +270,6 @@ namespace ts {
             }
             simulator.clear();
             simulator.insert(simulator.begin(), inputs.begin(), inputs.end());
-        }
-
-        std::cout << "===========================" << std::endl;
-        std::cout << "Simulator: " << std::endl;
-        for (auto node : simulator) {
-            std::cout << node << std::endl;
-        }
-
-        std::cout << "Instructions: " << std::endl;
-        for (auto it = block.instructions.rbegin(); it != block.instructions.rend(); ++it) {
-            std::cout << (*it)->str() << std::endl;
         }
 
         // reduce
