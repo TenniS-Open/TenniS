@@ -71,7 +71,8 @@ namespace ts {
         return this->m_hard->device();
     }
 
-    Memory::Memory() {
+    Memory::Memory()
+        : Memory(0) {
     }
 
     void memcpy(Memory &dst, const Memory &src, size_t size) {

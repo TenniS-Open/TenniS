@@ -2,6 +2,8 @@
 // Created by seeta on 2018/5/25.
 //
 
+#include <core/tensor.h>
+
 #include "core/tensor.h"
 
 namespace ts {
@@ -36,5 +38,13 @@ namespace ts {
         Tensor::shared dolly = std::make_shared<Tensor>(controller, this->m_proto);
         memcpy(dolly->m_memory, this->m_memory, size_t(this->m_proto.count() * this->m_proto.type_bytes()));
         return std::move(dolly);
+    }
+
+    Tensor::Tensor()
+        : Tensor(VOID, {}){
+    }
+
+    bool Tensor::empty() const {
+        return this->count() == 0;
     }
 }
