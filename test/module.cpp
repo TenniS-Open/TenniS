@@ -9,6 +9,8 @@
 #include <global/operator_factory.h>
 #include <utils/ctxmgr.h>
 
+#include <cstring>
+
 class Sum : public ts::Operator {
 public:
     virtual int run(ts::Stack &stack) {
