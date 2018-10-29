@@ -20,7 +20,11 @@ namespace ts {
         std::string op;
         std::string name;
 
-        static const char *const IN;
+        static const char *const Parameter; // Mean must input in graph
+        static const char *const Const;     // Mean never change in graph, including weights, saving in static memory
+        static const char *const Variable;  // Mean may change in graph, saving some state, do no use in this version
+
+        static bool IsEndPoint(const std::string &op);
     };
 
     inline std::ostream &operator<<(std::ostream &out, const OP &op) {

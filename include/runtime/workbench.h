@@ -12,6 +12,7 @@
 #include "core/tensor.h"
 #include "instruction.h"
 #include "module/module.h"
+#include <unordered_map>
 
 namespace ts {
     class Workbench {
@@ -19,33 +20,40 @@ namespace ts {
         using self = Workbench;    ///< self class
         using shared = std::shared_ptr<self>;  ///< smart pointer
 
+        template<typename K, typename V>
+        using map = std::unordered_map<K, V>;
+
         explicit Workbench(const ComputingDevice &device);
 
-        Stack &stack() {return *this->m_stack;}
+        Stack &stack() { return *this->m_stack; }
 
-        const Stack &stack() const{return *this->m_stack;}
+        const Stack &stack() const { return *this->m_stack; }
 
-        void jump_relative(int shift) {this->m_pointer += shift;}
+        void jump_relative(int shift);
 
-        void jump_absolute(size_t pointer) {this->m_pointer = pointer;}
+        void jump_absolute(size_t pointer);
 
         // clear all stack
-        void clear() {this->m_stack->clear();}
+        void clear() { this->m_stack->clear(); }
 
         // set input
-        Stack &input() {return *this->m_input;}
-        const Stack &input() const {return *this->m_input;}
-        Tensor &input(int i);
-        const Tensor &input(int i) const;
+        void input(const std::string &name, const Tensor &tensor);
 
+        void input(int slot, const Tensor &tensor);
+
+        const Tensor &input(const std::string &name) const;
+
+        const Tensor &input(int slot) const;
+
+        // run graph
         void run();
 
-        // set output
-        Stack &output() {return *this->m_output;}
-        const Stack &output() const {return *this->m_output;}
-        Tensor &output(int i);
-        const Tensor &output(int i) const;
+        // get output
+        const Tensor &output(const std::string &name) const;
 
+        const Tensor &output(int slot) const;
+
+        // clone an Workbench which can run
         Workbench::shared clone() const;
 
         static shared Load(const Module::shared &module, const ComputingDevice &device);
@@ -59,8 +67,12 @@ namespace ts {
         MemoryController::shared m_dynamic_memory;
         Stack::shared m_stack;  // save running memory, data area
         // Stack m_heap;   // save static area
-        Stack::shared m_input;  // saving input
-        Stack::shared m_output;  // saving output
+        // map slot, means <tensor'name, tensor's index in stack>
+        map<std::string, int> m_map_input_slots;
+        map<std::string, int> m_map_output_slots;
+        // map tensor, means <tensor's index in stack, tensor>
+        std::vector<Tensor> m_inputs;
+        std::vector<Tensor> m_outputs;
     };
 }
 

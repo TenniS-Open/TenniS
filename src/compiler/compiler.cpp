@@ -9,6 +9,8 @@
 #include <deque>
 #include <set>
 #include <map>
+#include <unordered_map>
+#include <unordered_set>
 #include <cassert>
 
 #include "runtime/instruction/istack.h"
@@ -16,11 +18,68 @@
 
 
 namespace ts {
+    template <typename K, typename V>
+    using map = std::unordered_map<K, V>;
+    template <typename K>
+    using set = std::unordered_set<K>;
+
 
     Compiler::Compiler(const ComputingDevice &computing_device)
             : m_computing_device(computing_device) {
     }
 
+    // TODO: speed this function up
+    static map<Node, set<Node>> build_node_refs(const std::vector<Node> &nodes) {
+        map<Node, int> map_node_depth;
+        std::deque<Node> node_walker; // top_down
+
+        for (auto &node : nodes) {
+            auto it = map_node_depth.find(node);
+            if (it != map_node_depth.end()) continue;
+            node_walker.push_back(node);
+            map_node_depth.insert(std::make_pair(node, 1));
+        }
+
+        while (!node_walker.empty()) {
+            auto node = node_walker.front();
+            node_walker.pop_front();
+            auto depth = map_node_depth[node];
+            for (auto &input : node.inputs()) {
+                auto input_depth_pair = map_node_depth.find(input);
+                if (input_depth_pair == map_node_depth.end()) {
+                    map_node_depth.insert(std::make_pair(input, depth + 1));
+                    node_walker.push_back(input);
+                } else {
+                    auto this_input_depth = depth + 1;
+                    if (input_depth_pair->second < this_input_depth) {
+                        input_depth_pair->second = this_input_depth;
+                    }
+                }
+            }
+        }
+
+        std::vector<std::pair<Node, int>> computation_schedule(map_node_depth.begin(), map_node_depth.end());
+        std::sort(computation_schedule.begin(), computation_schedule.end(),
+                [](const std::pair<Node, int> &lhs, const std::pair<Node, int> &rhs){
+            return lhs.second > rhs.second;
+        });
+
+        // build refs
+        map<Node, set<Node>> map_node_refs;
+        for (auto &node : computation_schedule) {
+            set<Node> refs;
+            for (auto &input : node.first.inputs()) {
+                refs.insert(input);
+                auto &input_refs = map_node_refs[input];
+                refs.insert(input_refs.begin(), input_refs.end());
+            }
+            map_node_refs.insert(std::make_pair(node.first, std::move(refs)));
+        }
+
+        return map_node_refs;
+    }
+
+    // TODO: inputs only support Parameter, try support other op
     InstructionBlock Compiler::compile(const std::vector<Node> &inputs, const std::vector<Node> &outputs) {
         InstructionBlock block;
         block.nargs = int(inputs.size());
@@ -31,9 +90,13 @@ namespace ts {
         // compile graph, check node to computing device support nodes
         // 考虑处理inplace操作符，加入copy节点，保证inplace操作不会对其他节点造成影响
 
+        // build refs
+        // save if compile a node, whose nodes needed directly or indirectly
+        map<Node, set<Node>> map_node_refs = build_node_refs(outputs);
+
         // convert graph to instructions
         std::deque<Node> simulator;
-        std::map<Node, size_t> working_nodes;
+        map<Node, size_t> working_nodes;
         size_t unsolved_node_count = 0;
 
         /**
@@ -49,7 +112,7 @@ namespace ts {
             } else {
                 if (i < it->second) it->second = i;
             }
-            if (op.op != OP::IN) {
+            if (op.op != OP::Parameter) {
                 ++unsolved_node_count;
             }
             simulator.push_back(node);
@@ -64,10 +127,10 @@ namespace ts {
             auto &op = node.ref<OP>();
             size_t i = simulator.size() - 1;
             auto it = working_nodes.find(node);
-            if (it == working_nodes.end() && it->second == i) {
+            if (it != working_nodes.end() && it->second == i) {
                 working_nodes.erase(node);
             }
-            if (op.op != OP::IN) {
+            if (op.op != OP::Parameter) {
                 --unsolved_node_count;
             }
             simulator.pop_back();
@@ -110,7 +173,24 @@ namespace ts {
             while (i >= 0) {
                 auto &node = simulator[i];
                 auto &op = node.ref<OP>();
-                if (op.op != OP::IN) return i;
+                if (op.op != OP::Parameter) return i;
+                --i;
+            }
+            return -1;
+        };
+
+        /**
+         * \brief find last node ref the given node `ref`
+         * \param ref give node
+         * \return found index
+         * \note return -1 if failed
+         */
+        auto simulator_find_last_ref_node_index = [&](Node ref) -> int64_t {
+            int64_t i = int64_t(simulator.size()) - 1;
+            while (i >= 0) {
+                auto &node = simulator[i];
+                auto &refs = map_node_refs[node];
+                if (refs.find(ref) != refs.end()) return i;
                 --i;
             }
             return -1;
@@ -121,20 +201,9 @@ namespace ts {
         // TODO: checking inplace operator converting
         // TODO: check if there are some repeating computing brach
         while (unsolved_node_count) {
-            std::cout << "===========================" << std::endl;
-            std::cout << "Simulator: " << std::endl;
-            for (auto node : simulator) {
-                std::cout << node << std::endl;
-            }
-
-            std::cout << "Instructions: " << std::endl;
-            for (auto it = block.instructions.rbegin(); it != block.instructions.rend(); ++it) {
-                std::cout << (*it)->str() << std::endl;
-            }
-
             auto node = simulator.back();
             auto op = node.ref<OP>();
-            // check if node are same node
+            // case1: check if node are same node
             auto i = simulator.size() - 1;
             auto it = working_nodes.find(node);
             if (it != working_nodes.end()) {
@@ -145,7 +214,18 @@ namespace ts {
                 }
             }
 
-            if (op.op == OP::IN) {
+            // case2-0: use Const
+            if (op.op == OP::Const) {
+                // TODO: add const getter
+            }
+
+            // case2-1: use Variable
+            if (op.op == OP::Variable) {
+                throw Exception(std::string("Not support ") + OP::Variable + " in this version.");
+            }
+
+            // case2: save input nodes, move last unsolved node to top
+            if (op.op == OP::Parameter) {
                 auto j = simulator_find_last_unsolved_node_index();
                 assert(j >= 0);
                 block.instructions.push_back(instruction::Stack::swap(int(i), int(j)));
@@ -153,7 +233,16 @@ namespace ts {
                 continue;
             }
 
-            // query operator
+            // case3: check if this node will be compute later, if true, then swap it's son to top
+            auto last_ref_node_index = simulator_find_last_ref_node_index(node);
+            if (last_ref_node_index >= 0) {
+                auto j = last_ref_node_index;
+                block.instructions.push_back(instruction::Stack::swap(int(i), int(j)));
+                simulator_swap(int(i), int(j));
+                continue;
+            }
+
+            // case4: found a node need to be compute. query operator
             auto creator = QueryOperatorCreator(m_computing_device.type(), op.op);
             if (creator == nullptr) throw Exception("Not supported operator " + op.op);
             std::string description = op.op + "(in=" + std::to_string(node.inputs().size()) + ", out=" +
@@ -164,24 +253,11 @@ namespace ts {
             for (auto &input : node.inputs()) simulator_push(input);
         }
         // check inputs
-        std::set<Node> have_inputs(inputs.begin(), inputs.end());
+        set<Node> have_inputs(inputs.begin(), inputs.end());
         for (auto &node : simulator) {
             if (have_inputs.find(node) == have_inputs.end()) {
                 throw Exception("Can not access input node: " + node.str());
             }
-        }
-
-
-
-        std::cout << "===========================" << std::endl;
-        std::cout << "Simulator: " << std::endl;
-        for (auto node : simulator) {
-            std::cout << node << std::endl;
-        }
-
-        std::cout << "Instructions: " << std::endl;
-        for (auto it = block.instructions.rbegin(); it != block.instructions.rend(); ++it) {
-            std::cout << (*it)->str() << std::endl;
         }
 
         // build inputs
@@ -197,7 +273,7 @@ namespace ts {
             }
         }
         if (!satisfied) {
-            std::map<Node, size_t> working_input_nodes;
+            map<Node, size_t> working_input_nodes;
             for (auto &node : inputs) working_input_nodes.insert(std::make_pair(node, working_input_nodes.size()));
             block.instructions.push_back(instruction::Stack::erase(0, -int(simulator.size())));
             for (auto it = simulator.rbegin(); it != simulator.rend(); ++it) {
@@ -207,23 +283,13 @@ namespace ts {
             simulator.insert(simulator.begin(), inputs.begin(), inputs.end());
         }
 
-        std::cout << "===========================" << std::endl;
-        std::cout << "Simulator: " << std::endl;
-        for (auto node : simulator) {
-            std::cout << node << std::endl;
-        }
-
-        std::cout << "Instructions: " << std::endl;
-        for (auto it = block.instructions.rbegin(); it != block.instructions.rend(); ++it) {
-            std::cout << (*it)->str() << std::endl;
-        }
-
         // reduce
         // 删除冗余的push，是否有必要，push的成本很低
         // inplace operator 是不是可以检测operator，如果是inplace操作，就把push换成clone。或者不支持inplace操作，最简单了。
         // 思考一下怎么处理额，可以在图的编译阶段，如果支持inplace操作，就插入一个copy节点。
 
-        // inverse
+        // reverse
+        std::reverse(block.instructions.begin(), block.instructions.end());
 
         return block;
     }

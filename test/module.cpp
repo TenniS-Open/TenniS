@@ -47,6 +47,10 @@ TS_REGISTER_OPERATOR(Sum, ts::CPU, "sum")
 namespace ts {
 
     namespace op {
+        Node param(const std::string &name) {
+            auto &g = ctx::ref<Graph>();
+            return g.make<OP>(OP::Parameter, name);
+        }
         Node sum(const std::string &name, const std::vector<Node> &nodes) {
             auto &g = ctx::ref<Graph>();
             Node result = g.make<OP>("sum", name);
@@ -55,6 +59,20 @@ namespace ts {
         }
     }
 
+    Node block(const std::string &prefix, Node in) {
+        auto conv = op::sum(prefix + "/" + "a", {in});
+        auto bn = op::sum(prefix + "/" + "b", {conv});
+        auto shortcut = op::sum(prefix + "/" + "out", {in, bn});
+        return shortcut;
+    }
+
+    Node block_n_times(const std::string &prefix, Node in, int n) {
+        auto blob = in;
+        for (int i = 0; i < n; ++i) {
+            blob = block(prefix + "/" + "block_" + std::to_string(i), blob);
+        }
+        return blob;
+    }
 }
 
 int main()
@@ -65,13 +83,19 @@ int main()
     // build graph
     Graph g;
     ctx::bind<Graph> _graph(g);
-    auto a = g.make<OP>(OP::IN, "a");
-    auto b = g.make<OP>(OP::IN, "b");
-    auto c = g.make<OP>(OP::IN, "c");
-    auto d = op::sum("d", {a, b});
-    auto e = op::sum("e", {a, b});
-    auto f = op::sum("f", {d, e});
-    auto h = op::sum("h", {f, c});
+
+//    auto a = op::in("input");
+//    auto block = block_n_times("block", a, 1000);
+//    auto output = op::sum("output", {block});
+//    auto a = op::in("a");
+//    auto b = op::sum("b", {a});
+//    auto c = op::sum("c", {b});
+//    auto d = op::sum("d", {a, c});
+
+    auto a = op::param("a");
+    auto b = op::param("b");
+
+    auto c = op::sum("c", {a, b});
 
     // setup module
     std::shared_ptr<Module> m = std::make_shared<Module>();
@@ -92,4 +116,19 @@ int main()
     // Workbench bench(device);
 
     auto bench = Workbench::Load(m, device);
+
+    Tensor input_a(FLOAT32, {1});
+    Tensor input_b(FLOAT32, {1});
+
+    input_a.data<float>()[0] = 1;
+    input_b.data<float>()[0] = 3;
+
+    bench->input("a", input_a);
+    bench->input("b", input_b);
+
+    bench->run();
+
+    auto output_c = bench->output("c");
+
+    std::cout << "output: " << output_c.data<float>()[0] << std::endl;
 }

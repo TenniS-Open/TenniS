@@ -2,17 +2,26 @@
 // Created by seeta on 2018/7/18.
 //
 
-#include <set>
+#include <unordered_set>
 #include <queue>
 #include "module/module.h"
+#include <unordered_set>
+#include <module/module.h>
 
 namespace ts {
-    const char *const OP::IN = "<in>";
+    const char *const OP::Parameter = "<param>";
+    const char *const OP::Const = "<const>";
+    const char *const OP::Variable = "<var>";
+    static const std::unordered_set<std::string> EndPoints = {OP::Parameter, OP::Const, OP::Variable};
+
+    bool OP::IsEndPoint(const std::string &op) {
+        return EndPoints.find(op) != EndPoints.end();
+    }
 
     void Module::load(Graph g) {
         // calculate inputs and outputs
         auto nodes = g.nodes();
-        std::set<Node> nodes_set;
+        std::unordered_set<Node> nodes_set;
         std::vector<Node> outputs;
         for (auto &node : nodes) {
             nodes_set.insert(node);
@@ -23,7 +32,7 @@ namespace ts {
         // valid graph, get inputs
         std::vector<Node> inputs;
         std::queue<Node> walker;
-        std::set<Node> walked;
+        std::unordered_set<Node> walked;
         for (auto &node : outputs) walker.push(node);
         while (!walker.empty()) {
             auto node = walker.front();
@@ -34,7 +43,7 @@ namespace ts {
                 throw ts::Exception("Found unlinked node in graph");
             }
             auto &op = node.ref<OP>();
-            if (op.op == OP::IN) {
+            if (op.op == OP::Parameter) {
                 inputs.push_back(node);
                 continue;
             }
@@ -46,7 +55,7 @@ namespace ts {
             }
         }
         // remove duplicate inputs
-        std::set<Node> input_nodes_set;
+        std::unordered_set<Node> input_nodes_set;
         for (auto &input : inputs) input_nodes_set.insert(input);
         m_inputs.insert(m_inputs.end(), input_nodes_set.begin(), input_nodes_set.end());
         m_outputs.insert(m_outputs.end(), outputs.begin(), outputs.end());

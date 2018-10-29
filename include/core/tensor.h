@@ -64,6 +64,10 @@ namespace ts {
 
         explicit Tensor(const Prototype &proto);
 
+        Tensor();
+
+        bool empty() const;
+
         const Device &device() const { return m_memory.device(); }
 
         TYPE type() const { return m_proto.type(); }
