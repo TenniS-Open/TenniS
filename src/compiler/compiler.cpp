@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <cassert>
+#include <algorithm>
 
 #include "runtime/instruction/istack.h"
 #include "global/operator_factory.h"
