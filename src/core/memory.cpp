@@ -3,6 +3,8 @@
 //
 
 #include <cassert>
+#include <algorithm>
+
 #include "core/memory.h"
 #include "global/converter.h"
 
@@ -89,5 +91,15 @@ namespace ts {
         HardConverter converter = QueryConverter(dst.device().type(), src.device().type());
         assert(converter != nullptr);
         converter(dst.device().id(), dst.data(), src.device().id(), src.data(), size);
+    }
+
+    size_t
+    memcpy(void *dst_ptr, const Device &dst_device, size_t dst_size, const void *src_ptr, const Device &src_device,
+               size_t src_size) {
+        auto copy_size = std::min(src_size, dst_size);
+        HardConverter converter = QueryConverter(dst_device.type(), src_device.type());
+        assert(converter != nullptr);
+        converter(dst_device.id(), dst_ptr, src_device.id(), src_ptr, copy_size);
+        return copy_size;
     }
 }

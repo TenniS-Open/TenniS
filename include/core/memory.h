@@ -136,7 +136,7 @@ namespace ts {
          * @note the use_count will reset after this API
          * @note use one of use_count or this API to control memory, do not use them both
          */
-        void destructor(const std::function<void(void*)> &dtor, void *data);
+        void destructor(const std::function<void(void *)> &dtor, void *data);
 
         /**
          * Set callback when memory will be free
@@ -171,7 +171,7 @@ namespace ts {
      * @param obj1 first object
      * @param obj2 second object
      */
-    inline void swap(Memory &obj1, Memory &obj2) {obj1.swap(obj2);}
+    inline void swap(Memory &obj1, Memory &obj2) { obj1.swap(obj2); }
 
     /**
      * copy memory in device or cross devices
@@ -188,6 +188,18 @@ namespace ts {
      */
     void memcpy(Memory &dst, const Memory &src);
 
+    /**
+     * copy memory in device or cross devices
+     * @param dst_ptr the dst memory
+     * @param dst_device the dst memory device
+     * @param dst_size the dst memory size
+     * @param src_ptr the src memory
+     * @param src_device the src memory device
+     * @param src_size the src memory size
+     * @return really copy size
+     */
+    size_t memcpy(void *dst_ptr, const Device &dst_device, size_t dst_size,
+                const void *src_ptr, const Device &src_device, size_t src_size);
 }
 
 
