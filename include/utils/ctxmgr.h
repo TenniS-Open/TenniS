@@ -25,11 +25,11 @@ namespace ts {
         }
 
         explicit NoContextException(const std::thread::id &id)
-                : Exception(build_message(id)), m_thread_id(id) {
+                : Exception(NoContextMessage(id)), m_thread_id(id) {
         }
 
     private:
-        std::string build_message(const std::thread::id &id) {
+        static std::string NoContextMessage(const std::thread::id &id) {
             std::ostringstream oss;
             oss << "Empty context in thread: " << id;
             return oss.str();
