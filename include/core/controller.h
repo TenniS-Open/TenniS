@@ -25,15 +25,15 @@ namespace ts {
         virtual Memory alloc(size_t size) = 0;
     };
 
-    class BaseMemoryController : public MemoryController {
+    class DynamicMemoryController : public MemoryController {
     public:
-        using self = BaseMemoryController;
+        using self = DynamicMemoryController;
         using shared = std::shared_ptr<self>;  ///< smart pointer
         using supper = MemoryController;
         /**
          * @param device the memory device
          */
-        explicit BaseMemoryController(const MemoryDevice &device);
+        explicit DynamicMemoryController(const MemoryDevice &device);
 
         Memory alloc(size_t size) override;
 

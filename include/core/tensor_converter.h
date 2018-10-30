@@ -50,13 +50,9 @@ namespace ts {
 
         std::string to_string(const Tensor &value) const;
 
-        Tensor convert(const Tensor &a, TYPE type) const;
-
     private:
         mutable MemoryController::shared m_controller;
     };
-
-    static const TensorConverter &tensor_converter();
 }
 
 

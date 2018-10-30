@@ -24,7 +24,7 @@ namespace ts {
         using shared = std::shared_ptr<self>;  ///< smart pointer
 
         explicit Stack(const MemoryDevice &device)
-                : Stack(device, std::make_shared<BaseMemoryController>(device)) {}
+                : Stack(device, std::make_shared<DynamicMemoryController>(device)) {}
 
         explicit Stack(const MemoryDevice &device, const MemoryController::shared &controller)
                 : m_device(device), m_controller(controller) {}

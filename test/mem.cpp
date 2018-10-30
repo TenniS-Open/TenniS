@@ -23,7 +23,7 @@ int main()
     std::cout << mem.data<int>()[0] << std::endl;
     mem.dispose();
 
-    ts::BaseMemoryController c({ts::CPU, 0});
+    ts::DynamicMemoryController c({ts::CPU, 0});
     ts::Memory a = c.alloc(123);
 
     ts::Memory b(ts::Device(ts::CPU, 0), 256);
