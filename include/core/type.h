@@ -21,8 +21,11 @@ namespace ts {
         FLOAT16,
         FLOAT32,
         FLOAT64,
-        PTR,            ///< for ptr type, with length of sizeof(void*) bytes
-        UNKNOWN8,       ///< for self define type, with length of 1 byte
+        PTR,              ///< for ptr type, with length of sizeof(void*) bytes
+        CHAR8,            ///< for char saving string
+        CHAR16,           ///< for char saving utf-16 string
+        CHAR32,           ///< for char saving utf-32 string
+        UNKNOWN8,        ///< for self define type, with length of 1 byte
         UNKNOWN16,
         UNKNOWN32,
         UNKNOWN64,
@@ -45,6 +48,9 @@ namespace ts {
             case FLOAT32: return 4;
             case FLOAT64: return 6;
             case PTR: return sizeof(FakeUsagePtr);
+            case CHAR8: return 1;
+            case CHAR16: return 2;
+            case CHAR32: return 4;
             case UNKNOWN8: return 1;
             case UNKNOWN16: return 2;
             case UNKNOWN32: return 4;
@@ -69,6 +75,9 @@ namespace ts {
             case FLOAT32: return "float32";
             case FLOAT64: return "float64";
             case PTR: return "pointer";
+            case CHAR8: return "char8";
+            case CHAR16: return "char16";
+            case CHAR32: return "char32";
             case UNKNOWN8: return "unknown8";
             case UNKNOWN16: return "unknown16";
             case UNKNOWN32: return "unknown32";
@@ -93,6 +102,9 @@ namespace ts {
     template <> struct type<FLOAT32> { using declare = float; };
     template <> struct type<FLOAT64> { using declare = double; };
     template <> struct type<PTR> { using declare = void*; };
+    template <> struct type<CHAR8> { using declare = char; };
+    template <> struct type<CHAR16> { using declare = char16_t; };
+    template <> struct type<CHAR32> { using declare = char32_t; };
 }
 
 
