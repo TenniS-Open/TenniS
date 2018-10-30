@@ -6,20 +6,31 @@
 #define TENSORSTACK_MODULE_MODULE_H
 
 #include <memory>
+#include <unordered_map>
+#include "core/tensor.h"
 
 #include "graph.h"
 
 namespace ts {
-    class OP {
+    class Bubble {
     public:
-        explicit OP(
+        template <typename K, typename V>
+        using map = std::unordered_map<K, V>;
+
+        explicit Bubble(
                 const std::string &op,
                 const std::string &name = "")
-                : op(op), name(name) {}
+                : m_op(op), m_name(name) {}
 
-        std::string op;
-        std::string name;
+        const std::string &op() const { return m_op; }
+        const std::string &name() const { return m_name; }
+    private:
+        std::string m_op;
+        std::string m_name;
 
+        map<std::string, Tensor> m_params;
+
+    public:
         static const char *const Parameter; // Mean must input in graph
         static const char *const Const;     // Mean never change in graph, including weights, saving in static memory
         static const char *const Variable;  // Mean may change in graph, saving some state, do no use in this version
@@ -27,8 +38,8 @@ namespace ts {
         static bool IsEndPoint(const std::string &op);
     };
 
-    inline std::ostream &operator<<(std::ostream &out, const OP &op) {
-        return out << op.op << ", " << op.name;
+    inline std::ostream &operator<<(std::ostream &out, const Bubble &op) {
+        return out << op.op() << ", " << op.name();
     }
 
     class Module {

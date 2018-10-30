@@ -9,12 +9,12 @@
 #include <module/module.h>
 
 namespace ts {
-    const char *const OP::Parameter = "<param>";
-    const char *const OP::Const = "<const>";
-    const char *const OP::Variable = "<var>";
-    static const std::unordered_set<std::string> EndPoints = {OP::Parameter, OP::Const, OP::Variable};
+    const char *const Bubble::Parameter = "<param>";
+    const char *const Bubble::Const = "<const>";
+    const char *const Bubble::Variable = "<var>";
+    static const std::unordered_set<std::string> EndPoints = {Bubble::Parameter, Bubble::Const, Bubble::Variable};
 
-    bool OP::IsEndPoint(const std::string &op) {
+    bool Bubble::IsEndPoint(const std::string &op) {
         return EndPoints.find(op) != EndPoints.end();
     }
 
@@ -42,8 +42,8 @@ namespace ts {
             if (nodes_set.find(node) == nodes_set.end()) {
                 throw ts::Exception("Found unlinked node in graph");
             }
-            auto &op = node.ref<OP>();
-            if (op.op == OP::Parameter) {
+            auto &op = node.ref<Bubble>();
+            if (op.op() == Bubble::Parameter) {
                 inputs.push_back(node);
                 continue;
             }

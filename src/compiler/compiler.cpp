@@ -105,7 +105,7 @@ namespace ts {
          * \param node node ready to push
          */
         auto simulator_push = [&](Node node) {
-            auto &op = node.ref<OP>();
+            auto &op = node.ref<Bubble>();
             size_t i = simulator.size();
             auto it = working_nodes.find(node);
             if (it == working_nodes.end()) {
@@ -113,7 +113,7 @@ namespace ts {
             } else {
                 if (i < it->second) it->second = i;
             }
-            if (op.op != OP::Parameter) {
+            if (op.op() != Bubble::Parameter) {
                 ++unsolved_node_count;
             }
             simulator.push_back(node);
@@ -125,13 +125,13 @@ namespace ts {
         auto simulator_pop = [&]() {
             if (simulator.empty()) return;
             auto node = simulator.back();
-            auto &op = node.ref<OP>();
+            auto &op = node.ref<Bubble>();
             size_t i = simulator.size() - 1;
             auto it = working_nodes.find(node);
             if (it != working_nodes.end() && it->second == i) {
                 working_nodes.erase(node);
             }
-            if (op.op != OP::Parameter) {
+            if (op.op() != Bubble::Parameter) {
                 --unsolved_node_count;
             }
             simulator.pop_back();
@@ -173,8 +173,8 @@ namespace ts {
             int64_t i = int64_t(simulator.size()) - 1;
             while (i >= 0) {
                 auto &node = simulator[i];
-                auto &op = node.ref<OP>();
-                if (op.op != OP::Parameter) return i;
+                auto &op = node.ref<Bubble>();
+                if (op.op() != Bubble::Parameter) return i;
                 --i;
             }
             return -1;
@@ -203,7 +203,7 @@ namespace ts {
         // TODO: check if there are some repeating computing brach
         while (unsolved_node_count) {
             auto node = simulator.back();
-            auto op = node.ref<OP>();
+            auto op = node.ref<Bubble>();
             // case1: check if node are same node
             auto i = simulator.size() - 1;
             auto it = working_nodes.find(node);
@@ -216,17 +216,17 @@ namespace ts {
             }
 
             // case2-0: use Const
-            if (op.op == OP::Const) {
+            if (op.op() == Bubble::Const) {
                 // TODO: add const getter
             }
 
             // case2-1: use Variable
-            if (op.op == OP::Variable) {
-                throw Exception(std::string("Not support ") + OP::Variable + " in this version.");
+            if (op.op() == Bubble::Variable) {
+                throw Exception(std::string("Not support ") + Bubble::Variable + " in this version.");
             }
 
             // case2: save input nodes, move last unsolved node to top
-            if (op.op == OP::Parameter) {
+            if (op.op() == Bubble::Parameter) {
                 auto j = simulator_find_last_unsolved_node_index();
                 assert(j >= 0);
                 block.instructions.push_back(instruction::Stack::swap(int(i), int(j)));
@@ -244,9 +244,9 @@ namespace ts {
             }
 
             // case4: found a node need to be compute. query operator
-            auto creator = QueryOperatorCreator(m_computing_device.type(), op.op);
-            if (creator == nullptr) throw Exception("Not supported operator " + op.op);
-            std::string description = op.op + "(in=" + std::to_string(node.inputs().size()) + ", out=" +
+            auto creator = QueryOperatorCreator(m_computing_device.type(), op.op());
+            if (creator == nullptr) throw Exception("Not supported operator " + op.op());
+            std::string description = op.op() + "(in=" + std::to_string(node.inputs().size()) + ", out=" +
                                       std::to_string(1) + ")";
             block.instructions.push_back(
                     std::make_shared<OperatorInstruction>(creator(), node.inputs().size(), 1, description));

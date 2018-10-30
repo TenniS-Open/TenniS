@@ -49,11 +49,11 @@ namespace ts {
     namespace op {
         Node param(const std::string &name) {
             auto &g = ctx::ref<Graph>();
-            return g.make<OP>(OP::Parameter, name);
+            return g.make<Bubble>(Bubble::Parameter, name);
         }
         Node sum(const std::string &name, const std::vector<Node> &nodes) {
             auto &g = ctx::ref<Graph>();
-            Node result = g.make<OP>("sum", name);
+            Node result = g.make<Bubble>("sum", name);
             Node::Link(result, nodes);
             return result;
         }
@@ -103,12 +103,12 @@ int main()
 
     std::cout << "Input nodes:" << std::endl;
     for (auto &node : m->inputs()) {
-        std::cout << node.ref<OP>().op << ":" << node.ref<OP>().name << std::endl;
+        std::cout << node.ref<Bubble>().op() << ":" << node.ref<Bubble>().name() << std::endl;
     }
 
     std::cout << "Output nodes:" << std::endl;
     for (auto &node : m->outputs()) {
-        std::cout << node.ref<OP>().op << ":" << node.ref<OP>().name << std::endl;
+        std::cout << node.ref<Bubble>().op() << ":" << node.ref<Bubble>().name() << std::endl;
     }
 
     // run workbench
