@@ -8,52 +8,43 @@
 #include "tensor.h"
 
 namespace ts {
-    class TensorConverter {
-    public:
-        using self = TensorConverter;
+    namespace tensor {
+        Tensor from(const std::string &value);
 
-        TensorConverter();
+        Tensor from(int8_t value);
 
-        explicit TensorConverter(const MemoryDevice &device);
+        Tensor from(int16_t value);
 
-        explicit TensorConverter(const MemoryController::shared &controller);
+        Tensor from(int32_t value);
 
-        Tensor from(const std::string &value) const;
+        Tensor from(int64_t value);
 
-        Tensor from(int8_t value) const;
+        Tensor from(uint8_t value);
 
-        Tensor from(int16_t value) const;
+        Tensor from(uint16_t value);
 
-        Tensor from(int32_t value) const;
+        Tensor from(uint32_t value);
 
-        Tensor from(int64_t value) const;
+        Tensor from(uint64_t value);
 
-        Tensor from(uint8_t value) const;
+        Tensor from(float value);
 
-        Tensor from(uint16_t value) const;
+        Tensor from(double value);
 
-        Tensor from(uint32_t value) const;
+        int to_int(const Tensor &value);
 
-        Tensor from(uint64_t value) const;
+        unsigned int to_uint(const Tensor &value);
 
-        Tensor from(float value) const;
+        float to_float(const Tensor &value);
 
-        Tensor from(double value) const;
+        double to_double(const Tensor &value);
 
-        int to_int(const Tensor &value) const;
+        std::string to_string(const Tensor &value);
 
-        unsigned int to_uint(const Tensor &value) const;
-
-        float to_float(const Tensor &value) const;
-
-        double to_double(const Tensor &value) const;
-
-        std::string to_string(const Tensor &value) const;
-
-    private:
-        mutable MemoryController::shared m_controller;
-    };
+        Tensor cast(TYPE type, const Tensor &val);
+    }
 }
+
 
 
 #endif //TENSORSTACK_CORE_TENSOR_CONVERTER_H
