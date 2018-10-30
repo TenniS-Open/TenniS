@@ -11,6 +11,11 @@ namespace ts {
     namespace tensor {
         Tensor from(const std::string &value);
 
+        template<size_t _size>
+        Tensor from(const char (&value)[_size]) { return from(std::string(value)); }
+
+        Tensor from(const char *value) { return from(std::string(value)); }
+
         Tensor from(int8_t value);
 
         Tensor from(int16_t value);
