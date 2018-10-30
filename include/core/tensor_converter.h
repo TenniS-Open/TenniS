@@ -14,9 +14,9 @@ namespace ts {
 
         TensorConverter();
 
-        TensorConverter(const Device &device);
+        explicit TensorConverter(const MemoryDevice &device);
 
-        TensorConverter(const MemoryController::shared &controller);
+        explicit TensorConverter(const MemoryController::shared &controller);
 
         Tensor from(const std::string &value) const;
 
@@ -53,7 +53,7 @@ namespace ts {
         Tensor convert(const Tensor &a, TYPE type) const;
 
     private:
-        MemoryController::shared m_controller;
+        mutable MemoryController::shared m_controller;
     };
 
     static const TensorConverter &tensor_converter();
