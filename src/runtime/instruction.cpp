@@ -94,7 +94,7 @@ namespace ts {
 
     std::string DataSagmentInstruction::str() const {
         std::ostringstream oss;
-        oss << "<Data: @" << m_data_index << ">";
+        oss << "<Const: @" << m_data_index << ">";
         return oss.str();
     }
 }
