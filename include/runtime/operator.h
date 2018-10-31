@@ -32,6 +32,7 @@ namespace ts {
         virtual ~Operator() = default;
 
         // explicit Operator(const std::string &name) : m_name(name) {}
+        virtual void init();
 
         // work on tensor stack, same as call
         virtual int run(Stack &stack) = 0;

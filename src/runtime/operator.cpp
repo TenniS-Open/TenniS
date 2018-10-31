@@ -139,4 +139,18 @@ namespace ts {
     bool Operator::is_in_params(const std::string &name) {
         return m_params.find(name) != m_params.end();
     }
+
+    void Operator::init() {
+        if (!this->check_params()) {
+            std::ostringstream oss;
+            auto unsatisfied_fields = this->unsatisfied_fields();
+            oss << "Operator has unsatisfied fields: ";
+            for (size_t i = 0; i < unsatisfied_fields.size(); ++i) {
+                if (i) oss << ", ";
+                oss << "\"" << unsatisfied_fields[i] << "\"";
+            }
+
+            throw Exception(oss.str());
+        }
+    }
 }
