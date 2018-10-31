@@ -114,4 +114,23 @@ namespace ts {
             return casted;
         }
     }
+
+    template<typename T>
+    Tensor tensor_builder<T>::build(const std::vector<T> &value) {
+        auto controller = std::make_shared<DynamicMemoryController>(MemoryDevice(CPU));
+        Tensor t(controller, detype<T>::id, {int(value.size())});
+        std::memcpy(t.data(), value.data(), value.size() * sizeof(T));
+        return t;
+    }
 }
+
+template class ts::tensor_builder<ts::type<ts::INT8>::declare>;
+template class ts::tensor_builder<ts::type<ts::UINT8>::declare>;
+template class ts::tensor_builder<ts::type<ts::INT16>::declare>;
+template class ts::tensor_builder<ts::type<ts::UINT16>::declare>;
+template class ts::tensor_builder<ts::type<ts::INT32>::declare>;
+template class ts::tensor_builder<ts::type<ts::UINT32>::declare>;
+template class ts::tensor_builder<ts::type<ts::INT64>::declare>;
+template class ts::tensor_builder<ts::type<ts::UINT64>::declare>;
+template class ts::tensor_builder<ts::type<ts::FLOAT32>::declare>;
+template class ts::tensor_builder<ts::type<ts::FLOAT64>::declare>;

@@ -8,6 +8,18 @@
 #include "tensor.h"
 
 namespace ts {
+    template <typename T>
+    class tensor_builder
+    {
+        static Tensor build(const T &value) {
+            return build(std::vector<T>(1, value));
+        }
+        static Tensor build(const std::initializer_list<T> &value) {
+            return build(std::vector<T>(value.begin(), value.end()));
+        }
+        static Tensor build(const std::vector<T> &value);
+    };
+
     namespace tensor {
         Tensor from(const std::string &value);
 
@@ -49,6 +61,17 @@ namespace ts {
         Tensor cast(TYPE type, const Tensor &value);
     }
 }
+
+extern template class ts::tensor_builder<ts::type<ts::INT8>::declare>;
+extern template class ts::tensor_builder<ts::type<ts::UINT8>::declare>;
+extern template class ts::tensor_builder<ts::type<ts::INT16>::declare>;
+extern template class ts::tensor_builder<ts::type<ts::UINT16>::declare>;
+extern template class ts::tensor_builder<ts::type<ts::INT32>::declare>;
+extern template class ts::tensor_builder<ts::type<ts::UINT32>::declare>;
+extern template class ts::tensor_builder<ts::type<ts::INT64>::declare>;
+extern template class ts::tensor_builder<ts::type<ts::UINT64>::declare>;
+extern template class ts::tensor_builder<ts::type<ts::FLOAT32>::declare>;
+extern template class ts::tensor_builder<ts::type<ts::FLOAT64>::declare>;
 
 
 
