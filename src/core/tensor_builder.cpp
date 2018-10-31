@@ -6,7 +6,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <unordered_set>
-#include "core/tensor_converter.h"
+#include "core/tensor_builder.h"
 
 namespace ts {
     namespace tensor {
