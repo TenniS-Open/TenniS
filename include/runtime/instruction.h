@@ -69,6 +69,8 @@ namespace ts {
 
         explicit DataSagmentInstruction(int data_index);
 
+        int data_index() const { return m_data_index; }
+
         void run(Workbench &workbench) final;
 
         std::string str() const final;

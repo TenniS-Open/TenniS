@@ -109,10 +109,29 @@ namespace ts {
         // save if compile a node, whose nodes needed directly or indirectly
         map<Node, set<Node>> map_node_refs = build_node_refs(outputs);
 
+        map<Node, int> map_node_data_sagment_index;
+
         // convert graph to instructions
         std::deque<Node> simulator;
         map<Node, size_t> working_nodes;
         size_t unsolved_node_count = 0;
+
+        /**
+         * \brief add node data sagment
+         * \return data index
+         */
+        auto push_data_sagment = [&](Node node) -> int {
+            auto node_it = map_node_data_sagment_index.find(node);
+            if (node_it != map_node_data_sagment_index.end()) {
+                return node_it->second;
+            }
+            auto &bubble = node.ref<Bubble>();
+            auto value = bubble.get("value");
+            auto data_index = int(block.data_sagment.size());
+            block.data_sagment.push_back(value);
+            map_node_data_sagment_index.insert(std::make_pair(node, data_index));
+            return data_index;
+        };
 
         /**
          * \brief add node to simulator
@@ -231,7 +250,10 @@ namespace ts {
 
             // case2-0: use Const
             if (bubble.op() == Bubble::Const) {
-                // TODO: add const getter
+                int data_index = push_data_sagment(node);
+                block.instructions.push_back(std::make_shared<DataSagmentInstruction>(data_index));
+                simulator_pop();
+                continue;
             }
 
             // case2-1: use Variable

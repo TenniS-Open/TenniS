@@ -82,6 +82,18 @@ namespace ts {
             return nullptr;
         }
 
+        // link data sagment
+        // TODO: link multi-data-sagment
+        auto data_sagment_base = int(bench->m_data_sagment->size());
+        for (auto &inst : block.instructions) {
+            auto data_sagment_inst = dynamic_cast<DataSagmentInstruction*>(inst.get());
+            if (data_sagment_inst == nullptr) continue;
+            inst = std::make_shared<DataSagmentInstruction>(data_sagment_inst->data_index() + data_sagment_base);
+        }
+        for (auto &data : block.data_sagment) {
+            bench->m_data_sagment->clone_push(data);
+        }
+
         // binding instructions
         bench->m_program = block.instructions;
         // binding input and output shots

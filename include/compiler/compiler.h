@@ -16,6 +16,7 @@ namespace ts {
         int nargs = 0;
         int nresults = 0;
         std::vector<Instruction::shared> instructions;
+        std::vector<Tensor> data_sagment;
     };
 
     class Compiler {
