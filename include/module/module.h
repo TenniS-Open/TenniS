@@ -1,5 +1,5 @@
 //
-// Created by seeta on 2018/7/18.
+// Created by kier on 2018/7/18.
 //
 
 #ifndef TENSORSTACK_MODULE_MODULE_H
@@ -14,6 +14,8 @@
 namespace ts {
     class Bubble {
     public:
+        using self = Bubble;
+
         template<typename K, typename V>
         using map = std::unordered_map<K, V>;
         using param_dict = map<std::string, Tensor>;
@@ -28,6 +30,8 @@ namespace ts {
         const std::string &name() const { return m_name; }
 
         const param_dict &params() const { return m_params; }
+
+        bool has(const std::string &param) const;
 
         void set(const std::string &param, const Tensor &value);
 
@@ -53,6 +57,8 @@ namespace ts {
          * Parameters
          */
         param_dict m_params;
+
+        std::string fuzzy_param_name(const std::string &name);
 
     public:
         static const char *const Parameter; // Mean must input in graph

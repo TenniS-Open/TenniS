@@ -1,12 +1,12 @@
 //
-// Created by seeta on 2018/7/18.
+// Created by kier on 2018/7/18.
 //
 
 #include <unordered_set>
 #include <queue>
+
 #include "module/module.h"
-#include <unordered_set>
-#include <module/module.h>
+#include "utils/box.h"
 
 namespace ts {
     const char *const Bubble::Parameter = "<param>";
@@ -18,26 +18,55 @@ namespace ts {
         return EndPoints.find(op) != EndPoints.end();
     }
 
-
+    bool Bubble::has(const std::string &param) const {
+        return this->m_params.find(param) != this->m_params.end();
+    }
 
     void Bubble::set(const std::string &param, const Tensor &value) {
         this->m_params.insert(std::make_pair(param, value));
     }
 
     Tensor &Bubble::get(const std::string &param) {
-        return this->m_params.at(param);
+        auto param_it = m_params.find(param);
+        if (param_it == m_params.end()) {
+            throw Exception(
+                    std::string("Unidentified param \"") + param + "\", did you mean \"" + fuzzy_param_name(param) +
+                    "\"");
+        }
+        return param_it->second;
     }
 
     const Tensor &Bubble::get(const std::string &param) const {
-        return this->m_params.at(param);
+        return const_cast<self *>(this)->get(param);
     }
 
     void Bubble::clear(const std::string &param) {
-        this->m_params.erase(param);
+        auto param_it = m_params.find(param);
+        if (param_it == m_params.end()) {
+            throw Exception(
+                    std::string("Unidentified param \"") + param + "\", did you mean \"" + fuzzy_param_name(param) +
+                    "\"");
+        }
+        this->m_params.erase(param_it);
     }
 
     void Bubble::clear_params() {
         this->m_params.clear();
+    }
+
+    std::string Bubble::fuzzy_param_name(const std::string &name) {
+        if (m_params.empty()) return "";
+        int min_edit_distance = INT_MAX;
+        std::string closest_name;
+        for (auto &param_tensor_pair : m_params) {
+            auto &target_name = param_tensor_pair.first;
+            int dist = edit_distance(name, target_name);
+            if (dist < min_edit_distance) {
+                closest_name = target_name;
+                min_edit_distance = dist;
+            }
+        }
+        return closest_name;
     }
 
     void Module::load(Graph g) {
