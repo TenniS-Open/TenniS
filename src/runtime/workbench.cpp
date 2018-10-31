@@ -77,11 +77,9 @@ namespace ts {
         auto module_inputs = module->inputs();
         auto module_outputs = module->outputs();
         InstructionBlock block;
-        try {
-            block = compiler.compile(module_inputs, module_outputs);
-        } catch (const Exception &e) {
-            return nullptr;
-        }
+
+        // never swallow any exception
+        block = compiler.compile(module_inputs, module_outputs);
 
         // link data sagment
         // TODO: link multi-data-sagment
