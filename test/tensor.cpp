@@ -3,7 +3,7 @@
 //
 
 #include <core/tensor.h>
-#include <core/type.h>
+#include <core/dtype.h>
 #include <iostream>
 #include <core/scan.h>
 

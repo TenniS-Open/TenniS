@@ -261,5 +261,5 @@ namespace ts {
     }
 }
 
-template class ts::cpu::math<ts::type<ts::FLOAT32>::declare>;
-template class ts::cpu::math<ts::type<ts::FLOAT64>::declare>;
+template class ts::cpu::math<ts::dtype<ts::FLOAT32>::declare>;
+template class ts::cpu::math<ts::dtype<ts::FLOAT64>::declare>;

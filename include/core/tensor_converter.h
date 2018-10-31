@@ -58,20 +58,20 @@ namespace ts {
 
         std::string to_string(const Tensor &value);
 
-        Tensor cast(TYPE type, const Tensor &value);
+        Tensor cast(DTYPE dtype, const Tensor &value);
     }
 }
 
-extern template class ts::tensor_builder<ts::type<ts::INT8>::declare>;
-extern template class ts::tensor_builder<ts::type<ts::UINT8>::declare>;
-extern template class ts::tensor_builder<ts::type<ts::INT16>::declare>;
-extern template class ts::tensor_builder<ts::type<ts::UINT16>::declare>;
-extern template class ts::tensor_builder<ts::type<ts::INT32>::declare>;
-extern template class ts::tensor_builder<ts::type<ts::UINT32>::declare>;
-extern template class ts::tensor_builder<ts::type<ts::INT64>::declare>;
-extern template class ts::tensor_builder<ts::type<ts::UINT64>::declare>;
-extern template class ts::tensor_builder<ts::type<ts::FLOAT32>::declare>;
-extern template class ts::tensor_builder<ts::type<ts::FLOAT64>::declare>;
+extern template class ts::tensor_builder<ts::dtype<ts::INT8>::declare>;
+extern template class ts::tensor_builder<ts::dtype<ts::UINT8>::declare>;
+extern template class ts::tensor_builder<ts::dtype<ts::INT16>::declare>;
+extern template class ts::tensor_builder<ts::dtype<ts::UINT16>::declare>;
+extern template class ts::tensor_builder<ts::dtype<ts::INT32>::declare>;
+extern template class ts::tensor_builder<ts::dtype<ts::UINT32>::declare>;
+extern template class ts::tensor_builder<ts::dtype<ts::INT64>::declare>;
+extern template class ts::tensor_builder<ts::dtype<ts::UINT64>::declare>;
+extern template class ts::tensor_builder<ts::dtype<ts::FLOAT32>::declare>;
+extern template class ts::tensor_builder<ts::dtype<ts::FLOAT64>::declare>;
 
 
 

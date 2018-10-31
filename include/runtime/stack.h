@@ -7,7 +7,7 @@
 
 #include "core/device.h"
 #include "core/controller.h"
-#include "core/type.h"
+#include "core/dtype.h"
 #include "core/tensor.h"
 #include "global/converter.h"
 
@@ -30,16 +30,16 @@ namespace ts {
                 : m_device(device), m_controller(controller) {}
 
         // return new Tensor, but not in stack
-        Tensor make(TYPE type, const Shape &shape) {
-            return Tensor(m_controller, type, shape);
+        Tensor make(DTYPE dtype, const Shape &shape) {
+            return Tensor(m_controller, dtype, shape);
         }
 
-        Tensor *push(TYPE type, const Shape &shape) {
-            return this->push(this->make(type, shape));
+        Tensor *push(DTYPE dtype, const Shape &shape) {
+            return this->push(this->make(dtype, shape));
         }
 
         Tensor *push(const Tensor::Prototype &proto) {
-            return this->push(proto.type(), proto.sizes());
+            return this->push(proto.dtype(), proto.sizes());
         }
 
         Tensor *push(const Tensor &tensor) {
@@ -64,7 +64,7 @@ namespace ts {
         Tensor *clone(int i) {
             auto &tensor = *this->index(i);
             auto &proto = tensor.proto();
-            auto dolly = this->push(proto.type(), proto.sizes());
+            auto dolly = this->push(proto.dtype(), proto.sizes());
             auto copy_converter = this->converter();
             copy_converter(m_device.id(), dolly->data(),
                            m_device.id(), tensor.data(),

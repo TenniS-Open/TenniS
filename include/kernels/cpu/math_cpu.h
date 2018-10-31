@@ -56,8 +56,8 @@ namespace ts {
     }
 }
 
-extern template class ts::cpu::math<ts::type<ts::FLOAT32>::declare>;
-extern template class ts::cpu::math<ts::type<ts::FLOAT64>::declare>;
+extern template class ts::cpu::math<ts::dtype<ts::FLOAT32>::declare>;
+extern template class ts::cpu::math<ts::dtype<ts::FLOAT64>::declare>;
 
 
 #endif //TENSORSTACK_KERNELS_CPU_MATH_CPU_H

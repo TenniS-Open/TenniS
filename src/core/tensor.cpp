@@ -8,14 +8,14 @@
 #include "core/tensor.h"
 
 namespace ts {
-    Tensor::Tensor(MemoryController::shared controller, TYPE type, const Shape &_shape)
-            : Tensor(controller, Prototype(type, _shape)) {}
+    Tensor::Tensor(MemoryController::shared controller, DTYPE dtype, const Shape &_shape)
+            : Tensor(controller, Prototype(dtype, _shape)) {}
 
-    Tensor::Tensor(const MemoryDevice &device, TYPE type, const Shape &_shape)
-            : Tensor(device, Prototype(type, _shape)) {}
+    Tensor::Tensor(const MemoryDevice &device, DTYPE dtype, const Shape &_shape)
+            : Tensor(device, Prototype(dtype, _shape)) {}
 
-    Tensor::Tensor(TYPE type, const Shape &_shape)
-            : Tensor(Prototype(type, _shape)) {}
+    Tensor::Tensor(DTYPE dtype, const Shape &_shape)
+            : Tensor(Prototype(dtype, _shape)) {}
 
     Tensor::Tensor(MemoryController::shared controller, const Tensor::Prototype &proto)
         : m_memory(controller->alloc(static_cast<size_t>(proto.count() * proto.type_bytes())))
@@ -50,7 +50,7 @@ namespace ts {
     }
 
     Tensor Tensor::reshape(const Shape &shape) const {
-        Prototype proto(this->type(), shape);
+        Prototype proto(this->dtype(), shape);
         assert(proto.count() == this->count());
         Tensor t = *this;
         t.m_proto = proto;

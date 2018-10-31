@@ -6,7 +6,7 @@
 #define TENSORSTACK_CORE_TENSOR_H
 
 #include "memory.h"
-#include "type.h"
+#include "dtype.h"
 #include "core/controller.h"
 
 #include <vector>
@@ -22,17 +22,17 @@ namespace ts {
 
             Prototype(const Shape &sizes) : m_sizes(sizes) {}
 
-            Prototype(TYPE type, const Shape &sizes) : m_type(type), m_sizes(sizes) {}
+            Prototype(DTYPE dtype, const Shape &sizes) : m_dtype(dtype), m_sizes(sizes) {}
 
-            explicit Prototype(TYPE type) : m_type(type) {}
+            explicit Prototype(DTYPE dtype) : m_dtype(dtype) {}
 
-            TYPE type() const { return m_type; }
+            DTYPE dtype() const { return m_dtype; }
 
             size_t dims() const { return m_sizes.size(); }
 
             const Shape &sizes() const { return m_sizes; }
 
-            int type_bytes() const { return ts::type_bytes(m_type); }
+            int type_bytes() const { return ts::type_bytes(m_dtype); }
 
             int count() const { return count(m_sizes); };
 
@@ -43,7 +43,7 @@ namespace ts {
             }
 
         private:
-            TYPE m_type = VOID;
+            DTYPE m_dtype = VOID;
             std::vector<int> m_sizes = {};  ///< ?in reversed mode?
             // std::string m_layout; ///< NCHW or NHWC
         };
@@ -51,12 +51,12 @@ namespace ts {
         using self = Tensor;    ///< self class
         using shared = std::shared_ptr<self>;  ///< smart pointer
 
-        Tensor(MemoryController::shared controller, TYPE type,
+        Tensor(MemoryController::shared controller, DTYPE dtype,
                const Shape &_shape);   // allocate memory from controller
 
-        Tensor(const MemoryDevice &device, TYPE type, const Shape &_shape);
+        Tensor(const MemoryDevice &device, DTYPE dtype, const Shape &_shape);
 
-        Tensor(TYPE type, const Shape &_shape);
+        Tensor(DTYPE dtype, const Shape &_shape);
 
         Tensor(MemoryController::shared controller, const Prototype &proto);   // allocate memory from controller
 
@@ -70,7 +70,7 @@ namespace ts {
 
         const Device &device() const { return m_memory.device(); }
 
-        TYPE type() const { return m_proto.type(); }
+        DTYPE dtype() const { return m_proto.dtype(); }
 
         size_t dims() const { return m_proto.dims(); }
 
