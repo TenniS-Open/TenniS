@@ -3,11 +3,16 @@
 //
 
 #include "global/operator_factory.h"
+#include <map>
 
 namespace ts {
     using Name = std::pair<DeviceType, std::string>;
-    static std::map<Name, OperatorCreator> &MapNameCreator() {
-        static std::map<Name, OperatorCreator> map_name_creator;
+
+    template <typename K, typename V>
+    using map = std::map<K, V>;
+
+    static map<Name, OperatorCreator> &MapNameCreator() {
+        static map<Name, OperatorCreator> map_name_creator;
         return map_name_creator;
     };
 
