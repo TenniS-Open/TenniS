@@ -18,6 +18,28 @@ namespace ts {
         return EndPoints.find(op) != EndPoints.end();
     }
 
+
+
+    void Bubble::set(const std::string &param, const Tensor &value) {
+        this->m_params.insert(std::make_pair(param, value));
+    }
+
+    Tensor &Bubble::get(const std::string &param) {
+        return this->m_params.at(param);
+    }
+
+    const Tensor &Bubble::get(const std::string &param) const {
+        return this->m_params.at(param);
+    }
+
+    void Bubble::clear(const std::string &param) {
+        this->m_params.erase(param);
+    }
+
+    void Bubble::clear_params() {
+        this->m_params.clear();
+    }
+
     void Module::load(Graph g) {
         // calculate inputs and outputs
         auto nodes = g.nodes();

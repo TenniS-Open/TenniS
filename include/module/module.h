@@ -14,8 +14,9 @@
 namespace ts {
     class Bubble {
     public:
-        template <typename K, typename V>
+        template<typename K, typename V>
         using map = std::unordered_map<K, V>;
+        using param_dict = map<std::string, Tensor>;
 
         explicit Bubble(
                 const std::string &op,
@@ -23,12 +24,35 @@ namespace ts {
                 : m_op(op), m_name(name) {}
 
         const std::string &op() const { return m_op; }
+
         const std::string &name() const { return m_name; }
+
+        const param_dict &params() const { return m_params; }
+
+        void set(const std::string &param, const Tensor &value);
+
+        Tensor &get(const std::string &param);
+
+        const Tensor &get(const std::string &param) const;
+
+        void clear(const std::string &param);
+
+        void clear_params();
+
     private:
+        /**
+         * Operator name
+         */
         std::string m_op;
+        /**
+         * Bubble name
+         */
         std::string m_name;
 
-        map<std::string, Tensor> m_params;
+        /**
+         * Parameters
+         */
+        param_dict m_params;
 
     public:
         static const char *const Parameter; // Mean must input in graph
