@@ -90,6 +90,12 @@ namespace ts {
         template<typename T>
         const T *data() const { return m_memory.data<T>(); }
 
+        template<typename T>
+        T &data(size_t i) { return m_memory.data<T>()[i]; }
+
+        template<typename T>
+        const T &data(size_t i) const { return m_memory.data<T>()[i]; }
+
         Tensor clone(MemoryController::shared controller) const;
 
         Tensor::shared clone_shared(MemoryController::shared controller) const;
