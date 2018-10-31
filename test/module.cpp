@@ -8,6 +8,8 @@
 #include <runtime/workbench.h>
 #include <global/operator_factory.h>
 #include <utils/ctxmgr.h>
+#include <core/tensor_builder.h>
+#include <module/menu.h>
 
 #include <cstring>
 
@@ -45,24 +47,10 @@ public:
 TS_REGISTER_OPERATOR(Sum, ts::CPU, "sum")
 
 namespace ts {
-
-    namespace op {
-        Node param(const std::string &name) {
-            auto &g = ctx::ref<Graph>();
-            return g.make<Bubble>(Bubble::Parameter, name);
-        }
-        Node sum(const std::string &name, const std::vector<Node> &nodes) {
-            auto &g = ctx::ref<Graph>();
-            Node result = g.make<Bubble>("sum", name);
-            Node::Link(result, nodes);
-            return result;
-        }
-    }
-
     Node block(const std::string &prefix, Node in) {
-        auto conv = op::sum(prefix + "/" + "a", {in});
-        auto bn = op::sum(prefix + "/" + "b", {conv});
-        auto shortcut = op::sum(prefix + "/" + "out", {in, bn});
+        auto conv = bubble::op(prefix + "/" + "a", "sum", {in});
+        auto bn = bubble::op(prefix + "/" + "b", "sum", {conv});
+        auto shortcut = bubble::op(prefix + "/" + "out", "sum", {in, bn});
         return shortcut;
     }
 
@@ -92,10 +80,11 @@ int main()
 //    auto c = op::sum("c", {b});
 //    auto d = op::sum("d", {a, c});
 
-    auto a = op::param("a");
-    auto b = op::param("b");
+    auto a = bubble::param("a");
+    auto b = bubble::param("b");
+    auto data = bubble::data("data", tensor::from<float>(3));
 
-    auto c = op::sum("c", {a, b});
+    auto c = bubble::op("c", "sum", {a, b, data});
 
     // setup module
     std::shared_ptr<Module> m = std::make_shared<Module>();
