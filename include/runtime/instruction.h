@@ -58,6 +58,25 @@ namespace ts {
         virtual void run(Stack &stack) = 0;
     };
 
+    /**
+     * \brief push data sagment to stack
+     */
+    class DataSagmentInstruction : public Instruction {
+    public:
+        using self = DataSagmentInstruction;    ///< self class
+        using shared = std::shared_ptr<self>;  ///< smart pointer
+        using supper = Instruction;
+
+        explicit DataSagmentInstruction(int data_index);
+
+        void run(Workbench &workbench) final;
+
+        std::string str() const final;
+
+    private:
+        int m_data_index;
+    };
+
     class OperatorInstruction : public Instruction {
     public:
         using self = OperatorInstruction;    ///< self class

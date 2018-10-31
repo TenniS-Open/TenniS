@@ -33,6 +33,8 @@ namespace ts {
 
         void jump_absolute(size_t pointer);
 
+        void push_data_sagment(int data_index);
+
         // clear all stack
         void clear() { this->m_stack->clear(); }
 
@@ -66,7 +68,7 @@ namespace ts {
         MemoryController::shared m_flow_memory;
         MemoryController::shared m_dynamic_memory;
         Stack::shared m_stack;  // save running memory, data area
-        // Stack m_heap;   // save static area
+        Stack::shared m_data_sagment;   // save static area
         // map slot, means <tensor'name, tensor's index in stack>
         map<std::string, int> m_map_input_slots;
         map<std::string, int> m_map_output_slots;

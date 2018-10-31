@@ -82,4 +82,19 @@ namespace ts {
     std::string Instruction::repr() const {
         return this->str();
     }
+
+    DataSagmentInstruction::DataSagmentInstruction(int data_index)
+        : m_data_index(data_index) {
+
+    }
+
+    void DataSagmentInstruction::run(Workbench &workbench) {
+        workbench.push_data_sagment(m_data_index);
+    }
+
+    std::string DataSagmentInstruction::str() const {
+        std::ostringstream oss;
+        oss << "<Data: @" << m_data_index << ">";
+        return oss.str();
+    }
 }

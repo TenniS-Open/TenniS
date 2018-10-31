@@ -19,6 +19,7 @@ namespace ts {
                 memory_device);   // TODO: Make real flow memory controller
         this->m_dynamic_memory = std::make_shared<DynamicMemoryController>(memory_device);
         this->m_stack = std::make_shared<Stack>(memory_device, this->m_flow_memory);
+        this->m_data_sagment = std::make_shared<Stack>(memory_device, this->m_static_memory);
     }
 
     void Workbench::run() {
@@ -203,5 +204,9 @@ namespace ts {
                     "Can not identify the name \"" + name + "\", did you mean: " + fuzzy_name(m_map_input_slots, name));
         }
         return this->input(slot_it->second);
+    }
+
+    void Workbench::push_data_sagment(int data_index) {
+        this->m_stack->push(*this->m_data_sagment->index(data_index));
     }
 }
