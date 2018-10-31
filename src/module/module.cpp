@@ -69,6 +69,9 @@ namespace ts {
                 inputs.push_back(node);
                 continue;
             }
+            if (op.op() == Bubble::Const) {
+                continue;
+            }
             if (node.inputs().empty()) {
                 throw ts::Exception("Found not computable node");
             }
