@@ -105,6 +105,24 @@ namespace ts {
     template <> struct type<CHAR8> { using declare = char; };
     template <> struct type<CHAR16> { using declare = char16_t; };
     template <> struct type<CHAR32> { using declare = char32_t; };
+
+    template <typename T> struct detype { static const TYPE id = VOID; };
+
+    template <> struct detype<void> { static const TYPE id = VOID; };
+    template <> struct detype<int8_t> { static const TYPE id = INT8; };
+    template <> struct detype<uint8_t> { static const TYPE id = UINT8; };
+    template <> struct detype<int16_t> { static const TYPE id = INT16; };
+    template <> struct detype<uint16_t> { static const TYPE id = UINT16; };
+    template <> struct detype<int32_t> { static const TYPE id = INT32; };
+    template <> struct detype<uint32_t> { static const TYPE id = UINT32; };
+    template <> struct detype<int64_t> { static const TYPE id = INT64; };
+    template <> struct detype<uint64_t> { static const TYPE id = UINT64; };
+    template <> struct detype<float> { static const TYPE id = FLOAT32; };
+    template <> struct detype<double> { static const TYPE id = FLOAT64; };
+    template <> struct detype<void*> { static const TYPE id = PTR; };
+    template <> struct detype<char> { static const TYPE id = CHAR8; };
+    template <> struct detype<char16_t> { static const TYPE id = CHAR16; };
+    template <> struct detype<char32_t> { static const TYPE id = CHAR32; };
 }
 
 
