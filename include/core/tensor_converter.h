@@ -11,6 +11,7 @@ namespace ts {
     template <typename T>
     class tensor_builder
     {
+    public:
         static Tensor build(const T &value) {
             return build(std::vector<T>(1, value));
         }
@@ -28,25 +29,14 @@ namespace ts {
 
         inline Tensor from(const char *value) { return from(std::string(value)); }
 
-        Tensor from(int8_t value);
+        template <typename T>
+        Tensor from(const T value) { return tensor_builder<T>::build(value); }
 
-        Tensor from(int16_t value);
+        template <typename T>
+        Tensor from(const std::initializer_list<T> &value) { return tensor_builder<T>::build(value); }
 
-        Tensor from(int32_t value);
-
-        Tensor from(int64_t value);
-
-        Tensor from(uint8_t value);
-
-        Tensor from(uint16_t value);
-
-        Tensor from(uint32_t value);
-
-        Tensor from(uint64_t value);
-
-        Tensor from(float value);
-
-        Tensor from(double value);
+        template <typename T>
+        Tensor from(const std::vector<T> &value) { return tensor_builder<T>::build(value); }
 
         int to_int(const Tensor &value);
 

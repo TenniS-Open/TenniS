@@ -23,4 +23,7 @@ int main() {
 
     std::cout << tf.data<int>()[0] << std::endl;
 
+    Tensor tti = tensor::from(10.0f);
+    std::cout << tensor::to_float(tti) << std::endl;
+
 }
