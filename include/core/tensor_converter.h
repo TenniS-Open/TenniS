@@ -12,9 +12,9 @@ namespace ts {
         Tensor from(const std::string &value);
 
         template<size_t _size>
-        Tensor from(const char (&value)[_size]) { return from(std::string(value)); }
+        inline Tensor from(const char (&value)[_size]) { return from(std::string(value)); }
 
-        Tensor from(const char *value) { return from(std::string(value)); }
+        inline Tensor from(const char *value) { return from(std::string(value)); }
 
         Tensor from(int8_t value);
 
@@ -46,7 +46,7 @@ namespace ts {
 
         std::string to_string(const Tensor &value);
 
-        Tensor cast(TYPE type, const Tensor &val);
+        Tensor cast(TYPE type, const Tensor &value);
     }
 }
 
