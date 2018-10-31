@@ -91,6 +91,17 @@ namespace ts {
             op->set(param.first, param.second);
         }
         // TODO: check param if valid
+        if (!op->check_params()) {
+            std::ostringstream oss;
+            auto unsatisfied_fields = op->unsatisfied_fields();
+            oss << "Operator \"" << bubble.op() << "\" has unsatisfied fields: ";
+            for (size_t i = 0; i < unsatisfied_fields.size(); ++i) {
+                if (i) oss << ", ";
+                oss << "\"" << unsatisfied_fields[i] << "\"";
+            }
+
+            throw Exception(oss.str());
+        }
         return std::make_shared<OperatorInstruction>(op, node.inputs().size(), 1, description);
     }
 
