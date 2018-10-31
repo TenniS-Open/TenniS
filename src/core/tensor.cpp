@@ -3,6 +3,7 @@
 //
 
 #include <core/tensor.h>
+#include <cassert>
 
 #include "core/tensor.h"
 
@@ -46,5 +47,13 @@ namespace ts {
 
     bool Tensor::empty() const {
         return this->count() == 0;
+    }
+
+    Tensor Tensor::reshape(const Shape &shape) const {
+        Prototype proto(this->type(), shape);
+        assert(proto.count() == this->count());
+        Tensor t = *this;
+        t.m_proto = proto;
+        return t;
     }
 }

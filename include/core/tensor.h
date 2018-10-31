@@ -94,6 +94,8 @@ namespace ts {
 
         Tensor::shared clone_shared(MemoryController::shared controller) const;
 
+        Tensor reshape(const Shape &shape) const;
+
     private:
         Memory m_memory;
         Prototype m_proto;
