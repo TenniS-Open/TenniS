@@ -39,6 +39,8 @@ namespace ts {
         // infer output size by input size, only for size allocate
         virtual int infer(Stack &stack, std::vector<Tensor::Prototype> &output) = 0;
 
+        bool has(const std::string &param) const;
+
         void set(const std::string &param, const Tensor &value);
 
         Tensor &get(const std::string &param);
