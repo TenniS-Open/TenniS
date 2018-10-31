@@ -122,7 +122,7 @@ namespace ts {
 
             Tensor casted(cpu_controller, dtype, cpu_value.sizes());
 
-            std::unordered_set<DTYPE> unsupported_types =
+            std::unordered_set<int> unsupported_types =
                     {UNKNOWN8, UNKNOWN16, UNKNOWN32, UNKNOWN64, UNKNOWN128, VOID, PTR};
 
             if (unsupported_types.find(dtype) != unsupported_types.end()
