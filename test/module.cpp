@@ -15,6 +15,15 @@
 
 class Sum : public ts::Operator {
 public:
+    using supper = ts::Operator;
+    Sum() {
+        field("test_field", OPTIONAL);
+    }
+
+    virtual void init() {
+        supper::init();
+    }
+
     virtual int run(ts::Stack &stack) {
         int input_num = stack.size();
         std::vector<ts::Tensor::Prototype> output;
@@ -104,7 +113,14 @@ int main()
     ComputingDevice device(CPU, 0);
     // Workbench bench(device);
 
-    auto bench = Workbench::Load(m, device);
+    Workbench::shared bench;
+
+    try {
+        bench = Workbench::Load(m, device);
+    } catch (const Exception &e) {
+        std::cout << e.what() << std::endl;
+        return -1;
+    }
 
     Tensor input_a(FLOAT32, {1});
     Tensor input_b(FLOAT32, {1});
