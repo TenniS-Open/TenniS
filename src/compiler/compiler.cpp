@@ -80,6 +80,20 @@ namespace ts {
         return map_node_refs;
     }
 
+    Instruction::shared Compiler::convert_operator_instruction(const Node &node) {
+        auto &bubble = node.ref<Bubble>();
+        auto creator = QueryOperatorCreator(m_computing_device.type(), bubble.op());
+        if (creator == nullptr) throw Exception("Not supported operator " + bubble.op());
+        std::string description = bubble.op() + "(in=" + std::to_string(node.inputs().size()) + ", out=" +
+                                  std::to_string(1) + ")";
+        auto op = creator();
+        for (auto &param : bubble.params()) {
+            op->set(param.first, param.second);
+        }
+        // TODO: check param if valid
+        return std::make_shared<OperatorInstruction>(op, node.inputs().size(), 1, description);
+    }
+
     // TODO: inputs only support Parameter, try support other op
     InstructionBlock Compiler::compile(const std::vector<Node> &inputs, const std::vector<Node> &outputs) {
         InstructionBlock block;
@@ -105,7 +119,7 @@ namespace ts {
          * \param node node ready to push
          */
         auto simulator_push = [&](Node node) {
-            auto &op = node.ref<Bubble>();
+            auto &bubble = node.ref<Bubble>();
             size_t i = simulator.size();
             auto it = working_nodes.find(node);
             if (it == working_nodes.end()) {
@@ -113,7 +127,7 @@ namespace ts {
             } else {
                 if (i < it->second) it->second = i;
             }
-            if (op.op() != Bubble::Parameter) {
+            if (bubble.op() != Bubble::Parameter) {
                 ++unsolved_node_count;
             }
             simulator.push_back(node);
@@ -125,13 +139,13 @@ namespace ts {
         auto simulator_pop = [&]() {
             if (simulator.empty()) return;
             auto node = simulator.back();
-            auto &op = node.ref<Bubble>();
+            auto &bubble = node.ref<Bubble>();
             size_t i = simulator.size() - 1;
             auto it = working_nodes.find(node);
             if (it != working_nodes.end() && it->second == i) {
                 working_nodes.erase(node);
             }
-            if (op.op() != Bubble::Parameter) {
+            if (bubble.op() != Bubble::Parameter) {
                 --unsolved_node_count;
             }
             simulator.pop_back();
@@ -173,8 +187,8 @@ namespace ts {
             int64_t i = int64_t(simulator.size()) - 1;
             while (i >= 0) {
                 auto &node = simulator[i];
-                auto &op = node.ref<Bubble>();
-                if (op.op() != Bubble::Parameter) return i;
+                auto &bubble = node.ref<Bubble>();
+                if (bubble.op() != Bubble::Parameter) return i;
                 --i;
             }
             return -1;
@@ -203,7 +217,7 @@ namespace ts {
         // TODO: check if there are some repeating computing brach
         while (unsolved_node_count) {
             auto node = simulator.back();
-            auto op = node.ref<Bubble>();
+            auto bubble = node.ref<Bubble>();
             // case1: check if node are same node
             auto i = simulator.size() - 1;
             auto it = working_nodes.find(node);
@@ -216,17 +230,17 @@ namespace ts {
             }
 
             // case2-0: use Const
-            if (op.op() == Bubble::Const) {
+            if (bubble.op() == Bubble::Const) {
                 // TODO: add const getter
             }
 
             // case2-1: use Variable
-            if (op.op() == Bubble::Variable) {
+            if (bubble.op() == Bubble::Variable) {
                 throw Exception(std::string("Not support ") + Bubble::Variable + " in this version.");
             }
 
             // case2: save input nodes, move last unsolved node to top
-            if (op.op() == Bubble::Parameter) {
+            if (bubble.op() == Bubble::Parameter) {
                 auto j = simulator_find_last_unsolved_node_index();
                 assert(j >= 0);
                 block.instructions.push_back(instruction::Stack::swap(int(i), int(j)));
@@ -244,12 +258,7 @@ namespace ts {
             }
 
             // case4: found a node need to be compute. query operator
-            auto creator = QueryOperatorCreator(m_computing_device.type(), op.op());
-            if (creator == nullptr) throw Exception("Not supported operator " + op.op());
-            std::string description = op.op() + "(in=" + std::to_string(node.inputs().size()) + ", out=" +
-                                      std::to_string(1) + ")";
-            block.instructions.push_back(
-                    std::make_shared<OperatorInstruction>(creator(), node.inputs().size(), 1, description));
+            block.instructions.push_back(convert_operator_instruction(node));
             simulator_pop();
             for (auto &input : node.inputs()) simulator_push(input);
         }
