@@ -8,7 +8,7 @@
 #include "core/tensor.h"
 
 namespace ts {
-    Tensor::Tensor(MemoryController::shared &controller, TYPE type, const Shape &_shape)
+    Tensor::Tensor(MemoryController::shared controller, TYPE type, const Shape &_shape)
             : Tensor(controller, Prototype(type, _shape)) {}
 
     Tensor::Tensor(const MemoryDevice &device, TYPE type, const Shape &_shape)
@@ -17,7 +17,7 @@ namespace ts {
     Tensor::Tensor(TYPE type, const Shape &_shape)
             : Tensor(Prototype(type, _shape)) {}
 
-    Tensor::Tensor(MemoryController::shared &controller, const Tensor::Prototype &proto)
+    Tensor::Tensor(MemoryController::shared controller, const Tensor::Prototype &proto)
         : m_memory(controller->alloc(static_cast<size_t>(proto.count() * proto.type_bytes())))
         , m_proto(proto) {}
 

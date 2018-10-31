@@ -51,14 +51,14 @@ namespace ts {
         using self = Tensor;    ///< self class
         using shared = std::shared_ptr<self>;  ///< smart pointer
 
-        Tensor(MemoryController::shared &controller, TYPE type,
+        Tensor(MemoryController::shared controller, TYPE type,
                const Shape &_shape);   // allocate memory from controller
 
         Tensor(const MemoryDevice &device, TYPE type, const Shape &_shape);
 
         Tensor(TYPE type, const Shape &_shape);
 
-        Tensor(MemoryController::shared &controller, const Prototype &proto);   // allocate memory from controller
+        Tensor(MemoryController::shared controller, const Prototype &proto);   // allocate memory from controller
 
         Tensor(const MemoryDevice &device, const Prototype &proto);
 
