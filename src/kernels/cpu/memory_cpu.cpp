@@ -2,8 +2,8 @@
 
 #include "utils/static.h"
 
-#include "global/allocator.h"
-#include "global/converter.h"
+#include "global/hard_allocator.h"
+#include "global/hard_converter.h"
 #include "global/memory_device.h"
 
 #include <cassert>

@@ -8,7 +8,7 @@
 #include <cstddef>
 
 #include "device.h"
-#include "global/allocator.h"
+#include "global/hard_allocator.h"
 
 namespace ts {
     /**

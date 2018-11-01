@@ -9,7 +9,7 @@
 #include "core/controller.h"
 #include "core/dtype.h"
 #include "core/tensor.h"
-#include "global/converter.h"
+#include "global/hard_converter.h"
 
 #include <vector>
 #include <deque>

@@ -6,7 +6,7 @@
 #include <algorithm>
 
 #include "core/memory.h"
-#include "global/converter.h"
+#include "global/hard_converter.h"
 
 namespace ts {
     static void *const FakeUsagePtr = (void *) (0x19910929);

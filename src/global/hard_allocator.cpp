@@ -2,7 +2,7 @@
 // Created by lby on 2018/3/11.
 //
 
-#include "global/allocator.h"
+#include "global/hard_allocator.h"
 #include "utils/static.h"
 
 #include <map>
