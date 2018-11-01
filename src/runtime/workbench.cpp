@@ -5,6 +5,7 @@
 #include <module/module.h>
 #include <core/device.h>
 #include <runtime/workbench.h>
+#include <utils/ctxmgr.h>
 
 #include "runtime/workbench.h"
 #include "global/memory_device.h"
@@ -21,6 +22,12 @@ namespace ts {
         this->m_dynamic_memory = std::make_shared<DynamicMemoryController>(memory_device);
         this->m_stack = std::make_shared<Stack>(memory_device, this->m_flow_memory);
         this->m_data_sagment = std::make_shared<Stack>(memory_device, this->m_static_memory);
+        this->m_thread_pool = std::make_shared<ThreadPool>(0);
+    }
+
+    Workbench::Workbench(const ComputingDevice &device, int computing_thread_number)
+            : self(device) {
+        this->set_computing_thread_number(computing_thread_number);
     }
 
     void Workbench::run() {
@@ -35,6 +42,9 @@ namespace ts {
             auto &arg = this->m_inputs[i];
             this->m_stack->clone_push(arg);
         }
+
+        // bind thread pool to any operator can using thread speed up
+        ctx::bind<ThreadPool>(m_thread_pool.get());
 
         // run
         while (m_pointer < m_program.size()) {
@@ -86,7 +96,7 @@ namespace ts {
         // TODO: link multi-data-sagment
         auto data_sagment_base = int(bench->m_data_sagment->size());
         for (auto &inst : block.instructions) {
-            auto data_sagment_inst = dynamic_cast<DataSagmentInstruction*>(inst.get());
+            auto data_sagment_inst = dynamic_cast<DataSagmentInstruction *>(inst.get());
             if (data_sagment_inst == nullptr) continue;
             inst = std::make_shared<DataSagmentInstruction>(data_sagment_inst->data_index() + data_sagment_base);
         }
@@ -180,5 +190,13 @@ namespace ts {
 
     void Workbench::push_data_sagment(int data_index) {
         this->m_stack->push(*this->m_data_sagment->index(data_index));
+    }
+
+    void Workbench::set_computing_thread_number(int computing_thread_number) {
+        this->m_thread_pool = std::make_shared<ThreadPool>(computing_thread_number < 0 ? 0 : computing_thread_number);
+    }
+
+    int Workbench::get_computing_thread_number() const {
+        return int(m_thread_pool->size());
     }
 }

@@ -7,12 +7,14 @@
 
 #include <memory>
 #include <queue>
+#include <unordered_map>
+
 #include "operator.h"
 #include "stack.h"
 #include "core/tensor.h"
 #include "instruction.h"
 #include "module/module.h"
-#include <unordered_map>
+#include "inside/thread_pool.h"
 
 namespace ts {
     class Workbench {
@@ -24,6 +26,14 @@ namespace ts {
         using map = std::unordered_map<K, V>;
 
         explicit Workbench(const ComputingDevice &device);
+
+        explicit Workbench(const ComputingDevice &device, int computing_thread_number);
+
+        ~Workbench() = default;
+
+        Workbench(const self &) = delete;
+
+        Workbench &operator=(const self &) = delete;
 
         Stack &stack() { return *this->m_stack; }
 
@@ -60,6 +70,10 @@ namespace ts {
 
         static shared Load(const Module::shared &module, const ComputingDevice &device);
 
+        void set_computing_thread_number(int computing_thread_number);
+
+        int get_computing_thread_number() const;
+
     private:
         ComputingDevice m_device;
         size_t m_pointer = 0;   // pointer to running function
@@ -75,6 +89,7 @@ namespace ts {
         // map tensor, means <tensor's index in stack, tensor>
         std::vector<Tensor> m_inputs;
         std::vector<Tensor> m_outputs;
+        ThreadPool::shared m_thread_pool;
     };
 }
 
