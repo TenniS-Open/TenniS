@@ -30,12 +30,52 @@ endif ()
 include_directories(${SOLUTION_DIR}/include)
 include_directories(${SOLUTION_DIR}/src)
 
-FILE(GLOB_RECURSE INCLUDE_FILES ${SOLUTION_DIR}/include/*.h)
+set(SOURCE_DIR ${SOLUTION_DIR})
 
-FILE(GLOB_RECURSE INCLUDE_SRC_FILES ${SOLUTION_DIR}/src/*.h)
+set(TENSORSTACK_MODULES compiler core engine global module runtime utils)
+set(TENSORSTACK_ACHIVES common cpu gpu) # in kernels and ops
 
-FILE(GLOB_RECURSE SRC_FILES ${SOLUTION_DIR}/src/*.cpp)
+add_definitions(-DTS_USE_SSE)
+# 4 types of achive
+# blas
+# Eigen
+# Ordinary
+# Ordinary with chipset result
 
+set(INCLUDE_FILES)
+set(SRC_FILES)
+set(SRC_INCLUDE_FILES)
+
+foreach (module ${TENSORSTACK_MODULES})
+    FILE(GLOB_RECURSE INCLUDE_${module}_FILES ${SOURCE_DIR}/include/${module}/*.h)
+    LIST(APPEND INCLUDE_FILES ${INCLUDE_${module}_FILES})
+
+    FILE(GLOB_RECURSE SRC_${module}_FILES ${SOURCE_DIR}/src/${module}/*.cpp)
+    LIST(APPEND SRC_FILES ${SRC_${module}_FILES})
+
+    FILE(GLOB_RECURSE SRC_INCLUDE_${module}_FILES ${SOURCE_DIR}/src/${module}/*.h)
+    LIST(APPEND SRC_INCLUDE_FILES ${SRC_INCLUDE_${module}_FILES})
+endforeach ()
+
+foreach (achive ${TENSORSTACK_ACHIVES})
+    FILE(GLOB_RECURSE INCLUDE_ARCHIVE_${achive}_FILES
+            ${SOURCE_DIR}/include/kernels/${achive}/*.h
+            ${SOURCE_DIR}/include/ops/${achive}/*.h
+            )
+    LIST(APPEND INCLUDE_FILES ${INCLUDE_ARCHIVE_${achive}_FILES})
+
+    FILE(GLOB_RECURSE SRC_ARCHIVE_${achive}_FILES
+            ${SOURCE_DIR}/src/kernels/${achive}/*.cpp
+            ${SOURCE_DIR}/src/ops/${achive}/*.cpp
+            )
+    LIST(APPEND SRC_FILES ${SRC_ARCHIVE_${achive}_FILES})
+
+    FILE(GLOB_RECURSE SRC_INCLUDE_ARCHIVE_${achive}_FILES
+            ${SOURCE_DIR}/src/kernels/${achive}/*.h
+            ${SOURCE_DIR}/src/ops/${achive}/*.h
+            )
+    LIST(APPEND SRC_INCLUDE_FILES ${SRC_INCLUDE_ARCHIVE_${achive}_FILES})
+endforeach ()
 
 add_library(${PROJECT_NAME}_STATIC STATIC ${INCLUDE_FILES} ${INCLUDE_SRC_FILES} ${SRC_FILES})
 add_library(${PROJECT_NAME}_SHARED SHARED ${INCLUDE_FILES} ${INCLUDE_SRC_FILES} ${SRC_FILES})
@@ -55,13 +95,6 @@ install(TARGETS ${PROJECT_NAME}_SHARED ${PROJECT_NAME}_STATIC
 install(DIRECTORY ${SOLUTION_DIR}/include/
         DESTINATION ${ENV_HEADER_DIR}
         )
-
-add_definitions(-DTS_USE_SSE)
-# 4 types of achive
-# blas
-# Eigen
-# Ordinary
-# Ordinary with chipset result
 
 # project files for clion
 FILE(GLOB_RECURSE TEST_FILES ${PROJECT_SOURCE_DIR}/test/*.cpp)
