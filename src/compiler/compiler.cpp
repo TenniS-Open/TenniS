@@ -54,6 +54,7 @@ namespace ts {
                     auto this_input_depth = depth + 1;
                     if (input_depth_pair->second < this_input_depth) {
                         input_depth_pair->second = this_input_depth;
+                        node_walker.push_back(input);   // re-walk nodes
                     }
                 }
             }
