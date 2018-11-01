@@ -12,11 +12,13 @@
 #include <thread>
 #include <vector>
 #include <deque>
+#include <memory>
 
 namespace ts {
     class Thread {
     public:
         using self = Thread;
+        using shared = std::shared_ptr<self>;
 
         using task_type = std::function<void(int)>;
         using after_task_type = std::function<void(int)>;
@@ -62,6 +64,9 @@ namespace ts {
  */
     class ThreadPool {
     public:
+        using self = ThreadPool;
+        using shared = std::shared_ptr<self>;
+
         /**
          * @brief Shotgun
          * @param pool_size The thread number in pool. Number of threads
