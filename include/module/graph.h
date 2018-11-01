@@ -103,6 +103,7 @@ namespace ts {
      *     c:1 = unpack(c, 1)   # get c's 1st output
      *     c:2 = unpack(c, 2)   # get c's 2nd output
      *  Notice: The c is pack(c:1, c:2) node, and the unpack method's first parameter must be pack node
+     *  TODO: supporting edit graph, not just a link
      */
     class Node {
     public:
