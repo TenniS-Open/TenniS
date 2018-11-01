@@ -2,7 +2,7 @@
 // Created by kier on 2018/10/17.
 //
 
-#include <runtime/instruction/istack.h>
+#include <runtime/instruction/stack_instruction.h>
 
 #include "runtime/workbench.h"
 

@@ -14,7 +14,7 @@
 #include <cassert>
 #include <algorithm>
 
-#include "runtime/instruction/istack.h"
+#include "runtime/instruction/stack_instruction.h"
 #include "global/operator_factory.h"
 
 
