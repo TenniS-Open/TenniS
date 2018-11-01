@@ -76,7 +76,7 @@ if (TS_USE_CBLAS)
         list(APPEND third_libraries ${OpenBLAS_LIBRARY})
     endif ()
 else()
-    message(STATUS "[Optional] Use CUDA: [CBLAS]")
+    message(STATUS "[Optional] Use CBLAS: [OFF]")
 endif()
 
 set(INCLUDE_FILES)
