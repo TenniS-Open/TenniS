@@ -7,6 +7,9 @@
 
 
 namespace ts {
+    /**
+     * convert between the Menu ang Graph
+     */
     class Converter {
     public:
         using self = Converter;

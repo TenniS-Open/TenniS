@@ -7,6 +7,10 @@
 
 
 namespace ts {
+    /**
+     * translate Graph to TGraph
+     * translate Graph from other framework to TS support Graph
+     */
     class Translator {
     public:
         using self = Translator;

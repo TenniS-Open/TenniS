@@ -7,6 +7,10 @@
 
 
 namespace ts {
+    /**
+     * zip TGraph to ZGraph
+     * may remove or add nodes
+     */
     class Zipper {
     public:
         using self = Zipper;

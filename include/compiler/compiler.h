@@ -19,6 +19,9 @@ namespace ts {
         std::vector<Tensor> data_sagment;
     };
 
+    /**
+     * compile the ZGraph to instructions
+     */
     class Compiler {
     public:
         using self = Compiler;
