@@ -65,6 +65,7 @@ namespace ts {
         dolly->m_outputs.resize(this->m_outputs.size());
         dolly->m_map_input_slots = this->m_map_input_slots;
         dolly->m_map_output_slots = this->m_map_output_slots;
+        dolly->m_data_sagment = this->m_data_sagment;
         return dolly;
     }
 
