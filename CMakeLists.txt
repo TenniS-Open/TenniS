@@ -14,6 +14,7 @@ set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Debug or Release")
 set(CONFIGURATION ${CMAKE_BUILD_TYPE})
 
 option(TS_USE_CUDA "[Optional] Use CUDA" OFF)
+option(TS_USE_CBLAS "[Optional] Use CBLAS" OFF)
 
 # set common compiler flags
 include(LOCAL_FLAGS)
@@ -45,6 +46,8 @@ add_definitions(-DTS_USE_SSE)
 # Ordinary
 # Ordinary with chipset result
 
+set(third_libraries)
+
 if (TS_USE_CUDA)
     find_package(CUDA REQUIRED)
     message(STATUS "[Optional] Use CUDA: [ON]")
@@ -53,6 +56,27 @@ if (TS_USE_CUDA)
     add_definitions(-DTS_USE_CUDA)
 else()
     message(STATUS "[Optional] Use CUDA: [OFF]")
+endif()
+
+if (TS_USE_CBLAS)
+    message(STATUS "[Optional] Use CBLAS: [ON]")
+    list(APPEND TENSORSTACK_ACHIVES cblas)
+    add_definitions(-DTS_USE_CBLAS)
+
+    if (WIN32)
+        find_library(OpenBLAS REQUIRED)
+        include_directories(${OpenBLAS_INCLUDE_DIR})
+        list(APPEND third_libraries ${OpenBLAS_LIBRARY})
+    elseif (APPLE)
+        message(STATUS "Using Max OS X: Accelerate")
+        list(APPEND third_libraries -lcblas)
+    elseif (UNIX)
+        find_library(OpenBLAS REQUIRED)
+        include_directories(${OpenBLAS_INCLUDE_DIR})
+        list(APPEND third_libraries ${OpenBLAS_LIBRARY})
+    endif ()
+else()
+    message(STATUS "[Optional] Use CUDA: [CBLAS]")
 endif()
 
 set(INCLUDE_FILES)
@@ -127,7 +151,8 @@ foreach (path ${TEST_FILES})
     string(REGEX MATCH "[^/]*.[(c)|(cc)|(cpp)]$" file_ext ${path})
     string(REGEX MATCH "^[^.]*" file ${file_ext})
     add_executable(test_${file} ${path})
-    target_link_libraries(test_${file} ${PROJECT_NAME}_SHARED -lopenblas)
+    target_link_libraries(test_${file} ${PROJECT_NAME}_SHARED)
+    target_link_libraries(test_${file} ${third_libraries})
     # set_target_properties(test_${file} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${LOCAL_OUTPUT_DIR}/lib)
 endforeach ()
 
@@ -137,6 +162,7 @@ foreach (path ${TOOL_FILES})
     add_executable(tool_${file} ${path})
     set_target_properties(tool_${file} PROPERTIES OUTPUT_NAME ${file})
     target_link_libraries(tool_${file} ${PROJECT_NAME}_SHARED)
+    target_link_libraries(tool_${file} ${third_libraries})
     install(TARGETS tool_${file}
             RUNTIME DESTINATION ${ENV_RUNTIME_DIR}
             )
