@@ -13,9 +13,12 @@ set(PLATFORM "auto" CACHE STRING "auto, x86 or x64")
 set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Debug or Release")
 set(CONFIGURATION ${CMAKE_BUILD_TYPE})
 
+option(TS_USE_CUDA "[Optional] Use CUDA" OFF)
+
 # set common compiler flags
 include(LOCAL_FLAGS)
 include(LOCAL_ENV)
+include(tools)
 
 set(CMAKE_INSTALL_PREFIX ${PROJECT_BINARY_DIR}/build CACHE STRING "set install prefix" FORCE)
 install(CODE "MESSAGE(\"Installing into ${CMAKE_INSTALL_PREFIX}\")")
@@ -33,7 +36,7 @@ include_directories(${SOLUTION_DIR}/src)
 set(SOURCE_DIR ${SOLUTION_DIR})
 
 set(TENSORSTACK_MODULES compiler core engine global module runtime utils)
-set(TENSORSTACK_ACHIVES common cpu gpu) # in kernels and ops
+set(TENSORSTACK_ACHIVES common cpu) # in kernels and ops
 
 add_definitions(-DTS_USE_SSE)
 # 4 types of achive
@@ -41,6 +44,16 @@ add_definitions(-DTS_USE_SSE)
 # Eigen
 # Ordinary
 # Ordinary with chipset result
+
+if (TS_USE_CUDA)
+    find_package(CUDA REQUIRED)
+    message(STATUS "[Optional] Use CUDA: [ON]")
+
+    list(APPEND TENSORSTACK_ACHIVES gpu)
+    add_definitions(-DTS_USE_CUDA)
+else()
+    message(STATUS "[Optional] Use CUDA: [OFF]")
+endif()
 
 set(INCLUDE_FILES)
 set(SRC_FILES)
@@ -70,6 +83,14 @@ foreach (achive ${TENSORSTACK_ACHIVES})
             )
     LIST(APPEND SRC_FILES ${SRC_ARCHIVE_${achive}_FILES})
 
+    if (TS_USE_CUDA)
+        FILE(GLOB_RECURSE SRC_ARCHIVE_${achive}_CU_FILES
+                ${SOURCE_DIR}/src/kernels/${achive}/*.cu
+                ${SOURCE_DIR}/src/ops/${achive}/*.cu
+                )
+        LIST(APPEND SRC_FILES ${SRC_ARCHIVE_${achive}_CU_FILES})
+    endif()
+
     FILE(GLOB_RECURSE SRC_INCLUDE_ARCHIVE_${achive}_FILES
             ${SOURCE_DIR}/src/kernels/${achive}/*.h
             ${SOURCE_DIR}/src/ops/${achive}/*.h
@@ -77,8 +98,8 @@ foreach (achive ${TENSORSTACK_ACHIVES})
     LIST(APPEND SRC_INCLUDE_FILES ${SRC_INCLUDE_ARCHIVE_${achive}_FILES})
 endforeach ()
 
-add_library(${PROJECT_NAME}_STATIC STATIC ${INCLUDE_FILES} ${INCLUDE_SRC_FILES} ${SRC_FILES})
-add_library(${PROJECT_NAME}_SHARED SHARED ${INCLUDE_FILES} ${INCLUDE_SRC_FILES} ${SRC_FILES})
+ts_add_library(${PROJECT_NAME}_STATIC STATIC ${INCLUDE_FILES} ${INCLUDE_SRC_FILES} ${SRC_FILES})
+ts_add_library(${PROJECT_NAME}_SHARED SHARED ${INCLUDE_FILES} ${INCLUDE_SRC_FILES} ${SRC_FILES})
 
 set_target_properties(${PROJECT_NAME}_SHARED PROPERTIES OUTPUT_NAME ${PROJECT_NAME}${ENV_SUFFIX})
 set_target_properties(${PROJECT_NAME}_STATIC PROPERTIES OUTPUT_NAME ${PROJECT_NAME}_static${ENV_SUFFIX})
