@@ -31,12 +31,12 @@ namespace ts {
 
         explicit Bubble(
                 const std::string &op,
-                size_t output_count);
+                int output_count);
 
         explicit Bubble(
                 const std::string &op,
                 const std::string &name,
-                size_t output_count);
+                int output_count);
 
         size_t output_count() const { return m_output_count; }
 
@@ -72,7 +72,7 @@ namespace ts {
         /**
          * Saving output size
          */
-        size_t m_output_count = 1;
+        int m_output_count = 1;
 
         /**
          * Parameters

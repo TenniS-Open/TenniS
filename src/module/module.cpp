@@ -31,16 +31,18 @@ namespace ts {
         update_retention_params();
     }
 
-    Bubble::Bubble(const std::string &op, size_t output_count)
+    Bubble::Bubble(const std::string &op, int output_count)
             : m_op(op)
             , m_output_count(output_count) {
+        assert(output_count >= 1);
         update_retention_params();
     }
 
-    Bubble::Bubble(const std::string &op, const std::string &name, size_t output_count)
+    Bubble::Bubble(const std::string &op, const std::string &name, int output_count)
             : m_op(op)
             , m_name(name)
             , m_output_count(output_count) {
+        assert(output_count >= 1);
         update_retention_params();
     }
 
