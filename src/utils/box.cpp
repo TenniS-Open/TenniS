@@ -87,7 +87,7 @@ namespace ts {
         return result;
     }
 
-    std::vector<std::pair<size_t, size_t>> ts::lsplit_bins(size_t first, size_t second, size_t bins) {
+    std::vector<std::pair<size_t, size_t>> lsplit_bins(size_t first, size_t second, size_t bins) {
         if (second <= first) return {};
         if (bins <= 1) return {{first, second}};
         auto step = safe_lceil((double(second) - double(first)) / bins);
