@@ -29,7 +29,7 @@ namespace ts {
         explicit Compiler(const ComputingDevice &computing_device);
 
         InstructionBlock compile(const std::vector<Node> &inputs, const std::vector<Node> &outputs);
-        Instruction::shared convert_operator_instruction(const Node &node);
+        std::vector<Instruction::shared> convert_operator_instruction(const Node &node);
     private:
         ComputingDevice m_computing_device;
     };

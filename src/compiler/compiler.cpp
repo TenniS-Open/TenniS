@@ -81,7 +81,7 @@ namespace ts {
         return map_node_refs;
     }
 
-    Instruction::shared Compiler::convert_operator_instruction(const Node &node) {
+    std::vector<Instruction::shared> Compiler::convert_operator_instruction(const Node &node) {
         auto &bubble = node.ref<Bubble>();
         auto creator = QueryOperatorCreator(m_computing_device.type(), bubble.op());
         if (creator == nullptr) throw Exception("Not supported operator " + bubble.op());
@@ -96,7 +96,12 @@ namespace ts {
         } catch (const Exception &e) {
             throw Exception(std::string("While initializing " + bubble.op() + ":" + bubble.name() + " got Exception: " + e.what()));
         }
-        return std::make_shared<OperatorInstruction>(op, node.inputs().size(), 1, description);
+        std::vector<Instruction::shared> instructions;
+        instructions.emplace_back(std::make_shared<OperatorInstruction>(op, node.inputs().size(), bubble.output_count(), description));
+        if (bubble.output_count() > 1) {
+            instructions.emplace_back(instruction::Tensor::pack(size_t(bubble.output_count())));
+        }
+        return std::move(instructions);
     }
 
     // TODO: inputs only support Parameter, try support other op
@@ -285,7 +290,10 @@ namespace ts {
             }
 
             // case4: found a node need to be compute. query operator
-            block.instructions.push_back(convert_operator_instruction(node));
+            auto operator_instructions = convert_operator_instruction(node);
+            for (auto inst_it = operator_instructions.rbegin(); inst_it != operator_instructions.rend(); ++inst_it) {
+                block.instructions.push_back(*inst_it);
+            }
             simulator_pop();
             for (auto &input : node.inputs()) simulator_push(input);
         }
