@@ -6,9 +6,21 @@
 #define TENSORSTACK_DEVICE_CONTEXT_H
 
 
-class device_context {
+#include <global/hard_converter.h>
 
-};
+namespace ts {
+    class DeviceHandle;
+    class DeviceContext {
+    public:
+        using self = DeviceContext;
+
+        /**
+         * pointing to device operating self-defined structure
+         * not using in out scope
+         */
+        DeviceHandle *handle = nullptr;
+    };
+}
 
 
 #endif //TENSORSTACK_DEVICE_CONTEXT_H
