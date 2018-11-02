@@ -2,7 +2,7 @@
 // Created by kier on 2018/10/17.
 //
 
-#include <runtime/instruction/stack_instruction.h>
+#include "runtime/instruction/stack_instruction.h"
 
 #include "runtime/workbench.h"
 
@@ -60,7 +60,7 @@ namespace ts {
                 fields.reserve(size);
                 int anchor = -int(size);
                 while (anchor < 0) {
-                    fields.emplace_back(stack.index(anchor));
+                    fields.emplace_back(*stack.index(anchor));
                     ++anchor;
                 }
                 Tensor packed_tensor;
