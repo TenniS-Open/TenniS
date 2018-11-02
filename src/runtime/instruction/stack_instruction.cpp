@@ -37,8 +37,8 @@ namespace ts {
         Instruction::shared Stack::swap(int i, int j) {
             return std::make_shared<LambdaInstruction>([=](Workbench &workbench){
                 auto &stack = workbench.stack();
-                Tensor ti = *stack.index(i);
-                Tensor tj = *stack.index(j);
+                auto ti = *stack.index(i);
+                auto tj = *stack.index(j);
                 *stack.index(i) = tj;
                 *stack.index(j) = ti;
             }, "swap(" + std::to_string(i) + ", " + std::to_string(j) + ")");
@@ -50,30 +50,30 @@ namespace ts {
             }, "erase(" + std::to_string(beg) + ", " + std::to_string(end) + ")");
         }
 
-        Instruction::shared Stack::pack(size_t size) {
+        Instruction::shared Tensor::pack(size_t size) {
             return std::make_shared<LambdaInstruction>([=](Workbench &workbench){
                 auto &stack = workbench.stack();
                 if (stack.size() < size) {
                     throw Exception(std::string("Can not pack ") + std::to_string(size) + "tensor(s) on stack(size=" + std::to_string(stack.size()) + ")");
                 }
-                std::vector<Tensor> fields;
+                std::vector<ts::Tensor> fields;
                 fields.reserve(size);
                 int anchor = -int(size);
                 while (anchor < 0) {
                     fields.emplace_back(*stack.index(anchor));
                     ++anchor;
                 }
-                Tensor packed_tensor;
+                ts::Tensor packed_tensor;
                 packed_tensor.pack(fields);
                 stack.pop(size);
                 stack.push(packed_tensor);
             }, "pack(" + std::to_string(size) + ")");
         }
 
-        Instruction::shared Stack::field(size_t index) {
+        Instruction::shared Tensor::field(size_t index) {
             return std::make_shared<LambdaInstruction>([=](Workbench &workbench){
                 auto &stack = workbench.stack();
-                Tensor field = stack.top()->field(index);
+                auto field = stack.top()->field(index);
                 stack.pop();
                 stack.push(field);
             }, "field(" + std::to_string(index) + ")");
