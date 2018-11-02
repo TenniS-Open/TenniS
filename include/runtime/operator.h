@@ -24,6 +24,8 @@ namespace ts {
         template<typename K>
         using hash_set = std::unordered_set<K>;
 
+        const static char retention_param_sign = '#';
+
         enum FieldAttr {
             OPTIONAL,
             REQUIRED,
@@ -42,6 +44,8 @@ namespace ts {
 
         bool has(const std::string &param) const;
 
+        // the params start with "#" are Retention parameters
+        // now Retention parameters has #op, #name, #output_size
         void set(const std::string &param, const Tensor &value);
 
         Tensor &get(const std::string &param);

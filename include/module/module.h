@@ -20,10 +20,25 @@ namespace ts {
         using map = std::unordered_map<K, V>;
         using param_dict = map<std::string, Tensor>;
 
+        const static char retention_param_sign = '#';
+
+        explicit Bubble(
+                const std::string &op);
+
         explicit Bubble(
                 const std::string &op,
-                const std::string &name = "")
-                : m_op(op), m_name(name) {}
+                const std::string &name);
+
+        explicit Bubble(
+                const std::string &op,
+                size_t output_count);
+
+        explicit Bubble(
+                const std::string &op,
+                const std::string &name,
+                size_t output_count);
+
+        size_t output_count() const { return m_output_count; }
 
         const std::string &op() const { return m_op; }
 
@@ -44,6 +59,8 @@ namespace ts {
         void clear_params();
 
     private:
+        void update_retention_params();
+
         /**
          * Operator name
          */
@@ -52,6 +69,10 @@ namespace ts {
          * Bubble name
          */
         std::string m_name;
+        /**
+         * Saving output size
+         */
+        size_t m_output_count = 1;
 
         /**
          * Parameters
@@ -69,7 +90,7 @@ namespace ts {
     };
 
     inline std::ostream &operator<<(std::ostream &out, const Bubble &op) {
-        return out << op.op() << ", " << op.name();
+        return out << op.op() << ", " << op.name() << ", " << op.output_count();
     }
 
     class Module {

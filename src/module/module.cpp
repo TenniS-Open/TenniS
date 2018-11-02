@@ -4,9 +4,11 @@
 
 #include <unordered_set>
 #include <queue>
+#include <cassert>
 
 #include "module/module.h"
 #include "utils/box.h"
+#include "core/tensor_builder.h"
 
 namespace ts {
     const char *const Bubble::Parameter = "<param>";
@@ -16,6 +18,30 @@ namespace ts {
 
     bool Bubble::IsEndPoint(const std::string &op) {
         return EndPoints.find(op) != EndPoints.end();
+    }
+
+    Bubble::Bubble(const std::string &op)
+            : m_op(op) {
+        update_retention_params();
+    }
+
+    Bubble::Bubble(const std::string &op, const std::string &name)
+            : m_op(op)
+            , m_name(name) {
+        update_retention_params();
+    }
+
+    Bubble::Bubble(const std::string &op, size_t output_count)
+            : m_op(op)
+            , m_output_count(output_count) {
+        update_retention_params();
+    }
+
+    Bubble::Bubble(const std::string &op, const std::string &name, size_t output_count)
+            : m_op(op)
+            , m_name(name)
+            , m_output_count(output_count) {
+        update_retention_params();
     }
 
     bool Bubble::has(const std::string &param) const {
@@ -51,7 +77,16 @@ namespace ts {
     }
 
     void Bubble::clear_params() {
-        this->m_params.clear();
+        std::vector<std::pair<std::string, Tensor>> retention_params;
+        for (auto &param_tenosr_pair : m_params) {
+            auto &param = param_tenosr_pair.first;
+            bool is_retention_param = !param.empty() && param[0] == retention_param_sign;
+            if (is_retention_param) {
+                retention_params.emplace_back(param_tenosr_pair);
+            }
+        }
+        m_params.clear();
+        m_params.insert(retention_params.begin(), retention_params.end());
     }
 
     std::string Bubble::fuzzy_param_name(const std::string &name) {
@@ -67,6 +102,13 @@ namespace ts {
             }
         }
         return closest_name;
+    }
+
+    void Bubble::update_retention_params() {
+        assert(retention_param_sign == '#');
+        set("#op", tensor::from(m_op));
+        set("#name", tensor::from(m_name));
+        set("#output_count", tensor::from(m_output_count));
     }
 
     void Module::load(Graph g) {

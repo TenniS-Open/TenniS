@@ -11,7 +11,8 @@ namespace ts {
     }
 
     void Operator::set(const std::string &param, const Tensor &value) {
-        if (!is_in_fields(param)) {
+        bool is_retention_param = !param.empty() && param[0] == retention_param_sign;
+        if (!is_retention_param && !is_in_fields(param)) {
             throw Exception(
                     std::string("Unidentified param \"") + param + "\", did you mean \"" + fuzzy_field_name(param) +
                     "\"");
@@ -44,7 +45,16 @@ namespace ts {
     }
 
     void Operator::clear_params() {
-        this->m_params.clear();
+        std::vector<std::pair<std::string, Tensor>> retention_params;
+        for (auto &param_tenosr_pair : m_params) {
+            auto &param = param_tenosr_pair.first;
+            bool is_retention_param = !param.empty() && param[0] == retention_param_sign;
+            if (is_retention_param) {
+                retention_params.emplace_back(param_tenosr_pair);
+            }
+        }
+        m_params.clear();
+        m_params.insert(retention_params.begin(), retention_params.end());
     }
 
     void Operator::clear_fields() {
