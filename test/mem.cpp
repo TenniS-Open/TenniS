@@ -6,12 +6,15 @@
 #include <core/controller.h>
 #include <iostream>
 #include <global/memory_device.h>
+#include <global/setup.h>
 
 #include <map>
 #include <unordered_map>
 
 int main()
 {
+    ts::setup();
+
     ts::HardMemory mem({ts::CPU, 0});
     try {
         mem.resize(10000000000000000000UL);
@@ -26,7 +29,7 @@ int main()
     ts::DynamicMemoryController c({ts::CPU, 0});
     ts::Memory a = c.alloc(123);
 
-    ts::Memory b(ts::Device(ts::CPU, 0), 256);
+    ts::Memory b(ts::MemoryDevice(ts::CPU, 0), 256);
 
     std::cout << a.size() << std::endl;
     std::cout << b.size() << std::endl;
@@ -45,8 +48,16 @@ int main()
         std::cout << e.what() << std::endl;
     }
 
-    std::map<ts::Device, int> aa;
-    std::unordered_map<ts::Device, int> bb;
+#ifdef TS_USE_CUDA
+    ts::Memory host_data1 = c.alloc(4);
+    ts::Memory host_data2 = c.alloc(4);
+    ts::DynamicMemoryController device_ctrl({ts::GPU, 0});
+    ts::Memory device_data = device_ctrl.alloc(4);
+    host_data1.data<int>()[0] = 233;
+    ts::memcpy(device_data, host_data1);
+    ts::memcpy(host_data2, device_data);
+    std::cout << host_data2.data<int>()[0] << std::endl;
+#endif
 
     return 0;
 }
