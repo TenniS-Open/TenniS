@@ -72,7 +72,11 @@ namespace ts {
         }
         this->m_memory = fields[0].m_memory;
         this->m_proto = fields[0].m_proto;
-        this->m_fields = std::make_shared<std::vector<self>>(fields.begin() + 1, fields.end());
+        if (fields.size() > 1) {
+            this->m_fields = std::make_shared<std::vector<self>>(fields.begin() + 1, fields.end());
+        } else {
+            this->m_fields.reset();
+        }
     }
 
     std::vector<Tensor::self> Tensor::unpack() const {
@@ -111,5 +115,9 @@ namespace ts {
 
     size_t Tensor::fields_count() const {
         return m_fields == nullptr ? 1 : 1 + m_fields->size();
+    }
+
+    bool Tensor::packed() const {
+        return !(m_fields == nullptr || m_fields->empty());
     }
 }

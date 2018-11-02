@@ -114,6 +114,8 @@ namespace ts {
 
         size_t fields_count() const;
 
+        bool packed() const;
+
     private:
         Memory m_memory;
         Prototype m_proto;
