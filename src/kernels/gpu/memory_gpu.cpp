@@ -39,10 +39,18 @@ namespace ts {
     }
 
     void cpu2gpu_converter(int dst_id, void *dst, int src_id, const void *src, size_t size) {
+        auto cuda_error = cudaSetDevice(dst_id);
+        if (cuda_error != cudaSuccess) {
+            throw Exception("cudaSetDevice(" + std::to_string(dst_id) + ") failed. error=" + std::to_string(cuda_error));
+        }
         cudaMemcpy(dst, src, size, cudaMemcpyHostToDevice);
     }
 
     void gpu2cpu_converter(int dst_id, void *dst, int src_id, const void *src, size_t size) {
+        auto cuda_error = cudaSetDevice(src_id);
+        if (cuda_error != cudaSuccess) {
+            throw Exception("cudaSetDevice(" + std::to_string(src_id) + ") failed. error=" + std::to_string(cuda_error));
+        }
         cudaMemcpy(dst, src, size, cudaMemcpyDeviceToHost);
     }
 }
