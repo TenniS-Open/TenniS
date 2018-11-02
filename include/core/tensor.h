@@ -64,6 +64,8 @@ namespace ts {
 
         explicit Tensor(const Prototype &proto);
 
+        Tensor(const Memory &memory, const Prototype &proto);
+
         Tensor();
 
         bool empty() const;
@@ -102,9 +104,22 @@ namespace ts {
 
         Tensor reshape(const Shape &shape) const;
 
+        Tensor field(size_t offset) const;
+
+        void field(size_t offset, const self &value);
+
+        void pack(const std::vector<self> &fields);
+
+        std::vector<self> unpack() const;
+
+        size_t fields_count() const;
+
     private:
         Memory m_memory;
         Prototype m_proto;
+
+        // add field supporting structure data
+        std::shared_ptr<std::vector<self>> m_fields;
     };
 }
 
