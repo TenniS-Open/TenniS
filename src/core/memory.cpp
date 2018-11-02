@@ -102,4 +102,24 @@ namespace ts {
         converter(dst_device.id(), dst_ptr, src_device.id(), src_ptr, copy_size);
         return copy_size;
     }
+
+    void memset(void *dst_ptr, const Device &dst_device, size_t dst_size, const void *src_ptr, const Device &src_device,
+                size_t src_size) {
+        HardConverter cross_device_converter = QueryConverter(dst_device.type(), src_device.type());
+        assert(cross_device_converter != nullptr);
+        HardConverter in_device_converter = (dst_device == src_device) ? cross_device_converter : QueryConverter(
+                dst_device.type(), dst_device.type());
+        assert(in_device_converter != nullptr);
+        cross_device_converter(dst_device.id(), dst_ptr, src_device.id(), src_ptr, std::min(dst_size, src_size));
+        size_t copy_anchor = src_size;
+        while (copy_anchor <= size_t(dst_size >> 1)) {
+            in_device_converter(dst_device.id(), reinterpret_cast<char *>(dst_ptr) + copy_anchor, dst_device.id(),
+                                dst_ptr, copy_anchor);
+            copy_anchor <<= 1;
+        }
+        if (dst_size > copy_anchor) {
+            in_device_converter(dst_device.id(), reinterpret_cast<char *>(dst_ptr) + copy_anchor, dst_device.id(),
+                                dst_ptr, dst_size - copy_anchor);
+        }
+    }
 }

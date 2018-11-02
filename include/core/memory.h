@@ -199,6 +199,18 @@ namespace ts {
      * @return really copy size
      */
     size_t memcpy(void *dst_ptr, const Device &dst_device, size_t dst_size,
+                  const void *src_ptr, const Device &src_device, size_t src_size);
+
+    /**
+     * set memory in device or cross devices
+     * @param dst_ptr the dst memory
+     * @param dst_device the dst memory device
+     * @param dst_size the dst memory size
+     * @param src_ptr the src memory
+     * @param src_device the src memory device
+     * @param src_size the src memory size
+     */
+    void memset(void *dst_ptr, const Device &dst_device, size_t dst_size,
                 const void *src_ptr, const Device &src_device, size_t src_size);
 }
 
