@@ -41,6 +41,8 @@ namespace ts {
         MemoryDevice m_device;
         HardAllocator m_allocator;
     };
+
+    // TODO: add flow memory controller
 }
 
 
