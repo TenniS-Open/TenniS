@@ -15,6 +15,8 @@ namespace ts {
         using self = DeviceContext;
         using shared = std::shared_ptr<self>;
 
+        DeviceContext() = default;
+
         DeviceContext(const self &) = delete;
         self &operator=(const self &) = delete;
 
