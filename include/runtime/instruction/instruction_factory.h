@@ -13,36 +13,39 @@
 namespace ts {
     // TODO: add instruction factory, query instruction by name
     // Those instructions are cross computing and memory device operator
-    using InstructionBuilder = std::function<std::vector<Instruction::shared>(const Node &node)>;
+    class InstructionCreator {
+    public:
+        using function = std::function<std::vector<Instruction::shared>(const Node &)>;
 
-    /**
-     * Example of InstructionBuilder
-     * @param node node ready to convert to instruction
-     * @return an serial of instructions, those can calculate node
-     */
-    std::vector<Instruction::shared> InstructionBuilderDeclaration(const Node &node);
+        /**
+         * Example of InstructionBuilder
+         * @param node node ready to convert to instruction
+         * @return an serial of instructions, those can calculate node
+         */
+        std::vector<Instruction::shared> InstructionBuilderFunction(const Node &node);
 
-    /**
-     * Query instruction builder of specific op
-     * @param op querying op
-     * @return InstructionBuilder
-     * @note supporting called by threads without calling @sa RegisterInstructionBuilder
-     * @note the query should be the Bubble.op
-     */
-    InstructionBuilder QueryInstructionBuilder(const std::string &op) TS_NOEXCEPT;
+        /**
+         * Query instruction builder of specific op
+         * @param op querying op
+         * @return InstructionBuilder
+         * @note supporting called by threads without calling @sa RegisterInstructionBuilder
+         * @note the query should be the Bubble.op
+         */
+        function Query(const std::string &op) TS_NOEXCEPT;
 
-    /**
-     * Register InstructionBuilder for specific op
-     * @param op specific op name @sa Bubble
-     * @param builder instruction builder
-     * @note only can be called before running @sa QueryInstructionBuilder
-     */
-    void RegisterInstructionBuilder(const std::string &op, const InstructionBuilder &builder) TS_NOEXCEPT;
+        /**
+         * Register InstructionBuilder for specific op
+         * @param op specific op name @sa Bubble
+         * @param builder instruction builder
+         * @note only can be called before running @sa QueryInstructionBuilder
+         */
+        void Register(const std::string &op, const function &builder) TS_NOEXCEPT;
 
-    /**
-     * No details for this API, so DO NOT call it
-     */
-    void ClearRegisterInstructionBuilder();
+        /**
+         * No details for this API, so DO NOT call it
+         */
+        void Clear();
+    };
 }
 
 
