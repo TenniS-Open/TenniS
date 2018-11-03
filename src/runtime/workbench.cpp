@@ -23,11 +23,23 @@ namespace ts {
         this->m_stack = std::make_shared<Stack>(memory_device, this->m_flow_memory);
         this->m_data_sagment = std::make_shared<Stack>(memory_device, this->m_static_memory);
         this->m_thread_pool = std::make_shared<ThreadPool>(0);
+
+        this->m_device_admin = QueryDeviceAdmin(device.type());
+
+        if (m_device_admin != nullptr) {
+            m_device_admin(&m_device_context.handle, m_device.id(), DEVICE_INITIALIZATION);
+        }
     }
 
     Workbench::Workbench(const ComputingDevice &device, int computing_thread_number)
             : self(device) {
         this->set_computing_thread_number(computing_thread_number);
+    }
+
+    Workbench::~Workbench() {
+        if (m_device_admin != nullptr && m_device_context.handle != nullptr) {
+            m_device_admin(&m_device_context.handle, m_device.id(), DEVICE_FINALIZATION);
+        }
     }
 
     void Workbench::run() {
@@ -44,7 +56,10 @@ namespace ts {
         }
 
         // bind thread pool to any operator can using thread speed up
-        ctx::bind<ThreadPool>(m_thread_pool.get());
+        ctx::bind<ThreadPool> bind_thread_pool(m_thread_pool.get());
+
+        // bind device context
+        ctx::bind<DeviceContext> bind_device_context(m_device_context);
 
         // run
         while (m_pointer < m_program.size()) {

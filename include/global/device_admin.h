@@ -35,20 +35,20 @@ namespace ts {
 
     /**
      * Query device admin
-     * @param device querying computing device
+     * @param device_type querying computing device
      * @return DeviceAdmin
      * @note supporting called by threads without calling @sa RegisterDeviceAdmin
      * @note the query device should be computing device
      */
-    DeviceAdmin QueryDeviceAdmin(const DeviceType &device) TS_NOEXCEPT;
+    DeviceAdmin QueryDeviceAdmin(const DeviceType &device_type) TS_NOEXCEPT;
 
     /**
      * Register allocator for specific device type
      * @param device_type specific @sa DeviceType
-     * @param allocator setting allocator
+     * @param device_admin setting allocator
      * @note only can be called before running @sa QueryDeviceAdmin
      */
-    void RegisterDeviceAdmin(const DeviceType &device_type, const DeviceAdmin &allocator) TS_NOEXCEPT;
+    void RegisterDeviceAdmin(const DeviceType &device_type, const DeviceAdmin &device_admin) TS_NOEXCEPT;
 
     /**
      * No details for this API, so DO NOT call it

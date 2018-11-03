@@ -31,7 +31,7 @@ namespace ts {
 
         explicit Workbench(const ComputingDevice &device, int computing_thread_number);
 
-        ~Workbench() = default;
+        ~Workbench();
 
         Workbench(const self &) = delete;
 
@@ -93,7 +93,8 @@ namespace ts {
         std::vector<Tensor> m_outputs;
         // thread pool to computing optimize
         ThreadPool::shared m_thread_pool;
-        DeviceContext m_context;    /// TODO: query and parse this context
+        // control device context
+        DeviceContext m_device_context;
         DeviceAdmin m_device_admin;
     };
 }
