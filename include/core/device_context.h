@@ -13,6 +13,10 @@ namespace ts {
     class DeviceContext {
     public:
         using self = DeviceContext;
+        using shared = std::shared_ptr<self>;
+
+        DeviceContext(const self &) = delete;
+        self &operator=(const self &) = delete;
 
         /**
          * pointing to device operating self-defined structure

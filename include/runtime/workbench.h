@@ -8,6 +8,7 @@
 #include <memory>
 #include <queue>
 #include <unordered_map>
+#include <core/device_context.h>
 
 #include "operator.h"
 #include "stack.h"
@@ -15,6 +16,7 @@
 #include "instruction.h"
 #include "module/module.h"
 #include "inside/thread_pool.h"
+#include "global/device_admin.h"
 
 namespace ts {
     class Workbench {
@@ -89,7 +91,10 @@ namespace ts {
         // map tensor, means <tensor's index in stack, tensor>
         std::vector<Tensor> m_inputs;
         std::vector<Tensor> m_outputs;
+        // thread pool to computing optimize
         ThreadPool::shared m_thread_pool;
+        DeviceContext m_context;    /// TODO: query and parse this context
+        DeviceAdmin m_device_admin;
     };
 }
 
