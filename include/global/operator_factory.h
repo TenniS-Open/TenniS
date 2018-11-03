@@ -10,15 +10,23 @@
 #include "utils/static.h"
 
 namespace ts {
-    using OperatorCreator =  std::function<Operator::shared(void)>;
 
-    Operator::shared OperatorCreatorDeclaration();
+    class OperatorCreator {
+    public:
 
-    OperatorCreator QueryOperatorCreator(const DeviceType &device_type, const std::string &operator_name) TS_NOEXCEPT;
+        using function =  std::function<Operator::shared(void)>;
 
-    void RegisterOperatorCreator(const DeviceType &device_type, const std::string &operator_name, const OperatorCreator &operator_creator) TS_NOEXCEPT;
+        Operator::shared OperatorCreatorFunction();
 
-    void ClearRegisteredOperatorCreator();
+        static function Query(const DeviceType &device_type,
+                              const std::string &operator_name) TS_NOEXCEPT;
+
+        static void Register(const DeviceType &device_type,
+                             const std::string &operator_name,
+                             const function &operator_creator) TS_NOEXCEPT;
+
+        static void Clear();
+    };
 }
 
 /**
@@ -28,7 +36,7 @@ namespace ts {
     namespace \
     { \
         static ts::Operator::shared _ts_concat_name(CLASS_NAME, _CREATOR)() { return std::make_shared<CLASS_NAME>(); } \
-        ts::StaticAction ts_serial_name(_ts_static_action_)(ts::RegisterOperatorCreator, DEVICE_TYPE, OP_NAME, _ts_concat_name(CLASS_NAME, _CREATOR)); \
+        ts::StaticAction ts_serial_name(_ts_static_action_)(ts::OperatorCreator::Register, DEVICE_TYPE, OP_NAME, _ts_concat_name(CLASS_NAME, _CREATOR)); \
     }
 
 

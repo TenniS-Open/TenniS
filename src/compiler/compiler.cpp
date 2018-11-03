@@ -86,7 +86,7 @@ namespace ts {
         // TODO: first query instruction with bubble.op
         // TODO: query operator with memory device operator
         auto &bubble = node.ref<Bubble>();
-        auto creator = QueryOperatorCreator(m_computing_device.type(), bubble.op());
+        auto creator = OperatorCreator::Query(m_computing_device.type(), bubble.op());
         if (creator == nullptr) throw Exception("Not supported operator " + bubble.op());
         std::string description = bubble.op() + "(in=" + std::to_string(node.inputs().size()) + ", out=" +
                                   std::to_string(1) + ")";
