@@ -14,9 +14,11 @@
 #include <cassert>
 #include <algorithm>
 
+#include "runtime/instruction/instruction_factory.h"
 #include "runtime/instruction/stack_instruction.h"
 #include "runtime/instruction/tensor_instruction.h"
 #include "global/operator_factory.h"
+#include "global/memory_device.h"
 
 
 namespace ts {
@@ -83,10 +85,22 @@ namespace ts {
     }
 
     std::vector<Instruction::shared> Compiler::convert_operator_instruction(const Node &node) {
-        // TODO: first query instruction with bubble.op
-        // TODO: query operator with memory device operator
         auto &bubble = node.ref<Bubble>();
+
+        // step 1: check inner InstructionCreator
+        auto icreator = InstructionCreator::Query(bubble.op());
+        if (icreator != nullptr) {
+            return icreator(node);
+        }
+
+        // step 2: try find operator on computing device
         auto creator = OperatorCreator::Query(m_computing_device.type(), bubble.op());
+        if (creator == nullptr) {
+            // step 2.x: try find operator on memory device, if computing device failed
+            auto memory_device = ComputingMemory::Query(m_computing_device);
+            creator = OperatorCreator::Query(memory_device.type(), bubble.op());
+        }
+
         if (creator == nullptr) throw Exception("Not supported operator " + bubble.op());
         std::string description = bubble.op() + "(in=" + std::to_string(node.inputs().size()) + ", out=" +
                                   std::to_string(1) + ")";

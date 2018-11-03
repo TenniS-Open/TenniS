@@ -9,6 +9,7 @@
 
 namespace ts {
     namespace instruction {
+        // TODO: use InstructionCreator::Register register field operator
         class Tensor {
         public:
             // [-size, +1, e]
