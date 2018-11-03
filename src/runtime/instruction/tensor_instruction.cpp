@@ -6,6 +6,9 @@
 
 #include "runtime/workbench.h"
 
+#include "runtime/instruction/instruction_factory.h"
+#include "utils/static.h"
+
 namespace ts {
     namespace instruction {
         Instruction::shared Tensor::pack(size_t size) {
@@ -37,5 +40,13 @@ namespace ts {
                 stack.push(field);
             }, "field(" + std::to_string(index) + ")");
         }
+        
+        static std::vector<Instruction::shared> field_instruction_creator(const Node &node) {
+            // TODO: finish this function
+            std::vector<Instruction::shared> inst;
+            return inst;
+        };
     }
 }
+
+TS_STATIC_ACTION(ts::InstructionCreator::Register, "_field", ts::instruction::field_instruction_creator);
