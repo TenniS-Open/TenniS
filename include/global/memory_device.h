@@ -31,34 +31,38 @@ namespace ts {
         DeviceType m_no_memory_device_type;
     };
 
-    /**
-     * Query memory device of compute device
-     * @param compute_device_type compute device type
-     * @return memory device
-     * @note May throw NoMemoryDeviceException
-     */
-    DeviceType QueryMemoryDevice(const DeviceType &compute_device_type);
+    class ComputingMemoryDevice {
+    public:
+        /**
+         * Query memory device of compute device
+         * @param compute_device_type compute device type
+         * @return memory device
+         * @note May throw NoMemoryDeviceException
+         */
+        static DeviceType Query(const DeviceType &compute_device_type);
 
-    /**
-     * Query memory device of compute device
-     * @param compute_device_type compute device
-     * @return memory device
-     * @note May throw NoMemoryDeviceException
-     * @note The returned device id is same with querying device
-     */
-    MemoryDevice QueryMemoryDevice(const Device &compute_device);
+        /**
+         * Query memory device of compute device
+         * @param compute_device_type compute device
+         * @return memory device
+         * @note May throw NoMemoryDeviceException
+         * @note The returned device id is same with querying device
+         */
+        static MemoryDevice Query(const Device &compute_device);
 
-    /**
-     * register an map of compute device and memory device
-     * @param compute_device_type the compute device, such as CPU, GPU, CUBLAS, CUDNN, etc.
-     * @param memory_device_type the memory device, such as CPU and GPU.
-     */
-    void RegisterMemoryDevice(const DeviceType &compute_device_type, const DeviceType &memory_device_type) TS_NOEXCEPT;
+        /**
+         * register an map of compute device and memory device
+         * @param compute_device_type the compute device, such as CPU, GPU, CUBLAS, CUDNN, etc.
+         * @param memory_device_type the memory device, such as CPU and GPU.
+         */
+        static void
+        Register(const DeviceType &compute_device_type, const DeviceType &memory_device_type) TS_NOEXCEPT;
 
-    /**
-     * No details for this API, so DO NOT call it
-     */
-    void ClearRegisteredMemoryDevice();
+        /**
+         * No details for this API, so DO NOT call it
+         */
+        static void Clear();
+    };
 }
 
 

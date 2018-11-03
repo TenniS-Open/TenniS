@@ -61,4 +61,4 @@ TS_STATIC_ACTION(ts::HardConverter::Register, ts::GPU, ts::GPU, ts::gpu2gpu_conv
 TS_STATIC_ACTION(ts::HardConverter::Register, ts::GPU, ts::CPU, ts::cpu2gpu_converter)
 TS_STATIC_ACTION(ts::HardConverter::Register, ts::CPU, ts::GPU, ts::gpu2cpu_converter)
 
-TS_STATIC_ACTION(ts::RegisterMemoryDevice, ts::GPU, ts::GPU)
+TS_STATIC_ACTION(ts::ComputingMemoryDevice::Register, ts::GPU, ts::GPU)

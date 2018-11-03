@@ -12,7 +12,7 @@ namespace ts {
         return map_memory_device;
     };
 
-    DeviceType QueryMemoryDevice(const DeviceType &compute_device_type) {
+    DeviceType ComputingMemoryDevice::Query(const DeviceType &compute_device_type) {
         auto &map_memory_device = MapMemoryDevice();
         auto memory_device = map_memory_device.find(compute_device_type);
         if (memory_device != map_memory_device.end()) {
@@ -21,16 +21,17 @@ namespace ts {
         throw NoMemoryDeviceException(compute_device_type);
     }
 
-    MemoryDevice QueryMemoryDevice(const Device &compute_device) {
-        return MemoryDevice(QueryMemoryDevice(compute_device.type()), compute_device.id());
+    MemoryDevice ComputingMemoryDevice::Query(const Device &compute_device) {
+        return MemoryDevice(Query(compute_device.type()), compute_device.id());
     }
 
-    void RegisterMemoryDevice(const DeviceType &compute_device_type, const DeviceType &memory_device_type) TS_NOEXCEPT {
+    void ComputingMemoryDevice::Register(const DeviceType &compute_device_type,
+                                         const DeviceType &memory_device_type) TS_NOEXCEPT {
         auto &map_memory_device = MapMemoryDevice();
         map_memory_device.insert(std::make_pair(compute_device_type, memory_device_type));
     }
 
-    void ClearRegisteredMemoryDevice() {
+    void ComputingMemoryDevice::Clear() {
         auto &map_memory_device = MapMemoryDevice();
         map_memory_device.clear();
     }
