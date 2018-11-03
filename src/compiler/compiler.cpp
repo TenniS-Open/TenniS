@@ -83,6 +83,8 @@ namespace ts {
     }
 
     std::vector<Instruction::shared> Compiler::convert_operator_instruction(const Node &node) {
+        // TODO: first query instruction with bubble.op
+        // TODO: query operator with memory device operator
         auto &bubble = node.ref<Bubble>();
         auto creator = QueryOperatorCreator(m_computing_device.type(), bubble.op());
         if (creator == nullptr) throw Exception("Not supported operator " + bubble.op());
