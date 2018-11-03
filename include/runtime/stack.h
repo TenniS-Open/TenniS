@@ -127,9 +127,9 @@ namespace ts {
             }
         }
 
-        HardConverter converter() const {
+        HardConverter::function converter() const {
             if (this->m_converter == nullptr) {
-                this->m_converter = QueryConverter(m_device.type(), m_device.type());
+                this->m_converter = HardConverter::Query(m_device.type(), m_device.type());
                 assert(this->m_converter != nullptr);
             }
             return this->m_converter;
@@ -146,7 +146,7 @@ namespace ts {
         size_t m_base = 0;                        ///< the running control base
         std::stack<size_t> m_base_stack;          ///< save each call base
 
-        mutable HardConverter m_converter = nullptr;    ///< convert memory in stack
+        mutable HardConverter::function m_converter = nullptr;    ///< convert memory in stack
     };
 }
 

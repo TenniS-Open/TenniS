@@ -34,6 +34,6 @@ namespace ts {
 
 TS_STATIC_ACTION(ts::HardAllocator::Register, ts::CPU, ts::cpu_allocator)
 
-TS_STATIC_ACTION(ts::RegisterConverter, ts::CPU, ts::CPU, ts::cpu_converter)
+TS_STATIC_ACTION(ts::HardConverter::Register, ts::CPU, ts::CPU, ts::cpu_converter)
 
 TS_STATIC_ACTION(ts::RegisterMemoryDevice, ts::CPU, ts::CPU)

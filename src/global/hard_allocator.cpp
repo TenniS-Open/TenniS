@@ -15,7 +15,7 @@ namespace ts {
         return map_device_allocator;
     };
 
-    HardAllocator::function HardAllocator::Query(const DeviceType &device_type) TS_NOEXCEPT{
+    HardAllocator::function HardAllocator::Query(const DeviceType &device_type) TS_NOEXCEPT {
         auto &map_device_allocator = MapDeviceAllocator();
         auto device_allocator = map_device_allocator.find(device_type);
         if (device_allocator != map_device_allocator.end()) {
