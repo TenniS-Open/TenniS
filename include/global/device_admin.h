@@ -11,49 +11,53 @@
 
 namespace ts {
 
-    /**
-     * Action on device
-     */
-    enum DeviceAction {
-        DEVICE_INITIALIZATION,  ///< initialize a handle on given device
-        DEVICE_FINALIZATION,    ///< finalize a handle on given device
+    class DeviceAdmin {
+    public:
+
+        /**
+         * Action on device
+         */
+        enum Action {
+            INITIALIZATION,  ///< initialize a handle on given device
+            FINALIZATION,    ///< finalize a handle on given device
+        };
+
+        /**
+         * DeviceAdmin, initialize or finalize device shang xia wen
+         */
+        using function = std::function<void(DeviceHandle * *, int, Action)>;
+
+
+        /**
+         * Example of DeviceAdmin
+         * @param handle Pointer to the pointer of handle, ready to be initialized of finalized, which controlled by `action`
+         * @param device_id admin device id
+         * @param action @sa DeviceAction
+         */
+        void DeviceAdminFunction(DeviceHandle **handle, int device_id, Action action);
+
+        /**
+         * Query device admin
+         * @param device_type querying computing device
+         * @return DeviceAdmin
+         * @note supporting called by threads without calling @sa RegisterDeviceAdmin
+         * @note the query device should be computing device
+         */
+        static function Query(const DeviceType &device_type) TS_NOEXCEPT;
+
+        /**
+         * Register DeviceAdmin for specific device type
+         * @param device_type specific @sa DeviceType
+         * @param device_admin setting allocator
+         * @note only can be called before running @sa QueryDeviceAdmin
+         */
+        static void Register(const DeviceType &device_type, const function &device_admin) TS_NOEXCEPT;
+
+        /**
+         * No details for this API, so DO NOT call it
+         */
+        static void Clear();
     };
-
-    /**
-     * DeviceAdmin, initialize or finalize device shang xia wen
-     */
-    using DeviceAdmin = std::function<void(DeviceHandle **handle, int device_id, DeviceAction action)>;
-
-
-    /**
-     * Example of DeviceAdmin
-     * @param handle Pointer to the pointer of handle, ready to be initialized of finalized, which controlled by `action`
-     * @param device_id admin device id
-     * @param action @sa DeviceAction
-     */
-    void DeviceAdminDeclaration(DeviceHandle **handle, int device_id, DeviceAction action);
-
-    /**
-     * Query device admin
-     * @param device_type querying computing device
-     * @return DeviceAdmin
-     * @note supporting called by threads without calling @sa RegisterDeviceAdmin
-     * @note the query device should be computing device
-     */
-    DeviceAdmin QueryDeviceAdmin(const DeviceType &device_type) TS_NOEXCEPT;
-
-    /**
-     * Register allocator for specific device type
-     * @param device_type specific @sa DeviceType
-     * @param device_admin setting allocator
-     * @note only can be called before running @sa QueryDeviceAdmin
-     */
-    void RegisterDeviceAdmin(const DeviceType &device_type, const DeviceAdmin &device_admin) TS_NOEXCEPT;
-
-    /**
-     * No details for this API, so DO NOT call it
-     */
-    void ClearRegisteredDeviceAdmin();
 }
 
 

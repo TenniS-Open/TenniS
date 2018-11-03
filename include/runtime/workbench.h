@@ -95,7 +95,7 @@ namespace ts {
         ThreadPool::shared m_thread_pool;
         // control device context
         DeviceContext m_device_context;
-        DeviceAdmin m_device_admin;
+        DeviceAdmin::function m_device_admin;
     };
 }
 

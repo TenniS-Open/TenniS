@@ -24,10 +24,10 @@ namespace ts {
         this->m_data_sagment = std::make_shared<Stack>(memory_device, this->m_static_memory);
         this->m_thread_pool = std::make_shared<ThreadPool>(0);
 
-        this->m_device_admin = QueryDeviceAdmin(device.type());
+        this->m_device_admin = DeviceAdmin::Query(device.type());
 
         if (m_device_admin != nullptr) {
-            m_device_admin(&m_device_context.handle, m_device.id(), DEVICE_INITIALIZATION);
+            m_device_admin(&m_device_context.handle, m_device.id(), DeviceAdmin::INITIALIZATION);
         }
     }
 
@@ -38,7 +38,7 @@ namespace ts {
 
     Workbench::~Workbench() {
         if (m_device_admin != nullptr && m_device_context.handle != nullptr) {
-            m_device_admin(&m_device_context.handle, m_device.id(), DEVICE_FINALIZATION);
+            m_device_admin(&m_device_context.handle, m_device.id(), DeviceAdmin::FINALIZATION);
         }
     }
 
