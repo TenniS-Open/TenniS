@@ -11,7 +11,7 @@
 namespace ts {
     HardMemory::HardMemory(const MemoryDevice &device)
             : m_device(device) {
-        m_allocator = QueryAllocator(device);
+        m_allocator = HardAllocator::Query(device.type());
         assert(m_allocator != nullptr);
     }
 
@@ -20,12 +20,12 @@ namespace ts {
         this->resize(size);
     }
 
-    HardMemory::HardMemory(const MemoryDevice &device, const HardAllocator &allocator)
+    HardMemory::HardMemory(const MemoryDevice &device, const HardAllocator::function &allocator)
         : m_device(device), m_allocator(allocator){
         assert(m_allocator != nullptr);
     }
 
-    HardMemory::HardMemory(const MemoryDevice &device, const HardAllocator &allocator, size_t size)
+    HardMemory::HardMemory(const MemoryDevice &device, const HardAllocator::function &allocator, size_t size)
             : HardMemory(device, allocator) {
         this->resize(size);
     }

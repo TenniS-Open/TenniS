@@ -39,7 +39,7 @@ namespace ts {
 
     private:
         MemoryDevice m_device;
-        HardAllocator m_allocator;
+        HardAllocator::function m_allocator;
     };
 
     // TODO: add flow memory controller

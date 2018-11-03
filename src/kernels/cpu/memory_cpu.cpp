@@ -32,7 +32,7 @@ namespace ts {
     }
 }
 
-TS_STATIC_ACTION(ts::RegisterAllocator, ts::CPU, ts::cpu_allocator)
+TS_STATIC_ACTION(ts::HardAllocator::Register, ts::CPU, ts::cpu_allocator)
 
 TS_STATIC_ACTION(ts::RegisterConverter, ts::CPU, ts::CPU, ts::cpu_converter)
 

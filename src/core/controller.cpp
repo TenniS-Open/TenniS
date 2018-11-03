@@ -9,7 +9,7 @@ namespace ts {
 
     DynamicMemoryController::DynamicMemoryController(const MemoryDevice &device)
             : m_device(device) {
-        m_allocator = QueryAllocator(device);
+        m_allocator = HardAllocator::Query(device.type());
         assert(m_allocator != nullptr);
     }
 

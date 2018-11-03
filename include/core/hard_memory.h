@@ -41,7 +41,7 @@ namespace ts {
          * @param device memory @sa Device
          * @param allocator memory allocator @see HardAllocator
          */
-        explicit HardMemory(const MemoryDevice &device, const HardAllocator &allocator);
+        explicit HardMemory(const MemoryDevice &device, const HardAllocator::function &allocator);
 
         /**
          * Initialize hardware memory
@@ -49,7 +49,7 @@ namespace ts {
          * @param allocator memory allocator @see HardAllocator
          * @param size expected size
          */
-        explicit HardMemory(const MemoryDevice &device, const HardAllocator &allocator, size_t size);
+        explicit HardMemory(const MemoryDevice &device, const HardAllocator::function &allocator, size_t size);
 
         ~HardMemory();
 
@@ -136,7 +136,7 @@ namespace ts {
         MemoryDevice m_device;                         ///< running device
         size_t m_capacity = 0;                   ///< memory capacity
         void *m_data = nullptr;                ///< memory start pointer
-        HardAllocator m_allocator = nullptr;    ///< memory allocator
+        HardAllocator::function m_allocator = nullptr;    ///< memory allocator
     };
 
     /**
