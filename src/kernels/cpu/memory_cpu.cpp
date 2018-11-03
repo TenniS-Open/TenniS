@@ -36,4 +36,4 @@ TS_STATIC_ACTION(ts::HardAllocator::Register, ts::CPU, ts::cpu_allocator)
 
 TS_STATIC_ACTION(ts::HardConverter::Register, ts::CPU, ts::CPU, ts::cpu_converter)
 
-TS_STATIC_ACTION(ts::ComputingMemoryDevice::Register, ts::CPU, ts::CPU)
+TS_STATIC_ACTION(ts::ComputingMemory::Register, ts::CPU, ts::CPU)

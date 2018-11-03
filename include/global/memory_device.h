@@ -31,7 +31,7 @@ namespace ts {
         DeviceType m_no_memory_device_type;
     };
 
-    class ComputingMemoryDevice {
+    class ComputingMemory {
     public:
         /**
          * Query memory device of compute device
@@ -55,8 +55,8 @@ namespace ts {
          * @param compute_device_type the compute device, such as CPU, GPU, CUBLAS, CUDNN, etc.
          * @param memory_device_type the memory device, such as CPU and GPU.
          */
-        static void
-        Register(const DeviceType &compute_device_type, const DeviceType &memory_device_type) TS_NOEXCEPT;
+        static void Register(const DeviceType &compute_device_type,
+                             const DeviceType &memory_device_type) TS_NOEXCEPT;
 
         /**
          * No details for this API, so DO NOT call it

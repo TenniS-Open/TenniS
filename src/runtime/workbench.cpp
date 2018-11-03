@@ -15,7 +15,7 @@
 namespace ts {
     Workbench::Workbench(const ComputingDevice &device)
             : m_device(device) {
-        auto memory_device = ComputingMemoryDevice::Query(device);
+        auto memory_device = ComputingMemory::Query(device);
         this->m_static_memory = std::make_shared<DynamicMemoryController>(memory_device);
         this->m_flow_memory = std::make_shared<DynamicMemoryController>(
                 memory_device);   // TODO: Make real flow memory controller
