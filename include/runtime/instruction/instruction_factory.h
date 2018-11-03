@@ -22,7 +22,7 @@ namespace ts {
          * @param node node ready to convert to instruction
          * @return an serial of instructions, those can calculate node
          */
-        std::vector<Instruction::shared> InstructionBuilderFunction(const Node &node);
+        std::vector<Instruction::shared> InstructionCreatorrFunction(const Node &node);
 
         /**
          * Query instruction builder of specific op
