@@ -15,6 +15,7 @@
 #include <algorithm>
 
 #include "runtime/instruction/stack_instruction.h"
+#include "runtime/instruction/tensor_instruction.h"
 #include "global/operator_factory.h"
 
 

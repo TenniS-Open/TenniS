@@ -24,14 +24,6 @@ namespace ts {
             // [-0, +0, -]
             static Instruction::shared swap(int i, int j);
         };
-
-        class Tensor {
-        public:
-            // [-size, +1, e]
-            static Instruction::shared pack(size_t size);
-            // [-1, +1, e]
-            static Instruction::shared field(size_t index);
-        };
     }
 }
 
