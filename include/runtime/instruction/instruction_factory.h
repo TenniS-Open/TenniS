@@ -31,7 +31,7 @@ namespace ts {
          * @note supporting called by threads without calling @sa RegisterInstructionBuilder
          * @note the query should be the Bubble.op
          */
-        function Query(const std::string &op) TS_NOEXCEPT;
+        static function Query(const std::string &op) TS_NOEXCEPT;
 
         /**
          * Register InstructionBuilder for specific op
@@ -39,12 +39,12 @@ namespace ts {
          * @param builder instruction builder
          * @note only can be called before running @sa QueryInstructionBuilder
          */
-        void Register(const std::string &op, const function &builder) TS_NOEXCEPT;
+        static void Register(const std::string &op, const function &builder) TS_NOEXCEPT;
 
         /**
          * No details for this API, so DO NOT call it
          */
-        void Clear();
+        static void Clear();
     };
 }
 
