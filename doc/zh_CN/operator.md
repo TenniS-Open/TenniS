@@ -5,7 +5,7 @@
 这里列举出，框架已经支持的算符，以及对应的参数设置。
 
 所有内置算符都包含参数：
-- `#op`: `string` `_field`
+- `#op`: `string` 算符的名称
 - `#name`: `string` 实例化名称
 - `#output_count`: `int` 输出结果数
 
