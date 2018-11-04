@@ -3,6 +3,7 @@
 //
 
 #include <unordered_set>
+#include <unordered_map>
 #include <queue>
 #include <cassert>
 #include <module/module.h>
@@ -233,5 +234,44 @@ namespace ts {
             }
         }
         m_inputs = inputs;
+    }
+
+    void Module::sort_inputs(const std::vector<std::string> &input_names) {
+        std::unordered_map<std::string, Node> map_name_input_node;
+        // map nodes
+        for (auto &input : m_inputs) {
+            auto &bubble = input.ref<Bubble>();
+            if (map_name_input_node.find(bubble.name()) != map_name_input_node.end()) {
+                auto it = map_name_input_node.find(bubble.name());
+                throw Exception("Can not sort inputs with duplicate names: " + input.str() + " and " + it->second.str());
+            }
+            map_name_input_node.insert(std::make_pair(bubble.name(), input));
+        }
+        // check inputs node
+        std::unordered_set<Node> used_inputs;   // make sure all inputs must be used after used
+        std::vector<Node> sorted_inputs;
+        for (auto &input_name : input_names) {
+            auto name_node_it = map_name_input_node.find(input_name);
+            if (name_node_it == map_name_input_node.end()) {
+                throw Exception("Can not recognize name " + input_name);
+            }
+            auto &node = name_node_it->second;
+            sorted_inputs.emplace_back(node);
+            used_inputs.insert(node);
+        }
+        if (used_inputs.size() < map_name_input_node.size()) {
+            std::ostringstream oss;
+            oss << "All inputs must be used after sorted, missing: ";
+            size_t missing_count = 0;
+            for (auto &name_node_pair : map_name_input_node) {
+                auto &node = name_node_pair.second;
+                if (used_inputs.find(node) != used_inputs.end()) continue;
+                if (missing_count) oss << ", ";
+                oss << name_node_pair.first;
+                ++missing_count;
+            }
+            throw Exception(oss.str());
+        }
+        m_inputs = sorted_inputs;
     }
 }

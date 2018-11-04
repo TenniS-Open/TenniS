@@ -10,6 +10,7 @@
 #include <utils/ctxmgr.h>
 #include <core/tensor_builder.h>
 #include <module/menu.h>
+#include <utils/box.h>
 
 #include <cstring>
 
@@ -77,6 +78,8 @@ int main()
     using namespace ts;
     setup();
 
+
+
     // build graph
     Graph g;
     ctx::bind<Graph> _graph(g);
@@ -97,7 +100,8 @@ int main()
 
     // setup module
     std::shared_ptr<Module> m = std::make_shared<Module>();
-    m->load(g);
+    m->load(g, {"c"});
+    m->sort_inputs({"a", "b"});
 
     std::cout << "Input nodes:" << std::endl;
     for (auto &node : m->inputs()) {

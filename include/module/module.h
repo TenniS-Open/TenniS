@@ -111,6 +111,8 @@ namespace ts {
 
         void sort_inputs(const std::vector<Node> &inputs);
 
+        void sort_inputs(const std::vector<std::string> &input_names);
+
     private:
         /**
          * @param g reference Graph
