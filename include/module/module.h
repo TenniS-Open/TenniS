@@ -107,6 +107,10 @@ namespace ts {
 
         const std::vector<Node> &outputs() const { return m_outputs; }
 
+        void clear();
+
+        void sort_inputs(const std::vector<Node> &inputs);
+
     private:
         /**
          * @param g reference Graph

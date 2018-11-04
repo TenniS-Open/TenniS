@@ -218,4 +218,20 @@ namespace ts {
         // return non-duplicate nodes
         return std::vector<Node>(input_nodes_set.begin(), input_nodes_set.end());
     }
+
+    void Module::clear() {
+        m_inputs.clear();
+        m_outputs.clear();
+        m_graphs.clear();
+    }
+
+    void Module::sort_inputs(const std::vector<Node> &inputs) {
+        std::unordered_set<Node> sorted_input_set(inputs.begin(), inputs.end());
+        for (auto &had_input : m_inputs) {
+            if (sorted_input_set.find(had_input) == sorted_input_set.end()) {
+                throw Exception("The sorted inputs must content " + had_input.str());
+            }
+        }
+        m_inputs = inputs;
+    }
 }
