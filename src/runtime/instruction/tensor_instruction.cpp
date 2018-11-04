@@ -41,8 +41,8 @@ namespace ts {
                 stack.push(field);
             }, "field(" + std::to_string(index) + ")");
         }
-        
-        static std::vector<Instruction::shared> field_instruction_creator(const Node &node) {
+
+        static std::vector<Instruction::shared> create_instruction_field(const Node &node) {
             assert(node.inputs().size() == 1);
 
             auto &bubble = node.ref<Bubble>();
@@ -57,7 +57,19 @@ namespace ts {
 
             return inst;
         };
+
+        static std::vector<Instruction::shared> create_instruction_pack(const Node &node) {
+            auto &bubble = node.ref<Bubble>();
+            assert(bubble.output_count() == 1);
+
+            std::vector<Instruction::shared> inst;
+
+            inst.push_back(Tensor::pack(node.inputs().size()));
+
+            return inst;
+        };
     }
 }
 
-TS_STATIC_ACTION(ts::InstructionCreator::Register, "_field", ts::instruction::field_instruction_creator);
+TS_STATIC_ACTION(ts::InstructionCreator::Register, "_field", ts::instruction::create_instruction_field);
+TS_STATIC_ACTION(ts::InstructionCreator::Register, "_pack", ts::instruction::create_instruction_pack);
