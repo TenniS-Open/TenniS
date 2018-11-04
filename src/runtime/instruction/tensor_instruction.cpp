@@ -8,6 +8,7 @@
 
 #include "runtime/instruction/instruction_factory.h"
 #include "utils/static.h"
+#include "core/tensor_builder.h"
 
 namespace ts {
     namespace instruction {
@@ -42,8 +43,16 @@ namespace ts {
         }
         
         static std::vector<Instruction::shared> field_instruction_creator(const Node &node) {
-            // TODO: finish this function
+            assert(node.inputs().size() == 1);
+            auto &bubble = node.ref<Bubble>();
+
             std::vector<Instruction::shared> inst;
+            int offset = tensor::to_int(bubble.get("offset"));
+
+            assert(offset >= 0);
+
+            inst.push_back(Tensor::field(size_t(offset)));
+
             return inst;
         };
     }
