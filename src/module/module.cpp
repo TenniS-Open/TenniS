@@ -5,6 +5,8 @@
 #include <unordered_set>
 #include <queue>
 #include <cassert>
+#include <module/module.h>
+
 
 #include "module/module.h"
 #include "utils/box.h"
@@ -114,15 +116,72 @@ namespace ts {
     }
 
     void Module::load(Graph g) {
-        // calculate inputs and outputs
         auto nodes = g.nodes();
-        std::unordered_set<Node> nodes_set;
         std::vector<Node> outputs;
         for (auto &node : nodes) {
-            nodes_set.insert(node);
             if (node.outputs().empty()) {
                 outputs.push_back(node);
             }
+        }
+        load(g, outputs);
+    }
+
+    void Module::load(Graph g, const std::vector<Node> &outputs) {
+        auto inputs = graph_walker(g, outputs);
+
+        m_inputs.insert(m_inputs.end(), inputs.begin(), inputs.end());
+        m_outputs.insert(m_outputs.end(), outputs.begin(), outputs.end());
+        m_graphs.push_back(g);
+    }
+
+    void Module::load(Graph g, const std::vector<std::string> &outputs) {
+        std::unordered_map<std::string, Node> map_name_found_node;
+        size_t found_count = 0;
+        Graph local_graph;
+        Node empty_node = local_graph.make<Bubble>("_empty");
+        for (auto &output_name : outputs) {
+            map_name_found_node.insert(std::make_pair(output_name, empty_node));
+        }
+        auto nodes = g.nodes();
+        for (auto &node : nodes) {
+            auto &bubble = node.ref<Bubble>();
+            auto name_it = map_name_found_node.find(bubble.name());
+            if (name_it == map_name_found_node.end()) {
+                continue;
+            }
+            if (name_it->second != empty_node) {
+                throw Exception("Found duplicate Node " + node.str() + ", with Node " + name_it->second.str());
+            }
+            ++found_count;
+            name_it->second = node;
+        }
+        if (found_count != map_name_found_node.size()) {
+            std::ostringstream oss;
+            oss << "Can not found those names in graph: ";
+            size_t not_found_name_count = 0;
+            for (auto &name_found_node_pair : map_name_found_node) {
+                if (name_found_node_pair.second != empty_node) continue;
+                if (not_found_name_count) oss << ", ";
+                oss << name_found_node_pair.first;
+                ++not_found_name_count;
+            }
+            throw Exception(oss.str());
+        }
+        std::vector<Node> found_nodes;
+        found_nodes.reserve(outputs.size());
+        for (auto &output_name : outputs) {
+            Node &found_node = map_name_found_node.at(output_name);
+            found_nodes.emplace_back(found_node);
+        }
+        this->load(g, found_nodes);
+    }
+
+    std::vector<Node> Module::graph_walker(Graph g, const std::vector<Node> &outputs) {
+        // calculate inputs and outputs
+        auto nodes = g.nodes();
+        std::unordered_set<Node> nodes_set;
+        for (auto &node : nodes) {
+            nodes_set.insert(node);
         }
         // valid graph, get inputs
         std::vector<Node> inputs;
@@ -135,7 +194,7 @@ namespace ts {
             if (walked.find(node) != walked.end()) continue;
             walked.insert(node);
             if (nodes_set.find(node) == nodes_set.end()) {
-                throw ts::Exception("Found unlinked node in graph");
+                throw ts::Exception("Found unlinked node in graph: " + node.str());
             }
             auto &op = node.ref<Bubble>();
             if (op.op() == Bubble::Parameter) {
@@ -146,7 +205,7 @@ namespace ts {
                 continue;
             }
             if (node.inputs().empty()) {
-                throw ts::Exception("Found not computable node");
+                throw ts::Exception("Found not computable node: " + node.str());
             }
             for (auto &input : node.inputs()) {
                 walker.push(input);
@@ -155,8 +214,8 @@ namespace ts {
         // remove duplicate inputs
         std::unordered_set<Node> input_nodes_set;
         for (auto &input : inputs) input_nodes_set.insert(input);
-        m_inputs.insert(m_inputs.end(), input_nodes_set.begin(), input_nodes_set.end());
-        m_outputs.insert(m_outputs.end(), outputs.begin(), outputs.end());
-        m_graphs.push_back(g);
+
+        // return non-duplicate nodes
+        return std::vector<Node>(input_nodes_set.begin(), input_nodes_set.end());
     }
 }

@@ -108,6 +108,13 @@ namespace ts {
         const std::vector<Node> &outputs() const { return m_outputs; }
 
     private:
+        /**
+         * @param g reference Graph
+         * @param outputs output nodes
+         * @return input node supporting computing outputs
+         */
+        static std::vector<Node> graph_walker(Graph g, const std::vector<Node> &outputs);
+
         std::vector<Node> m_inputs;
         std::vector<Node> m_outputs;
         std::vector<Graph> m_graphs;
