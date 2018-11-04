@@ -44,7 +44,9 @@ namespace ts {
         
         static std::vector<Instruction::shared> field_instruction_creator(const Node &node) {
             assert(node.inputs().size() == 1);
+
             auto &bubble = node.ref<Bubble>();
+            assert(bubble.output_count() == 1);
 
             std::vector<Instruction::shared> inst;
             int offset = tensor::to_int(bubble.get("offset"));
