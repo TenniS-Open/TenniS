@@ -73,6 +73,7 @@ namespace ts {
          * Saving output size
          */
         int m_output_count = 1;
+        /// TODO: Since output count must greater than 1, try supporting 0 output
 
         /**
          * Parameters
