@@ -44,6 +44,71 @@ namespace ts {
         return InnerGlobalLogLevel;
     }
 
+    class LogCore {
+    public:
+        using self = LogCore;
+
+        explicit  LogCore(std::ostream &stream)
+                : m_stream(stream) {}
+
+        LogCore()
+                : m_stream(std::cout) {}
+
+        virtual ~LogCore() = default;
+
+        void add(const std::string &message) {
+            m_buffer << message;
+        }
+
+        void commit() {
+            m_buffer << std::endl;
+            m_stream << m_buffer.str();
+            m_buffer.str("");
+        }
+
+    private:
+        std::ostream &m_stream;
+        std::ostringstream m_buffer;
+    };
+
+    class LogCoreStream : public LogCore {
+    public:
+        using self = LogCoreStream;
+        using supper = LogCore;
+
+        explicit LogCoreStream(LogLevel level, std::ostream &stream)
+                : supper(stream), m_level(level) {}
+
+        explicit LogCoreStream(LogLevel level)
+                : m_level(level) {}
+
+        LogCoreStream()
+                : m_level(NONE) {}
+
+        ~LogCoreStream() {
+            if (actived()) commit();
+        }
+
+        /**
+         * @return true if actived
+         */
+        bool actived() const {
+            return m_level >= GlobalLogLevel();
+        }
+
+        template <typename T>
+        self &operator<<(const T &message) {
+            if (!this->actived()) return *this;
+            std::ostringstream oss;
+            oss << message;
+            this->add(oss.str());
+            return *this;
+        }
+
+    private:
+        LogLevel m_level;
+    };
+
     class Log {
     public:
         Log(LogLevel level, std::ostream &log = std::cout)
