@@ -115,6 +115,14 @@ namespace ts {
 
         void sort_inputs(const std::initializer_list<std::string> &input_names);
 
+        enum SerializationFormat {
+            BINARY,
+            DESCRIPTION,
+        };
+
+        // TODO: finish Load ad Save method
+        Module::shared Load(const std::string &filename, SerializationFormat format);
+        Module::shared Save(const std::string &filename, SerializationFormat format);
     private:
         /**
          * @param g reference Graph
