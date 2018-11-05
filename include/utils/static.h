@@ -6,6 +6,8 @@
 #define TENSORSTACK_UTILS_STATIC_H
 
 #include <utility>
+#include <functional>
+
 #include "utils/except.h"
 
 namespace ts {
@@ -16,7 +18,7 @@ namespace ts {
     public:
         template <typename FUNC, typename... Args>
         explicit StaticAction(FUNC func, Args&&... args) TS_NOEXCEPT {
-            func(std::forward<Args>(args)...);
+            std::bind(func, std::forward<Args>(args)...)();
         }
     };
 }

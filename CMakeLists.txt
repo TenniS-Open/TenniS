@@ -3,6 +3,7 @@ project(TensorStack)
 
 # global root dir
 set(SOLUTION_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+add_definitions(-DTS_SOLUTION_DIR="${SOLUTION_DIR}")
 
 # dir for common cmake files
 list(APPEND CMAKE_MODULE_PATH ${SOLUTION_DIR}/cmake)
