@@ -100,7 +100,9 @@ namespace ts {
         using shared = std::shared_ptr<self>;  ///< smart pointer
 
         void load(Graph g);
+
         void load(Graph g, const std::vector<Node> &outputs);
+
         void load(Graph g, const std::vector<std::string> &outputs);
 
         const std::vector<Node> &inputs() const { return m_inputs; }
@@ -122,7 +124,9 @@ namespace ts {
 
         // TODO: finish Load ad Save method
         Module::shared Load(const std::string &filename, SerializationFormat format);
+
         Module::shared Save(const std::string &filename, SerializationFormat format);
+
     private:
         /**
          * @param g reference Graph
