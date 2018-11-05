@@ -274,4 +274,8 @@ namespace ts {
         }
         m_inputs = sorted_inputs;
     }
+
+    void Module::sort_inputs(const std::initializer_list<std::string> &input_names) {
+        this->sort_inputs(std::vector<std::string>(input_names.begin(), input_names.end()));
+    }
 }
