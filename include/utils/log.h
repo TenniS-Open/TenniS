@@ -115,6 +115,12 @@ namespace ts {
     inline LogStream &fatal(LogStream &log) {
         const auto msg = log.message();
         log.flush();
+        std::exit(-1);
+    }
+
+    inline LogStream &eject(LogStream &log) {
+        const auto msg = log.message();
+        log.flush();
         throw Exception(msg);
     }
 }
@@ -131,6 +137,6 @@ namespace ts {
 
 #define TS_LOG(level) (ts::LogStream(level))("[")(TS_LOCAL_FILE)(":")(__LINE__)("]: ")
 #define TS_TIME(level) (ts::LogStream(level))("[")(ts::now_time())("]: ")
-#define TS_TIME_LOG(level) (ts::LogStream(level))("[")(TS_LOCAL_FILE)(":")(__LINE__)("][")(ts::now_time())("]: ")
+#define TS_LOG_TIME(level) (ts::LogStream(level))("[")(TS_LOCAL_FILE)(":")(__LINE__)("][")(ts::now_time())("]: ")
 
 #endif //TENSORSTACK_LOG_H
