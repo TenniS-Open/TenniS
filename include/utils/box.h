@@ -8,8 +8,11 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <chrono>
 
 namespace ts {
+    using time_point = decltype(std::chrono::system_clock::now());
+
     /**
      * get edit distance of edit lhs to rhs
      * @param lhs original string
@@ -37,6 +40,16 @@ namespace ts {
      * @note Example input(0, 10, 3) returns [(0, 4), (4, 8), (8, 10)]
      */
     std::vector<std::pair<size_t, size_t>> lsplit_bins(size_t first, size_t second, size_t bins);
+
+    std::string to_string(time_point tp, const std::string &format = "%Y-%m-%d %H:%M:%S");
+
+    /**
+     * return format now time string
+     * @param format same as strftime
+     * @return string contains now time
+     * @see strftime
+     */
+    std::string now_time(const std::string &format = "%Y-%m-%d %H:%M:%S");
 }
 
 

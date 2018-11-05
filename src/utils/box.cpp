@@ -3,11 +3,14 @@
 //
 
 #include "utils/box.h"
+#include "utils/platform.h"
 
 #include <algorithm>
 #include <memory>
 #include <cmath>
 #include <cfenv>
+#include <ctime>
+#include <iomanip>
 
 
 namespace ts {
@@ -94,7 +97,7 @@ namespace ts {
         if (step < 1) step = 1;
         auto anchor = first;
 
-        std::vector<std::pair<size_t , size_t >> result_bins;
+        std::vector<std::pair<size_t, size_t >> result_bins;
         while (anchor + step < second) {
             result_bins.emplace_back(std::make_pair(anchor, anchor + step));
             anchor += step;
@@ -103,5 +106,27 @@ namespace ts {
             result_bins.emplace_back(std::make_pair(anchor, second));
         }
         return result_bins;
+    }
+
+    static struct tm time2tm(std::time_t from) {
+        std::tm to = {0};
+#if TS_PLATFORM_CC_MSVC
+        localtime_s(&to, &from);
+#else
+        localtime_r(&from, &to);
+#endif
+        return to;
+    }
+
+    std::string to_string(time_point tp, const std::string &format) {
+        std::time_t tt = std::chrono::system_clock::to_time_t(tp);
+        std::tm even = time2tm(tt);
+        char tmp[64];
+        std::strftime(tmp, sizeof(tmp), format.c_str(), &even);
+        return std::string(tmp);
+    }
+
+    std::string now_time(const std::string &format) {
+        return to_string(std::chrono::system_clock::now(), format);
     }
 }
