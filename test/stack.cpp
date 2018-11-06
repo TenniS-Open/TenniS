@@ -2,14 +2,16 @@
 // Created by seeta on 2018/6/28.
 //
 
-#include <stack/stack.h>
+#include <runtime/stack.h>
 #include <iostream>
-#include <stack/workbench.h>
+#include <runtime/workbench.h>
+#include <global/setup.h>
 
 int main() {
+    ts::setup();
 
-    ts::Stack ss(ts::Device(ts::CPU));
-    ss.push(ts::TYPE::INT8, {1});
+    ts::Stack ss(ts::MemoryDevice(ts::CPU));
+    ss.push(ts::DTYPE::INT8, {1});
     std::cout << ss.size() << std::endl;
     ss.push(-1);
     ss.push(-1);

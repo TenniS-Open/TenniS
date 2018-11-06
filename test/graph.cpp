@@ -17,6 +17,11 @@ public:
     }
 };
 
+template <typename T>
+inline std::ostream &operator<<(std::ostream &out, const Add<T> &node) {
+    return out << "Add";
+}
+
 int main()
 {
     int N= 1000;

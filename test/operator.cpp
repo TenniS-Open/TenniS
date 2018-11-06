@@ -19,10 +19,10 @@ public:
     }
 };
 
-TS_REGISTER_OPERATOR(Op, "op:cpu:float")
+TS_REGISTER_OPERATOR(Op, ts::CPU, "op:cpu:float")
 
 int main() {
-    auto f = ts::QueryOperatorCreator("op:cpu:float");
+    auto f = ts::OperatorCreator::Query(ts::CPU, "op:cpu:float");
     auto t = f();
     return 0;
 }

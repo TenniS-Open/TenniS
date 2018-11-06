@@ -40,10 +40,10 @@ int main()
 
     std::cout << b.data<int>()[0] << std::endl;
 
-    std::cout << ts::QueryMemoryDevice(ts::Device(ts::CPU, 0)) << std::endl;
+    std::cout << ts::ComputingMemory::Query(ts::Device(ts::CPU, 0)) << std::endl;
 
     try {
-        ts::QueryMemoryDevice(ts::Device("ARM", 0));
+        ts::ComputingMemory::Query(ts::Device("ARM", 0));
     } catch (const ts::NoMemoryDeviceException &e) {
         std::cout << e.what() << std::endl;
     }

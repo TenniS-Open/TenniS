@@ -6,17 +6,19 @@
 #include <core/dtype.h>
 #include <iostream>
 #include <core/scan.h>
+#include <global/setup.h>
 
 int main() {
     using namespace ts;
+    setup();
+
     Tensor a(FLOAT32, {2, 3, 4});
+
 
     float *data = a.data<float>();
     for (int i = 0; i < a.count(); ++i) {
         data[i] = i;
     }
-
-    BaseItrator it(&a);
 
 //    while (true)
 //    {
@@ -26,9 +28,6 @@ int main() {
 //
 //        it.next();
 //    }
-
-    std::cout << *reinterpret_cast<float*>(it.at({1,1,1})) << std::endl;
-    std::cout << *reinterpret_cast<float*>(it.at(1, 1, 0)) << std::endl;
 
     auto b = Scan(3, 1);
     auto c = Scan(3, -3);
