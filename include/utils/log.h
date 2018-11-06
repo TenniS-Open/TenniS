@@ -15,6 +15,13 @@
 #include "box.h"
 
 namespace ts {
+
+    class EjectionException : public Exception {
+    public:
+        EjectionException() : Exception() {}
+        explicit EjectionException(const std::string &message) : Exception(message) {}
+    };
+
     enum LogLevel {
         LOG_NONE = 0,
         LOG_DEBUG = 1,
@@ -121,7 +128,7 @@ namespace ts {
     inline LogStream &eject(LogStream &log) {
         const auto msg = log.message();
         log.flush();
-        throw Exception(msg);
+        throw EjectionException(msg);
     }
 }
 
@@ -138,5 +145,11 @@ namespace ts {
 #define TS_LOG(level) (ts::LogStream(level))("[")(TS_LOCAL_FILE)(":")(__LINE__)("]: ")
 #define TS_TIME(level) (ts::LogStream(level))("[")(ts::now_time())("]: ")
 #define TS_LOG_TIME(level) (ts::LogStream(level))("[")(TS_LOCAL_FILE)(":")(__LINE__)("][")(ts::now_time())("]: ")
+
+#define TS_LOG_DEBUG TS_LOG(ts::LOG_DEBUG)
+#define TS_LOG_STATUS TS_LOG(ts::LOG_STATUS)
+#define TS_LOG_INFO TS_LOG(ts::LOG_INFO)
+#define TS_LOG_ERROR TS_LOG(ts::LOG_ERROR)
+#define TS_LOG_FATAL TS_LOG(ts::LOG_FATAL)
 
 #endif //TENSORSTACK_LOG_H

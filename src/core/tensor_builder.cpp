@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <unordered_set>
 #include "core/tensor_builder.h"
+#include "utils/assert.h"
 
 namespace ts {
     namespace tensor {
@@ -61,8 +62,9 @@ namespace ts {
         type_cast_to(void *dst, DTYPE dst_dtype, const typename dtype<DTYPE_SRC>::declare *src, size_t size) {
             switch (dst_dtype) {
                 default:
-                    throw Exception(
-                            std::string("Can not convert dtype ") + type_str(DTYPE_SRC) + " to " + type_str(dst_dtype));
+                    TS_LOG_ERROR << "Can not convert dtype " << type_str(DTYPE_SRC) << " to " << type_str(dst_dtype)
+                                 << eject;
+                    break;
 #define __CASE_TYPE_CALL_TYPE_CAST(__type__) \
                 case __type__: type_cast_template<__type__, DTYPE_SRC>::cast(reinterpret_cast<typename dtype<__type__>::declare *>(dst), src, size); break;
                 __CASE_TYPE_CALL_TYPE_CAST(INT8)
@@ -86,8 +88,9 @@ namespace ts {
         static void type_cast_to_from(void *dst, DTYPE dst_dtype, const void *src, DTYPE src_dtype, size_t size) {
             switch (src_dtype) {
                 default:
-                    throw Exception(
-                            std::string("Can not convert dtype ") + type_str(src_dtype) + " to " + type_str(dst_dtype));
+                    TS_LOG_ERROR << "Can not convert dtype " << type_str(src_dtype) << " to " << type_str(dst_dtype)
+                                 << eject;
+                    break;
 #define __CASE_TYPE_CALL_TYPE_CAST_TO(__type__) \
                 case __type__: type_cast_to<__type__>(dst, dst_dtype, reinterpret_cast<const typename dtype<__type__>::declare *>(src), size); break;
                 __CASE_TYPE_CALL_TYPE_CAST_TO(INT8)
@@ -127,8 +130,8 @@ namespace ts {
 
             if (unsupported_types.find(dtype) != unsupported_types.end()
                 || unsupported_types.find(cpu_value.dtype()) != unsupported_types.end()) {
-                throw Exception(
-                        std::string("Can not convert dtype ") + type_str(cpu_value.dtype()) + " to " + type_str(dtype));
+                TS_LOG_ERROR << "Can not convert dtype " << type_str(cpu_value.dtype()) << " to " << type_str(dtype)
+                             << eject;
             }
 
             type_cast_to_from(casted.data(), dtype, cpu_value.data(), cpu_value.dtype(), size_t(cpu_value.count()));
@@ -142,7 +145,7 @@ namespace ts {
                     return int(std::strtol(to_string(value).c_str(), nullptr, 10));
                 } catch (const Exception &) {}
             }
-            if (value.count() == 0) throw Exception("Can not convert empty tensor to int");
+            if (value.count() == 0) TS_LOG_ERROR("Can not convert empty tensor to int") << eject;
             return cast(INT32, value).data<int32_t>(0);
         }
 
@@ -152,7 +155,7 @@ namespace ts {
                     return (unsigned int)(std::strtoul(to_string(value).c_str(), nullptr, 10));
                 } catch (const Exception &) {}
             }
-            if (value.count() == 0) throw Exception("Can not convert empty tensor to int");
+            if (value.count() == 0) TS_LOG_ERROR("Can not convert empty tensor to int") << eject;
             return cast(UINT32, value).data<uint32_t>(0);
         }
 
@@ -162,7 +165,7 @@ namespace ts {
                     return (float)(std::strtod(to_string(value).c_str(), nullptr));
                 } catch (const Exception &) {}
             }
-            if (value.count() == 0) throw Exception("Can not convert empty tensor to int");
+            if (value.count() == 0) TS_LOG_ERROR("Can not convert empty tensor to int") << eject;
             return cast(FLOAT32, value).data<float>(0);
         }
 
@@ -172,7 +175,7 @@ namespace ts {
                     return std::strtod(to_string(value).c_str(), nullptr);
                 } catch (const Exception &) {}
             }
-            if (value.count() == 0) throw Exception("Can not convert empty tensor to int");
+            if (value.count() == 0) TS_LOG_ERROR("Can not convert empty tensor to int") << eject;
             return cast(FLOAT64, value).data<double>(0);
         }
     }

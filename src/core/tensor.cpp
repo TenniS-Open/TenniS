@@ -6,6 +6,7 @@
 #include <cassert>
 
 #include "core/tensor.h"
+#include "utils/assert.h"
 
 namespace ts {
     Tensor::Tensor(MemoryController::shared controller, DTYPE dtype, const Shape &_shape)
@@ -94,8 +95,7 @@ namespace ts {
             return Tensor(m_memory, m_proto);
         }
         if (m_fields == nullptr || offset - 1 >= m_fields->size()) {
-            throw Exception(std::string("Tensor offset output range error. Access index ") + std::to_string(offset) +
-                            " in range(" + std::to_string(fields_count()) + ")");
+            TS_LOG_ERROR << "Tensor offset output range error. Access index " << offset << " in range(" << fields_count() << ")" << eject;
         }
         return m_fields->at(offset - 1);
     }
@@ -107,8 +107,7 @@ namespace ts {
             return;
         }
         if (m_fields == nullptr || offset - 1 >= m_fields->size()) {
-            throw Exception(std::string("Tensor offset output range error. Access index ") + std::to_string(offset) +
-                            " in range(" + std::to_string(fields_count()) + ")");
+            TS_LOG_ERROR << "Tensor offset output range error. Access index " << offset << " in range(" << fields_count() << ")" << eject;
         }
         m_fields->at(offset - 1) = value;
     }

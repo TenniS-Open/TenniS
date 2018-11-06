@@ -12,6 +12,7 @@
 #include <sstream>
 
 #include "utils/except.h"
+#include "utils/assert.h"
 
 namespace ts {
 
@@ -40,11 +41,11 @@ namespace ts {
 
         static void Link(const weak &node, const std::vector<weak> &inputs) {
             auto output = node.lock();
-            if (!output) throw ts::Exception("Link expired node");
+            if (!output) throw NullPointerException("Link expired node");
             output->m_inputs.resize(inputs.size());
             for (size_t i = 0; i < inputs.size(); ++i) {
                 auto input = inputs[i].lock();
-                if (!input) throw ts::Exception("Link expired node");
+                if (!input) throw NullPointerException("Link expired node");
                 input->m_outputs.push_back(output);
                 output->m_inputs[i] = input;
             }
@@ -121,7 +122,7 @@ namespace ts {
 
         std::vector<Node> inputs() const {
             auto ptr = m_ptr.lock();
-            if (!ptr) throw ts::Exception("Getting expired node's inputs");
+            if (!ptr) throw NullPointerException("Getting expired node's inputs");
             auto raw_vector = ptr->inputs();
             std::vector<Node> out_vector;
             out_vector.reserve(raw_vector.size());
@@ -131,7 +132,7 @@ namespace ts {
 
         std::vector<Node> outputs() const {
             auto ptr = m_ptr.lock();
-            if (!ptr) throw ts::Exception("Getting expired node's outputs");
+            if (!ptr) throw NullPointerException("Getting expired node's outputs");
             auto raw_vector = ptr->outputs();
             std::vector<Node> out_vector;
             out_vector.reserve(raw_vector.size());
@@ -154,7 +155,7 @@ namespace ts {
         template<typename T>
         T &ref() {
             auto value_ptr = this->ptr<T>();
-            if (value_ptr == nullptr) throw ts::Exception("Getting reference from null pointer");
+            if (value_ptr == nullptr) throw NullPointerException("Getting reference from null pointer");
             return *value_ptr;
         }
 

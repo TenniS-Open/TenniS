@@ -5,6 +5,8 @@
 #include "runtime/operator.h"
 #include "utils/box.h"
 
+#include "utils/assert.h"
+
 namespace ts {
     bool Operator::has(const std::string &param) const {
         return this->m_params.find(param) != this->m_params.end();
@@ -13,9 +15,8 @@ namespace ts {
     void Operator::set(const std::string &param, const Tensor &value) {
         bool is_retention_param = !param.empty() && param[0] == retention_param_sign;
         if (!is_retention_param && !is_in_fields(param)) {
-            throw Exception(
-                    std::string("Unidentified param \"") + param + "\", did you mean \"" + fuzzy_field_name(param) +
-                    "\"");
+            TS_LOG_ERROR << "Unidentified param \"" << param << "\", did you mean \"" << fuzzy_param_name(param) << "\""
+                         << eject;
         }
         this->m_params.insert(std::make_pair(param, value));
     }
@@ -23,9 +24,8 @@ namespace ts {
     Tensor &Operator::get(const std::string &param) {
         auto param_it = m_params.find(param);
         if (param_it == m_params.end()) {
-            throw Exception(
-                    std::string("Unidentified param \"") + param + "\", did you mean \"" + fuzzy_param_name(param) +
-                    "\"");
+            TS_LOG_ERROR << "Unidentified param \"" << param << "\", did you mean \"" << fuzzy_param_name(param) << "\""
+                         << eject;
         }
         return param_it->second;
     }
@@ -37,9 +37,8 @@ namespace ts {
     void Operator::clear(const std::string &param) {
         auto param_it = m_params.find(param);
         if (param_it == m_params.end()) {
-            throw Exception(
-                    std::string("Unidentified param \"") + param + "\", did you mean \"" + fuzzy_param_name(param) +
-                    "\"");
+            TS_LOG_ERROR << "Unidentified param \"" << param << "\", did you mean \"" << fuzzy_param_name(param) << "\""
+                         << eject;
         }
         this->m_params.erase(param_it);
     }
@@ -160,7 +159,7 @@ namespace ts {
                 oss << "\"" << unsatisfied_fields[i] << "\"";
             }
 
-            throw Exception(oss.str());
+            TS_LOG_ERROR(oss.str()) << eject;
         }
     }
 }

@@ -27,6 +27,12 @@ namespace ts {
     private:
         std::string m_message;
     };
+
+    class NullPointerException : public Exception {
+    public:
+        NullPointerException() : Exception() {}
+        explicit NullPointerException(const std::string &message) : Exception(message) {}
+    };
 }
 
 #endif //TENSORSTACK_UTILS_EXCEPT_H

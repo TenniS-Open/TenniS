@@ -101,7 +101,7 @@ namespace ts {
             creator = OperatorCreator::Query(memory_device.type(), bubble.op());
         }
 
-        if (creator == nullptr) throw Exception("Not supported operator " + bubble.op());
+        if (creator == nullptr) TS_LOG_ERROR << "Not supported operator " << bubble.op() << eject;
         std::string description = bubble.op() + "(in=" + std::to_string(node.inputs().size()) + ", out=" +
                                   std::to_string(1) + ")";
         auto op = creator();
@@ -111,7 +111,7 @@ namespace ts {
         try {
             op->init();
         } catch (const Exception &e) {
-            throw Exception(std::string("While initializing " + bubble.op() + ":" + bubble.name() + " got Exception: " + e.what()));
+            TS_LOG_ERROR << "While initializing " << bubble.op() << ":" << bubble.name() << " got Exception: " << e.what() << eject;
         }
         std::vector<Instruction::shared> instructions;
         instructions.emplace_back(std::make_shared<OperatorInstruction>(op, node.inputs().size(), bubble.output_count(), description));
@@ -285,7 +285,7 @@ namespace ts {
 
             // case2-1: use Variable
             if (bubble.op() == Bubble::Variable) {
-                throw Exception(std::string("Not support ") + Bubble::Variable + " in this version.");
+                TS_LOG_ERROR << "Not support " << Bubble::Variable << " in this version" << eject;
             }
 
             // case2: save input nodes, move last unsolved node to top
@@ -318,7 +318,7 @@ namespace ts {
         set<Node> have_inputs(inputs.begin(), inputs.end());
         for (auto &node : simulator) {
             if (have_inputs.find(node) == have_inputs.end()) {
-                throw Exception("Can not access input node: " + node.str());
+                TS_LOG_ERROR << "Can not access input node: " << node.str() << eject;
             }
         }
 

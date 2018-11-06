@@ -60,9 +60,8 @@ namespace ts {
     Tensor &Bubble::get(const std::string &param) {
         auto param_it = m_params.find(param);
         if (param_it == m_params.end()) {
-            throw Exception(
-                    std::string("Unidentified param \"") + param + "\", did you mean \"" + fuzzy_param_name(param) +
-                    "\"");
+            TS_LOG_ERROR << "Unidentified param \"" << param << "\", did you mean \"" << fuzzy_param_name(param) << "\""
+                         << eject;
         }
         return param_it->second;
     }
@@ -74,9 +73,8 @@ namespace ts {
     void Bubble::clear(const std::string &param) {
         auto param_it = m_params.find(param);
         if (param_it == m_params.end()) {
-            throw Exception(
-                    std::string("Unidentified param \"") + param + "\", did you mean \"" + fuzzy_param_name(param) +
-                    "\"");
+            TS_LOG_ERROR << "Unidentified param \"" << param << "\", did you mean \"" << fuzzy_param_name(param) << "\""
+                         << eject;
         }
         this->m_params.erase(param_it);
     }
@@ -151,7 +149,8 @@ namespace ts {
                 continue;
             }
             if (name_it->second != empty_node) {
-                throw Exception("Found duplicate Node " + node.str() + ", with Node " + name_it->second.str());
+                TS_LOG_ERROR << "Found duplicate Node " << node.str() << ", with Node " << name_it->second.str()
+                             << eject;
             }
             ++found_count;
             name_it->second = node;
@@ -166,7 +165,7 @@ namespace ts {
                 oss << name_found_node_pair.first;
                 ++not_found_name_count;
             }
-            throw Exception(oss.str());
+            TS_LOG_ERROR(oss.str()) << eject;
         }
         std::vector<Node> found_nodes;
         found_nodes.reserve(outputs.size());
@@ -195,7 +194,7 @@ namespace ts {
             if (walked.find(node) != walked.end()) continue;
             walked.insert(node);
             if (nodes_set.find(node) == nodes_set.end()) {
-                throw ts::Exception("Found unlinked node in graph: " + node.str());
+                TS_LOG_ERROR << "Found unlinked node in graph: " << node.str() << eject;
             }
             auto &op = node.ref<Bubble>();
             if (op.op() == Bubble::Parameter) {
@@ -206,7 +205,7 @@ namespace ts {
                 continue;
             }
             if (node.inputs().empty()) {
-                throw ts::Exception("Found not computable node: " + node.str());
+                TS_LOG_ERROR << "Found not computable node: " << node.str() << eject;
             }
             for (auto &input : node.inputs()) {
                 walker.push(input);
@@ -230,7 +229,7 @@ namespace ts {
         std::unordered_set<Node> sorted_input_set(inputs.begin(), inputs.end());
         for (auto &had_input : m_inputs) {
             if (sorted_input_set.find(had_input) == sorted_input_set.end()) {
-                throw Exception("The sorted inputs must content " + had_input.str());
+                TS_LOG_ERROR << "The sorted inputs must content " << had_input.str() << eject;
             }
         }
         m_inputs = inputs;
@@ -243,7 +242,8 @@ namespace ts {
             auto &bubble = input.ref<Bubble>();
             if (map_name_input_node.find(bubble.name()) != map_name_input_node.end()) {
                 auto it = map_name_input_node.find(bubble.name());
-                throw Exception("Can not sort inputs with duplicate names: " + input.str() + " and " + it->second.str());
+                TS_LOG_ERROR << "Can not sort inputs with duplicate names: " << input.str() << " and "
+                             << it->second.str() << eject;
             }
             map_name_input_node.insert(std::make_pair(bubble.name(), input));
         }
@@ -253,7 +253,7 @@ namespace ts {
         for (auto &input_name : input_names) {
             auto name_node_it = map_name_input_node.find(input_name);
             if (name_node_it == map_name_input_node.end()) {
-                throw Exception("Can not recognize name " + input_name);
+                TS_LOG_ERROR << "Can not recognize name " << input_name << eject;
             }
             auto &node = name_node_it->second;
             sorted_inputs.emplace_back(node);
@@ -270,7 +270,7 @@ namespace ts {
                 oss << name_node_pair.first;
                 ++missing_count;
             }
-            throw Exception(oss.str());
+            TS_LOG_ERROR(oss.str()) << eject;
         }
         m_inputs = sorted_inputs;
     }

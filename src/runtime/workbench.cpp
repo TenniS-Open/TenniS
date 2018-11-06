@@ -70,8 +70,8 @@ namespace ts {
 
         // check output
         if (this->m_stack->size() != this->m_outputs.size()) {
-            throw Exception("Got unexpected output number want " + std::to_string(this->m_outputs.size()) +
-                            " vs. " + std::to_string(this->m_stack->size()) + " given.");
+            TS_LOG_ERROR << "Got unexpected output number want " << this->m_outputs.size() << " vs. "
+                         << this->m_stack->size() << " given." << eject;
         }
 
         // set output
@@ -143,21 +143,21 @@ namespace ts {
 
     void Workbench::input(int slot, const Tensor &tensor) {
         if (slot < 0 || size_t(slot) >= m_inputs.size()) {
-            throw Exception("Input index out of range. with index=" + std::to_string(slot));
+            TS_LOG_ERROR << "Input index out of range. with index=" << slot << eject;
         }
         m_inputs[slot] = tensor;
     }
 
     const Tensor &Workbench::output(int slot) const {
         if (slot < 0 || size_t(slot) >= m_outputs.size()) {
-            throw Exception("Output index out of range, with index= " + std::to_string(slot));
+            TS_LOG_ERROR << "Output index out of range. with index=" << slot << eject;
         }
         return m_outputs[slot];
     }
 
     const Tensor &Workbench::input(int slot) const {
         if (slot < 0 || size_t(slot) >= m_inputs.size()) {
-            throw Exception("Input index out of range. with index=" + std::to_string(slot));
+            TS_LOG_ERROR << "Input index out of range. with index=" << slot << eject;
         }
         return m_inputs[slot];
     }
@@ -180,8 +180,8 @@ namespace ts {
     void Workbench::input(const std::string &name, const Tensor &tensor) {
         auto slot_it = m_map_input_slots.find(name);
         if (slot_it == m_map_input_slots.end()) {
-            throw Exception(
-                    "Can not identify the name \"" + name + "\", did you mean: " + fuzzy_name(m_map_input_slots, name));
+            TS_LOG_ERROR << "Can not identify the name \"" << name << "\", did you mean: "
+                         << fuzzy_name(m_map_input_slots, name) << eject;
         }
         this->input(slot_it->second, tensor);
     }
@@ -189,8 +189,8 @@ namespace ts {
     const Tensor &Workbench::output(const std::string &name) const {
         auto slot_it = m_map_output_slots.find(name);
         if (slot_it == m_map_output_slots.end()) {
-            throw Exception("Can not identify the name \"" + name + "\", did you mean: " +
-                            fuzzy_name(m_map_output_slots, name));
+            TS_LOG_ERROR << "Can not identify the name \"" << name << "\", did you mean: "
+                         << fuzzy_name(m_map_output_slots, name) << eject;
         }
         return this->output(slot_it->second);
     }
@@ -198,8 +198,8 @@ namespace ts {
     const Tensor &Workbench::input(const std::string &name) const {
         auto slot_it = m_map_input_slots.find(name);
         if (slot_it == m_map_input_slots.end()) {
-            throw Exception(
-                    "Can not identify the name \"" + name + "\", did you mean: " + fuzzy_name(m_map_input_slots, name));
+            TS_LOG_ERROR << "Can not identify the name \"" << name << "\", did you mean: "
+                         << fuzzy_name(m_map_input_slots, name) << eject;
         }
         return this->input(slot_it->second);
     }

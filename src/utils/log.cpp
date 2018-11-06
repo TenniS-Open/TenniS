@@ -5,6 +5,8 @@
 #include "utils/log.h"
 #include "utils/static.h"
 
+#include <atomic>
+
 namespace ts {
     static std::atomic<LogLevel> InnerGlobalLogLevel;
 
