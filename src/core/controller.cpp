@@ -5,12 +5,14 @@
 #include <cassert>
 #include "core/controller.h"
 
+#include "utils/assert.h"
+
 namespace ts {
 
     DynamicMemoryController::DynamicMemoryController(const MemoryDevice &device)
             : m_device(device) {
         m_allocator = HardAllocator::Query(device.type());
-        assert(m_allocator != nullptr);
+        TS_AUTO_CHECK(m_allocator != nullptr);
     }
 
     Memory DynamicMemoryController::alloc(size_t size) {

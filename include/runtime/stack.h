@@ -10,6 +10,7 @@
 #include "core/dtype.h"
 #include "core/tensor.h"
 #include "global/hard_converter.h"
+#include "utils/assert.h"
 
 #include <vector>
 #include <deque>
@@ -44,7 +45,7 @@ namespace ts {
 
         Tensor *push(const Tensor &tensor) {
             // TODO: remove this check, supporting cross device computing
-            assert(tensor.device() == this->m_device);
+            TS_AUTO_CHECK(tensor.device() == this->m_device);
             this->m_stack.push_back(tensor);
             return &this->m_stack.back();
         }
@@ -101,7 +102,7 @@ namespace ts {
         void erase(int beg, int end) {
             auto beg_it = this->m_stack.begin() + relative2absolute(beg);
             auto end_it = this->m_stack.begin() + relative2absolute(end);
-            // assert(end_it - beg_it >= 0);
+            // TS_AUTO_CHECK(end_it - beg_it >= 0);
             this->m_stack.erase(beg_it, end_it);
         }
 
@@ -130,7 +131,7 @@ namespace ts {
         HardConverter::function converter() const {
             if (this->m_converter == nullptr) {
                 this->m_converter = HardConverter::Query(m_device.type(), m_device.type());
-                assert(this->m_converter != nullptr);
+                TS_AUTO_CHECK(this->m_converter != nullptr);
             }
             return this->m_converter;
         }

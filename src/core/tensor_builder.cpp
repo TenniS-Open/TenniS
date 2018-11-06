@@ -19,8 +19,8 @@ namespace ts {
         }
 
         std::string to_string(const Tensor &value) {
-            assert(value.proto().dtype() == CHAR8);
-            assert(value.proto().sizes().size() == 1);
+            TS_AUTO_CHECK(value.proto().dtype() == CHAR8);
+            TS_AUTO_CHECK(value.proto().sizes().size() == 1);
             auto cpu_value = value;
             if (cpu_value.device().type() != CPU) {
                 auto controller = std::make_shared<DynamicMemoryController>(MemoryDevice(CPU));

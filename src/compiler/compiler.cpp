@@ -291,7 +291,7 @@ namespace ts {
             // case2: save input nodes, move last unsolved node to top
             if (bubble.op() == Bubble::Parameter) {
                 auto j = simulator_find_last_unsolved_node_index();
-                assert(j >= 0);
+                TS_AUTO_CHECK(j >= 0);
                 block.instructions.push_back(instruction::Stack::swap(int(i), int(j)));
                 simulator_swap(int(i), int(j));
                 continue;

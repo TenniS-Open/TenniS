@@ -8,11 +8,13 @@
 #include <utility>
 #include <cassert>
 
+#include "utils/assert.h"
+
 namespace ts {
     HardMemory::HardMemory(const MemoryDevice &device)
             : m_device(device) {
         m_allocator = HardAllocator::Query(device.type());
-        assert(m_allocator != nullptr);
+        TS_AUTO_CHECK(m_allocator != nullptr);
     }
 
     HardMemory::HardMemory(const MemoryDevice &device, size_t size)
@@ -22,7 +24,7 @@ namespace ts {
 
     HardMemory::HardMemory(const MemoryDevice &device, const HardAllocator::function &allocator)
         : m_device(device), m_allocator(allocator){
-        assert(m_allocator != nullptr);
+        TS_AUTO_CHECK(m_allocator != nullptr);
     }
 
     HardMemory::HardMemory(const MemoryDevice &device, const HardAllocator::function &allocator, size_t size)

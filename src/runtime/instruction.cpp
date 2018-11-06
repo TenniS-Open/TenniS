@@ -13,13 +13,13 @@ namespace ts {
 
     OperatorInstruction::OperatorInstruction(const Operator::shared &func, int nargs, int nresults)
             : m_func(func), m_nargs(nargs), m_nresults(nresults) {
-        assert(m_func != nullptr);
+        TS_AUTO_CHECK(m_func != nullptr);
     }
 
     void OperatorInstruction::run(Workbench &workbench) {
         auto &stack = workbench.stack();
 
-        assert(stack.size() >= static_cast<size_t>(m_nargs));
+        TS_AUTO_CHECK(stack.size() >= static_cast<size_t>(m_nargs));
 
         // save base
         stack.push_base(-m_nargs);
@@ -29,8 +29,8 @@ namespace ts {
         auto return_size = m_func->run(stack);
         (void)(return_size);
 
-        assert(return_size == m_nresults);  // must return given sizes
-        assert(stack.size() >= static_cast<size_t>(return_size));    // must have enough returns
+        TS_AUTO_CHECK(return_size == m_nresults);  // must return given sizes
+        TS_AUTO_CHECK(stack.size() >= static_cast<size_t>(return_size));    // must have enough returns
 
         // add base
         stack.erase(0, -m_nresults);
@@ -39,7 +39,7 @@ namespace ts {
     OperatorInstruction::OperatorInstruction(const Operator::shared &func, int nargs, int nresults,
                                              const std::string &description)
             : m_func(func), m_nargs(nargs), m_nresults(nresults), m_description(description) {
-        assert(m_func != nullptr);
+        TS_AUTO_CHECK(m_func != nullptr);
     }
 
     std::string OperatorInstruction::str() const {

@@ -7,6 +7,7 @@
 
 #include "core/memory.h"
 #include "global/hard_converter.h"
+#include "utils/assert.h"
 
 namespace ts {
     static void *const FakeUsagePtr = (void *) (0x19910929);
@@ -78,18 +79,18 @@ namespace ts {
     }
 
     void memcpy(Memory &dst, const Memory &src, size_t size) {
-        assert(dst.size() >= size);
-        assert(src.size() >= size);
+        TS_AUTO_CHECK(dst.size() >= size);
+        TS_AUTO_CHECK(src.size() >= size);
         HardConverter::function converter = HardConverter::Query(dst.device().type(), src.device().type());
-        assert(converter != nullptr);
+        TS_AUTO_CHECK(converter != nullptr);
         converter(dst.device().id(), dst.data(), src.device().id(), src.data(), size);
     }
 
     void memcpy(Memory &dst, const Memory &src) {
-        assert(dst.size() >= src.size());
+        TS_AUTO_CHECK(dst.size() >= src.size());
         auto size = src.size();
         HardConverter::function converter = HardConverter::Query(dst.device().type(), src.device().type());
-        assert(converter != nullptr);
+        TS_AUTO_CHECK(converter != nullptr);
         converter(dst.device().id(), dst.data(), src.device().id(), src.data(), size);
     }
 
@@ -98,7 +99,7 @@ namespace ts {
            size_t src_size) {
         auto copy_size = std::min(src_size, dst_size);
         HardConverter::function converter = HardConverter::Query(dst_device.type(), src_device.type());
-        assert(converter != nullptr);
+        TS_AUTO_CHECK(converter != nullptr);
         converter(dst_device.id(), dst_ptr, src_device.id(), src_ptr, copy_size);
         return copy_size;
     }
@@ -107,11 +108,11 @@ namespace ts {
                 size_t src_size) {
         HardConverter::function cross_device_converter = HardConverter::Query(dst_device.type(),
                                                                               src_device.type());
-        assert(cross_device_converter != nullptr);
+        TS_AUTO_CHECK(cross_device_converter != nullptr);
         HardConverter::function in_device_converter = (dst_device == src_device) ? cross_device_converter
                                                                                  : HardConverter::Query(
                         dst_device.type(), dst_device.type());
-        assert(in_device_converter != nullptr);
+        TS_AUTO_CHECK(in_device_converter != nullptr);
         cross_device_converter(dst_device.id(), dst_ptr, src_device.id(), src_ptr, std::min(dst_size, src_size));
         size_t copy_anchor = src_size;
         while (copy_anchor <= size_t(dst_size >> 1)) {

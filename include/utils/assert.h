@@ -53,8 +53,8 @@ namespace ts {
 #define TS_CHECK_LT(lhs, rhs) TS_CHECK(lhs < rhs)
 #define TS_CHECK_GT(lhs, rhs) TS_CHECK(lhs > rhs)
 
-#define TS_AUTO_ASSERT(condition) TS_LOG((condition) ? ts::LOG_NONE : ts::LOG_FATAL)("Assertion failed: (")(#condition)(").")(ts::fatal)
-#define TS_AUTO_CHECK(condition) TS_LOG((condition) ? ts::LOG_NONE : ts::LOG_ERROR)("Check failed: (")(#condition)(").")(ts::eject)
+#define TS_AUTO_ASSERT(condition) (TS_LOG((condition) ? ts::LOG_NONE : ts::LOG_FATAL)("Assertion failed: (")(#condition)(").") << ts::fatal)
+#define TS_AUTO_CHECK(condition) (TS_LOG((condition) ? ts::LOG_NONE : ts::LOG_ERROR)("Check failed: (")(#condition)(").") << ts::eject)
 
 #define TS_AUTO_CHECK_EQ(lhs, rhs) TS_AUTO_CHECK(lhs == rhs)
 #define TS_AUTO_CHECK_NQ(lhs, rhs) TS_AUTO_CHECK(lhs != rhs)

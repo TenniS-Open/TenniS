@@ -29,7 +29,7 @@ public:
         int input_num = stack.size();
         std::vector<ts::Tensor::Prototype> output;
         this->infer(stack, output);
-        assert(output[0].dtype() == ts::FLOAT32);
+        TS_AUTO_CHECK(output[0].dtype() == ts::FLOAT32);
         stack.push(output[0]);
         auto &sum = *stack.index(-1);
         std::memset(sum.data<float>(), 0, sum.count() * sizeof(float));

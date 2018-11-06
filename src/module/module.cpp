@@ -37,7 +37,7 @@ namespace ts {
     Bubble::Bubble(const std::string &op, int output_count)
             : m_op(op)
             , m_output_count(output_count) {
-        assert(output_count >= 1);
+        TS_AUTO_CHECK(output_count >= 1);
         update_retention_params();
     }
 
@@ -45,7 +45,7 @@ namespace ts {
             : m_op(op)
             , m_name(name)
             , m_output_count(output_count) {
-        assert(output_count >= 1);
+        TS_AUTO_CHECK(output_count >= 1);
         update_retention_params();
     }
 
@@ -108,7 +108,7 @@ namespace ts {
     }
 
     void Bubble::update_retention_params() {
-        assert(retention_param_sign == '#');
+        TS_AUTO_CHECK(retention_param_sign == '#');
         set("#op", tensor::from(m_op));
         set("#name", tensor::from(m_name));
         set("#output_count", tensor::from(m_output_count));

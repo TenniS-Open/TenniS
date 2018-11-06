@@ -60,7 +60,7 @@ namespace ts {
 
     Tensor Tensor::reshape(const Shape &shape) const {
         Prototype proto(this->dtype(), shape);
-        assert(proto.count() == this->count());
+        TS_AUTO_CHECK(proto.count() == this->count());
         Tensor t = *this;
         t.m_proto = proto;
         return t;

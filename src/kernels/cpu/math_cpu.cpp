@@ -4,6 +4,7 @@
 
 #include "kernels/cpu/math_cpu.h"
 #include "kernels/common/math.h"
+#include "utils/assert.h"
 
 #include <iostream>
 #include <cassert>
@@ -147,9 +148,9 @@ namespace ts {
                 T beta,
                 T *C, int ldc) {
             // TODO: check if lda, ldb, ldc use correct
-            assert(lda >= (TransA == blas::NoTrans ? K : M));
-            assert(ldb >= (TransB == blas::NoTrans ? N : K));
-            assert(ldc >= N);
+            TS_AUTO_CHECK(lda >= (TransA == blas::NoTrans ? K : M));
+            TS_AUTO_CHECK(ldb >= (TransB == blas::NoTrans ? N : K));
+            TS_AUTO_CHECK(ldc >= N);
 
             // calculate beta * C
             // C is RowMajor

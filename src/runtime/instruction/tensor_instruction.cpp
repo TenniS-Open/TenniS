@@ -9,6 +9,7 @@
 #include "runtime/instruction/instruction_factory.h"
 #include "utils/static.h"
 #include "core/tensor_builder.h"
+#include "utils/assert.h"
 
 namespace ts {
     namespace instruction {
@@ -16,8 +17,8 @@ namespace ts {
             return std::make_shared<LambdaInstruction>([=](Workbench &workbench) {
                 auto &stack = workbench.stack();
                 if (stack.size() < size) {
-                    throw Exception(std::string("Can not pack ") + std::to_string(size) + "tensor(s) on stack(size=" +
-                                    std::to_string(stack.size()) + ")");
+                    TS_LOG(LOG_ERROR) << "Can not pack " << size << "tensor(s) on stack(size=" << stack.size() << ")"
+                                      << eject;
                 }
                 std::vector<ts::Tensor> fields;
                 fields.reserve(size);
@@ -43,15 +44,15 @@ namespace ts {
         }
 
         static std::vector<Instruction::shared> create_instruction_field(const Node &node) {
-            assert(node.inputs().size() == 1);
+            TS_AUTO_CHECK(node.inputs().size() == 1);
 
             auto &bubble = node.ref<Bubble>();
-            assert(bubble.output_count() == 1);
+            TS_AUTO_CHECK(bubble.output_count() == 1);
 
             std::vector<Instruction::shared> inst;
             int offset = tensor::to_int(bubble.get("offset"));
 
-            assert(offset >= 0);
+            TS_AUTO_CHECK(offset >= 0);
 
             inst.push_back(Tensor::field(size_t(offset)));
 
@@ -60,7 +61,7 @@ namespace ts {
 
         static std::vector<Instruction::shared> create_instruction_pack(const Node &node) {
             auto &bubble = node.ref<Bubble>();
-            assert(bubble.output_count() == 1);
+            TS_AUTO_CHECK(bubble.output_count() == 1);
 
             std::vector<Instruction::shared> inst;
 
