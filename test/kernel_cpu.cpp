@@ -9,8 +9,10 @@
 #include <cstring>
 #include <iostream>
 #include <chrono>
+#include <runtime/inside/thread_pool.h>
+#include <utils/ctxmgr.h>
 
-void test_blas(ts::Random &rand)
+void test_blas(ts::Random &rand, float *ratio = nullptr)
 {
     using T = float;
 
@@ -26,6 +28,7 @@ void test_blas(ts::Random &rand)
     ts::blas::Order order = rand.u() > 0.5 ? ts::blas::RowMajor : ts::blas::ColMajor;
     ts::blas::Transpose TransA = rand.u() > 0.5 ? ts::blas::NoTrans : ts::blas::Trans;
     ts::blas::Transpose TransB = rand.u() > 0.5 ? ts::blas::NoTrans : ts::blas::Trans;
+
 
     int lda, ldb, ldc;
 
@@ -72,12 +75,18 @@ void test_blas(ts::Random &rand)
     for (int i = 0; i < M * N; ++i) sum += fabs(C[i] - cblas_C[i]);
     sum /= (M * N);
 
-    std::cout << sum << " " << spent << "ms vs. " << spent2 << "ms, " << spent / spent2 << std::endl;
+    std::cout << sum << " " << spent << "ms vs. " << spent2 << "ms, " << spent2 / spent << std::endl;
+    float local_ratio = spent2 / spent;
+    if (std::isnan(local_ratio) || std::isinf(local_ratio)) local_ratio = 1;
+    if (ratio) *ratio = local_ratio;
 
 }
 
 int main() {
     using namespace ts;
+    ts::ThreadPool pool(16);
+
+    ts::ctx::bind<ts::ThreadPool> _bind_thread_pool(pool);
 
     openblas_set_num_threads(16);
 
@@ -91,10 +100,15 @@ int main() {
 //
 //    ts::cpu::math<double>::gemm(blas::ColMajor, blas::NoTrans, blas::NoTrans, 3, 3, 2, 1, A, 3, B, 2, 1, C, 3);
     ts::Random rand(4481);
-    for (int i = 0; i < 100;  ++i)
-    test_blas(rand);
+    int N = 100;
+    float ratio_sum = 0;
+    for (int i = 0; i < N;  ++i) {
+        float ratio;
+        test_blas(rand, &ratio);
+        ratio_sum += ratio;
+    }
 
-    std::cout << "Finished" << std::flush;
+    std::cout << "Finished. ratio = " << ratio_sum / N << std::flush;
 
     return 0;
 }
