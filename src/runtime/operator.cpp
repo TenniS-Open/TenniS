@@ -6,6 +6,7 @@
 #include "utils/box.h"
 
 #include "utils/assert.h"
+#include "core/tensor_builder.h"
 
 namespace ts {
     bool Operator::has(const std::string &param) const {
@@ -153,7 +154,14 @@ namespace ts {
         if (!this->check_params()) {
             std::ostringstream oss;
             auto unsatisfied_fields = this->unsatisfied_fields();
-            oss << "Operator has unsatisfied fields: ";
+            std::string op, name;
+            try {
+                op = tensor::to_string(get("#op"));
+                name = tensor::to_string(get("#name"));
+            } catch (const Exception &) {
+
+            }
+            oss << "Operator " << op << "\"" << name << "\" has unsatisfied fields: ";
             for (size_t i = 0; i < unsatisfied_fields.size(); ++i) {
                 if (i) oss << ", ";
                 oss << "\"" << unsatisfied_fields[i] << "\"";
