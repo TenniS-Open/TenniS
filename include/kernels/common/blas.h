@@ -1,5 +1,5 @@
 //
-// Created by seeta on 2018/7/19.
+// Created by kier on 2018/7/19.
 //
 
 #ifndef TENSORSTACK_KERNELS_COMMON_BLAS_H

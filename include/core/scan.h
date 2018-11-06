@@ -1,5 +1,5 @@
 //
-// Created by seeta on 2018/6/3.
+// Created by kier on 2018/6/3.
 //
 
 #ifndef TENSORSTACK_CORE_SCAN_H

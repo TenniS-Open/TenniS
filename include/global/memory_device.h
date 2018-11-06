@@ -1,5 +1,5 @@
 //
-// Created by seeta on 2018/5/19.
+// Created by kier on 2018/5/19.
 //
 
 #ifndef TENSORSTACK_GLOBAL_DEVICE_MEMORY_H

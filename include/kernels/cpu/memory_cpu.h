@@ -1,5 +1,5 @@
 //
-// Created by seeta on 2018/7/18.
+// Created by kier on 2018/7/18.
 //
 
 #ifndef TENSORSTACK_KERNELS_CPU_MEMORY_CPU_H

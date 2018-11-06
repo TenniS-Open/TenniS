@@ -1,5 +1,5 @@
 //
-// Created by seeta on 2018/5/19.
+// Created by kier on 2018/5/19.
 //
 
 #ifndef TENSORSTACK_RUNTIME_OPERATOR_H

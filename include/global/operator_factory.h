@@ -1,5 +1,5 @@
 //
-// Created by seeta on 2018/6/29.
+// Created by kier on 2018/6/29.
 //
 
 #ifndef TENSORSTACK_OPERATOR_FACTORY_H

@@ -1,5 +1,5 @@
 //
-// Created by seeta on 2018/5/25.
+// Created by kier on 2018/5/25.
 //
 
 #ifndef TENSORSTACK_RUNTIME_WORKBENCH_H

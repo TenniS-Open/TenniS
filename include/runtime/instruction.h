@@ -1,5 +1,5 @@
 //
-// Created by seeta on 2018/6/28.
+// Created by kier on 2018/6/28.
 //
 
 #ifndef TENSORSTACK_RUNTIME_INSTRUCTION_H
