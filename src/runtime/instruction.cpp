@@ -2,7 +2,7 @@
 // Created by seeta on 2018/6/28.
 //
 
-#include <cassert>
+
 #include <runtime/instruction.h>
 
 #include "utils/need.h"

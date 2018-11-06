@@ -11,7 +11,7 @@
 #include <map>
 #include <unordered_map>
 #include <unordered_set>
-#include <cassert>
+
 #include <algorithm>
 
 #include "runtime/instruction/instruction_factory.h"

@@ -3,7 +3,7 @@
 //
 
 #include <core/tensor.h>
-#include <cassert>
+
 
 #include "core/tensor.h"
 #include "utils/assert.h"

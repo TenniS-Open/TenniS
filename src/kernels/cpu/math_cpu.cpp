@@ -7,7 +7,7 @@
 #include "utils/assert.h"
 
 #include <iostream>
-#include <cassert>
+
 #include <cmath>
 
 #ifdef TS_USE_SSE

@@ -6,7 +6,7 @@
 #include "global/hard_converter.h"
 #include "global/memory_device.h"
 
-#include <cassert>
+
 #include <cstring>
 
 namespace ts {
