@@ -181,7 +181,23 @@ namespace ts {
 
         template<typename T>
         T math<T>::dot(int N, const T *x, int incx, const T *y, int incy) {
-            return inline_dot<T>(N, x, incx, y, incy);
+            auto gun = try_threads_on(size_t(N), 4);
+            if (gun == nullptr) {
+                return inline_dot<T>(N, x, incx, y, incy);
+            }
+            auto bins = split_bins(0, N, (int) gun->size());
+            std::vector<T> threads_sum(gun->size(), 0);
+            for (auto &range : bins) {
+                gun->run([&, range](int id) {
+                    const T *local_x = x + range.first * incx;
+                    const T *local_y = y + range.first * incy;
+                    threads_sum[id] = inline_dot<T>(range.second - range.first, local_x, incx, local_y, incy);
+                });
+            }
+            gun->join();
+            T sum = 0;
+            for (auto v : threads_sum) sum += v;
+            return sum;
         }
 
         template<typename T>
@@ -366,7 +382,7 @@ namespace ts {
         }
 
         template<typename T>
-        T math<T>::asum(int N, const T *x, int incx) {
+        inline T inline_asum(int N, const T *x, int incx) {
             T sum = 0;
             // block: 4
             int i = 0;
@@ -381,6 +397,26 @@ namespace ts {
             for (; i < N; ++i) {
                 sum += abs(*x); x += incx;
             }
+            return sum;
+        }
+
+        template<typename T>
+        T math<T>::asum(int N, const T *x, int incx) {
+            auto gun = try_threads_on(size_t(N), 4);
+            if (gun == nullptr) {
+                return inline_asum<T>(N, x, incx);
+            }
+            auto bins = split_bins(0, N, (int) gun->size());
+            std::vector<T> threads_sum(gun->size(), 0);
+            for (auto &range : bins) {
+                gun->run([&, range](int id) {
+                    const T *local_x = x + range.first * incx;
+                    threads_sum[id] = inline_asum<T>(range.second - range.first, local_x, incx);
+                });
+            }
+            gun->join();
+            T sum = 0;
+            for (auto v : threads_sum) sum += v;
             return sum;
         }
 
