@@ -23,13 +23,21 @@ void test_blas(ts::Random &rand)
     std::unique_ptr<T[]> C(new T[M * N]);
     T alpha = rand.u() * 2;
     T beta = rand.u() * 2;
-    ts::blas::Order order = ts::blas::RowMajor;
+    ts::blas::Order order = rand.u() > 0.5 ? ts::blas::RowMajor : ts::blas::ColMajor;
     ts::blas::Transpose TransA = rand.u() > 0.5 ? ts::blas::NoTrans : ts::blas::Trans;
     ts::blas::Transpose TransB = rand.u() > 0.5 ? ts::blas::NoTrans : ts::blas::Trans;
 
-    int lda = (TransA == ts::blas::NoTrans ? K : M);
-    int ldb = (TransB == ts::blas::NoTrans ? N : K);
-    int ldc = N;
+    int lda, ldb, ldc;
+
+    if (order == ts::blas::RowMajor) {
+        lda = (TransA == ts::blas::NoTrans ? K : M);
+        ldb = (TransB == ts::blas::NoTrans ? N : K);
+        ldc = N;
+    } else {
+        lda = (TransA == ts::blas::Trans ? K : M);
+        ldb = (TransB == ts::blas::Trans ? N : K);
+        ldc = M;
+    }
 
     CBLAS_ORDER cblas_order = order == ts::blas::RowMajor ? CblasRowMajor : CblasColMajor;
     CBLAS_TRANSPOSE cblas_TransA = TransA == ts::blas::NoTrans ? CblasNoTrans : CblasTrans;
@@ -44,7 +52,11 @@ void test_blas(ts::Random &rand)
     microseconds duration(0);
 
     auto start = system_clock::now();
-    ts::cpu::math<T>::gemm(order, TransA, TransB, M, N, K, alpha, A.get(), lda, B.get(), ldb, beta, C.get(), ldc);
+    try {
+        ts::cpu::math<T>::gemm(order, TransA, TransB, M, N, K, alpha, A.get(), lda, B.get(), ldb, beta, C.get(), ldc);
+    } catch (const ts::Exception &e) {
+        return;
+    }
     auto end = system_clock::now();
     duration += duration_cast<microseconds>(end - start);
     double spent = 1.0 * duration.count() / 1000;
