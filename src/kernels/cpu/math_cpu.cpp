@@ -325,6 +325,7 @@ namespace ts {
             }
         }
 
+        // TODO: it has deviation in some case, when N, M, K is large
         template<typename T>
         void
         math<T>::gemm(
