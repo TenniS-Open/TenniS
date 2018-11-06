@@ -19,6 +19,12 @@
 
 namespace ts {
     namespace cpu {
+        ThreadPool *try_threads_on(size_t task_number, size_t task_weight = 4) {
+            auto gun = ctx::ptr<ThreadPool>();
+            if (gun != nullptr && gun->size() > 1 && (gun->size() * task_weight) <= task_number) return gun;
+            return nullptr;
+        }
+
         template<typename T>
         inline T inline_dot(int N, const T *x, int incx, const T *y, int incy) {
             T sum = 0;
@@ -102,8 +108,8 @@ namespace ts {
         template<typename T>
         inline void inline_zero(int N, T *x, int incx) {
             // use thread
-            auto gun = ctx::ptr<ThreadPool>();
-            if (gun != nullptr && int(gun->size() * 4) <= N) {
+            auto gun = try_threads_on(size_t(N), 4);
+            if (gun != nullptr) {
                 auto bins = split_bins(0, N, (int)gun->size());
                 for (auto &range : bins) {
                     gun->run([&, range](int) {
@@ -141,8 +147,8 @@ namespace ts {
                 return;
             }
             // use thread
-            auto gun = ctx::ptr<ThreadPool>();
-            if (gun != nullptr && int(gun->size() * 4) <= N) {
+            auto gun = try_threads_on(size_t(N), 4);
+            if (gun != nullptr) {
                 auto bins = split_bins(0, N, (int)gun->size());
                 for (auto &range : bins) {
                     gun->run([&, range](int) {
@@ -193,13 +199,13 @@ namespace ts {
             TS_AUTO_CHECK(ldb >= (TransB == blas::NoTrans ? N : K));
             TS_AUTO_CHECK(ldc >= N);
 
-            auto gun = ctx::ptr<ThreadPool>();
+            auto gun = try_threads_on(size_t(M), 4);
 
             // calculate beta * C
             // C is RowMajor
             if (ldc == N) inline_scal(M * N, beta, C, 1);
             else {
-                if (gun != nullptr && int(gun->size() * 4) <= M) {
+                if (gun != nullptr) {
                     auto bins = split_bins(0, M, (int) gun->size());
                     for (auto &range : bins) {
                         gun->run([&, range](int) {
@@ -223,7 +229,7 @@ namespace ts {
             unsigned int condition = (TransA == blas::NoTrans ? 0U : 1U) | ((TransB == blas::NoTrans ? 0U : 2U));
             switch (condition) {
                 case 0: // A: NoTrans, B: NoTrans
-                    if (gun != nullptr && int(gun->size() * 4) <= M) {
+                    if (gun != nullptr) {
                         auto bins = split_bins(0, M, (int)gun->size());
                         for (auto &range : bins) {
                             gun->run([&, range](int) {
@@ -248,7 +254,7 @@ namespace ts {
                     }
                     break;
                 case 1: // A: Trans, B: NoTrans
-                    if (gun != nullptr && int(gun->size() * 4) <= M) {
+                    if (gun != nullptr) {
                         auto bins = split_bins(0, M, (int)gun->size());
                         for (auto &range : bins) {
                             gun->run([&, range](int) {
@@ -273,7 +279,7 @@ namespace ts {
                     }
                     break;
                 case 2: // A: NoTrans, B: Trans
-                    if (gun != nullptr && int(gun->size() * 4) <= M) {
+                    if (gun != nullptr) {
                         auto bins = split_bins(0, M, (int)gun->size());
                         for (auto &range : bins) {
                             gun->run([&, range](int) {
@@ -298,7 +304,7 @@ namespace ts {
                     }
                     break;
                 default: // A: Trans, B: Trans
-                    if (gun != nullptr && int(gun->size() * 4) <= M) {
+                    if (gun != nullptr) {
                         auto bins = split_bins(0, M, (int)gun->size());
                         for (auto &range : bins) {
                             gun->run([&, range](int) {
