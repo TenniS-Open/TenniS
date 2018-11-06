@@ -5,6 +5,9 @@
 #include "kernels/cpu/math_cpu.h"
 #include "kernels/common/math.h"
 #include "utils/assert.h"
+#include "runtime/inside/thread_pool.h"
+#include "utils/ctxmgr.h"
+#include "utils/box.h"
 
 #include <iostream>
 
@@ -59,9 +62,8 @@ namespace ts {
             }
             return sum;
         }
-        template <>
-        inline float inline_dot<float>(int N, const float *x, int incx, const float *y, int incy) {
-            if (incx == 1 && incy == 1) return inline_dot_conitnous_float(N, x, y);
+
+        inline float inline_dot_non_conitnous_float(int N, const float *x, int incx, const float *y, int incy) {
             float sum = 0;
             // block: 4
             int i = 0;
@@ -90,10 +92,32 @@ namespace ts {
             }
             return sum;
         }
+        template <>
+        inline float inline_dot<float>(int N, const float *x, int incx, const float *y, int incy) {
+            if (incx == 1 && incy == 1) return inline_dot_conitnous_float(N, x, y);
+            return inline_dot_non_conitnous_float(N, x, incx, y, incy);
+        }
 #endif
 
         template<typename T>
         inline void inline_zero(int N, T *x, int incx) {
+            // use thread
+            auto gun = ctx::ptr<ThreadPool>();
+            if (gun != nullptr && int(gun->size() * 4) <= N) {
+                auto bins = split_bins(0, N, (int)gun->size());
+                for (auto &range : bins) {
+                    gun->run([&, range](int) {
+                        T *local_x = x + range.first * incx;
+                        auto local_i = range.first;
+                        auto local_N = range.second;
+                        for (; local_i < local_N; ++local_i) {
+                            *local_x = 0; local_x += incx;
+                        }
+                    });
+                }
+                gun->join();
+                return;
+            }
             // block: 4
             int i = 0;
             static const int block_size = 4;
@@ -114,6 +138,23 @@ namespace ts {
             if (ts::near(alpha, 1)) return; // TODO: update float number equal check method
             if (ts::near(alpha, 0)) {
                 inline_zero<T>(N, x, incx);
+                return;
+            }
+            // use thread
+            auto gun = ctx::ptr<ThreadPool>();
+            if (gun != nullptr && int(gun->size() * 4) <= N) {
+                auto bins = split_bins(0, N, (int)gun->size());
+                for (auto &range : bins) {
+                    gun->run([&, range](int) {
+                        T *local_x = x + range.first * incx;
+                        auto local_i = range.first;
+                        auto local_N = range.second;
+                        for (; local_i < local_N; ++local_i) {
+                            *local_x *= alpha; local_x += incx;
+                        }
+                    });
+                }
+                gun->join();
                 return;
             }
             // block: 4
@@ -152,12 +193,29 @@ namespace ts {
             TS_AUTO_CHECK(ldb >= (TransB == blas::NoTrans ? N : K));
             TS_AUTO_CHECK(ldc >= N);
 
+            auto gun = ctx::ptr<ThreadPool>();
+
             // calculate beta * C
             // C is RowMajor
             if (ldc == N) inline_scal(M * N, beta, C, 1);
             else {
-                T *C_anchor = C;
-                for (int i = 0; i < M; ++i, C_anchor += ldc) inline_scal(N, beta, C_anchor, 1);
+                if (gun != nullptr && int(gun->size() * 4) <= M) {
+                    auto bins = split_bins(0, M, (int) gun->size());
+                    for (auto &range : bins) {
+                        gun->run([&, range](int) {
+                            T *local_C = C + range.first * ldc;
+                            auto local_i = range.first;
+                            auto local_M = range.second;
+                            for (; local_i < local_M; ++local_i, local_C += ldc) {
+                                inline_scal(N, beta, local_C, 1);
+                            }
+                        });
+                    }
+                    gun->join();
+                } else {
+                    T *C_anchor = C;
+                    for (int i = 0; i < M; ++i, C_anchor += ldc) inline_scal(N, beta, C_anchor, 1);
+                }
             }
 
             if (ts::near(alpha, 0)) return;
@@ -165,38 +223,102 @@ namespace ts {
             unsigned int condition = (TransA == blas::NoTrans ? 0U : 1U) | ((TransB == blas::NoTrans ? 0U : 2U));
             switch (condition) {
                 case 0: // A: NoTrans, B: NoTrans
-                    for (int i = 0; i < M; ++i) {
-                        T *C_anchor = &C[i * ldc];
-                        for (int j = 0; j < N; ++j) {
-                            *C_anchor += alpha * inline_dot(K, &A[i * lda], 1, &B[j], ldb);
-                            C_anchor++;
+                    if (gun != nullptr && int(gun->size() * 4) <= M) {
+                        auto bins = split_bins(0, M, (int)gun->size());
+                        for (auto &range : bins) {
+                            gun->run([&, range](int) {
+                                for (int i = range.first; i < range.second; ++i) {
+                                    T *C_anchor = &C[i * ldc];
+                                    for (int j = 0; j < N; ++j) {
+                                        *C_anchor += alpha * inline_dot(K, &A[i * lda], 1, &B[j], ldb);
+                                        C_anchor++;
+                                    }
+                                }
+                            });
+                        }
+                        gun->join();
+                    } else {
+                        for (int i = 0; i < M; ++i) {
+                            T *C_anchor = &C[i * ldc];
+                            for (int j = 0; j < N; ++j) {
+                                *C_anchor += alpha * inline_dot(K, &A[i * lda], 1, &B[j], ldb);
+                                C_anchor++;
+                            }
                         }
                     }
                     break;
                 case 1: // A: Trans, B: NoTrans
-                    for (int i = 0; i < M; ++i) {
-                        T *C_anchor = &C[i * ldc];
-                        for (int j = 0; j < N; ++j) {
-                            *C_anchor += alpha * inline_dot(K, &A[i], lda, &B[j], ldb);
-                            C_anchor++;
+                    if (gun != nullptr && int(gun->size() * 4) <= M) {
+                        auto bins = split_bins(0, M, (int)gun->size());
+                        for (auto &range : bins) {
+                            gun->run([&, range](int) {
+                                for (int i = range.first; i < range.second; ++i) {
+                                    T *C_anchor = &C[i * ldc];
+                                    for (int j = 0; j < N; ++j) {
+                                        *C_anchor += alpha * inline_dot(K, &A[i], lda, &B[j], ldb);
+                                        C_anchor++;
+                                    }
+                                }
+                            });
+                        }
+                        gun->join();
+                    } else {
+                        for (int i = 0; i < M; ++i) {
+                            T *C_anchor = &C[i * ldc];
+                            for (int j = 0; j < N; ++j) {
+                                *C_anchor += alpha * inline_dot(K, &A[i], lda, &B[j], ldb);
+                                C_anchor++;
+                            }
                         }
                     }
                     break;
                 case 2: // A: NoTrans, B: Trans
-                    for (int i = 0; i < M; ++i) {
-                        T *C_anchor = &C[i * ldc];
-                        for (int j = 0; j < N; ++j) {
-                            *C_anchor += alpha * inline_dot(K, &A[i * lda], 1, &B[j * ldb], 1);
-                            C_anchor++;
+                    if (gun != nullptr && int(gun->size() * 4) <= M) {
+                        auto bins = split_bins(0, M, (int)gun->size());
+                        for (auto &range : bins) {
+                            gun->run([&, range](int) {
+                                for (int i = range.first; i < range.second; ++i) {
+                                    T *C_anchor = &C[i * ldc];
+                                    for (int j = 0; j < N; ++j) {
+                                        *C_anchor += alpha * inline_dot(K, &A[i * lda], 1, &B[j * ldb], 1);
+                                        C_anchor++;
+                                    }
+                                }
+                            });
+                        }
+                        gun->join();
+                    } else {
+                        for (int i = 0; i < M; ++i) {
+                            T *C_anchor = &C[i * ldc];
+                            for (int j = 0; j < N; ++j) {
+                                *C_anchor += alpha * inline_dot(K, &A[i * lda], 1, &B[j * ldb], 1);
+                                C_anchor++;
+                            }
                         }
                     }
                     break;
                 default: // A: Trans, B: Trans
-                    for (int i = 0; i < M; ++i) {
-                        T *C_anchor = &C[i * ldc];
-                        for (int j = 0; j < N; ++j) {
-                            *C_anchor += alpha * inline_dot(K, &A[i], lda, &B[j * ldb], 1);
-                            C_anchor++;
+                    if (gun != nullptr && int(gun->size() * 4) <= M) {
+                        auto bins = split_bins(0, M, (int)gun->size());
+                        for (auto &range : bins) {
+                            gun->run([&, range](int) {
+                                for (int i = range.first; i < range.second; ++i) {
+                                    T *C_anchor = &C[i * ldc];
+                                    for (int j = 0; j < N; ++j) {
+                                        *C_anchor += alpha * inline_dot(K, &A[i], lda, &B[j * ldb], 1);
+                                        C_anchor++;
+                                    }
+                                }
+                            });
+                        }
+                        gun->join();
+                    } else {
+                        for (int i = 0; i < M; ++i) {
+                            T *C_anchor = &C[i * ldc];
+                            for (int j = 0; j < N; ++j) {
+                                *C_anchor += alpha * inline_dot(K, &A[i], lda, &B[j * ldb], 1);
+                                C_anchor++;
+                            }
                         }
                     }
                     break;
