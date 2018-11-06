@@ -157,7 +157,7 @@ namespace ts {
             if (ldc == N) inline_scal(M * N, beta, C, 1);
             else {
                 T *C_anchor = C;
-                for (int i = 0; i < M; ++i, C += ldc) inline_scal(N, beta, C_anchor, 1);
+                for (int i = 0; i < M; ++i, C_anchor += ldc) inline_scal(N, beta, C_anchor, 1);
             }
 
             if (ts::near(alpha, 0)) return;
