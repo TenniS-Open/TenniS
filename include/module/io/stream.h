@@ -7,6 +7,9 @@
 
 
 #include <cstddef>
+#include <string>
+
+
 
 namespace ts {
     class StreamReader {
@@ -27,6 +30,38 @@ namespace ts {
     public:
         using self = Stream;
     };
+
+    namespace binio {
+        template<typename T>
+        size_t read(StreamReader &stream, T &buffer) {
+            return stream.read(&buffer, sizeof(T));
+        }
+
+        template<typename T>
+        size_t read(StreamReader &stream, T *buffer, size_t size) {
+            return stream.read(buffer, sizeof(T) * size);
+        }
+
+        template<typename T, size_t _Size>
+        size_t read(StreamReader &stream, T (&buffer)[_Size]) {
+            return stream.read(buffer, sizeof(T) * _Size);
+        }
+
+        template<typename T>
+        size_t write(StreamWriter &stream, const T &buffer) {
+            return stream.write(&buffer, sizeof(T));
+        }
+
+        template<typename T>
+        size_t write(StreamWriter &stream, const T *buffer, size_t size) {
+            return stream.write(buffer, sizeof(T) * size);
+        }
+
+        template<typename T, size_t _Size>
+        size_t write(StreamWriter &stream, const T (&buffer)[_Size]) {
+            return stream.write(buffer, sizeof(T) * _Size);
+        }
+    }
 }
 
 
