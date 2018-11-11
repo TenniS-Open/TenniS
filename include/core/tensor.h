@@ -8,13 +8,14 @@
 #include "memory.h"
 #include "dtype.h"
 #include "core/controller.h"
+#include "module/serialization.h"
 
 #include <vector>
 
 namespace ts {
     using Shape = std::vector<int>;
 
-    class Tensor {
+    class Tensor : public Serializable {
     public:
         class Prototype {
         public:
@@ -115,6 +116,10 @@ namespace ts {
         size_t fields_count() const;
 
         bool packed() const;
+
+        size_t serialize(StreamWriter &stream) const override;
+
+        size_t externalize(StreamReader &stream) override;
 
     private:
         Memory m_memory;

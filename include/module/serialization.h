@@ -10,6 +10,7 @@
 namespace ts {
     /**
      * Interface of serialize and externalize
+     * @note Please call ctx::bind<MemoryController> before externalize
      */
     class Serializable {
     public:
