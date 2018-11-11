@@ -117,9 +117,9 @@ namespace ts {
 
         bool packed() const;
 
-        size_t serialize(StreamWriter &stream) const override;
+        size_t serialize(StreamWriter &stream) const final;
 
-        size_t externalize(StreamReader &stream) override;
+        size_t externalize(StreamReader &stream) final;
 
     private:
         Memory m_memory;

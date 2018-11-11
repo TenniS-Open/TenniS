@@ -16,6 +16,8 @@ namespace ts {
     public:
         using self = Serializable;
 
+        virtual ~Serializable() = default;
+
         /**
          * serialize object to stream
          * @param stream ready stream

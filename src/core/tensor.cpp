@@ -71,6 +71,7 @@ namespace ts {
         if (fields.empty()) {
             this->m_memory = Memory();
             this->m_proto = Prototype();
+            return;
         }
         this->m_memory = fields[0].m_memory;
         this->m_proto = fields[0].m_proto;
@@ -197,10 +198,11 @@ namespace ts {
         uint32_t size_buffer;
         binio::read<uint32_t>(stream, size_buffer);
         size_t read_size = 4;
-        std::vector<Tensor> fields;
+        std::vector<Tensor> fields(size_buffer);
         for (auto &tensor : fields) {
             read_size += externalize_prototype_memory(stream, tensor.m_proto, tensor.m_memory);
         }
+        this->pack(fields);
         return read_size;
     }
 }
