@@ -126,13 +126,14 @@ namespace ts {
 
     static size_t serialize_prototype_memory(StreamWriter &stream,
                                              const Tensor::Prototype &proto, const Memory &memory) {
+        size_t writen_size = 0;
         // 1. write prototype
         // 1.1 write dtype
-        binio::write<uint8_t>(stream, proto.dtype());
+        writen_size += binio::write<uint8_t>(stream, proto.dtype());
         // 1.2 write size
-        binio::write<uint32_t>(stream, uint32_t(proto.sizes().size()));
+        writen_size += binio::write<uint32_t>(stream, uint32_t(proto.sizes().size()));
         for (auto &size : proto.sizes()) {
-            binio::write<uint32_t>(stream, uint32_t(size));
+            writen_size += binio::write<uint32_t>(stream, uint32_t(size));
         }
         Memory cpu_memory;
         if (memory.device().type() == ts::CPU) {
@@ -142,11 +143,8 @@ namespace ts {
             memcpy(cpu_memory, memory);
         }
         // 2. write memory
-        binio::write<char>(stream, cpu_memory.data<char>(), size_t(proto.count()) * proto.type_bytes());
-        return 1 /* dtype */ +
-               4 /* sizes.size */ +
-               proto.sizes().size() * 4 /* sizes */ +
-               proto.count() * proto.type_bytes() /* memeory */;
+        writen_size += binio::write<char>(stream, cpu_memory.data<char>(), size_t(proto.count()) * proto.type_bytes());
+        return writen_size;
     }
 
     static size_t externalize_prototype_memory(StreamReader &stream,
@@ -157,20 +155,21 @@ namespace ts {
             may_controller.reset(new DynamicMemoryController(memory.device()));
             controller = may_controller.get();
         }
+        size_t read_size = 0;
         // 1. read prototype
         DTYPE dtype;
         Shape shape;
         // 1.1 read dtype
         uint8_t dtype_buffer;
-        binio::read<uint8_t >(stream, dtype_buffer);
+        read_size += binio::read<uint8_t >(stream, dtype_buffer);
         dtype = DTYPE(dtype_buffer);
         TS_AUTO_CHECK(dtype >= VOID && dtype <= UNKNOWN128);
         // 1.2 read sizes
         uint32_t size_buffer;
-        binio::read<uint32_t>(stream, size_buffer);
+        read_size += binio::read<uint32_t>(stream, size_buffer);
         shape.resize(size_buffer);
         for (size_t i = 0; i < shape.size(); ++i) {
-            binio::read<uint32_t>(stream, size_buffer);
+            read_size += binio::read<uint32_t>(stream, size_buffer);
             shape[i] = size_buffer;
         }
         // 1.x set proto
@@ -178,16 +177,13 @@ namespace ts {
 
         // 2. read memory
         memory = controller->alloc(size_t(proto.count()) * proto.type_bytes());
-        binio::read<char>(stream, memory.data<char>(), memory.size());
-        return 1 /* dtype */ +
-               4 /* sizes.size */ +
-               proto.sizes().size() * 4 /* sizes */ +
-               proto.count() * proto.type_bytes() /* memeory */;
+        read_size += binio::read<char>(stream, memory.data<char>(), memory.size());
+        return read_size;
     }
 
     size_t Tensor::serialize(StreamWriter &stream) const {
-        binio::write<uint32_t>(stream, uint32_t(this->fields_count()));
-        size_t writen_size = 4;
+        size_t writen_size = 0;
+        writen_size += binio::write<uint32_t>(stream, uint32_t(this->fields_count()));
         for (auto &tensor : this->unpack()) {
             writen_size += serialize_prototype_memory(stream, tensor.m_proto, tensor.m_memory);
         }
@@ -195,9 +191,9 @@ namespace ts {
     }
 
     size_t Tensor::externalize(StreamReader &stream) {
+        size_t read_size = 0;
         uint32_t size_buffer;
-        binio::read<uint32_t>(stream, size_buffer);
-        size_t read_size = 4;
+        read_size += binio::read<uint32_t>(stream, size_buffer);
         std::vector<Tensor> fields(size_buffer);
         for (auto &tensor : fields) {
             read_size += externalize_prototype_memory(stream, tensor.m_proto, tensor.m_memory);

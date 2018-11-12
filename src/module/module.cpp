@@ -114,6 +114,62 @@ namespace ts {
         set("#output_count", tensor::from(m_output_count));
     }
 
+    static size_t write_param(StreamWriter &stream, const std::pair<std::string, Tensor> &param) {
+        auto &name = param.first;
+        auto &value = param.second;
+        size_t writen_size = 0;
+        // 1 write param's name
+        // 1.1 write name length
+        writen_size += binio::write<uint32_t>(stream, uint32_t(name.size()));
+        // 1.2 write name string
+        writen_size += binio::write<char>(stream, name.data(), name.size());
+        // 2. write param's value
+        writen_size += value.serialize(stream);
+        return writen_size;
+    }
+
+    static size_t read_param(StreamReader &stream, std::pair<std::string, Tensor> &param) {
+        auto &name = param.first;
+        auto &value = param.second;
+        size_t read_size = 0;
+        uint32_t size_buffer;
+        // 1. read param's name
+        // 1.1 read name length
+        read_size += binio::read<uint32_t>(stream, size_buffer);
+        // 1.2 read name
+        std::vector<char> string_buffer(size_buffer);
+        read_size += binio::read<char>(stream, string_buffer.data(), size_buffer);
+        name = std::string(string_buffer.begin(), string_buffer.end());
+        // 2. read param's value
+        read_size += value.externalize(stream);
+        return read_size;
+    }
+
+    size_t Bubble::serialize(StreamWriter &stream) const {
+        size_t writen_size = 0;
+        writen_size += binio::write<uint32_t>(stream, uint32_t(m_params.size()));
+        for (auto &param : m_params) {
+            writen_size += write_param(stream, param);
+        }
+        return writen_size;
+    }
+
+    size_t Bubble::externalize(StreamReader &stream) {
+        m_params.clear();
+        size_t read_size = 0;
+        uint32_t size_buffer;
+        read_size += binio::read<uint32_t>(stream, size_buffer);
+        std::pair<std::string, Tensor> param;
+        for (uint32_t i = 0; i < size_buffer; ++i) {
+            read_size += read_param(stream, param);
+            m_params.insert(param);
+        }
+        m_op = tensor::to_string(m_params["#op"]);
+        m_name = tensor::to_string(m_params["#name"]);
+        m_output_count = tensor::to_int(m_params["#output_count"]);
+        return read_size;
+    }
+
     void Module::load(Graph g) {
         auto nodes = g.nodes();
         std::vector<Node> outputs;

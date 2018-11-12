@@ -12,7 +12,7 @@
 #include "graph.h"
 
 namespace ts {
-    class Bubble {
+    class Bubble : public Serializable {
     public:
         using self = Bubble;
 
@@ -21,6 +21,8 @@ namespace ts {
         using param_dict = map<std::string, Tensor>;
 
         const static char retention_param_sign = '#';
+
+        explicit Bubble() = default;
 
         explicit Bubble(
                 const std::string &op);
@@ -57,6 +59,10 @@ namespace ts {
         void clear(const std::string &param);
 
         void clear_params();
+
+        size_t serialize(StreamWriter &stream) const final;
+
+        size_t externalize(StreamReader &stream) final;
 
     private:
         void update_retention_params();
