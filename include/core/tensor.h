@@ -69,6 +69,14 @@ namespace ts {
 
         Tensor();
 
+        Tensor(const self &) = default;
+
+        self &operator=(const self &) = default;
+
+        Tensor(self &&other) TS_NOEXCEPT;
+
+        self &operator=(self &&other) TS_NOEXCEPT;
+
         bool empty() const;
 
         const Device &device() const { return m_memory.device(); }

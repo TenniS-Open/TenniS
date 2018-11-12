@@ -24,6 +24,14 @@ namespace ts {
 
         explicit Bubble() = default;
 
+        Bubble(const self &) = default;
+
+        self &operator=(const self &) = default;
+
+        Bubble(self &&other) TS_NOEXCEPT;
+
+        self &operator=(self &&other) TS_NOEXCEPT;
+
         explicit Bubble(
                 const std::string &op);
 

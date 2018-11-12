@@ -3,9 +3,10 @@
 //
 
 #include <core/tensor.h>
+
+#include <utility>
+
 #include <utils/ctxmgr.h>
-
-
 #include "core/tensor.h"
 #include "utils/assert.h"
 
@@ -200,5 +201,16 @@ namespace ts {
         }
         this->pack(fields);
         return read_size;
+    }
+
+    Tensor::Tensor(Tensor::self &&other) TS_NOEXCEPT {
+        this->operator=(std::forward<self>(other));
+    }
+
+    Tensor::self &Tensor::operator=(Tensor::self &&other) TS_NOEXCEPT {
+        this->m_proto = std::move(other.m_proto);
+        this->m_memory = std::move(other.m_memory);
+        this->m_fields = std::move(other.m_fields);
+        return *this;
     }
 }

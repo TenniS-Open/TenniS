@@ -5,6 +5,7 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <queue>
+#include <utility>
 
 #include <module/module.h>
 
@@ -23,28 +24,36 @@ namespace ts {
         return EndPoints.find(op) != EndPoints.end();
     }
 
+    Bubble::Bubble(self &&other) TS_NOEXCEPT {
+        this->operator=(std::forward<self>(other));
+    }
+
+    Bubble::self &Bubble::operator=(self &&other) TS_NOEXCEPT {
+        this->m_op = std::move(other.m_op);
+        this->m_name = std::move(other.m_name);
+        this->m_output_count = other.m_output_count;
+        this->m_params = std::move(other.m_params);
+        return *this;
+    }
+
     Bubble::Bubble(const std::string &op)
             : m_op(op) {
         update_retention_params();
     }
 
     Bubble::Bubble(const std::string &op, const std::string &name)
-            : m_op(op)
-            , m_name(name) {
+            : m_op(op), m_name(name) {
         update_retention_params();
     }
 
     Bubble::Bubble(const std::string &op, int output_count)
-            : m_op(op)
-            , m_output_count(output_count) {
+            : m_op(op), m_output_count(output_count) {
         TS_AUTO_CHECK(output_count >= 1);
         update_retention_params();
     }
 
     Bubble::Bubble(const std::string &op, const std::string &name, int output_count)
-            : m_op(op)
-            , m_name(name)
-            , m_output_count(output_count) {
+            : m_op(op), m_name(name), m_output_count(output_count) {
         TS_AUTO_CHECK(output_count >= 1);
         update_retention_params();
     }
