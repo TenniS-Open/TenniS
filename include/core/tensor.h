@@ -15,6 +15,93 @@
 namespace ts {
     using Shape = std::vector<int>;
 
+    class HypeShape {
+    public:
+        using self = HypeShape;
+        using T = int;
+
+        HypeShape(const Shape &shape)
+                : m_shape(shape) {
+            // update weights
+            if (m_shape.empty()) throw Exception("Not support empty shape.");
+            m_weights.resize(m_shape.size());
+            auto size = m_shape.size();
+            auto weight_it = m_weights.rbegin();
+            auto shape_it = m_shape.rbegin();
+            *weight_it++ = *shape_it++;
+            for (size_t times = size - 1; times; --times) {
+                *weight_it = *(weight_it - 1) * *shape_it;
+                ++weight_it;
+                ++shape_it;
+            }
+        }
+
+        T to_index(const std::initializer_list<T> &coordinate) const {
+            // if (coordinate.size() > m_shape.size()) throw CoordinateOutOfShapeException(m_shape, coordinate);
+            assert(coordinate.size() != 0);
+            auto size = coordinate.size();
+            auto weight_it = m_weights.end() - size + 1;
+            auto coordinate_it = coordinate.begin();
+            T index = 0;
+            for (size_t times = size - 1; times; --times) {
+                index += *weight_it * *coordinate_it;
+                ++weight_it;
+                ++coordinate_it;
+            }
+            index += *coordinate_it;
+            return index;
+        }
+
+        T to_index(const std::vector<T> &coordinate) const {
+            // if (coordinate.size() > m_shape.size()) throw CoordinateOutOfShapeException(m_shape, coordinate);
+            assert(!coordinate.empty());
+            auto size = coordinate.size();
+            auto weight_it = m_weights.end() - size + 1;
+            auto coordinate_it = coordinate.begin();
+            T index = 0;
+            for (size_t times = size - 1; times; --times) {
+                index += *weight_it * *coordinate_it;
+                ++weight_it;
+                ++coordinate_it;
+            }
+            index += *coordinate_it;
+            return index;
+        }
+
+        std::vector<T> to_coordinate(T index) const {
+            // if (m_shape.empty()) return std::vector<T>();
+            // if (index >= m_weights[0]) throw IndexOutOfShapeException(m_shape, index);
+            std::vector<T> coordinate(m_shape.size());
+            auto size = m_shape.size();
+            auto weight_it = m_weights.begin() + 1;
+            auto coordinate_it = coordinate.begin();
+            for (size_t times = size - 1; times; --times) {
+                *coordinate_it = index / *weight_it;
+                index %= *weight_it;
+                ++weight_it;
+                ++coordinate_it;
+            }
+            *coordinate_it = index;
+            return coordinate;
+        }
+
+        T count() const { return m_weights[0]; }
+
+        T weight(size_t i) const { return m_weights[i]; };
+
+        const std::vector<T> &weight() const { return m_weights; };
+
+        T shape(size_t i) const { return m_shape[i]; };
+
+        const std::vector<T> &shape() const { return m_shape; };
+
+        explicit operator Shape() const { return m_shape; }
+
+    private:
+        Shape m_shape;
+        std::vector<T> m_weights;
+    };
+
     class Tensor : public Serializable {
     public:
         class Prototype {
@@ -128,6 +215,8 @@ namespace ts {
         size_t serialize(StreamWriter &stream) const final;
 
         size_t externalize(StreamReader &stream) final;
+
+        HypeShape hype_shape() const { return HypeShape(this->sizes()); }
 
     private:
         Memory m_memory;

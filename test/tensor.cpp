@@ -8,6 +8,17 @@
 #include <core/scan.h>
 #include <global/setup.h>
 
+template <typename T>
+std::ostream &operator<<(std::ostream &out, const std::vector<T> &vec) {
+    out << "(";
+    for (size_t i = 0; i < vec.size(); ++i) {
+        if (i) out << ", ";
+        out << vec[i];
+    }
+    out << ")";
+    return out;
+}
+
 int main() {
     using namespace ts;
     setup();
@@ -57,6 +68,29 @@ int main() {
     }
 
     std::cout << std::endl;
+
+    std::vector<int> shape = {2, 3, 4, 5};
+
+    HypeShape hype_shape(shape);
+
+    std::cout << "count: " << hype_shape.count() << std::endl;
+
+    for (int i = 0; i < hype_shape.count(); ++i) {
+        std::cout << hype_shape.to_coordinate(i) << std::endl;
+    }
+
+    for (int i = 0; i < shape[0]; ++i) {
+        for (int j = 0; j < shape[1]; ++j) {
+            for (int k = 0; k < shape[2]; ++k) {
+                for (int l = 0; l < shape[3]; ++l) {
+                    std::cout << hype_shape.to_index({i, j, k, l}) << std::endl;
+                }
+            }
+        }
+    }
+
+    std::cout << std::endl;
+    std::cout << hype_shape.to_index({1, 2340}) << std::endl;
 
     return 0;
 }
