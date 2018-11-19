@@ -387,4 +387,10 @@ namespace ts {
 
         return std::move(computation_schedule);
     }
+
+    void Module::Save(const std::string &filename, Module::shared, Module::SerializationFormat format) {
+        // save inputs
+        // save outputs
+        // save graph
+    }
 }

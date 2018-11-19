@@ -11,6 +11,7 @@
 #include <core/tensor_builder.h>
 #include <module/menu.h>
 #include <utils/box.h>
+#include <module/io/fstream.h>
 
 #include <cstring>
 
@@ -97,6 +98,18 @@ int main()
     auto data = bubble::data("data", tensor::from<float>(3));
 
     auto c = bubble::op("c", "sum", {a, b, data});
+    
+    {
+        // test graph
+        ts::FileStreamWriter out("test.module.txt");
+        serialize_graph(out, g);
+        out.close();
+
+        ts::Graph tg;
+        ts::FileStreamReader in("test.module.txt");
+        externalize_graph(in, tg);
+        g = tg;
+    }
 
     // setup module
     std::shared_ptr<Module> m = std::make_shared<Module>();

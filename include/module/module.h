@@ -137,9 +137,9 @@ namespace ts {
         };
 
         // TODO: finish Load ad Save method
-        Module::shared Load(const std::string &filename, SerializationFormat format = BINARY);
+        static Module::shared Load(const std::string &filename, SerializationFormat format = BINARY);
 
-        Module::shared Save(const std::string &filename, SerializationFormat format = BINARY);
+        static void Save(const std::string &filename, Module::shared, SerializationFormat format = BINARY);
 
         static std::vector<std::pair<Node, int>> list_reference_nodes(const std::vector<Node> &nodes);
 
