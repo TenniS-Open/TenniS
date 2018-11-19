@@ -34,40 +34,7 @@ namespace ts {
 
     // TODO: speed this function up
     static map<Node, set<Node>> build_node_refs(const std::vector<Node> &nodes) {
-        map<Node, int> map_node_depth;
-        std::deque<Node> node_walker; // top_down
-
-        for (auto &node : nodes) {
-            auto it = map_node_depth.find(node);
-            if (it != map_node_depth.end()) continue;
-            node_walker.push_back(node);
-            map_node_depth.insert(std::make_pair(node, 1));
-        }
-
-        while (!node_walker.empty()) {
-            auto node = node_walker.front();
-            node_walker.pop_front();
-            auto depth = map_node_depth[node];
-            for (auto &input : node.inputs()) {
-                auto input_depth_pair = map_node_depth.find(input);
-                if (input_depth_pair == map_node_depth.end()) {
-                    map_node_depth.insert(std::make_pair(input, depth + 1));
-                    node_walker.push_back(input);
-                } else {
-                    auto this_input_depth = depth + 1;
-                    if (input_depth_pair->second < this_input_depth) {
-                        input_depth_pair->second = this_input_depth;
-                        node_walker.push_back(input);   // re-walk nodes
-                    }
-                }
-            }
-        }
-
-        std::vector<std::pair<Node, int>> computation_schedule(map_node_depth.begin(), map_node_depth.end());
-        std::sort(computation_schedule.begin(), computation_schedule.end(),
-                [](const std::pair<Node, int> &lhs, const std::pair<Node, int> &rhs){
-            return lhs.second > rhs.second;
-        });
+        auto computation_schedule = Module::list_reference_nodes(nodes);
 
         // build refs
         map<Node, set<Node>> map_node_refs;
