@@ -98,15 +98,15 @@ int main()
     auto data = bubble::data("data", tensor::from<float>(3));
 
     auto c = bubble::op("c", "sum", {a, b, data});
-    
+
     {
         // test graph
-        ts::FileStreamWriter out("test.module.txt");
+        ts::FileStreamWriter out("test.graph.txt");
         serialize_graph(out, g);
         out.close();
 
         ts::Graph tg;
-        ts::FileStreamReader in("test.module.txt");
+        ts::FileStreamReader in("test.graph.txt");
         externalize_graph(in, tg);
         g = tg;
     }
@@ -115,6 +115,13 @@ int main()
     std::shared_ptr<Module> m = std::make_shared<Module>();
     m->load(g, {"c"});
     m->sort_inputs({"a", "b"});
+
+    {
+        // test graph
+        Module::Save("test.module.txt", m);
+
+        m = Module::Load("test.module.txt");
+    }
 
     std::cout << "Input nodes:" << std::endl;
     for (auto &node : m->inputs()) {

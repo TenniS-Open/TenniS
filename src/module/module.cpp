@@ -13,6 +13,8 @@
 #include "module/module.h"
 #include "utils/box.h"
 #include "core/tensor_builder.h"
+#include "module/io/fstream.h"
+#include "module/menu.h"
 
 namespace ts {
     const char *const Bubble::Parameter = "<param>";
@@ -388,9 +390,73 @@ namespace ts {
         return std::move(computation_schedule);
     }
 
-    void Module::Save(const std::string &filename, Module::shared, Module::SerializationFormat format) {
-        // save inputs
-        // save outputs
-        // save graph
+    void Module::Save(const std::string &filename, Module::shared module, Module::SerializationFormat format) {
+        TS_AUTO_CHECK(format == BINARY);
+        // get nodes ready to read
+        FileStreamWriter stream(filename);
+        auto valued_nodes = list_reference_nodes(module->outputs());
+        std::vector<Node> nodes;
+        std::unordered_map<Node, size_t> map_node_index;
+        size_t index = 0;
+        for (auto &valued_node : valued_nodes) {
+            auto &node = valued_node.first;
+            map_node_index.insert(std::make_pair(node, index++));
+            nodes.emplace_back(node);
+        }
+        for (auto &input : module->inputs()) {
+            if (map_node_index.find(input) != map_node_index.end()) continue;
+            auto &node = input;
+            map_node_index.insert(std::make_pair(node, index++));
+            nodes.emplace_back(node);
+        }
+        // 1. save inputs
+        binio::write<uint32_t>(stream, uint32_t(module->inputs().size()));
+        for (auto &node : module->inputs()) {
+            binio::write<uint32_t>(stream, uint32_t(map_node_index[node]));
+        }
+        // 2. save outputs
+        binio::write<uint32_t>(stream, uint32_t(module->outputs().size()));
+        for (auto &node : module->outputs()) {
+            binio::write<uint32_t>(stream, uint32_t(map_node_index[node]));
+        }
+        // 3. save graphs
+        serialize_nodes(stream, nodes);
+    }
+
+    static size_t read_uint32_list(StreamReader &stream, std::vector<uint32_t> &list) {
+        uint32_t size_buffer = 0;
+        size_t read_size = 0;
+        read_size += binio::read<uint32_t>(stream, size_buffer);
+        list.resize(size_buffer);
+        for (auto &elem : list) {
+            read_size += binio::read<uint32_t>(stream, elem);
+        }
+        return read_size;
+    }
+
+    Module::shared Module::Load(const std::string &filename, Module::SerializationFormat format) {
+        TS_AUTO_CHECK(format == BINARY);
+        FileStreamReader stream(filename);
+        size_t read_size = 0;
+        // 1. read inputs
+        // read node index
+        std::vector<uint32_t> input_index;
+        read_size += read_uint32_list(stream, input_index);
+        // 2. read outputs
+        std::vector<uint32_t> output_index;
+        read_size += read_uint32_list(stream, output_index);
+        // 3. read graph
+        Graph g;
+        read_size += externalize_graph(stream, g);
+        const auto &nodes = g.nodes();
+        // x.1 convert inputs and outputs
+        std::vector<Node> inputs;
+        for (auto index : input_index) inputs.emplace_back(nodes[index]);
+        std::vector<Node> outputs;
+        for (auto index : output_index) outputs.emplace_back(nodes[index]);
+        Module::shared module = std::make_shared<Module>();
+        module->load(g, outputs);
+        module->sort_inputs(inputs);
+        return module;
     }
 }
