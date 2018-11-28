@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.7)
 project(TensorStack)
 
+set(TARGET "SHARED" CACHE STRING "STATIC or SHARED" FORCE)
+
 # global root dir
 set(SOLUTION_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 add_definitions(-DTS_SOLUTION_DIR="${SOLUTION_DIR}")
@@ -142,15 +144,16 @@ foreach (achive ${TENSORSTACK_ACHIVES})
     LIST(APPEND SRC_INCLUDE_FILES ${SRC_INCLUDE_ARCHIVE_${achive}_FILES})
 endforeach ()
 
-ts_add_library(${PROJECT_NAME}_STATIC STATIC ${INCLUDE_FILES} ${INCLUDE_SRC_FILES} ${SRC_FILES})
-ts_add_library(${PROJECT_NAME}_SHARED SHARED ${INCLUDE_FILES} ${INCLUDE_SRC_FILES} ${SRC_FILES})
+ts_add_library(${PROJECT_NAME}_LIB ${TARGET} ${INCLUDE_FILES} ${INCLUDE_SRC_FILES} ${SRC_FILES})
 
-set_target_properties(${PROJECT_NAME}_SHARED PROPERTIES OUTPUT_NAME ${PROJECT_NAME}${ENV_SUFFIX})
-set_target_properties(${PROJECT_NAME}_STATIC PROPERTIES OUTPUT_NAME ${PROJECT_NAME}_static${ENV_SUFFIX})
+set_target_properties(${PROJECT_NAME}_LIB PROPERTIES OUTPUT_NAME ${PROJECT_NAME}${ENV_SUFFIX})
 
-set_target_properties(${PROJECT_NAME}_SHARED PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${LOCAL_OUTPUT_DIR}/${ENV_RUNTIME_DIR})
+if (WIN32)
+    set_target_properties(${PROJECT_NAME}_LIB PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${LOCAL_OUTPUT_DIR}/${ENV_RUNTIME_DIR})
+endif()
 
-install(TARGETS ${PROJECT_NAME}_SHARED ${PROJECT_NAME}_STATIC
+
+install(TARGETS ${PROJECT_NAME}_LIB
         RUNTIME DESTINATION ${ENV_RUNTIME_DIR}
         LIBRARY DESTINATION ${ENV_LIBRARY_DIR}
         ARCHIVE DESTINATION ${ENV_ARCHIVE_DIR}
@@ -171,7 +174,7 @@ foreach (path ${TEST_FILES})
     string(REGEX MATCH "[^/]*.[(c)|(cc)|(cpp)]$" file_ext ${path})
     string(REGEX MATCH "^[^.]*" file ${file_ext})
     add_executable(test_${file} ${path})
-    target_link_libraries(test_${file} ${PROJECT_NAME}_SHARED)
+    target_link_libraries(test_${file} ${PROJECT_NAME}_LIB)
     target_link_libraries(test_${file} ${third_libraries})
     # set_target_properties(test_${file} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${LOCAL_OUTPUT_DIR}/lib)
 endforeach ()
@@ -181,7 +184,7 @@ foreach (path ${TOOL_FILES})
     string(REGEX MATCH "^[^.]*" file ${file_ext})
     add_executable(tool_${file} ${path})
     set_target_properties(tool_${file} PROPERTIES OUTPUT_NAME ${file})
-    target_link_libraries(tool_${file} ${PROJECT_NAME}_SHARED)
+    target_link_libraries(tool_${file} ${PROJECT_NAME}_LIB)
     target_link_libraries(tool_${file} ${third_libraries})
     install(TARGETS tool_${file}
             RUNTIME DESTINATION ${ENV_RUNTIME_DIR}
