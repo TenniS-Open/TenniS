@@ -38,7 +38,7 @@ namespace ts {
 #define TS_STATIC_ACTION(func, ...) \
     namespace \
     { \
-         ts::StaticAction ts_serial_name(_ts_static_action_)(func, __VA_ARGS__); \
+         ts::StaticAction ts_serial_name(_ts_static_action_)(func, ## __VA_ARGS__); \
     }
 
 #endif //TENSORSTACK_UTILS_STATIC_H
