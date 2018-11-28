@@ -134,11 +134,11 @@ prototype := <int8:dtype><int32:sizes_size><int32*$sizes_size:sizes>;
 tensor := <prototype:proto>
     <byte*(prod($proto.sizes) * type_bytes($proto.dtype)):memory>;
 bubble := <int32:size><<string:name><tensor:value>*$size:params>
-inputs := <int32:size><int32*$size:links>;
+inputs := <int32:size><int32*$size:indexs>;
 node := <bubble:bubble><inputs:inputs>;
 graph := <int32:size><node*$size:nodes>;
-outputs := <int32:size><int32*$size:links>;
-module := <inputs:outputs><indexs:outputs><graph:graph>;
+outputs := <int32:size><int32*$size:indexs>;
+module := <inputs:outputs><outputs:outputs><graph:graph>;
 <module>
 ```
 
