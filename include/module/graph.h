@@ -51,6 +51,23 @@ namespace ts {
             }
         }
 
+        static void ReplaceOutput(const weak &old_node, const weak &new_node) {
+            auto old_ptr = old_node.lock();
+            if (!old_ptr) throw NullPointerException("Link expired node");
+            auto new_ptr = new_node.lock();
+            if (!new_ptr) throw NullPointerException("Link expired node");
+            for (auto &output : old_ptr->outputs()) {
+                auto output_ptr = output.lock();
+                for (auto &output_s_input : output_ptr->m_inputs) {
+                    if (output_s_input.lock() != old_ptr) continue;
+                    output_s_input = new_node;
+                    break;
+                }
+                new_ptr->m_outputs.push_back(output);
+            }
+            old_ptr->m_outputs.clear();
+        }
+
         virtual std::string str() const {
             std::ostringstream oss;
             oss << "<Node: " << this << ">";
@@ -162,11 +179,25 @@ namespace ts {
         template<typename T>
         const T &ref() const { return const_cast<self *>(this)->ref<T>(); }
 
+        /**
+         * Link node perform as (inputs[0], ..., inputs[n - 1]) -> node
+         * @param node output node
+         * @param inputs input nodes
+         */
         static void Link(const Node &node, const std::vector<Node> &inputs) {
             std::vector<_RawNode::weak> raw_inputs;
             raw_inputs.reserve(inputs.size());
             for (auto &input : inputs) raw_inputs.emplace_back(_RawNode::weak(input));
             _RawNode::Link(node.m_ptr, raw_inputs);
+        }
+
+        /**
+         * Replace all output nodes linked with old_node to new_node
+         * @param old_node the node ready to be replaced
+         * @param new_node the new node
+         */
+        static void ReplaceOutput(const Node &old_node, const Node &new_node) {
+            _RawNode::ReplaceOutput(old_node.m_ptr, new_node.m_ptr);
         }
 
         std::string str() const {
