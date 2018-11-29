@@ -61,6 +61,8 @@ namespace ts {
     }
 }
 
+#if !defined(TS_DISABLE_PARALLEL)
+
 /**
  * Parallel for loop
  * @param var_loop_value loop value name
@@ -104,34 +106,39 @@ namespace ts {
 }
 
 /**
- * Parallel for loop
- * @param var_loop_value loop value name, is type of Range
- * @param var_loop_begin loop begin value
- * @param var_loop_end loop end value
+ * Parallel for range parallel
+ * @param var_range_value range parallel value name, is type of Range
+ * @param var_range_begin range parallel begin value
+ * @param var_rnage_end range parallel end value
  * @note the TS_PARALLEL_XXX block do NOT support nest
  * @note The input parameters over 3 are the closure value in parallel run
  * Usage:
  * ```
- * TS_PARALLEL_FOR_BEGIN(i, 0, 10)
- *     std::cout << i << std::endl;
- * TS_PARALLEL_FOR_END()
+ * TS_PARALLEL_RANGE_BEGIN(range, 0, 10)
+ *     for (int i = range.first; i < range.second; ++i) {
+ *         std::cout << i << std::endl;
+ *     }
+ * TS_PARALLEL_RANGE_END()
  * TS_PARALLEL_SYNC
  * ```
  * equal to codes:
  * ```
- * for (int i = 0; i < 10; ++i) {
- *     std::cout << i << std::endl;
+ * {
+ *     std::pair<int, int> range(0, 10)
+ *     for (int i = range.first; i < range.second; ++i) {
+ *         std::cout << i << std::endl;
+ *     }
  * }
  * ```
  * , but in parallel
  * @note remeber use TS_PARALLEL_SYNC after every parallel task should sync of finish
  */
-#define TS_PARALLEL_RANGE_BEGIN(var_loop_value, var_range_begin, var_range_end, ...) \
+#define TS_PARALLEL_RANGE_BEGIN(var_range_value, var_range_begin, var_range_end, ...) \
 { \
     int __ts_parallel_begin = int(var_range_begin); \
     int __ts_parallel_end = int(var_range_end); \
     auto __ts_parallel_solver = [&, ## __VA_ARGS__](const ts::Range &__ts_parallel_range) -> void { \
-        const auto &var_loop_value = __ts_parallel_range; \
+        const auto &var_range_value = __ts_parallel_range; \
 
 
 /**
@@ -148,6 +155,32 @@ namespace ts {
  */
 #define TS_PARALLEL_SYNC \
 ts::parallel_sync();
+
+#else
+
+#define TS_PARALLEL_FOR_BEGIN(var_loop_value, var_loop_begin, var_loop_end, ...) \
+{ \
+    int __ts_parallel_begin = int(var_loop_begin); \
+    int __ts_parallel_end = int(var_loop_end); \
+    int var_loop_value = __ts_parallel_begin; \
+    for (; var_loop_value < __ts_parallel_end; ++var_loop_value) {
+
+#define TS_PARALLEL_FOR_END(...) \
+    } \
+}
+
+#define TS_PARALLEL_RANGE_BEGIN(var_range_value, var_range_begin, var_range_end, ...) \
+{ \
+    int __ts_parallel_begin = int(var_range_begin); \
+    int __ts_parallel_end = int(var_range_end); \
+    ts::Range var_range_value(__ts_parallel_begin, __ts_parallel_end);
+
+#define TS_PARALLEL_RANGE_END(...) \
+}
+
+#define TS_PARALLEL_SYNC ;
+
+#endif
 
 
 #endif //TENSORSTACK_RUNTIME_INSIDE_PARALLEL_H
