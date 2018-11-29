@@ -13,18 +13,14 @@
 
 #include <cmath>
 
+#include <runtime/inside/parallel.h>
+
 #ifdef TS_USE_SSE
 #include <immintrin.h>
 #endif
 
 namespace ts {
     namespace cpu {
-        ThreadPool *try_threads_on(size_t task_number, size_t task_weight = 4) {
-            auto gun = ctx::ptr<ThreadPool>();
-            if (gun != nullptr && gun->size() > 1 && (gun->size() * task_weight) <= task_number) return gun;
-            return nullptr;
-        }
-
         template<typename T>
         inline T inline_dot(int N, const T *x, int incx, const T *y, int incy) {
             T sum = 0;
@@ -56,8 +52,8 @@ namespace ts {
             float simdBuffer[4];
             for (; i < blocked_N; i += block_size) {
                 simdX = _mm_loadu_ps(x);
-                simdY = _mm_loadu_ps(y);
                 x += 4;
+                simdY = _mm_loadu_ps(y);
                 y += 4;
                 simdSUM = _mm_add_ps(simdSUM, _mm_mul_ps(simdX, simdY));
             }
@@ -98,45 +94,99 @@ namespace ts {
             }
             return sum;
         }
+
+        inline float inline_dot_lhs_conitnous_float(int N, const float *x, const float *y, int incy) {
+            float sum = 0;
+            // block: 4
+            int i = 0;
+            static const int block_size = 4;
+            int blocked_N = N % block_size ? N - block_size : N;
+            __m128 simdX, simdY;
+            __m128 simdSUM = _mm_setzero_ps();
+            float simdBuffer[4];
+            for (; i < blocked_N; i += block_size) {
+                simdX = _mm_loadu_ps(x);
+                x += 4;
+                simdBuffer[0] = *y; y += incy;
+                simdBuffer[1] = *y; y += incy;
+                simdBuffer[2] = *y; y += incy;
+                simdBuffer[3] = *y; y += incy;
+                simdY = _mm_loadu_ps(simdBuffer);
+                simdSUM = _mm_add_ps(simdSUM, _mm_mul_ps(simdX, simdY));
+            }
+            _mm_storeu_ps(simdBuffer, simdSUM);
+            sum = simdBuffer[0] + simdBuffer[1] + simdBuffer[2] + simdBuffer[3];
+            for (; i < N; ++i) {
+                sum += *x * *y; ++x; y += incy;
+            }
+            return sum;
+        }
+
+        inline float inline_dot_rhs_conitnous_float(int N, const float *x, int incx, const float *y) {
+            float sum = 0;
+            // block: 4
+            int i = 0;
+            static const int block_size = 4;
+            int blocked_N = N % block_size ? N - block_size : N;
+            __m128 simdX, simdY;
+            __m128 simdSUM = _mm_setzero_ps();
+            float simdBuffer[4];
+            for (; i < blocked_N; i += block_size) {
+                simdBuffer[0] = *x; x += incx;
+                simdBuffer[1] = *x; x += incx;
+                simdBuffer[2] = *x; x += incx;
+                simdBuffer[3] = *x; x += incx;
+                simdX = _mm_loadu_ps(simdBuffer);
+                simdY = _mm_loadu_ps(y);
+                y += 4;
+                simdSUM = _mm_add_ps(simdSUM, _mm_mul_ps(simdX, simdY));
+            }
+            _mm_storeu_ps(simdBuffer, simdSUM);
+            sum = simdBuffer[0] + simdBuffer[1] + simdBuffer[2] + simdBuffer[3];
+            for (; i < N; ++i) {
+                sum += *x * *y; x += incx; ++y;
+            }
+            return sum;
+        }
+
         template <>
         inline float inline_dot<float>(int N, const float *x, int incx, const float *y, int incy) {
-            if (incx == 1 && incy == 1) return inline_dot_conitnous_float(N, x, y);
-            return inline_dot_non_conitnous_float(N, x, incx, y, incy);
+            if (incx == 1) {
+                if (incy == 1) {
+                    return inline_dot_conitnous_float(N, x, y);
+                } else {
+                    return inline_dot_lhs_conitnous_float(N, x, y, incy);
+                }
+            } else {
+                if (incy == 1) {
+                    return inline_dot_rhs_conitnous_float(N, x, incx, y);
+                } else {
+                    return inline_dot_non_conitnous_float(N, x, incx, y, incy);
+                }
+            }
         }
 #endif
 
         template<typename T>
         inline void inline_zero(int N, T *x, int incx) {
-            // use thread
-            auto gun = try_threads_on(size_t(N), 4);
-            if (gun != nullptr) {
-                auto bins = split_bins(0, N, (int)gun->size());
-                for (auto &range : bins) {
-                    gun->run([&, range](int) {
-                        T *local_x = x + range.first * incx;
-                        auto local_i = range.first;
-                        auto local_N = range.second;
-                        for (; local_i < local_N; ++local_i) {
-                            *local_x = 0; local_x += incx;
-                        }
-                    });
-                }
-                gun->join();
+            if (incx == 1) {
+                std::memset(x, 0, N * sizeof(T));
                 return;
             }
-            // block: 4
-            int i = 0;
-            static const int block_size = 4;
-            int blocked_N = N % block_size ? N - block_size : N;
-            for (; i < blocked_N; i += block_size) {
-                *x = 0; x += incx;
-                *x = 0; x += incx;
-                *x = 0; x += incx;
-                *x = 0; x += incx;
-            }
-            for (; i < N; ++i) {
-                *x = 0; x += incx;
-            }
+            TS_PARALLEL_RANGE_BEGIN(range, 0, N)
+                    auto xx = x + range.first * incx;
+                    const auto count = range.second - range.first;
+                    int i = 0;
+                    for (; i < count - 3; i += 4) {
+                        *xx = 0; xx += incx;
+                        *xx = 0; xx += incx;
+                        *xx = 0; xx += incx;
+                        *xx = 0; xx += incx;
+                    }
+                    for (; i < count; ++i) {
+                        *xx = 0; xx += incx;
+                    }
+            TS_PARALLEL_RANGE_END()
         }
 
         template<typename T>
@@ -147,56 +197,34 @@ namespace ts {
                 return;
             }
             // use thread
-            auto gun = try_threads_on(size_t(N), 4);
-            if (gun != nullptr) {
-                auto bins = split_bins(0, N, (int)gun->size());
-                for (auto &range : bins) {
-                    gun->run([&, range](int) {
-                        T *local_x = x + range.first * incx;
-                        auto local_i = range.first;
-                        auto local_N = range.second;
-                        for (; local_i < local_N; ++local_i) {
-                            *local_x *= alpha; local_x += incx;
-                        }
-                    });
-                }
-                gun->join();
-                return;
-            }
-            // block: 4
-            int i = 0;
-            static const int block_size = 4;
-            int blocked_N = N % block_size ? N - block_size : N;
-            for (; i < blocked_N; i += block_size) {
-                *x *= alpha; x += incx;
-                *x *= alpha; x += incx;
-                *x *= alpha; x += incx;
-                *x *= alpha; x += incx;
-            }
-            for (; i < N; ++i) {
-                *x *= alpha; x += incx;
-            }
+            TS_PARALLEL_RANGE_BEGIN(range, 0, N)
+                    auto xx = x + range.first * incx;
+                    const auto count = range.second - range.first;
+                    int i = 0;
+                    for (; i < count - 3; i += 4) {
+                        *xx *= alpha; xx += incx;
+                        *xx *= alpha; xx += incx;
+                        *xx *= alpha; xx += incx;
+                        *xx *= alpha; xx += incx;
+                    }
+                    for (; i < count; ++i) {
+                        *xx *= alpha; xx += incx;
+                    }
+            TS_PARALLEL_RANGE_END()
         }
 
 
         template<typename T>
         T math<T>::dot(int N, const T *x, int incx, const T *y, int incy) {
-            auto gun = try_threads_on(size_t(N), 4);
-            if (gun == nullptr) {
-                return inline_dot<T>(N, x, incx, y, incy);
-            }
-            auto bins = split_bins(0, N, (int) gun->size());
-            std::vector<T> threads_sum(gun->size(), 0);
-            for (auto &range : bins) {
-                gun->run([&, range](int id) {
-                    const T *local_x = x + range.first * incx;
-                    const T *local_y = y + range.first * incy;
-                    threads_sum[id] = inline_dot<T>(range.second - range.first, local_x, incx, local_y, incy);
-                });
-            }
-            gun->join();
+            std::vector<T> parallel_sum(TS_PARALLEL_SIZE, T(0));
+            TS_PARALLEL_RANGE_BEGIN(range, 0, N)
+                    auto xx = x + range.first * incx;
+                    auto yy = y + range.first * incy;
+                    const auto count = range.second - range.first;
+                    parallel_sum[__parallel_id] += inline_dot<T>(count, xx, incx, yy, incy);
+            TS_PARALLEL_RANGE_END()
             T sum = 0;
-            for (auto v : threads_sum) sum += v;
+            for (auto value : parallel_sum) sum += value;
             return sum;
         }
 
@@ -215,29 +243,16 @@ namespace ts {
             TS_AUTO_CHECK(ldb >= (TransB == blas::NoTrans ? N : K));
             TS_AUTO_CHECK(ldc >= N);
 
-            auto gun = try_threads_on(size_t(M), 4);
+            //auto gun = try_threads_on(size_t(M), 4);
 
             // calculate beta * C
             // C is RowMajor
             if (ldc == N) inline_scal(M * N, beta, C, 1);
             else {
-                if (gun != nullptr) {
-                    auto bins = split_bins(0, M, (int) gun->size());
-                    for (auto &range : bins) {
-                        gun->run([&, range](int) {
-                            T *local_C = C + range.first * ldc;
-                            auto local_i = range.first;
-                            auto local_M = range.second;
-                            for (; local_i < local_M; ++local_i, local_C += ldc) {
-                                inline_scal(N, beta, local_C, 1);
-                            }
-                        });
-                    }
-                    gun->join();
-                } else {
-                    T *C_anchor = C;
-                    for (int i = 0; i < M; ++i, C_anchor += ldc) inline_scal(N, beta, C_anchor, 1);
-                }
+                TS_PARALLEL_FOR_BEGIN(m, 0, M)
+                            auto CC = &C[m * ldc];
+                            inline_scal(N, beta, CC, 1);
+                TS_PARALLEL_FOR_END()
             }
 
             if (ts::near(alpha, 0)) return;
@@ -245,104 +260,40 @@ namespace ts {
             unsigned int condition = (TransA == blas::NoTrans ? 0U : 1U) | ((TransB == blas::NoTrans ? 0U : 2U));
             switch (condition) {
                 case 0: // A: NoTrans, B: NoTrans
-                    if (gun != nullptr) {
-                        auto bins = split_bins(0, M, (int)gun->size());
-                        for (auto &range : bins) {
-                            gun->run([&, range](int) {
-                                for (int i = range.first; i < range.second; ++i) {
-                                    T *C_anchor = &C[i * ldc];
-                                    for (int j = 0; j < N; ++j) {
-                                        *C_anchor += alpha * inline_dot(K, &A[i * lda], 1, &B[j], ldb);
-                                        C_anchor++;
-                                    }
-                                }
-                            });
-                        }
-                        gun->join();
-                    } else {
-                        for (int i = 0; i < M; ++i) {
+                TS_PARALLEL_FOR_BEGIN(i, 0, M)
                             T *C_anchor = &C[i * ldc];
                             for (int j = 0; j < N; ++j) {
                                 *C_anchor += alpha * inline_dot(K, &A[i * lda], 1, &B[j], ldb);
                                 C_anchor++;
                             }
-                        }
-                    }
+                TS_PARALLEL_FOR_END()
                     break;
                 case 1: // A: Trans, B: NoTrans
-                    if (gun != nullptr) {
-                        auto bins = split_bins(0, M, (int)gun->size());
-                        for (auto &range : bins) {
-                            gun->run([&, range](int) {
-                                for (int i = range.first; i < range.second; ++i) {
-                                    T *C_anchor = &C[i * ldc];
-                                    for (int j = 0; j < N; ++j) {
-                                        *C_anchor += alpha * inline_dot(K, &A[i], lda, &B[j], ldb);
-                                        C_anchor++;
-                                    }
-                                }
-                            });
-                        }
-                        gun->join();
-                    } else {
-                        for (int i = 0; i < M; ++i) {
+                TS_PARALLEL_FOR_BEGIN(i, 0, M)
                             T *C_anchor = &C[i * ldc];
                             for (int j = 0; j < N; ++j) {
                                 *C_anchor += alpha * inline_dot(K, &A[i], lda, &B[j], ldb);
                                 C_anchor++;
                             }
-                        }
-                    }
+                TS_PARALLEL_FOR_END()
                     break;
                 case 2: // A: NoTrans, B: Trans
-                    if (gun != nullptr) {
-                        auto bins = split_bins(0, M, (int)gun->size());
-                        for (auto &range : bins) {
-                            gun->run([&, range](int) {
-                                for (int i = range.first; i < range.second; ++i) {
-                                    T *C_anchor = &C[i * ldc];
-                                    for (int j = 0; j < N; ++j) {
-                                        *C_anchor += alpha * inline_dot(K, &A[i * lda], 1, &B[j * ldb], 1);
-                                        C_anchor++;
-                                    }
-                                }
-                            });
-                        }
-                        gun->join();
-                    } else {
-                        for (int i = 0; i < M; ++i) {
+                TS_PARALLEL_FOR_BEGIN(i, 0, M)
                             T *C_anchor = &C[i * ldc];
                             for (int j = 0; j < N; ++j) {
                                 *C_anchor += alpha * inline_dot(K, &A[i * lda], 1, &B[j * ldb], 1);
                                 C_anchor++;
                             }
-                        }
-                    }
+                TS_PARALLEL_FOR_END()
                     break;
                 default: // A: Trans, B: Trans
-                    if (gun != nullptr) {
-                        auto bins = split_bins(0, M, (int)gun->size());
-                        for (auto &range : bins) {
-                            gun->run([&, range](int) {
-                                for (int i = range.first; i < range.second; ++i) {
-                                    T *C_anchor = &C[i * ldc];
-                                    for (int j = 0; j < N; ++j) {
-                                        *C_anchor += alpha * inline_dot(K, &A[i], lda, &B[j * ldb], 1);
-                                        C_anchor++;
-                                    }
-                                }
-                            });
-                        }
-                        gun->join();
-                    } else {
-                        for (int i = 0; i < M; ++i) {
+                TS_PARALLEL_FOR_BEGIN(i, 0, M)
                             T *C_anchor = &C[i * ldc];
                             for (int j = 0; j < N; ++j) {
                                 *C_anchor += alpha * inline_dot(K, &A[i], lda, &B[j * ldb], 1);
                                 C_anchor++;
                             }
-                        }
-                    }
+                TS_PARALLEL_FOR_END()
                     break;
             }
         }
@@ -402,21 +353,14 @@ namespace ts {
 
         template<typename T>
         T math<T>::asum(int N, const T *x, int incx) {
-            auto gun = try_threads_on(size_t(N), 4);
-            if (gun == nullptr) {
-                return inline_asum<T>(N, x, incx);
-            }
-            auto bins = split_bins(0, N, (int) gun->size());
-            std::vector<T> threads_sum(gun->size(), 0);
-            for (auto &range : bins) {
-                gun->run([&, range](int id) {
-                    const T *local_x = x + range.first * incx;
-                    threads_sum[id] = inline_asum<T>(range.second - range.first, local_x, incx);
-                });
-            }
-            gun->join();
+            std::vector<T> parallel_sum(TS_PARALLEL_SIZE, T(0));
+            TS_PARALLEL_RANGE_BEGIN(range, 0, N)
+                    const T *xx = x + range.first * incx;
+                    const auto count = range.second - range.first;
+                    parallel_sum[__parallel_id] += inline_asum<T>(count, xx, incx);
+            TS_PARALLEL_RANGE_END()
             T sum = 0;
-            for (auto v : threads_sum) sum += v;
+            for (auto value : parallel_sum) sum += value;
             return sum;
         }
 
