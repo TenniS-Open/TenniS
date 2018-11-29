@@ -85,13 +85,11 @@ int main()
     Graph g;
     ctx::bind<Graph> _graph(g);
 
-//    auto a = op::in("input");
-//    auto block = block_n_times("block", a, 1000);
-//    auto output = op::sum("output", {block});
-//    auto a = op::in("a");
-//    auto b = op::sum("b", {a});
-//    auto c = op::sum("c", {b});
-//    auto d = op::sum("d", {a, c});
+//    auto a = bubble::param("a");
+//    auto b = bubble::param("b");
+//    auto b1 = block_n_times("block1", a, 100);
+//    auto b2 = block_n_times("block1", b, 100);
+//    auto c = bubble::op("c", "sum", {b1, b2});
 
     auto a = bubble::param("a");
     auto b = bubble::param("b");
@@ -141,6 +139,7 @@ int main()
 
     try {
         bench = Workbench::Load(m, device);
+        bench = bench->clone();
     } catch (const Exception &e) {
         std::cout << e.what() << std::endl;
         return -1;
