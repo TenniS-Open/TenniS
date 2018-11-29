@@ -21,43 +21,48 @@ namespace ts {
         return nullptr;
     }
 
-    inline void parallel_run(const std::function<void(int, int)> &range_solver, int begin, int end, bool joinable = true) {
+    inline void parallel_run(const std::function<void(int, int, int)> &range_solver, int begin, int end, bool joinable = true) {
         auto parallel_gun = ts::try_parallel(end - begin);
         if (parallel_gun) {
             auto parallel_ranges = ts::split_bins(begin, end, int(parallel_gun->size()));
             for (auto &parallel_range : parallel_ranges) {
-                parallel_gun->run([range_solver, parallel_range](int){
-                    range_solver(parallel_range.first, parallel_range.second);
+                parallel_gun->run([range_solver, parallel_range](int signet){
+                    range_solver(signet, parallel_range.first, parallel_range.second);
                 });
             }
             if (joinable) {
                 parallel_gun->join();
             }
         } else {
-            range_solver(begin, end);
+            range_solver(0, begin, end);
         }
     }
 
-    inline void parallel_range(const std::function<void(const Range &)> &range_solver, int begin, int end, bool joinable = true) {
+    inline void parallel_range(const std::function<void(int, const Range &)> &range_solver, int begin, int end, bool joinable = true) {
         auto parallel_gun = ts::try_parallel(end - begin);
         if (parallel_gun) {
             auto parallel_ranges = ts::split_bins(begin, end, int(parallel_gun->size()));
             for (auto &parallel_range : parallel_ranges) {
-                parallel_gun->run([range_solver, parallel_range](int){
-                    range_solver(parallel_range);
+                parallel_gun->run([range_solver, parallel_range](int signet){
+                    range_solver(signet, parallel_range);
                 });
             }
             if (joinable) {
                 parallel_gun->join();
             }
         } else {
-            range_solver(Range(begin, end));
+            range_solver(0, Range(begin, end));
         }
     }
 
     inline void parallel_sync() {
         auto gun = ctx::ptr<ThreadPool>();
         if (gun) gun->join();
+    }
+
+    inline size_t parallel_size() {
+        auto gun = ctx::ptr<ThreadPool>();
+        return gun != nullptr ? (std::max<size_t>(gun->size(), 1)) : 1;
     }
 }
 
@@ -90,7 +95,7 @@ namespace ts {
 { \
     int __ts_parallel_begin = int(var_loop_begin); \
     int __ts_parallel_end = int(var_loop_end); \
-    auto __ts_parallel_solver = [&, ## __VA_ARGS__](int begin, int end) -> void { \
+    auto __ts_parallel_solver = [&, ## __VA_ARGS__](const int __parallel_id, int begin, int end) -> void { \
         int var_loop_value = begin; \
         for (; var_loop_value < end; ++var_loop_value) { \
 
@@ -137,7 +142,7 @@ namespace ts {
 { \
     int __ts_parallel_begin = int(var_range_begin); \
     int __ts_parallel_end = int(var_range_end); \
-    auto __ts_parallel_solver = [&, ## __VA_ARGS__](const ts::Range &__ts_parallel_range) -> void { \
+    auto __ts_parallel_solver = [&, ## __VA_ARGS__](const int __parallel_id, const ts::Range &__ts_parallel_range) -> void { \
         const auto &var_range_value = __ts_parallel_range; \
 
 
@@ -156,10 +161,15 @@ namespace ts {
 #define TS_PARALLEL_SYNC \
 ts::parallel_sync();
 
+#define TS_PARALLEL_SIZE \
+ts::parallel_size()
+
 #else
 
 #define TS_PARALLEL_FOR_BEGIN(var_loop_value, var_loop_begin, var_loop_end, ...) \
 { \
+    const int __parallel_id = 0; \
+    (void)(__parallel_id); \
     int __ts_parallel_begin = int(var_loop_begin); \
     int __ts_parallel_end = int(var_loop_end); \
     int var_loop_value = __ts_parallel_begin; \
@@ -171,6 +181,8 @@ ts::parallel_sync();
 
 #define TS_PARALLEL_RANGE_BEGIN(var_range_value, var_range_begin, var_range_end, ...) \
 { \
+    const int __parallel_id = 0; \
+    (void)(__parallel_id); \
     int __ts_parallel_begin = int(var_range_begin); \
     int __ts_parallel_end = int(var_range_end); \
     ts::Range var_range_value(__ts_parallel_begin, __ts_parallel_end);
@@ -179,6 +191,8 @@ ts::parallel_sync();
 }
 
 #define TS_PARALLEL_SYNC ;
+
+#define TS_PARALLEL_SIZE 1
 
 #endif
 
