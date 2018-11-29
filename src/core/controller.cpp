@@ -7,6 +7,8 @@
 
 #include "utils/assert.h"
 
+#include "utils/ctxmgr_lite_support.h"
+
 namespace ts {
 
     DynamicMemoryController::DynamicMemoryController(const MemoryDevice &device)
@@ -19,3 +21,5 @@ namespace ts {
         return Memory(std::make_shared<HardMemory>(m_device, m_allocator, size));
     }
 }
+
+TS_LITE_CONTEXT(ts::MemoryController)

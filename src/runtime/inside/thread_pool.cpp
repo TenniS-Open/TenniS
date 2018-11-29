@@ -3,6 +3,7 @@
 //
 
 #include "runtime/inside/thread_pool.h"
+#include "utils/ctxmgr_lite_support.h"
 
 namespace ts {
 
@@ -123,3 +124,5 @@ namespace ts {
         running_core_cond.notify_all();
     }
 }
+
+TS_LITE_CONTEXT(ts::ThreadPool)

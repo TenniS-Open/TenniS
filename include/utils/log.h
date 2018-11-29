@@ -139,7 +139,7 @@ namespace ts {
     : ((const char *)(__FILE__)) \
     )
 #else
-#define TS_LOCAL_FILE (orz::Split(__FILE__, R"(/\)").back())
+#define TS_LOCAL_FILE (ts::Split(__FILE__, R"(/\)").back())
 #endif
 
 #define TS_LOG(level) (ts::LogStream(level))("[")(TS_LOCAL_FILE)(":")(__LINE__)("]: ")

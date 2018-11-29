@@ -14,6 +14,8 @@
 #include "utils/except.h"
 #include "utils/assert.h"
 
+#include "utils/ctxmgr_lite_support.h"
+
 namespace ts {
 
     /**
@@ -276,5 +278,6 @@ namespace std {
     };
 }
 
+TS_LITE_CONTEXT(ts::Graph)
 
 #endif //TENSORSTACK_MODULE_GRAPH_H
