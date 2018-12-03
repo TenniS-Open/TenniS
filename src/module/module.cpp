@@ -15,6 +15,7 @@
 #include "core/tensor_builder.h"
 #include "module/io/fstream.h"
 #include "module/menu.h"
+#include "module/header.h"
 
 namespace ts {
     const char *const Bubble::Parameter = "<param>";
@@ -409,6 +410,12 @@ namespace ts {
             map_node_index.insert(std::make_pair(node, index++));
             nodes.emplace_back(node);
         }
+
+        // 0. save header
+        Header header;
+        header.code = TS_MODULE_CODE_V1;
+        header.serialize(stream);
+
         // 1. save inputs
         binio::write<uint32_t>(stream, uint32_t(module->inputs().size()));
         for (auto &node : module->inputs()) {
@@ -438,6 +445,12 @@ namespace ts {
         TS_AUTO_CHECK(format == BINARY);
         FileStreamReader stream(filename);
         size_t read_size = 0;
+
+        // 0. read header
+        Header header;
+        read_size += header.externalize(stream);
+        TS_AUTO_CHECK(header.code == TS_MODULE_CODE_V1);
+
         // 1. read inputs
         // read node index
         std::vector<uint32_t> input_index;

@@ -139,7 +139,8 @@ node := <bubble:bubble><inputs:inputs>;
 graph := <int32:size><node*$size:nodes>;
 outputs := <int32:size><int32*$size:indexs>;
 module := <inputs:outputs><outputs:outputs><graph:graph>;
-<module>
+header := <int32:fake><int32:code><byte*120:data>;
+<header><module>
 ```
 
 其中 `$tensor.memory` 存放的是 `$tensor.proto.dtype` 描述的类型号的内存。
@@ -149,3 +150,10 @@ module := <inputs:outputs><outputs:outputs><graph:graph>;
 节点用整数索引表示，索引值为该节点在 `$graph.nodes` 中的下标。
 
 `$module.inputs` 和 `$module.outputs` 分别表示输入节点和输出节点在 `$module.graph.nodes` 中的下标值。
+
+`$header.code` 为版本标识符，当前支持的版本为：
+格式V1为`0x19910929`。
+
+`$header.fake` 为保留字节，无实际意义。
+
+`$header.data` 为保留字节区，长度为120个字节。保留字节可用于用户自定义。
