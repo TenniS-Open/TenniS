@@ -30,6 +30,11 @@ namespace ts {
         UNKNOWN32,
         UNKNOWN64,
         UNKNOWN128,
+
+        BOOLEAN,    // bool type, using byte in native
+        COMPLEX32,  // complex 32(16 + 16)
+        COMPLEX64,  // complex 64(32 + 32)
+        COMPLEX128  // complex 128(64 + 64)
     };
 
     inline int type_bytes(DTYPE dtype) {
@@ -56,6 +61,10 @@ namespace ts {
             case UNKNOWN32: return 4;
             case UNKNOWN64: return 8;
             case UNKNOWN128: return 16;
+            case BOOLEAN: return 1;
+            case COMPLEX32: return 4;
+            case COMPLEX64: return 8;
+            case COMPLEX128: return 16;
         }
         return 0;
     }
@@ -83,6 +92,10 @@ namespace ts {
             case UNKNOWN32: return "unknown32";
             case UNKNOWN64: return "unknown64";
             case UNKNOWN128: return "unknown128";
+            case BOOLEAN: return "bool";
+            case COMPLEX32: return "complex32";
+            case COMPLEX64: return "complex64";
+            case COMPLEX128: return "complex128";
         }
         return "unknown";
     }
@@ -105,6 +118,7 @@ namespace ts {
     template <> struct dtype<CHAR8> { using declare = char; };
     template <> struct dtype<CHAR16> { using declare = char16_t; };
     template <> struct dtype<CHAR32> { using declare = char32_t; };
+    template <> struct dtype<BOOLEAN> { using declare = uint8_t; };
 
     template <typename T> struct dtypeid { static const DTYPE id = VOID; };
 
