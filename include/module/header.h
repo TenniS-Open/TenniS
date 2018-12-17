@@ -14,9 +14,11 @@
 namespace ts {
     class Header : public Serializable {
     public:
+        using data_type = std::array<char, 120>;
+
         uint32_t fake = 0;
         uint32_t code = 0;
-        std::array<char, 120> data = {0};
+        data_type data = data_type({0, });
 
         size_t serialize(StreamWriter &stream) const final;
 
