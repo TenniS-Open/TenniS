@@ -28,6 +28,61 @@ COMPLEX32 = 23
 COMPLEX64 = 24
 COMPLEX128 = 25
 
+__dtype_bytes_map = {
+    VOID: 0,
+    INT8: 1,
+    UINT8: 1,
+    INT16: 2,
+    UINT16: 2,
+    INT32: 4,
+    UINT32: 4,
+    INT64: 8,
+    UINT64: 8,
+    FLOAT16: 2,
+    FLOAT32: 4,
+    FLOAT64: 6,
+    CHAR8: 1,
+    CHAR16: 2,
+    CHAR32: 4,
+    UNKNOWN8: 1,
+    UNKNOWN16: 2,
+    UNKNOWN32: 4,
+    UNKNOWN64: 8,
+    UNKNOWN128: 16,
+    BOOLEAN: 1,
+    COMPLEX32: 4,
+    COMPLEX64: 8,
+    COMPLEX128: 16,
+}
+
+__dtype_str_map = {
+    VOID: 'void',
+    INT8: 'int8',
+    UINT8: 'uint8',
+    INT16: 'int16',
+    UINT16: 'uint16',
+    INT32: 'int32',
+    UINT32: 'uint32',
+    INT64: 'int64',
+    UINT64: 'uint64',
+    FLOAT16: 'float16',
+    FLOAT32: 'float32',
+    FLOAT64: 'float64',
+    PTR: 'ptr',
+    CHAR8: 'char8',
+    CHAR16: 'char16',
+    CHAR32: 'char32',
+    UNKNOWN8: 'unknown8',
+    UNKNOWN16: 'unknown16',
+    UNKNOWN32: 'unknown32',
+    UNKNOWN64: 'unknown64',
+    UNKNOWN128: 'unknown128',
+    BOOLEAN: 'boolean',
+    COMPLEX32: 'complex32',
+    COMPLEX64: 'complex64',
+    COMPLEX128: 'complex128',
+}
+
 convert_pairs = [
     (numpy.bool, BOOLEAN),
     (numpy.int8, INT8),
@@ -48,6 +103,19 @@ convert_pairs = [
 
 __numpy_dtype_to_dtype = { pair[0]: pair[1] for pair in convert_pairs }
 __dtype_to_numpy_dtype = { pair[1]: pair[0] for pair in convert_pairs }
+
+
+def is_dtype(numpy_dtype, ts_dtype):
+    # type: (numpy.dtype, int) -> bool
+    """
+    return if numpy's dtype is ts's dtype
+    :param numpy_dtype: numpy.dtye
+    :param ts_dtype: int value of ts.dtype
+    :return: bool
+    """
+    if ts_dtype not in __dtype_to_numpy_dtype:
+        return False
+    return __dtype_to_numpy_dtype[ts_dtype] == numpy_dtype
 
 
 def from_numpy(dtype):
@@ -82,3 +150,21 @@ def to_numpy(dtype):
     if dtype not in __dtype_to_numpy_dtype:
         raise Exception("Not supported converting tensorstack dtype ={}".format(dtype))
     return __dtype_to_numpy_dtype[dtype]
+
+
+def dtype_bytes(dtype):
+    # type: (Union[int, numpy.dtype]) -> int
+    if not isinstance(dtype, int):
+        dtype = from_numpy(dtype=dtype)
+    if dtype not in __dtype_bytes_map:
+        raise Exception("Do not support dtype={}".format(dtype))
+    return __dtype_bytes_map[dtype]
+
+
+def dtype_str(dtype):
+    # type: (Union[int, numpy.dtype]) -> str
+    if not isinstance(dtype, int):
+        dtype = from_numpy(dtype=dtype)
+    if dtype not in __dtype_str_map:
+        raise Exception("Do not support dtype={}".format(dtype))
+    return __dtype_str_map[dtype]

@@ -6,39 +6,30 @@
 
 import numpy
 import struct
-import dtype
-from dtype import from_numpy
-from dtype import to_numpy
+
+from prototype import Prototype
+from prototype import write_prototype
+from prototype import read_prototype
 
 
-def write_int32_shape(stream, shape):
-    if isinstance(shape, list) or isinstance(shape, tuple):
-        stream.write(struct.pack("=i", len(shape)))
-        for size in shape:
-            stream.write(struct.pack("=i", size))
-    else:
-        raise Exception("The shape must be list or tuple")
+def from_any(val, dtype=None):
+    pass
 
 
-def read_int32_shape(stream):
-    shape_size = struct.unpack('=i', stream.read(4))[0]
-    shape = []
-    for i in range(shape_size):
-        size = struct.unpack('=i', stream.read(4))[0]
-        shape.append(size)
-    return shape
+def to_int(val):
+    pass
 
 
-def write_prototype(stream, dtype, shape):
-    stream.write(struct.pack("=b", from_numpy(dtype=dtype)))
-    write_int32_shape(stream=stream, shape=shape)
+def to_float():
+    pass
 
 
-def read_prototype(stream):
-    dtype_code = struct.unpack('=b', stream.read(1))[0]
-    dtype = to_numpy(dtype=dtype_code)
-    shape = read_int32_shape(stream=stream)
-    return dtype, shape
+def to_str():
+    pass
+
+
+def prod(shape):
+    return numpy.prod(shape)
 
 
 def write_tensor(stream, tensor):
@@ -49,6 +40,11 @@ def write_tensor(stream, tensor):
     :param tensor: numpy.ndarray
     :return: None
     """
+    proto = Prototype(dtype=tensor.dtype, shape=tensor.shape)
+    write_prototype(stream=stream, proto=proto)
+    bytes = tensor.newbyteorder('<').tobytes()
+    assert proto.count * proto.dtype_bytes == len(bytes)
+    stream.write(struct.pack("=%ds" % len(bytes), bytes))
     pass
 
 
@@ -59,7 +55,14 @@ def read_tensor(stream):
     :param stream: a stream contains ts's tensor
     :return:
     """
-    pass
+    proto = read_prototype(stream=stream)
+    print(proto)
+    bytes = stream.read(proto.count * proto.dtype_bytes)
+    dtype = numpy.dtype(proto.dtype_numpy)
+    dtype = dtype.newbyteorder('<')
+    tensor = numpy.frombuffer(bytes, dtype=dtype)
+    tensor = numpy.resize(tensor, new_shape=proto.shape)
+    return tensor
 
 
 if __name__ == '__main__':
@@ -72,15 +75,12 @@ if __name__ == '__main__':
     dtype = tensor.dtype
     shape = tensor.shape
 
-    with open("prototype.txt", "wb") as fo:
+    with open("tensor.txt", "wb") as fo:
         print("Write dtype={}, shape={}".format(dtype, shape))
-        write_prototype(stream=fo, dtype=dtype, shape=shape)
+        write_tensor(fo, tensor=tensor)
 
-    with open("prototype.txt", "rb") as fi:
-        local_dtype, local_shape = read_prototype(stream=fi)
-        print("Read dtype={}, shape={}".format(local_dtype, local_shape))
-        read_tensor = numpy.ones(shape=local_shape, dtype=local_dtype)
-        print(read_tensor.dtype)
-
-
+    with open("tensor.txt", "rb") as fi:
+        local_tensor = read_tensor(fi)
+        print("Read dtype={}, shape={}".format(local_tensor.dtype, local_tensor.shape))
+        print(local_tensor)
     pass
