@@ -98,7 +98,6 @@ convert_pairs = [
     (numpy.float64, FLOAT64),
     (numpy.complex64, COMPLEX64),
     (numpy.complex128, COMPLEX128),
-    (numpy.char, CHAR8),
 ]
 
 __numpy_dtype_to_dtype = { pair[0]: pair[1] for pair in convert_pairs }
