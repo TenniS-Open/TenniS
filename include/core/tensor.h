@@ -11,6 +11,7 @@
 #include "module/serialization.h"
 
 #include <vector>
+#include <cassert>
 
 namespace ts {
     using Shape = std::vector<int>;

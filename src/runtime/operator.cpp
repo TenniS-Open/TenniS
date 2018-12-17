@@ -8,6 +8,8 @@
 #include "utils/assert.h"
 #include "core/tensor_builder.h"
 
+#include <climits>
+
 namespace ts {
     bool Operator::has(const std::string &param) const {
         return this->m_params.find(param) != this->m_params.end();

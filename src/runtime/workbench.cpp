@@ -12,6 +12,8 @@
 #include "compiler/compiler.h"
 #include "utils/box.h"
 
+#include <climits>
+
 namespace ts {
     Workbench::Workbench(const ComputingDevice &device)
             : m_device(device) {

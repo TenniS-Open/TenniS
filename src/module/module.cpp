@@ -6,6 +6,8 @@
 #include <unordered_map>
 #include <queue>
 #include <utility>
+#include <climits>
+#include <algorithm>
 
 #include <module/module.h>
 
