@@ -20,10 +20,10 @@ class Node(object):
     Const = "<const>"
     Variable = "<var>"
 
-    def __init__(self, op=None, name=None, output_count=None):
+    def __init__(self, op=None, name=None, output_count=1):
         self.__op = "" if op is None else op
         self.__name = "" if name is None else name
-        self.__output_count = 0 if output_count is None else output_count
+        self.__output_count = 1 if output_count is None else output_count
         self.__params = {
             "#name": self.__name,
             "#op": self.__op,
@@ -65,14 +65,16 @@ class Node(object):
 
     @property
     def inputs(self):
+        # type: () -> list[Node]
         return self.__inputs
 
     @property
     def outputs(self):
+        # type: () -> list[Node]
         return self.__outputs
 
     @staticmethod
-    def link(node, inputs):
+    def Link(node, inputs):
         """
         :param node: Node
         :param inputs: single Node of list of Node
@@ -89,6 +91,12 @@ class Node(object):
             input.__outputs.append(node)
         else:
             raise Exception("Input nodes must be node or list of nodes")
+
+    def __str__(self):
+        return str(self.__params)
+
+    def __repr__(self):
+        return str(self.__params)
 
 
 def write_string(stream, s):
