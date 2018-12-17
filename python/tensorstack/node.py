@@ -111,7 +111,7 @@ def read_string(stream):
     # type: (file) -> str
     size = __read_int(stream=stream)
     s = struct.unpack('=%ds' % size, stream.read(size))[0]
-    return str(s.encode())
+    return str(s.decode())
 
 
 def write_bubble(stream, node):
