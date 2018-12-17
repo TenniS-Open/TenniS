@@ -11,9 +11,15 @@ from collections import OrderedDict
 from tensor import write_tensor
 from tensor import read_tensor
 from tensor import from_any
+from tensor import to_int
+from tensor import to_str
 
 
 class Node(object):
+    Parameter = "<param>"
+    Const = "<const>"
+    Variable = "<var>"
+
     def __init__(self, op=None, name=None, output_count=None):
         self.__op = "" if op is None else op
         self.__name = "" if name is None else name
@@ -127,13 +133,18 @@ def write_bubble(stream, node):
 
 def read_bubble(stream):
     # type: (file) -> Node
-    node = Node()
+    params = {}
     size = __read_int(stream=stream)
     while size > 0:
         k = read_string(stream=stream)
         v = read_tensor(stream=stream)
-        node.set(k, v)
+        params[k] = v
         size -= 1
+    node = Node(op=to_str(params["#op"]),
+                name=to_str(params["#name"]),
+                output_count=to_int(params["#output_count"]))
+    for k in params.keys():
+        node.set(k, params[k])
     return node
 
 

@@ -76,6 +76,8 @@ def to_int(val):
         return int(str(val))
     if not isinstance(val, numpy.ndarray):
         raise Exception("Can not convert dtype={} to int".format(type(val)))
+    if len(val.shape) == 0:
+        return int(val)
     if len(val.shape) != 1 or val.shape[0] != 1:
         raise Exception("Can not convert shape={} to int".format(val.shape))
     return int(val[0])
@@ -87,6 +89,8 @@ def to_float(val):
         return float(str(val))
     if not isinstance(val, numpy.ndarray):
         raise Exception("Can not convert dtype={} to float".format(type(val)))
+    if len(val.shape) == 0:
+        return float(val)
     if len(val.shape) != 1 or val.shape[0] != 1:
         raise Exception("Can not convert shape={} to float".format(val.shape))
     return float(val[0])
