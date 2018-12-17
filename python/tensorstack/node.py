@@ -4,6 +4,14 @@
 :author Kier
 """
 
+import struct
+from tensor import compatible_string
+from collections import OrderedDict
+
+from tensor import write_tensor
+from tensor import read_tensor
+from tensor import from_any
+
 
 class Node(object):
     def __init__(self, op=None, name=None, output_count=None):
@@ -11,8 +19,8 @@ class Node(object):
         self.__name = "" if name is None else name
         self.__output_count = 0 if output_count is None else output_count
         self.__params = {
-            "#op": self.__op,
             "#name": self.__name,
+            "#op": self.__op,
             "#output_count": self.__output_count,
         }
         self.__inputs = []
@@ -76,3 +84,68 @@ class Node(object):
         else:
             raise Exception("Input nodes must be node or list of nodes")
 
+
+def write_string(stream, s):
+    # type: (file, [str, bytes]) -> None
+    s = compatible_string(s)
+    if isinstance(s, str):
+        s = s.encode()
+    elif isinstance(s, bytes):
+        pass
+    else:
+        raise Exception("Can not write type={} as string".format(type(s)))
+    stream.write(struct.pack("=i%ds" % len(s), len(s), s))
+
+
+def __write_int(stream, i):
+    # type: (file, int) -> None
+    stream.write(struct.pack("=i", i))
+
+
+def __read_int(stream):
+    # type: (file) -> int
+    return int(struct.unpack('=i', stream.read(4))[0])
+
+
+def read_string(stream):
+    # type: (file) -> str
+    size = __read_int(stream=stream)
+    s = struct.unpack('=%ds' % size, stream.read(size))[0]
+    return str(s.encode())
+
+
+def write_bubble(stream, node):
+    # type: (file, Node) -> None
+    params = node.params
+    stream.write(struct.pack("=i", len(params)))
+    ordered_params = OrderedDict(params)
+    for k in ordered_params.keys():
+        v = ordered_params[k]
+        write_string(stream=stream, s=k)
+        write_tensor(stream=stream, tensor=from_any(v))
+
+
+def read_bubble(stream):
+    # type: (file) -> Node
+    node = Node()
+    size = __read_int(stream=stream)
+    while size > 0:
+        k = read_string(stream=stream)
+        v = read_tensor(stream=stream)
+        node.set(k, v)
+        size -= 1
+    return node
+
+
+if __name__ == '__main__':
+    node = Node(op='sum', name='C', output_count=7)
+    node.set("str", "v:str")
+    node.set("int", 16)
+    node.set("float", 3.4)
+
+    with open("bubble.txt", "wb") as fo:
+        write_bubble(fo, node)
+
+    with open("bubble.txt", "rb") as fi:
+        local_node = read_bubble(fi)
+        print(local_node.params)

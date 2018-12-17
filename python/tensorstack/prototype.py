@@ -38,7 +38,7 @@ class Prototype(object):
 
     @property
     def count(self):
-        return numpy.prod(self.__shape)
+        return numpy.prod(self.__shape, dtype=int)
 
     @property
     def dtype_numpy(self):
