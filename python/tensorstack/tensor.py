@@ -6,6 +6,7 @@
 
 import numpy
 import struct
+import sys
 
 from prototype import Prototype
 from prototype import write_prototype
@@ -14,11 +15,21 @@ from prototype import read_prototype
 import dtype as ts_dtype
 
 
+def compatible_string(obj):
+    # type: (object) -> object
+    if sys.version > '3':
+        pass
+    else:
+        if isinstance(obj, unicode):
+            return str(obj)
+    return obj
+
+
 class StringTensor(object):
     def __init__(self, s):
-        if isinstance(s, unicode):
-            s = str(s)
-        elif isinstance(s, str):
+        # type: (Union[str, bytes]) -> None
+        s = compatible_string(s)
+        if isinstance(s, str):
             pass
         elif isinstance(s, bytes):
             s = str(s.decode())
@@ -48,7 +59,8 @@ def from_any(val, dtype=None):
         dtype = ts_dtype.to_numpy(dtype=dtype)
 
     # compress str as StringTensor
-    if isinstance(val, (str, unicode, bytes)):
+    val = compatible_string(val)
+    if isinstance(val, (str, bytes)):
         return StringTensor(val)
 
     return numpy.asarray(val, dtype=dtype)
@@ -88,13 +100,12 @@ def prod(shape):
 
 
 def __write_string(stream, s):
-    # type: (file, Union[str, unicode, bytes, StringTensor]) -> None
+    # type: (file, Union[str, bytes, StringTensor]) -> None
+    s = compatible_string(s)
     if isinstance(s, StringTensor):
         s = s.tobytes()
     elif isinstance(s, str):
         s = s.encode()
-    elif isinstance(s, unicode):
-        s = str(s).encode()
     elif isinstance(s, bytes):
         pass
     else:
@@ -111,7 +122,7 @@ def __read_raw_string(stream, n):
 
 
 def write_tensor(stream, tensor):
-    # type: (file, Union[numpy.ndarray, int, float, str, unicode, bytes, list, tuple, StringTensor]) -> None
+    # type: (file, Union[numpy.ndarray, int, float, str, bytes, list, tuple, StringTensor]) -> None
     """
     Write numpy.ndarray to ts.tensor
     :param stream: a stream ready to write
@@ -119,7 +130,8 @@ def write_tensor(stream, tensor):
     :return: None
     """
     # write special string type
-    if isinstance(tensor, (unicode, str, bytes, StringTensor)):
+    tensor = compatible_string(tensor)
+    if isinstance(tensor, (str, bytes, StringTensor)):
         __write_string(stream=stream, s=tensor)
         return
 
@@ -166,8 +178,8 @@ if __name__ == '__main__':
         [4, 5, 6],
         [7, 8, 9],
     ]
-    tensor = from_any("ABC")
-    #tensor = numpy.asarray(a, dtype="float32")
+    #tensor = from_any("ABC")
+    tensor = numpy.asarray(a, dtype="float32")
     dtype = tensor.dtype
     shape = tensor.shape
 
