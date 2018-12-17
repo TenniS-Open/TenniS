@@ -51,7 +51,7 @@ namespace ts {
             case UINT64: return 8;
             case FLOAT16: return 2;
             case FLOAT32: return 4;
-            case FLOAT64: return 6;
+            case FLOAT64: return 8;
             case PTR: return sizeof(FakeUsagePtr);
             case CHAR8: return 1;
             case CHAR16: return 2;

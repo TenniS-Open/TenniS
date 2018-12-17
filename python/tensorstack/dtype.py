@@ -40,7 +40,7 @@ __dtype_bytes_map = {
     UINT64: 8,
     FLOAT16: 2,
     FLOAT32: 4,
-    FLOAT64: 6,
+    FLOAT64: 8,
     CHAR8: 1,
     CHAR16: 2,
     CHAR32: 4,
