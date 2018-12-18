@@ -26,6 +26,9 @@ namespace ts {
         this->m_data_sagment = std::make_shared<Stack>(memory_device, this->m_static_memory);
         this->m_thread_pool = std::make_shared<ThreadPool>(0);
 
+        this->m_device_context.computing_device = device;
+        this->m_device_context.memory_device = memory_device;
+
         this->m_device_admin = DeviceAdmin::Query(device.type());
 
         if (m_device_admin != nullptr) {
