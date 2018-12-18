@@ -2,7 +2,7 @@
 
 from tensorstack import Node
 from tensorstack import Module
-from tensorstack import menu as bubble
+from tensorstack import bubble
 from tensorstack import tensor
 
 if __name__ == '__main__':
@@ -16,5 +16,5 @@ if __name__ == '__main__':
 
     module.load(c)
 
-    with open("test.module.txt", "wb") as fo:
+    with open("test.module.txt", "w") as fo:
         Module.Save(stream=fo, module=module)

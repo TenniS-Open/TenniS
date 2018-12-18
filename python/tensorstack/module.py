@@ -22,6 +22,8 @@ from header import read_header
 from graph import write_nodes
 from graph import read_nodes
 
+import io
+
 import sys
 if sys.version > '3':
     from queue import Queue
@@ -123,7 +125,7 @@ class Module(object):
 
     @staticmethod
     def Save(stream, module):
-        # type: (file, Module) -> None
+        # type: (Union[file, io.BinaryIO, io.TextIO, io.StringIO], Module) -> None
         header = Header(code=Header.MODULE_CODE_V1)
         nodes = module.__nodes
         index = 0
@@ -145,7 +147,7 @@ class Module(object):
 
     @staticmethod
     def Load(stream):
-        # type: (file) -> Module
+        # type: (Union[file, io.BinaryIO, io.TextIO, io.StringIO]) -> Module
         header = read_header(stream=stream)
         if header.code != Header.MODULE_CODE_V1:
             raise Exception("Do NOT support model format code={}".format(header.code))
