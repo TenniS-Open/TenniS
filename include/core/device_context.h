@@ -25,6 +25,9 @@ namespace ts {
          * not using in out scope
          */
         DeviceHandle *handle = nullptr;
+
+        ComputingDevice computing_device;
+        MemoryDevice memory_device;
     };
 }
 
