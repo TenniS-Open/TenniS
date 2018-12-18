@@ -176,11 +176,11 @@ if __name__ == '__main__':
     with open("module.txt", "wb") as fo:
         Module.Save(fo, module=module)
 
-    # with open("module.txt", "rb") as fi:
-    #     module = Module.Load(fi)
-    #
-    # with open("module.txt", "wb") as fo:
-    #     Module.Save(fo, module=module)
+    with open("module.txt", "rb") as fi:
+        module = Module.Load(fi)
+
+    with open("module.txt", "wb") as fo:
+        Module.Save(fo, module=module)
 
     with open("module.txt", "rb") as fi:
         local_module = Module.Load(fi)

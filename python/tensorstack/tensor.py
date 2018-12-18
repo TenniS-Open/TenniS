@@ -54,9 +54,12 @@ class StringTensor(object):
 
 
 def from_any(val, dtype=None):
-    # type: (Union[numpy.ndarray, str], Union[numpy.dtype, int]) -> Union[numpy.ndarray, StringTensor]
+    # type: (Union[numpy.ndarray, str, StringTensor], Union[numpy.dtype, int]) -> Union[numpy.ndarray, StringTensor]
     if isinstance(dtype, int):
         dtype = ts_dtype.to_numpy(dtype=dtype)
+
+    if isinstance(val, StringTensor):
+        return val
 
     # compress str as StringTensor
     val = compatible_string(val)
