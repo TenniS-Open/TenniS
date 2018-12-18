@@ -57,8 +57,8 @@ def write_header(stream, header):
 
 def read_header(stream):
     # type: (file) -> Header
-    fake = struct.unpack("=%i", stream.read(4))[0]
-    code = struct.unpack("=%i", stream.read(4))[0]
+    fake = struct.unpack("=i", stream.read(4))[0]
+    code = struct.unpack("=i", stream.read(4))[0]
     data_size = 120
     data = struct.unpack("=%ds" % data_size, stream.read(data_size))[0]
     header = Header(fake=fake, code=code)

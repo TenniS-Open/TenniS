@@ -10,11 +10,24 @@ from graph import Graph
 
 from tensor import compatible_string
 
+from binio import write_int
+from binio import write_int_list
+from binio import read_int_list
+from binio import read_int_list
+
+from header import Header
+from header import write_header
+from header import read_header
+
+from graph import write_nodes
+from graph import read_nodes
+
 import sys
 if sys.version > '3':
     from queue import Queue
 else:
     from Queue import Queue
+
 
 class Module(object):
     def __init__(self):
@@ -111,13 +124,41 @@ class Module(object):
     @staticmethod
     def Save(stream, module):
         # type: (file, Module) -> None
-        module.__inputs = []
-        pass
+        header = Header(code=Header.MODULE_CODE_V1)
+        nodes = module.__nodes
+        index = 0
+        node_index_map = {}
+        for node in nodes:
+            node_index_map[node] = index
+            index += 1
+        inputs = [node_index_map[input] for input in module.__inputs]
+        outputs = [node_index_map[output] for output in module.__outputs]
+        # 0. write header
+        write_header(stream=stream, header=header)
+        # 1. write inputs
+        write_int_list(stream=stream, a=inputs)
+        # 2. write outputs
+        write_int_list(stream=stream, a=outputs)
+        # 3. write graph
+        write_nodes(stream=stream, nodes=nodes)
+
 
     @staticmethod
     def Load(stream):
         # type: (file) -> Module
-        pass
+        header = read_header(stream=stream)
+        if header.code != Header.MODULE_CODE_V1:
+            raise Exception("Do NOT support model format code={}".format(header.code))
+        inputs = read_int_list(stream=stream)
+        outputs = read_int_list(stream=stream)
+        nodes = read_nodes(stream=stream)
+
+        module = Module()
+        module.__inputs = [nodes[i] for i in inputs]
+        module.__outputs = [nodes[i] for i in outputs]
+        module.__nodes = nodes
+
+        return module
 
 
 if __name__ == '__main__':
@@ -131,4 +172,11 @@ if __name__ == '__main__':
     module.sort_inputs(['b', 'a'])
     print(module.inputs)
     print(module.outputs)
-    Module.Save(None, module=module)
+
+    with open("module.txt", "wb") as fo:
+        Module.Save(fo, module=module)
+
+    with open("module.txt", "rb") as fi:
+        local_module = Module.Load(fi)
+        print(local_module.inputs)
+        print(local_module.outputs)
