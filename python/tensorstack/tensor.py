@@ -129,7 +129,7 @@ def __read_raw_string(stream, n):
     return StringTensor(bytes.decode())
 
 
-def write_tensor(stream, tensor):
+def write_unpacked_tensor(stream, tensor):
     # type: (file, Union[numpy.ndarray, int, float, str, bytes, list, tuple, StringTensor]) -> None
     """
     Write numpy.ndarray to ts.tensor
@@ -152,14 +152,16 @@ def write_tensor(stream, tensor):
         pass
     else:
         raise Exception("Can not write type={} as tensor".format(type(tensor)))
+    # 1. write prototype
     proto = Prototype(dtype=tensor.dtype, shape=tensor.shape)
+    # 2. write memory
     write_prototype(stream=stream, proto=proto)
     tensor_bytes = tensor.newbyteorder('<').tobytes()
     assert proto.count * proto.dtype_bytes == len(tensor_bytes)
     stream.write(struct.pack("=%ds" % len(tensor_bytes), tensor_bytes))
 
 
-def read_tensor(stream):
+def read_unpacked_tensor(stream):
     # type: (file) -> Union[numpy.ndarray, StringTensor]
     """
     Read ts.tensor from stream
@@ -167,17 +169,38 @@ def read_tensor(stream):
     :return:
     """
     # read special string type
+    # 1. read prototype
+    # read common string type
     proto = read_prototype(stream=stream)
     if proto.dtype == ts_dtype.CHAR8:
         s = __read_raw_string(stream=stream, n=proto.count)
         return s
-    # read common string type
+    # 2. read memory
     bytes = stream.read(proto.count * proto.dtype_bytes)
     dtype_numpy = numpy.dtype(proto.dtype_numpy)
     dtype_numpy = dtype_numpy.newbyteorder('<')
     tensor = numpy.frombuffer(bytes, dtype=dtype_numpy)
     tensor = numpy.resize(tensor, new_shape=proto.shape)
     return tensor
+
+
+def write_tensor(stream, tensor):
+    # type: (file, Union[numpy.ndarray, int, float, str, bytes, list, tuple, StringTensor]) -> None
+    # 0. write field_count
+    field_count = 1
+    stream.write(struct.pack("=i", field_count))
+
+    write_unpacked_tensor(stream=stream, tensor=tensor)
+
+
+def read_tensor(stream):
+    # type: (file) -> Union[numpy.ndarray, StringTensor]
+
+    # 0. read field count
+    field_count = struct.unpack("=i", stream.read(4))[0]
+    assert field_count == 1
+
+    return read_unpacked_tensor(stream=stream)
 
 
 if __name__ == '__main__':

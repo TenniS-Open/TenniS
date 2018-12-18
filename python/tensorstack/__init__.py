@@ -7,3 +7,5 @@
 from node import Node
 from module import Module
 from graph import Graph
+import tensor
+import menu
