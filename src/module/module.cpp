@@ -463,7 +463,7 @@ namespace ts {
         // 3. read graph
         Graph g;
         read_size += externalize_graph(stream, g);
-        const auto &nodes = g.nodes();
+        const auto &nodes = g.nodes();  // TODO: Check if the read nodes is the given nodes
         // x.1 convert inputs and outputs
         std::vector<Node> inputs;
         for (auto index : input_index) inputs.emplace_back(nodes[index]);
