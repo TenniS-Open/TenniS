@@ -17,7 +17,7 @@ class Header(object):
             code = 0
         self.__fake = fake
         self.__code = code
-        self.__data = bytes('\0' * 120)
+        self.__data = bytes(('\0' * 120).encode())
 
     @property
     def fake(self):
