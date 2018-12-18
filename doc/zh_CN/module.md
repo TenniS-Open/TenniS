@@ -113,17 +113,23 @@ enum DTYPE {
     UINT64      = 8,
     FLOAT16     = 9,
     FLOAT32     = 10,
-    FLOAT64     = 12,
-    PTR         = 13,   ///< for ptr type, with length of sizeof(void*) bytes
-    CHAR8       = 14,   ///< for char saving string
-    CHAR16      = 15,   ///< for char saving utf-16 string
-    CHAR32      = 16,   ///< for char saving utf-32 string
-    UNKNOWN8    = 17,   ///< for self define type, with length of 1 byte
-    UNKNOWN16   = 18,
-    UNKNOWN32   = 19,
-    UNKNOWN64   = 20,
-    UNKNOWN128  = 21,
+    FLOAT64     = 11,
+    PTR         = 12,              ///< for ptr type, with length of sizeof(void*) bytes
+    CHAR8       = 13,            ///< for char saving string
+    CHAR16      = 14,           ///< for char saving utf-16 string
+    CHAR32      = 15,           ///< for char saving utf-32 string
+    UNKNOWN8    = 16,        ///< for self define type, with length of 1 byte
+    UNKNOWN16   = 17,
+    UNKNOWN32   = 18,
+    UNKNOWN64   = 19,
+    UNKNOWN128  = 20,
+
+    BOOLEAN     = 21,    // bool type, using byte in native
+    COMPLEX32   = 22,  // complex 32(16 + 16)
+    COMPLEX64   = 23,  // complex 64(32 + 32)
+    COMPLEX128  = 24,  // complex 128(64 + 64)
 };
+
 ```
 
 ## 4. 模块存储格式
@@ -133,7 +139,8 @@ string := <int32:size><char8*$size:data>;
 prototype := <int8:dtype><int32:sizes_size><int32*$sizes_size:sizes>;
 tensor := <prototype:proto>
     <byte*(prod($proto.sizes) * type_bytes($proto.dtype)):memory>;
-bubble := <int32:size><<string:name><tensor:value>*$size:params>
+packed_tensor := <int32:size><tensor*$size:fields>;
+bubble := <int32:size><<string:name><packed_tensor:value>*$size:params>
 inputs := <int32:size><int32*$size:indexs>;
 node := <bubble:bubble><inputs:inputs>;
 graph := <int32:size><node*$size:nodes>;

@@ -9,32 +9,32 @@
 
 namespace ts {
     enum DTYPE {
-        VOID,
-        INT8,
-        UINT8,
-        INT16,
-        UINT16,
-        INT32,
-        UINT32,
-        INT64,
-        UINT64,
-        FLOAT16,
-        FLOAT32,
-        FLOAT64,
-        PTR,              ///< for ptr type, with length of sizeof(void*) bytes
-        CHAR8,            ///< for char saving string
-        CHAR16,           ///< for char saving utf-16 string
-        CHAR32,           ///< for char saving utf-32 string
-        UNKNOWN8,        ///< for self define type, with length of 1 byte
-        UNKNOWN16,
-        UNKNOWN32,
-        UNKNOWN64,
-        UNKNOWN128,
+        VOID        = 0,
+        INT8        = 1,
+        UINT8       = 2,
+        INT16       = 3,
+        UINT16      = 4,
+        INT32       = 5,
+        UINT32      = 6,
+        INT64       = 7,
+        UINT64      = 8,
+        FLOAT16     = 9,
+        FLOAT32     = 10,
+        FLOAT64     = 11,
+        PTR         = 12,              ///< for ptr type, with length of sizeof(void*) bytes
+        CHAR8       = 13,            ///< for char saving string
+        CHAR16      = 14,           ///< for char saving utf-16 string
+        CHAR32      = 15,           ///< for char saving utf-32 string
+        UNKNOWN8    = 16,        ///< for self define type, with length of 1 byte
+        UNKNOWN16   = 17,
+        UNKNOWN32   = 18,
+        UNKNOWN64   = 19,
+        UNKNOWN128  = 20,
 
-        BOOLEAN,    // bool type, using byte in native
-        COMPLEX32,  // complex 32(16 + 16)
-        COMPLEX64,  // complex 64(32 + 32)
-        COMPLEX128  // complex 128(64 + 64)
+        BOOLEAN     = 21,    // bool type, using byte in native
+        COMPLEX32   = 22,  // complex 32(16 + 16)
+        COMPLEX64   = 23,  // complex 64(32 + 32)
+        COMPLEX128  = 24,  // complex 128(64 + 64)
     };
 
     inline int type_bytes(DTYPE dtype) {
