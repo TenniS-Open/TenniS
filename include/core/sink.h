@@ -59,6 +59,7 @@ namespace ts {
     class number_converter {
     public:
         static _FIXED_T ToFixed(_COMMON_T value, int _Q) {
+            // TODO: supporting round number
             auto fixed = top_number(value * (1 << _Q));
             auto max = top_number(number<_FIXED_T>::Max());
             auto min = top_number(number<_FIXED_T>::Min());
@@ -145,7 +146,7 @@ namespace ts {
 #undef TS_DECLARE_CONSTRUCTOR
 
 #define TS_DECLARE_OPERATOR(_COMMON_T) \
-        explicit operator _COMMON_T() const { return number_converter<_COMMON_T, S>::ToCommon(S(this->value), _Q); }
+        operator _COMMON_T() const { return number_converter<_COMMON_T, S>::ToCommon(S(this->value), _Q); }
 
         TS_DECLARE_OPERATOR(int8_t)
         TS_DECLARE_OPERATOR(int16_t)
