@@ -303,6 +303,24 @@ namespace ts {
 #endif
     }
 
+    template <typename _T, int _Q>
+    bool operator<(const sink<_T, _Q> &lhs, const sink<_T, _Q> &rhs) { return lhs.value < rhs.value; }
+
+    template <typename _T, int _Q>
+    bool operator>(const sink<_T, _Q> &lhs, const sink<_T, _Q> &rhs) { return lhs.value > rhs.value; }
+
+    template <typename _T, int _Q>
+    bool operator<=(const sink<_T, _Q> &lhs, const sink<_T, _Q> &rhs) { return lhs.value <= rhs.value; }
+
+    template <typename _T, int _Q>
+    bool operator>=(const sink<_T, _Q> &lhs, const sink<_T, _Q> &rhs) { return lhs.value >= rhs.value; }
+
+    template <typename _T, int _Q>
+    bool operator==(const sink<_T, _Q> &lhs, const sink<_T, _Q> &rhs) { return lhs.value == rhs.value; }
+
+    template <typename _T, int _Q>
+    bool operator!=(const sink<_T, _Q> &lhs, const sink<_T, _Q> &rhs) { return lhs.value != rhs.value; }
+
     // TODO: add operators on sink type, inv
 }
 
