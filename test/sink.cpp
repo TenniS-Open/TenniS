@@ -65,9 +65,11 @@ void test() {
 
         int Q = 0;
 
-        ts::sink8_t s = ts::sink8_t(i & 0xff);
+        auto s = uint8_t(i & 0xff);
         while (Q < 8) {
-            ts::sink8_t ts = ts::to_sink(ts::to_float(s, Q), Q);
+            auto f = ts::number_converter<float, uint8_t>::ToCommon(s, Q);
+            auto ts = ts::number_converter<float, uint8_t>::ToFixed(f, Q);
+
             ++count;
             if (ts == s) {
                 ++match;
