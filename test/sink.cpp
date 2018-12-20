@@ -92,19 +92,75 @@ int8_t random_sink8() {
     return int8_t (rand() & 0xff);
 }
 
+void test_mul_float(long N) {
+    std::unique_ptr<float[]> _a(new float[N]);
+    std::unique_ptr<float[]> _b(new float[N]);
+    auto a = _a.get();
+    auto b = _b.get();
+
+    for (long i = 0; i < N; ++i) {
+        a[i] = rand() % 100 / 10.0f - 5;
+        b[i] = rand() % 100 / 10.0f - 5;
+    }
+
+    using namespace std::chrono;
+    microseconds duration(0);
+    auto start = system_clock::now();
+    for (long i = 0; i < N; ++i)
+    {
+        *a = *a * *b;
+        ++a;
+        ++b;
+    }
+    auto end = system_clock::now();
+    duration += duration_cast<microseconds>(end - start);
+    double spent = 1.0 * duration.count() / 1000;
+    std::cout << "float: " << spent << "ms" << std::endl;
+}
+
+void test_mul_uint8(long N) {
+    std::unique_ptr<ts::sink8<4>[]> _a(new ts::sink8<4>[N]);
+    std::unique_ptr<ts::sink8<4>[]> _b(new ts::sink8<4>[N]);
+    auto a = _a.get();
+    auto b = _b.get();
+
+    for (long i = 0; i < N; ++i) {
+        a[i] = rand() % 100 / 10.0f - 5;
+        b[i] = rand() % 100 / 10.0f - 5;
+    }
+
+    using namespace std::chrono;
+    microseconds duration(0);
+    auto start = system_clock::now();
+    for (long i = 0; i < N; ++i)
+    {
+        *a = *a * *b;
+        ++a;
+        ++b;
+    }
+    auto end = system_clock::now();
+    duration += duration_cast<microseconds>(end - start);
+    double spent = 1.0 * duration.count() / 1000;
+    std::cout << "uint8: " << spent << "ms" << std::endl;
+}
+
 int main() {
     // plot_list();
 
     std::cout << "Converting each sink8 to float then convert back." << std::endl;
 
+
+
     test();
 
-    ts::sink8<4> s = 3.5;
+    std::cout << sizeof(ts::sink8<4>) << std::endl;
 
-    float f = s;
+    long N = 10000000;
 
-    std::cout << f << std::endl;
-
+    srand(9);
+    test_mul_float(N);
+    srand(9);
+    test_mul_uint8(N);
 
     return 0;
 }
