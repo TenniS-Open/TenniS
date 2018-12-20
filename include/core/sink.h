@@ -8,56 +8,183 @@
 #include <cstdint>
 
 namespace ts {
-    using sink8_t = uint8_t;
+    using top_number = int64_t;
 
-    extern const int code_map[];
+    template <typename _T>
+    class number {
+    public:
+        using T = _T;
+        _T value;
 
-    union __union_float32_int32 {
-        __union_float32_int32() = default;
-        __union_float32_int32(float f) : f(f) {}
-        __union_float32_int32(uint32_t i) : i(i) {}
-        __union_float32_int32(int32_t i) : i(uint32_t(i)) {}
-        float f;
-        uint32_t i;
+        number() = default;
+        number(_T value) : value(value) {}
+
+        explicit operator _T() const { return value; }
+
+        static _T Max();
+
+        static _T Min();
     };
 
-    inline float to_float(sink8_t s, int Q) {
-        // static const int float_width = 31;
-        // static const int sink8_tail_width = 7;
-        // static const int float_tail_width = 23;
+#define TS_DEFINE_NUMBER_MAX(_T, value) template <> _T number<_T>::Max() { return (value); }
+#define TS_DEFINE_NUMBER_MIN(_T, value) template <> _T number<_T>::Min() { return (value); }
 
-        // TODO: Check if it's little endian
-        int32_t s_tail = s & 0x7f;
-        int32_t sign = (s & 0x80) << (31 - 7);
-        if (s_tail == 0) return __union_float32_int32(sign).f;
-        auto first_one = code_map[s_tail];
-        int32_t exp = first_one - Q - 1;
-        int32_t tail = s_tail << (23 + 1 - first_one);
+    TS_DEFINE_NUMBER_MAX(int8_t, INT8_MAX)
+    TS_DEFINE_NUMBER_MIN(int8_t, INT8_MIN)
+    TS_DEFINE_NUMBER_MAX(int16_t, INT16_MAX)
+    TS_DEFINE_NUMBER_MIN(int16_t, INT16_MIN)
+    TS_DEFINE_NUMBER_MAX(int32_t, INT32_MAX)
+    TS_DEFINE_NUMBER_MIN(int32_t, INT32_MIN)
+    TS_DEFINE_NUMBER_MAX(int64_t, INT64_MAX)
+    TS_DEFINE_NUMBER_MIN(int64_t, INT64_MIN)
+#undef TS_DEFINE_NUMBER_MAX
+#undef TS_DEFINE_NUMBER_MIN
 
-        __union_float32_int32 u = uint32_t(sign | ((exp + 127) << 23) | (tail & 0x007fffff));
+    template <typename _T>
+    class _signed {
+    public:
+        using T = _T;
+    };
 
-        return u.f;
-    }
+#define TS_DEFINE_SIGNED(_UNSIGNED_T, _SIGNED) \
+    template <> class _signed<_UNSIGNED_T> { public:using T = _SIGNED ; };
 
-    inline sink8_t to_sink(float f, int Q) {
-        // static const int float_width = 31;
-        // static const int sink8_tail_width = 7;
-        // static const int float_tail_width = 23;
+    TS_DEFINE_SIGNED(uint8_t, int8_t)
+    TS_DEFINE_SIGNED(uint16_t, int16_t)
+    TS_DEFINE_SIGNED(uint32_t, int32_t)
+    TS_DEFINE_SIGNED(uint64_t, int64_t)
+#undef TS_DEFINE_SIGNED
 
-        // TODO: Check if it's little endian
-        __union_float32_int32 u = f;
+    template <typename _COMMON_T, typename _FIXED_T>
+    class number_converter {
+    public:
+        static _FIXED_T ToFixed(_COMMON_T value, int _Q) {
+            auto fixed = top_number(value * (1 << _Q));
+            auto max = top_number(number<_FIXED_T>::Max());
+            auto min = top_number(number<_FIXED_T>::Min());
+            return _FIXED_T(fixed > max ? max : (fixed < min ? min : fixed));
+        }
 
-        uint32_t sign = (u.i & 0x80000000) >> (31 - 7);
-        int32_t exp = int32_t((u.i & 0x7f800000) >> 23) - 127;
-        uint32_t tail = (u.i & 0x007fffff) | 0x00800000;
+        static _COMMON_T ToCommon(_FIXED_T value, int _Q) {
+            return _COMMON_T(value) / (1 << _Q);
+        }
+    };
 
-        auto right_shift = (23 - exp - Q);
-        uint32_t fixed = right_shift > 23 ? 0 : (right_shift <= 23 - 7 ? 0x7f : tail >> right_shift);
+#define TS_DEFINE_FIXED_NUMBER_INTEGER_CONVERTER(_T) \
+    template <typename _FIXED_T> \
+    class number_converter<_T, _FIXED_T> { \
+    public: \
+        using _COMMON_T = _T; \
+        static _FIXED_T ToFixed(_COMMON_T value, int _Q) { \
+            auto fixed = top_number(value) << _Q; \
+            auto max = top_number(number<_FIXED_T>::Max()); \
+            auto min = top_number(number<_FIXED_T>::Min()); \
+            return _FIXED_T(fixed > max ? max : (fixed < min ? min : fixed)); \
+        } \
+        static _COMMON_T ToCommon(_FIXED_T value, int _Q) { \
+            return _COMMON_T(value >> _Q); \
+        } \
+    };
 
-        auto s = sink8_t((sign | fixed) & 0xff);
+    TS_DEFINE_FIXED_NUMBER_INTEGER_CONVERTER(int8_t)
+    TS_DEFINE_FIXED_NUMBER_INTEGER_CONVERTER(int16_t)
+    TS_DEFINE_FIXED_NUMBER_INTEGER_CONVERTER(int32_t)
+    TS_DEFINE_FIXED_NUMBER_INTEGER_CONVERTER(int64_t)
+    TS_DEFINE_FIXED_NUMBER_INTEGER_CONVERTER(uint8_t)
+    TS_DEFINE_FIXED_NUMBER_INTEGER_CONVERTER(uint16_t)
+    TS_DEFINE_FIXED_NUMBER_INTEGER_CONVERTER(uint32_t)
+    TS_DEFINE_FIXED_NUMBER_INTEGER_CONVERTER(uint64_t)
+#undef TS_DEFINE_FIXED_NUMBER_INTEGER_CONVERTER
 
-        return s;
-    }
+#define TS_DEFINE_FIXED_NUMBER_UNSIGNED_CONVERTER(_T) \
+    template <typename _COMMON_T> \
+    class number_converter<_COMMON_T, _T> { \
+    public: \
+        using _FIXED_T = _T; \
+        using _SIGNED_FIXED_T = typename _signed<_FIXED_T>::T; \
+        static _FIXED_T ToFixed(_COMMON_T value, int _Q) { \
+            return _FIXED_T(number_converter<_COMMON_T, _SIGNED_FIXED_T>::ToFixed(value, _Q)); \
+        } \
+        static _COMMON_T ToCommon(_FIXED_T value, int _Q) { \
+            return number_converter<_COMMON_T, _SIGNED_FIXED_T>::ToCommon(_SIGNED_FIXED_T(value), _Q); \
+        } \
+    };
+
+    TS_DEFINE_FIXED_NUMBER_UNSIGNED_CONVERTER(uint8_t)
+    TS_DEFINE_FIXED_NUMBER_UNSIGNED_CONVERTER(uint16_t)
+    TS_DEFINE_FIXED_NUMBER_UNSIGNED_CONVERTER(uint32_t)
+    TS_DEFINE_FIXED_NUMBER_UNSIGNED_CONVERTER(uint64_t)
+#undef TS_DEFINE_FIXED_NUMBER_UNSIGNED_CONVERTER
+
+    template <typename _T, int _Q>
+    class fixed_point_number : public number<_T> {
+    public:
+        using self = fixed_point_number;
+        using supper = number<_T>;
+
+        using T = _T;
+        using S = typename _signed<_T>::T;
+
+        static const int Q = _Q;
+
+        fixed_point_number() = default;
+
+#define TS_DECLARE_CONSTRUCTOR(_COMMON_T) \
+        fixed_point_number(_COMMON_T value) : supper(_T(number_converter<decltype(value), S>::ToFixed(value, _Q))) {}
+
+        TS_DECLARE_CONSTRUCTOR(int8_t)
+        TS_DECLARE_CONSTRUCTOR(int16_t)
+        TS_DECLARE_CONSTRUCTOR(int32_t)
+        TS_DECLARE_CONSTRUCTOR(int64_t)
+        TS_DECLARE_CONSTRUCTOR(uint8_t)
+        TS_DECLARE_CONSTRUCTOR(uint16_t)
+        TS_DECLARE_CONSTRUCTOR(uint32_t)
+        TS_DECLARE_CONSTRUCTOR(uint64_t)
+        TS_DECLARE_CONSTRUCTOR(float)
+        TS_DECLARE_CONSTRUCTOR(double)
+#undef TS_DECLARE_CONSTRUCTOR
+
+#define TS_DECLARE_OPERATOR(_COMMON_T) \
+        explicit operator _COMMON_T() const { return number_converter<_COMMON_T, S>::ToCommon(S(this->value), _Q); }
+
+        TS_DECLARE_OPERATOR(int8_t)
+        TS_DECLARE_OPERATOR(int16_t)
+        TS_DECLARE_OPERATOR(int32_t)
+        TS_DECLARE_OPERATOR(int64_t)
+        TS_DECLARE_OPERATOR(uint8_t)
+        TS_DECLARE_OPERATOR(uint16_t)
+        TS_DECLARE_OPERATOR(uint32_t)
+        TS_DECLARE_OPERATOR(uint64_t)
+        TS_DECLARE_OPERATOR(float)
+        TS_DECLARE_OPERATOR(double)
+#undef TS_DECLARE_OPERATOR
+
+        template <typename _TO_T>
+        _TO_T to() const { return _TO_T(*this); }
+
+        static self from_fixed(_T fixed) {
+            self result;
+            result.value = fixed;
+            return result;
+        }
+    };
+
+    template <typename _T, int _Q>
+    using sink = fixed_point_number<_T, _Q>;
+
+    template <int _Q>
+    using sink8 = sink<uint8_t, _Q>;
+
+    template <int _Q>
+    using sink16 = sink<uint16_t, _Q>;
+
+    template <int _Q>
+    using sink32 = sink<uint32_t, _Q>;
+
+    template <int _Q>
+    using sink64 = sink<uint64_t, _Q>;
+
+    // TODO: add operators on sink type
 }
 
 #endif //TENSORSTACK_CORE_SINK_H
