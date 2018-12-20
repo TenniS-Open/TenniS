@@ -6,6 +6,9 @@
 #define TENSORSTACK_CORE_SINK_H
 
 #include <cstdint>
+#include <iostream>
+
+// #define TS_SINK_CHECKING_OVERFLOW
 
 namespace ts {
     using top_number = int64_t;
@@ -55,15 +58,37 @@ namespace ts {
     TS_DEFINE_SIGNED(uint64_t, int64_t)
 #undef TS_DEFINE_SIGNED
 
+    template <typename _T>
+    class _double_width {
+    public:
+        using T = _T;
+    };
+#define TS_DEFINE_DOUBLE_WIDTH(_T, _2T) \
+    template <> class _double_width<_T> { public:using T = _2T ; };
+
+    TS_DEFINE_DOUBLE_WIDTH(int8_t, int16_t)
+    TS_DEFINE_DOUBLE_WIDTH(int16_t, int32_t)
+    TS_DEFINE_DOUBLE_WIDTH(int32_t, int64_t)
+    TS_DEFINE_DOUBLE_WIDTH(int64_t, long long)
+    TS_DEFINE_DOUBLE_WIDTH(uint8_t, uint16_t)
+    TS_DEFINE_DOUBLE_WIDTH(uint16_t, uint32_t)
+    TS_DEFINE_DOUBLE_WIDTH(uint32_t, uint64_t)
+    TS_DEFINE_DOUBLE_WIDTH(uint64_t, unsigned long long)
+#undef TS_DEFINE_DOUBLE_WIDTH
+
     template <typename _COMMON_T, typename _FIXED_T>
     class number_converter {
     public:
         static _FIXED_T ToFixed(_COMMON_T value, int _Q) {
             // TODO: supporting round number
             auto fixed = top_number(value * (1 << _Q));
+#ifndef TS_SINK_CHECKING_OVERFLOW
+            return _FIXED_T(fixed);
+#else
             auto max = top_number(number<_FIXED_T>::Max());
             auto min = top_number(number<_FIXED_T>::Min());
             return _FIXED_T(fixed > max ? max : (fixed < min ? min : fixed));
+#endif
         }
 
         static _COMMON_T ToCommon(_FIXED_T value, int _Q) {
@@ -71,6 +96,21 @@ namespace ts {
         }
     };
 
+#ifndef TS_SINK_CHECKING_OVERFLOW
+#define TS_DEFINE_FIXED_NUMBER_INTEGER_CONVERTER(_T) \
+    template <typename _FIXED_T> \
+    class number_converter<_T, _FIXED_T> { \
+    public: \
+        using _COMMON_T = _T; \
+        static _FIXED_T ToFixed(_COMMON_T value, int _Q) { \
+            auto fixed = top_number(value) << _Q; \
+            return _FIXED_T(fixed); \
+        } \
+        static _COMMON_T ToCommon(_FIXED_T value, int _Q) { \
+            return _COMMON_T(value >> _Q); \
+        } \
+    };
+#else
 #define TS_DEFINE_FIXED_NUMBER_INTEGER_CONVERTER(_T) \
     template <typename _FIXED_T> \
     class number_converter<_T, _FIXED_T> { \
@@ -86,6 +126,7 @@ namespace ts {
             return _COMMON_T(value >> _Q); \
         } \
     };
+#endif
 
     TS_DEFINE_FIXED_NUMBER_INTEGER_CONVERTER(int8_t)
     TS_DEFINE_FIXED_NUMBER_INTEGER_CONVERTER(int16_t)
@@ -127,6 +168,9 @@ namespace ts {
         using S = typename _signed<_T>::T;
 
         static const int Q = _Q;
+
+        static self Max() { return from_fixed(_T(number<S>::Max())); }
+        static self Min() { return from_fixed(_T(number<S>::Min())); }
 
         fixed_point_number() = default;
 
@@ -185,7 +229,81 @@ namespace ts {
     template <int _Q>
     using sink64 = sink<uint64_t, _Q>;
 
-    // TODO: add operators on sink type
+    template <typename _T, int _Q>
+    std::ostream &operator<<(std::ostream &out, const sink<_T, _Q> &s) {
+        return out << double(s);
+    }
+
+    template <typename _T, int _Q>
+    std::istream &operator>>(std::istream &in, sink<_T, _Q> &s) {
+        double d;
+        in >> d;
+        s = d;
+        return in;
+    }
+
+    template <typename _T, int _Q>
+    sink<_T, _Q> operator-(const sink<_T, _Q> &lhs, const sink<_T, _Q> &rhs) {
+        using _S = typename _signed<_T>::T;
+        using _DS = typename _double_width<_S>::T;
+        auto fixed = _DS(lhs.value) - _DS(rhs.value);
+#ifndef TS_SINK_CHECKING_OVERFLOW
+        return sink<_T, _Q>::from_fixed(_T(fixed));
+#else
+        auto max = top_number(number<_S>::Max());
+        auto min = top_number(number<_S>::Min());
+        return sink<_T, _Q>::from_fixed(_T(fixed > max ? max : (fixed < min ? min : fixed)));
+#endif
+    }
+
+    template <typename _T, int _Q>
+    sink<_T, _Q> operator+(const sink<_T, _Q> &lhs, const sink<_T, _Q> &rhs) {
+        using _S = typename _signed<_T>::T;
+        using _DS = typename _double_width<_S>::T;
+        auto fixed = _DS(lhs.value) + _DS(rhs.value);
+#ifndef TS_SINK_CHECKING_OVERFLOW
+        return sink<_T, _Q>::from_fixed(_T(fixed));
+#else
+        auto max = top_number(number<_S>::Max());
+        auto min = top_number(number<_S>::Min());
+        return sink<_T, _Q>::from_fixed(_T(fixed > max ? max : (fixed < min ? min : fixed)));
+#endif
+    }
+
+    template <typename _T, int _Q>
+    sink<_T, _Q> operator-(const sink<_T, _Q> &lhs) {
+        return sink<_T, _Q>::from_fixed(-lhs.value);
+    }
+
+    template <typename _T, int _Q>
+    sink<_T, _Q> operator*(const sink<_T, _Q> &lhs, const sink<_T, _Q> &rhs) {
+        using _S = typename _signed<_T>::T;
+        using _DS = typename _double_width<_S>::T;
+        auto fixed = ((_DS)(lhs.value) * (_DS)(rhs.value)) >> ((_Q) + (_Q) - (_Q));
+#ifndef TS_SINK_CHECKING_OVERFLOW
+        return sink<_T, _Q>::from_fixed(_T(fixed));
+#else
+        auto max = top_number(number<_S>::Max());
+        auto min = top_number(number<_S>::Min());
+        return sink<_T, _Q>::from_fixed(_T(fixed > max ? max : (fixed < min ? min : fixed)));
+#endif
+    }
+
+    template <typename _T, int _Q>
+    sink<_T, _Q> operator/(const sink<_T, _Q> &lhs, const sink<_T, _Q> &rhs) {
+        using _S = typename _signed<_T>::T;
+        using _DS = typename _double_width<_S>::T;
+        auto fixed = rhs.value == 0 ? sink<_T, _Q>::Max().value : (((_DS)lhs.value) << ((_Q) + (_Q) - (_Q))) / rhs.value;
+#ifndef TS_SINK_CHECKING_OVERFLOW
+        return sink<_T, _Q>::from_fixed(_T(fixed));
+#else
+        auto max = top_number(number<_S>::Max());
+        auto min = top_number(number<_S>::Min());
+        return sink<_T, _Q>::from_fixed(_T(fixed > max ? max : (fixed < min ? min : fixed)));
+#endif
+    }
+
+    // TODO: add operators on sink type, inv
 }
 
 #endif //TENSORSTACK_CORE_SINK_H
