@@ -11,6 +11,8 @@
 #include <vector>
 #include <map>
 
+#include <immintrin.h>
+
 int find_first_i(int i) {
     int p = 0;
     while (i) {
@@ -86,6 +88,9 @@ void test() {
     std::cout << "count=" << count << ", match=" << match << std::endl;
 }
 
+int8_t random_sink8() {
+    return int8_t (rand() & 0xff);
+}
 
 int main() {
     // plot_list();
@@ -93,6 +98,13 @@ int main() {
     std::cout << "Converting each sink8 to float then convert back." << std::endl;
 
     test();
+
+    ts::sink8<4> s = 3.5;
+
+    float f = s;
+
+    std::cout << f << std::endl;
+
 
     return 0;
 }
