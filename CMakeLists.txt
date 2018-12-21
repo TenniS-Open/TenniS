@@ -16,6 +16,8 @@ set(PLATFORM "auto" CACHE STRING "auto, x86 or x64")
 set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Debug or Release")
 set(CONFIGURATION ${CMAKE_BUILD_TYPE})
 
+option(TS_USE_OPENMP "[Optional] Use OpenMP" ON)
+
 option(TS_USE_CUDA "[Optional] Use CUDA" OFF)
 option(TS_USE_CBLAS "[Optional] Use CBLAS" OFF)
 
@@ -50,6 +52,15 @@ add_definitions(-DTS_USE_SSE)
 # Ordinary with chipset result
 
 set(third_libraries)
+
+if (TS_USE_OPENMP)
+    add_definitions(-DTS_USE_OPENMP)
+    message(STATUS "[Optional] Use OpenMP: [ON]")
+
+    include(use_openmp)
+else ()
+    message(STATUS "[Optional] Use OpenMP: [OFF]")
+endif ()
 
 if (TS_USE_CUDA)
     find_package(CUDA REQUIRED)
