@@ -5,12 +5,12 @@
 #ifndef TENSORSTACK_GLOBAL_DEVICE_INITIALIZER_H
 #define TENSORSTACK_GLOBAL_DEVICE_INITIALIZER_H
 
-#include "core/device_context.h"
-
 #include <functional>
 
-namespace ts {
+#include "core/device.h"
 
+namespace ts {
+    class DeviceHandle;
     class DeviceAdmin {
     public:
 
