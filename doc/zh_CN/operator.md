@@ -31,7 +31,7 @@
 输入：`size` `IntArray1D` 数组的长度，要和 `a` 的维度一致。要缩放的图像的大小，包含`-1`表示扩展  
 输出：`resized` `Tensor` 缩放后的图像   
 参数：
-- `type`: `Enum[linear(Default), cubic]` `[Optional]` 图像缩放类型  
+- `type`: `Enum[linear=0, cubic=1] Default(0)` `[Optional]` 图像缩放类型  
 
 举例：  
 输入: `[1, 640, 480, 3]` 和 `[-1, 300, 300, -1]`，输出 `[1, 300, 300, 3]`。
