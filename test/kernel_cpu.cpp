@@ -3,7 +3,6 @@
 //
 
 #include <kernels/cpu/math_cpu.h>
-#include <OpenBLAS/cblas.h>
 #include <utils/random.h>
 
 #include <cstring>
@@ -11,6 +10,16 @@
 #include <chrono>
 #include <runtime/inside/thread_pool.h>
 #include <utils/ctxmgr.h>
+
+#if TS_PLATFORM_OS_MAC || TS_PLATFORM_OS_IOS
+#include <Accelerate/Accelerate.h>
+#elif TS_PLATFORM_OS_LINUX
+#include <openblas/cblas.h>
+#elif TS_PLATFORM_OS_WINDOWS && TS_PLATFORM_CC_MINGW
+#include <OpenBLAS/cblas.h>
+#else
+#incldue <cblas.h>
+#endif
 
 void test_blas(ts::Random &rand, float *ratio = nullptr)
 {

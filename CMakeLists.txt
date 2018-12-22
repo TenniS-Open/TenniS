@@ -58,6 +58,7 @@ if (TS_USE_OPENMP)
     message(STATUS "[Optional] Use OpenMP: [ON]")
 
     include(use_openmp)
+    list(APPEND third_libraries ${OPENMP_LIBRARY})
 else ()
     message(STATUS "[Optional] Use OpenMP: [OFF]")
 endif ()
