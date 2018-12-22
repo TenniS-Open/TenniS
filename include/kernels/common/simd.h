@@ -43,6 +43,11 @@ namespace ts {
         return a[0] + a[1] + a[2] + a[3];
     }
 
+    template <typename T, int M>
+    inline const simd<T, M> &operator+=(simd<T, M> &lhs, const simd<T, M> &rhs) {
+        return lhs = lhs + rhs;
+    }
+
     template <>
     class simd<float, 4> : public simd_base<float, 4> {
     public:
@@ -54,6 +59,7 @@ namespace ts {
         simd() = default;
         simd(type value) : value(value) {}
         simd(base a) : simd(a, a, a, a) {}
+        simd(int a) : simd(base(a)) {}
 
         simd(const base *p);
 
@@ -83,6 +89,7 @@ namespace ts {
     inline simd<float, 4> operator/(const simd<float, 4> &lhs, const simd<float, 4> &rhs) {
         return _simd_f32x4_div(lhs.value, rhs.value);
     }
+
 }
 
 #endif //TENSORSTACK_KERNELS_COMMON_SIMD_H
