@@ -106,10 +106,10 @@ namespace ts {
  * @note TS_PARALLEL_FOR_END can parse an bool value, mean the parallel tasks if is joinable
  * @see TS_PARALLEL_FOR_BEGIN
  */
-#define TS_PARALLEL_FOR_END(...) \
+#define TS_PARALLEL_FOR_END() \
         } \
     }; \
-    ts::parallel_run(__ts_parallel_solver, __ts_parallel_begin, __ts_parallel_end, ## __VA_ARGS__); \
+    ts::parallel_run(__ts_parallel_solver, __ts_parallel_begin, __ts_parallel_end); \
 }
 
 /**
@@ -152,9 +152,9 @@ namespace ts {
  * @note TS_PARALLEL_FOR_END can parse an bool value, mean the parallel tasks if is joinable
  * @see TS_PARALLEL_FOR_BEGIN
  */
-#define TS_PARALLEL_RANGE_END(...) \
+#define TS_PARALLEL_RANGE_END() \
     }; \
-    ts::parallel_range(__ts_parallel_solver, __ts_parallel_begin, __ts_parallel_end, ## __VA_ARGS__); \
+    ts::parallel_range(__ts_parallel_solver, __ts_parallel_begin, __ts_parallel_end); \
 }
 
 /**
