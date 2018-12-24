@@ -163,7 +163,7 @@ namespace ts {
             } catch (const Exception &) {
 
             }
-            oss << "Operator " << op << "\"" << name << "\" has unsatisfied fields: ";
+            oss << "Operator " << op << " \"" << name << "\" has unsatisfied fields: ";
             for (size_t i = 0; i < unsatisfied_fields.size(); ++i) {
                 if (i) oss << ", ";
                 oss << "\"" << unsatisfied_fields[i] << "\"";
