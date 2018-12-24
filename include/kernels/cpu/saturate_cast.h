@@ -1,6 +1,7 @@
 #ifndef TS_KERNELS_SATURATE_H
 #define TS_KERNELS_SATURATE_H
 //#include <limits> 
+#include <algorithm>
  
 namespace ts 
 {
