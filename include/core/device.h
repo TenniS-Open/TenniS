@@ -120,11 +120,26 @@ namespace ts {
 
     class MemoryDevice : public Device {
     public:
-        using Device::Device;
+        using self = MemoryDevice;
+        using supper = Device;
+
+        MemoryDevice(const DeviceType &type, int id) : supper(type, id) {}
+
+        MemoryDevice(const DeviceType &type) : supper(type) {}
+
+        MemoryDevice() : supper() {}
+
     };
     class ComputingDevice : public Device {
     public:
-        using Device::Device;
+        using self = ComputingDevice;
+        using supper = Device;
+
+        ComputingDevice(const DeviceType &type, int id) : supper(type, id) {}
+
+        ComputingDevice(const DeviceType &type) : supper(type) {}
+
+        ComputingDevice() : supper() {}
     };
 
 }

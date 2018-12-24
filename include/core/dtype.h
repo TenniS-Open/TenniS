@@ -168,8 +168,6 @@ namespace ts {
     template <> struct dtypeid<double> { static const DTYPE id = FLOAT64; };
     template <> struct dtypeid<void*> { static const DTYPE id = PTR; };
     template <> struct dtypeid<char> { static const DTYPE id = CHAR8; };
-    template <> struct dtypeid<char16_t> { static const DTYPE id = CHAR16; };
-    template <> struct dtypeid<char32_t> { static const DTYPE id = CHAR32; };
 }
 
 
