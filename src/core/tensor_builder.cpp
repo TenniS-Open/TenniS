@@ -92,7 +92,7 @@ namespace ts {
                                  << eject;
                     break;
 #define __CASE_TYPE_CALL_TYPE_CAST_TO(__type__) \
-                case __type__: type_cast_to<__type__>(dst, dst_dtype, reinterpret_cast<const typename dtype<__type__>::declare *>(src), size); break;
+                case __type__: type_cast_to<__type__>(dst, dst_dtype, reinterpret_cast<const dtype<__type__>::declare *>(src), size); break;
                 __CASE_TYPE_CALL_TYPE_CAST_TO(INT8)
                 __CASE_TYPE_CALL_TYPE_CAST_TO(UINT8)
                 __CASE_TYPE_CALL_TYPE_CAST_TO(INT16)

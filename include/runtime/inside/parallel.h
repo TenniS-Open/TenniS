@@ -11,6 +11,8 @@
 #include "utils/box.h"
 #include "utils/log.h"
 
+#include <algorithm>
+
 #define TS_THREAD_BLOCK_SIZE 40960
 
 namespace ts {

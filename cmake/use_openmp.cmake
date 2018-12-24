@@ -1,8 +1,8 @@
 # use OpenMP
 
-if (WIN32)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /openmp")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /openmp")
+if (MINGW)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 
     set(OPENMP_LIBRARY)
 elseif (APPLE)
@@ -20,6 +20,11 @@ elseif (APPLE)
 elseif (UNIX)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+
+    set(OPENMP_LIBRARY)
+elseif (WIN32)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /openmp")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /openmp")
 
     set(OPENMP_LIBRARY)
 else ()
