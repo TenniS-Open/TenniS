@@ -124,9 +124,9 @@ namespace ts {
             auto value = bubble.get("value");
             auto data_index = int(block.data_sagment.size());
             if (bubble.has("#device")) {
-                block.data_sagment.push_back(DeviceTensor(value));
-            } else {
                 block.data_sagment.push_back(DeviceTensor(value, tensor::to_string(bubble.get("#device"))));
+            } else {
+                block.data_sagment.push_back(DeviceTensor(value));
             }
             map_node_data_sagment_index.insert(std::make_pair(node, data_index));
             return data_index;
@@ -204,7 +204,7 @@ namespace ts {
         auto simulator_find_last_unsolved_node_index = [&]() -> int64_t {
             int64_t i = int64_t(simulator.size()) - 1;
             while (i >= 0) {
-                auto &node = simulator[i];
+                auto &node = simulator[size_t(i)];
                 auto &bubble = node.ref<Bubble>();
                 if (bubble.op() != Bubble::Parameter) return i;
                 --i;
@@ -221,7 +221,7 @@ namespace ts {
         auto simulator_find_last_ref_node_index = [&](Node ref) -> int64_t {
             int64_t i = int64_t(simulator.size()) - 1;
             while (i >= 0) {
-                auto &node = simulator[i];
+                auto &node = simulator[size_t(i)];
                 auto &refs = map_node_refs[node];
                 if (refs.find(ref) != refs.end()) return i;
                 --i;
