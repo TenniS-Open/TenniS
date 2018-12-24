@@ -15,6 +15,14 @@
 
 #include <cstring>
 
+#include <kernels/cpu/resize2d.h>
+
+#include <opencv2/core/core.hpp>
+#include <opencv2/opencv.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+
+
+
 class Sum : public ts::Operator {
 public:
     using supper = ts::Operator;
@@ -91,12 +99,25 @@ int main()
 //    auto b2 = block_n_times("block1", b, 100);
 //    auto c = bubble::op("c", "sum", {b1, b2});
 
+    /*
     auto a = bubble::param("a");
     auto b = bubble::param("b");
     auto data = bubble::data("data", tensor::from<float>(3));
 
     auto c = bubble::op("c", "sum", {a, b, data});
+    */
 
+    cv::Mat srcimage = cv::imread("/wqy/Downloads/test.png");
+    auto a = bubble::param("a");
+    auto b = bubble::param("b");
+    auto c = bubble::op("c","resize2d",{a,b});
+
+    ts::Shape type_shape = {1};
+    Tensor param_type(INT32, type_shape);
+    param_type.data<int>()[0] = 0;
+    c.ref<Bubble>().set("type",param_type);
+
+    /*
     {
         // test graph
         ts::FileStreamWriter out("test.graph.txt");
@@ -108,7 +129,7 @@ int main()
         externalize_graph(in, tg);
         g = tg;
     }
-
+    */
     // setup module
     std::shared_ptr<Module> m = std::make_shared<Module>();
     m->load(g, {"c"});
@@ -121,6 +142,7 @@ int main()
         m = Module::Load("test.module.txt");
     }
 
+    /*
     std::cout << "Input nodes:" << std::endl;
     for (auto &node : m->inputs()) {
         std::cout << node.ref<Bubble>().op() << ":" << node.ref<Bubble>().name() << std::endl;
@@ -130,7 +152,7 @@ int main()
     for (auto &node : m->outputs()) {
         std::cout << node.ref<Bubble>().op() << ":" << node.ref<Bubble>().name() << std::endl;
     }
-
+    */
     // run workbench
     ComputingDevice device(CPU, 0);
     // Workbench bench(device);
@@ -145,11 +167,47 @@ int main()
         return -1;
     }
 
+    /*
     Tensor input_a(FLOAT32, {1});
     Tensor input_b(FLOAT32, {1});
 
     input_a.data<float>()[0] = 1;
     input_b.data<float>()[0] = 3;
+    */
+
+    ts::Shape shape = {2,srcimage.rows, srcimage.cols, srcimage.channels()};
+
+    //ts::Shape shape = {1,1,4, 4};
+    Tensor input_a(FLOAT32, shape);
+
+    //Tensor input_a(UINT8, shape);
+    Tensor input_b(INT32, {4});
+
+    cv::Mat srcimage2 = cv::imread("/wqy/Downloads/test2.png");
+
+    std::cout << "old:" << srcimage.channels() * srcimage.rows * srcimage.cols << std::endl;
+    std::cout << "count:" << input_a.count() << std::endl;
+    int num = input_a.count();
+    float * buffer = new float[num];
+    //unsigned char * buffer = new unsigned char[num];
+
+    num = num / 2;
+    for(int i=0;i<num; i++) {
+         buffer[i ] = srcimage.data[i];
+    }
+
+    for(int i=0;i<num; i++) {
+         buffer[i + num ] = srcimage2.data[i];
+    }
+
+    memcpy(input_a.data<float>(), buffer, num * sizeof(float) * 2);
+    delete [] buffer;
+ 
+    input_b.data<int>()[0] = -1;
+    input_b.data<int>()[1] = 400;
+    input_b.data<int>()[2] = 400;
+    input_b.data<int>()[3] = -1;
+
 
     bench->input("a", input_a);
     bench->input("b", input_b);
@@ -157,6 +215,13 @@ int main()
     bench->run();
 
     auto output_c = bench->output("c");
+    cv::Mat dstimage(400,400,CV_32FC3,output_c.data<float>());
+    cv::Mat dstimage2(400,400,CV_32FC3,output_c.data<float>() + 400 * 400 * 3);
 
-    std::cout << "output: " << output_c.data<float>()[0] << std::endl;
+    //cv::Mat dstimage(400,400,CV_8UC3,output_c.data<unsigned char>());
+    //cv::Mat dstimage2(400,400,CV_8UC3,output_c.data<unsigned char>() + 400 * 400 * 3);
+    cv::imwrite("/tmp/mm3.png", dstimage);
+    cv::imwrite("/tmp/mm4.png", dstimage2);
+
+    //std::cout << "output: " << output_c.data<float>()[0] << std::endl;
 }
