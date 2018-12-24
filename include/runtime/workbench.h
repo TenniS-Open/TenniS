@@ -17,6 +17,7 @@
 #include "module/module.h"
 #include "inside/thread_pool.h"
 #include "global/device_admin.h"
+#include "runtime/runtime.h"
 
 namespace ts {
     class Workbench {
@@ -72,12 +73,13 @@ namespace ts {
 
         static shared Load(const Module::shared &module, const ComputingDevice &device);
 
-        void set_computing_thread_number(int computing_thread_number);
+        const DeviceContext &device() const { return m_device_context; }
 
-        int get_computing_thread_number() const;
+        const RuntimeContext &runtime() const { return m_runtime_context; }
+
+        RuntimeContext &runtime() { return m_runtime_context; }
 
     private:
-        ComputingDevice m_device;
         size_t m_pointer = 0;   // pointer to running function
         std::vector<Instruction::shared> m_program; // running function, program area
         MemoryController::shared m_static_memory;
@@ -91,11 +93,12 @@ namespace ts {
         // map tensor, means <tensor's index in stack, tensor>
         std::vector<Tensor> m_inputs;
         std::vector<Tensor> m_outputs;
-        // thread pool to computing optimize
-        ThreadPool::shared m_thread_pool;
+
         // control device context
         DeviceContext m_device_context;
-        DeviceAdmin::function m_device_admin;
+
+        // runtime setting, shared in working thread
+        RuntimeContext m_runtime_context;
     };
 }
 

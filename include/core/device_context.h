@@ -7,6 +7,7 @@
 
 
 #include <global/hard_converter.h>
+#include <global/device_admin.h>
 
 namespace ts {
     class DeviceHandle;
@@ -17,8 +18,15 @@ namespace ts {
 
         DeviceContext() = default;
 
+        DeviceContext(ComputingDevice computing_device);
+
+        ~DeviceContext();
+
         DeviceContext(const self &) = delete;
         self &operator=(const self &) = delete;
+
+        void initialize(ComputingDevice computing_device);
+        void finalize();
 
         /**
          * pointing to device operating self-defined structure
@@ -28,6 +36,9 @@ namespace ts {
 
         ComputingDevice computing_device;
         MemoryDevice memory_device;
+
+    private:
+        DeviceAdmin::function m_device_admin;
     };
 }
 
