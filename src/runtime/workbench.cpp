@@ -114,7 +114,14 @@ namespace ts {
             inst = std::make_shared<DataSagmentInstruction>(data_sagment_inst->data_index() + data_sagment_base);
         }
         for (auto &data : block.data_sagment) {
-            bench->m_data_sagment->clone_push(data);
+            if (data.device.empty()) {
+                bench->m_data_sagment->clone_push(data);
+            } else if (data.device == CPU) {
+                bench->m_data_sagment->push(data);
+            } else {
+                auto controller = std::make_shared<DynamicMemoryController>(data.device);
+                bench->m_data_sagment->push(data.tensor.clone(controller));
+            }
         }
 
         // binding instructions
