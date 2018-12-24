@@ -44,8 +44,8 @@ namespace ts {
         }
 
         Tensor *push(const Tensor &tensor) {
-            // TODO: remove this check, supporting cross device computing
-            TS_AUTO_CHECK(tensor.device() == this->m_device);
+            // removed this check, supporting cross device computing
+            // TS_AUTO_CHECK(tensor.device() == this->m_device);
             this->m_stack.push_back(tensor);
             return &this->m_stack.back();
         }

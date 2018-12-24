@@ -19,6 +19,7 @@
 #include "runtime/instruction/tensor_instruction.h"
 #include "global/operator_factory.h"
 #include "global/memory_device.h"
+#include "core/tensor_builder.h"
 
 
 namespace ts {
@@ -122,7 +123,11 @@ namespace ts {
             auto &bubble = node.ref<Bubble>();
             auto value = bubble.get("value");
             auto data_index = int(block.data_sagment.size());
-            block.data_sagment.push_back(value);
+            if (bubble.has("#device")) {
+                block.data_sagment.push_back(DeviceTensor(value));
+            } else {
+                block.data_sagment.push_back(DeviceTensor(value, tensor::to_string(bubble.get("#device"))));
+            }
             map_node_data_sagment_index.insert(std::make_pair(node, data_index));
             return data_index;
         };
