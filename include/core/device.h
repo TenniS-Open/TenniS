@@ -155,6 +155,22 @@ namespace std {
                    ^ hash<int>()(key.id());
         }
     };
+
+    template<>
+    struct hash<ts::MemoryDevice> {
+        using type = ts::MemoryDevice;
+        std::size_t operator()(const type &key) const {
+            return hash<type::supper>()(key);
+        }
+    };
+
+    template<>
+    struct hash<ts::ComputingDevice> {
+        using type = ts::ComputingDevice;
+        std::size_t operator()(const type &key) const {
+            return hash<type::supper>()(key);
+        }
+    };
 }
 
 #endif //TENSORSTACK_CORE_DEVICE_H
