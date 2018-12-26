@@ -20,6 +20,11 @@ namespace ts {
         using key_t = _KEY;
         using value_t = _VALUE;
 
+        enum Usage {
+            READ,
+            WRITE
+        };
+
         using sync_handler = std::function<_VALUE(const _VALUE &from_value, const _KEY &from_key, const _KEY &to_key)>;
 
         SyncBlock(const self &) = delete;
@@ -32,6 +37,7 @@ namespace ts {
 
         void set(const _KEY &key, const _VALUE &value) {
             auto _write = this->lock_write();
+            m_sync_values = decltype(m_sync_values)();
             m_sync_values.insert(std::make_pair(key, value));
         }
 
@@ -44,7 +50,20 @@ namespace ts {
             return it->second;
         }
 
-        _VALUE sync(const _KEY &key) {
+        void clear(const _KEY &key) {
+            auto _write = this->lock_write();
+            m_sync_values.erase(key);
+        }
+
+        _VALUE sync(const _KEY &key, Usage usage = READ) {
+            switch (usage) {
+                default: return sync_write(key);
+                case READ: return sync_read(key);
+                case WRITE: return sync_write(key);
+            }
+        }
+
+        _VALUE sync_read(const _KEY &key) {
             {
                 auto _read = this->lock_read();
                 auto it = m_sync_values.find(key);
@@ -52,12 +71,23 @@ namespace ts {
                     return it->second;
                 }
             }
-            return this->sync_write(key);
+            {
+                auto _write = this->lock_write();
+                return this->sync_insert(key);
+            }
+        }
+
+        // get the value of the given key, and remove all the other's key
+        _VALUE sync_write(const _KEY &key) {
+            auto _write = this->lock_write();
+            auto value = this->sync_insert(key);
+            m_sync_values = decltype(m_sync_values)();
+            m_sync_values.insert(std::make_pair(key, value));
+            return value;
         }
 
     private:
-        _VALUE sync_write(const _KEY &key) {
-            auto _write = this->lock_write();
+        _VALUE sync_insert(const _KEY &key) {
             auto it = m_sync_values.find(key);
             if (it != m_sync_values.end()) {
                 return it->second;
