@@ -16,6 +16,7 @@
 #include <cstring>
 
 #include <kernels/cpu/resize2d.h>
+#include <kernels/cpu/reshape.h>
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/opencv.hpp>
@@ -107,16 +108,30 @@ int main()
     auto c = bubble::op("c", "sum", {a, b, data});
     */
 
+    /*
     cv::Mat srcimage = cv::imread("/wqy/Downloads/test.png");
     auto a = bubble::param("a");
     auto b = bubble::param("b");
-    auto c = bubble::op("c","resize2d",{a,b});
+    auto c = bubble::op("c","_resize2d",{a,b});
 
     ts::Shape type_shape = {1};
     Tensor param_type(INT32, type_shape);
     param_type.data<int>()[0] = 0;
     c.ref<Bubble>().set("type",param_type);
+    */
 
+
+    auto a = bubble::param("a");
+    auto c = bubble::op("c","_transpose",{a});
+
+    ts::Shape type_shape = {4};
+    Tensor param_type(INT32, type_shape);
+    param_type.data<int>()[0] = 0;
+    param_type.data<int>()[1] = 2;
+
+    param_type.data<int>()[2] = 3;
+    param_type.data<int>()[3] = 1;
+    c.ref<Bubble>().set("permute",param_type);
     /*
     {
         // test graph
@@ -133,15 +148,15 @@ int main()
     // setup module
     std::shared_ptr<Module> m = std::make_shared<Module>();
     m->load(g, {"c"});
-    m->sort_inputs({"a", "b"});
-
+    //m->sort_inputs({"a", "b"});
+    /*
     {
         // test graph
         Module::Save("test.module.txt", m);
 
         m = Module::Load("test.module.txt");
     }
-
+    */
     /*
     std::cout << "Input nodes:" << std::endl;
     for (auto &node : m->inputs()) {
@@ -167,14 +182,40 @@ int main()
         return -1;
     }
 
+    
+    Tensor input_a(FLOAT32, {2,2,4,3});
+    //Tensor input_b(FLOAT32, {2,24});
+    float src[] = {
+                 1,2.8,3.1,
+                 1,2.9,3.2,
+                 1,2.4,3.3,
+                 1,2.2,3.4,
+
+                 4,5,6,
+                 4,5,6,
+                 4,5,6,
+                 4,5,6,
+
+                 7,8,9,
+                 7,8,9,
+                 7,8,9,
+                 7,8,9,
+
+                 11.01,12.1,13.3,
+                 11.02,12.2,13.4,
+                 11.03,12.3,13.5,
+                 11.04,12.4,13.6
+
+                      };
+
+    memcpy(input_a.data(), src, 4 * 48); 
+    //for(int i=0; i<48; i++)
+    //    input_a.data<int>()[i] = i+1;
+    //input_a.data<float>()[0] = 1;
+    //input_b.data<float>()[0] = 3;
+    
+
     /*
-    Tensor input_a(FLOAT32, {1});
-    Tensor input_b(FLOAT32, {1});
-
-    input_a.data<float>()[0] = 1;
-    input_b.data<float>()[0] = 3;
-    */
-
     ts::Shape shape = {2,srcimage.rows, srcimage.cols, srcimage.channels()};
 
     //ts::Shape shape = {1,1,4, 4};
@@ -207,21 +248,33 @@ int main()
     input_b.data<int>()[1] = 400;
     input_b.data<int>()[2] = 400;
     input_b.data<int>()[3] = -1;
-
+    */
 
     bench->input("a", input_a);
-    bench->input("b", input_b);
+    //bench->input("b", input_b);
 
     bench->run();
 
     auto output_c = bench->output("c");
-    cv::Mat dstimage(400,400,CV_32FC3,output_c.data<float>());
-    cv::Mat dstimage2(400,400,CV_32FC3,output_c.data<float>() + 400 * 400 * 3);
+    std::vector<int> vec = output_c.sizes();
+    std::cout << vec.size() << ",count:" << output_c.count() << std::endl;
+    for(int i=0; i<vec.size(); i++)
+        std::cout << vec[i] << ",";
+    std::cout << "output_c.count:" << output_c.count() << std::endl;  
+
+    for(int i=0; i<output_c.count(); i++) {
+        if(i % 2 == 0)
+           std::cout << std::endl;
+        std::cout << output_c.data<float>()[i] << ",";
+    }
+    std::cout << std::endl;  
+    //cv::Mat dstimage(400,400,CV_32FC3,output_c.data<float>());
+    //cv::Mat dstimage2(400,400,CV_32FC3,output_c.data<float>() + 400 * 400 * 3);
 
     //cv::Mat dstimage(400,400,CV_8UC3,output_c.data<unsigned char>());
     //cv::Mat dstimage2(400,400,CV_8UC3,output_c.data<unsigned char>() + 400 * 400 * 3);
-    cv::imwrite("/tmp/mm3.png", dstimage);
-    cv::imwrite("/tmp/mm4.png", dstimage2);
+    //cv::imwrite("/tmp/mm3.png", dstimage);
+    //cv::imwrite("/tmp/mm4.png", dstimage2);
 
     //std::cout << "output: " << output_c.data<float>()[0] << std::endl;
 }

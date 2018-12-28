@@ -17,12 +17,12 @@ class Resize2d : public ts::Operator {
 public:
 
 
-template<typename T>
-      static void ResizeImageLinear( const T *src_im, int src_width, int src_height, int channels,
+    template<typename T>
+    static void ResizeImageLinear( const T *src_im, int src_width, int src_height, int channels,
                                      T *dst_im, int dst_width, int dst_height, bool ishwc);
 
-template<typename T>
-static void ResizeImageCubic(const T *src_im, int src_width, int src_height, int channels,
+    template<typename T>
+    static void ResizeImageCubic(const T *src_im, int src_width, int src_height, int channels,
                              T *dst_im, int dst_width, int dst_height, bool ishwc);
 
 public:
@@ -43,8 +43,6 @@ public:
     virtual int run(ts::Stack &stack) {
         int input_num = stack.size();
 
-        //std::cout << "input num:" << input_num << std::endl;
-        //std::cout << "index0:" << stack.index(0)->dims() << ", index1:" << stack.index(1)->count() << std::endl; 
         if(input_num != 2 || stack.index(0)->dims() < 2 || stack.index(0)->dims() != stack.index(1)->count()) {
             throw ts::Exception("input parameters is invalid");
         }
@@ -67,10 +65,13 @@ public:
         int old_height = (int)stack.index(0)->sizes()[i];
         int old_width  = (int)stack.index(0)->sizes()[i+1];
 
-        ts::Shape shape(stack.index(0)->sizes());
+        std::vector<ts::Tensor::Prototype> output;
+        infer(stack, output);
 
-        shape[i] = new_height;
-        shape[i+1] = new_width;
+        ts::Shape shape(output[0].sizes());
+        //ts::Shape shape(stack.index(0)->sizes());
+        //shape[i] = new_height;
+        //shape[i+1] = new_width;
 
         int ntotalbuffer = 0;
         int batchs,channels;
@@ -108,12 +109,12 @@ public:
         //ntotalbuffer = batchs * channels * new_height * new_width;
         //std::cout << "channels:" << channels << ",batchs:" << batchs << ",total:" << ntotalbuffer << std::endl;
 
-        std::vector<ts::Tensor::Prototype> output;
-        output.resize(1);
+        //std::vector<ts::Tensor::Prototype> output;
+        //output.resize(1);
         //ts::Tensor::Prototype prototype(ts::UINT8,shape);
-
-        ts::Tensor::Prototype prototype(stack.index(0)->dtype(),shape);
-        output[0] = prototype;
+        //ts::Tensor::Prototype prototype(stack.index(0)->dtype(),shape);
+        //output[0] = prototype;
+        //infer(stack, output);
         stack.push(output[0]);
 
         int newstep = channels * new_height * new_width;
@@ -160,6 +161,35 @@ public:
 
     virtual int infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output) {
 
+        if(stack.size() != 2 || stack.index(0)->dims() < 2 || stack.index(0)->dims() != stack.index(1)->count()) {
+            throw ts::Exception("input parameters is invalid");
+        }
+
+        int type_len = ts::type_bytes(stack.index(0)->dtype());
+
+        int dims = stack.index(0)->dims();
+        int i=0;
+        for(i=0; i< dims; i++) {
+            if((int)(stack.index(1)->data<int>()[i]) > 0)
+                break;
+        }
+
+        if(i >= dims - 1) {
+            throw ts::Exception("input parameters dims invalid");
+        }
+
+        int new_height = (int)stack.index(1)->data<int>()[i];
+        int new_width  = (int)stack.index(1)->data<int>()[i+1];
+        //int old_height = (int)stack.index(0)->sizes()[i];
+        //int old_width  = (int)stack.index(0)->sizes()[i+1];
+
+        ts::Shape shape(stack.index(0)->sizes());
+
+        shape[i] = new_height;
+        shape[i+1] = new_width;
+
+        output.resize(1);
+        output[0] = ts::Tensor::Prototype(stack.index(0)->dtype(),shape);
         return 1;
     }
 
