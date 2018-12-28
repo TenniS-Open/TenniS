@@ -193,6 +193,6 @@ template<typename T>
 
 
 
-TS_REGISTER_OPERATOR(Resize2d, ts::CPU, "resize2d")
+TS_REGISTER_OPERATOR(Resize2d, ts::CPU, "_resize2d")
 
 }
