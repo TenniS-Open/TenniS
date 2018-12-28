@@ -161,12 +161,12 @@ public:
             }
         }
 
-        std::cout << "type:" << type_str(stack.index(0)->dtype()) << std::endl;
-        for(int i=0; i<permute.size(); i++)
-            std::cout << "permute:" << permute[i] << ","  << std::endl;
+        //std::cout << "type:" << type_str(stack.index(0)->dtype()) << std::endl;
+        //for(int i=0; i<permute.size(); i++)
+        //    std::cout << "permute:" << permute[i] << ","  << std::endl;
 
-        for(int i=0; i<permute.size(); i++)
-            std::cout << "new shape:" << reshape[i] << "," << std::endl;
+        //for(int i=0; i<permute.size(); i++)
+        //    std::cout << "new shape:" << reshape[i] << "," << std::endl;
 
         output.resize(2);
         output[0] = ts::Tensor::Prototype(stack.index(0)->dtype(), permute);
