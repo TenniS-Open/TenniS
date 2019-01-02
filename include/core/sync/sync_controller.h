@@ -69,12 +69,12 @@ namespace ts {
 
         using BaseMemoryController = _MemoryController;
 
-        static shared Make(const MemoryDevice &device, bool need_lock) {
+        static shared Make(const MemoryDevice &device, bool need_lock = false) {
             return shared(new self(device, need_lock));
         }
 
     private:
-        HypeSyncMemoryController(const MemoryDevice &device, bool need_lock = true)
+        HypeSyncMemoryController(const MemoryDevice &device, bool need_lock = false)
                 : SyncDeviceMemoryController(device)
                 , m_sync_controllers(device, std::make_shared<BaseMemoryController>(device), sync_controller_handler, need_lock)
                 , m_memory_need_lock(need_lock) {
@@ -117,6 +117,8 @@ namespace ts {
             return std::make_shared<BaseMemoryController>(device);
         }
     };
+
+    using DynamicSyncMemoryController = HypeSyncMemoryController<DynamicMemoryController>;
 }
 
 
