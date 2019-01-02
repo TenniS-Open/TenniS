@@ -20,36 +20,64 @@ namespace ts {
         using shared = std::shared_ptr<self>;  ///< smart pointer
 
         virtual ~SyncMemoryController() = default;
+
+        /**
+         * alloc memory with size
+         * @param size memory size (bytes)
+         * @return allocated memory
+         * The default device should control in other way
+         */
+        virtual SyncMemory alloc(size_t size) = 0;
+
         /**
          * alloc memory with size
          * @param device device to get memory
          * @param size memory size (bytes)
          * @return allocated memory
          */
-        virtual SyncMemory alloc(const MemoryDevice &device, size_t size, bool need_lock) = 0;
+        virtual SyncMemory alloc(const MemoryDevice &device, size_t size) = 0;
+    };
+
+    class SyncDeviceMemoryController : public SyncMemoryController {
+    public:
+        using self = SyncDeviceMemoryController;
+        using supper = SyncMemoryController;
+
+        using shared = std::shared_ptr<self>;  ///< smart pointer
+
+        SyncDeviceMemoryController(const MemoryDevice &device) : m_device(device) {}
+
+        SyncMemory alloc(size_t size) final {
+            return this->alloc(m_device, size);
+        }
+
+        SyncMemory alloc(const MemoryDevice &device, size_t size) override = 0;
+
+    protected:
+        MemoryDevice m_device;
     };
 
     template <typename _MemoryController>
     class HypeSyncMemoryController
-            : public SyncMemoryController,
+            : public SyncDeviceMemoryController,
             public std::enable_shared_from_this<HypeSyncMemoryController<_MemoryController>> {
     public:
         using self = HypeSyncMemoryController;
-        using supper = SyncMemoryController;
+        using supper = SyncDeviceMemoryController;
 
         using shared = std::shared_ptr<self>;
 
         using BaseMemoryController = _MemoryController;
 
-        static shared Make(bool need_lock) {
-            return shared(new self(need_lock));
+        static shared Make(const MemoryDevice &device, bool need_lock) {
+            return shared(new self(device, need_lock));
         }
 
     private:
-        HypeSyncMemoryController(bool need_lock) : m_sync_controllers(sync_controller_handler, need_lock) {
-            auto cpu_device = MemoryDevice(CPU);
-            auto cpu_controller = std::make_shared<BaseMemoryController>(cpu_device);
-            m_sync_controllers.set(cpu_device, cpu_controller);
+        HypeSyncMemoryController(const MemoryDevice &device, bool need_lock = true)
+                : SyncDeviceMemoryController(device)
+                , m_sync_controllers(device, std::make_shared<BaseMemoryController>(device), sync_controller_handler, need_lock)
+                , m_memory_need_lock(need_lock) {
         }
 
     public:
@@ -57,10 +85,10 @@ namespace ts {
             m_sync_controllers.clear(device);
         }
 
-        SyncMemory alloc(const MemoryDevice &device, size_t size, bool need_lock) override {
+        SyncMemory alloc(const MemoryDevice &device, size_t size) override {
             auto controller = m_sync_controllers.sync(device);
             auto memory = controller->alloc(size);
-            return SyncMemory(this->sync_handler(), need_lock, device, memory);
+            return SyncMemory(memory, m_memory_need_lock, this->sync_handler());
         }
 
         SyncMemory::Block::sync_handler sync_handler() {
@@ -79,6 +107,8 @@ namespace ts {
         using SyncControllerBlock = SyncBlock<MemoryDevice, std::shared_ptr<BaseMemoryController>>;
 
         SyncControllerBlock m_sync_controllers;
+
+        bool m_memory_need_lock;
 
         static typename SyncControllerBlock::value_t sync_controller_handler(
                 const typename SyncControllerBlock::value_t &,

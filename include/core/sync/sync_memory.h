@@ -11,32 +11,123 @@
 namespace ts {
     class SyncMemory {
     public:
+        using self = SyncMemory;
+        using shared = std::shared_ptr<self>;
+
         using Block = SyncBlock<MemoryDevice, Memory>;
 
-        enum Usage {
-            READ,
-            WRITE,
-        };
-
-        SyncMemory(Block::sync_handler handler, bool lock, const MemoryDevice &device, const Memory &memory) {
-            m_sync_memory = std::make_shared<Block>(handler, lock);
-            m_sync_memory->set(device, memory);
+        static Block::value_t dynamic_sync_handler(const Block::value_t &from_memory,
+                                                   const Block::key_t &from_device,
+                                                   const Block::key_t &to_device) {
+            Memory to_memory(to_device, from_memory.size());
+            memcpy(to_memory, from_memory);
+            return to_memory;
         }
+
+        SyncMemory(const Memory &memory, bool lock, Block::sync_handler handler) {
+            m_sync_memory = std::make_shared<Block>(memory.device(), memory, handler, lock);
+        }
+
+        SyncMemory(const Memory &memory, bool lock = true)
+            : SyncMemory(memory, lock, dynamic_sync_handler){}
+
+        SyncMemory(const MemoryDevice &device, size_t size, bool lock = true)
+            : SyncMemory(Memory(device, size), lock) {}
+
+        SyncMemory(size_t size, bool lock = true)
+                : SyncMemory(Memory(size), lock) {}
+
+        SyncMemory(bool lock = true)
+                : SyncMemory(0, lock) {}
 
         void set(const MemoryDevice &device, const Memory &memory) {
             m_sync_memory->set(device, memory);
         }
 
-        // write mode may cause data missmatch in multi thread access, use set instead write
-        // write mode is only work for in workbench memory controll
-        Memory sync(const MemoryDevice &device, Usage usage = READ) {
-            switch (usage) {
-                default: return m_sync_memory->sync(device, Block::READ);
-                case READ: return m_sync_memory->sync(device, Block::READ);
-                case WRITE: return m_sync_memory->sync(device, Block::WRITE);
-            }
+        /**
+         * Moving constructed function
+         * @param other other object
+         */
+        SyncMemory(const self &other) TS_NOEXCEPT = default;
+
+        /**
+         * Moving assignment function
+         * @param other other object
+         */
+        SyncMemory &operator=(const self &other) TS_NOEXCEPT = default;
+
+        /**
+         * Moving constructed function
+         * @param other other object
+         */
+        SyncMemory(self &&other) TS_NOEXCEPT;
+
+        /**
+         * Moving assignment function
+         * @param other other object
+         */
+        SyncMemory &operator=(self &&other) TS_NOEXCEPT;
+
+        /**
+         * Swap to other object
+         * @param other
+         */
+        void swap(self &other);
+
+        /**
+         * Get size of memory
+         * @return size of memory
+         */
+        size_t size() const { return m_sync_memory->value().size(); }
+
+        /**
+         * Get memory pointer
+         * @return memory pointer
+         */
+        void *data() {
+            auto default_value = m_sync_memory->value();
+            return default_value.data();
         }
+
+        /**
+         * Get memory pointer
+         * @return memory pointer
+         */
+        const void *data() const { return m_sync_memory->value().data(); }
+
+        /**
+         * Get memory pointer
+         * @return memory pointer
+         */
+        template<typename T>
+        T *data() { return reinterpret_cast<T *>(this->data()); }
+
+        /**
+         * Get memory pointer
+         * @return memory pointer
+         */
+        template<typename T>
+        const T *data() const { return reinterpret_cast<const T *>(this->data()); }
+
+        /**
+         * return Device of this memory
+         * @return @see Device
+         */
+        const MemoryDevice &device() const { return  m_sync_memory->key(); }
+
+        // following sync part
+        Memory sync(const MemoryDevice &device) {
+            return m_sync_memory->sync(device);
+        }
+
+        shared locked() {
+            std::shared_ptr<self> locked_self(new self(m_sync_memory->locked()));
+            return locked_self;
+        }
+
     private:
+        SyncMemory(std::shared_ptr<Block> sync_memory) : m_sync_memory(sync_memory) {}
+
         std::shared_ptr<Block> m_sync_memory;
     };
 }
