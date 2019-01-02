@@ -108,7 +108,11 @@ namespace ts {
 
         shared locked() {
             std::shared_ptr<unique_write_lock> _write(m_mutex ? new unique_write_lock(*m_mutex) : nullptr);
-            std::shared_ptr<self> dolly(new self);
+            std::shared_ptr<self> dolly(new self, [this](const self *ptr){
+                this->m_default_value = ptr->m_default_value;
+                this->m_sync_values = ptr->m_sync_values;
+                delete ptr;
+            });
             dolly->m_default_key = m_default_key;
             dolly->m_default_value = m_default_value;
             dolly->m_sync_values = m_sync_values;

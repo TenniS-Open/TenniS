@@ -9,6 +9,7 @@
 #include <iostream>
 #include <chrono>
 #include <utils/assert.h>
+#include <core/sync/sync_block.h>
 
 int mul(int *base, int times, ts::rwmutex *mutex, bool lock = true) {
     int sum = 0;
@@ -79,6 +80,14 @@ int main() {
         pool.join();
     }
 
+    ts::SyncBlock<std::string, int> _block("CPU", 10, [](int value, const std::string &from_key, const std::string &to_key) {
+        return value;
+    }, true);
+
+    _block.set("CPU", 10);
+
+    TS_LOG_INFO << "GPU data: " << _block.sync("GPU");
+    TS_LOG_INFO << "GPU data: " << _block.get("GPU");
 
     return 0;
 }

@@ -19,5 +19,14 @@ int main() {
     a.sync(cpu0).data<int>()[0] = i;
 
     TS_LOG_INFO << "Got i=" << a.sync(cpu1).data<int>()[0];
+
+    {
+        TS_LOG_INFO << "Swap i=" << i;
+        auto locked = a.locked();
+        locked->sync(cpu1).data<int>()[0] = -i;
+        locked->broadcast(cpu1);
+    }
+
+    TS_LOG_INFO << "Got i=" << a.sync(cpu0).data<int>()[0];
 }
 
