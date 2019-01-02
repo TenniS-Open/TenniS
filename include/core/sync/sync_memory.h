@@ -60,19 +60,26 @@ namespace ts {
          * Moving constructed function
          * @param other other object
          */
-        SyncMemory(self &&other) TS_NOEXCEPT;
+        SyncMemory(self &&other) TS_NOEXCEPT {
+            this->swap(other);
+        }
 
         /**
          * Moving assignment function
          * @param other other object
          */
-        SyncMemory &operator=(self &&other) TS_NOEXCEPT;
+        SyncMemory &operator=(self &&other) TS_NOEXCEPT {
+            this->swap(other);
+            return *this;
+        }
 
         /**
          * Swap to other object
          * @param other
          */
-        void swap(self &other);
+        void swap(self &other) {
+            std::swap(this->m_sync_memory, other.m_sync_memory);
+        }
 
         /**
          * Get size of memory
@@ -120,13 +127,17 @@ namespace ts {
             return m_sync_memory->sync(device);
         }
 
+        void broadcast(const MemoryDevice &device) {
+            m_sync_memory->broadcast(device);
+        }
+
         shared locked() {
             std::shared_ptr<self> locked_self(new self(m_sync_memory->locked()));
             return locked_self;
         }
 
     private:
-        SyncMemory(std::shared_ptr<Block> sync_memory) : m_sync_memory(sync_memory) {}
+        SyncMemory(std::shared_ptr<Block> sync_memory) : m_sync_memory(std::move(sync_memory)) {}
 
         std::shared_ptr<Block> m_sync_memory;
     };
