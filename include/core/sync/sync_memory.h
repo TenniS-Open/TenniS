@@ -28,17 +28,53 @@ namespace ts {
             m_sync_memory = std::make_shared<Block>(memory.device(), memory, handler, lock);
         }
 
-        SyncMemory(const Memory &memory, bool lock = true)
+        SyncMemory(const Memory &memory, bool lock = false)
             : SyncMemory(memory, lock, dynamic_sync_handler){}
 
-        SyncMemory(const MemoryDevice &device, size_t size, bool lock = true)
+        SyncMemory(const MemoryDevice &device, size_t size, bool lock = false)
             : SyncMemory(Memory(device, size), lock) {}
 
-        SyncMemory(size_t size, bool lock = true)
+        SyncMemory(size_t size, bool lock = false)
                 : SyncMemory(Memory(size), lock) {}
 
-        SyncMemory(bool lock = true)
+        SyncMemory(bool lock = false)
                 : SyncMemory(0, lock) {}
+
+        /**
+         * Initialize Memory
+         * @param hard ready memory
+         * @param size sizeof the memory block
+         * @param shift shift from start pointer
+         */
+        SyncMemory(const HardMemory::shared &hard, size_t size, size_t shift = 0)
+                : SyncMemory(Memory(hard, size, shift)) {}
+
+        /**
+         * Initialize Memory
+         * @param hard ready memory
+         * @param size sizeof the memory block
+         * @param shift shift from start pointer
+         */
+        SyncMemory(HardMemory::shared &&hard, size_t size, size_t shift = 0)
+                : SyncMemory(Memory(std::move(hard), size, shift)) {}
+
+        /**
+         * Initialize Memory
+         * @param hard ready memory
+         * @param size sizeof the memory block
+         * @param shift shift from start pointer
+         */
+        SyncMemory(const HardMemory::shared &hard)
+                : SyncMemory(Memory(hard)) {}
+
+        /**
+         * Initialize Memory
+         * @param hard ready memory
+         * @param size sizeof the memory block
+         * @param shift shift from start pointer
+         */
+        SyncMemory(HardMemory::shared &&hard)
+                : SyncMemory(Memory(std::move(hard))) {}
 
         void set(const MemoryDevice &device, const Memory &memory) {
             m_sync_memory->set(device, memory);
@@ -123,6 +159,10 @@ namespace ts {
         const MemoryDevice &device() const { return  m_sync_memory->key(); }
 
         // following sync part
+        Memory sync() const {
+            return m_sync_memory->value();
+        }
+
         Memory sync(const MemoryDevice &device) {
             return m_sync_memory->sync(device);
         }
@@ -141,6 +181,29 @@ namespace ts {
 
         std::shared_ptr<Block> m_sync_memory;
     };
+
+    /**
+     * copy memory in device or cross devices
+     * @param dst the dst memory
+     * @param src the src memory
+     * @param size copy size
+     */
+    inline void memcpy(SyncMemory &dst, const SyncMemory &src, size_t size) {
+        auto locked_dst = dst.locked();
+        auto locked_value = locked_dst->sync();
+        memcpy(locked_value, src.sync(), size);
+    }
+
+    /**
+     * copy memory in device or cross devices, copy src size
+     * @param dst the dst memory
+     * @param src the src memory
+     */
+    inline void memcpy(SyncMemory &dst, const SyncMemory &src)  {
+        auto locked_dst = dst.locked();
+        auto locked_value = locked_dst->sync();
+        memcpy(locked_value, src.sync());
+    }
 }
 
 

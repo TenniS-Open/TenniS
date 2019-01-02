@@ -19,10 +19,10 @@ namespace ts {
         this->m_device_context.initialize(device);
         auto &memory_device = this->m_device_context.memory_device;
 
-        this->m_static_memory = std::make_shared<DynamicMemoryController>(memory_device);
+        this->m_static_memory = DynamicSyncMemoryController::Make(memory_device, true);
         // TODO: Make real flow memory controller
-        this->m_flow_memory = std::make_shared<DynamicMemoryController>(memory_device);
-        this->m_dynamic_memory = std::make_shared<DynamicMemoryController>(memory_device);
+        this->m_flow_memory = DynamicSyncMemoryController::Make(memory_device, false);
+        this->m_dynamic_memory = DynamicSyncMemoryController::Make(memory_device, false);
         this->m_stack = std::make_shared<Stack>(memory_device, this->m_flow_memory);
         this->m_data_sagment = std::make_shared<Stack>(memory_device, this->m_static_memory);
     }
@@ -116,11 +116,8 @@ namespace ts {
         for (auto &data : block.data_sagment) {
             if (data.device.empty()) {
                 bench->m_data_sagment->clone_push(data);
-            } else if (data.device == CPU) {
-                bench->m_data_sagment->push(data);
             } else {
-                auto controller = std::make_shared<DynamicMemoryController>(data.device);
-                bench->m_data_sagment->push(data.tensor.clone(controller));
+                bench->m_data_sagment->clone_push(data, data.device);
             }
         }
 

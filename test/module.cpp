@@ -74,6 +74,40 @@ namespace ts {
     }
 }
 
+class time_log {
+public:
+    using self = time_log;
+
+    using microseconds = std::chrono::microseconds;
+    using system_clock = std::chrono::system_clock;
+    using time_point = decltype(system_clock::now());
+
+    explicit time_log(ts::LogLevel level, const std::string &header = "") :
+            m_duration(0) {
+        m_level = level;
+        m_header = header;
+        m_start = system_clock::now();
+    }
+
+    ~time_log() {
+        m_end = system_clock::now();
+        m_duration = m_end - m_start;
+
+        std::ostringstream oss;
+        ts::LogStream(m_level) << m_header << m_duration.count() / 1000.0 << "ms";
+    }
+
+    time_log(const self &) = delete;
+    self &operator=(const self &) = delete;
+
+private:
+    ts::LogLevel m_level;
+    std::string m_header;
+    microseconds m_duration;
+    time_point m_start;
+    time_point m_end;
+};
+
 int main()
 {
     using namespace ts;
@@ -87,13 +121,13 @@ int main()
 
 //    auto a = bubble::param("a");
 //    auto b = bubble::param("b");
-//    auto b1 = block_n_times("block1", a, 100);
-//    auto b2 = block_n_times("block1", b, 100);
+//    auto b1 = block_n_times("block1", a, 1000);
+//    auto b2 = block_n_times("block1", b, 1000);
 //    auto c = bubble::op("c", "sum", {b1, b2});
 
     auto a = bubble::param("a");
     auto b = bubble::param("b");
-    auto data = bubble::data("data", tensor::from<float>(3));
+    auto data = bubble::data("data", tensor::from<float>(3), CPU);
 
     auto c = bubble::op("c", "sum", {a, b, data});
 
@@ -153,8 +187,11 @@ int main()
 
     bench->input("a", input_a);
     bench->input("b", input_b);
+    {
+        time_log _log(ts::LOG_INFO, "Spent ");
 
-    bench->run();
+        bench->run();
+    }
 
     auto output_c = bench->output("c");
 

@@ -14,6 +14,12 @@ namespace ts {
     Tensor::Tensor(MemoryController::shared controller, DTYPE dtype, const Shape &_shape)
             : Tensor(controller, Prototype(dtype, _shape)) {}
 
+    Tensor::Tensor(SyncMemoryController::shared controller, DTYPE dtype, const Shape &_shape)
+            : Tensor(controller, Prototype(dtype, _shape)) {}
+
+    Tensor::Tensor(SyncMemoryController::shared controller, DTYPE dtype, const Shape &_shape, const MemoryDevice &device)
+            : Tensor(controller, Prototype(dtype, _shape), device) {}
+
     Tensor::Tensor(const MemoryDevice &device, DTYPE dtype, const Shape &_shape)
             : Tensor(device, Prototype(dtype, _shape)) {}
 
@@ -22,6 +28,14 @@ namespace ts {
 
     Tensor::Tensor(MemoryController::shared controller, const Tensor::Prototype &proto)
             : m_memory(controller->alloc(static_cast<size_t>(proto.count() * proto.type_bytes())))
+            , m_proto(proto) {}
+
+    Tensor::Tensor(SyncMemoryController::shared controller, const Tensor::Prototype &proto)
+            : m_memory(controller->alloc(static_cast<size_t>(proto.count() * proto.type_bytes())))
+            , m_proto(proto) {}
+
+    Tensor::Tensor(SyncMemoryController::shared controller, const Tensor::Prototype &proto, const MemoryDevice &device)
+            : m_memory(controller->alloc(device, static_cast<size_t>(proto.count() * proto.type_bytes())))
             , m_proto(proto) {}
 
     Tensor::Tensor(const MemoryDevice &device, const Tensor::Prototype &proto)
@@ -33,6 +47,10 @@ namespace ts {
             , m_proto(proto) {}
 
     Tensor::Tensor(const Memory &memory, const Tensor::Prototype &proto)
+            : m_memory(memory)
+            , m_proto(proto) {}
+
+    Tensor::Tensor(const SyncMemory &memory, const Tensor::Prototype &proto)
             : m_memory(memory)
             , m_proto(proto) {}
 
@@ -48,8 +66,40 @@ namespace ts {
         return std::move(dolly);
     }
 
+    Tensor Tensor::clone(SyncMemoryController::shared controller) const {
+        auto fields = this->unpack();
+        for (auto &value : fields) {
+            Tensor dolly(std::move(controller), value.m_proto);
+            memcpy(dolly.m_memory, value.m_memory, size_t(value.m_proto.count() * value.m_proto.type_bytes()));
+            value = dolly;
+        }
+        Tensor dolly;
+        dolly.pack(fields);
+        return std::move(dolly);
+    }
+
+    Tensor Tensor::clone(SyncMemoryController::shared controller, const MemoryDevice &device) const {
+        auto fields = this->unpack();
+        for (auto &value : fields) {
+            Tensor dolly(std::move(controller), value.m_proto, device);
+            memcpy(dolly.m_memory, value.m_memory, size_t(value.m_proto.count() * value.m_proto.type_bytes()));
+            value = dolly;
+        }
+        Tensor dolly;
+        dolly.pack(fields);
+        return std::move(dolly);
+    }
+
     Tensor::shared Tensor::clone_shared(MemoryController::shared controller) const {
         return std::make_shared<Tensor>(this->clone(std::move(controller)));
+    }
+
+    Tensor::shared Tensor::clone_shared(SyncMemoryController::shared controller) const {
+        return std::make_shared<Tensor>(this->clone(std::move(controller)));
+    }
+
+    Tensor::shared Tensor::clone_shared(SyncMemoryController::shared controller, const MemoryDevice &device) const {
+        return std::make_shared<Tensor>(this->clone(std::move(controller), device));
     }
 
     Tensor::Tensor()
@@ -186,7 +236,8 @@ namespace ts {
         size_t writen_size = 0;
         writen_size += binio::write<uint32_t>(stream, uint32_t(this->fields_count()));
         for (auto &tensor : this->unpack()) {
-            writen_size += serialize_prototype_memory(stream, tensor.m_proto, tensor.m_memory);
+            auto cpu_memory = tensor.m_memory.sync(MemoryDevice(CPU));
+            writen_size += serialize_prototype_memory(stream, tensor.m_proto, cpu_memory);
         }
         return writen_size;
     }
@@ -197,7 +248,9 @@ namespace ts {
         read_size += binio::read<uint32_t>(stream, size_buffer);
         std::vector<Tensor> fields(size_buffer);
         for (auto &tensor : fields) {
-            read_size += externalize_prototype_memory(stream, tensor.m_proto, tensor.m_memory);
+            Memory cpu_memory;
+            read_size += externalize_prototype_memory(stream, tensor.m_proto, cpu_memory);
+            tensor.m_memory = SyncMemory(cpu_memory);
         }
         this->pack(fields);
         return read_size;
