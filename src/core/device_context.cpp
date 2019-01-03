@@ -7,6 +7,8 @@
 #include "core/device_context.h"
 #include "global/memory_device.h"
 
+#include "utils/ctxmgr_lite_support.h"
+
 namespace ts {
     DeviceContext::~DeviceContext() {
         this->finalize();
@@ -34,3 +36,5 @@ namespace ts {
         this->initialize(computing_device);
     }
 }
+
+TS_LITE_CONTEXT(ts::DeviceContext)
