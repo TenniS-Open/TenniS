@@ -46,7 +46,7 @@ namespace ts {
         // set input
         for (int i = 0; static_cast<size_t >(i) < this->m_inputs.size(); ++i) {
             auto &arg = this->m_inputs[i];
-            this->m_stack->clone_push(arg);
+            this->m_stack->clone_push(arg, arg.device());
         }
 
         // bind thread pool to any operator can using thread speed up
@@ -75,7 +75,7 @@ namespace ts {
         // TODO: change output memory device type
         for (int i = 0; static_cast<size_t >(i) < this->m_stack->size(); ++i) {
             auto &arg = *this->m_stack->index(i);
-            this->m_outputs[i] = arg.clone(m_dynamic_memory);
+            this->m_outputs[i] = arg.clone(m_dynamic_memory, arg.device());
         }
     }
 

@@ -182,7 +182,7 @@ namespace ts {
 
         bool empty() const;
 
-        const Device &device() const { return m_memory.device(); }
+        const MemoryDevice &device() const { return m_memory.device(); }
 
         DTYPE dtype() const { return m_proto.dtype(); }
 
