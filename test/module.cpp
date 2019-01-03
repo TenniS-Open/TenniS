@@ -31,12 +31,14 @@ public:
         std::vector<ts::Tensor::Prototype> output;
         this->infer(stack, output);
         TS_AUTO_CHECK(output[0].dtype() == ts::FLOAT32);
-        stack.push(output[0]);
-        auto &sum = *stack.index(-1);
-        std::memset(sum.data<float>(), 0, sum.count() * sizeof(float));
+        stack.push(output[0], memory_device()); // Notice push tensor device, default is DeviceContext.memory_device
+        auto sum = stack.index(-1);
+        auto sum_ptr = sum->sync(memory_device()).data<float>();    // Get CPU data ptr
+        std::memset(sum_ptr, 0, sum->count() * sizeof(float));
         for (int i = 0; i < input_num; ++i) {
-            for (int j = 0; j < sum.count(); ++j) {
-                sum.data<float>()[j] += stack.index(i)->data<float>()[j];
+            auto input_ptr = stack.index(i)->sync(memory_device()).data<float>();   // Get CPU data ptr
+            for (int j = 0; j < sum->count(); ++j) {
+                sum_ptr[j] += input_ptr[j];
             }
         }
         return 1;
