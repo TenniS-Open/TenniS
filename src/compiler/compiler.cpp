@@ -69,6 +69,13 @@ namespace ts {
             creator = OperatorCreator::Query(memory_device.type(), bubble.op());
         }
 
+        if (creator == nullptr) {
+            // step 2.y: try find operator on CPU version
+            if (m_computing_device.type() != CPU) {
+                creator = OperatorCreator::Query(CPU, bubble.op());
+            }
+        }
+
         if (creator == nullptr) TS_LOG_ERROR << "Not supported operator " << bubble.op() << eject;
         std::string description = bubble.op() + "(in=" + std::to_string(node.inputs().size()) + ", out=" +
                                   std::to_string(1) + ")";
