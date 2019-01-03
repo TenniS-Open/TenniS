@@ -250,6 +250,8 @@ namespace ts {
 
         Memory sync(const MemoryDevice &device) { return m_memory.sync(device); }
 
+        Tensor view(const MemoryDevice &device);
+
     private:
         TensorMemory m_memory;
         Prototype m_proto;

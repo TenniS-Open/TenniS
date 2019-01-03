@@ -266,4 +266,21 @@ namespace ts {
         this->m_fields = std::move(other.m_fields);
         return *this;
     }
+
+    Tensor Tensor::view(const MemoryDevice &device) {
+        Tensor view_tensor;
+        view_tensor.m_memory = TensorMemory(m_memory.sync(device), false);
+        view_tensor.m_proto = m_proto;
+
+        if (m_fields != nullptr) {
+            std::vector<self> view_fields(m_fields->size());
+            for (size_t i = 0; i < m_fields->size(); ++i) {
+                view_fields[i] = m_fields->at(i).view(device);
+            }
+
+            view_tensor.m_fields = std::make_shared<std::vector<self>>(std::move(view_fields));
+        }
+
+        return view_tensor;
+    }
 }
