@@ -31,34 +31,34 @@ namespace ts {
 
         explicit Random(int __seed);
 
-        // 设置随机数种子
+        // Set seed of random serial
         void seed(int __seed);
 
-        // 获取[0, MT19937::MAX]的平均分布随机数
+        // Uniformly distributed integer in [0, MT19937::MAX]
         int next();
 
-        // 获取[min, max]的平均分布随机数
+        // Uniformly distributed integer in [min, max]
         int next(int min, int max);
 
-        // 获得[0, 1]的平均分布随机数
+        // Uniformly distributed number in [0, 1]
         double u();
 
-        // 根据p概率返回真值
+        // Binomial distributed boolean(p)
         bool binomial(double p);
 
-        // 指数分布随机数
+        // Exponential distribution
         double exp(double beta);
 
-        // 瑞利分布随机数
+        // Ray distribution
         double ray(double mu);
 
-        // 韦布尔分布随机数
+        // Weibull distribution
         double weibull(double alpha, double beta);
 
-        // N(0, 1)正态分布随机数
+        // Normal distribution: N(0, 1)
         double normal();
 
-        // N(mu, delta^2)正态分布随机数
+        // Normal distribution: N(mu, delta^2)
         double normal(double mu, double delta);
 
     private:

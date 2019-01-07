@@ -9,6 +9,8 @@
 
 #include <array>
 
+#include <cstdint>
+
 #define TS_MODULE_CODE_V1 0x19910929
 
 namespace ts {

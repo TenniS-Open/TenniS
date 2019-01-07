@@ -19,23 +19,33 @@ namespace ts {
         Node param(const std::string &name);
 
         /**
-         * get Parameter node
+         * get Operator node
          * @param name Node name
          * @param op_name Operator name
          * @param inputs Input nodes
          * @return new Node belonging to context-Graph
          * @note Must call `ts::ctx::bind<Graph>` to bind context firstly
          */
-        Node op(const std::string &name, const std::string &op_name, const std::vector<Node> &inputs);
+        Node op(const std::string &name, const std::string &op_name, const std::vector<Node> &inputs, int output_count = 1);
 
         /**
-         * get Parameter node
+         * get Data node
          * @param name Node name
          * @param value the data value
          * @return new Node belonging to context-Graph
          * @note Must call `ts::ctx::bind<Graph>` to bind context firstly
          */
         Node data(const std::string &name, const Tensor &value);
+
+        /**
+         * get Data node
+         * @param name Node name
+         * @param value the data value
+         * @param device the memory saving device
+         * @return new Node belonging to context-Graph
+         * @note Must call `ts::ctx::bind<Graph>` to bind context firstly
+         */
+        Node data(const std::string &name, const Tensor &value, const DeviceType &device);
     }
 
     /**
