@@ -72,17 +72,19 @@ public:
 
     virtual int run(ts::Stack &stack) {
 
-        std::vector<ts::Tensor::Prototype> output;
-        infer(stack, output);
+        ts::Tensor::Prototype output_permute;
+        ts::Tensor::Prototype output;
+        //std::vector<ts::Tensor::Prototype> output;
+        infer_private(stack, output_permute, output);
 
         ts::Tensor *input_tensor = stack.index(0);
         Shape shape = input_tensor->sizes();
-        Shape permute = output[0].sizes();
-        Shape reshape = output[1].sizes();
+        Shape permute = output_permute.sizes();
+        Shape reshape = output.sizes();
 
         int type_len = ts::type_bytes(input_tensor->dtype());
 
-        stack.push(output[1]);
+        stack.push(output);
 
         ts::Tensor *tensor = stack.index(-1);
       
@@ -109,6 +111,13 @@ public:
     }
 
     virtual int infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output) {
+        ts::Tensor::Prototype permute;
+        output.resize(1);
+        return infer_private(stack, permute, output[0]);
+    }
+
+private:
+    int infer_private(ts::Stack &stack, ts::Tensor::Prototype &output_permute, ts::Tensor::Prototype &output) {
         int input_num = stack.size();
         if(input_num != 1) {
             throw ts::Exception("input parameters is more than one");
@@ -168,12 +177,14 @@ public:
         //for(int i=0; i<permute.size(); i++)
         //    std::cout << "new shape:" << reshape[i] << "," << std::endl;
 
-        output.resize(2);
-        output[0] = ts::Tensor::Prototype(stack.index(0)->dtype(), permute);
-        output[1] = ts::Tensor::Prototype(stack.index(0)->dtype(), reshape);
+        //output.resize(2);
+        //output[0] = ts::Tensor::Prototype(stack.index(0)->dtype(), permute);
+        //output[1] = ts::Tensor::Prototype(stack.index(0)->dtype(), reshape);
+
+        output = ts::Tensor::Prototype(stack.index(0)->dtype(), reshape);
+        output_permute = ts::Tensor::Prototype(stack.index(0)->dtype(), permute);
         return 1;
     }
-
 
 
 };
