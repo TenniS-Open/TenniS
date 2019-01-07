@@ -5,6 +5,7 @@
 #include <module/menu.h>
 
 #include "module/menu.h"
+#include "core/tensor_builder.h"
 
 namespace ts {
     namespace bubble {
@@ -13,9 +14,9 @@ namespace ts {
             return g.make<Bubble>(Bubble::Parameter, name);
         }
 
-        Node op(const std::string &name, const std::string &op_name, const std::vector<Node> &inputs) {
+        Node op(const std::string &name, const std::string &op_name, const std::vector<Node> &inputs, int output_count) {
             auto &g = ctx::ref<Graph>();
-            Node result = g.make<Bubble>(op_name, name);
+            Node result = g.make<Bubble>(op_name, name, output_count);
             Node::Link(result, inputs);
             return result;
         }
@@ -24,6 +25,14 @@ namespace ts {
             auto &g = ctx::ref<Graph>();
             Node result = g.make<Bubble>(Bubble::Const, name);
             result.ref<Bubble>().set("value", value);
+            return result;
+        }
+
+        Node data(const std::string &name, const Tensor &value, const DeviceType &device) {
+            auto &g = ctx::ref<Graph>();
+            Node result = g.make<Bubble>(Bubble::Const, name);
+            result.ref<Bubble>().set("value", value);
+            result.ref<Bubble>().set("#device", tensor::from(device));
             return result;
         }
     }

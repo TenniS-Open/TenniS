@@ -35,6 +35,15 @@ namespace ts {
         COMPLEX32   = 22,  // complex 32(16 + 16)
         COMPLEX64   = 23,  // complex 64(32 + 32)
         COMPLEX128  = 24,  // complex 128(64 + 64)
+
+        SINK8Q0     = 25,
+        SINK8Q1     = 26,
+        SINK8Q2     = 27,
+        SINK8Q3     = 28,
+        SINK8Q4     = 29,
+        SINK8Q5     = 30,
+        SINK8Q6     = 31,
+        SINK8Q7     = 32,
     };
 
     inline int type_bytes(DTYPE dtype) {
@@ -65,6 +74,14 @@ namespace ts {
             case COMPLEX32: return 4;
             case COMPLEX64: return 8;
             case COMPLEX128: return 16;
+            case SINK8Q0: return 1;
+            case SINK8Q1: return 1;
+            case SINK8Q2: return 1;
+            case SINK8Q3: return 1;
+            case SINK8Q4: return 1;
+            case SINK8Q5: return 1;
+            case SINK8Q6: return 1;
+            case SINK8Q7: return 1;
         }
         return 0;
     }
@@ -96,6 +113,14 @@ namespace ts {
             case COMPLEX32: return "complex32";
             case COMPLEX64: return "complex64";
             case COMPLEX128: return "complex128";
+            case SINK8Q0: return "sink8q0";
+            case SINK8Q1: return "sink8q1";
+            case SINK8Q2: return "sink8q2";
+            case SINK8Q3: return "sink8q3";
+            case SINK8Q4: return "sink8q4";
+            case SINK8Q5: return "sink8q5";
+            case SINK8Q6: return "sink8q6";
+            case SINK8Q7: return "sink8q7";
         }
         return "unknown";
     }
@@ -119,6 +144,14 @@ namespace ts {
     template <> struct dtype<CHAR16> { using declare = char16_t; };
     template <> struct dtype<CHAR32> { using declare = char32_t; };
     template <> struct dtype<BOOLEAN> { using declare = uint8_t; };
+    template <> struct dtype<SINK8Q0> { using declare = uint8_t; };
+    template <> struct dtype<SINK8Q1> { using declare = uint8_t; };
+    template <> struct dtype<SINK8Q2> { using declare = uint8_t; };
+    template <> struct dtype<SINK8Q3> { using declare = uint8_t; };
+    template <> struct dtype<SINK8Q4> { using declare = uint8_t; };
+    template <> struct dtype<SINK8Q5> { using declare = uint8_t; };
+    template <> struct dtype<SINK8Q6> { using declare = uint8_t; };
+    template <> struct dtype<SINK8Q7> { using declare = uint8_t; };
 
     template <typename T> struct dtypeid { static const DTYPE id = VOID; };
 
@@ -135,8 +168,6 @@ namespace ts {
     template <> struct dtypeid<double> { static const DTYPE id = FLOAT64; };
     template <> struct dtypeid<void*> { static const DTYPE id = PTR; };
     template <> struct dtypeid<char> { static const DTYPE id = CHAR8; };
-    template <> struct dtypeid<char16_t> { static const DTYPE id = CHAR16; };
-    template <> struct dtypeid<char32_t> { static const DTYPE id = CHAR32; };
 }
 
 

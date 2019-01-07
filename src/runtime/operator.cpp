@@ -7,8 +7,12 @@
 
 #include "utils/assert.h"
 #include "core/tensor_builder.h"
+#include "core/device_context.h"
+#include "utils/ctxmgr_lite.h"
 
 #include <climits>
+#include <runtime/operator.h>
+
 
 namespace ts {
     bool Operator::has(const std::string &param) const {
@@ -163,7 +167,7 @@ namespace ts {
             } catch (const Exception &) {
 
             }
-            oss << "Operator " << op << "\"" << name << "\" has unsatisfied fields: ";
+            oss << "Operator " << op << " \"" << name << "\" has unsatisfied fields: ";
             for (size_t i = 0; i < unsatisfied_fields.size(); ++i) {
                 if (i) oss << ", ";
                 oss << "\"" << unsatisfied_fields[i] << "\"";
@@ -171,5 +175,15 @@ namespace ts {
 
             TS_LOG_ERROR(oss.str()) << eject;
         }
+    }
+
+    MemoryDevice Operator::memory_device() const {
+        auto device = ctx::ptr<DeviceContext>();
+        return device ? device->memory_device : MemoryDevice();
+    }
+
+    ComputingDevice Operator::computing_device() const {
+        auto device = ctx::ptr<DeviceContext>();
+        return device ? device->computing_device : ComputingDevice();
     }
 }

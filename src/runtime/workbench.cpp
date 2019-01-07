@@ -15,36 +15,25 @@
 #include <climits>
 
 namespace ts {
-    Workbench::Workbench(const ComputingDevice &device)
-            : m_device(device) {
-        auto memory_device = ComputingMemory::Query(device);
-        this->m_static_memory = std::make_shared<DynamicMemoryController>(memory_device);
-        this->m_flow_memory = std::make_shared<DynamicMemoryController>(
-                memory_device);   // TODO: Make real flow memory controller
-        this->m_dynamic_memory = std::make_shared<DynamicMemoryController>(memory_device);
+    Workbench::Workbench(const ComputingDevice &device) {
+        this->m_device_context.initialize(device);
+        auto &memory_device = this->m_device_context.memory_device;
+
+        this->m_static_memory = DynamicSyncMemoryController::Make(memory_device, true);
+        // TODO: Make real flow memory controller
+        this->m_flow_memory = DynamicSyncMemoryController::Make(memory_device, false);
+        this->m_dynamic_memory = DynamicSyncMemoryController::Make(memory_device, false);
         this->m_stack = std::make_shared<Stack>(memory_device, this->m_flow_memory);
         this->m_data_sagment = std::make_shared<Stack>(memory_device, this->m_static_memory);
-        this->m_thread_pool = std::make_shared<ThreadPool>(0);
-
-        this->m_device_context.computing_device = device;
-        this->m_device_context.memory_device = memory_device;
-
-        this->m_device_admin = DeviceAdmin::Query(device.type());
-
-        if (m_device_admin != nullptr) {
-            m_device_admin(&m_device_context.handle, m_device.id(), DeviceAdmin::INITIALIZATION);
-        }
     }
 
     Workbench::Workbench(const ComputingDevice &device, int computing_thread_number)
             : self(device) {
-        this->set_computing_thread_number(computing_thread_number);
+        this->m_runtime_context.set_computing_thread_number(computing_thread_number);
     }
 
     Workbench::~Workbench() {
-        if (m_device_admin != nullptr && m_device_context.handle != nullptr) {
-            m_device_admin(&m_device_context.handle, m_device.id(), DeviceAdmin::FINALIZATION);
-        }
+        this->m_device_context.finalize();
     }
 
     void Workbench::run() {
@@ -57,14 +46,17 @@ namespace ts {
         // set input
         for (int i = 0; static_cast<size_t >(i) < this->m_inputs.size(); ++i) {
             auto &arg = this->m_inputs[i];
-            this->m_stack->clone_push(arg);
+            this->m_stack->clone_push(arg, arg.device());
         }
 
         // bind thread pool to any operator can using thread speed up
-        ctx::bind<ThreadPool> bind_thread_pool(m_thread_pool.get());
+        ctx::bind<ThreadPool> bind_thread_pool(this->runtime().thread_pool());
 
         // bind device context
         ctx::bind<DeviceContext> bind_device_context(m_device_context);
+
+        // bind runtime context
+        ctx::bind<RuntimeContext> bind_runtime_context(m_runtime_context);
 
         // run
         while (m_pointer < m_program.size()) {
@@ -83,12 +75,12 @@ namespace ts {
         // TODO: change output memory device type
         for (int i = 0; static_cast<size_t >(i) < this->m_stack->size(); ++i) {
             auto &arg = *this->m_stack->index(i);
-            this->m_outputs[i] = arg.clone(m_dynamic_memory);
+            this->m_outputs[i] = arg.clone(m_dynamic_memory, arg.device());
         }
     }
 
     Workbench::shared Workbench::clone() const {
-        Workbench::shared dolly = std::make_shared<Workbench>(this->m_device);
+        Workbench::shared dolly = std::make_shared<Workbench>(this->m_device_context.computing_device);
         dolly->m_pointer = this->m_pointer;
         dolly->m_program = this->m_program;
         dolly->m_inputs.resize(this->m_inputs.size());
@@ -96,7 +88,7 @@ namespace ts {
         dolly->m_map_input_slots = this->m_map_input_slots;
         dolly->m_map_output_slots = this->m_map_output_slots;
         dolly->m_data_sagment = this->m_data_sagment;
-        dolly->set_computing_thread_number(this->get_computing_thread_number());
+        dolly->m_runtime_context = this->m_runtime_context.clone();
         return dolly;
     }
 
@@ -122,7 +114,11 @@ namespace ts {
             inst = std::make_shared<DataSagmentInstruction>(data_sagment_inst->data_index() + data_sagment_base);
         }
         for (auto &data : block.data_sagment) {
-            bench->m_data_sagment->clone_push(data);
+            if (data.device.empty()) {
+                bench->m_data_sagment->clone_push(data);
+            } else {
+                bench->m_data_sagment->clone_push(data, data.device);
+            }
         }
 
         // binding instructions
@@ -211,13 +207,5 @@ namespace ts {
 
     void Workbench::push_data_sagment(int data_index) {
         this->m_stack->push(*this->m_data_sagment->index(data_index));
-    }
-
-    void Workbench::set_computing_thread_number(int computing_thread_number) {
-        this->m_thread_pool = std::make_shared<ThreadPool>(computing_thread_number < 0 ? 0 : computing_thread_number);
-    }
-
-    int Workbench::get_computing_thread_number() const {
-        return int(m_thread_pool->size());
     }
 }

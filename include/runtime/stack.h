@@ -6,7 +6,7 @@
 #define TENSORSTACK_RUNTIME_STACK_H
 
 #include "core/device.h"
-#include "core/controller.h"
+#include "core/sync/sync_controller.h"
 #include "core/dtype.h"
 #include "core/tensor.h"
 #include "global/hard_converter.h"
@@ -25,9 +25,12 @@ namespace ts {
         using shared = std::shared_ptr<self>;  ///< smart pointer
 
         explicit Stack(const MemoryDevice &device)
-                : Stack(device, std::make_shared<DynamicMemoryController>(device)) {}
+                : Stack(device, DynamicSyncMemoryController::Make(device)) {}
 
-        explicit Stack(const MemoryDevice &device, const MemoryController::shared &controller)
+        explicit Stack(const MemoryDevice &device, bool need_lock)
+                : Stack(device, DynamicSyncMemoryController::Make(device, need_lock)) {}
+
+        explicit Stack(const MemoryDevice &device, const SyncMemoryController::shared &controller)
                 : m_device(device), m_controller(controller) {}
 
         // return new Tensor, but not in stack
@@ -35,17 +38,29 @@ namespace ts {
             return Tensor(m_controller, dtype, shape);
         }
 
+        Tensor make(DTYPE dtype, const Shape &shape, const MemoryDevice &device) {
+            return Tensor(m_controller, dtype, shape, device);
+        }
+
         Tensor *push(DTYPE dtype, const Shape &shape) {
             return this->push(this->make(dtype, shape));
+        }
+
+        Tensor *push(DTYPE dtype, const Shape &shape, const MemoryDevice &device) {
+            return this->push(this->make(dtype, shape, device));
         }
 
         Tensor *push(const Tensor::Prototype &proto) {
             return this->push(proto.dtype(), proto.sizes());
         }
 
+        Tensor *push(const Tensor::Prototype &proto, const MemoryDevice &device) {
+            return this->push(proto.dtype(), proto.sizes(), device);
+        }
+
         Tensor *push(const Tensor &tensor) {
-            // TODO: remove this check, supporting cross device computing
-            TS_AUTO_CHECK(tensor.device() == this->m_device);
+            // removed this check, supporting cross device computing
+            // TS_AUTO_CHECK(tensor.device() == this->m_device);
             this->m_stack.push_back(tensor);
             return &this->m_stack.back();
         }
@@ -63,15 +78,18 @@ namespace ts {
             return this->push(tensor.clone(this->m_controller));
         }
 
+        Tensor *clone_push(const Tensor &tensor, const MemoryDevice &device) {
+            return this->push(tensor.clone(this->m_controller, device));
+        }
+
         Tensor *clone(int i) {
-            auto &tensor = *this->index(i);
-            auto &proto = tensor.proto();
-            auto dolly = this->push(proto.dtype(), proto.sizes());
-            auto copy_converter = this->converter();
-            copy_converter(m_device.id(), dolly->data(),
-                           m_device.id(), tensor.data(),
-                           size_t(tensor.proto().count() * tensor.proto().type_bytes()));
-            return dolly;
+            auto tensor = *this->index(i);
+            return clone_push(tensor);
+        }
+
+        Tensor *clone(int i, const MemoryDevice &device) {
+            auto tensor = *this->index(i);
+            return clone_push(tensor, device);
         }
 
         // if i >= 0, then i is bottom_up_index; else if i < 0, the i is top_down_index
@@ -142,7 +160,7 @@ namespace ts {
         }
 
         Device m_device;                          ///< running tensor device, compute on it
-        MemoryController::shared m_controller;    ///< tensor memory backend
+        SyncMemoryController::shared m_controller;    ///< tensor memory backend
         std::deque<Tensor> m_stack;               ///< saving all tensor
         size_t m_base = 0;                        ///< the running control base
         std::stack<size_t> m_base_stack;          ///< save each call base
