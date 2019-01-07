@@ -8,6 +8,8 @@
 
 #include "utils/ctxmgr_lite_support.h"
 
+#include <algorithm>
+
 namespace ts {
     RuntimeContext::RuntimeContext():
         m_computing_thread_number(1) {

@@ -82,9 +82,9 @@ namespace ts {
     private:
         size_t m_pointer = 0;   // pointer to running function
         std::vector<Instruction::shared> m_program; // running function, program area
-        MemoryController::shared m_static_memory;
-        MemoryController::shared m_flow_memory;
-        MemoryController::shared m_dynamic_memory;
+        SyncMemoryController::shared m_static_memory;
+        SyncMemoryController::shared m_flow_memory;
+        SyncMemoryController::shared m_dynamic_memory;
         Stack::shared m_stack;  // save running memory, data area
         Stack::shared m_data_sagment;   // save static area
         // map slot, means <tensor'name, tensor's index in stack>

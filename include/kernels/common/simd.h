@@ -28,7 +28,7 @@ namespace ts {
     using float32x4 = simd<float, 4>;
 
     template <typename T, int M>
-    inline T sum(simd<T, M> value) {
+    inline T sum(const simd<T, M> &value) {
         T a[M];
         value.store(a);
         T sum = 0;
@@ -37,7 +37,7 @@ namespace ts {
     }
 
     template <typename T>
-    inline T sum(simd<T, 4> value) {
+    inline T sum(const simd<T, 4> &value) {
         T a[4];
         value.store(a);
         return a[0] + a[1] + a[2] + a[3];

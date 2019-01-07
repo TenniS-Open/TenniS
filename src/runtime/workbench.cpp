@@ -19,10 +19,10 @@ namespace ts {
         this->m_device_context.initialize(device);
         auto &memory_device = this->m_device_context.memory_device;
 
-        this->m_static_memory = std::make_shared<DynamicMemoryController>(memory_device);
+        this->m_static_memory = DynamicSyncMemoryController::Make(memory_device, true);
         // TODO: Make real flow memory controller
-        this->m_flow_memory = std::make_shared<DynamicMemoryController>(memory_device);
-        this->m_dynamic_memory = std::make_shared<DynamicMemoryController>(memory_device);
+        this->m_flow_memory = DynamicSyncMemoryController::Make(memory_device, false);
+        this->m_dynamic_memory = DynamicSyncMemoryController::Make(memory_device, false);
         this->m_stack = std::make_shared<Stack>(memory_device, this->m_flow_memory);
         this->m_data_sagment = std::make_shared<Stack>(memory_device, this->m_static_memory);
     }
@@ -46,7 +46,7 @@ namespace ts {
         // set input
         for (int i = 0; static_cast<size_t >(i) < this->m_inputs.size(); ++i) {
             auto &arg = this->m_inputs[i];
-            this->m_stack->clone_push(arg);
+            this->m_stack->clone_push(arg, arg.device());
         }
 
         // bind thread pool to any operator can using thread speed up
@@ -75,7 +75,7 @@ namespace ts {
         // TODO: change output memory device type
         for (int i = 0; static_cast<size_t >(i) < this->m_stack->size(); ++i) {
             auto &arg = *this->m_stack->index(i);
-            this->m_outputs[i] = arg.clone(m_dynamic_memory);
+            this->m_outputs[i] = arg.clone(m_dynamic_memory, arg.device());
         }
     }
 
@@ -114,7 +114,11 @@ namespace ts {
             inst = std::make_shared<DataSagmentInstruction>(data_sagment_inst->data_index() + data_sagment_base);
         }
         for (auto &data : block.data_sagment) {
-            bench->m_data_sagment->clone_push(data);
+            if (data.device.empty()) {
+                bench->m_data_sagment->clone_push(data);
+            } else {
+                bench->m_data_sagment->clone_push(data, data.device);
+            }
         }
 
         // binding instructions

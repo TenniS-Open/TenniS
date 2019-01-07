@@ -10,13 +10,26 @@
 
 namespace ts {
 
+    class DeviceTensor
+    {
+    public:
+        Tensor tensor;
+        DeviceType device;
+
+        DeviceTensor(const Tensor &tensor) : tensor(tensor) {}
+        DeviceTensor(const Tensor &tensor, const DeviceType &device)
+            : tensor(tensor), device(device) {}
+
+        operator Tensor() const { return tensor; }
+    };
+
     class InstructionBlock
     {
     public:
         int nargs = 0;
         int nresults = 0;
         std::vector<Instruction::shared> instructions;
-        std::vector<Tensor> data_sagment;
+        std::vector<DeviceTensor> data_sagment;
     };
 
     /**

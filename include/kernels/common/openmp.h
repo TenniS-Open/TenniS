@@ -24,6 +24,14 @@ namespace ts {
         return 1;
 #endif
     }
+
+    inline int openmp_thread_id() {
+#ifdef TS_USE_OPENMP
+        return omp_get_thread_num();
+#else
+        return 0;
+#endif
+    }
 }
 
 

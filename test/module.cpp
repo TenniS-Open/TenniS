@@ -16,6 +16,7 @@
 #include <cstring>
 
 #include <kernels/cpu/resize2d.h>
+#include <kernels/cpu/reshape.h>
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/opencv.hpp>
@@ -39,12 +40,14 @@ public:
         std::vector<ts::Tensor::Prototype> output;
         this->infer(stack, output);
         TS_AUTO_CHECK(output[0].dtype() == ts::FLOAT32);
-        stack.push(output[0]);
-        auto &sum = *stack.index(-1);
-        std::memset(sum.data<float>(), 0, sum.count() * sizeof(float));
+        stack.push(output[0], memory_device()); // Notice push tensor device, default is DeviceContext.memory_device
+        auto sum = stack.index(-1);
+        auto sum_ptr = sum->sync(memory_device()).data<float>();    // Get CPU data ptr
+        std::memset(sum_ptr, 0, sum->count() * sizeof(float));
         for (int i = 0; i < input_num; ++i) {
-            for (int j = 0; j < sum.count(); ++j) {
-                sum.data<float>()[j] += stack.index(i)->data<float>()[j];
+            auto input_ptr = stack.index(i)->sync(memory_device()).data<float>();   // Get CPU data ptr
+            for (int j = 0; j < sum->count(); ++j) {
+                sum_ptr[j] += input_ptr[j];
             }
         }
         return 1;
@@ -82,6 +85,40 @@ namespace ts {
     }
 }
 
+class time_log {
+public:
+    using self = time_log;
+
+    using microseconds = std::chrono::microseconds;
+    using system_clock = std::chrono::system_clock;
+    using time_point = decltype(system_clock::now());
+
+    explicit time_log(ts::LogLevel level, const std::string &header = "") :
+            m_duration(0) {
+        m_level = level;
+        m_header = header;
+        m_start = system_clock::now();
+    }
+
+    ~time_log() {
+        m_end = system_clock::now();
+        m_duration = m_end - m_start;
+
+        std::ostringstream oss;
+        ts::LogStream(m_level) << m_header << m_duration.count() / 1000.0 << "ms";
+    }
+
+    time_log(const self &) = delete;
+    self &operator=(const self &) = delete;
+
+private:
+    ts::LogLevel m_level;
+    std::string m_header;
+    microseconds m_duration;
+    time_point m_start;
+    time_point m_end;
+};
+
 int main()
 {
     using namespace ts;
@@ -95,28 +132,43 @@ int main()
 
 //    auto a = bubble::param("a");
 //    auto b = bubble::param("b");
-//    auto b1 = block_n_times("block1", a, 100);
-//    auto b2 = block_n_times("block1", b, 100);
+//    auto b1 = block_n_times("block1", a, 1000);
+//    auto b2 = block_n_times("block1", b, 1000);
 //    auto c = bubble::op("c", "sum", {b1, b2});
 
     /*
     auto a = bubble::param("a");
     auto b = bubble::param("b");
-    auto data = bubble::data("data", tensor::from<float>(3));
+    auto data = bubble::data("data", tensor::from<float>(3), CPU);
 
     auto c = bubble::op("c", "sum", {a, b, data});
     */
 
+    
     cv::Mat srcimage = cv::imread("/wqy/Downloads/test.png");
     auto a = bubble::param("a");
     auto b = bubble::param("b");
-    auto c = bubble::op("c","resize2d",{a,b});
+    auto c = bubble::op("c","_resize2d",{a,b});
 
     ts::Shape type_shape = {1};
     Tensor param_type(INT32, type_shape);
     param_type.data<int>()[0] = 0;
     c.ref<Bubble>().set("type",param_type);
+    
 
+    /*
+    auto a = bubble::param("a");
+    auto c = bubble::op("c","_reshape",{a});
+
+    ts::Shape type_shape = {4};
+    Tensor param_type(INT32, type_shape);
+    param_type.data<int>()[0] = 2;
+    param_type.data<int>()[1] = -1;
+
+    param_type.data<int>()[2] = 3;
+    param_type.data<int>()[3] = 4;
+    c.ref<Bubble>().set("shape",param_type);
+    */
     /*
     {
         // test graph
@@ -133,7 +185,7 @@ int main()
     // setup module
     std::shared_ptr<Module> m = std::make_shared<Module>();
     m->load(g, {"c"});
-    m->sort_inputs({"a", "b"});
+    //m->sort_inputs({"a", "b"});
 
     {
         // test graph
@@ -167,14 +219,17 @@ int main()
         return -1;
     }
 
-    /*
-    Tensor input_a(FLOAT32, {1});
-    Tensor input_b(FLOAT32, {1});
+    
+    //Tensor input_a(INT32, {3,16});
+    //Tensor input_b(FLOAT32, {2,24});
 
-    input_a.data<float>()[0] = 1;
-    input_b.data<float>()[0] = 3;
-    */
+    //for(int i=0; i<48; i++)
+    //    input_a.data<int>()[i] = i+1;
+    //input_a.data<float>()[0] = 1;
+    //input_b.data<float>()[0] = 3;
+    
 
+    
     ts::Shape shape = {2,srcimage.rows, srcimage.cols, srcimage.channels()};
 
     //ts::Shape shape = {1,1,4, 4};
@@ -207,14 +262,26 @@ int main()
     input_b.data<int>()[1] = 400;
     input_b.data<int>()[2] = 400;
     input_b.data<int>()[3] = -1;
-
+    
 
     bench->input("a", input_a);
     bench->input("b", input_b);
+    {
+        time_log _log(ts::LOG_INFO, "Spent ");
 
-    bench->run();
+        bench->run();
+    }
 
     auto output_c = bench->output("c");
+    std::vector<int> vec = output_c.sizes();
+    std::cout << vec.size() << ",count:" << output_c.count() << std::endl;
+    for(int i=0; i<vec.size(); i++)
+        std::cout << vec[i] << ",";
+    std::cout << std::endl;  
+
+    //for(int i=0; i<output_c.count(); i++)
+    //    std::cout << output_c.data<int>()[i] << ",";
+    //std::cout << std::endl;  
     cv::Mat dstimage(400,400,CV_32FC3,output_c.data<float>());
     cv::Mat dstimage2(400,400,CV_32FC3,output_c.data<float>() + 400 * 400 * 3);
 
@@ -223,5 +290,6 @@ int main()
     cv::imwrite("/tmp/mm3.png", dstimage);
     cv::imwrite("/tmp/mm4.png", dstimage2);
 
+    std::cout << "-----ok-----" << std::endl;  
     //std::cout << "output: " << output_c.data<float>()[0] << std::endl;
 }

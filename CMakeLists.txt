@@ -58,6 +58,15 @@ set(third_libraries)
 list(APPEND third_libraries -lopenblas)
 list(APPEND third_libraries -lpthread)
 
+if (TS_USE_OPENMP)
+    add_definitions(-DTS_USE_OPENMP)
+    message(STATUS "[Optional] Use OpenMP: [ON]")
+
+    include(use_openmp)
+    list(APPEND third_libraries ${OPENMP_LIBRARY})
+else ()
+    message(STATUS "[Optional] Use OpenMP: [OFF]")
+endif ()
 
 if (TS_USE_CUDA)
     find_package(CUDA REQUIRED)

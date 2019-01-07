@@ -1,4 +1,4 @@
-#include <kernels/cpu/resize2d.h>
+#include <kernels/cpu/image_resize2d.h>
 #include <kernels/cpu/saturate_cast.h>
 #include <memory>
 
@@ -6,8 +6,14 @@ namespace ts {
 
 
 template<typename T>
-void Resize2d::ResizeImageLinear( const T *src_im, int src_width, int src_height, int channels,
-                                     T *dst_im, int dst_width, int dst_height){
+void Image_Resize2d::ResizeImageLinear( const T *src_im, int src_width, int src_height, int channels,
+                                     T *dst_im, int dst_width, int dst_height, bool ishwc){
+  if ((channels != 1 && channels != 3)) {
+    std::cout << "<Illegal image channels!>" << std::endl;
+    std::cout << "src_img: " << channels << std::endl;
+    throw ts::Exception("input channels only support 1 and 3");
+  }
+
   if (src_width == dst_width && src_height == dst_height) {
     ::memcpy(dst_im, src_im, src_width * src_height * channels * sizeof(T));
     return;
@@ -38,20 +44,20 @@ void Resize2d::ResizeImageLinear( const T *src_im, int src_width, int src_height
       double lf_weight_y = lf_y_s - n_y_s;
 
       for (int c = 0; c < channels; c++) {
-          //if(ishwc) {
+          if(ishwc) {
               dst_im[(n_y_d * dst_width + n_x_d) * channels + c] =
                      (1 - lf_weight_y) * (1 - lf_weight_x) * src_im[(n_y_s * src_width + n_x_s) * channels + c] +
                      (1 - lf_weight_y) * lf_weight_x * src_im[(n_y_s * src_width + n_x_s + 1) * channels + c] +
                      lf_weight_y * (1 - lf_weight_x) * src_im[((n_y_s + 1) * src_width + n_x_s) * channels + c] +
                      lf_weight_y * lf_weight_x * src_im[((n_y_s + 1) * src_width + n_x_s + 1) * channels + c];
-          //}else {
-          //    dst_im[(n_y_d * dst_width + n_x_d) + c * dststep ] =
-          //           (1 - lf_weight_y) * (1 - lf_weight_x) * src_im[(n_y_s * src_width + n_x_s) + c * srcstep] +
-          //           (1 - lf_weight_y) * lf_weight_x * src_im[(n_y_s * src_width + n_x_s + 1) + c * srcstep] + 
-          //           lf_weight_y * (1 - lf_weight_x) * src_im[((n_y_s + 1) * src_width + n_x_s) + c * srcstep] +
-          //           lf_weight_y * lf_weight_x * src_im[((n_y_s + 1) * src_width + n_x_s + 1) + c * srcstep];
+          }else {
+              dst_im[(n_y_d * dst_width + n_x_d) + c * dststep ] =
+                     (1 - lf_weight_y) * (1 - lf_weight_x) * src_im[(n_y_s * src_width + n_x_s) + c * srcstep] +
+                     (1 - lf_weight_y) * lf_weight_x * src_im[(n_y_s * src_width + n_x_s + 1) + c * srcstep] + 
+                     lf_weight_y * (1 - lf_weight_x) * src_im[((n_y_s + 1) * src_width + n_x_s) + c * srcstep] +
+                     lf_weight_y * lf_weight_x * src_im[((n_y_s + 1) * src_width + n_x_s + 1) + c * srcstep];
 
-         //}//end if
+         }//end if
       }//end for c
     }
   }
@@ -63,8 +69,8 @@ void Resize2d::ResizeImageLinear( const T *src_im, int src_width, int src_height
 
 
 template<typename T>
- void Resize2d::ResizeImageCubic(const T *src_im, int src_width, int src_height, int channels,
-                             T *dst_im, int dst_width, int dst_height){
+ void Image_Resize2d::ResizeImageCubic(const T *src_im, int src_width, int src_height, int channels,
+                             T *dst_im, int dst_width, int dst_height, bool ishwc){
     double scale_x = (double)src_width / dst_width;
     double scale_y = (double)src_height / dst_height;
 
@@ -128,7 +134,7 @@ template<typename T>
             cbufX[3] = ts::saturate_cast<short>(coeffsX[3] * 2048);
 
             for (int k = 0; k < channels; ++k) {
-                //if(ishwc) {
+                if(ishwc) {
                     dst_im[j * dstrows + i * channels + k] = abs(int((src_im [(sy-1) * srcrows + (sx-1) * channels + k] * cbufX[0] * cbufY[0] +
                                                                   src_im [(sy) * srcrows + (sx-1) * channels + k] * cbufX[0] * cbufY[1] +
                                                                   src_im [(sy+1) * srcrows + (sx-1) * channels + k] * cbufX[0] * cbufY[2] +
@@ -153,7 +159,7 @@ template<typename T>
                                                                   src_im [(sy+1) * srcrows + (sx+2) * channels + k] * cbufX[3] * cbufY[2] +
                                                                   src_im [(sy+2) * srcrows + (sx+2) * channels + k] * cbufX[3] * cbufY[3] )) >> 22);
 
-                /*}else {
+                }else {
                     dst_im[j * dst_width + i + k * dststep] = abs(int((src_im [(sy-1) * src_width + (sx-1) + k * srcstep] * cbufX[0] * cbufY[0] +
                                                                   src_im [(sy) * src_width + (sx-1) + k * srcstep] * cbufX[0] * cbufY[1] +
                                                                   src_im [(sy+1) * src_width + (sx-1) + k * srcstep] * cbufX[0] * cbufY[2] +
@@ -179,7 +185,7 @@ template<typename T>
                                                                   src_im [(sy+2) * src_width + (sx+2) + k * srcstep] * cbufX[3] * cbufY[3] )) >> 22);
 
                 }//end if
-              */
+
             }//end k
         }
     }
@@ -187,6 +193,6 @@ template<typename T>
 
 
 
-TS_REGISTER_OPERATOR(Resize2d, ts::CPU, "_resize2d")
+TS_REGISTER_OPERATOR(Image_Resize2d, ts::CPU, "_image_resize2d")
 
 }
