@@ -58,8 +58,8 @@ public:
 
         for(int k=0; k<preoffset; k++) {
             for(int i=0; i<shuffle.size(); i++) {
-                ::memcpy(tensor->sync(memory_device()).data() + type_len * (k * newstride + i * backstride),
-                         input_tensor->sync(memory_device()).data() + type_len * (k * stride + shuffle[i] * backstride), 
+                ::memcpy(tensor->sync(memory_device()).data<char>() + type_len * (k * newstride + i * backstride),
+                         input_tensor->sync(memory_device()).data<char>() + type_len * (k * stride + shuffle[i] * backstride), 
                          backstride * type_len); 
             }
         }
