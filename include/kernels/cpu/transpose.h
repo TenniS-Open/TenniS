@@ -84,7 +84,7 @@ public:
 
         int type_len = ts::type_bytes(input_tensor->dtype());
 
-        stack.push(output);
+        stack.push(output, memory_device());
 
         ts::Tensor *tensor = stack.index(-1);
       
@@ -105,7 +105,8 @@ public:
             //std::cout << "new index:" << index << ",index:" << i << ",type_len:" << type_len  << ",value:" << input_tensor->data<int>()[i] << std::endl;
             //tensor->data<int>()[index] = input_tensor->data<int>()[i];
             //std::cout << "new index:" << index << ",index:" << i << ",type_len:" << type_len << std::endl;
-            ::memcpy(tensor->data() + type_len * index, input_tensor->data() + type_len * i, type_len); 
+            ::memcpy(tensor->sync(memory_device()).data() + type_len * index, 
+                     input_tensor->sync(memory_device()).data() + type_len * i, type_len); 
         }
         return 1;
     }
@@ -154,7 +155,7 @@ private:
 
             std::set<int> tmpset;
             for(int i=0; i<tensor_permute.count(); i++) {
-                permute[i] = tensor_permute.data<int>()[i];
+                permute[i] = tensor_permute.sync(memory_device()).data<int>()[i];
                 if(permute[i] < 0 || permute[i] >= shape.size()) {
                     throw ts::Exception("permute parameter is invalid"); 
                 }

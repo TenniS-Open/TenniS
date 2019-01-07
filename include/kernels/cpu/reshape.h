@@ -70,12 +70,12 @@ public:
         Shape reshape(ncount);
         unsigned int ntotal = 1;
         for(int i=0; i<ncount; i++) {
-            reshape[i] = tensor_shape.data<int>()[i];
+            reshape[i] = tensor_shape.sync(memory_device()).data<int>()[i];
             std::cout << "i:" << reshape[i] << std::endl;
             if(reshape[i] > 0) {
                     ntotal *= reshape[i];
             }
-            if(tensor_shape.data<int>()[i] <= 0) {
+            if(tensor_shape.sync(memory_device()).data<int>()[i] <= 0) {
                 if(bfind) {
                     throw ts::Exception("shape parameters only one less than 0 ");
                 }else {
