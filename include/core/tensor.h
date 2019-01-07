@@ -7,8 +7,9 @@
 
 #include "memory.h"
 #include "dtype.h"
-#include "core/controller.h"
+#include "core/sync/sync_controller.h"
 #include "module/serialization.h"
+#include "sync/sync_memory.h"
 
 #include <vector>
 #include <cassert>
@@ -103,6 +104,8 @@ namespace ts {
         std::vector<T> m_weights;
     };
 
+    using TensorMemory = SyncMemory;
+
     class Tensor : public Serializable {
     public:
         class Prototype {
@@ -143,17 +146,29 @@ namespace ts {
         Tensor(MemoryController::shared controller, DTYPE dtype,
                const Shape &_shape);   // allocate memory from controller
 
+        Tensor(SyncMemoryController::shared controller, DTYPE dtype,
+               const Shape &_shape);   // allocate memory from controller
+
+        Tensor(SyncMemoryController::shared controller, DTYPE dtype,
+               const Shape &_shape, const MemoryDevice &device);   // allocate memory from controller
+
         Tensor(const MemoryDevice &device, DTYPE dtype, const Shape &_shape);
 
         Tensor(DTYPE dtype, const Shape &_shape);
 
         Tensor(MemoryController::shared controller, const Prototype &proto);   // allocate memory from controller
 
+        Tensor(SyncMemoryController::shared controller, const Prototype &proto);   // allocate memory from controller
+
+        Tensor(SyncMemoryController::shared controller, const Prototype &proto, const MemoryDevice &device);   // allocate memory from controller
+
         Tensor(const MemoryDevice &device, const Prototype &proto);
 
         explicit Tensor(const Prototype &proto);
 
         Tensor(const Memory &memory, const Prototype &proto);
+
+        Tensor(const SyncMemory &memory, const Prototype &proto);
 
         Tensor();
 
@@ -167,7 +182,7 @@ namespace ts {
 
         bool empty() const;
 
-        const Device &device() const { return m_memory.device(); }
+        const MemoryDevice &device() const { return m_memory.device(); }
 
         DTYPE dtype() const { return m_proto.dtype(); }
 
@@ -197,7 +212,15 @@ namespace ts {
 
         Tensor clone(MemoryController::shared controller) const;
 
+        Tensor clone(SyncMemoryController::shared controller) const;
+
+        Tensor clone(SyncMemoryController::shared controller, const MemoryDevice &device) const;
+
         Tensor::shared clone_shared(MemoryController::shared controller) const;
+
+        Tensor::shared clone_shared(SyncMemoryController::shared controller) const;
+
+        Tensor::shared clone_shared(SyncMemoryController::shared controller, const MemoryDevice &device) const;
 
         Tensor reshape(const Shape &shape) const;
 
@@ -219,8 +242,18 @@ namespace ts {
 
         HypeShape hype_shape() const { return HypeShape(this->sizes()); }
 
+        TensorMemory::shared locked() { return m_memory.locked(); }
+
+        Memory sync() { return m_memory.sync(); }
+
+        Memory sync() const { return m_memory.sync(); }
+
+        Memory sync(const MemoryDevice &device) { return m_memory.sync(device); }
+
+        Tensor view(const MemoryDevice &device);
+
     private:
-        Memory m_memory;
+        TensorMemory m_memory;
         Prototype m_proto;
 
         // add field supporting structure data

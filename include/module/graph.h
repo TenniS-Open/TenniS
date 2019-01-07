@@ -133,11 +133,7 @@ namespace ts {
 
         Node(const self &) = default;
 
-        Node(self &&) = default;
-
         Node &operator=(const self &) = default;
-
-        Node &operator=(self &&) = default;
 
         std::vector<Node> inputs() const {
             auto ptr = m_ptr.lock();

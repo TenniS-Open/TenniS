@@ -14,7 +14,7 @@ namespace ts {
     DynamicMemoryController::DynamicMemoryController(const MemoryDevice &device)
             : m_device(device) {
         m_allocator = HardAllocator::Query(device.type());
-        TS_AUTO_CHECK(m_allocator != nullptr);
+        TS_CHECK(m_allocator != nullptr) << "Can not found memory controller for " << device.type();
     }
 
     Memory DynamicMemoryController::alloc(size_t size) {

@@ -70,6 +70,10 @@ namespace ts {
 
         void clear_fields();
 
+        MemoryDevice memory_device() const;
+
+        ComputingDevice computing_device() const;
+
     private:
         bool is_in_fields(const std::string &name);
 

@@ -19,6 +19,7 @@
 #include "runtime/instruction/tensor_instruction.h"
 #include "global/operator_factory.h"
 #include "global/memory_device.h"
+#include "core/tensor_builder.h"
 
 
 namespace ts {
@@ -66,6 +67,13 @@ namespace ts {
             // step 2.x: try find operator on memory device, if computing device failed
             auto memory_device = ComputingMemory::Query(m_computing_device);
             creator = OperatorCreator::Query(memory_device.type(), bubble.op());
+        }
+
+        if (creator == nullptr) {
+            // step 2.y: try find operator on CPU version
+            if (m_computing_device.type() != CPU) {
+                creator = OperatorCreator::Query(CPU, bubble.op());
+            }
         }
 
         if (creator == nullptr) TS_LOG_ERROR << "Not supported operator " << bubble.op() << eject;
@@ -122,7 +130,11 @@ namespace ts {
             auto &bubble = node.ref<Bubble>();
             auto value = bubble.get("value");
             auto data_index = int(block.data_sagment.size());
-            block.data_sagment.push_back(value);
+            if (bubble.has("#device")) {
+                block.data_sagment.push_back(DeviceTensor(value, tensor::to_string(bubble.get("#device"))));
+            } else {
+                block.data_sagment.push_back(DeviceTensor(value));
+            }
             map_node_data_sagment_index.insert(std::make_pair(node, data_index));
             return data_index;
         };
@@ -199,7 +211,7 @@ namespace ts {
         auto simulator_find_last_unsolved_node_index = [&]() -> int64_t {
             int64_t i = int64_t(simulator.size()) - 1;
             while (i >= 0) {
-                auto &node = simulator[i];
+                auto &node = simulator[size_t(i)];
                 auto &bubble = node.ref<Bubble>();
                 if (bubble.op() != Bubble::Parameter) return i;
                 --i;
@@ -216,7 +228,7 @@ namespace ts {
         auto simulator_find_last_ref_node_index = [&](Node ref) -> int64_t {
             int64_t i = int64_t(simulator.size()) - 1;
             while (i >= 0) {
-                auto &node = simulator[i];
+                auto &node = simulator[size_t(i)];
                 auto &refs = map_node_refs[node];
                 if (refs.find(ref) != refs.end()) return i;
                 --i;

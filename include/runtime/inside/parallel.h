@@ -12,6 +12,8 @@
 #include "utils/log.h"
 #include <algorithm>
 
+#include <algorithm>
+
 #define TS_THREAD_BLOCK_SIZE 40960
 
 namespace ts {
