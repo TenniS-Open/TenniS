@@ -1,12 +1,14 @@
 cmake_minimum_required(VERSION 2.7)
 project(TensorStack)
 
-set(TARGET "SHARED" CACHE STRING "STATIC or SHARED" FORCE)
+set(TARGET "STATIC" CACHE STRING "STATIC or SHARED" FORCE)
 
 # global root dir
 set(SOLUTION_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 add_definitions(-DTS_SOLUTION_DIR="${SOLUTION_DIR}")
+add_definitions("-Wall -g")
 
+add_definitions(-DTS_DISABLE_PARALLEL)
 # dir for common cmake files
 list(APPEND CMAKE_MODULE_PATH ${SOLUTION_DIR}/cmake)
 list(APPEND CMAKE_PREFIX_PATH ${SOLUTION_DIR}/cmake)
@@ -53,6 +55,9 @@ add_definitions(-DTS_USE_SSE)
 
 set(third_libraries)
 
+list(APPEND third_libraries -lopenblas)
+list(APPEND third_libraries -lpthread)
+
 if (TS_USE_OPENMP)
     add_definitions(-DTS_USE_OPENMP)
     message(STATUS "[Optional] Use OpenMP: [ON]")
@@ -81,6 +86,18 @@ elseif (UNIX)
     list(APPEND third_libraries pthread)
 else ()
 endif ()
+
+message(STATUS "Build with opencv")
+find_package(OpenCV REQUIRED)
+message(STATUS "OpenCV library status:")
+message(STATUS "    version: ${OpenCV_VERSION}")
+message(STATUS "    libraries: ${OpenCV_LIBS}")
+message(STATUS "    include path: ${OpenCV_INCLUDE_DIRS}")
+
+include_directories(${OpenCV_INCLUDE_DIRS})
+list(APPEND third_libraries ${OpenCV_LIBS})
+
+
 
 if (TS_USE_CBLAS)
     message(STATUS "[Optional] Use CBLAS: [ON]")
