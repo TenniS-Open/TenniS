@@ -8,6 +8,7 @@
 #include "pot.h"
 #include <vector>
 #include <map>
+#include <unordered_map>
 
 namespace ts {
 
@@ -52,7 +53,7 @@ namespace ts {
         Pot::allocator m_allocator = nullptr;
 
         // std::vector<RopedPot> m_list;
-        std::map<void *, Pot> m_dict;	///< save pair of pointer and index
+        std::unordered_map<void *, Pot> m_dict;	///< save pair of pointer and index
         std::vector<Pot> m_heap;	///< save all free memory, small fisrt sort
     };
 

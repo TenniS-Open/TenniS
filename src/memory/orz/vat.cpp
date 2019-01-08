@@ -15,16 +15,34 @@ namespace ts {
         : m_allocator(ator) {
     }
 
+    static int binary_find(const std::vector<Pot> &heap, size_t size, int left, int right) {
+        while (true) {
+            if (right - left <= 0) return left;
+            int middle = (left + right) / 2;
+            if (heap[middle].capacity() < size) {
+                left = middle + 1;
+                continue;
+            }
+            if (middle > 0 && heap[middle - 1].capacity() >= size) {
+                right = middle - 1;
+                continue;
+            }
+            return middle;
+        }
+    }
+
+    // find the position of Pot, which can contain the size, or return 0
+    // the return value
+    static int binary_find(const std::vector<Pot> &heap, size_t size) {
+        return binary_find(heap, size, 0, int(heap.size()) - 1);
+    }
+
     void *Vat::malloc(size_t _size) {
         // find first small piece
         Pot pot(m_allocator);
         if (!m_heap.empty())
         {
-            size_t i = 0;
-            for (; i < m_heap.size() - 1; ++i)
-            {
-                if (m_heap[i].capacity() >= _size) break;
-            }
+            auto i = binary_find(m_heap, _size);
             pot = m_heap[i];
             m_heap.erase(m_heap.begin() + i);
         }
@@ -43,8 +61,8 @@ namespace ts {
 
         auto &pot = it->second;
 
-        auto ind = m_heap.begin();
-        while (ind != m_heap.end() && ind->capacity() < pot.capacity()) ++ind;
+        auto i = binary_find(m_heap, pot.capacity());
+        auto ind = m_heap.begin() + i;
         m_heap.insert(ind, pot);
 
         m_dict.erase(key);
