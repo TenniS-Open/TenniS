@@ -41,7 +41,7 @@ include_directories(${SOLUTION_DIR}/src)
 
 set(SOURCE_DIR ${SOLUTION_DIR})
 
-set(TENSORSTACK_MODULES compiler core engine global module runtime utils)
+set(TENSORSTACK_MODULES compiler core engine global memory module runtime utils)
 set(TENSORSTACK_ACHIVES common cpu) # in kernels and ops
 
 add_definitions(-DTS_USE_SSE)
@@ -77,6 +77,7 @@ if (WIN32)
     # list(APPEND third_libraries pthread)
 elseif (APPLE)
     # list(APPEND third_libraries pthread)
+    set(CMAKE_MACOSX_RPATH 1)
 elseif (UNIX)
     list(APPEND third_libraries pthread)
 else ()
