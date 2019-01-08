@@ -6,11 +6,13 @@
 #include "global/hard_converter.h"
 #include "global/memory_device.h"
 
+#include "utils/assert.h"
 
 #include <cstring>
 
 namespace ts {
     void *cpu_allocator(int id, size_t size, void *mem) {
+        if (size == 0 && mem == nullptr) return nullptr;
         void *new_mem = nullptr;
         if (size == 0) {
             std::free(mem);
