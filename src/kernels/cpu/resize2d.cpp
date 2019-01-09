@@ -1,5 +1,6 @@
 #include <kernels/cpu/resize2d.h>
 #include <kernels/cpu/saturate_cast.h>
+#include <core/tensor_builder.h>
 #include <memory>
 
 namespace ts {
@@ -185,7 +186,152 @@ template<typename T>
     }
 }
 
+///////////////////////////////////////////////////////////
+Resize2d:: Resize2d() {
+    field("type", OPTIONAL);
+    m_type = 0;
+}
 
+void Resize2d::init() {
+    supper::init();
+    if(has("type")) {
+        //std::cout << "type:" << get("type").sync(memory_device()).data<int>()[0] << std::endl;
+        m_type = ts::tensor::to_int(get("type"));
+    }
+
+}
+
+
+
+int Resize2d::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output) {
+    if(stack.size() != 2 || stack.index(0)->dims() < 2 || stack.index(0)->dims() != stack.index(1)->count()) {
+        throw ts::Exception("Resize2d input parameters is invalid");
+    }
+
+    if(stack.index(1)->dtype() != ts::INT32) {
+        throw ts::Exception("Resize2d input parameters 1 type only supported INT32");
+    }
+
+    int type_len = ts::type_bytes(stack.index(0)->dtype());
+
+    int dims = stack.index(0)->dims();
+    int i=0;
+    for(i=0; i< dims; i++) {
+        if((int)(stack.index(1)->sync(memory_device()).data<int>()[i]) > 0)
+            break;
+    }
+
+    if(i >= dims - 1) {
+        throw ts::Exception("Resize2d input parameters dims invalid");
+    }
+
+    int new_height = (int)stack.index(1)->sync(memory_device()).data<int>()[i];
+    int new_width  = (int)stack.index(1)->sync(memory_device()).data<int>()[i+1];
+
+    ts::Shape shape(stack.index(0)->sizes());
+
+    shape[i] = new_height;
+    shape[i+1] = new_width;
+
+    output.resize(1);
+    output[0] = ts::Tensor::Prototype(stack.index(0)->dtype(),shape);
+    return 1;
+}
+
+template<typename T>
+void Resize2d::resize(ts::Stack &stack, ts::Tensor &tensor, int old_height, int old_width,
+                      int new_height,int new_width, unsigned int oldstep, unsigned int newstep, 
+                      unsigned int step, int channels) {
+
+     T*  psrc = stack.index(0)->sync(memory_device()).data<T>() + oldstep;;
+     T*  pdst = tensor.sync(memory_device()).data<T>() + newstep;;
+
+     if(m_type == 0) {
+         ResizeImageLinear(psrc, old_width, old_height, channels, pdst,new_width,new_height);
+     }else {
+         ResizeImageCubic(psrc, old_width, old_height, channels, pdst,new_width,new_height);
+     }
+}
+
+
+int Resize2d::run(ts::Stack &stack) {
+    int input_num = stack.size();
+
+    if(input_num != 2 || stack.index(0)->dims() < 2 || stack.index(0)->dims() != stack.index(1)->count()) {
+        throw ts::Exception("Resize2d input parameters is invalid");
+    }
+
+    if(stack.index(1)->dtype() != ts::INT32) {
+        throw ts::Exception("Resize2d input parameters 1 type only supported INT32");
+    }
+    int type_len = ts::type_bytes(stack.index(0)->dtype());
+
+    int dims = stack.index(0)->dims();
+    int i=0;
+    for(i=0; i< dims; i++) {
+        if((int)(stack.index(1)->sync(memory_device()).data<int>()[i]) > 0)
+            break;
+    }
+
+    if(i >= dims - 1) {
+         throw ts::Exception("Resize2d input parameters dims invalid");
+    }
+
+    int new_height = (int)stack.index(1)->sync(memory_device()).data<int>()[i];
+    int new_width  = (int)stack.index(1)->sync(memory_device()).data<int>()[i+1];
+    int old_height = (int)stack.index(0)->sizes()[i];
+    int old_width  = (int)stack.index(0)->sizes()[i+1];
+
+    std::vector<ts::Tensor::Prototype> output;
+    infer(stack, output);
+
+    ts::Shape shape(output[0].sizes());
+
+    int ntotalbuffer = 0;
+    int batchs,channels;
+    batchs = channels = 1;
+
+    for(int k=0; k<i; k++) {
+        batchs *= shape[k];
+    }
+
+    for(int k=i+2; k<shape.size(); k++) {
+        channels *= shape[k];
+    }
+
+    stack.push(output[0], memory_device());
+
+    int newstep = channels * new_height * new_width;
+    int oldstep = channels * old_height * old_width;
+
+    auto &tensor = *stack.index(-1);
+
+    for(int k=0; k<batchs; k++) {
+        if(type_len == 1){
+            resize<unsigned char>(stack, tensor, old_height,old_width,new_height,new_width,
+                                     k * oldstep, k * newstep, newstep, channels);
+        }else if(type_len == 2) {
+            resize<unsigned short>(stack, tensor, old_height,old_width,new_height,new_width,
+                                     k * oldstep, k * newstep,  newstep, channels);
+        }else if(type_len == 4) {
+            resize<float>(stack, tensor, old_height,old_width,new_height,new_width,
+                                     k * oldstep, k * newstep, newstep, channels);
+        }else if(type_len == 8) {
+            resize<double>(stack, tensor, old_height,old_width,new_height,new_width,
+                                   k * oldstep, k * newstep, newstep, channels);
+        }
+
+    }
+
+    return 1;
+}
+
+
+
+
+
+
+//////////////////////////////////////////////////////////
 
 TS_REGISTER_OPERATOR(Resize2d, ts::CPU, "_resize2d")
 
