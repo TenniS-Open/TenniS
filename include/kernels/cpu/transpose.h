@@ -55,7 +55,7 @@ public:
     }
 
 
-    static std::vector<int> to_coordinate(int index, std::vector<int> &shape)
+    static std::vector<int> to_coordinate(int index, const std::vector<int> &shape)
     {
         std::vector<int> corrdinate(shape.size());
         int ntmp = 0;
@@ -68,7 +68,33 @@ public:
 
         return corrdinate;
     }
- 
+
+    template<typename T>
+    void tranpose_run(T * psrc, int len, T* pdst,  const Shape &shape, const Shape &reshape, const Shape &permute) {
+
+        Shape tmpshape;
+        tmpshape.resize(shape.size());
+
+        int index = 0;
+        for(unsigned int i=0; i<len; i++) {
+            Shape oldshape = to_coordinate(i, shape);
+            for(int k=0; k<oldshape.size(); k++) {
+                tmpshape[k] = oldshape[permute[k]];
+            }
+
+            index = to_index(reshape, tmpshape);
+
+            if(index < 0) {
+                throw ts::Exception("tranpose operator failed, index is invalid");
+            }
+            pdst[index] = psrc[i];
+            //std::cout << "new index:" << index << ",index:" << i << ",type_len:" << type_len  << ",value:" << input_tensor->data<int>()[i] << std::endl;
+            //tensor->data<int>()[index] = input_tensor->data<int>()[i];
+            //std::cout << "new index:" << index << ",index:" << i << ",type_len:" << type_len << std::endl;
+            //::memcpy(tensor->sync(memory_device()).data() + type_len * index, 
+            //         input_tensor->sync(memory_device()).data() + type_len * i, type_len); 
+        }
+    } 
 
     virtual int run(ts::Stack &stack) {
 
@@ -82,17 +108,57 @@ public:
         Shape permute = output_permute.sizes();
         Shape reshape = output.sizes();
 
-        int type_len = ts::type_bytes(input_tensor->dtype());
+        //int type_len = ts::type_bytes(input_tensor->dtype());
 
         stack.push(output, memory_device());
 
         ts::Tensor *tensor = stack.index(-1);
-      
+        ts::DTYPE type = stack.index(0)->dtype();
+
+        unsigned int ncount = input_tensor->count();
+        switch(type) {
+            case ts::INT8: {
+                char * psrc = stack.index(0)->sync(memory_device()).data<char>();
+                char * pdst = tensor->sync(memory_device()).data<char>();
+                tranpose_run<char>(psrc, ncount, pdst, shape, reshape, permute);
+                break;
+            }
+            case ts::INT16: {
+                short * psrc = stack.index(0)->sync(memory_device()).data<short>();
+                short * pdst = tensor->sync(memory_device()).data<short>();
+                tranpose_run<short>(psrc, ncount, pdst, shape, reshape, permute);
+                break;
+            }
+            case ts::INT32: {
+                int * psrc = stack.index(0)->sync(memory_device()).data<int>();
+                int * pdst = tensor->sync(memory_device()).data<int>();
+                tranpose_run<int>(psrc, ncount, pdst, shape, reshape, permute);
+                break;
+            }
+            case ts::FLOAT32: {
+                float * psrc = stack.index(0)->sync(memory_device()).data<float>();
+                float * pdst = tensor->sync(memory_device()).data<float>();
+                tranpose_run<float>(psrc, ncount, pdst, shape, reshape, permute);
+                break;
+            }
+            case ts::FLOAT64: {
+                double * psrc = stack.index(0)->sync(memory_device()).data<double>();
+                double * pdst = tensor->sync(memory_device()).data<double>();
+                tranpose_run<double>(psrc, ncount, pdst, shape, reshape, permute);
+                break;
+            }
+            defalut: {
+                throw ts::Exception("tranpose not support this data type");
+                break;
+            }
+        }
+ 
+        /* 
         //std::cout << "new type:" << type_str(tensor->dtype()) << std::endl;
         Shape tmpshape;
         tmpshape.resize(shape.size());
 
-        unsigned int index = 0;
+        int index = 0;
         unsigned int ncount = input_tensor->count();
         for(unsigned int i=0; i<ncount; i++) {
             Shape oldshape = to_coordinate(i, shape);
@@ -102,12 +168,16 @@ public:
 
             index = to_index(reshape, tmpshape);
 
+            if(index < 0) {
+
+            }
             //std::cout << "new index:" << index << ",index:" << i << ",type_len:" << type_len  << ",value:" << input_tensor->data<int>()[i] << std::endl;
             //tensor->data<int>()[index] = input_tensor->data<int>()[i];
             //std::cout << "new index:" << index << ",index:" << i << ",type_len:" << type_len << std::endl;
             ::memcpy(tensor->sync(memory_device()).data() + type_len * index, 
                      input_tensor->sync(memory_device()).data() + type_len * i, type_len); 
         }
+        */
         return 1;
     }
 
