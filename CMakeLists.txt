@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.7)
 project(TensorStack)
 
-set(TARGET "SHARED" CACHE STRING "STATIC or SHARED" FORCE)
+set(TARGET "STATIC" CACHE STRING "STATIC or SHARED" FORCE)
 
 # global root dir
 set(SOLUTION_DIR ${CMAKE_CURRENT_SOURCE_DIR})

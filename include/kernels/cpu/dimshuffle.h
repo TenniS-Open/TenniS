@@ -24,6 +24,7 @@ public:
     virtual int run(ts::Stack &stack);
     virtual int infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output);
 
+
 private:
     void infer_private(ts::Stack &stack, ts::Tensor::Prototype &output);
 
