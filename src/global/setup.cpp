@@ -12,9 +12,9 @@
 namespace ts {
     void setup() {
         // may do some setup
-        cpu_allocator(0, 0, nullptr);
+        cpu_allocator(0, 0, nullptr, 0);
 #ifdef TS_USE_CUDA
-        gpu_allocator(0, 0, nullptr);
+        gpu_allocator(0, 0, nullptr, 0);
 #endif
     }
 }
