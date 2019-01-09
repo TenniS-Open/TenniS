@@ -160,16 +160,8 @@ namespace ts {
 
 	void Pooling2d::caculate_pool_size(int& output_h, int& output_w)
 	{
-		if (m_pooling_type == max)
-		{
-			output_h = ceil((m_input_h + m_pad_h_up + m_pad_h_down - m_kernel_h) / static_cast<float>(m_stride_h) + 1);
-			output_w = ceil((m_input_w + m_pad_w_left + m_pad_w_right - m_kernel_w) / static_cast<float>(m_stride_w) + 1);
-		}
-		else
-		{
-			output_h = floor((m_input_h + m_pad_h_up + m_pad_h_down - m_kernel_h) / static_cast<float>(m_stride_h) + 1);
-			output_w = floor((m_input_w + m_pad_w_left + m_pad_w_right - m_kernel_w) / static_cast<float>(m_stride_w) + 1);
-		}
+		output_h = ceil((m_input_h + m_pad_h_up + m_pad_h_down - m_kernel_h) / static_cast<float>(m_stride_h) + 1);
+		output_w = ceil((m_input_w + m_pad_w_left + m_pad_w_right - m_kernel_w) / static_cast<float>(m_stride_w) + 1);
 	}
 
 	template<typename T>
