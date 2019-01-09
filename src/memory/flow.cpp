@@ -24,33 +24,27 @@ namespace ts {
         auto hard_allocator = HardAllocator::Query(device.type());
         TS_CHECK(hard_allocator != nullptr) << "Can not found memory controller for " << device.type();
         using namespace std::placeholders;
-        auto hard_free = std::bind(hard_allocator, device.id(), 0, _1);
+        auto hard_free = std::bind(hard_allocator, device.id(), 0, _1, 0);
         auto pot_allocator = [hard_allocator, device, hard_free](size_t size) -> std::shared_ptr<void> {
-//            auto log_allocator = [=](int i, size_t s, void *m) -> void *{
-//                auto new_mem = hard_allocator(i, s, m);
-//                TS_LOG_DEBUG << "CPU malloc(" << size << "): " << new_mem;
-//                return new_mem;
-//            };
-//
-//            auto log_free = [=](void *m) -> void {
-//                hard_free(m);
-//                TS_LOG_DEBUG << "CPU free(" << 0 << "): " << m;
-//            };
-            return std::shared_ptr<void>(hard_allocator(device.id(), size, nullptr), hard_free);
+            return std::shared_ptr<void>(hard_allocator(device.id(), size, nullptr, 0), hard_free);
         };
 
         m_impl->m_device = device;
         m_impl->m_vat = std::make_shared<Vat>(pot_allocator);
-        m_impl->m_managed_allocator = [this](int, size_t size, void *mem) -> void * {
+        m_impl->m_managed_allocator = [this](int, size_t new_size, void *mem, size_t mem_size) -> void * {
             void *new_mem = nullptr;
-            if (size == 0) {
+            if (new_size == 0) {
                 m_impl->m_vat->free(mem);
                 return nullptr;
             } else if (mem != nullptr) {
-                m_impl->m_vat->free(mem);
-                new_mem = m_impl->m_vat->malloc(size);
+                if (mem_size > 0) {
+                    TS_LOG_ERROR << "Reach the un-given code" << eject;
+                } else {
+                    m_impl->m_vat->free(mem);
+                    new_mem = m_impl->m_vat->malloc(new_size);
+                }
             } else {
-                new_mem = m_impl->m_vat->malloc(size);
+                new_mem = m_impl->m_vat->malloc(new_size);
             }
             return new_mem;
         };

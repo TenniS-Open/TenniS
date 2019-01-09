@@ -47,19 +47,20 @@ namespace ts {
          * Memory allocator type, allocate memory from specific device
          * @see HardAllocatorDeclaration
          */
-        using function = std::function<void *(int, size_t, void *)>;
+        using function = std::function<void *(int, size_t, void *, size_t)>;
 
         /**
          * Example of HardAllocator
          * @param id the allocating device id
-         * @param size the new size of memory
+         * @param new_size the new size of memory
          * @param mem the older memory
+         * @param mem_size the size of given mem
          * @return a pointer to new memory
          * @note if size == 0: free(mem),
          *        else if mem == nullptr: return malloc(size)
          *        else: return realloc(mem, size)
          */
-        void *HardAllocatorFunction(int id, size_t size, void *mem);
+        void *HardAllocatorFunction(int id, size_t new_size, void *mem, size_t mem_size);
 
         /**
          * Query memory allocator
@@ -82,6 +83,31 @@ namespace ts {
          * No details for this API, so DO NOT call it
          */
         static void Clear();
+
+        using _malloc = std::function<void *(int, size_t)>;
+        using _free = std::function<void(int, void *)>;
+        using _realloc = std::function<void*(int, size_t, void *, size_t)>;
+
+        /**
+         * Register allocator for specific device type
+         * @param device_type specific @sa DeviceType
+         * @param _new function to new memory
+         * @param _delete function to delete memory
+         * @note only can be called before running
+         */
+        static void RegisterV2(const DeviceType &device_type, const _malloc &_new, const _free &_delete) TS_NOEXCEPT;
+
+        /**
+         * Register allocator for specific device type
+         * @param device_type specific @sa DeviceType
+         * @param _new function to new memory
+         * @param _delete function to delete memory
+         * @param _reset function to reset memory
+         * @note only can be called before running
+         */
+        static void RegisterV3(const DeviceType &device_type, const _malloc &_new, const _free &_delete, const _realloc &_reset) TS_NOEXCEPT;
+
+        static function Bind(const _malloc &_new, const _free &_delete, const _realloc &_reset);
     };
 }
 
