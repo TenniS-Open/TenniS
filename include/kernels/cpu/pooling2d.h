@@ -6,7 +6,6 @@
 #include <runtime/stack.h>
 
 #include <string>
-#include <algorithm>
 
 namespace ts {
 	class Pooling2d : public ts::Operator {
