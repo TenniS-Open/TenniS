@@ -9,10 +9,10 @@ static int Caculate(const int height, const int width, const int kernel_h, const
                     const int pad_w_right, const int stride_h, const int stride_w,
                     const int dilation_h, const int dilation_w,
                     int& output_h, int& output_w) {
-    output_h = ceil((height + pad_h_top + pad_h_bottom -
-               (dilation_h * (kernel_h - 1) + 1)) / (float)stride_h + 1);
-    output_w = ceil((width + pad_w_left + pad_w_right -
-               (dilation_w * (kernel_w - 1) + 1)) / (float)stride_w + 1);
+    output_h = floor((height + pad_h_top + pad_h_bottom -
+               (dilation_h * (kernel_h - 1) + 1)) / stride_h + 1);
+    output_w = floor((width + pad_w_left + pad_w_right -
+               (dilation_w * (kernel_w - 1) + 1)) / stride_w + 1);
 
     return 0;
 }
