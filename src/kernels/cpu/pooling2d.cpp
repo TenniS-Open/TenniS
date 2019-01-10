@@ -61,7 +61,7 @@ namespace ts {
 		}
 		else if (m_format == "NHWC")
 		{
-			throw ts::Exception("The Format parameter must be NCHW");
+			throw ts::Exception("The Format parameter must be NCHW");  // onlu support NCHW now
 			if (padding_memory.data<int>()[0] != 0 || padding_memory.data<int>()[1] != 0 || padding_memory.data<int>()[6] != 0 || padding_memory.data<int>()[7] != 0)
 				throw ts::Exception("The Padding value parameter error!");
 
