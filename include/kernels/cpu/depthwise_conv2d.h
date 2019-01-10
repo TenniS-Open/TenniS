@@ -1,20 +1,18 @@
-#ifndef TS_KERNELS_CONV2D_H
-#define TS_KERNELS_CONV2D_H
+#ifndef TS_KERNELS_DEPTHWISE_CONV2D_H
+#define TS_KERNELS_DEPTHWISE_CONV2D_H
 
 #include <global/operator_factory.h>
 #include <core/tensor.h>
 #include <runtime/stack.h>
-//#include <cstring>
-#include <string.h>
 
 namespace ts {
 
 
-class Conv2d: public ts::Operator {
+class Depthwise_Conv2d: public ts::Operator {
 public:
 
     using supper = ts::Operator;
-    Conv2d();
+    Depthwise_Conv2d();
 
     virtual void init(); 
 
@@ -39,8 +37,7 @@ private:
 };
 
 
-TS_REGISTER_OPERATOR(Conv2d, ts::CPU, "conv2d")
-
+TS_REGISTER_OPERATOR(Depthwise_Conv2d, ts::CPU, "depthwise_conv2d")
 
 }
 

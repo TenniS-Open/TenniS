@@ -4,8 +4,8 @@
 #include <global/operator_factory.h>
 #include <core/tensor.h>
 #include <runtime/stack.h>
-#include <cstring>
-#include <math.h>
+//#include <cstring>
+//#include <math.h>
 
 
 
@@ -49,6 +49,11 @@ template<typename T>
 private:
     int m_type;
 };
+
+
+
+TS_REGISTER_OPERATOR(Resize2d, ts::CPU, "_resize2d")
+
 
 }
 

@@ -96,6 +96,6 @@ int Reshape::run(ts::Stack &stack) {
 
 
 /////////////////////////////////////////////////////
-TS_REGISTER_OPERATOR(Reshape, ts::CPU, "_reshape")
+//TS_REGISTER_OPERATOR(Reshape, ts::CPU, "_reshape")
 
 }
