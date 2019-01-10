@@ -1,5 +1,5 @@
-#ifndef TS_KERNELS_OP_RELU_H
-#define TS_KERNELS_OP_RELU_H
+#ifndef TS_KERNELS_RELU_H
+#define TS_KERNELS_RELU_H
 
 #include <global/operator_factory.h>
 #include <core/tensor.h>
@@ -24,4 +24,4 @@ namespace ts {
 
 
 
-#endif //TS_KERNELS_OP_RELU_H
+#endif //TS_KERNELS_RELU_H
