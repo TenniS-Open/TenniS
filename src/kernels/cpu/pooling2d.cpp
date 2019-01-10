@@ -99,24 +99,43 @@ namespace ts {
 		this->infer(stack, output);
 		stack.push(output[0], memory_device());
 
-		int type_len = ts::type_bytes(stack.index(0)->dtype());
+		auto dtype = stack.index(0)->dtype();
 		bool flag;
-		if (type_len == 1)
+		switch (dtype) 
 		{
-			flag = pooling<unsigned char>(stack);
+			case ts::FLOAT32: 
+			{
+				flag = pooling<float>(stack);
+				break;
+			}
+			case ts::FLOAT64: 
+			{
+				flag = pooling<double>(stack);
+				break;
+			}
+			default: 
+			{
+				throw ts::Exception("pooling2d only support FLOAT32 and FLOAT64 type");
+				break;
+			}
 		}
-		else if (type_len == 2)
-		{
-			flag = pooling<unsigned short>(stack);
-		}
-		else if (type_len == 4)
-		{
-			flag = pooling<float>(stack);
-		}
-		else if (type_len == 8)
-		{
-			flag = pooling<double>(stack);
-		}
+		//int type_len = ts::type_bytes(stack.index(0)->dtype());
+		//if (type_len == 1)
+		//{
+		//	flag = pooling<unsigned char>(stack);
+		//}
+		//else if (type_len == 2)
+		//{
+		//	flag = pooling<unsigned short>(stack);
+		//}
+		//else if (type_len == 4)
+		//{
+		//	flag = pooling<float>(stack);
+		//}
+		//else if (type_len == 8)
+		//{
+		//	flag = pooling<double>(stack);
+		//}
 
 		return flag ? 1:0;
 	}
@@ -128,6 +147,9 @@ namespace ts {
 
 		if (stack.size() != 1 || stack.index(0)->dims() != 4)
 			throw ts::Exception("Input parameter is invalid");
+
+		if (stack.index(0)->dtype() != FLOAT32 && stack.index(0)->dtype() != FLOAT64)
+			throw ts::Exception("Input parameter should be float or double");
 
 		if (m_format == "NCHW")
 		{
