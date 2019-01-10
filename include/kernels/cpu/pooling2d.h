@@ -15,7 +15,9 @@ namespace ts {
 			field("format", REQUIRED);
 			field("type", REQUIRED);
 			field("padding", REQUIRED);
-			field("padding_type", OPTIONAL);
+			Tensor default_padding_type(INT32, { 1 });
+			default_padding_type.data<int>()[0] = 0;
+			field("padding_type", OPTIONAL, default_padding_type);
 			//Tensor default_pooling_value(FLOAT32, { 1 });
 			//default_pooling_value.data<int>()[0] = 0;
 			//field("padding_value", OPTIONAL, default_pooling_value);

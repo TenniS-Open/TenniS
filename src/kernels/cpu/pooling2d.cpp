@@ -15,17 +15,16 @@ namespace ts {
 		if (fomat_param.dtype() != CHAR8)
 			throw ts::Exception("The Fomat parameter type must be string!");
 		m_format = tensor::to_string(fomat_param);
-		//m_format = "NCHW";
 
 		ts::Tensor& padding_param = get("padding");
-		//if (padding_param.dims() != 4)
-		//	throw ts::Exception("The Padding parameter must be four-dimensional!");
 		if (padding_param.count() != 8)
 			throw ts::Exception("The Padding parameter must have eight!");
-		auto padding_memory = padding_param.sync(memory_device());
-		
-		ts::Tensor& padding_type_param = get("padding_type");
-		m_padding_type = (PDDINGTYPE)tensor::to_int(padding_type_param);
+
+		if (has("padding_type"))
+		{
+			ts::Tensor& padding_type_param = get("padding_type");
+			m_padding_type = (PDDINGTYPE)tensor::to_int(padding_type_param);
+		}
 
 		//ts::Tensor& padding_value_param = get("padding_value");
 		//if (padding_value_param.dtype() != FLOAT32)
@@ -35,16 +34,10 @@ namespace ts {
 
 		ts::Tensor& stide_param = get("stride");
 
+		auto padding_memory = padding_param.sync(memory_device());
+
 		if (m_format == "NCHW")
 		{
-			m_pad_h_up = padding_memory.data<int>()[4];
-			m_pad_h_down = padding_memory.data<int>()[5];
-			m_pad_w_left = padding_memory.data<int>()[6];
-			m_pad_w_right = padding_memory.data<int>()[7];
-			m_kernel_h = ksize_param.data<int>()[2];
-			m_kernel_w = ksize_param.data<int>()[3];
-			m_stride_h = stide_param.data<int>()[2];
-			m_stride_w = stide_param.data<int>()[3];
 			if (padding_memory.data<int>()[0] != 0 || padding_memory.data<int>()[1] != 0 || padding_memory.data<int>()[2] != 0 || padding_memory.data<int>()[3] != 0)
 				throw ts::Exception("The Padding value parameter error!");
 
@@ -57,17 +50,18 @@ namespace ts {
 				throw ts::Exception("The stride parameter error!");
 			if (stide_param.sync(memory_device()).data<int>()[2] < 0 || stide_param.sync(memory_device()).data<int>()[3] < 0)
 				throw ts::Exception("The stride parameter must be greater than or equal to 0!");
+			m_pad_h_up = padding_memory.data<int>()[4];
+			m_pad_h_down = padding_memory.data<int>()[5];
+			m_pad_w_left = padding_memory.data<int>()[6];
+			m_pad_w_right = padding_memory.data<int>()[7];
+			m_kernel_h = ksize_param.data<int>()[2];
+			m_kernel_w = ksize_param.data<int>()[3];
+			m_stride_h = stide_param.data<int>()[2];
+			m_stride_w = stide_param.data<int>()[3];
 		}
 		else if (m_format == "NHWC")
 		{
-			m_pad_h_up = padding_memory.data<int>()[2];
-			m_pad_h_down = padding_memory.data<int>()[3];
-			m_pad_w_left = padding_memory.data<int>()[4];
-			m_pad_w_right = padding_memory.data<int>()[5];
-			m_kernel_h = ksize_param.data<int>()[1];
-			m_kernel_w = ksize_param.data<int>()[2];
-			m_stride_h = stide_param.data<int>()[1];
-			m_stride_w = stide_param.data<int>()[2];
+			throw ts::Exception("The Format parameter must be NCHW");
 			if (padding_memory.data<int>()[0] != 0 || padding_memory.data<int>()[1] != 0 || padding_memory.data<int>()[6] != 0 || padding_memory.data<int>()[7] != 0)
 				throw ts::Exception("The Padding value parameter error!");
 
@@ -80,6 +74,14 @@ namespace ts {
 				throw ts::Exception("The stride parameter error!");
 			if (stide_param.sync(memory_device()).data<int>()[1] < 0 || stide_param.sync(memory_device()).data<int>()[2] < 0)
 				throw ts::Exception("The stride parameter must be greater than or equal to 0!");
+			m_pad_h_up = padding_memory.data<int>()[2];
+			m_pad_h_down = padding_memory.data<int>()[3];
+			m_pad_w_left = padding_memory.data<int>()[4];
+			m_pad_w_right = padding_memory.data<int>()[5];
+			m_kernel_h = ksize_param.data<int>()[1];
+			m_kernel_w = ksize_param.data<int>()[2];
+			m_stride_h = stide_param.data<int>()[1];
+			m_stride_w = stide_param.data<int>()[2];
 		}
 		else
 		{
