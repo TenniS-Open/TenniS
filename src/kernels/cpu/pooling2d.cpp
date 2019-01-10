@@ -1,5 +1,6 @@
 #include <kernels/cpu/pooling2d.h>
 #include <core/tensor_builder.h>
+#include <algorithm>
 
 namespace ts {
 
@@ -97,24 +98,25 @@ namespace ts {
 		stack.push(output[0], memory_device());
 
 		int type_len = ts::type_bytes(stack.index(0)->dtype());
+		bool flag;
 		if (type_len == 1)
 		{
-			pooling<unsigned char>(stack);
+			flag = pooling<unsigned char>(stack);
 		}
 		else if (type_len == 2)
 		{
-			pooling<unsigned short>(stack);
+			flag = pooling<unsigned short>(stack);
 		}
 		else if (type_len == 4)
 		{
-			pooling<float>(stack);
+			flag = pooling<float>(stack);
 		}
 		else if (type_len == 8)
 		{
-			pooling<double>(stack);
+			flag = pooling<double>(stack);
 		}
 
-		return 1;
+		return flag ? 1:0;
 	}
 
 	int Pooling2d::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output)
