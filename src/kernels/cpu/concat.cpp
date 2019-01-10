@@ -23,25 +23,73 @@ namespace ts {
 		this->infer(stack, output);
 		stack.push(output[0], memory_device());
 
-		int type_len = ts::type_bytes(stack.index(0)->dtype());
-
+		auto dtype = stack.index(0)->dtype();
 		bool flag;
-		if (type_len == 1)
+		switch (dtype)
 		{
-			flag = concat<unsigned char>(stack, input_num);
+			case ts::INT8:
+			{
+				flag = concat<char>(stack, input_num);
+				break;
+			}
+			case ts::UINT8:
+			{
+				flag = concat<unsigned char>(stack, input_num);
+				break;
+			}
+			case ts::INT16:
+			{
+				flag = concat<short>(stack, input_num);
+				break;
+			}
+			case ts::UINT16:
+			{
+				flag = concat<unsigned short>(stack, input_num);
+				break;
+			}
+			case ts::INT32:
+			{
+				flag = concat<int>(stack, input_num);
+				break;
+			}
+			case ts::UINT32:
+			{
+				flag = concat<unsigned int>(stack, input_num);
+				break;
+			}
+			case ts::FLOAT32:
+			{
+				flag = concat<float>(stack, input_num);
+				break;
+			}
+			case ts::FLOAT64:
+			{
+				flag = concat<double>(stack, input_num);
+				break;
+			}
+			default:
+			{
+				throw ts::Exception("concat only support INT8,UINT8,INT16,UINT16,INT32,UINT32,FLOAT32 and FLOAT64 type");
+				break;
+			}
 		}
-		else if (type_len == 2)
-		{
-			flag = concat<unsigned short>(stack, input_num);
-		}
-		else if (type_len == 4)
-		{
-			flag = concat<float>(stack, input_num);
-		}
-		else if (type_len == 8)
-		{
-			flag = concat<double>(stack, input_num);
-		}
+		//int type_len = ts::type_bytes(stack.index(0)->dtype());
+		//if (type_len == 1)
+		//{
+		//	flag = concat<unsigned char>(stack, input_num);
+		//}
+		//else if (type_len == 2)
+		//{
+		//	flag = concat<unsigned short>(stack, input_num);
+		//}
+		//else if (type_len == 4)
+		//{
+		//	flag = concat<unsigned char>(stack, input_num);
+		//}
+		//else if (type_len == 8)
+		//{
+		//	flag = concat<double>(stack, input_num);
+		//}
 		return flag ? 1:0;
 	}
 
@@ -54,6 +102,14 @@ namespace ts {
 		{
 			output.resize(1);
 			output[0] = ts::Tensor::Prototype(stack.index(0)->dtype(), stack.index(0)->sizes());
+		}
+
+		auto dtype = stack.index(0)->dtype();
+
+		for (int i = 1; i < input_num; i++)
+		{
+			if (stack.index(i)->dtype() != dtype)
+				throw ts::Exception("Can not concat on different data type");
 		}
 		
 		Shape output_shape(stack.index(0)->sizes());
@@ -115,38 +171,38 @@ namespace ts {
 		}
 
 		int offset_concat_axis = 0;
-		//for (int i = 0; i < input_num; i++)
-		//{
-		//	const T* input_data = stack.index(i)->sync(memory_device()).data<T>();
-		//	int input_concat_axis = stack.index(i)->sizes()[m_dim];
-		//	for (int j = 0; j < num_concats; j++)
-		//	{
-		//		::memcpy(output_data + (j * output_concat_axis + offset_concat_axis)* bottom_concat_size,
-		//			input_data + j * input_concat_axis * bottom_concat_size, 
-		//			input_concat_axis * bottom_concat_size * sizeof(T));
-		//	}
-		//	offset_concat_axis += input_concat_axis;
-		//}
-		int output_index = 0;
 		for (int i = 0; i < input_num; i++)
 		{
 			const T* input_data = stack.index(i)->sync(memory_device()).data<T>();
 			int input_concat_axis = stack.index(i)->sizes()[m_dim];
-			int input_index = 0;
 			for (int j = 0; j < num_concats; j++)
 			{
-				int output_index_temp = output_index;
-				int input_index_temp = input_index;
-				for (int num = 0; num < input_concat_axis * bottom_concat_size; num++)
-				{
-					output_data[output_index_temp++] = input_data[input_index_temp++];
-				}
-				input_index += input_concat_axis * bottom_concat_size;
-				output_index += output_concat_axis * bottom_concat_size;
+				::memcpy(output_data + (j * output_concat_axis + offset_concat_axis)* bottom_concat_size,
+					input_data + j * input_concat_axis * bottom_concat_size, 
+					input_concat_axis * bottom_concat_size * sizeof(T));
 			}
 			offset_concat_axis += input_concat_axis;
-			output_index = offset_concat_axis * bottom_concat_size;
 		}
+		//int output_index = 0;
+		//for (int i = 0; i < input_num; i++)
+		//{
+		//	const T* input_data = stack.index(i)->sync(memory_device()).data<T>();
+		//	int input_concat_axis = stack.index(i)->sizes()[m_dim];
+		//	int input_index = 0;
+		//	for (int j = 0; j < num_concats; j++)
+		//	{
+		//		int output_index_temp = output_index;
+		//		int input_index_temp = input_index;
+		//		for (int num = 0; num < input_concat_axis * bottom_concat_size; num++)
+		//		{
+		//			output_data[output_index_temp++] = input_data[input_index_temp++];
+		//		}
+		//		input_index += input_concat_axis * bottom_concat_size;
+		//		output_index += output_concat_axis * bottom_concat_size;
+		//	}
+		//	offset_concat_axis += input_concat_axis;
+		//	output_index = offset_concat_axis * bottom_concat_size;
+		//}
 
 		return true;
 	}
