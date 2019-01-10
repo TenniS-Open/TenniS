@@ -333,6 +333,6 @@ int Resize2d::run(ts::Stack &stack) {
 
 //////////////////////////////////////////////////////////
 
-TS_REGISTER_OPERATOR(Resize2d, ts::CPU, "_resize2d")
+//TS_REGISTER_OPERATOR(Resize2d, ts::CPU, "_resize2d")
 
 }

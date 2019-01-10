@@ -1,4 +1,4 @@
-#include <kernels/cpu/bias.h>
+#include <kernels/cpu/batch_scale.h>
 #include <core/tensor_builder.h>
 
 
@@ -7,73 +7,63 @@ namespace ts {
 
 
 //////////////////////////////////////////////
-Bias::Bias() {
-    field("format", OPTIONAL);
-    field("dim", OPTIONAL);
-    m_dim = -1;     
+Batch_Scale::Batch_Scale() {
+    field("dim", REQUIRED);
+    m_dim = -1;   
 } 
 
-void Bias::init() {
+void Batch_Scale::init() {
     supper::init();
-
-    if(has("format")){
-        Tensor tensor_format = get("format");
-        std::string format = ts::tensor::to_string(tensor_format);
-        if(!(format == "NCHW" || format == "NHWC")) {
-            throw ts::Exception("bias format parameter is not supported");
-        }
-
-        int nfind = format.find("C");
-        if(nfind != std::string::npos) {
-            m_dim = nfind;
-        }
-    }
 
     if(has("dim")){
         Tensor tensor_dim = get("dim");
         m_dim = ts::tensor::to_int(tensor_dim);
+    }else {
+        throw ts::Exception("batch_scale must set dim parameter");
     }
 }   
 
-void Bias::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) {
+void Batch_Scale::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) {
     int input_num = stack.size();
-    if(input_num != 2) {
-        throw ts::Exception("bias must have tow input parameters");
+    if(input_num != 3) {
+        throw ts::Exception("batch_scale must have three input parameters");
     }
 
     Shape shape = stack.index(0)->sizes();
 
-    if(shape.size()  != 4 ) {
-        throw ts::Exception("bias first parameter's dims is not 4");
+    if(m_dim < 0 || m_dim >= shape.size() ) {
+        throw ts::Exception("batch_scale dim parameter check failed");
     }
    
-    Shape bias_shape = stack.index(1)->sizes();
+    Shape scale_shape = stack.index(1)->sizes();
+    if(scale_shape.size()  != 1 ) {
+        throw ts::Exception("batch_scale scale parameter's dims is not 1");
+    }
 
+    Shape bias_shape = stack.index(2)->sizes();
     if(bias_shape.size()  != 1 ) {
-        throw ts::Exception("bias second parameter's dims is not 1");
+        throw ts::Exception("batch_scale bias parameter's dims is not 1");
     }
 
-    if(m_dim < 0 || m_dim >= shape.size()) {
-        throw ts::Exception("bias dim parameter check failed");
+    if(scale_shape[0] != shape[m_dim] || bias_shape[0] != shape[m_dim]) {
+        throw ts::Exception("batch_scale scale and bias parameters check failed");
     }
 
-    if(stack.index(1)->count() != shape[m_dim]) {
-        throw ts::Exception("bias count is not match input data channels");
-    }
     output = ts::Tensor::Prototype(stack.index(0)->dtype(), shape);
-    return ;
+    return;
 }
 
 
 
-int Bias::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output) {
+int Batch_Scale::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output) {
     output.resize(1);
     infer_private(stack, output[0]);
     return 1;
 }
 
 template<typename T>
-void Bias::compute_bias(ts::Tensor *input_tensor, ts::Tensor *bias_tensor, ts::Tensor *output_tensor) {
+void Batch_Scale::compute_batch_scale(ts::Tensor *input_tensor, ts::Tensor *scale_tensor, 
+                                    ts::Tensor *bias_tensor, ts::Tensor *output_tensor) {
     Shape shape = input_tensor->sizes();
     int predims = 1;
     int backdims = 1;
@@ -86,6 +76,7 @@ void Bias::compute_bias(ts::Tensor *input_tensor, ts::Tensor *bias_tensor, ts::T
     }
 
     T* psrc  = input_tensor->sync(memory_device()).data<T>();
+    T* pscale = scale_tensor->sync(memory_device()).data<T>();
     T* pbias = bias_tensor->sync(memory_device()).data<T>();
     T* pdst  = output_tensor->sync(memory_device()).data<T>();
     int stridedims = backdims * shape[m_dim];
@@ -95,7 +86,7 @@ void Bias::compute_bias(ts::Tensor *input_tensor, ts::Tensor *bias_tensor, ts::T
         for(int k=0; k<shape[m_dim]; k++) {
             offset = i * stridedims + k * backdims;
             for(int m=0; m<backdims; m++) {
-                pdst[offset + m] = pbias[k] + psrc[offset + m];
+                pdst[offset + m] = psrc[offset + m] * pscale[k] + pbias[k];
             }
         }
     }
@@ -103,28 +94,28 @@ void Bias::compute_bias(ts::Tensor *input_tensor, ts::Tensor *bias_tensor, ts::T
 
 
 
-int Bias::run(ts::Stack &stack) {
+int Batch_Scale::run(ts::Stack &stack) {
     std::vector<ts::Tensor::Prototype> output;
     output.resize(1);
     infer_private(stack, output[0]);
 
     ts::Tensor *input_tensor =  stack.index(0);
-    ts::Tensor *bias_tensor  = stack.index(1);
-
+    ts::Tensor *scale_tensor  = stack.index(1);
+    ts::Tensor *bias_tensor  = stack.index(2);
     stack.push(output[0], memory_device());
     ts::Tensor *tensor = stack.index(-1);
 
     switch(input_tensor->dtype()) {
         case ts::FLOAT32: {
-            compute_bias<float>(input_tensor, bias_tensor, tensor);
+            compute_batch_scale<float>(input_tensor, scale_tensor, bias_tensor, tensor);
             break;
         }
         case ts::FLOAT64: {
-            compute_bias<double>(input_tensor, bias_tensor, tensor);
+            compute_batch_scale<double>(input_tensor, scale_tensor, bias_tensor, tensor);
             break;
         }
         default: {
-            throw ts::Exception("bias only support FLOAT32 and FLOAT64 type");
+            throw ts::Exception("batch_scale only support FLOAT32 and FLOAT64 type");
             break;
         }
     }
@@ -136,6 +127,6 @@ int Bias::run(ts::Stack &stack) {
 
 
 /////////////////////////////////////////////////
-//TS_REGISTER_OPERATOR(Bias, ts::CPU, "bias")
+//TS_REGISTER_OPERATOR(Batch_Scale, ts::CPU, "batch_scale")
 
 }

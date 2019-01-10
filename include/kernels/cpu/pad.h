@@ -4,13 +4,13 @@
 #include <global/operator_factory.h>
 #include <core/tensor.h>
 
-#include <core/dtype.h>
+//#include <core/dtype.h>
 #include <runtime/stack.h>
-#include <cstring>
+//#include <cstring>
 //#include <math.h>
 
-#include <string.h>
-#include <set>
+//#include <string.h>
+//#include <set>
 
 namespace ts {
 
@@ -36,6 +36,11 @@ private:
     int m_padding_value;
 
 };
+
+
+
+TS_REGISTER_OPERATOR(Pad, ts::CPU, "pad")
+
 
 }
 

@@ -4,11 +4,11 @@
 #include <global/operator_factory.h>
 #include <core/tensor.h>
 #include <runtime/stack.h>
-#include <cstring>
+//#include <cstring>
 //#include <math.h>
 
-#include <string.h>
-#include <set>
+//#include <string.h>
+//#include <set>
 
 namespace ts {
 
@@ -33,6 +33,10 @@ private:
     Shape m_permute;
 
 };
+
+
+TS_REGISTER_OPERATOR(Transpose, ts::CPU, "_transpose")
+
 
 }
 

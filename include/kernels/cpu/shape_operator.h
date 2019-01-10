@@ -4,8 +4,8 @@
 #include <global/operator_factory.h>
 #include <core/tensor.h>
 #include <runtime/stack.h>
-#include <cstring>
-#include <math.h>
+//#include <cstring>
+//#include <math.h>
 
 
 
@@ -25,6 +25,9 @@ public:
     virtual int infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output); 
 
 };
+
+
+TS_REGISTER_OPERATOR(Shape_Operator, ts::CPU, "_shape")
 
 }
 

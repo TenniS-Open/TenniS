@@ -1,6 +1,6 @@
 #include <kernels/cpu/dimshuffle.h>
 #include <core/tensor_builder.h>
-
+#include <set>
 
 namespace ts {
 
@@ -100,8 +100,8 @@ int Dimshuffle::run(ts::Stack &stack) {
 
     for(int k=0; k<preoffset; k++) {
         for(int i=0; i<m_shuffle.size(); i++) {
-            ::memcpy(tensor->sync(memory_device()).data<char>() + type_len * (k * newstride + i * backstride),
-                     input_tensor->sync(memory_device()).data<char>() + type_len * (k * stride + m_shuffle[i] * backstride),
+            ::memcpy(tensor->sync(memory_device()).data() + type_len * (k * newstride + i * backstride),
+                     input_tensor->sync(memory_device()).data() + type_len * (k * stride + m_shuffle[i] * backstride),
                      backstride * type_len);
         }
     }
@@ -122,6 +122,6 @@ int Dimshuffle::run(ts::Stack &stack) {
 
 ///////////////////////////////////////////
 
-TS_REGISTER_OPERATOR(Dimshuffle, ts::CPU, "_dimshuffle")
+//TS_REGISTER_OPERATOR(Dimshuffle, ts::CPU, "_dimshuffle")
 
 }

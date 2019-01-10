@@ -4,8 +4,8 @@
 #include <global/operator_factory.h>
 #include <core/tensor.h>
 #include <runtime/stack.h>
-#include <cstring>
-#include <math.h>
+//#include <cstring>
+//#include <math.h>
 
 
 
@@ -30,6 +30,10 @@ private:
     int   m_dims;
 
 };
+
+
+TS_REGISTER_OPERATOR(Reshape, ts::CPU, "_reshape")
+
 
 }
 
