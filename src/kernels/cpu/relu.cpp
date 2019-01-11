@@ -77,5 +77,5 @@ namespace ts {
 
 		return true;
 	}
-
+	TS_REGISTER_OPERATOR(Relu, ts::CPU, "relu")
 }

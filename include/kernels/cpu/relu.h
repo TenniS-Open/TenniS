@@ -19,7 +19,7 @@ namespace ts {
 		bool relu(ts::Stack &stack);
 	};
 
-	TS_REGISTER_OPERATOR(Relu, ts::CPU, "relu")
+	//TS_REGISTER_OPERATOR(Relu, ts::CPU, "relu")
 }
 
 
