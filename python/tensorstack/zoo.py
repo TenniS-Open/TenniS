@@ -26,6 +26,23 @@ class Name(object):
         padding_depthwise_conv2d = "padding_depthwise_conv2d"
         depthwise_conv2d_bias = "depthwise_conv2d_bias"
         padding_depthwise_conv2d_bias = "padding_depthwise_conv2d_bias"
+        bias = "bias"
+        batch_norm = "batch_norm"
+        batch_scale = "batch_scale"
+        fused_batch_norm = "fused_batch_norm"
+        add = "add"
+        sub = "sub"
+        mul = "mul"
+        div = "div"
+        inner_prod = "inner_prod"
+        relu = "relu"
+        prelu = "prelu"
+        relu_max = "relu_max"
+        sigmoid = "sigmoid"
+        softmax = "softmax"
+        concat = "concat"
+        flatten = "flatten"
+        to_float = "to_float"
 
     dim = "dim"
     shuffle = "shuffle"
@@ -37,6 +54,9 @@ class Name(object):
     padding_value = "padding_value"
     stride = "stride"
     dialations = "dialations"
+    epsilon = "epsilon"
+    max = "max"
+    slope = "slope"
 
 
 class Default(object):
@@ -236,5 +256,164 @@ def depthwise_conv2d(name, x, w,
     node.set(Name.dialations, dialations)
 
     return node
+
+
+def bias(name, x, b, format=Name.NCHW):
+    assert isinstance(x, None)
+    assert format == Name.NCHW or format == Name.NHWC
+
+    b = to_node(b, name="_const_" + name + "_bias")
+
+    node = menu.op(name=name, op_name=Name.Layer.bias, inputs=[x, b])
+
+    dim = 1
+    if format == Name.NCHW:
+        dim = 1
+    else:
+        dim = 3
+
+    node.set(Name.format, format)
+    node.set(Name.dim, dim)
+
+    return node
+
+
+def batch_norm(name, x, mean, variance, dim, epsilon):
+    assert isinstance(x, None)
+    mean = to_node(mean, name="_const_" + name + "_mean")
+    variance = to_node(variance, name="_const_" + name + "_variance")
+
+    node = menu.op(name=name, op_name=Name.Layer.batch_norm, inputs=[x, mean, variance])
+    node.set(Name.dim, dim)
+    node.set(Name.epsilon, epsilon)
+
+    return node
+
+
+def batch_scale(name, x, scale, bias, dim):
+    assert isinstance(x, None)
+    scale = to_node(scale, name="_const_" + name + "_mean")
+    bias = to_node(bias, name="_const_" + name + "_variance")
+
+    node = menu.op(name=name, op_name=Name.Layer.batch_scale, inputs=[x, scale, bias])
+    node.set(Name.dim, dim)
+
+    return node
+
+
+def fused_batch_norm(name, x, mean, variance, scale, bias, dim, epsilon):
+    assert isinstance(x, None)
+    mean = to_node(mean, name="_const_" + name + "_mean")
+    variance = to_node(variance, name="_const_" + name + "_variance")
+    scale = to_node(scale, name="_const_" + name + "_mean")
+    bias = to_node(bias, name="_const_" + name + "_variance")
+
+    node = menu.op(name=name, op_name=Name.Layer.fused_batch_norm, inputs=[x, mean, variance, scale, bias])
+    node.set(Name.dim, dim)
+    node.set(Name.epsilon, epsilon)
+
+    return node
+
+
+def add(name, lhs, rhs):
+    lhs = to_node(lhs, name="_const_" + name + "_lhs")
+    rhs = to_node(rhs, name="_const_" + name + "_rhs")
+
+    node = menu.op(name=name, op_name=Name.Layer.add, inputs=[lhs, rhs])
+
+    return node
+
+
+def sub(name, lhs, rhs):
+    lhs = to_node(lhs, name="_const_" + name + "_lhs")
+    rhs = to_node(rhs, name="_const_" + name + "_rhs")
+
+    node = menu.op(name=name, op_name=Name.Layer.sub, inputs=[lhs, rhs])
+
+    return node
+
+
+def mul(name, lhs, rhs):
+    lhs = to_node(lhs, name="_const_" + name + "_lhs")
+    rhs = to_node(rhs, name="_const_" + name + "_rhs")
+
+    node = menu.op(name=name, op_name=Name.Layer.mul, inputs=[lhs, rhs])
+
+    return node
+
+
+def div(name, lhs, rhs):
+    lhs = to_node(lhs, name="_const_" + name + "_lhs")
+    rhs = to_node(rhs, name="_const_" + name + "_rhs")
+
+    node = menu.op(name=name, op_name=Name.Layer.div, inputs=[lhs, rhs])
+
+    return node
+
+
+def inner_prod(name, lhs, rhs):
+    lhs = to_node(lhs, name="_const_" + name + "_lhs")
+    rhs = to_node(rhs, name="_const_" + name + "_rhs")
+
+    node = menu.op(name=name, op_name=Name.Layer.inner_prod, inputs=[lhs, rhs])
+
+    return node
+
+
+def relu(name, x):
+    assert isinstance(x, Node)
+    node = menu.op(name=name, op_name=Name.Layer.relu, inputs=[x, ])
+    return node
+
+
+def relu_max(name, x, max):
+    assert isinstance(x, Node)
+    node = menu.op(name=name, op_name=Name.Layer.relu_max, inputs=[x, ])
+    node.set(Name.max, max)
+    return node
+
+
+def prelu(name, x, dim, slope):
+    assert isinstance(x, Node)
+    node = menu.op(name=name, op_name=Name.Layer.prelu, inputs=[x, ])
+    node.set(Name.dim, dim)
+    node.set(Name.slope, slope)
+    return node
+
+
+def sigmoid(name, x):
+    assert isinstance(x, Node)
+    node = menu.op(name=name, op_name=Name.Layer.sigmoid, inputs=[x, ])
+    return node
+
+
+def softmax(name, x, dim):
+    assert isinstance(x, Node)
+    node = menu.op(name=name, op_name=Name.Layer.softmax, inputs=[x, ])
+    node.set(Name.dim, dim)
+    return node
+
+
+def concat(name, inputs, dim):
+    for x in inputs:
+        assert isinstance(x, Node)
+    node = menu.op(name=name, op_name=Name.Layer.concat, inputs=inputs)
+    node.set(Name.dim, dim)
+    return node
+
+
+def flatten(name, x):
+    assert isinstance(x, Node)
+    node = menu.op(name=name, op_name=Name.Layer.flatten, inputs=[x, ])
+    return node
+
+
+def to_float(name, x):
+    assert isinstance(x, Node)
+    node = menu.op(name=name, op_name=Name.Layer.to_float, inputs=[x, ])
+    return node
+
+
+
 
 
