@@ -84,5 +84,5 @@ namespace ts {
 
 		return true;
 	}
-
+	TS_REGISTER_OPERATOR(ReluMax, ts::CPU, "relu_max")
 }
