@@ -69,7 +69,8 @@ namespace ts {
 
 		for (int i = 0; i < output_tensor.count(); i++)
 		{
-			*output_data = *input_data > 0 ? *input_data : 0;
+			//*output_data = *input_data > 0 ? *input_data : 0;
+			*output_data = std::max(*input_data,T(0.0));
 			input_data++;
 			output_data++;
 		}
