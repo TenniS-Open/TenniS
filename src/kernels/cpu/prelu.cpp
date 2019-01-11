@@ -10,15 +10,13 @@ namespace ts {
 		if (!has("slope"))
 			throw ts::Exception("Must input slope parameter");
 
-		if (!has("dim"))
-			throw ts::Exception("Must input dim parameter");
-
 		ts::Tensor slope = get("slope");
-
-		m_dim = tensor::to_int(get("dim"));
 
 		if (slope.count() != 1)
 		{
+			if (!has("dim"))
+				throw ts::Exception("Must input dim parameter");
+			m_dim = tensor::to_int(get("dim"));
 			auto dtype = slope.dtype();
 			if (dtype != FLOAT32)
 				throw ts::Exception("Parameter slope should be float");
@@ -77,12 +75,13 @@ namespace ts {
 		if (stack.index(0)->dtype() != FLOAT32 && stack.index(0)->dtype() != FLOAT64)
 			throw ts::Exception("Input parameter should be float or double");
 
-		if (m_dim < 0 || m_dim >= stack.index(0)->dims()) {
+		int slope_size = m_slope.size();
+
+		if (slope_size != 1 && m_dim < 0 || m_dim >= stack.index(0)->dims()) {
 			throw ts::Exception("Prelu dim parameter check failed");
 		}
 
-		int slope_size = m_slope.size();
-		if (slope_size != stack.index(0)->sizes()[m_dim] && slope_size != 1)
+		if (slope_size != 1 && slope_size != stack.index(0)->sizes()[m_dim])
 			throw ts::Exception("Parameter slope should be 1 or equal to the dim dimension of the input parameter");
 			
 		output.resize(1);

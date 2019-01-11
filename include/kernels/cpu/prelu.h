@@ -12,8 +12,9 @@ namespace ts {
 	public:
 		using supper = ts::Operator;
 		Prelu() {
-			field("dim", REQUIRED);
+			field("dim", OPTIONAL);
 			field("slope", REQUIRED);
+			m_dim = -1;
 		}
 		virtual void init();
 		virtual int run(ts::Stack &stack);
