@@ -206,4 +206,5 @@ namespace ts {
 
 		return true;
 	}
+	TS_REGISTER_OPERATOR(Concat, ts::CPU, "concat")
 }

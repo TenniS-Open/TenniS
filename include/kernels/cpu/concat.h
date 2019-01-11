@@ -25,7 +25,7 @@ namespace ts {
 		int m_dim;
 	};
 
-	TS_REGISTER_OPERATOR(Concat, ts::CPU, "concat")
+	//TS_REGISTER_OPERATOR(Concat, ts::CPU, "concat")
 }
 
 

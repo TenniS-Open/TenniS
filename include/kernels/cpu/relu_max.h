@@ -23,8 +23,7 @@ namespace ts {
 	private:
 		float m_max;
 	};
-
-	TS_REGISTER_OPERATOR(ReluMax, ts::CPU, "relu_max")
+	//TS_REGISTER_OPERATOR(ReluMax, ts::CPU, "relu_max")
 }
 
 

@@ -308,6 +308,6 @@ namespace ts {
 		return true;
 	}
 
-	//TS_REGISTER_OPERATOR(Pooling2d, ts::CPU, "pooling2d")
+	TS_REGISTER_OPERATOR(Pooling2d, ts::CPU, "pooling2d")
 
 }
