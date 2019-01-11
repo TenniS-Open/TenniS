@@ -11,3 +11,6 @@ import tensor
 import menu as bubble
 import menu
 import device
+import zoo
+
+__version__ = "beta"
