@@ -1,4 +1,4 @@
-#include <kernels/cpu/bias.h>
+#include <kernels/cpu/add_bias.h>
 #include <core/tensor_builder.h>
 
 
@@ -7,20 +7,20 @@ namespace ts {
 
 
 //////////////////////////////////////////////
-Bias::Bias() {
+Add_Bias::Add_Bias() {
     field("format", OPTIONAL);
     field("dim", OPTIONAL);
     m_dim = -1;     
 } 
 
-void Bias::init() {
+void Add_Bias::init() {
     supper::init();
 
     if(has("format")){
         Tensor tensor_format = get("format");
         std::string format = ts::tensor::to_string(tensor_format);
         if(!(format == "NCHW" || format == "NHWC")) {
-            throw ts::Exception("bias format parameter is not supported");
+            throw ts::Exception("add_bias format parameter is not supported");
         }
 
         int nfind = format.find("C");
@@ -35,30 +35,30 @@ void Bias::init() {
     }
 }   
 
-void Bias::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) {
+void Add_Bias::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) {
     int input_num = stack.size();
     if(input_num != 2) {
-        throw ts::Exception("bias must have tow input parameters");
+        throw ts::Exception("add_bias must have tow input parameters");
     }
 
     Shape shape = stack.index(0)->sizes();
 
     if(shape.size()  != 4 ) {
-        throw ts::Exception("bias first parameter's dims is not 4");
+        throw ts::Exception("add_bias first parameter's dims is not 4");
     }
    
     Shape bias_shape = stack.index(1)->sizes();
 
     if(bias_shape.size()  != 1 ) {
-        throw ts::Exception("bias second parameter's dims is not 1");
+        throw ts::Exception("add_bias second parameter's dims is not 1");
     }
 
     if(m_dim < 0 || m_dim >= shape.size()) {
-        throw ts::Exception("bias dim parameter check failed");
+        throw ts::Exception("add_bias dim parameter check failed");
     }
 
     if(stack.index(1)->count() != shape[m_dim]) {
-        throw ts::Exception("bias count is not match input data channels");
+        throw ts::Exception("add_bias count is not match input data channels");
     }
     output = ts::Tensor::Prototype(stack.index(0)->dtype(), shape);
     return ;
@@ -66,14 +66,14 @@ void Bias::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) {
 
 
 
-int Bias::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output) {
+int Add_Bias::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output) {
     output.resize(1);
     infer_private(stack, output[0]);
     return 1;
 }
 
 template<typename T>
-void Bias::compute_bias(ts::Tensor *input_tensor, ts::Tensor *bias_tensor, ts::Tensor *output_tensor) {
+void Add_Bias::compute_bias(ts::Tensor *input_tensor, ts::Tensor *bias_tensor, ts::Tensor *output_tensor) {
     Shape shape = input_tensor->sizes();
     int predims = 1;
     int backdims = 1;
@@ -103,7 +103,7 @@ void Bias::compute_bias(ts::Tensor *input_tensor, ts::Tensor *bias_tensor, ts::T
 
 
 
-int Bias::run(ts::Stack &stack) {
+int Add_Bias::run(ts::Stack &stack) {
     std::vector<ts::Tensor::Prototype> output;
     output.resize(1);
     infer_private(stack, output[0]);
@@ -115,6 +115,31 @@ int Bias::run(ts::Stack &stack) {
     ts::Tensor *tensor = stack.index(-1);
 
     switch(input_tensor->dtype()) {
+
+        case ts::INT8: {
+            compute_bias<char>(input_tensor, bias_tensor, tensor);
+            break;
+        }
+        case ts::UINT8: {
+            compute_bias<unsigned char>(input_tensor, bias_tensor, tensor);
+            break;
+        }
+        case ts::INT16: {
+            compute_bias<short>(input_tensor, bias_tensor, tensor);
+            break;
+        }
+        case ts::UINT16: {
+            compute_bias<unsigned short>(input_tensor, bias_tensor, tensor);
+            break;
+        }
+        case ts::INT32: {
+            compute_bias<int>(input_tensor, bias_tensor, tensor);
+            break;
+        }
+        case ts::UINT32: {
+            compute_bias<unsigned int>(input_tensor, bias_tensor, tensor);
+            break;
+        }
         case ts::FLOAT32: {
             compute_bias<float>(input_tensor, bias_tensor, tensor);
             break;
@@ -124,7 +149,7 @@ int Bias::run(ts::Stack &stack) {
             break;
         }
         default: {
-            throw ts::Exception("bias only support FLOAT32 and FLOAT64 type");
+            throw ts::Exception("add_bias do not support data type");
             break;
         }
     }
@@ -136,6 +161,6 @@ int Bias::run(ts::Stack &stack) {
 
 
 /////////////////////////////////////////////////
-//TS_REGISTER_OPERATOR(Bias, ts::CPU, "bias")
+TS_REGISTER_OPERATOR(Add_Bias, ts::CPU, "add_bias")
 
 }
