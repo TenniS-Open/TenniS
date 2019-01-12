@@ -1,33 +1,35 @@
-#ifndef TS_KERNELS_CONCAT_H
-#define TS_KERNELS_CONCAT_H
+#ifndef TS_KERNELS_SOFTMAX_H
+#define TS_KERNELS_SOFTMAX_H
 
 #include <global/operator_factory.h>
 #include <core/tensor.h>
 #include <runtime/stack.h>
 
-namespace ts {
+#include <vector>
 
-	class Concat : public ts::Operator {
+namespace ts {
+	class Softmax : public ts::Operator {
 	public:
 		using supper = ts::Operator;
-		Concat():m_dim(-1) 
-		{
+		Softmax():m_dim(-1){
 			field("dim", REQUIRED);
 		}
 		virtual void init();
 		virtual int run(ts::Stack &stack);
 		virtual int infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output);
-	private:
 
+	private:
 		template<typename T>
-		bool concat(ts::Stack &stack, int input_num);
+		bool softmax(ts::Stack &stack);
+	private:
 
 	private:
 		int m_dim;
 	};
 
-	//TS_REGISTER_OPERATOR(Concat, ts::CPU, "concat")
+	//TS_REGISTER_OPERATOR(Softmax, ts::CPU, "softmax")
 }
 
 
-#endif //TS_KERNELS_CONCAT_H
+
+#endif //TS_KERNELS_SOFTMAX_H

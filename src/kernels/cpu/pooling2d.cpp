@@ -31,8 +31,12 @@ namespace ts {
 		//	throw ts::Exception("The Padding value parameter type must be FLOAT32!");  //default type
 
 		ts::Tensor& ksize_param = get("ksize");
+		if(ksize_param.count() != 4)
+			throw ts::Exception("The ksize parameter must have four!");
 
 		ts::Tensor& stide_param = get("stride");
+		if(stide_param.count() != 4)
+			throw ts::Exception("The stride parameter must have four!");
 
 		auto padding_memory = padding_param.sync(memory_device());
 
@@ -61,7 +65,7 @@ namespace ts {
 		}
 		else if (m_format == "NHWC")
 		{
-			throw ts::Exception("The Format parameter must be NCHW");
+			throw ts::Exception("The Format parameter must be NCHW");  // onlu support NCHW now
 			if (padding_memory.data<int>()[0] != 0 || padding_memory.data<int>()[1] != 0 || padding_memory.data<int>()[6] != 0 || padding_memory.data<int>()[7] != 0)
 				throw ts::Exception("The Padding value parameter error!");
 
@@ -137,7 +141,9 @@ namespace ts {
 		//	flag = pooling<double>(stack);
 		//}
 
-		return flag ? 1:0;
+		if (!flag)
+			throw ts::Exception("pooling2d failed!");
+		return 1;
 	}
 
 	int Pooling2d::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output)
@@ -308,6 +314,6 @@ namespace ts {
 		return true;
 	}
 
-	//TS_REGISTER_OPERATOR(Pooling2d, ts::CPU, "pooling2d")
+	TS_REGISTER_OPERATOR(Pooling2d, ts::CPU, "pooling2d")
 
 }

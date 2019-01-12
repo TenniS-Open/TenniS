@@ -6,12 +6,14 @@ namespace ts {
 	void Concat::init()
 	{
 		supper::init();
+		if (!has("dim"))
+			throw ts::Exception("Missing dim parameter");
 
 		auto dim_tensor = get("dim");
 		m_dim = tensor::to_int(dim_tensor);
 
 		if (m_dim < 0)
-			throw ts::Exception("Concat dim should be greater than 0!");
+			throw ts::Exception("Concat dim should be greater than or equale to 0!");
 
 	}
 
@@ -90,7 +92,9 @@ namespace ts {
 		//{
 		//	flag = concat<double>(stack, input_num);
 		//}
-		return flag ? 1:0;
+		if (!flag)
+			throw ts::Exception("concat failed!");
+		return 1;
 	}
 
 	int Concat::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output)
@@ -206,4 +210,5 @@ namespace ts {
 
 		return true;
 	}
+	TS_REGISTER_OPERATOR(Concat, ts::CPU, "concat")
 }
