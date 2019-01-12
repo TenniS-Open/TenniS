@@ -11,10 +11,10 @@ namespace ts {
 	class Prelu : public ts::Operator {
 	public:
 		using supper = ts::Operator;
-		Prelu() {
+		Prelu(): m_dim(-1) {
 			field("dim", OPTIONAL);
 			field("slope", REQUIRED);
-			m_dim = -1;
+			
 		}
 		virtual void init();
 		virtual int run(ts::Stack &stack);

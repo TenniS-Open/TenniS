@@ -11,7 +11,7 @@ namespace ts {
 	class Softmax : public ts::Operator {
 	public:
 		using supper = ts::Operator;
-		Softmax() {
+		Softmax():m_dim(-1){
 			field("dim", REQUIRED);
 		}
 		virtual void init();

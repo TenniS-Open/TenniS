@@ -8,7 +8,8 @@ namespace ts {
 	void Softmax::init()
 	{
 		supper::init();
-
+		if(!has("dim"))
+			throw ts::Exception("Missing dim parameter");
 		auto dim_tensor = get("dim");
 		m_dim = tensor::to_int(dim_tensor);
 

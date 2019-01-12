@@ -10,7 +10,8 @@ namespace ts {
 	class Concat : public ts::Operator {
 	public:
 		using supper = ts::Operator;
-		Concat() {
+		Concat():m_dim(-1) 
+		{
 			field("dim", REQUIRED);
 		}
 		virtual void init();
