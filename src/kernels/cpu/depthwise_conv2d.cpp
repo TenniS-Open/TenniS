@@ -245,6 +245,6 @@ int Depthwise_Conv2d::run(ts::Stack &stack) {
 
 
 
-//TS_REGISTER_OPERATOR(Depthwise_Conv2d, ts::CPU, "depthwise_conv2d")
+TS_REGISTER_OPERATOR(Depthwise_Conv2d, ts::CPU, "depthwise_conv2d")
 
 }

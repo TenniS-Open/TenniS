@@ -37,7 +37,7 @@ private:
 };
 
 
-TS_REGISTER_OPERATOR(Depthwise_Conv2d, ts::CPU, "depthwise_conv2d")
+//TS_REGISTER_OPERATOR(Depthwise_Conv2d, ts::CPU, "depthwise_conv2d")
 
 }
 

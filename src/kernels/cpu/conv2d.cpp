@@ -236,6 +236,6 @@ int Conv2d::run(ts::Stack &stack) {
 
 
 
-//TS_REGISTER_OPERATOR(Conv2d, ts::CPU, "conv2d")
+TS_REGISTER_OPERATOR(Conv2d, ts::CPU, "conv2d")
 
 }

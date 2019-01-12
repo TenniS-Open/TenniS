@@ -1,5 +1,5 @@
-#ifndef TS_KERNELS_BATCH_SCALE_H
-#define TS_KERNELS_BATCH_SCALE_H
+#ifndef TS_KERNELS_INNER_PROD_H
+#define TS_KERNELS_INNER_PROD_H
 
 #include <global/operator_factory.h>
 #include <core/tensor.h>
@@ -10,11 +10,11 @@
 namespace ts {
 
 
-class Batch_Scale : public ts::Operator {
+class Inner_Prod : public ts::Operator {
 public:
 
     using supper = ts::Operator;
-    Batch_Scale();
+    Inner_Prod();
 
     virtual void init(); 
 
@@ -24,17 +24,12 @@ public:
 
 private:
     template<typename T>
-    void compute_batch_scale(ts::Tensor *input_tensor, ts::Tensor *scale_tensor,
-                            ts::Tensor *bias_tensor, ts::Tensor *output_tensor);
+    void compute_inner_prod(ts::Tensor *input_tensor, ts::Tensor *dot_tensor, ts::Tensor *output_tensor);
     void infer_private(ts::Stack &stack, ts::Tensor::Prototype &output);
 
-private:
-    int m_dim;
 
 };
 
-
-//TS_REGISTER_OPERATOR(Batch_Scale, ts::CPU, "batch_scale")
 
 
 

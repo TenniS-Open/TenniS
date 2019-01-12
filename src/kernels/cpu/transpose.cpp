@@ -224,6 +224,6 @@ int Transpose::run(ts::Stack &stack) {
 
 
 /////////////////////////////////////////////////////////////
-//TS_REGISTER_OPERATOR(Transpose, ts::CPU, "_transpose")
+TS_REGISTER_OPERATOR(Transpose, ts::CPU, "_transpose")
 
 }

@@ -1,5 +1,4 @@
 #include <kernels/cpu/resize2d.h>
-#include <kernels/cpu/saturate_cast.h>
 #include <core/tensor_builder.h>
 #include <memory>
 
@@ -39,20 +38,12 @@ void Resize2d::ResizeImageLinear( const T *src_im, int src_width, int src_height
       double lf_weight_y = lf_y_s - n_y_s;
 
       for (int c = 0; c < channels; c++) {
-          //if(ishwc) {
-              dst_im[(n_y_d * dst_width + n_x_d) * channels + c] =
-                     (1 - lf_weight_y) * (1 - lf_weight_x) * src_im[(n_y_s * src_width + n_x_s) * channels + c] +
-                     (1 - lf_weight_y) * lf_weight_x * src_im[(n_y_s * src_width + n_x_s + 1) * channels + c] +
-                     lf_weight_y * (1 - lf_weight_x) * src_im[((n_y_s + 1) * src_width + n_x_s) * channels + c] +
-                     lf_weight_y * lf_weight_x * src_im[((n_y_s + 1) * src_width + n_x_s + 1) * channels + c];
-          //}else {
-          //    dst_im[(n_y_d * dst_width + n_x_d) + c * dststep ] =
-          //           (1 - lf_weight_y) * (1 - lf_weight_x) * src_im[(n_y_s * src_width + n_x_s) + c * srcstep] +
-          //           (1 - lf_weight_y) * lf_weight_x * src_im[(n_y_s * src_width + n_x_s + 1) + c * srcstep] + 
-          //           lf_weight_y * (1 - lf_weight_x) * src_im[((n_y_s + 1) * src_width + n_x_s) + c * srcstep] +
-          //           lf_weight_y * lf_weight_x * src_im[((n_y_s + 1) * src_width + n_x_s + 1) + c * srcstep];
+          dst_im[(n_y_d * dst_width + n_x_d) * channels + c] =
+          (T)((1 - lf_weight_y) * (1 - lf_weight_x) * src_im[(n_y_s * src_width + n_x_s) * channels + c] +
+          (1 - lf_weight_y) * lf_weight_x * src_im[(n_y_s * src_width + n_x_s + 1) * channels + c] +
+          lf_weight_y * (1 - lf_weight_x) * src_im[((n_y_s + 1) * src_width + n_x_s) * channels + c] +
+          lf_weight_y * lf_weight_x * src_im[((n_y_s + 1) * src_width + n_x_s + 1) * channels + c]);
 
-         //}//end if
       }//end for c
     }
   }
@@ -76,7 +67,7 @@ template<typename T>
 
 
     for (int j = 0; j < dst_height; ++j) {
-        float fy = (float)((j + 0.5) * scale_y - 0.5);
+        double fy = (double)((j + 0.5) * scale_y - 0.5);
         int sy = floor(fy);
         fy -= sy;
         //sy = std::min(sy, src_height - 3);  
@@ -89,23 +80,17 @@ template<typename T>
             fy = 0, sy = src_height - 3;
         }
 
-        const float A = -0.75f;
+        const double A = -0.75f;
 
-        float coeffsY[4];
+        double coeffsY[4];
         coeffsY[0] = ((A*(fy + 1) - 5*A)*(fy + 1) + 8*A)*(fy + 1) - 4*A;
         coeffsY[1] = ((A + 2)*fy - (A + 3))*fy*fy + 1;
         coeffsY[2] = ((A + 2)*(1 - fy) - (A + 3))*(1 - fy)*(1 - fy) + 1;
         coeffsY[3] = 1.f - coeffsY[0] - coeffsY[1] - coeffsY[2];
 
-        short cbufY[4];
-        cbufY[0] = ts::saturate_cast<short>(coeffsY[0] * 2048);
-        cbufY[1] = ts::saturate_cast<short>(coeffsY[1] * 2048);
-        cbufY[2] = ts::saturate_cast<short>(coeffsY[2] * 2048);
-        cbufY[3] = ts::saturate_cast<short>(coeffsY[3] * 2048);
-
         for (int i = 0; i < dst_width; ++i)
         {
-            float fx = (float)((i + 0.5) * scale_x - 0.5);
+            double fx = (double)((i + 0.5) * scale_x - 0.5);
             int sx = floor(fx);
             fx -= sx;
 
@@ -116,71 +101,33 @@ template<typename T>
                fx = 0, sx = src_width - 3;
             }
 
-            float coeffsX[4];
+            double coeffsX[4];
             coeffsX[0] = ((A*(fx + 1) - 5*A)*(fx + 1) + 8*A)*(fx + 1) - 4*A;
             coeffsX[1] = ((A + 2)*fx - (A + 3))*fx*fx + 1;
             coeffsX[2] = ((A + 2)*(1 - fx) - (A + 3))*(1 - fx)*(1 - fx) + 1;
             coeffsX[3] = 1.f - coeffsX[0] - coeffsX[1] - coeffsX[2];
 
-            short cbufX[4];
-            cbufX[0] = ts::saturate_cast<short>(coeffsX[0] * 2048);
-            cbufX[1] = ts::saturate_cast<short>(coeffsX[1] * 2048);
-            cbufX[2] = ts::saturate_cast<short>(coeffsX[2] * 2048);
-            cbufX[3] = ts::saturate_cast<short>(coeffsX[3] * 2048);
-
             for (int k = 0; k < channels; ++k) {
-                //if(ishwc) {
-                    dst_im[j * dstrows + i * channels + k] = abs(int((src_im [(sy-1) * srcrows + (sx-1) * channels + k] * cbufX[0] * cbufY[0] +
-                                                                  src_im [(sy) * srcrows + (sx-1) * channels + k] * cbufX[0] * cbufY[1] +
-                                                                  src_im [(sy+1) * srcrows + (sx-1) * channels + k] * cbufX[0] * cbufY[2] +
-                                                                  src_im [(sy+2) * srcrows + (sx-1) * channels + k] * cbufX[0] * cbufY[3] +
+                dst_im[j * dstrows + i * channels + k] = (T)((src_im [(sy-1) * srcrows + (sx-1) * channels + k] * coeffsX[0] * coeffsY[0] +
+                                                         src_im [(sy) * srcrows + (sx-1) * channels + k] * coeffsX[0] * coeffsY[1] +
+                                                         src_im [(sy+1) * srcrows + (sx-1) * channels + k] * coeffsX[0] * coeffsY[2] +
+                                                         src_im [(sy+2) * srcrows + (sx-1) * channels + k] * coeffsX[0] * coeffsY[3] +
 
-                                                                  src_im [(sy-1) * srcrows + (sx) * channels + k] * cbufX[1] * cbufY[0] +
-                                                                  src_im [(sy) * srcrows + (sx) * channels + k] * cbufX[1] * cbufY[1] +
+                                                         src_im [(sy-1) * srcrows + (sx) * channels + k] * coeffsX[1] * coeffsY[0] +
+                                                         src_im [(sy) * srcrows + (sx) * channels + k] * coeffsX[1] * coeffsY[1] +
+                                                         src_im [(sy+1) * srcrows + (sx) * channels + k] * coeffsX[1] * coeffsY[2] +
+                                                         src_im [(sy+2) * srcrows + (sx) * channels + k] * coeffsX[1] * coeffsY[3] +
 
-                                                                  src_im [(sy+1) * srcrows + (sx) * channels + k] * cbufX[1] * cbufY[2] +
-                                                                  src_im [(sy+2) * srcrows + (sx) * channels + k] * cbufX[1] * cbufY[3] +
+                                                         src_im [(sy-1) * srcrows + (sx+1) * channels + k] * coeffsX[2] * coeffsY[0] +
+                                                         src_im [(sy) * srcrows + (sx+1) * channels + k] * coeffsX[2] * coeffsY[1] +
+                                                         src_im [(sy+1) * srcrows + (sx+1) * channels + k] * coeffsX[2] * coeffsY[2] +
+                                                         src_im [(sy+2) * srcrows + (sx+1) * channels + k] * coeffsX[2] * coeffsY[3] +
 
-                                                                  src_im [(sy-1) * srcrows + (sx+1) * channels + k] * cbufX[2] * cbufY[0] +
-                                                                  src_im [(sy) * srcrows + (sx+1) * channels + k] * cbufX[2] * cbufY[1] +
+                                                         src_im [(sy-1) * srcrows + (sx+2) * channels + k] * coeffsX[3] * coeffsY[0] +
+                                                         src_im [(sy) * srcrows + (sx+2) * channels + k] * coeffsX[3] * coeffsY[1] +
+                                                         src_im [(sy+1) * srcrows + (sx+2) * channels + k] * coeffsX[3] * coeffsY[2] +
+                                                         src_im [(sy+2) * srcrows + (sx+2) * channels + k] * coeffsX[3] * coeffsY[3] ));
 
-                                                                  src_im [(sy+1) * srcrows + (sx+1) * channels + k] * cbufX[2] * cbufY[2] +
-                                                                  src_im [(sy+2) * srcrows + (sx+1) * channels + k] * cbufX[2] * cbufY[3] +
-
-                                                                  src_im [(sy-1) * srcrows + (sx+2) * channels + k] * cbufX[3] * cbufY[0] +
-                                                                  src_im [(sy) * srcrows + (sx+2) * channels + k] * cbufX[3] * cbufY[1] +
-
-
-                                                                  src_im [(sy+1) * srcrows + (sx+2) * channels + k] * cbufX[3] * cbufY[2] +
-                                                                  src_im [(sy+2) * srcrows + (sx+2) * channels + k] * cbufX[3] * cbufY[3] )) >> 22);
-
-                /*}else {
-                    dst_im[j * dst_width + i + k * dststep] = abs(int((src_im [(sy-1) * src_width + (sx-1) + k * srcstep] * cbufX[0] * cbufY[0] +
-                                                                  src_im [(sy) * src_width + (sx-1) + k * srcstep] * cbufX[0] * cbufY[1] +
-                                                                  src_im [(sy+1) * src_width + (sx-1) + k * srcstep] * cbufX[0] * cbufY[2] +
-                                                                  src_im [(sy+2) * src_width + (sx-1) + k * srcstep] * cbufX[0] * cbufY[3] +
-
-                                                                  src_im [(sy-1) * src_width + (sx) + k * srcstep] * cbufX[1] * cbufY[0] +
-                                                                  src_im [(sy) * src_width + (sx)  + k * srcstep] * cbufX[1] * cbufY[1] +
-
-                                                                  src_im [(sy+1) * src_width + (sx) + k * srcstep] * cbufX[1] * cbufY[2] +
-                                                                  src_im [(sy+2) * src_width + (sx) + k * srcstep] * cbufX[1] * cbufY[3] +
-
-                                                                  src_im [(sy-1) * src_width + (sx+1) + k * srcstep] * cbufX[2] * cbufY[0] +
-                                                                  src_im [(sy) * src_width + (sx+1) + k * srcstep] * cbufX[2] * cbufY[1] +
-
-                                                                  src_im [(sy+1) * src_width + (sx+1) + k * srcstep] * cbufX[2] * cbufY[2] +
-                                                                  src_im [(sy+2) * src_width + (sx+1) + k * srcstep] * cbufX[2] * cbufY[3] +
-
-                                                                  src_im [(sy-1) * src_width + (sx+2) + k * srcstep] * cbufX[3] * cbufY[0] +
-                                                                  src_im [(sy) * src_width + (sx+2)  + k * srcstep] * cbufX[3] * cbufY[1] +
-
-
-                                                                  src_im [(sy+1) * src_width + (sx+2) + k * srcstep] * cbufX[3] * cbufY[2] +
-                                                                  src_im [(sy+2) * src_width + (sx+2) + k * srcstep] * cbufX[3] * cbufY[3] )) >> 22);
-
-                }//end if
-              */
             }//end k
         }
     }
@@ -195,7 +142,6 @@ Resize2d:: Resize2d() {
 void Resize2d::init() {
     supper::init();
     if(has("type")) {
-        //std::cout << "type:" << get("type").sync(memory_device()).data<int>()[0] << std::endl;
         m_type = ts::tensor::to_int(get("type"));
     }
 
@@ -264,7 +210,7 @@ int Resize2d::run(ts::Stack &stack) {
     if(stack.index(1)->dtype() != ts::INT32) {
         throw ts::Exception("Resize2d input parameters 1 type only supported INT32");
     }
-    int type_len = ts::type_bytes(stack.index(0)->dtype());
+    //int type_len = ts::type_bytes(stack.index(0)->dtype());
 
     int dims = stack.index(0)->dims();
     int i=0;
@@ -305,20 +251,35 @@ int Resize2d::run(ts::Stack &stack) {
     int oldstep = channels * old_height * old_width;
 
     auto &tensor = *stack.index(-1);
+    ts::DTYPE type = tensor.dtype();
 
     for(int k=0; k<batchs; k++) {
-        if(type_len == 1){
+        if(type == ts::UINT8){
             resize<unsigned char>(stack, tensor, old_height,old_width,new_height,new_width,
                                      k * oldstep, k * newstep, newstep, channels);
-        }else if(type_len == 2) {
+        }else if(type == ts::INT8) {
+            resize<char>(stack, tensor, old_height,old_width,new_height,new_width,
+                                     k * oldstep, k * newstep,  newstep, channels);
+        }else if(type == ts::INT16) {
+            resize<short>(stack, tensor, old_height,old_width,new_height,new_width,
+                                     k * oldstep, k * newstep,  newstep, channels);
+        }else if(type == ts::UINT16) {
             resize<unsigned short>(stack, tensor, old_height,old_width,new_height,new_width,
                                      k * oldstep, k * newstep,  newstep, channels);
-        }else if(type_len == 4) {
+        }else if(type == ts::INT32) {
+            resize<int>(stack, tensor, old_height,old_width,new_height,new_width,
+                                     k * oldstep, k * newstep,  newstep, channels);
+        }else if(type == ts::UINT32) {
+            resize<unsigned int>(stack, tensor, old_height,old_width,new_height,new_width,
+                                     k * oldstep, k * newstep, newstep, channels);
+        }else if(type == ts::FLOAT32) {
             resize<float>(stack, tensor, old_height,old_width,new_height,new_width,
                                      k * oldstep, k * newstep, newstep, channels);
-        }else if(type_len == 8) {
+        }else if(type == ts::FLOAT64) {
             resize<double>(stack, tensor, old_height,old_width,new_height,new_width,
                                    k * oldstep, k * newstep, newstep, channels);
+        }else {
+            throw ts::Exception("Resize2d do not support data type");
         }
 
     }
@@ -333,6 +294,6 @@ int Resize2d::run(ts::Stack &stack) {
 
 //////////////////////////////////////////////////////////
 
-//TS_REGISTER_OPERATOR(Resize2d, ts::CPU, "_resize2d")
+TS_REGISTER_OPERATOR(Resize2d, ts::CPU, "_resize2d")
 
 }

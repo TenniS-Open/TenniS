@@ -39,7 +39,7 @@ private:
 
 
 
-TS_REGISTER_OPERATOR(Pad, ts::CPU, "pad")
+//TS_REGISTER_OPERATOR(Pad, ts::CPU, "pad")
 
 
 }
