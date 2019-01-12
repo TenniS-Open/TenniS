@@ -27,7 +27,7 @@ private:
     void dimshuffle(const Shape & shape, int dim, int add_dim, const T* src, T* dst);
 
     template<typename T>
-    void compute_sub(ts::Tensor *input_tensor, ts::Tensor *sub_tensor, ts::Tensor *output_tensor);
+    void compute_sub(const ts::Tensor *input_tensor, const ts::Tensor *sub_tensor, ts::Tensor *output_tensor);
     void infer_private(ts::Stack &stack, ts::Tensor::Prototype &output);
 
 

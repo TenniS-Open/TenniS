@@ -56,7 +56,7 @@ Pad::Pad() {
 void Pad::init() {
     supper::init();
     if(has("padding_value")){
-        Tensor tensor_padding_value = get("padding_value");
+        const Tensor& tensor_padding_value = get("padding_value");
         m_padding_value = ts::tensor::to_int(tensor_padding_value); 
     }
 
@@ -68,8 +68,8 @@ void Pad::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) {
         throw ts::Exception("pad only support two input parameters");
     }
 
-    Shape shape = stack.index(0)->sizes();
-    Shape pad_shape = stack.index(1)->sizes();;
+    const Shape &shape = stack.index(0)->sizes();
+    const Shape &pad_shape = stack.index(1)->sizes();;
     Shape reshape;
         
     if(!(stack.index(0)->dtype() == ts::INT32 || stack.index(0)->dtype() == ts::FLOAT32 ||
@@ -88,7 +88,7 @@ void Pad::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) {
 
     reshape.resize(shape.size());
 
-    int * padding = stack.index(1)->sync(memory_device()).data<int>();
+    const int * padding = stack.index(1)->data<int>();
     //std::cout << "reshape:";
     for(int i=0; i<shape.size(); i++) {
         reshape[i] = shape[i] + padding[2 * i] + padding[2 * i + 1];
@@ -112,7 +112,7 @@ int Pad::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output) {
 }
 
 template <typename T>
-void Pad::padding_run(T * psrc, int len, T* pdst, int* padding, const Shape &shape, const Shape &reshape) {
+void Pad::padding_run(const T * psrc, int len, T* pdst, const int* padding, const Shape &shape, const Shape &reshape) {
     int index = 0;
     Shape tmpshape;
     tmpshape.resize(shape.size());
@@ -138,15 +138,15 @@ int Pad::run(ts::Stack &stack) {
     infer_private(stack, output);
 
     ts::Tensor *input_tensor = stack.index(0);
-    Shape shape = input_tensor->sizes();
-    Shape reshape = output.sizes();
+    const Shape& shape = input_tensor->sizes();
+    const Shape& reshape = output.sizes();
 
     int type_len = ts::type_bytes(input_tensor->dtype());
 
     stack.push(output, memory_device());
     ts::Tensor *tensor = stack.index(-1);
 
-    int * padding = stack.index(1)->sync(memory_device()).data<int>();
+    const int * padding = stack.index(1)->data<int>();
 
     Shape tmpshape;
     tmpshape.resize(shape.size());
@@ -156,31 +156,31 @@ int Pad::run(ts::Stack &stack) {
 
     switch(type) {
         case ts::INT8: {
-            char * psrc = stack.index(0)->sync(memory_device()).data<char>();
+            const char * psrc = stack.index(0)->data<char>();
             char * pdst = tensor->sync(memory_device()).data<char>();
             padding_run<char>(psrc, ncount, pdst, padding, shape, reshape);
             break;
         }
         case ts::INT16: {
-            short * psrc = stack.index(0)->sync(memory_device()).data<short>();
+            const short * psrc = stack.index(0)->data<short>();
             short * pdst = tensor->sync(memory_device()).data<short>();
             padding_run<short>(psrc, ncount, pdst, padding, shape, reshape);
             break;
         }
         case ts::INT32: {
-            int * psrc = stack.index(0)->sync(memory_device()).data<int>();
+            const int * psrc = stack.index(0)->data<int>();
             int * pdst = tensor->sync(memory_device()).data<int>();
             padding_run<int>(psrc, ncount, pdst, padding, shape, reshape);
             break;
         }
         case ts::FLOAT32: {
-            float * psrc = stack.index(0)->sync(memory_device()).data<float>();
+            const float * psrc = stack.index(0)->data<float>();
             float * pdst = tensor->sync(memory_device()).data<float>();
             padding_run<float>(psrc, ncount, pdst, padding, shape, reshape);
             break;
         }
         case ts::FLOAT64: {
-            double * psrc = stack.index(0)->sync(memory_device()).data<double>();
+            const double * psrc = stack.index(0)->data<double>();
             double * pdst = tensor->sync(memory_device()).data<double>();
             padding_run<double>(psrc, ncount, pdst, padding, shape, reshape);
             break;
@@ -193,14 +193,6 @@ int Pad::run(ts::Stack &stack) {
 
     return 1;
 }
-
-
-
-
-
-
-
-
 
 
 

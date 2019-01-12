@@ -54,7 +54,7 @@ void Depthwise_Conv2d::init() {
        throw ts::Exception("depthwise conv2d format parameter is not supported");
     }
 
-    Tensor tensor_padding = get("padding");
+    const Tensor& tensor_padding = get("padding");
     if(tensor_padding.dims() != 2 || tensor_padding.dtype() != ts::INT32 || tensor_padding.count() != 8) {
         throw ts::Exception("depthwise input parameter padding check failed");
     }
@@ -62,16 +62,16 @@ void Depthwise_Conv2d::init() {
     m_padding.resize(8);
     for(int i=0; i<4; i++) {
         if(i==0 || i== 1) {
-            if(tensor_padding.sync(memory_device()).data<int>()[2*i] != 0 ||
-               tensor_padding.sync(memory_device()).data<int>()[2*i + 1] != 0) {
+            if(tensor_padding.data<int>()[2*i] != 0 ||
+               tensor_padding.data<int>()[2*i + 1] != 0) {
                 throw ts::Exception("depthwise input parameter padding  check failed");
             }
         }
-        m_padding[2*i] = tensor_padding.sync(memory_device()).data<int>()[2*i];
-        m_padding[2*i + 1] = tensor_padding.sync(memory_device()).data<int>()[2*i + 1];
+        m_padding[2*i] = tensor_padding.data<int>()[2*i];
+        m_padding[2*i + 1] = tensor_padding.data<int>()[2*i + 1];
     }
 
-    Tensor tensor_stride = get("stride");
+    const Tensor& tensor_stride = get("stride");
     if(tensor_stride.dims() != 1 || tensor_stride.dtype() != ts::INT32 || tensor_stride.count() != 4) {
         throw ts::Exception("depthwise input parameter stride check failed");
     }
@@ -79,14 +79,14 @@ void Depthwise_Conv2d::init() {
     m_stride.resize(4);
     for(int i=0; i<4; i++) {
         if(i==0 || i== 1) {
-            if(tensor_stride.sync(memory_device()).data<int>()[i] != 0 ) {
+            if(tensor_stride.data<int>()[i] != 0 ) {
                 throw ts::Exception("depthwise conv2d input parameter stride check failed");
             }
         }
-        m_stride[i] = tensor_stride.sync(memory_device()).data<int>()[i];
+        m_stride[i] = tensor_stride.data<int>()[i];
     }
 
-    Tensor tensor_dialations = get("dialations");
+    const Tensor& tensor_dialations = get("dialations");
     if(tensor_dialations.dims() != 1 || tensor_dialations.dtype() != ts::INT32 || tensor_dialations.count() != 4) {
         throw ts::Exception("depthwise conv2d input parameter dialations check failed");
     }
@@ -94,20 +94,20 @@ void Depthwise_Conv2d::init() {
     m_dialations.resize(4);
     for(int i=0; i<4; i++) {
         if(i==0 || i== 1) {
-            if(tensor_dialations.sync(memory_device()).data<int>()[i] != 0 ) {
+            if(tensor_dialations.data<int>()[i] != 0 ) {
                 throw ts::Exception("depthwiseconv2d input parameter dialations check failed");
             }
         }
-        m_dialations[i] = tensor_dialations.sync(memory_device()).data<int>()[i];
+        m_dialations[i] = tensor_dialations.data<int>()[i];
     }
 
     if(has("group")){
-        Tensor tensor_group = get("group");
+        const Tensor& tensor_group = get("group");
         m_group = ts::tensor::to_int(tensor_group);
     }
 
     if(has("padding_value")){
-        Tensor tensor_padding_value = get("padding_value");
+        const Tensor& tensor_padding_value = get("padding_value");
         m_padding_value = ts::tensor::to_int(tensor_padding_value);
     }
 
@@ -126,7 +126,7 @@ int Depthwise_Conv2d::infer_private(ts::Stack &stack, ts::Tensor::Prototype &out
         throw ts::Exception("depthwise conv2d first parameter's dims is not 4");
     }
 
-    Shape weight_shape = stack.index(1)->sizes();
+    const Shape& weight_shape = stack.index(1)->sizes();
 
     if(weight_shape.size()  != 4 ) {
         throw ts::Exception("depthwise conv2d second parameter's dims is not 4");
@@ -147,7 +147,7 @@ int Depthwise_Conv2d::infer_private(ts::Stack &stack, ts::Tensor::Prototype &out
     shape[2] = output_h;
     shape[3] = output_w;
 
-    std::cout << "output shape:n=" << shape[0] << ",c=" << shape[1] << ",h=" << shape[2] << ",w=" << shape[3] << std::endl;
+    //std::cout << "output shape:n=" << shape[0] << ",c=" << shape[1] << ",h=" << shape[2] << ",w=" << shape[3] << std::endl;
     output = ts::Tensor::Prototype(stack.index(0)->dtype(), shape);
     return 1;
 }
@@ -159,7 +159,7 @@ int Depthwise_Conv2d::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype>
 }
 
 template<typename T>
-void Depthwise_Conv2d::compute_conv(Tensor *input_tensor, Tensor *weight_tensor, Tensor *tensor, const Shape& shape,
+void Depthwise_Conv2d::compute_conv(const Tensor *input_tensor, const Tensor *weight_tensor, Tensor *tensor, const Shape& shape,
                       const Shape &reshape, const Shape &weight_shape ) {
 
     int kernel_dims = weight_shape[1] * weight_shape[2] * weight_shape[3];
@@ -171,14 +171,14 @@ void Depthwise_Conv2d::compute_conv(Tensor *input_tensor, Tensor *weight_tensor,
     int col_buffer_size = shape[1] * weight_shape[2] * weight_shape[3] * reshape[2] * reshape[3];
 
 
-    T *pinput = (input_tensor->sync(memory_device())).data<T>();
-    T *pweight_base = weight_tensor->sync(memory_device()).data<T>();
+    const T *pinput = input_tensor->data<T>();
+    const T *pweight_base = weight_tensor->data<T>();
     T *poutput = tensor->sync(memory_device()).data<T>();
     for(int n=0; n<reshape[0]; n++) {
         for(int c=0; c < reshape[1]; c++) {
             for(int h=0; h<reshape[2]; h++) {
                 for(int w=0; w<reshape[3]; w++) {
-                    T * pweight = pweight_base + c * weight_shape[2] * weight_shape[3];
+                    const T * pweight = pweight_base + c * weight_shape[2] * weight_shape[3];
                     T value = 0;
                     for(int kh=0; kh<weight_shape[2]; kh++) {
                         for(int kw=0; kw<weight_shape[3]; kw++) {
@@ -202,12 +202,12 @@ void Depthwise_Conv2d::compute_conv(Tensor *input_tensor, Tensor *weight_tensor,
 
 int Depthwise_Conv2d::run(ts::Stack &stack) {
     ts::Tensor::Prototype output;
-    Shape padding;
+    //Shape padding;
     infer_private(stack, output);
 
     ts::Tensor *input_tensor = stack.index(0);
-    Shape shape = input_tensor->sizes();
-    Shape reshape = output.sizes();
+    const Shape& shape = input_tensor->sizes();
+    const Shape& reshape = output.sizes();
 
     int type_len = ts::type_bytes(input_tensor->dtype());
 
@@ -215,7 +215,7 @@ int Depthwise_Conv2d::run(ts::Stack &stack) {
     ts::Tensor *tensor = stack.index(-1);
 
     ts::Tensor *weight_tensor = stack.index(1);
-    Shape weight_shape = weight_tensor->sizes();
+    const Shape& weight_shape = weight_tensor->sizes();
 
     switch(tensor->dtype()) {
         case ts::FLOAT32: {

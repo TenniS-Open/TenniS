@@ -3,14 +3,7 @@
 
 #include <global/operator_factory.h>
 #include <core/tensor.h>
-
-//#include <core/dtype.h>
 #include <runtime/stack.h>
-//#include <cstring>
-//#include <math.h>
-
-//#include <string.h>
-//#include <set>
 
 namespace ts {
 
@@ -30,7 +23,7 @@ private:
     void infer_private(ts::Stack &stack, ts::Tensor::Prototype &output); 
 
     template <typename T>
-    void padding_run(T * psrc, int len, T* pdst, int* padding, const Shape &shape, const Shape &reshape);
+    void padding_run(const T * psrc, int len, T* pdst, const int* padding, const Shape &shape, const Shape &reshape);
 
 private:
     int m_padding_value;

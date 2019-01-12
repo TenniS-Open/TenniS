@@ -27,7 +27,7 @@ private:
     int infer_private(ts::Stack &stack, ts::Tensor::Prototype &output);
 
     template<typename T>
-    void transpose_run(T * psrc, int len, T* pdst,  const Shape &shape, const Shape &reshape);
+    void transpose_run(const T * psrc, int len, T* pdst,  const Shape &shape, const Shape &reshape);
 
 private:
     Shape m_permute;

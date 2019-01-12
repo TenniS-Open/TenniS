@@ -24,8 +24,8 @@ public:
 
 private:
     template<typename T>
-    void compute_batch_scale(ts::Tensor *input_tensor, ts::Tensor *scale_tensor,
-                            ts::Tensor *bias_tensor, ts::Tensor *output_tensor);
+    void compute_batch_scale(const ts::Tensor *input_tensor, const ts::Tensor *scale_tensor,
+                             const ts::Tensor *bias_tensor, ts::Tensor *output_tensor);
     void infer_private(ts::Stack &stack, ts::Tensor::Prototype &output);
 
 private:
@@ -34,7 +34,6 @@ private:
 };
 
 
-//TS_REGISTER_OPERATOR(Batch_Scale, ts::CPU, "batch_scale")
 
 
 

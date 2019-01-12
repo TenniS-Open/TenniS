@@ -21,8 +21,8 @@ void Mul::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) {
         throw ts::Exception("mul must have tow input parameters");
     }
 
-    Shape shape = stack.index(0)->sizes();
-    Shape mul_shape = stack.index(1)->sizes();
+    const Shape& shape = stack.index(0)->sizes();
+    const Shape& mul_shape = stack.index(1)->sizes();
 
     if(mul_shape.size()  != shape.size() ) {
         throw ts::Exception("mul two parameters's dims is not same");
@@ -83,18 +83,19 @@ void Mul::dimshuffle(const Shape & shape, int dim, int mul_dim, const T* src, T*
 
 
 template<typename T>
-void Mul::compute_mul(ts::Tensor *input_tensor, ts::Tensor *mul_tensor, ts::Tensor *output_tensor) {
-    Shape shape = input_tensor->sizes();
+void Mul::compute_mul(const ts::Tensor *input_tensor, const ts::Tensor *mul_tensor, ts::Tensor *output_tensor) {
+    const Shape& shape = input_tensor->sizes();
     Shape mul_shape = mul_tensor->sizes();
-    Shape reshape = output_tensor->sizes();
+    const Shape& reshape = output_tensor->sizes();
 
-    T* psrc = input_tensor->sync(memory_device()).data<T>();
-    T* pmul = mul_tensor->sync(memory_device()).data<T>();
+    const T* psrc = input_tensor->data<T>();
+    const T* pmul = mul_tensor->data<T>();
     T* pdst = output_tensor->sync(memory_device()).data<T>();
 
     T* tmpbuffer = NULL;
     T* dimshuffle_buffer = NULL;
     T* ptr = NULL;
+    const T* pdata = NULL;
 
     for(int i=0; i<shape.size(); i++) {
         if((mul_shape[i] == 1) && (shape[i] > 1)) {
@@ -115,14 +116,14 @@ void Mul::compute_mul(ts::Tensor *input_tensor, ts::Tensor *mul_tensor, ts::Tens
 
 
     if(dimshuffle_buffer != NULL) {
-        ptr = dimshuffle_buffer;
+        pdata = dimshuffle_buffer;
     }else {
-        ptr = pmul;
+        pdata = pmul;
     }
 
     int ncount = input_tensor->count();
     for(int i=0; i<ncount; i++) {
-        pdst[i] = psrc[i] * ptr[i];
+        pdst[i] = psrc[i] * pdata[i];
     }
     
     if(dimshuffle_buffer != NULL) {

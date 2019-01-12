@@ -163,7 +163,7 @@ int Resize2d::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output
     int dims = stack.index(0)->dims();
     int i=0;
     for(i=0; i< dims; i++) {
-        if((int)(stack.index(1)->sync(memory_device()).data<int>()[i]) > 0)
+        if((int)(stack.index(1)->data<int>()[i]) > 0)
             break;
     }
 
@@ -171,8 +171,8 @@ int Resize2d::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output
         throw ts::Exception("Resize2d input parameters dims invalid");
     }
 
-    int new_height = (int)stack.index(1)->sync(memory_device()).data<int>()[i];
-    int new_width  = (int)stack.index(1)->sync(memory_device()).data<int>()[i+1];
+    int new_height = (int)stack.index(1)->data<int>()[i];
+    int new_width  = (int)stack.index(1)->data<int>()[i+1];
 
     ts::Shape shape(stack.index(0)->sizes());
 
@@ -189,7 +189,7 @@ void Resize2d::resize(ts::Stack &stack, ts::Tensor &tensor, int old_height, int 
                       int new_height,int new_width, unsigned int oldstep, unsigned int newstep, 
                       unsigned int step, int channels) {
 
-     T*  psrc = stack.index(0)->sync(memory_device()).data<T>() + oldstep;;
+     const T*  psrc = stack.index(0)->data<T>() + oldstep;;
      T*  pdst = tensor.sync(memory_device()).data<T>() + newstep;;
 
      if(m_type == 0) {
@@ -223,8 +223,8 @@ int Resize2d::run(ts::Stack &stack) {
          throw ts::Exception("Resize2d input parameters dims invalid");
     }
 
-    int new_height = (int)stack.index(1)->sync(memory_device()).data<int>()[i];
-    int new_width  = (int)stack.index(1)->sync(memory_device()).data<int>()[i+1];
+    int new_height = (int)stack.index(1)->data<int>()[i];
+    int new_width  = (int)stack.index(1)->data<int>()[i+1];
     int old_height = (int)stack.index(0)->sizes()[i];
     int old_width  = (int)stack.index(0)->sizes()[i+1];
 

@@ -21,8 +21,8 @@ void Add::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) {
         throw ts::Exception("add must have tow input parameters");
     }
 
-    Shape shape = stack.index(0)->sizes();
-    Shape add_shape = stack.index(1)->sizes();
+    const Shape& shape = stack.index(0)->sizes();
+    const Shape& add_shape = stack.index(1)->sizes();
 
     if(add_shape.size()  != shape.size() ) {
         throw ts::Exception("add two parameters's dims is not same");
@@ -83,19 +83,19 @@ void Add::dimshuffle(const Shape & shape, int dim, int add_dim, const T* src, T*
 
 
 template<typename T>
-void Add::compute_add(ts::Tensor *input_tensor, ts::Tensor *add_tensor, ts::Tensor *output_tensor) {
-    Shape shape = input_tensor->sizes();
+void Add::compute_add(const ts::Tensor *input_tensor, const ts::Tensor *add_tensor, ts::Tensor *output_tensor) {
+    const Shape& shape = input_tensor->sizes();
     Shape add_shape = add_tensor->sizes();
-    Shape reshape = output_tensor->sizes();
+    const Shape& reshape = output_tensor->sizes();
 
-    T* psrc = input_tensor->sync(memory_device()).data<T>();
-    T* padd = add_tensor->sync(memory_device()).data<T>();
+    const T* psrc = input_tensor->data<T>();
+    const T* padd = add_tensor->data<T>();
     T* pdst = output_tensor->sync(memory_device()).data<T>();
 
     T* tmpbuffer = NULL;
     T* dimshuffle_buffer = NULL;
     T* ptr = NULL;
-
+    const T* pdata = NULL;
     for(int i=0; i<shape.size(); i++) {
         if((add_shape[i] == 1) && (shape[i] > 1)) {
             if(tmpbuffer == NULL) {
@@ -115,14 +115,14 @@ void Add::compute_add(ts::Tensor *input_tensor, ts::Tensor *add_tensor, ts::Tens
 
 
     if(dimshuffle_buffer != NULL) {
-        ptr = dimshuffle_buffer;
+        pdata = dimshuffle_buffer;
     }else {
-        ptr = padd;
+        pdata = padd;
     }
 
     int ncount = input_tensor->count();
     for(int i=0; i<ncount; i++) {
-        pdst[i] = psrc[i] + ptr[i];
+        pdst[i] = psrc[i] + pdata[i];
     }
     
     if(dimshuffle_buffer != NULL) {
