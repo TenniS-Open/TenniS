@@ -133,7 +133,7 @@ int Batch_Norm::run(ts::Stack &stack) {
 
 
 /////////////////////////////////////////////////
-//TS_REGISTER_OPERATOR(Batch_Norm, ts::CPU, "batch_norm")
+TS_REGISTER_OPERATOR(Batch_Norm, ts::CPU, "batch_norm")
 
 
 

@@ -56,6 +56,6 @@ int Shape_Operator::run(ts::Stack &stack) {
 
 
 ////////////////////////////////////////////////////
-//TS_REGISTER_OPERATOR(Shape_Operator, ts::CPU, "_shape")
+TS_REGISTER_OPERATOR(Shape_Operator, ts::CPU, "_shape")
 
 }

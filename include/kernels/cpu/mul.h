@@ -1,5 +1,5 @@
-#ifndef TS_KERNELS_BIAS_H
-#define TS_KERNELS_BIAS_H
+#ifndef TS_KERNELS_MUL_H
+#define TS_KERNELS_MUL_H
 
 #include <global/operator_factory.h>
 #include <core/tensor.h>
@@ -12,11 +12,11 @@
 namespace ts {
 
 
-class Bias : public ts::Operator {
+class Mul : public ts::Operator {
 public:
 
     using supper = ts::Operator;
-    Bias();
+    Mul();
 
     virtual void init(); 
 
@@ -26,16 +26,17 @@ public:
 
 private:
     template<typename T>
-    void compute_bias(ts::Tensor *input_tensor, ts::Tensor *bias_tensor, ts::Tensor *output_tensor);
+    void dimshuffle(const Shape & shape, int dim, int mul_dim, const T* src, T* dst);
+
+    template<typename T>
+    void compute_mul(ts::Tensor *input_tensor, ts::Tensor *mul_tensor, ts::Tensor *output_tensor);
     void infer_private(ts::Stack &stack, ts::Tensor::Prototype &output);
 
-private:
-    int m_dim;
 
 };
 
 
-TS_REGISTER_OPERATOR(Bias, ts::CPU, "bias")
+//TS_REGISTER_OPERATOR(Mul, ts::CPU, "add")
 
 
 }

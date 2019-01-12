@@ -27,7 +27,7 @@ public:
 };
 
 
-TS_REGISTER_OPERATOR(Shape_Operator, ts::CPU, "_shape")
+//TS_REGISTER_OPERATOR(Shape_Operator, ts::CPU, "_shape")
 
 }
 

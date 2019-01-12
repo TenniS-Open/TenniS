@@ -52,7 +52,7 @@ private:
 
 
 
-TS_REGISTER_OPERATOR(Resize2d, ts::CPU, "_resize2d")
+//TS_REGISTER_OPERATOR(Resize2d, ts::CPU, "_resize2d")
 
 
 }
