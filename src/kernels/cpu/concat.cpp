@@ -11,7 +11,7 @@ namespace ts {
 		m_dim = tensor::to_int(dim_tensor);
 
 		if (m_dim < 0)
-			throw ts::Exception("Concat dim should be greater than 0!");
+			throw ts::Exception("Concat dim should be greater than or equale to 0!");
 
 	}
 
