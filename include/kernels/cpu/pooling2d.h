@@ -60,7 +60,7 @@ namespace ts {
 		POOLINGTYPE m_pooling_type;
 		PDDINGTYPE m_padding_type;
 	};
-	TS_REGISTER_OPERATOR(Pooling2d, ts::CPU, "pooling2d")
+	//TS_REGISTER_OPERATOR(Pooling2d, ts::CPU, "pooling2d")
 }
 
 #endif //TS_KERNELS_POOLONG2D_H
