@@ -77,7 +77,7 @@ namespace ts {
 
 		int slope_size = m_slope.size();
 
-		if (slope_size != 1 && m_dim < 0 || m_dim >= stack.index(0)->dims()) {
+		if (slope_size != 1 && (m_dim < 0 || m_dim >= stack.index(0)->dims())) {
 			throw ts::Exception("Prelu dim parameter check failed");
 		}
 

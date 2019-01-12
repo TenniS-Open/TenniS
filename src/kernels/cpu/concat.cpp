@@ -90,7 +90,9 @@ namespace ts {
 		//{
 		//	flag = concat<double>(stack, input_num);
 		//}
-		return flag ? 1:0;
+		if (!flag)
+			throw ts::Exception("concat failed!");
+		return 1;
 	}
 
 	int Concat::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output)
