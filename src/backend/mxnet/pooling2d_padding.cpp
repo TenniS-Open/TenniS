@@ -60,8 +60,8 @@ namespace ts {
         static Size2D valid_pooling2d_forward(const Size2D &x, const Padding2D &padding, const KSize2D &ksize,
                                         const Stride2D &stride) {
             Size2D y;
-            y.height = int(std::ceil((x.height + padding.top + padding.bottom - ksize.height) / (float)stride.height + 1));
-            y.width = int(std::ceil((x.width + padding.left + padding.right - ksize.width) / (float)stride.width + 1));
+            y.height = int(std::floor((x.height + padding.top + padding.bottom - ksize.height) / (float)stride.height + 1));
+            y.width = int(std::floor((x.width + padding.left + padding.right - ksize.width) / (float)stride.width + 1));
             return y;
         }
 
@@ -140,4 +140,4 @@ namespace ts {
 using namespace ts;
 using namespace ts::mxnet;
 
-TS_REGISTER_OPERATOR(Pooling2dPadding, CPU, name::layer::mx_pooling2d_padding)
+TS_REGISTER_OPERATOR(Pooling2dPadding, CPU, name::layer::mx_pooling2d_padding())
