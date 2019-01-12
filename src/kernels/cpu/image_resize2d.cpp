@@ -228,8 +228,8 @@ int Image_Resize2d::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &
         throw ts::Exception("input parameters dims invalid");
     }
 
-    int new_height = (int)stack.index(1)->sync(memory_device()).data<int>()[i];
-    int new_width  = (int)stack.index(1)->sync(memory_device()).data<int>()[i+1];
+    int new_height = (int)stack.index(1)->data<int>()[i];
+    int new_width  = (int)stack.index(1)->data<int>()[i+1];
     //int old_height = (int)stack.index(0)->sizes()[i];
     //int old_width  = (int)stack.index(0)->sizes()[i+1];
 
@@ -248,7 +248,7 @@ template<typename T>
 void Image_Resize2d::resize(ts::Stack &stack, ts::Tensor &tensor, int old_height, int old_width,
            int new_height,int new_width, unsigned int oldstep, unsigned int newstep, unsigned int step, int channels, bool ishwc) {
 
-    T*  psrc = stack.index(0)->sync(memory_device()).data<T>() + oldstep;;
+    const T*  psrc = stack.index(0)->data<T>() + oldstep;;
     T*  pdst = tensor.sync(memory_device()).data<T>() + newstep;;
 
 
@@ -282,8 +282,8 @@ int Image_Resize2d::run(ts::Stack &stack) {
         throw ts::Exception("input parameters dims invalid");
     }
 
-    int new_height = (int)stack.index(1)->sync(memory_device()).data<int>()[i];
-    int new_width  = (int)stack.index(1)->sync(memory_device()).data<int>()[i+1];
+    int new_height = (int)stack.index(1)->data<int>()[i];
+    int new_width  = (int)stack.index(1)->data<int>()[i+1];
     int old_height = (int)stack.index(0)->sizes()[i];
     int old_width  = (int)stack.index(0)->sizes()[i+1];
 

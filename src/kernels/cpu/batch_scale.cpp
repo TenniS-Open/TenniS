@@ -16,7 +16,7 @@ void Batch_Scale::init() {
     supper::init();
 
     if(has("dim")){
-        Tensor tensor_dim = get("dim");
+        const Tensor& tensor_dim = get("dim");
         m_dim = ts::tensor::to_int(tensor_dim);
     }else {
         throw ts::Exception("batch_scale must set dim parameter");
@@ -29,18 +29,18 @@ void Batch_Scale::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output)
         throw ts::Exception("batch_scale must have three input parameters");
     }
 
-    Shape shape = stack.index(0)->sizes();
+    const Shape& shape = stack.index(0)->sizes();
 
     if(m_dim < 0 || m_dim >= shape.size() ) {
         throw ts::Exception("batch_scale dim parameter check failed");
     }
    
-    Shape scale_shape = stack.index(1)->sizes();
+    const Shape& scale_shape = stack.index(1)->sizes();
     if(scale_shape.size()  != 1 ) {
         throw ts::Exception("batch_scale scale parameter's dims is not 1");
     }
 
-    Shape bias_shape = stack.index(2)->sizes();
+    const Shape& bias_shape = stack.index(2)->sizes();
     if(bias_shape.size()  != 1 ) {
         throw ts::Exception("batch_scale bias parameter's dims is not 1");
     }
@@ -62,9 +62,9 @@ int Batch_Scale::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &out
 }
 
 template<typename T>
-void Batch_Scale::compute_batch_scale(ts::Tensor *input_tensor, ts::Tensor *scale_tensor, 
-                                    ts::Tensor *bias_tensor, ts::Tensor *output_tensor) {
-    Shape shape = input_tensor->sizes();
+void Batch_Scale::compute_batch_scale(const ts::Tensor *input_tensor, const ts::Tensor *scale_tensor, 
+                                      const ts::Tensor *bias_tensor, ts::Tensor *output_tensor) {
+    const Shape& shape = input_tensor->sizes();
     int predims = 1;
     int backdims = 1;
     for(int i=0; i<m_dim; i++) {
@@ -75,9 +75,9 @@ void Batch_Scale::compute_batch_scale(ts::Tensor *input_tensor, ts::Tensor *scal
         backdims *= shape[i];
     }
 
-    T* psrc  = input_tensor->sync(memory_device()).data<T>();
-    T* pscale = scale_tensor->sync(memory_device()).data<T>();
-    T* pbias = bias_tensor->sync(memory_device()).data<T>();
+    const T* psrc  = input_tensor->data<T>();
+    const T* pscale = scale_tensor->data<T>();
+    const T* pbias = bias_tensor->data<T>();
     T* pdst  = output_tensor->sync(memory_device()).data<T>();
     int stridedims = backdims * shape[m_dim];
     int offset = 0;

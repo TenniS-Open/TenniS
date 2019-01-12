@@ -17,7 +17,7 @@ void Add_Bias::init() {
     supper::init();
 
     if(has("format")){
-        Tensor tensor_format = get("format");
+        const Tensor& tensor_format = get("format");
         std::string format = ts::tensor::to_string(tensor_format);
         if(!(format == "NCHW" || format == "NHWC")) {
             throw ts::Exception("add_bias format parameter is not supported");
@@ -30,7 +30,7 @@ void Add_Bias::init() {
     }
 
     if(has("dim")){
-        Tensor tensor_dim = get("dim");
+        const Tensor& tensor_dim = get("dim");
         m_dim = ts::tensor::to_int(tensor_dim);
     }
 }   
@@ -41,13 +41,13 @@ void Add_Bias::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) {
         throw ts::Exception("add_bias must have tow input parameters");
     }
 
-    Shape shape = stack.index(0)->sizes();
+    const Shape & shape = stack.index(0)->sizes();
 
     if(shape.size()  != 4 ) {
         throw ts::Exception("add_bias first parameter's dims is not 4");
     }
    
-    Shape bias_shape = stack.index(1)->sizes();
+    const Shape & bias_shape = stack.index(1)->sizes();
 
     if(bias_shape.size()  != 1 ) {
         throw ts::Exception("add_bias second parameter's dims is not 1");
@@ -73,8 +73,8 @@ int Add_Bias::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output
 }
 
 template<typename T>
-void Add_Bias::compute_bias(ts::Tensor *input_tensor, ts::Tensor *bias_tensor, ts::Tensor *output_tensor) {
-    Shape shape = input_tensor->sizes();
+void Add_Bias::compute_bias(const ts::Tensor *input_tensor, const ts::Tensor *bias_tensor, ts::Tensor *output_tensor) {
+    const Shape& shape = input_tensor->sizes();
     int predims = 1;
     int backdims = 1;
     for(int i=0; i<m_dim; i++) {
@@ -85,8 +85,8 @@ void Add_Bias::compute_bias(ts::Tensor *input_tensor, ts::Tensor *bias_tensor, t
         backdims *= shape[i];
     }
 
-    T* psrc  = input_tensor->sync(memory_device()).data<T>();
-    T* pbias = bias_tensor->sync(memory_device()).data<T>();
+    const T* psrc  = input_tensor->data<T>();
+    const T* pbias = bias_tensor->data<T>();
     T* pdst  = output_tensor->sync(memory_device()).data<T>();
     int stridedims = backdims * shape[m_dim];
     int offset = 0;

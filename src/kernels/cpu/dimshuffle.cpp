@@ -22,16 +22,16 @@ void Dimshuffle::init() {
         throw ts::Exception("Dimshuffle input parameter shuffle do not find");
     }
 
-    Tensor tensor_dim = get("dim");
+    const Tensor& tensor_dim = get("dim");
     m_dim = ts::tensor::to_int(tensor_dim);
 
-    Tensor tensor_shuffle = get("shuffle");
+    const Tensor& tensor_shuffle = get("shuffle");
     if(tensor_shuffle.dtype() != ts::INT32) {
         throw ts::Exception("Dimshuffle input parameter shuffle only support INT32 type");
     }
     m_shuffle.resize(tensor_shuffle.count());
     for(int i=0; i<tensor_shuffle.count(); i++) {
-        m_shuffle[i] = tensor_shuffle.sync(memory_device()).data<int>()[i];
+        m_shuffle[i] = tensor_shuffle.data<int>()[i];
     }
 }
 
@@ -76,8 +76,8 @@ int Dimshuffle::run(ts::Stack &stack) {
     infer_private(stack, output);
 
     ts::Tensor *input_tensor = stack.index(0);
-    Shape shape = input_tensor->sizes();
-    Shape reshape = output.sizes();
+    const Shape& shape = input_tensor->sizes();
+    const Shape& reshape = output.sizes();
 
     int type_len = ts::type_bytes(input_tensor->dtype());
 
@@ -101,7 +101,7 @@ int Dimshuffle::run(ts::Stack &stack) {
     for(int k=0; k<preoffset; k++) {
         for(int i=0; i<m_shuffle.size(); i++) {
             ::memcpy(tensor->sync(memory_device()).data() + type_len * (k * newstride + i * backstride),
-                     input_tensor->sync(memory_device()).data() + type_len * (k * stride + m_shuffle[i] * backstride),
+                     input_tensor->data() + type_len * (k * stride + m_shuffle[i] * backstride),
                      backstride * type_len);
         }
     }

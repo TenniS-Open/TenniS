@@ -51,7 +51,7 @@ void Transpose::init() {
     supper::init();
 
     if(has("permute")){
-        Tensor tensor_permute  = get("permute");
+        const Tensor& tensor_permute  = get("permute");
         if((tensor_permute.dims() != 1)) {
              throw ts::Exception("Transpose permute parameter is not match input Tensor");
         }
@@ -63,7 +63,7 @@ void Transpose::init() {
         m_permute.resize(tensor_permute.count());
         std::set<int> tmpset;
         for(int i=0; i<tensor_permute.count(); i++) {
-            m_permute[i] = tensor_permute.sync(memory_device()).data<int>()[i];
+            m_permute[i] = tensor_permute.data<int>()[i];
             if(m_permute[i] < 0 ) {
                 throw ts::Exception("Transpose permute parameter is invalid");
             }
@@ -89,7 +89,7 @@ int Transpose::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) {
         throw ts::Exception("transpose input parameters is more than one");
     }
 
-    Shape shape = stack.index(0)->sizes();
+    const Shape& shape = stack.index(0)->sizes();
     //Shape permute;
     Shape reshape;
 
@@ -140,7 +140,7 @@ int Transpose::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &outpu
 
 
 template<typename T>
-void Transpose::transpose_run(T * psrc, int len, T* pdst,  const Shape &shape, const Shape &reshape) {
+void Transpose::transpose_run(const T * psrc, int len, T* pdst,  const Shape &shape, const Shape &reshape) {
     Shape tmpshape;
     tmpshape.resize(shape.size());
 
@@ -167,9 +167,9 @@ int Transpose::run(ts::Stack &stack) {
     infer_private(stack, output);
 
     ts::Tensor *input_tensor = stack.index(0);
-    Shape shape = input_tensor->sizes();
+    const Shape& shape = input_tensor->sizes();
     //Shape permute = output_permute.sizes();
-    Shape reshape = output.sizes();
+    const Shape& reshape = output.sizes();
 
     //int type_len = ts::type_bytes(input_tensor->dtype());
 
@@ -181,31 +181,31 @@ int Transpose::run(ts::Stack &stack) {
     unsigned int ncount = input_tensor->count();
     switch(type) {
         case ts::INT8: {
-            char * psrc = stack.index(0)->sync(memory_device()).data<char>();
+            const char * psrc = stack.index(0)->data<char>();
             char * pdst = tensor->sync(memory_device()).data<char>();
             transpose_run<char>(psrc, ncount, pdst, shape, reshape);
             break;
         }
         case ts::INT16: {
-            short * psrc = stack.index(0)->sync(memory_device()).data<short>();
+            const short * psrc = stack.index(0)->data<short>();
             short * pdst = tensor->sync(memory_device()).data<short>();
             transpose_run<short>(psrc, ncount, pdst, shape, reshape);
             break;
         }
         case ts::INT32: {
-            int * psrc = stack.index(0)->sync(memory_device()).data<int>();
+            const int * psrc = stack.index(0)->data<int>();
             int * pdst = tensor->sync(memory_device()).data<int>();
             transpose_run<int>(psrc, ncount, pdst, shape, reshape);
             break;
         }
         case ts::FLOAT32: {
-            float * psrc = stack.index(0)->sync(memory_device()).data<float>();
+            const float * psrc = stack.index(0)->data<float>();
             float * pdst = tensor->sync(memory_device()).data<float>();
             transpose_run<float>(psrc, ncount, pdst, shape, reshape);
             break;
         }
         case ts::FLOAT64: {
-            double * psrc = stack.index(0)->sync(memory_device()).data<double>();
+            const double * psrc = stack.index(0)->data<double>();
             double * pdst = tensor->sync(memory_device()).data<double>();
             transpose_run<double>(psrc, ncount, pdst, shape, reshape);
             break;

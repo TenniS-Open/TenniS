@@ -22,7 +22,7 @@ void Inner_Prod::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) 
     }
 
     Shape shape = stack.index(0)->sizes();
-    Shape dot_shape = stack.index(1)->sizes();
+    const Shape &dot_shape = stack.index(1)->sizes();
 
     
     if(shape.size() != 2 || shape.size() != dot_shape.size() || shape[1] != dot_shape[0]) {
@@ -52,13 +52,13 @@ int Inner_Prod::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &outp
 
 
 template<typename T>
-void Inner_Prod::compute_inner_prod(ts::Tensor *input_tensor, ts::Tensor *dot_tensor, ts::Tensor *output_tensor) {
-    Shape shape = input_tensor->sizes();
-    Shape dot_shape = dot_tensor->sizes();
-    Shape reshape = output_tensor->sizes();
+void Inner_Prod::compute_inner_prod(const ts::Tensor *input_tensor, const ts::Tensor *dot_tensor, ts::Tensor *output_tensor) {
+    const Shape& shape = input_tensor->sizes();
+    const Shape& dot_shape = dot_tensor->sizes();
+    const Shape& reshape = output_tensor->sizes();
 
-    T* psrc = input_tensor->sync(memory_device()).data<T>();
-    T* pdot = dot_tensor->sync(memory_device()).data<T>();
+    const T* psrc = input_tensor->data<T>();
+    const T* pdot = dot_tensor->data<T>();
     T* pdst = output_tensor->sync(memory_device()).data<T>();
 
 

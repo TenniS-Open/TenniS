@@ -19,14 +19,17 @@ void Batch_Norm::init() {
     supper::init();
 
     if(has("epsilon")){
-        Tensor tensor_epsilon = get("epsilon");
+        const Tensor& tensor_epsilon = get("epsilon");
         m_epsilon = ts::tensor::to_float(tensor_epsilon); 
     }
 
     if(has("dim")){
-        Tensor tensor_dim = get("dim");
+        const Tensor& tensor_dim = get("dim");
         m_dim = ts::tensor::to_int(tensor_dim);
+    }else {
+        throw ts::Exception("batch_norm missed dim parameter ");
     }
+  
 }   
 
 void Batch_Norm::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) {
@@ -35,18 +38,18 @@ void Batch_Norm::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) 
         throw ts::Exception("batch_norm must have three input parameters");
     }
 
-    Shape shape = stack.index(0)->sizes();
+    const Shape& shape = stack.index(0)->sizes();
 
     if(m_dim < 0 || m_dim >= shape.size() ) {
         throw ts::Exception("batch_norm dim parameter check failed");
     }
    
-    Shape mean_shape = stack.index(1)->sizes();
+    const Shape& mean_shape = stack.index(1)->sizes();
     if(mean_shape.size()  != 1 ) {
         throw ts::Exception("batch_norm mean parameter's dims is not 1");
     }
 
-    Shape variance_shape = stack.index(2)->sizes();
+    const Shape& variance_shape = stack.index(2)->sizes();
     if(variance_shape.size()  != 1 ) {
         throw ts::Exception("batch_norm variance parameter's dims is not 1");
     }
@@ -68,9 +71,9 @@ int Batch_Norm::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &outp
 }
 
 template<typename T>
-void Batch_Norm::compute_batch_norm(ts::Tensor *input_tensor, ts::Tensor *mean_tensor, 
-                                    ts::Tensor *variance_tensor, ts::Tensor *output_tensor) {
-    Shape shape = input_tensor->sizes();
+void Batch_Norm::compute_batch_norm(const ts::Tensor *input_tensor, const ts::Tensor *mean_tensor, 
+                                    const ts::Tensor *variance_tensor, ts::Tensor *output_tensor) {
+    const Shape& shape = input_tensor->sizes();
     int predims = 1;
     int backdims = 1;
     for(int i=0; i<m_dim; i++) {
@@ -81,9 +84,9 @@ void Batch_Norm::compute_batch_norm(ts::Tensor *input_tensor, ts::Tensor *mean_t
         backdims *= shape[i];
     }
 
-    T* psrc  = input_tensor->sync(memory_device()).data<T>();
-    T* pmean = mean_tensor->sync(memory_device()).data<T>();
-    T* pvariance = variance_tensor->sync(memory_device()).data<T>();
+    const T* psrc  = input_tensor->data<T>();
+    const T* pmean = mean_tensor->data<T>();
+    const T* pvariance = variance_tensor->data<T>();
     T* pdst  = output_tensor->sync(memory_device()).data<T>();
     int stridedims = backdims * shape[m_dim];
     int offset = 0;

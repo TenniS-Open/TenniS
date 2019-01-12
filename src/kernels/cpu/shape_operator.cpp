@@ -36,9 +36,10 @@ int Shape_Operator::run(ts::Stack &stack) {
     stack.push(output[0], memory_device());
     ts::Tensor *tensor = stack.index(-1);
 
-    Shape shape = stack.index(0)->sizes();
+    const Shape& shape = stack.index(0)->sizes();
+    int *pdata = tensor->sync(memory_device()).data<int>();
     for(int i=0; i<shape.size(); i++) {
-        tensor->sync(memory_device()).data<int>()[i] = shape[i];
+        pdata[i] = shape[i];
     }
 
     return 1;

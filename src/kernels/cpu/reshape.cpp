@@ -18,7 +18,7 @@ void Reshape::init() {
         throw ts::Exception("reshape shape parameter do not find");
     }
 
-    Tensor tensor_shape  = get("shape");
+    const Tensor& tensor_shape  = get("shape");
 
     if(tensor_shape.dtype() != INT32){
         throw ts::Exception("reshape shape parameter dtype is not INT32");
@@ -36,12 +36,12 @@ void Reshape::init() {
     m_shape.resize(ncount);
     //int ntotal = 1;
     for(int i=0; i<ncount; i++) {
-        m_shape[i] = tensor_shape.sync(memory_device()).data<int>()[i];
+        m_shape[i] = tensor_shape.data<int>()[i];
         //std::cout << "i:" << reshape[i] << std::endl;
         if(m_shape[i] > 0) {
             m_dims *= m_shape[i];
         }
-        if(tensor_shape.sync(memory_device()).data<int>()[i] <= 0) {
+        if(tensor_shape.data<int>()[i] <= 0) {
             if(bfind) {
                 throw ts::Exception("reshape shape parameters only one less than 0 ");
             }else {
@@ -60,7 +60,7 @@ int Reshape::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output)
         throw ts::Exception("input parameters is more than one");
     }
 
-    Shape shape = stack.index(0)->sizes();
+    const Shape& shape = stack.index(0)->sizes();
 
     int dims = stack.index(0)->dims();
     int nsize = stack.index(0)->count();

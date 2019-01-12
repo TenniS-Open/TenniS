@@ -21,8 +21,8 @@ void Div::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) {
         throw ts::Exception("div must have tow input parameters");
     }
 
-    Shape shape = stack.index(0)->sizes();
-    Shape div_shape = stack.index(1)->sizes();
+    const Shape& shape = stack.index(0)->sizes();
+    const Shape& div_shape = stack.index(1)->sizes();
 
     if(div_shape.size()  != shape.size() ) {
         throw ts::Exception("div two parameters's dims is not same");
@@ -83,18 +83,19 @@ void Div::dimshuffle(const Shape & shape, int dim, int div_dim, const T* src, T*
 
 
 template<typename T>
-void Div::compute_div(ts::Tensor *input_tensor, ts::Tensor *div_tensor, ts::Tensor *output_tensor) {
-    Shape shape = input_tensor->sizes();
+void Div::compute_div(const ts::Tensor *input_tensor, const ts::Tensor *div_tensor, ts::Tensor *output_tensor) {
+    const Shape& shape = input_tensor->sizes();
     Shape div_shape = div_tensor->sizes();
-    Shape reshape = output_tensor->sizes();
+    const Shape& reshape = output_tensor->sizes();
 
-    T* psrc = input_tensor->sync(memory_device()).data<T>();
-    T* pdiv = div_tensor->sync(memory_device()).data<T>();
+    const T* psrc = input_tensor->data<T>();
+    const T* pdiv = div_tensor->data<T>();
     T* pdst = output_tensor->sync(memory_device()).data<T>();
 
     T* tmpbuffer = NULL;
     T* dimshuffle_buffer = NULL;
     T* ptr = NULL;
+    const T* pdata = NULL;
 
     for(int i=0; i<shape.size(); i++) {
         if((div_shape[i] == 1) && (shape[i] > 1)) {
@@ -115,21 +116,21 @@ void Div::compute_div(ts::Tensor *input_tensor, ts::Tensor *div_tensor, ts::Tens
 
 
     if(dimshuffle_buffer != NULL) {
-        ptr = dimshuffle_buffer;
+        pdata = dimshuffle_buffer;
     }else {
-        ptr = pdiv;
+        pdata = pdiv;
     }
 
     int ncount = input_tensor->count();
     for(int i=0; i<ncount; i++) {
-        if(ptr[i] == 0) {
+        if(pdata[i] == 0) {
            if(psrc[i] >= 0) {
                pdst[i] = std::numeric_limits<T>::max();
            }else {
                pdst[i] = std::numeric_limits<T>::lowest();
            }
         }else {
-            pdst[i] = psrc[i] / ptr[i];
+            pdst[i] = psrc[i] / pdata[i];
         }
     }
     
