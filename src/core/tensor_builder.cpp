@@ -112,16 +112,11 @@ namespace ts {
         }
 
         Tensor cast(DTYPE dtype, const Tensor &value) {
-            auto cpu_value = value;
+            auto cpu_value = value.view(MemoryDevice(CPU));
+
+            if (cpu_value.dtype() == dtype) return cpu_value;
+
             auto cpu_controller = std::make_shared<DynamicMemoryController>(MemoryDevice(CPU));
-
-            if (cpu_value.dtype() == dtype) {
-                return value.clone(cpu_controller);
-            }
-
-            if (cpu_value.device().type() != CPU) {
-                cpu_value = cpu_value.clone(cpu_controller);
-            }
 
             Tensor casted(cpu_controller, dtype, cpu_value.sizes());
 
