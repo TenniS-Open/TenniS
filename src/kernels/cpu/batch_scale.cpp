@@ -127,6 +127,6 @@ int Batch_Scale::run(ts::Stack &stack) {
 
 
 /////////////////////////////////////////////////
-//TS_REGISTER_OPERATOR(Batch_Scale, ts::CPU, "batch_scale")
+TS_REGISTER_OPERATOR(Batch_Scale, ts::CPU, "batch_scale")
 
 }

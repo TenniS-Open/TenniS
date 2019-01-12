@@ -122,6 +122,6 @@ int Dimshuffle::run(ts::Stack &stack) {
 
 ///////////////////////////////////////////
 
-//TS_REGISTER_OPERATOR(Dimshuffle, ts::CPU, "_dimshuffle")
+TS_REGISTER_OPERATOR(Dimshuffle, ts::CPU, "_dimshuffle")
 
 }

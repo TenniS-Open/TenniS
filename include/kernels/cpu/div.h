@@ -1,5 +1,5 @@
-#ifndef TS_KERNELS_BATCH_SCALE_H
-#define TS_KERNELS_BATCH_SCALE_H
+#ifndef TS_KERNELS_DIV_H
+#define TS_KERNELS_DIV_H
 
 #include <global/operator_factory.h>
 #include <core/tensor.h>
@@ -10,11 +10,11 @@
 namespace ts {
 
 
-class Batch_Scale : public ts::Operator {
+class Div : public ts::Operator {
 public:
 
     using supper = ts::Operator;
-    Batch_Scale();
+    Div();
 
     virtual void init(); 
 
@@ -24,17 +24,15 @@ public:
 
 private:
     template<typename T>
-    void compute_batch_scale(ts::Tensor *input_tensor, ts::Tensor *scale_tensor,
-                            ts::Tensor *bias_tensor, ts::Tensor *output_tensor);
+    void dimshuffle(const Shape & shape, int dim, int div_dim, const T* src, T* dst);
+
+    template<typename T>
+    void compute_div(ts::Tensor *input_tensor, ts::Tensor *div_tensor, ts::Tensor *output_tensor);
     void infer_private(ts::Stack &stack, ts::Tensor::Prototype &output);
 
-private:
-    int m_dim;
 
 };
 
-
-//TS_REGISTER_OPERATOR(Batch_Scale, ts::CPU, "batch_scale")
 
 
 

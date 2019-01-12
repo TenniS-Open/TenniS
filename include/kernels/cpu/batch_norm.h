@@ -36,7 +36,7 @@ private:
 
 
 
-TS_REGISTER_OPERATOR(Batch_Norm, ts::CPU, "batch_norm")
+//TS_REGISTER_OPERATOR(Batch_Norm, ts::CPU, "batch_norm")
 
 }
 

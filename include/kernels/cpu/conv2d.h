@@ -39,7 +39,7 @@ private:
 };
 
 
-TS_REGISTER_OPERATOR(Conv2d, ts::CPU, "conv2d")
+//TS_REGISTER_OPERATOR(Conv2d, ts::CPU, "conv2d")
 
 
 }

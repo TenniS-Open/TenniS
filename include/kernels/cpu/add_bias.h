@@ -1,20 +1,22 @@
-#ifndef TS_KERNELS_BATCH_SCALE_H
-#define TS_KERNELS_BATCH_SCALE_H
+#ifndef TS_KERNELS_ADD_BIAS_H
+#define TS_KERNELS_ADD_BIAS_H
 
 #include <global/operator_factory.h>
 #include <core/tensor.h>
 #include <runtime/stack.h>
+//#include <cstring>
+//#include <math.h>
 
 
 
 namespace ts {
 
 
-class Batch_Scale : public ts::Operator {
+class Add_Bias : public ts::Operator {
 public:
 
     using supper = ts::Operator;
-    Batch_Scale();
+    Add_Bias();
 
     virtual void init(); 
 
@@ -24,8 +26,7 @@ public:
 
 private:
     template<typename T>
-    void compute_batch_scale(ts::Tensor *input_tensor, ts::Tensor *scale_tensor,
-                            ts::Tensor *bias_tensor, ts::Tensor *output_tensor);
+    void compute_bias(ts::Tensor *input_tensor, ts::Tensor *bias_tensor, ts::Tensor *output_tensor);
     void infer_private(ts::Stack &stack, ts::Tensor::Prototype &output);
 
 private:
@@ -33,8 +34,6 @@ private:
 
 };
 
-
-//TS_REGISTER_OPERATOR(Batch_Scale, ts::CPU, "batch_scale")
 
 
 
