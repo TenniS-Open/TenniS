@@ -8,6 +8,7 @@ from node import Node
 import menu as menu
 import device as device
 
+
 class Name(object):
     NCHW = "NCHW"
     NHWC = "NHWC"
@@ -18,15 +19,15 @@ class Name(object):
         reshape = "_reshape"
         conv2d = "conv2d"
         padding_conv2d = "padding_conv2d"
-        conv2d_bias = "conv2d_bias"
-        padding_conv2d_bias = "padding_conv2d_bias"
+        # conv2d_bias = "conv2d_bias"
+        # padding_conv2d_bias = "padding_conv2d_bias"
         shape = "_shape"
         pad = "pad"
         depthwise_conv2d = "depthwise_conv2d"
         padding_depthwise_conv2d = "padding_depthwise_conv2d"
-        depthwise_conv2d_bias = "depthwise_conv2d_bias"
-        padding_depthwise_conv2d_bias = "padding_depthwise_conv2d_bias"
-        bias = "bias"
+        # depthwise_conv2d_bias = "depthwise_conv2d_bias"
+        # padding_depthwise_conv2d_bias = "padding_depthwise_conv2d_bias"
+        add_bias = "add_bias"
         batch_norm = "batch_norm"
         batch_scale = "batch_scale"
         fused_batch_norm = "fused_batch_norm"
@@ -43,6 +44,9 @@ class Name(object):
         concat = "concat"
         flatten = "flatten"
         to_float = "to_float"
+        pooling2d = "pooling2d"
+        pooling2d_v2 = "pooling2d_v2"
+        resize2d = "resize2d"
 
     dim = "dim"
     shuffle = "shuffle"
@@ -57,12 +61,19 @@ class Name(object):
     epsilon = "epsilon"
     max = "max"
     slope = "slope"
+    type = "type"
+    padding_type = "padding_type"
+    ksize = "ksize"
 
 
 class Default(object):
     @staticmethod
     def padding():
         return [[0, 0], [0, 0], [0, 0], [0, 0]]
+
+    @staticmethod
+    def ksize():
+        return [1, 1, 1, 1]
 
     @staticmethod
     def stride():
@@ -75,6 +86,21 @@ class Default(object):
     @staticmethod
     def padding_value():
         return 0
+
+
+class Type(object):
+    class resize2d_type(object):
+        linear = 0
+        cubic = 1
+
+    class padding_type(object):
+        black = 0
+        copy = 1
+        loop = 2
+
+    class pooling_type(object):
+        max = 0
+        avg = 1
 
 
 def to_const(value, name=None):
@@ -156,8 +182,7 @@ def conv2d(name, x, w,
            padding=None,
            padding_value=None,
            stride=None,
-           dialations=None,
-           bias=None):
+           dialations=None):
     assert isinstance(x, Node)
 
     if padding is None:
@@ -171,21 +196,13 @@ def conv2d(name, x, w,
     w = to_node(w, name="_const_" + name + "_weights")
 
     node = None
-    if bias is None:
-        if isinstance(padding, None):
-            node = menu.op(name=name, op_name=Name.Layer.padding_conv2d, inputs=[x, padding, w])
-            node.set(Name.padding, Default.padding())
-        else:
-            node = menu.op(name=name, op_name=Name.Layer.conv2d, inputs=[x, w])
-            node.set(Name.padding, padding)
+
+    if isinstance(padding, None):
+        node = menu.op(name=name, op_name=Name.Layer.padding_conv2d, inputs=[x, padding, w])
+        node.set(Name.padding, Default.padding())
     else:
-        bias = to_node(bias, name="_const_" + name + "_bias")
-        if isinstance(padding, None):
-            node = menu.op(name=name, op_name=Name.Layer.padding_conv2d_bias, inputs=[x, padding, w, bias])
-            node.set(Name.padding, Default.padding())
-        else:
-            node = menu.op(name=name, op_name=Name.Layer.conv2d_bias, inputs=[x, w, bias])
-            node.set(Name.padding, padding)
+        node = menu.op(name=name, op_name=Name.Layer.conv2d, inputs=[x, w])
+        node.set(Name.padding, padding)
 
     node.set(Name.format, format)
     node.set(Name.padding_value, padding_value)
@@ -206,7 +223,7 @@ def pad(name, x, padding, padding_value=None):
 
     if padding_value is None:
         padding_value = Default.padding_value()
-    padding = to_node(padding, name="_const_" +  name + "_padding", device=device.CPU)
+    padding = to_node(padding, name="_const_" + name + "_padding", device=device.CPU)
 
     node = menu.op(name=name, op_name=Name.Layer.pad, inputs=[x, padding])
     node.set(Name.padding_value, padding_value)
@@ -219,8 +236,7 @@ def depthwise_conv2d(name, x, w,
                      padding=None,
                      padding_value=None,
                      stride=None,
-                     dialations=None,
-                     bias=None):
+                     dialations=None):
     assert isinstance(x, Node)
 
     if padding is None:
@@ -234,21 +250,12 @@ def depthwise_conv2d(name, x, w,
     w = to_node(w, name="_const_" + name + "_weights")
 
     node = None
-    if bias is None:
-        if isinstance(padding, None):
-            node = menu.op(name=name, op_name=Name.Layer.padding_depthwise_conv2d, inputs=[x, padding, w])
-            node.set(Name.padding, Default.padding())
-        else:
-            node = menu.op(name=name, op_name=Name.Layer.depthwise_conv2d, inputs=[x, w])
-            node.set(Name.padding, padding)
+    if isinstance(padding, None):
+        node = menu.op(name=name, op_name=Name.Layer.padding_depthwise_conv2d, inputs=[x, padding, w])
+        node.set(Name.padding, Default.padding())
     else:
-        bias = to_node(bias, name="_const_" + name + "_bias")
-        if isinstance(padding, None):
-            node = menu.op(name=name, op_name=Name.Layer.padding_depthwise_conv2d_bias, inputs=[x, padding, w, bias])
-            node.set(Name.padding, Default.padding())
-        else:
-            node = menu.op(name=name, op_name=Name.Layer.depthwise_conv2d_bias, inputs=[x, w, bias])
-            node.set(Name.padding, padding)
+        node = menu.op(name=name, op_name=Name.Layer.depthwise_conv2d, inputs=[x, w])
+        node.set(Name.padding, padding)
 
     node.set(Name.format, format)
     node.set(Name.padding_value, padding_value)
@@ -258,13 +265,13 @@ def depthwise_conv2d(name, x, w,
     return node
 
 
-def bias(name, x, b, format=Name.NCHW):
+def add_bias(name, x, b, format=Name.NCHW):
     assert isinstance(x, None)
     assert format == Name.NCHW or format == Name.NHWC
 
     b = to_node(b, name="_const_" + name + "_bias")
 
-    node = menu.op(name=name, op_name=Name.Layer.bias, inputs=[x, b])
+    node = menu.op(name=name, op_name=Name.Layer.add_bias, inputs=[x, b])
 
     dim = 1
     if format == Name.NCHW:
@@ -276,6 +283,44 @@ def bias(name, x, b, format=Name.NCHW):
     node.set(Name.dim, dim)
 
     return node
+
+
+def conv2d_bias(name, x, w, b=None,
+                format=Name.NCHW,
+                padding=None,
+                padding_value=None,
+                stride=None,
+                dialations=None):
+    if b is None:
+        return conv2d(name=name, x=x, w=w,
+                      format=format,
+                      padding=padding, padding_value=padding_value,
+                      stride=stride, dialations=dialations)
+    else:
+        conv_node = conv2d(name="_op_" + name + "_conv2d", x=x, w=w,
+                           format=format,
+                           padding=padding, padding_value=padding_value,
+                           stride=stride, dialations=dialations)
+        return add_bias(name=name, x=conv_node, b=b, format=format)
+
+
+def depthwise_conv2d_bias(name, x, w, b=None,
+                          format=Name.NCHW,
+                          padding=None,
+                          padding_value=None,
+                          stride=None,
+                          dialations=None):
+    if b is None:
+        return depthwise_conv2d(name=name, x=x, w=w,
+                      format=format,
+                      padding=padding, padding_value=padding_value,
+                      stride=stride, dialations=dialations)
+    else:
+        conv_node = depthwise_conv2d(name="_op_" + name + "_conv2d", x=x, w=w,
+                           format=format,
+                           padding=padding, padding_value=padding_value,
+                           stride=stride, dialations=dialations)
+        return add_bias(name=name, x=conv_node, b=b, format=format)
 
 
 def batch_norm(name, x, mean, variance, dim, epsilon):
@@ -411,6 +456,65 @@ def flatten(name, x):
 def to_float(name, x):
     assert isinstance(x, Node)
     node = menu.op(name=name, op_name=Name.Layer.to_float, inputs=[x, ])
+    return node
+
+
+def resize2d(name, x, size, type=Type.resize2d_type.linear):
+    assert isinstance(x, Node)
+
+    size = to_node(size, name="_const_" + name + "_size", device=device.CPU)
+
+    node = menu.op(name=name, op_name=Name.Layer.resize2d, inputs=[x, size])
+    node.set(Name.type, type)
+
+    return node
+
+
+def pooling2d_v2(name, x, ksize, stride, type=Type.pooling_type.max, format=Name.NCHW,
+              padding=None,
+              padding_type=Type.padding_type.black):
+    assert isinstance(x, Node)
+
+    if padding is None:
+        padding = Default.padding()
+
+    padding = to_node(padding, name="_const_" + name + "_padding", device=device.CPU)
+    ksize = to_node(ksize, name="_const_" + name + "_ksize", device=device.CPU)
+    stride = to_node(stride, name="_const_" + name + "_stride", device=device.CPU)
+
+    node = menu.op(name=name, op_name=Name.Layer.pooling2d_v2, inputs=[x, padding, ksize, stride])
+    node.set(Name.format, format)
+    node.set(Name.type, type)
+    node.set(Name.padding_type, padding_type)
+
+    return node
+
+
+def pooling2d(name, x, ksize, stride, type=Type.pooling_type.max, format=Name.NCHW,
+              padding=None,
+              padding_type=Type.padding_type.black):
+    assert isinstance(x, Node)
+
+    if padding is None:
+        padding = Default.padding()
+
+    if isinstance(ksize, Node) or isinstance(stride, Node) or isinstance(padding, Node):
+        return pooling2d_v2(name=name, x=x,
+                            ksize=ksize, stride=stride,
+                            type=type, format=format, padding=padding, padding_type=padding_type)
+
+    padding = to_const(padding, name="padding")
+    ksize = to_const(ksize, name="ksize")
+    stride = to_const(stride, name="stride")
+
+    node = menu.op(name=name, op_name=Name.Layer.pooling2d, inputs=[x])
+    node.set(Name.padding, padding)
+    node.set(Name.ksize, ksize)
+    node.set(Name.stride, stride)
+    node.set(Name.format, format)
+    node.set(Name.type, type)
+    node.set(Name.padding_type, padding_type)
+
     return node
 
 
