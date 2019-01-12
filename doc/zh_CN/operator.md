@@ -382,7 +382,33 @@ padding_type为black时，超出可计算区域的结果为0。
 
 ### mx_conv2d_padding
 
-### mx_pooling2d_padding
+### _mx_pooling2d_padding(x, ksize, stride) -> dynamic_padding
+描述：  
+- `x` 预计要进行 padding 的数据
+- `padding` `IntArray4Dx2D` 静态进行padding的数据
+在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+- `ksize`
+在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+- `stride`
+在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+- `dynamic_padding` 输出的padding形式，为4x2维
+
+参数：  
+- `format` `String` 为 `NCHW` 或者 `NHWC`
+- `valid` `Int`  
+非0数表示计算为：
+```
+output_height = floor((input_height + 2 * m_pad_h - m_kernel_h) / (float)m_stride_h + 1);
+output_width = floor((input_width + 2 * m_pad_w - m_kernel_w) / (float)m_stride_w + 1);
+```
+0表示计算为：
+```
+output_height = ceil((input_height + 2 * m_pad_h - m_kernel_h) / (float)m_stride_h + 1);
+output_width = ceil((input_width + 2 * m_pad_w - m_kernel_w) / (float)m_stride_w + 1);
+```
 
 ## 附录
 
