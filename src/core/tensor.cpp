@@ -267,7 +267,7 @@ namespace ts {
         return *this;
     }
 
-    Tensor Tensor::view(const MemoryDevice &device) {
+    Tensor Tensor::view(const MemoryDevice &device) const {
         Tensor view_tensor;
         view_tensor.m_memory = TensorMemory(m_memory.sync(device), false);
         view_tensor.m_proto = m_proto;
