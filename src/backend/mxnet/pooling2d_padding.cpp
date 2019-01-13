@@ -76,35 +76,44 @@ namespace ts {
             auto ksize_tensor = tensor::cast(INT32, *stack.index(1));
             auto stride_tensor = tensor::cast(INT32, *stack.index(2));
 
-            KSize2D ksize;
-            Stride2D stride;
-            Size2D input_size;
-
-            if (format == name::NCHW) {
-                ksize.height = ksize_tensor.data<int32_t>()[2];
-                ksize.width = ksize_tensor.data<int32_t>()[3];
-                stride.height = stride_tensor.data<int32_t>()[2];
-                stride.width = stride_tensor.data<int32_t>()[3];
-                input_size.height = shape[2];
-                input_size.width = shape[3];
-            } else {
-                ksize.height = ksize_tensor.data<int32_t>()[1];
-                ksize.width = ksize_tensor.data<int32_t>()[2];
-                stride.height = stride_tensor.data<int32_t>()[1];
-                stride.width = stride_tensor.data<int32_t>()[2];
-                input_size.height = shape[1];
-                input_size.width = shape[2];
-            }
-
             Padding2D dynamic_padding;
 
             if (this->valid) {
+                KSize2D ksize;
+                Stride2D stride;
+                Size2D input_size;
+
+                if (format == name::NCHW) {
+                    ksize.height = ksize_tensor.data<int32_t>()[2];
+                    ksize.width = ksize_tensor.data<int32_t>()[3];
+                    stride.height = stride_tensor.data<int32_t>()[2];
+                    stride.width = stride_tensor.data<int32_t>()[3];
+                    input_size.height = shape[2];
+                    input_size.width = shape[3];
+                } else {
+                    ksize.height = ksize_tensor.data<int32_t>()[1];
+                    ksize.width = ksize_tensor.data<int32_t>()[2];
+                    stride.height = stride_tensor.data<int32_t>()[1];
+                    stride.width = stride_tensor.data<int32_t>()[2];
+                    input_size.height = shape[1];
+                    input_size.width = shape[2];
+                }
+
+                /* Heavy version
                 Size2D expected_output_size = valid_pooling2d_forward(input_size, static_padding, ksize, stride);
                 Size2D expected_input_size = pooling2d_backward(expected_output_size, static_padding, ksize, stride);
                 dynamic_padding.top = static_padding.top;
                 dynamic_padding.left = static_padding.left;
                 dynamic_padding.bottom = static_padding.bottom + expected_input_size.height - input_size.height;
                 dynamic_padding.right = static_padding.right + expected_input_size.width - input_size.width;
+                 */
+                /* light version */
+                dynamic_padding.top = static_padding.top;
+                dynamic_padding.left = static_padding.left;
+                dynamic_padding.bottom = static_padding.bottom
+                                         - (input_size.height + static_padding.top + static_padding.bottom - ksize.height) % stride.height;
+                dynamic_padding.right = static_padding.right
+                                        - (input_size.width + static_padding.left + static_padding.right - ksize.width) % stride.width;
             } else {
                 dynamic_padding = static_padding;
             }
