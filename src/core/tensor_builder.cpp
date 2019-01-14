@@ -6,6 +6,8 @@
 #include <cstring>
 #include <cstdlib>
 #include <unordered_set>
+#include <core/tensor_builder.h>
+
 #include "core/tensor_builder.h"
 #include "utils/assert.h"
 
@@ -67,6 +69,7 @@ namespace ts {
                     break;
 #define __CASE_TYPE_CALL_TYPE_CAST(__type__) \
                 case __type__: type_cast_template<__type__, DTYPE_SRC>::cast(reinterpret_cast<typename dtype<__type__>::declare *>(dst), src, size); break;
+                __CASE_TYPE_CALL_TYPE_CAST(BOOLEAN)
                 __CASE_TYPE_CALL_TYPE_CAST(INT8)
                 __CASE_TYPE_CALL_TYPE_CAST(UINT8)
                 __CASE_TYPE_CALL_TYPE_CAST(INT16)
@@ -93,6 +96,7 @@ namespace ts {
                     break;
 #define __CASE_TYPE_CALL_TYPE_CAST_TO(__type__) \
                 case __type__: type_cast_to<__type__>(dst, dst_dtype, reinterpret_cast<const dtype<__type__>::declare *>(src), size); break;
+                __CASE_TYPE_CALL_TYPE_CAST_TO(BOOLEAN)
                 __CASE_TYPE_CALL_TYPE_CAST_TO(INT8)
                 __CASE_TYPE_CALL_TYPE_CAST_TO(UINT8)
                 __CASE_TYPE_CALL_TYPE_CAST_TO(INT16)
@@ -112,16 +116,11 @@ namespace ts {
         }
 
         Tensor cast(DTYPE dtype, const Tensor &value) {
-            auto cpu_value = value;
+            auto cpu_value = value.view(MemoryDevice(CPU));
+
+            if (cpu_value.dtype() == dtype) return cpu_value;
+
             auto cpu_controller = std::make_shared<DynamicMemoryController>(MemoryDevice(CPU));
-
-            if (cpu_value.dtype() == dtype) {
-                return value.clone(cpu_controller);
-            }
-
-            if (cpu_value.device().type() != CPU) {
-                cpu_value = cpu_value.clone(cpu_controller);
-            }
 
             Tensor casted(cpu_controller, dtype, cpu_value.sizes());
 
@@ -181,12 +180,13 @@ namespace ts {
     }
 
     template<typename T>
-    Tensor tensor_builder<T>::build(const std::vector<T> &value) {
+    Tensor tensor_builder<T>::build(const T *data, size_t count) {
         auto controller = std::make_shared<DynamicMemoryController>(MemoryDevice(CPU));
-        Tensor t(controller, dtypeid<T>::id, {int(value.size())});
-        std::memcpy(t.data(), value.data(), value.size() * sizeof(T));
+        Tensor t(controller, dtypeid<T>::id, {int(count)});
+        std::memcpy(t.data(), data, count * sizeof(T));
         return t;
     }
+
 }
 
 template class ts::tensor_builder<ts::dtype<ts::INT8>::declare>;

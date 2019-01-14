@@ -124,6 +124,8 @@ namespace ts {
 
             const Shape &sizes() const { return m_sizes; }
 
+            int size(size_t i) const { return m_sizes[i]; }
+
             int type_bytes() const { return ts::type_bytes(m_dtype); }
 
             int count() const { return count(m_sizes); };
@@ -190,6 +192,8 @@ namespace ts {
 
         const Shape &sizes() const { return m_proto.sizes(); }
 
+        int size(size_t i) const { return m_proto.size(i); }
+
         int count() const { return m_proto.count(); };
 
         const Prototype &proto() const { return m_proto; }
@@ -250,7 +254,7 @@ namespace ts {
 
         Memory sync(const MemoryDevice &device) { return m_memory.sync(device); }
 
-        Tensor view(const MemoryDevice &device);
+        Tensor view(const MemoryDevice &device) const;
 
     private:
         TensorMemory m_memory;
