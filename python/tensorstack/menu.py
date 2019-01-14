@@ -19,10 +19,12 @@ def op(name, op_name, inputs, output_count=1):
     return node
 
 
-def data(name, value):
-    # type: (str, object) -> Node
+def data(name, value, device=None):
+    # type: (str, object, Union[str]) -> Node
     node = Node(op=Node.Const, name=name)
     node.set("value", value)
+    if device is not None:
+        node.set("#device", device)
     return node
 
 

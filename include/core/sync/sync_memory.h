@@ -163,7 +163,7 @@ namespace ts {
             return m_sync_memory->value();
         }
 
-        Memory sync(const MemoryDevice &device) {
+        Memory sync(const MemoryDevice &device) const {
             return m_sync_memory->sync(device);
         }
 

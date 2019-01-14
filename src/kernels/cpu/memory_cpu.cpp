@@ -6,21 +6,28 @@
 #include "global/hard_converter.h"
 #include "global/memory_device.h"
 
+#include "utils/assert.h"
 
 #include <cstring>
 
 namespace ts {
-    void *cpu_allocator(int id, size_t size, void *mem) {
+    void *cpu_allocator(int id, size_t new_size, void *mem, size_t mem_size) {
+        if (new_size == 0 && mem == nullptr) return nullptr;
         void *new_mem = nullptr;
-        if (size == 0) {
+        if (new_size == 0) {
             std::free(mem);
             return nullptr;
         } else if (mem != nullptr) {
-            new_mem = std::realloc(mem, size);
+            if (mem_size) {
+                new_mem = std::realloc(mem, new_size);
+            } else {
+                std::free(mem);
+                new_mem = std::malloc(new_size);
+            }
         } else {
-            new_mem = std::malloc(size);
+            new_mem = std::malloc(new_size);
         }
-        if (new_mem == nullptr) throw OutOfMemoryException(MemoryDevice(CPU, id), size);
+        if (new_mem == nullptr) throw OutOfMemoryException(MemoryDevice(CPU, id), new_size);
         return new_mem;
     }
 
