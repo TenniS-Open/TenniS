@@ -64,6 +64,7 @@ class Name(object):
     type = "type"
     padding_type = "padding_type"
     ksize = "ksize"
+    device = "device"
 
 
 class Default(object):

@@ -120,7 +120,7 @@ namespace ts {
 
     void ThreadPool::recycling_thread(int signet) {
         std::unique_lock<std::mutex> locker(running_core_mutex);
-        this->running_core.push_back(signet);
+        this->running_core.push_front(signet);
         running_core_cond.notify_all();
     }
 }
