@@ -28,24 +28,27 @@ namespace ts {
         cudaError_t m_cudaError = cudaSuccess;
     };
 
-    void *gpu_allocator(int id, size_t size, void *mem) {
+    void *gpu_allocator(int id, size_t new_size, void *mem, size_t mem_size) {
         auto cuda_error = cudaSetDevice(id);
         if (cuda_error != cudaSuccess) {
             TS_LOG_ERROR << "cudaSetDevice(" << id << ") failed. error=" << cuda_error << eject;
         }
         void *new_mem = nullptr;
-        if (size == 0) {
+        if (new_size == 0) {
             cudaFree(mem);
             return nullptr;
         } else if (mem != nullptr) {
-            cudaFree(mem);
-            cuda_error = cudaMalloc(&new_mem, size);
+            cuda_error = cudaMalloc(&new_mem, new_size);
+            if (cuda_error == cudaSuccess) {
+                cuda_error = cudaMemcpy(new_mem, mem, std::min(new_size, mem_size), cudaMemcpyDeviceToDevice);
+                cudaFree(mem);
+            }
         } else {
-            cuda_error = cudaMalloc(&new_mem, size);
+            cuda_error = cudaMalloc(&new_mem, new_size);
         }
-        if (new_mem == nullptr) throw OutOfMemoryException(MemoryDevice(CPU, id), size);
+        if (new_mem == nullptr) throw OutOfMemoryException(MemoryDevice(CPU, id), new_size);
         if (cuda_error != cudaSuccess) {
-            TS_LOG_ERROR << "cudaMalloc(" << &new_mem << " " << size << ") failed. error=" << cuda_error << eject;
+            TS_LOG_ERROR << "cudaMalloc(" << &new_mem << " " << new_size << ") failed. error=" << cuda_error << eject;
         }
         return new_mem;
     }
