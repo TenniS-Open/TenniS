@@ -5,7 +5,7 @@
 #include <core/tensor.h>
 #include <runtime/stack.h>
 
-#include <string>
+#include "backend/common_structure.h"
 
 namespace ts {
 	class Pooling2d : public ts::Operator {
@@ -18,9 +18,6 @@ namespace ts {
 			Tensor default_padding_type(INT32, { 1 });
 			default_padding_type.data<int>()[0] = 0;
 			field("padding_type", OPTIONAL, default_padding_type);
-			//Tensor default_pooling_value(FLOAT32, { 1 });
-			//default_pooling_value.data<int>()[0] = 0;
-			//field("padding_value", OPTIONAL, default_pooling_value);
 			field("ksize", REQUIRED);
 			field("stride", REQUIRED);
 		}
@@ -41,26 +38,26 @@ namespace ts {
 		virtual int infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output);
 
 	private:
-		void caculate_pool_size(int& output_h, int& output_w);
 
 		template<typename T>
 		bool pooling(ts::Stack &stack);
 
 		template<typename T>
-		bool max_pooling(T* input_data, T* output_data);
+		bool max_pooling(T* input_data, T* output_data, Shape& input_shape, Shape& output_shape, KSize2D& ksize, Stride2D& stride);
 
 		template<typename T>
-		bool average_pooling(T* input_data, T* output_data);
+		bool average_pooling(T* input_data, T* output_data, Shape& input_shape, Shape& output_shap, KSize2D& ksize, Stride2D& stride);
 
 	private:
-		int m_batch_num, m_channel, m_input_h, m_input_w;
-		int m_pad_h_up, m_pad_h_down, m_pad_w_left, m_pad_w_right, m_kernel_h, m_kernel_w, m_stride_h, m_stride_w;
-		int m_output_h, m_output_w;
+
+		Padding2D m_padding;
 		std::string m_format;
 		POOLINGTYPE m_pooling_type;
 		PDDINGTYPE m_padding_type;
+		KSize2D m_ksize;
+		Stride2D m_stride;
 	};
-	//TS_REGISTER_OPERATOR(Pooling2d, ts::CPU, "pooling2d")
+	TS_REGISTER_OPERATOR(Pooling2d, ts::CPU, "pooling2d")
 }
 
 #endif //TS_KERNELS_POOLONG2D_H

@@ -1,6 +1,8 @@
 #include <kernels/cpu/pooling2d.h>
 #include <core/tensor_builder.h>
-#include <algorithm>
+#include "backend/common_function.h"
+#include "backend/name.h"
+#include "utils/assert.h"
 
 namespace ts {
 
@@ -8,17 +10,47 @@ namespace ts {
 	{
 		supper::init();
 
-		if (!has("format") || !has("type") || !has("padding") || !has("ksize") || !has("stride"))
-			throw ts::Exception("Missing patameter!");
+		m_format = tensor::to_string(this->get(name::format));
+		TS_AUTO_CHECK(m_format == name::NCHW || m_format == name::NHWC);
+		TS_AUTO_CHECK(m_format == name::NCHW);    // only support NCHW now
 
-		ts::Tensor& fomat_param = get("format");
-		if (fomat_param.dtype() != CHAR8)
-			throw ts::Exception("The Fomat parameter type must be string!");
-		m_format = tensor::to_string(fomat_param);
+		auto static_padding = tensor::cast(INT32, this->get(name::padding));
+		TS_AUTO_CHECK(static_padding.dims() == 2 && static_padding.size(0) == 4 && static_padding.size(1) == 2);
 
-		ts::Tensor& padding_param = get("padding");
-		if (padding_param.dims() != 2 && padding_param.dtype() != INT32 && padding_param.count() != 8)
-			throw ts::Exception("The Padding parameter check failed!");
+		auto ksize_tensor = tensor::cast(INT32, this->get(name::ksize));
+
+		auto stride_tensor = tensor::cast(INT32, this->get(name::stride));
+
+		if (m_format == name::NCHW)
+		{
+			TS_AUTO_CHECK(static_padding.data<int32_t>()[0] == 0 && static_padding.data<int32_t>()[1] == 0
+				&& static_padding.data<int32_t>()[2] == 0 && static_padding.data<int32_t>()[3] == 0);
+			TS_AUTO_CHECK(ksize_tensor.data<int32_t>()[0] == 0 && ksize_tensor.data<int32_t>()[1] == 0);
+			TS_AUTO_CHECK(stride_tensor.data<int32_t>()[0] == 0 && stride_tensor.data<int32_t>()[1] == 0);
+			m_padding.top = static_padding.data<int32_t>()[4];
+			m_padding.bottom = static_padding.data<int32_t>()[5];
+			m_padding.left = static_padding.data<int32_t>()[6];
+			m_padding.right = static_padding.data<int32_t>()[7];
+			m_ksize.height = ksize_tensor.data<int32_t>()[2];
+			m_ksize.width = ksize_tensor.data<int32_t>()[3];
+			m_stride.height = stride_tensor.data<int32_t>()[2];
+			m_stride.width = stride_tensor.data<int32_t>()[3];
+		}
+		else
+		{
+			TS_AUTO_CHECK(static_padding.data<int32_t>()[0] == 0 && static_padding.data<int32_t>()[1] == 0
+				&& static_padding.data<int32_t>()[6] == 0 && static_padding.data<int32_t>()[7] == 0);
+			TS_AUTO_CHECK(ksize_tensor.data<int32_t>()[0] == 0 && ksize_tensor.data<int32_t>()[3] == 0);
+			TS_AUTO_CHECK(stride_tensor.data<int32_t>()[0] == 0 && stride_tensor.data<int32_t>()[3] == 0);
+			m_padding.top = static_padding.data<int32_t>()[2];
+			m_padding.bottom = static_padding.data<int32_t>()[3];
+			m_padding.left = static_padding.data<int32_t>()[4];
+			m_padding.right = static_padding.data<int32_t>()[5];
+			m_ksize.height = ksize_tensor.data<int32_t>()[1];
+			m_ksize.width = ksize_tensor.data<int32_t>()[2];
+			m_stride.height = stride_tensor.data<int32_t>()[1];
+			m_stride.width = stride_tensor.data<int32_t>()[2];
+		}
 
 		if (has("padding_type"))
 		{
@@ -26,52 +58,17 @@ namespace ts {
 			m_padding_type = (PDDINGTYPE)tensor::to_int(padding_type_param);
 		}
 
-		ts::Tensor& ksize_param = get("ksize");
-		if(ksize_param.dims() != 1 && ksize_param.dtype() != INT32 && ksize_param.count() != 4)
-			throw ts::Exception("The ksize parameter check failed!");
-
-		ts::Tensor& stide_param = get("stride");
-		if(stide_param.dims() != 1 && stide_param.dtype() != INT32 && stide_param.count() != 4)
-			throw ts::Exception("The stride parameter check failed!");
-
-		auto padding_memory = padding_param.sync(memory_device());
-
-		if (m_format == "NCHW")
-		{
-			if (padding_memory.data<int>()[0] != 0 || padding_memory.data<int>()[1] != 0 || padding_memory.data<int>()[2] != 0 || padding_memory.data<int>()[3] != 0)
-				throw ts::Exception("The Padding value parameter error!");
-
-			if (ksize_param.sync(memory_device()).data<int>()[0] != 0 || ksize_param.sync(memory_device()).data<int>()[1] != 0)
-				throw ts::Exception("The ksize parameter error!");
-
-			if (ksize_param.sync(memory_device()).data<int>()[2] < 0 || ksize_param.sync(memory_device()).data<int>()[3] < 0)
-				throw ts::Exception("The ksize parameter must be greater than or equal to 0!");
-
-			if (stide_param.sync(memory_device()).data<int>()[0] != 0 || stide_param.sync(memory_device()).data<int>()[1] != 0)
-				throw ts::Exception("The stride parameter error!");
-
-			if (stide_param.sync(memory_device()).data<int>()[2] < 0 || stide_param.sync(memory_device()).data<int>()[3] < 0)
-				throw ts::Exception("The stride parameter must be greater than or equal to 0!");
-
-			m_pad_h_up = padding_memory.data<int>()[4];
-			m_pad_h_down = padding_memory.data<int>()[5];
-			m_pad_w_left = padding_memory.data<int>()[6];
-			m_pad_w_right = padding_memory.data<int>()[7];
-			m_kernel_h = ksize_param.data<int>()[2];
-			m_kernel_w = ksize_param.data<int>()[3];
-			m_stride_h = stide_param.data<int>()[2];
-			m_stride_w = stide_param.data<int>()[3];
-		}
-		else
-		{
-			throw ts::Exception("The Format parameter must be NCHW!");
-		}
+		TS_AUTO_CHECK(m_padding_type == black);
 
 		m_pooling_type = (POOLINGTYPE)tensor::to_int(get("type"));
 	}
 
 	int Pooling2d::run(ts::Stack &stack)
 	{
+		TS_AUTO_CHECK(stack.size() != 0);
+		TS_AUTO_CHECK(stack.size() == 1 && stack.index(0)->dims() == 4);
+		TS_AUTO_CHECK(stack.index(0)->dtype() == FLOAT32 || stack.index(0)->dtype() == FLOAT64);
+
 		int input_num = stack.size();
 		std::vector<ts::Tensor::Prototype> output;
 
@@ -92,132 +89,101 @@ namespace ts {
 				flag = pooling<double>(stack);
 				break;
 			}
-			default: 
-			{
-				throw ts::Exception("pooling2d only support FLOAT32 and FLOAT64 type");
-				break;
-			}
+			default:break;
 		}
-		//int type_len = ts::type_bytes(stack.index(0)->dtype());
-		//if (type_len == 1)
-		//{
-		//	flag = pooling<unsigned char>(stack);
-		//}
-		//else if (type_len == 2)
-		//{
-		//	flag = pooling<unsigned short>(stack);
-		//}
-		//else if (type_len == 4)
-		//{
-		//	flag = pooling<float>(stack);
-		//}
-		//else if (type_len == 8)
-		//{
-		//	flag = pooling<double>(stack);
-		//}
 
-		if (!flag)
-			throw ts::Exception("pooling2d failed!");
 		return 1;
 	}
 
 	int Pooling2d::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output)
 	{
-		if (stack.size() == 0)
-			throw ts::Exception("Can not pooling on empty inputs");
-
-		if (stack.size() != 1 || stack.index(0)->dims() != 4)
-			throw ts::Exception("Input parameter is invalid");
-
-		if (stack.index(0)->dtype() != FLOAT32 && stack.index(0)->dtype() != FLOAT64)
-			throw ts::Exception("Input parameter should be float or double");
+		Size2D input_size;
 
 		if (m_format == "NCHW")
 		{
-			m_batch_num = stack.index(0)->sizes()[0];
-			m_channel = stack.index(0)->sizes()[1];
-			m_input_h = stack.index(0)->sizes()[2];
-			m_input_w = stack.index(0)->sizes()[3];
+			input_size.height = stack.index(0)->sizes()[2];
+			input_size.width = stack.index(0)->sizes()[3];
 		}
 		else
 		{
-			m_batch_num = stack.index(0)->sizes()[0];
-			m_channel = stack.index(0)->sizes()[3];
-			m_input_h = stack.index(0)->sizes()[1];
-			m_input_w = stack.index(0)->sizes()[2];
+			input_size.height = stack.index(0)->sizes()[1];
+			input_size.width = stack.index(0)->sizes()[2];
 		}
 
-		caculate_pool_size(m_output_h, m_output_w);
+		Size2D output_size;
+		output_size = pooling2d_forward(input_size, m_padding, m_ksize, m_stride);
 
 		Shape output_shape(stack.index(0)->sizes());
 		if (m_format == "NCHW")
 		{
-			output_shape[2] = m_output_h;
-			output_shape[3] = m_output_w;
+			output_shape[2] = output_size.height;
+			output_shape[3] = output_size.width;
 		}
 		else
 		{
-			output_shape[1] = m_output_h;
-			output_shape[2] = m_output_w;
+			output_shape[1] = output_size.height;
+			output_shape[2] = output_size.width;
 		}
 		output.resize(1);
 		output[0] = ts::Tensor::Prototype(stack.index(0)->dtype(), output_shape);
 		return 1;
 	}
 
-	void Pooling2d::caculate_pool_size(int& output_h, int& output_w)
-	{
-		output_h = ceil((m_input_h + m_pad_h_up + m_pad_h_down - m_kernel_h) / static_cast<float>(m_stride_h) + 1);
-		output_w = ceil((m_input_w + m_pad_w_left + m_pad_w_right - m_kernel_w) / static_cast<float>(m_stride_w) + 1);
-	}
-
 	template<typename T>
 	bool Pooling2d::pooling(ts::Stack &stack)
 	{
-		T* input_data = stack.index(0)->sync(memory_device()).data<T>();
+		ts::Tensor input_tensor = *stack.index(0);
+		Shape input_shape = input_tensor.sizes();
+		T* input_data = input_tensor.sync(memory_device()).data<T>();
+
 		ts::Tensor& output_tensor = *stack.index(-1);
+		Shape output_shape = output_tensor.sizes();
 		T* output_data = output_tensor.sync(memory_device()).data<T>();
-		if (input_data == nullptr || output_data == nullptr)
-			return false;
+
 		bool flag;
+
 		if (m_pooling_type == max)
 		{
-			flag = max_pooling<T>(input_data, output_data);
+			flag = max_pooling<T>(input_data, output_data, input_shape, output_shape, m_ksize, m_stride);
 		}
 		else
 		{
-			flag = average_pooling<T>(input_data, output_data);
+			flag = average_pooling<T>(input_data, output_data, input_shape, output_shape, m_ksize, m_stride);
 		}
 		return flag;
 	}
 
 	template<typename T>
-	bool Pooling2d::max_pooling(T* input_data, T* output_data)
+	bool Pooling2d::max_pooling(T* input_data, T* output_data, Shape& input_shape, Shape& output_shape, KSize2D& ksize, Stride2D& stride)
 	{
-		int input_channel_size = m_input_h * m_input_w;
-		int output_channel_size = m_output_h * m_output_w;
-		for (int n = 0; n < m_batch_num; n++)
+		int input_h = input_shape[2];
+		int input_w = input_shape[3];
+		int output_h = output_shape[2];
+		int output_w = output_shape[3];
+		int input_channel_size = input_h * input_w;
+		int output_channel_size = output_h * output_w;
+		for (int n = 0; n < output_shape[0]; n++)
 		{
-			for (int c = 0; c< m_channel; c++)
+			for (int c = 0; c< output_shape[1]; c++)
 			{
-				for (int oh = 0; oh < m_output_h; oh++)
+				for (int oh = 0; oh < output_shape[2]; oh++)
 				{
-					for (int ow = 0; ow < m_output_w; ow++)
+					for (int ow = 0; ow < output_shape[3]; ow++)
 					{
-						int ihStart = oh * m_stride_h - m_pad_h_up;
-						int iwStart = ow * m_stride_w - m_pad_w_left;
-						int ihEnd = std::min<T>(ihStart + m_kernel_h, m_input_h);
-						int iwEnd = std::min<T>(iwStart + m_kernel_w, m_input_w);
+						int ihStart = oh * stride.height - m_padding.top;
+						int iwStart = ow * stride.width - m_padding.left;
+						int ihEnd = std::min<T>(ihStart + ksize.height, input_h);
+						int iwEnd = std::min<T>(iwStart + ksize.width, input_w);
 						ihStart = std::max<T>(ihStart, 0);
 						iwStart = std::max<T>(iwStart, 0);
-						int outIndex = oh * m_output_w + ow;
+						int outIndex = oh * output_w + ow;
 						T maxVlue = 0;
 						//int count = 0;
 						for (int ih = ihStart; ih < ihEnd; ih++)
 						{
 							for (int iw = iwStart; iw < iwEnd; iw++)
 							{
-								int input_index = ih * m_input_w + iw;
+								int input_index = ih * input_w + iw;
 								if (input_data[input_index] > maxVlue)
 								{
 									maxVlue = input_data[input_index];
@@ -240,32 +206,36 @@ namespace ts {
 	}
 
 	template<typename T>
-	bool Pooling2d::average_pooling(T* input_data, T* output_data)
+	bool Pooling2d::average_pooling(T* input_data, T* output_data, Shape& input_shape, Shape& output_shape, KSize2D& ksize, Stride2D& stride)
 	{
-		int input_channel_size = m_input_h * m_input_w;
-		int output_channel_size = m_output_h * m_output_w;
-		for (int n = 0; n < m_batch_num; n++)
+		int input_h = input_shape[2];
+		int input_w = input_shape[3];
+		int output_h = output_shape[2];
+		int output_w = output_shape[3];
+		int input_channel_size = input_h * input_w;
+		int output_channel_size = output_h * output_w;
+		for (int n = 0; n < output_shape[0]; n++)
 		{
-			for (int c = 0; c< m_channel; c++)
+			for (int c = 0; c< output_shape[1]; c++)
 			{
-				for (int oh = 0; oh < m_output_h; oh++)
+				for (int oh = 0; oh < output_shape[2]; oh++)
 				{
-					for (int ow = 0; ow < m_output_w; ow++)
+					for (int ow = 0; ow < output_shape[3]; ow++)
 					{
-						int ihStart = oh * m_stride_h - m_pad_h_up;
-						int iwStart = ow * m_stride_w - m_pad_w_left;
-						int ihEnd = std::min<T>(ihStart + m_kernel_h, m_input_h);
-						int iwEnd = std::min<T>(iwStart + m_kernel_w, m_input_w);
+						int ihStart = oh * stride.height - m_padding.top;
+						int iwStart = ow * stride.width - m_padding.left;
+						int ihEnd = std::min<T>(ihStart + ksize.height, input_h);
+						int iwEnd = std::min<T>(iwStart + ksize.width, input_w);
 						ihStart = std::max<T>(ihStart, 0);
 						iwStart = std::max<T>(iwStart, 0);
-						int outIndex = oh * m_output_w + ow;
+						int outIndex = oh * output_w + ow;
 						T sumValue = 0.0;
 						int count = 0;
 						for (int ih = ihStart; ih < ihEnd; ih++)
 						{
 							for (int iw = iwStart; iw < iwEnd; iw++)
 							{
-								int input_index = ih * m_input_w + iw;
+								int input_index = ih * input_w + iw;
 								sumValue += input_data[input_index];
 								count++;
 							}
@@ -288,7 +258,7 @@ namespace ts {
 		}
 		return true;
 	}
-
-	TS_REGISTER_OPERATOR(Pooling2d, ts::CPU, "pooling2d")
-
 }
+
+//using namespace ts;
+//TS_REGISTER_OPERATOR(Pooling2d, ts::CPU, "pooling2d")
