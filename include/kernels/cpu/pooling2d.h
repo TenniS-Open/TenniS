@@ -57,7 +57,7 @@ namespace ts {
 		KSize2D m_ksize;
 		Stride2D m_stride;
 	};
-	TS_REGISTER_OPERATOR(Pooling2d, ts::CPU, "pooling2d")
+	//TS_REGISTER_OPERATOR(Pooling2d, ts::CPU, "pooling2d")
 }
 
 #endif //TS_KERNELS_POOLONG2D_H
