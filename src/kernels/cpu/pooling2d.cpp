@@ -6,6 +6,18 @@
 
 namespace ts {
 
+	Pooling2d::Pooling2d() 
+	{
+		field(name::format, REQUIRED);
+		field(name::type, REQUIRED);
+		field(name::padding, REQUIRED);
+		Tensor default_padding_type(INT32, { 1 });
+		default_padding_type.data<int>()[0] = 0;
+		field(name::padding_type, OPTIONAL, default_padding_type);
+		field(name::ksize, REQUIRED);
+		field(name::stride, REQUIRED);
+	}
+
 	void Pooling2d::init()
 	{
 		supper::init();
@@ -66,7 +78,7 @@ namespace ts {
 	int Pooling2d::run(ts::Stack &stack)
 	{
 		TS_AUTO_CHECK(stack.size() != 0);
-		TS_AUTO_CHECK(stack.size() == 1 && stack.index(0)->dims() == 4);
+		//TS_AUTO_CHECK(stack.size() == 1 && stack.index(0)->dims() == 4);
 		TS_AUTO_CHECK(stack.index(0)->dtype() == FLOAT32 || stack.index(0)->dtype() == FLOAT64);
 
 		int input_num = stack.size();
