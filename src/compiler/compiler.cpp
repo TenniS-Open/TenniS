@@ -20,6 +20,8 @@
 #include "global/operator_factory.h"
 #include "global/memory_device.h"
 #include "core/tensor_builder.h"
+#include "core/device_context.h"
+#include "utils/ctxmgr_lite.h"
 
 
 namespace ts {
@@ -98,6 +100,9 @@ namespace ts {
 
     // TODO: inputs only support Parameter, try support other op
     InstructionBlock Compiler::compile(const std::vector<Node> &inputs, const std::vector<Node> &outputs) {
+        DeviceContext device_context(m_computing_device);
+        ctx::bind<DeviceContext> _bind_device_context(device_context);
+
         InstructionBlock block;
         block.nargs = int(inputs.size());
         block.nresults = int(outputs.size());
