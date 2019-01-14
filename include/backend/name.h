@@ -13,6 +13,8 @@ namespace ts {
         using string = std::string;
 
         namespace layer {
+            const string &field() TS_NOEXCEPT;
+            const string &pack() TS_NOEXCEPT;
             const string &dimshuffle() TS_NOEXCEPT;
             const string &transpose() TS_NOEXCEPT;
             const string &reshape() TS_NOEXCEPT;
@@ -63,6 +65,8 @@ namespace ts {
         extern string type;
         extern string padding_type;
         extern string ksize;
+        extern string device;
+        extern string offset;
 
 
         extern string valid;

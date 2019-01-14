@@ -13,6 +13,7 @@
 #include <unordered_set>
 
 #include <algorithm>
+#include <backend/name.h>
 
 #include "runtime/instruction/instruction_factory.h"
 #include "runtime/instruction/stack_instruction.h"
@@ -133,10 +134,10 @@ namespace ts {
                 return node_it->second;
             }
             auto &bubble = node.ref<Bubble>();
-            auto value = bubble.get("value");
+            auto value = bubble.get(name::value);
             auto data_index = int(block.data_sagment.size());
-            if (bubble.has("#device")) {
-                block.data_sagment.push_back(DeviceTensor(value, tensor::to_string(bubble.get("#device"))));
+            if (bubble.has(name::device)) {
+                block.data_sagment.push_back(DeviceTensor(value, tensor::to_string(bubble.get(name::device))));
             } else {
                 block.data_sagment.push_back(DeviceTensor(value));
             }
