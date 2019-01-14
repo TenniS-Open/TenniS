@@ -12,14 +12,14 @@ namespace ts {
 	public:
 		using supper = ts::Operator;
 		Pooling2d() {
-			field("format", REQUIRED);
-			field("type", REQUIRED);
-			field("padding", REQUIRED);
+			field(name::format, REQUIRED);
+			field(name::type, REQUIRED);
+			field(name::padding, REQUIRED);
 			Tensor default_padding_type(INT32, { 1 });
 			default_padding_type.data<int>()[0] = 0;
-			field("padding_type", OPTIONAL, default_padding_type);
-			field("ksize", REQUIRED);
-			field("stride", REQUIRED);
+			field(name::padding_type, OPTIONAL, default_padding_type);
+			field(name::ksize, REQUIRED);
+			field(name::stride, REQUIRED);
 		}
 
 		enum POOLINGTYPE {
