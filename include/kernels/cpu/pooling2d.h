@@ -11,16 +11,7 @@ namespace ts {
 	class Pooling2d : public ts::Operator {
 	public:
 		using supper = ts::Operator;
-		Pooling2d() {
-			field(name::format, REQUIRED);
-			field(name::type, REQUIRED);
-			field(name::padding, REQUIRED);
-			Tensor default_padding_type(INT32, { 1 });
-			default_padding_type.data<int>()[0] = 0;
-			field(name::padding_type, OPTIONAL, default_padding_type);
-			field(name::ksize, REQUIRED);
-			field(name::stride, REQUIRED);
-		}
+		Pooling2d(); 
 
 		enum POOLINGTYPE {
 			max,
