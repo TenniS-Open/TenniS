@@ -17,7 +17,7 @@ namespace ts {
 		m_format = tensor::to_string(fomat_param);
 
 		ts::Tensor& padding_param = get("padding");
-		if (padding_param.dims() != 1 && padding_param.dtype() != INT32 && padding_param.count() != 8)
+		if (padding_param.dims() != 2 && padding_param.dtype() != INT32 && padding_param.count() != 8)
 			throw ts::Exception("The Padding parameter check failed!");
 
 		if (has("padding_type"))
