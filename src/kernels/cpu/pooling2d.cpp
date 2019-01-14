@@ -260,5 +260,5 @@ namespace ts {
 	}
 }
 
-//using namespace ts;
-//TS_REGISTER_OPERATOR(Pooling2d, ts::CPU, "pooling2d")
+using namespace ts;
+TS_REGISTER_OPERATOR(Pooling2d, ts::CPU, "pooling2d")
