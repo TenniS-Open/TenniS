@@ -17,8 +17,8 @@ namespace ts {
 		m_format = tensor::to_string(fomat_param);
 
 		ts::Tensor& padding_param = get("padding");
-		if (padding_param.count() != 8)
-			throw ts::Exception("The Padding parameter must have eight!");
+		if (padding_param.dims() != 1 && padding_param.dtype() != INT32 && padding_param.count() != 8)
+			throw ts::Exception("The Padding parameter check failed!");
 
 		if (has("padding_type"))
 		{
@@ -26,17 +26,13 @@ namespace ts {
 			m_padding_type = (PDDINGTYPE)tensor::to_int(padding_type_param);
 		}
 
-		//ts::Tensor& padding_value_param = get("padding_value");
-		//if (padding_value_param.dtype() != FLOAT32)
-		//	throw ts::Exception("The Padding value parameter type must be FLOAT32!");  //default type
-
 		ts::Tensor& ksize_param = get("ksize");
-		if(ksize_param.count() != 4)
-			throw ts::Exception("The ksize parameter must have four!");
+		if(ksize_param.dims() != 1 && ksize_param.dtype() != INT32 && ksize_param.count() != 4)
+			throw ts::Exception("The ksize parameter check failed!");
 
 		ts::Tensor& stide_param = get("stride");
-		if(stide_param.count() != 4)
-			throw ts::Exception("The stride parameter must have four!");
+		if(stide_param.dims() != 1 && stide_param.dtype() != INT32 && stide_param.count() != 4)
+			throw ts::Exception("The stride parameter check failed!");
 
 		auto padding_memory = padding_param.sync(memory_device());
 
@@ -47,13 +43,16 @@ namespace ts {
 
 			if (ksize_param.sync(memory_device()).data<int>()[0] != 0 || ksize_param.sync(memory_device()).data<int>()[1] != 0)
 				throw ts::Exception("The ksize parameter error!");
+
 			if (ksize_param.sync(memory_device()).data<int>()[2] < 0 || ksize_param.sync(memory_device()).data<int>()[3] < 0)
 				throw ts::Exception("The ksize parameter must be greater than or equal to 0!");
 
 			if (stide_param.sync(memory_device()).data<int>()[0] != 0 || stide_param.sync(memory_device()).data<int>()[1] != 0)
 				throw ts::Exception("The stride parameter error!");
+
 			if (stide_param.sync(memory_device()).data<int>()[2] < 0 || stide_param.sync(memory_device()).data<int>()[3] < 0)
 				throw ts::Exception("The stride parameter must be greater than or equal to 0!");
+
 			m_pad_h_up = padding_memory.data<int>()[4];
 			m_pad_h_down = padding_memory.data<int>()[5];
 			m_pad_w_left = padding_memory.data<int>()[6];
@@ -63,33 +62,9 @@ namespace ts {
 			m_stride_h = stide_param.data<int>()[2];
 			m_stride_w = stide_param.data<int>()[3];
 		}
-		else if (m_format == "NHWC")
-		{
-			throw ts::Exception("The Format parameter must be NCHW");  // onlu support NCHW now
-			if (padding_memory.data<int>()[0] != 0 || padding_memory.data<int>()[1] != 0 || padding_memory.data<int>()[6] != 0 || padding_memory.data<int>()[7] != 0)
-				throw ts::Exception("The Padding value parameter error!");
-
-			if (ksize_param.sync(memory_device()).data<int>()[0] != 0 || ksize_param.sync(memory_device()).data<int>()[3] != 0)
-				throw ts::Exception("The ksize parameter error!");
-			if (ksize_param.sync(memory_device()).data<int>()[1] < 0 || ksize_param.sync(memory_device()).data<int>()[2] < 0)
-				throw ts::Exception("The ksize parameter must be greater than or equal to 0!");
-
-			if (stide_param.sync(memory_device()).data<int>()[0] != 0 || stide_param.sync(memory_device()).data<int>()[3] != 0)
-				throw ts::Exception("The stride parameter error!");
-			if (stide_param.sync(memory_device()).data<int>()[1] < 0 || stide_param.sync(memory_device()).data<int>()[2] < 0)
-				throw ts::Exception("The stride parameter must be greater than or equal to 0!");
-			m_pad_h_up = padding_memory.data<int>()[2];
-			m_pad_h_down = padding_memory.data<int>()[3];
-			m_pad_w_left = padding_memory.data<int>()[4];
-			m_pad_w_right = padding_memory.data<int>()[5];
-			m_kernel_h = ksize_param.data<int>()[1];
-			m_kernel_w = ksize_param.data<int>()[2];
-			m_stride_h = stide_param.data<int>()[1];
-			m_stride_w = stide_param.data<int>()[2];
-		}
 		else
 		{
-			throw ts::Exception("The Format parameter must be NCHW or NHWC!");
+			throw ts::Exception("The Format parameter must be NCHW!");
 		}
 
 		m_pooling_type = (POOLINGTYPE)tensor::to_int(get("type"));
