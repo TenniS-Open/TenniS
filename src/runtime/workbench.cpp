@@ -12,6 +12,8 @@
 #include "compiler/compiler.h"
 #include "utils/box.h"
 
+#include "memory/flow.h"
+
 #include <climits>
 
 namespace ts {
@@ -21,7 +23,7 @@ namespace ts {
 
         this->m_static_memory = DynamicSyncMemoryController::Make(memory_device, true);
         // TODO: Make real flow memory controller
-        this->m_flow_memory = DynamicSyncMemoryController::Make(memory_device, false);
+        this->m_flow_memory = HypeSyncMemoryController<FlowMemoryController>::Make(memory_device, false);
         this->m_dynamic_memory = DynamicSyncMemoryController::Make(memory_device, false);
         this->m_stack = std::make_shared<Stack>(memory_device, this->m_flow_memory);
         this->m_data_sagment = std::make_shared<Stack>(memory_device, this->m_static_memory);

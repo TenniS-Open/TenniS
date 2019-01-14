@@ -15,155 +15,64 @@
 
 #include <runtime/inside/parallel.h>
 
-#ifdef TS_USE_SSE
-#include <immintrin.h>
-#endif
+#include "kernels/common/openmp.h"
+#include "kernels/common/simd.h"
+
+
+#include <omp.h>
+
 
 namespace ts {
     namespace cpu {
         template<typename T>
         inline T inline_dot(int N, const T *x, int incx, const T *y, int incy) {
             T sum = 0;
-            // block: 4
-            int i = 0;
-            static const int block_size = 4;
-            int blocked_N = N % block_size ? N - block_size : N;
-            for (; i < blocked_N; i += block_size) {
+
+            const int BLOCK = 4;
+            int BODY = N / BLOCK, TAIL = N % BLOCK;
+
+            for (; BODY; --BODY) {
                 sum += *x * *y; x += incx; y += incy;
                 sum += *x * *y; x += incx; y += incy;
                 sum += *x * *y; x += incx; y += incy;
                 sum += *x * *y; x += incx; y += incy;
             }
-            for (; i < N; ++i) {
+            for (; TAIL; --TAIL) {
                 sum += *x * *y; x += incx; y += incy;
             }
             return sum;
         }
 #ifdef TS_USE_SSE
-
-        inline float inline_dot_conitnous_float(int N, const float *x, const float *y) {
-            float sum = 0;
-            // block: 4
-            int i = 0;
-            static const int block_size = 4;
-            int blocked_N = N % block_size ? N - block_size : N;
-            __m128 simdX, simdY;
-            __m128 simdSUM = _mm_setzero_ps();
-            float simdBuffer[4];
-            for (; i < blocked_N; i += block_size) {
-                simdX = _mm_loadu_ps(x);
-                x += 4;
-                simdY = _mm_loadu_ps(y);
-                y += 4;
-                simdSUM = _mm_add_ps(simdSUM, _mm_mul_ps(simdX, simdY));
-            }
-            _mm_storeu_ps(simdBuffer, simdSUM);
-            sum = simdBuffer[0] + simdBuffer[1] + simdBuffer[2] + simdBuffer[3];
-            for (; i < N; ++i) {
-                sum += *x * *y; x += 1; y += 1;
-            }
-            return sum;
-        }
-
-        inline float inline_dot_non_conitnous_float(int N, const float *x, int incx, const float *y, int incy) {
-            float sum = 0;
-            // block: 4
-            int i = 0;
-            static const int block_size = 4;
-            int blocked_N = N % block_size ? N - block_size : N;
-            __m128 simdX, simdY;
-            __m128 simdSUM = _mm_setzero_ps();
-            float simdBuffer[4];
-            for (; i < blocked_N; i += block_size) {
-                simdBuffer[0] = *x; x += incx;
-                simdBuffer[1] = *x; x += incx;
-                simdBuffer[2] = *x; x += incx;
-                simdBuffer[3] = *x; x += incx;
-                simdX = _mm_loadu_ps(simdBuffer);
-                simdBuffer[0] = *y; y += incy;
-                simdBuffer[1] = *y; y += incy;
-                simdBuffer[2] = *y; y += incy;
-                simdBuffer[3] = *y; y += incy;
-                simdY = _mm_loadu_ps(simdBuffer);
-                simdSUM = _mm_add_ps(simdSUM, _mm_mul_ps(simdX, simdY));
-            }
-            _mm_storeu_ps(simdBuffer, simdSUM);
-            sum = simdBuffer[0] + simdBuffer[1] + simdBuffer[2] + simdBuffer[3];
-            for (; i < N; ++i) {
-                sum += *x * *y; x += incx; y += incy;
-            }
-            return sum;
-        }
-
-        inline float inline_dot_lhs_conitnous_float(int N, const float *x, const float *y, int incy) {
-            float sum = 0;
-            // block: 4
-            int i = 0;
-            static const int block_size = 4;
-            int blocked_N = N % block_size ? N - block_size : N;
-            __m128 simdX, simdY;
-            __m128 simdSUM = _mm_setzero_ps();
-            float simdBuffer[4];
-            for (; i < blocked_N; i += block_size) {
-                simdX = _mm_loadu_ps(x);
-                x += 4;
-                simdBuffer[0] = *y; y += incy;
-                simdBuffer[1] = *y; y += incy;
-                simdBuffer[2] = *y; y += incy;
-                simdBuffer[3] = *y; y += incy;
-                simdY = _mm_loadu_ps(simdBuffer);
-                simdSUM = _mm_add_ps(simdSUM, _mm_mul_ps(simdX, simdY));
-            }
-            _mm_storeu_ps(simdBuffer, simdSUM);
-            sum = simdBuffer[0] + simdBuffer[1] + simdBuffer[2] + simdBuffer[3];
-            for (; i < N; ++i) {
-                sum += *x * *y; ++x; y += incy;
-            }
-            return sum;
-        }
-
-        inline float inline_dot_rhs_conitnous_float(int N, const float *x, int incx, const float *y) {
-            float sum = 0;
-            // block: 4
-            int i = 0;
-            static const int block_size = 4;
-            int blocked_N = N % block_size ? N - block_size : N;
-            __m128 simdX, simdY;
-            __m128 simdSUM = _mm_setzero_ps();
-            float simdBuffer[4];
-            for (; i < blocked_N; i += block_size) {
-                simdBuffer[0] = *x; x += incx;
-                simdBuffer[1] = *x; x += incx;
-                simdBuffer[2] = *x; x += incx;
-                simdBuffer[3] = *x; x += incx;
-                simdX = _mm_loadu_ps(simdBuffer);
-                simdY = _mm_loadu_ps(y);
-                y += 4;
-                simdSUM = _mm_add_ps(simdSUM, _mm_mul_ps(simdX, simdY));
-            }
-            _mm_storeu_ps(simdBuffer, simdSUM);
-            sum = simdBuffer[0] + simdBuffer[1] + simdBuffer[2] + simdBuffer[3];
-            for (; i < N; ++i) {
-                sum += *x * *y; x += incx; ++y;
-            }
-            return sum;
-        }
-
         template <>
         inline float inline_dot<float>(int N, const float *x, int incx, const float *y, int incy) {
-            if (incx == 1) {
-                if (incy == 1) {
-                    return inline_dot_conitnous_float(N, x, y);
-                } else {
-                    return inline_dot_lhs_conitnous_float(N, x, y, incy);
-                }
-            } else {
-                if (incy == 1) {
-                    return inline_dot_rhs_conitnous_float(N, x, incx, y);
-                } else {
-                    return inline_dot_non_conitnous_float(N, x, incx, y, incy);
-                }
+            const auto incx1 = incx;
+            const auto incx2 = incx1 + incx;
+            const auto incx3 = incx2 + incx;
+            const auto incx4 = incx3 + incx;
+            const auto incy1 = incy;
+            const auto incy2 = incy1 + incy;
+            const auto incy3 = incy2 + incy;
+            const auto incy4 = incy3 + incy;
+
+            float sum = 0;
+            int i = 0;
+
+            float32x4 sumx4 = 0;
+            for (; i < N - 3; i += 4) {
+                sumx4 += float32x4(x[0], x[incx1], x[incx2], x[incx3]) * float32x4(y[0], y[incy1], y[incy2], y[incy3]);
+                x += incx4;
+                y += incy4;
             }
+
+            sum = ts::sum(sumx4);
+
+            for (; i < N; ++i) {
+                sum += *x * *y;
+                x += incx;
+                y += incy;
+            }
+
+            return sum;
         }
 #endif
 
