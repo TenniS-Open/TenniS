@@ -22,6 +22,14 @@ namespace ts {
 
         const static char retention_param_sign = '#';
 
+        class RetentionParam {
+        public:
+            static std::string name;
+            static std::string op;
+            static std::string output_count;
+            static std::string shape;
+        };
+
         explicit Bubble() = default;
 
         Bubble(const self &) = default;
@@ -47,6 +55,22 @@ namespace ts {
                 const std::string &op,
                 const std::string &name,
                 int output_count);
+
+        explicit Bubble(
+                const std::string &op, const Shape &shape);
+
+        explicit Bubble(
+                const std::string &op,
+                const std::string &name, const Shape &shape);
+
+        explicit Bubble(
+                const std::string &op,
+                int output_count, const Shape &shape);
+
+        explicit Bubble(
+                const std::string &op,
+                const std::string &name,
+                int output_count, const Shape &shape);
 
         size_t output_count() const { return m_output_count; }
 
@@ -94,6 +118,13 @@ namespace ts {
          */
         param_dict m_params;
 
+        Shape m_shape;
+
+        /**
+         *
+         * @param name
+         * @return
+         */
         std::string fuzzy_param_name(const std::string &name);
 
     public:
