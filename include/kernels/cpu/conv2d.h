@@ -1,19 +1,18 @@
 #ifndef TS_KERNELS_CONV2D_H
 #define TS_KERNELS_CONV2D_H
 
-#include <global/operator_factory.h>
+#include <kernels/cpu/conv2d_base.h>
 #include <core/tensor.h>
 #include <runtime/stack.h>
-//#include <cstring>
 #include <string.h>
 
 namespace ts {
 
 
-class Conv2d: public ts::Operator {
+class Conv2d: public ts::Conv2d_Base {
 public:
 
-    using supper = ts::Operator;
+    using supper = ts::Conv2d_Base;
     Conv2d();
 
     virtual void init(); 
@@ -30,16 +29,15 @@ private:
     void compute_conv(const Tensor *input_tensor, const Tensor *weight_tensor, Tensor *tensor, const Shape& shape, 
                       const Shape &reshape, const Shape &weight_shape);
 private:
-    int m_group;
-    int m_padding_value;
-    Shape m_padding;
-    Shape m_stride;
-    Shape m_dialations;
-    std::string m_format;
+    //int m_group;
+    //int m_padding_value;
+    //Shape m_padding;
+    //Shape m_stride;
+    //Shape m_dialations;
+    //std::string m_format;
 };
 
 
-//TS_REGISTER_OPERATOR(Conv2d, ts::CPU, "conv2d")
 
 
 }

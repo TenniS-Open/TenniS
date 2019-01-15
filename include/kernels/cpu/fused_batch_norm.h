@@ -1,5 +1,5 @@
-#ifndef TS_KERNELS_BATCH_SCALE_H
-#define TS_KERNELS_BATCH_SCALE_H
+#ifndef TS_KERNELS_FUSED_BATCH_NORM_H
+#define TS_KERNELS_FUSED_BATCH_NORM_H
 
 #include <core/tensor.h>
 #include <runtime/stack.h>
@@ -9,11 +9,11 @@
 namespace ts {
 
 
-class Batch_Scale : public ts::Operator {
+class Fused_Batch_Norm : public ts::Operator {
 public:
 
     using supper = ts::Operator;
-    Batch_Scale();
+    Fused_Batch_Norm();
 
     virtual void init(); 
 
@@ -22,16 +22,12 @@ public:
 
 
 private:
-    template<typename T>
-    void compute_batch_scale(const ts::Tensor *input_tensor, const ts::Tensor *scale_tensor,
-                             const ts::Tensor *bias_tensor, ts::Tensor *output_tensor);
     void infer_private(ts::Stack &stack, ts::Tensor::Prototype &output);
 
 private:
     int m_dim;
 
 };
-
 
 
 
