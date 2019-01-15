@@ -213,8 +213,13 @@ class OPType(object):
     Enum_SigmoidLayer = 19
     Enum_FinallyLayer = 1001
 
+    # for tf
     Enum_SpaceToBatchNDLayer = 20
     Enum_BatchToSpaceNDLayer = 21
+
+    # for tf
+    Enum_ReshapeLayer = 22
+    Enum_RealMulLayer = 23
 
 
 class Net(object):
