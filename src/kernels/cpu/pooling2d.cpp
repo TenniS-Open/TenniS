@@ -64,15 +64,15 @@ namespace ts {
 			m_stride.width = stride_tensor.data<int32_t>()[2];
 		}
 
-		if (has("padding_type"))
+		if (has(name::padding_type))
 		{
-			ts::Tensor& padding_type_param = get("padding_type");
+			ts::Tensor& padding_type_param = get(name::padding_type);
 			m_padding_type = (PDDINGTYPE)tensor::to_int(padding_type_param);
 		}
 
 		TS_AUTO_CHECK(m_padding_type == black);
 
-		m_pooling_type = (POOLINGTYPE)tensor::to_int(get("type"));
+		m_pooling_type = (POOLINGTYPE)tensor::to_int(get(name::type));
 	}
 
 	int Pooling2d::run(ts::Stack &stack)
@@ -111,7 +111,7 @@ namespace ts {
 	{
 		Size2D input_size;
 
-		if (m_format == "NCHW")
+		if (m_format == name::NCHW)
 		{
 			input_size.height = stack.index(0)->sizes()[2];
 			input_size.width = stack.index(0)->sizes()[3];
@@ -126,7 +126,7 @@ namespace ts {
 		output_size = pooling2d_forward(input_size, m_padding, m_ksize, m_stride);
 
 		Shape output_shape(stack.index(0)->sizes());
-		if (m_format == "NCHW")
+		if (m_format == name::NCHW)
 		{
 			output_shape[2] = output_size.height;
 			output_shape[3] = output_size.width;
@@ -273,4 +273,4 @@ namespace ts {
 }
 
 using namespace ts;
-TS_REGISTER_OPERATOR(Pooling2d, ts::CPU, "pooling2d")
+TS_REGISTER_OPERATOR(Pooling2d, ts::CPU, name::layer::pooling2d())
