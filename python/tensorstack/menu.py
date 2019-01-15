@@ -17,9 +17,9 @@ class Name(object):
     device = "device"
 
 
-def param(name):
+def param(name, shape=None):
     # type: (str) -> Node
-    return Node(op=Node.Parameter, name=name)
+    return Node(op=Node.Parameter, name=name, shape=shape)
 
 
 def op(name, op_name, inputs, output_count=1):
