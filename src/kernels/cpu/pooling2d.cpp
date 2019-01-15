@@ -78,7 +78,7 @@ namespace ts {
 	int Pooling2d::run(ts::Stack &stack)
 	{
 		TS_AUTO_CHECK(stack.size() != 0);
-		//TS_AUTO_CHECK(stack.size() == 1 && stack.index(0)->dims() == 4);
+		TS_AUTO_CHECK(stack.size() == 1 && stack.index(0)->dims() == 4);
 		TS_AUTO_CHECK(stack.index(0)->dtype() == FLOAT32 || stack.index(0)->dtype() == FLOAT64);
 
 		int input_num = stack.size();

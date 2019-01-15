@@ -1,25 +1,30 @@
 #include <kernels/cpu/prelu.h>
 #include <core/tensor_builder.h>
+#include "backend/name.h"
+
 #include <algorithm>
 
 namespace ts {
 
+	Prelu::Prelu() : m_dim(-1) 
+	{
+		field(name::dim, OPTIONAL);
+		field(name::slope, REQUIRED);
+	}
+
 	void Prelu::init()
 	{
 		supper::init();
-		if (!has("slope"))
-			throw ts::Exception("Must input slope parameter");
 
-		ts::Tensor slope = get("slope");
+		ts::Tensor slope = get(name::slope);
 
 		if (slope.count() != 1)
 		{
-			if (!has("dim"))
+			if (!has(name::dim))
 				throw ts::Exception("Must input dim parameter");
-			m_dim = tensor::to_int(get("dim"));
+			m_dim = tensor::to_int(get(name::dim));
 			auto dtype = slope.dtype();
-			if (dtype != FLOAT32)
-				throw ts::Exception("Parameter slope should be float");
+			TS_AUTO_CHECK(dtype == FLOAT32);
 
 			auto slope_mem = slope.sync(memory_device());
 			for (int i = 0; i < slope.count(); i++)
@@ -54,14 +59,8 @@ namespace ts {
 				flag = prelu<double>(stack);
 				break;
 			}
-			default:
-			{
-				throw ts::Exception("prelu only support FLOAT32 and FLOAT64 type");
-				break;
-			}
+			default:break;
 		}
-		if (!flag)
-			throw ts::Exception("prelu failed!");
 		return 1;
 	}
 
@@ -69,20 +68,25 @@ namespace ts {
 	{
 		int input_num = stack.size();
 
-		if (input_num != 1)
-			throw ts::Exception("Input parameter should be one!");
+		TS_AUTO_CHECK(input_num == 1);
+		TS_AUTO_CHECK(stack.index(0)->dtype() == FLOAT32 || stack.index(0)->dtype() == FLOAT64);
 
-		if (stack.index(0)->dtype() != FLOAT32 && stack.index(0)->dtype() != FLOAT64)
-			throw ts::Exception("Input parameter should be float or double");
+		//if (input_num != 1)
+		//	throw ts::Exception("Input parameter should be one!");
+
+		//if (stack.index(0)->dtype() != FLOAT32 && stack.index(0)->dtype() != FLOAT64)
+		//	throw ts::Exception("Input parameter should be float or double");
 
 		int slope_size = m_slope.size();
 
-		if (slope_size != 1 && (m_dim < 0 || m_dim >= stack.index(0)->dims())) {
-			throw ts::Exception("Prelu dim parameter check failed");
-		}
+		TS_AUTO_CHECK(slope_size == 1 || (m_dim >= 0 && m_dim < stack.index(0)->dims()));
+		//if (slope_size != 1 && (m_dim < 0 || m_dim >= stack.index(0)->dims())) {
+		//	throw ts::Exception("Prelu dim parameter check failed");
+		//}
 
-		if (slope_size != 1 && slope_size != stack.index(0)->sizes()[m_dim])
-			throw ts::Exception("Parameter slope should be 1 or equal to the dim dimension of the input parameter");
+		TS_AUTO_CHECK(slope_size == 1 || slope_size == stack.index(0)->sizes()[m_dim]);
+		//if (slope_size != 1 && slope_size != stack.index(0)->sizes()[m_dim])
+		//	throw ts::Exception("Parameter slope should be 1 or equal to the dim dimension of the input parameter");
 			
 		output.resize(1);
 		output[0] = ts::Tensor::Prototype(stack.index(0)->dtype(), stack.index(0)->sizes());
@@ -141,5 +145,8 @@ namespace ts {
 		}
 		return true;
 	}
-	TS_REGISTER_OPERATOR(Prelu, ts::CPU, "prelu")
+	
 }
+
+using namespace ts;
+TS_REGISTER_OPERATOR(Prelu, ts::CPU, name::layer::prelu())

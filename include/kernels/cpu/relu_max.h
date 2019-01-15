@@ -9,9 +9,7 @@ namespace ts {
 	class ReluMax : public ts::Operator {
 	public:
 		using supper = ts::Operator;
-		ReluMax() {
-			field("max", REQUIRED);
-		}
+		ReluMax();
 		virtual void init();
 		virtual int run(ts::Stack &stack);
 		virtual int infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output);

@@ -1,6 +1,8 @@
 #include <kernels/cpu/relu.h>
 #include <algorithm>
 
+#include "backend/name.h"
+
 namespace ts {
 
 	void Relu::init()
@@ -29,26 +31,18 @@ namespace ts {
 				flag = relu<double>(stack);
 				break;
 			}
-			default:
-			{
-				throw ts::Exception("relu only support FLOAT32 and FLOAT64 type");
-				break;
-			}
+			default:break;
 		}
-		if (!flag)
-			throw ts::Exception("relu failed!");
+
 		return 1;
 	}
 
 	int Relu::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output)
 	{
 		int input_num = stack.size();
+		TS_AUTO_CHECK(input_num == 1);
 
-		if (input_num != 1)
-			throw ts::Exception("Input parameter should be one!");
-
-		if (stack.index(0)->dtype() != FLOAT32 && stack.index(0)->dtype() != FLOAT64)
-			throw ts::Exception("Input parameter should be float or double");
+		TS_AUTO_CHECK(stack.index(0)->dtype() == FLOAT32 || stack.index(0)->dtype() == FLOAT64);
 
 		output.resize(1);
 		output[0] = ts::Tensor::Prototype(stack.index(0)->dtype(), stack.index(0)->sizes());
@@ -63,8 +57,6 @@ namespace ts {
 		auto output_shape = output_tensor.sizes();
 		T* input_data = stack.index(0)->sync(memory_device()).data<T>();
 		T* output_data = output_tensor.sync(memory_device()).data<T>();
-		if (output_data == nullptr)
-			return false;
 		//::memcpy(output_data, input_data, stack.index(0)*sizeof(T));
 
 		for (int i = 0; i < output_tensor.count(); i++)
@@ -77,5 +69,7 @@ namespace ts {
 
 		return true;
 	}
-	TS_REGISTER_OPERATOR(Relu, ts::CPU, "relu")
 }
+
+using namespace ts;
+TS_REGISTER_OPERATOR(Relu, ts::CPU, name::layer::relu())

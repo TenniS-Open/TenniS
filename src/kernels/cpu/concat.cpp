@@ -1,25 +1,32 @@
 #include <kernels/cpu/concat.h>
 #include <core/tensor_builder.h>
 
+#include "backend/name.h"
+
 namespace ts {
+
+	Concat::Concat() :m_dim(-1)
+	{
+		field(name::dim, REQUIRED);
+	}
 
 	void Concat::init()
 	{
 		supper::init();
-		if (!has("dim"))
-			throw ts::Exception("Missing dim parameter");
 
-		auto dim_tensor = get("dim");
+		auto dim_tensor = get(name::dim);
 		m_dim = tensor::to_int(dim_tensor);
-
-		if (m_dim < 0)
-			throw ts::Exception("Concat dim should be greater than or equale to 0!");
-
+		
+		TS_AUTO_CHECK(m_dim > 0);
 	}
 
 	int Concat::run(ts::Stack &stack)
 	{
 		int input_num = stack.size();
+
+		TS_AUTO_CHECK(input_num != 0);
+		TS_AUTO_CHECK(stack.index(0)->dtype() == FLOAT32 || stack.index(0)->dtype() == FLOAT64);
+
 		std::vector<ts::Tensor::Prototype> output;
 
 		this->infer(stack, output);
@@ -69,39 +76,18 @@ namespace ts {
 				flag = concat<double>(stack, input_num);
 				break;
 			}
-			default:
-			{
-				throw ts::Exception("concat only support INT8,UINT8,INT16,UINT16,INT32,UINT32,FLOAT32 and FLOAT64 type");
-				break;
-			}
+			default:break;
 		}
-		//int type_len = ts::type_bytes(stack.index(0)->dtype());
-		//if (type_len == 1)
-		//{
-		//	flag = concat<unsigned char>(stack, input_num);
-		//}
-		//else if (type_len == 2)
-		//{
-		//	flag = concat<unsigned short>(stack, input_num);
-		//}
-		//else if (type_len == 4)
-		//{
-		//	flag = concat<unsigned char>(stack, input_num);
-		//}
-		//else if (type_len == 8)
-		//{
-		//	flag = concat<double>(stack, input_num);
-		//}
-		if (!flag)
-			throw ts::Exception("concat failed!");
 		return 1;
 	}
 
 	int Concat::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output)
 	{
 		int input_num = stack.size();
-		if (input_num == 0)
-			throw ts::Exception("Can not concat on empty inputs!");
+
+		TS_AUTO_CHECK(input_num != 0);
+		TS_AUTO_CHECK(stack.index(0)->dtype() == FLOAT32 || stack.index(0)->dtype() == FLOAT64);
+
 		if (input_num == 1)
 		{
 			output.resize(1);
@@ -210,5 +196,7 @@ namespace ts {
 
 		return true;
 	}
-	TS_REGISTER_OPERATOR(Concat, ts::CPU, "concat")
 }
+
+using namespace ts;
+TS_REGISTER_OPERATOR(Concat, ts::CPU, name::layer::concat())

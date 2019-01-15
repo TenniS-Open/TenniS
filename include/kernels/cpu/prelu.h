@@ -11,11 +11,7 @@ namespace ts {
 	class Prelu : public ts::Operator {
 	public:
 		using supper = ts::Operator;
-		Prelu(): m_dim(-1) {
-			field("dim", OPTIONAL);
-			field("slope", REQUIRED);
-			
-		}
+		Prelu();
 		virtual void init();
 		virtual int run(ts::Stack &stack);
 		virtual int infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output);
