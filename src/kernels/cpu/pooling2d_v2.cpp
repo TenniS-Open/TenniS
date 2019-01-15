@@ -50,7 +50,7 @@ namespace ts {
 		//auto padding_tensor = this->get(name::padding);
 		//m_operator->set(name::padding, padding_tensor);
 
-		if (has("padding_type"))
+		if (has(name::padding_type))
 		{
 			auto padding_tensor = this->get(name::padding_type);
 			m_operator->set(name::padding_type, padding_tensor);
@@ -64,14 +64,16 @@ namespace ts {
 		TS_AUTO_CHECK(stack.size() == 4 && stack.index(0)->dims() == 4);
 		TS_AUTO_CHECK(stack.index(0)->dtype() == FLOAT32 || stack.index(0)->dtype() == FLOAT64);
 
+		auto controller = std::make_shared<DynamicMemoryController>(MemoryDevice(CPU));
+
 		auto padding_tensor = tensor::cast(INT32, *stack.index(1));
-		m_operator->set(name::padding, padding_tensor);
+		m_operator->set(name::padding, padding_tensor.clone(controller));
 
 		auto ksize_tensor = tensor::cast(INT32, *stack.index(2));
-		m_operator->set(name::ksize, ksize_tensor);
+		m_operator->set(name::ksize, ksize_tensor.clone(controller));
 
 		auto stride_tensor = tensor::cast(INT32, *stack.index(3));
-		m_operator->set(name::stride, stride_tensor);
+		m_operator->set(name::stride, stride_tensor.clone(controller));
 
 		m_operator->init();
 
@@ -79,14 +81,7 @@ namespace ts {
 		stack.pop();
 		stack.pop();
 
-		try
-		{
-			return m_operator->run(stack);
-		}
-		catch (const Exception &e) {
-			std::cout << e.what() << std::endl;
-			return -1;
-		}
+		return m_operator->run(stack);
 	}
 
 	int Pooling2dV2::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output)
