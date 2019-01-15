@@ -12,14 +12,7 @@ namespace ts {
 		using self = Pooling2dV2;
 		using supper = ts::Operator;
 
-		Pooling2dV2() {
-			field("format", REQUIRED);
-			field("type", REQUIRED);
-			field("padding", REQUIRED);
-			Tensor default_padding_type(INT32, { 1 });
-			default_padding_type.data<int>()[0] = 0;
-			field("padding_type", OPTIONAL, default_padding_type);
-		}
+		Pooling2dV2();
 
 		enum POOLINGTYPE {
 			max,
@@ -38,23 +31,10 @@ namespace ts {
 
 	private:
 
-		template<typename T>
-		bool pooling(ts::Stack &stack);
+		Operator::shared m_operator;
 
-		template<typename T>
-		bool max_pooling(T* input_data, T* output_data, Shape& input_shape, Shape& output_shape, KSize2D& ksize, Stride2D& stride);
-
-		template<typename T>
-		bool average_pooling(T* input_data, T* output_data, Shape& input_shape, Shape& output_shap, KSize2D& ksize, Stride2D& stride);
-
-	private:
-
-		Padding2D m_padding;
-		std::string m_format;
-		POOLINGTYPE m_pooling_type;
-		PDDINGTYPE m_padding_type;
 	};
-	TS_REGISTER_OPERATOR(Pooling2dV2, ts::CPU, "pooling2d_v2")
+	//TS_REGISTER_OPERATOR(Pooling2dV2, ts::CPU, "pooling2d_v2")
 }
 
 #endif //TS_KERNELS_POOLONG2DV2_H

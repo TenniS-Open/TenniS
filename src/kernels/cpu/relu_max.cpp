@@ -1,19 +1,19 @@
 #include <kernels/cpu/relu_max.h>
 #include <core/tensor_builder.h>
+#include "backend/name.h"
 #include <algorithm>
 
 namespace ts {
 
+	ReluMax::ReluMax()
+	{
+		field(name::max, REQUIRED);
+	}
+
 	void ReluMax::init()
 	{
 		supper::init();
-
-		if (has("max"))
-		{
-			m_max = tensor::to_float(get("max"));
-		}
-		else
-			throw ts::Exception("Missing parameter max");
+		m_max = tensor::to_float(get(name::max));
 	}
 
 	int ReluMax::run(ts::Stack &stack)
@@ -37,14 +37,9 @@ namespace ts {
 				flag = relu_max<double>(stack);
 				break;
 			}
-			default:
-			{
-				throw ts::Exception("relu_max only support FLOAT32 and FLOAT64 type");
-				break;
-			}
+			default:break;
 		}
-		if (!flag)
-			throw ts::Exception("relu_max failed!");
+
 		return 1;
 	}
 
@@ -52,11 +47,8 @@ namespace ts {
 	{
 		int input_num = stack.size();
 
-		if (input_num != 1)
-			throw ts::Exception("Input parameter should be one!");
-
-		if (stack.index(0)->dtype() != FLOAT32 && stack.index(0)->dtype() != FLOAT64)
-			throw ts::Exception("Input parameter should be float or double");
+		TS_AUTO_CHECK(input_num == 1);
+		TS_AUTO_CHECK(stack.index(0)->dtype() == FLOAT32 || stack.index(0)->dtype() == FLOAT64);
 
 		output.resize(1);
 		output[0] = ts::Tensor::Prototype(stack.index(0)->dtype(), stack.index(0)->sizes());
@@ -71,8 +63,6 @@ namespace ts {
 
 		T* input_data = stack.index(0)->sync(memory_device()).data<T>();
 		T* output_data = output_tensor.sync(memory_device()).data<T>();
-		if (output_data == nullptr)
-			return false;
 
 		for (int i = 0; i < output_tensor.count(); i++)
 		{
@@ -84,5 +74,7 @@ namespace ts {
 
 		return true;
 	}
-	TS_REGISTER_OPERATOR(ReluMax, ts::CPU, "relu_max")
 }
+
+using namespace ts;
+TS_REGISTER_OPERATOR(ReluMax, ts::CPU, name::layer::relu_max())

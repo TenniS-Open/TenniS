@@ -1,20 +1,24 @@
 #include <kernels/cpu/softmax.h>
 #include <core/tensor_builder.h>
+#include "backend/name.h"
 #include <algorithm>
 #include <math.h>
 
 namespace ts {
 
+	Softmax::Softmax() :m_dim(-1)
+	{
+		field(name::dim, REQUIRED);
+	}
+
 	void Softmax::init()
 	{
 		supper::init();
-		if(!has("dim"))
-			throw ts::Exception("Missing dim parameter");
-		auto dim_tensor = get("dim");
+
+		auto dim_tensor = get(name::dim);
 		m_dim = tensor::to_int(dim_tensor);
 
-		if (m_dim < 0)
-			throw ts::Exception("Softmax dim should be greater than or equale to 0!");
+		TS_AUTO_CHECK(m_dim >= 0);
 	}
 
 	int Softmax::run(ts::Stack &stack)
@@ -38,14 +42,8 @@ namespace ts {
 				flag = softmax<double>(stack);
 				break;
 			}
-			default:
-			{
-				throw ts::Exception("Softmax only support FLOAT32 and FLOAT64 type");
-				break;
-			}
+			default:break;
 		}
-		if (!flag)
-			throw ts::Exception("Softmax failed!");
 		return 1;
 	}
 
@@ -53,16 +51,10 @@ namespace ts {
 	{
 		int input_num = stack.size();
 
-		if (input_num != 1)
-			throw ts::Exception("Input parameter should be one!");
+		TS_AUTO_CHECK(input_num == 1);
+		TS_AUTO_CHECK(stack.index(0)->dtype() == FLOAT32 || stack.index(0)->dtype() == FLOAT64);
 
-		if (stack.index(0)->dtype() != FLOAT32 && stack.index(0)->dtype() != FLOAT64)
-			throw ts::Exception("Input parameter should be float or double");;
-
-		if (m_dim < 0 || m_dim >= stack.index(0)->dims()) 
-		{
-			throw ts::Exception("Softmax dim parameter check failed");
-		}
+		TS_AUTO_CHECK(m_dim >=0 && m_dim < stack.index(0)->dims());
 
 		output.resize(1);
 		output[0] = ts::Tensor::Prototype(stack.index(0)->dtype(), stack.index(0)->sizes());
@@ -134,5 +126,7 @@ namespace ts {
 		
 		return true;
 	}
-	TS_REGISTER_OPERATOR(Softmax, ts::CPU, "softmax")
 }
+
+using namespace ts;
+TS_REGISTER_OPERATOR(Softmax, ts::CPU, name::layer::softmax())

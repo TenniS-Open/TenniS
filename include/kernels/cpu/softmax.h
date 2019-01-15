@@ -11,9 +11,7 @@ namespace ts {
 	class Softmax : public ts::Operator {
 	public:
 		using supper = ts::Operator;
-		Softmax():m_dim(-1){
-			field("dim", REQUIRED);
-		}
+		Softmax();
 		virtual void init();
 		virtual int run(ts::Stack &stack);
 		virtual int infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output);
