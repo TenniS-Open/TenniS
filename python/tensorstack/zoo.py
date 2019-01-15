@@ -200,7 +200,7 @@ def conv2d(name, x, w,
 
     if isinstance(padding, None):
         node = menu.op(name=name, op_name=Name.Layer.padding_conv2d, inputs=[x, padding, w])
-        node.set(Name.padding, Default.padding())
+        # node.set(Name.padding, Default.padding())
     else:
         node = menu.op(name=name, op_name=Name.Layer.conv2d, inputs=[x, w])
         node.set(Name.padding, padding)
@@ -253,7 +253,7 @@ def depthwise_conv2d(name, x, w,
     node = None
     if isinstance(padding, None):
         node = menu.op(name=name, op_name=Name.Layer.padding_depthwise_conv2d, inputs=[x, padding, w])
-        node.set(Name.padding, Default.padding())
+        # node.set(Name.padding, Default.padding())
     else:
         node = menu.op(name=name, op_name=Name.Layer.depthwise_conv2d, inputs=[x, w])
         node.set(Name.padding, padding)
