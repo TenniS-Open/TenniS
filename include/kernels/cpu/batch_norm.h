@@ -4,7 +4,6 @@
 #include <core/tensor.h>
 #include <runtime/stack.h>
 #include <runtime/operator.h>
-#include <global/operator_factory.h>
 
 
 namespace ts {
@@ -36,7 +35,6 @@ private:
 
 
 
-//TS_REGISTER_OPERATOR(Batch_Norm, ts::CPU, "batch_norm")
 
 }
 

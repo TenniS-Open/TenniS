@@ -1,6 +1,8 @@
 #include <kernels/cpu/image_resize2d.h>
 #include <core/tensor_builder.h>
 #include <memory>
+#include <global/operator_factory.h>
+
 
 namespace ts {
 

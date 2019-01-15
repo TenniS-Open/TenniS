@@ -1,19 +1,20 @@
-#ifndef TS_KERNELS_RESHAPE_H
-#define TS_KERNELS_RESHAPE_H
+#ifndef TS_KERNELS_FLATTEN_H
+#define TS_KERNELS_FLATTEN_H
 
+#include <global/operator_factory.h>
 #include <core/tensor.h>
 #include <runtime/stack.h>
-#include <runtime/operator.h>
+
 
 
 namespace ts {
 
 
-class Reshape : public ts::Operator {
+class Flatten : public ts::Operator {
 public:
 
     using supper = ts::Operator;
-    Reshape();
+    Flatten();
 
     virtual void init();
 
@@ -21,10 +22,6 @@ public:
 
     virtual int infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output);
 
-private:
-    Shape m_shape;
-    int   m_index;
-    int   m_dims;
 
 };
 

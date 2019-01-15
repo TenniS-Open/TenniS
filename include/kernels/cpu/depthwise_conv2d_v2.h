@@ -1,6 +1,6 @@
-#ifndef TS_KERNELS_DEPTHWISE_CONV2D_H
-#define TS_KERNELS_DEPTHWISE_CONV2D_H
-#include <kernels/cpu/conv2d_base.h>
+#ifndef TS_KERNELS_DEPTHWISE_CONV2D_V2_H
+#define TS_KERNELS_DEPTHWISE_CONV2D_V2_H
+#include <kernels/cpu/conv2d_v2_base.h>
 #include <global/operator_factory.h>
 #include <core/tensor.h>
 #include <runtime/stack.h>
@@ -8,11 +8,11 @@
 namespace ts {
 
 
-class Depthwise_Conv2d: public ts::Conv2d_Base {
+class Depthwise_Conv2d_V2: public ts::Conv2d_V2_Base {
 public:
 
-    using supper = ts::Conv2d_Base;
-    Depthwise_Conv2d();
+    using supper = ts::Conv2d_V2_Base;
+    Depthwise_Conv2d_V2();
 
     virtual void init(); 
 
@@ -27,8 +27,10 @@ private:
     template<typename T>
     void compute_conv(const Tensor *input_tensor, const Tensor *weight_tensor, Tensor *tensor, const Shape& shape, 
                       const Shape &reshape, const Shape &weight_shape);
-/*
+
 private:
+    Shape m_padding;
+/*
     int m_group;
     int m_padding_value;
     Shape m_padding;

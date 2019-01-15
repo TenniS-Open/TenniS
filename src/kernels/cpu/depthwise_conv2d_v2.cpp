@@ -1,4 +1,4 @@
-#include <kernels/cpu/depthwise_conv2d.h>
+#include <kernels/cpu/depthwise_conv2d_v2.h>
 #include <core/tensor_builder.h>
 #include <global/operator_factory.h>
 
@@ -7,7 +7,7 @@ namespace ts {
 
 
 ////////////////////////////////////////////
-Depthwise_Conv2d::Depthwise_Conv2d() {
+Depthwise_Conv2d_V2::Depthwise_Conv2d_V2() {
     /*
     field("format", REQUIRED);
     field("padding", REQUIRED);
@@ -20,34 +20,52 @@ Depthwise_Conv2d::Depthwise_Conv2d() {
     */
 }
 
-void Depthwise_Conv2d::init() {
+void Depthwise_Conv2d_V2::init() {
     supper::init();
 }
 
 
-int Depthwise_Conv2d::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) {
+int Depthwise_Conv2d_V2::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) {
     int input_num = stack.size();
-    if(input_num != 2) {
-        throw ts::Exception("depthwise conv2d must have tow input parameters");
+    if(input_num != 3) {
+        throw ts::Exception("depthwise_conv2d_v2 must have three input parameters");
     }
 
     Shape shape = stack.index(0)->sizes();
 
     if(shape.size()  != 4 ) {
-        throw ts::Exception("depthwise conv2d first parameter's dims is not 4");
+        throw ts::Exception("depthwise_conv2d_v2 first parameter's dims is not 4");
     }
 
-    const Shape& weight_shape = stack.index(1)->sizes();
+    const Tensor * tensor_padding = stack.index(1);
+    if(tensor_padding->dims() != 2 || tensor_padding->dtype() != ts::INT32 || tensor_padding->count() != 8) {
+        throw ts::Exception("conv2d_v2 input parameter padding check failed");
+    }
+;
+    m_padding.resize(8);
+    for(int i=0; i<4; i++) {
+        if(i==0 || i== 1) {
+            if(tensor_padding->data<int>()[2*i] != 0 ||
+               tensor_padding->data<int>()[2*i + 1] != 0) {
+                throw ts::Exception("conv2d_v2 input parameter padding  check failed");
+            }
+        }
+        m_padding[2*i] = tensor_padding->data<int>()[2*i];
+        m_padding[2*i + 1] = tensor_padding->data<int>()[2*i + 1];
+    }
+
+
+    const Shape& weight_shape = stack.index(2)->sizes();
 
     if(weight_shape.size()  != 4 ) {
-        throw ts::Exception("depthwise conv2d second parameter's dims is not 4");
+        throw ts::Exception("depthwise_conv2d_v2 second parameter's dims is not 4");
     }
 
     if(weight_shape[0] != 1) {
-        throw ts::Exception("depthwise conv2d weight parameters first dim is not 1");
+        throw ts::Exception("depthwise_conv2d_v2 weight parameters first dim is not 1");
     }
     if(weight_shape[1] != shape[1]) {
-        throw ts::Exception("depthwise conv2d two input parameters channels is not equal");
+        throw ts::Exception("depthwise_conv2d_v2 two input parameters channels is not equal");
     }
 
     int output_h,output_w;
@@ -64,13 +82,13 @@ int Depthwise_Conv2d::infer_private(ts::Stack &stack, ts::Tensor::Prototype &out
 }
 
 
-int Depthwise_Conv2d::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output) {
+int Depthwise_Conv2d_V2::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output) {
     output.resize(1);
     return infer_private(stack, output[0]);
 }
 
 template<typename T>
-void Depthwise_Conv2d::compute_conv(const Tensor *input_tensor, const Tensor *weight_tensor, Tensor *tensor, const Shape& shape,
+void Depthwise_Conv2d_V2::compute_conv(const Tensor *input_tensor, const Tensor *weight_tensor, Tensor *tensor, const Shape& shape,
                       const Shape &reshape, const Shape &weight_shape ) {
 
     int kernel_dims = weight_shape[1] * weight_shape[2] * weight_shape[3];
@@ -111,7 +129,7 @@ void Depthwise_Conv2d::compute_conv(const Tensor *input_tensor, const Tensor *we
 }
 
 
-int Depthwise_Conv2d::run(ts::Stack &stack) {
+int Depthwise_Conv2d_V2::run(ts::Stack &stack) {
     ts::Tensor::Prototype output;
     //Shape padding;
     infer_private(stack, output);
@@ -140,7 +158,7 @@ int Depthwise_Conv2d::run(ts::Stack &stack) {
              break;
         }
         default: {
-            throw ts::Exception("depthwise conv2d only support FLOAT32 and FLOAT64 type");
+            throw ts::Exception("depthwise_conv2d_v2 only support FLOAT32 and FLOAT64 type");
             break;
         }
     }
@@ -156,6 +174,6 @@ int Depthwise_Conv2d::run(ts::Stack &stack) {
 
 
 
-TS_REGISTER_OPERATOR(Depthwise_Conv2d, ts::CPU, "depthwise_conv2d")
+TS_REGISTER_OPERATOR(Depthwise_Conv2d_V2, ts::CPU, "depthwise_conv2d_v2")
 
 }

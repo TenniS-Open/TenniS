@@ -1,11 +1,9 @@
 #ifndef TS_KERNELS_ADD_BIAS_H
 #define TS_KERNELS_ADD_BIAS_H
 
-#include <global/operator_factory.h>
+#include <runtime/operator.h>
 #include <core/tensor.h>
 #include <runtime/stack.h>
-//#include <cstring>
-//#include <math.h>
 
 
 
