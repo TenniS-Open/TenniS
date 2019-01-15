@@ -13,6 +13,9 @@
 #include <climits>
 #include <runtime/operator.h>
 
+#include "utils/need.h"
+#include "runtime/stack.h"
+
 
 namespace ts {
     bool Operator::has(const std::string &param) const {
@@ -185,5 +188,24 @@ namespace ts {
     ComputingDevice Operator::computing_device() const {
         auto device = ctx::ptr<DeviceContext>();
         return device ? device->computing_device : ComputingDevice();
+    }
+
+
+    int RunOperator(Operator::shared op, Stack &stack, int nargs) {
+        TS_AUTO_CHECK(stack.size() >= static_cast<size_t>(nargs));
+
+        // save base
+        stack.push_base(-nargs);
+        ts::need pop_base(&Stack::pop_base, &stack);
+
+        // call function
+        auto return_size = op->run(stack);
+
+        TS_AUTO_CHECK(stack.size() >= static_cast<size_t>(return_size));    // must have enough returns
+
+        // add base
+        stack.erase(0, -return_size);
+
+        return return_size;
     }
 }
