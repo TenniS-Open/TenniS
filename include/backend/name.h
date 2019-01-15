@@ -19,11 +19,11 @@ namespace ts {
             const string &transpose() TS_NOEXCEPT;
             const string &reshape() TS_NOEXCEPT;
             const string &conv2d() TS_NOEXCEPT;
-            const string &padding_conv2d() TS_NOEXCEPT;
+            const string &conv2d_v2() TS_NOEXCEPT;
             const string &shape() TS_NOEXCEPT;
             const string &pad() TS_NOEXCEPT;
             const string &depthwise_conv2d() TS_NOEXCEPT;
-            const string &padding_depthwise_conv2d() TS_NOEXCEPT;
+            const string &depthwise_conv2d_v2() TS_NOEXCEPT;
             const string &add_bias() TS_NOEXCEPT;
             const string &batch_norm() TS_NOEXCEPT;
             const string &batch_scale() TS_NOEXCEPT;
