@@ -12,10 +12,8 @@
 #include <module/menu.h>
 #include <utils/box.h>
 #include <module/io/fstream.h>
-#include <backend/name.h>
 
 #include <cstring>
-#include <backend/mxnet/pooling2d_padding.h>
 
 class Sum : public ts::Operator {
 public:
@@ -35,7 +33,7 @@ public:
         TS_AUTO_CHECK(output[0].dtype() == ts::FLOAT32);
         stack.push(output[0], memory_device()); // Notice push tensor device, default is DeviceContext.memory_device
         auto sum = stack.index(-1);
-        auto sum_ptr = sum->sync(ts::MemoryDevice(ts::CPU)).data<float>();    // Get CPU data ptr
+        auto sum_ptr = sum->sync(memory_device()).data<float>();    // Get CPU data ptr
         std::memset(sum_ptr, 0, sum->count() * sizeof(float));
         for (int i = 0; i < input_num; ++i) {
             auto input_ptr = stack.index(i)->sync(memory_device()).data<float>();   // Get CPU data ptr
@@ -95,7 +93,7 @@ public:
 
     ~time_log() {
         m_end = system_clock::now();
-        m_duration = std::chrono::duration_cast<microseconds>(m_end - m_start);
+        m_duration = m_end - m_start;
 
         std::ostringstream oss;
         ts::LogStream(m_level) << m_header << m_duration.count() / 1000.0 << "ms";
@@ -117,60 +115,11 @@ int main()
     using namespace ts;
     setup();
 
-    GlobalLogLevel(LOG_DEBUG);
-
 
 
     // build graph
     Graph g;
     ctx::bind<Graph> _graph(g);
-
-//    Tensor padding = tensor::build(INT32, {4, 2}, {0, 0, 0, 0, 0, 0, 0, 0});
-//
-//    auto x = bubble::param("x");
-//    auto ksize = bubble::data("ksize", tensor::build(INT32, {4, }, {1, 1, 2, 2}));
-//    auto stride = bubble::data("stride", tensor::build(INT32, {4, }, {1, 1, 2, 2}));
-//
-//    auto y = bubble::op("pooling2d_padding", name::layer::mx_pooling2d_padding(), {x, ksize, stride});
-//    y.ref<Bubble>().set(name::format, tensor::from(name::NCHW));
-//    y.ref<Bubble>().set(name::valid, tensor::from(true));
-//    y.ref<Bubble>().set(name::padding, padding);
-//
-//
-//    std::shared_ptr<Module> m = std::make_shared<Module>();
-//    m->load(g, {y});
-//    m->sort_inputs({x});
-//
-//    ComputingDevice device(CPU, 0);
-//    // Workbench bench(device);
-//
-//    Workbench::shared bench;
-//
-//    try {
-//        bench = Workbench::Load(m, device);
-//    } catch (const Exception &e) {
-//        std::cout << e.what() << std::endl;
-//        return -1;
-//    }
-//
-//    Tensor input(FLOAT32, {1, 3, 256, 255});
-//
-//    bench->input(0, input);
-//    bench->run();
-//
-//    auto output = bench->output(0);
-//
-//    auto output_memory = tensor::cast(INT32, output).sync(MemoryDevice(CPU));
-//    auto output_data = output_memory.data<int32_t >();
-//
-//    for (int i = 0; i < 8; ++i) {
-//        std::cout << output_data[i] << " ";
-//    }
-//    std::cout << std::endl;
-//
-//    mxnet::Pooling2dPadding a;
-
-
 
 //    auto a = bubble::param("a");
 //    auto b = bubble::param("b");
@@ -181,15 +130,42 @@ int main()
     auto a = bubble::param("a");
     auto b = bubble::param("b");
     auto data = bubble::data("data", tensor::from<float>(3), CPU);
+
     auto c = bubble::op("c", "sum", {a, b, data});
 
+    {
+        // test graph
+        ts::FileStreamWriter out("test.graph.txt");
+        serialize_graph(out, g);
+        out.close();
+
+        ts::Graph tg;
+        ts::FileStreamReader in("test.graph.txt");
+        externalize_graph(in, tg);
+        g = tg;
+    }
 
     // setup module
     std::shared_ptr<Module> m = std::make_shared<Module>();
     m->load(g, {"c"});
     m->sort_inputs({"a", "b"});
 
-    m = Module::Load("/Users/seetadev/Documents/SDK/CLion/TensorStack/python/test.module.txt");
+    {
+        // test graph
+        Module::Save("test.module.txt", m);
+
+        m = Module::Load("test.module.txt");
+    }
+
+    std::cout << "Input nodes:" << std::endl;
+    for (auto &node : m->inputs()) {
+        std::cout << node.ref<Bubble>().op() << ":" << node.ref<Bubble>().name() << std::endl;
+    }
+
+    std::cout << "Output nodes:" << std::endl;
+    for (auto &node : m->outputs()) {
+        std::cout << node.ref<Bubble>().op() << ":" << node.ref<Bubble>().name() << std::endl;
+    }
 
     // run workbench
     ComputingDevice device(CPU, 0);
@@ -199,6 +175,7 @@ int main()
 
     try {
         bench = Workbench::Load(m, device);
+        bench = bench->clone();
     } catch (const Exception &e) {
         std::cout << e.what() << std::endl;
         return -1;
@@ -212,13 +189,10 @@ int main()
 
     bench->input("a", input_a);
     bench->input("b", input_b);
-    bench->run();
-
     {
         time_log _log(ts::LOG_INFO, "Spent ");
-        for (int i = 0; i < 1000; ++i)
-            bench->run();
 
+        bench->run();
     }
 
     auto output_c = bench->output("c");

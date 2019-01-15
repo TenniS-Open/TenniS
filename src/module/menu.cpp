@@ -26,14 +26,14 @@ namespace ts {
         Node data(const std::string &name, const Tensor &value) {
             auto &g = ctx::ref<Graph>();
             Node result = g.make<Bubble>(Bubble::Const, name);
-            result.ref<Bubble>().set(name::valid, value);
+            result.ref<Bubble>().set(name::value, value);
             return result;
         }
 
         Node data(const std::string &name, const Tensor &value, const DeviceType &device) {
             auto &g = ctx::ref<Graph>();
             Node result = g.make<Bubble>(Bubble::Const, name);
-            result.ref<Bubble>().set(name::valid, value);
+            result.ref<Bubble>().set(name::value, value);
             result.ref<Bubble>().set(name::device, tensor::from(device));
             return result;
         }
