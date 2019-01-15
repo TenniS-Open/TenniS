@@ -190,22 +190,59 @@ output_w = floor((width + pad_w -
 
 
 ### padding_conv2d(x, padding, w) -> y
-描述：等价于 `conv2d(pad(padding), w)`
-
-参数：  
-包含 `conv2d` 和 `padding` 参数
-
-### conv2d_bias(x, w, b) -> y
-描述：等价于 `bias(conv2d(x, w), b)`
-
-参数：
-包含 `conv2d` 和 `bias` 参数。
-
-### padding_conv2d_bias(x, padding, w, b) -> y
-描述：等价于 `bias(conv2d(pad(x, padding), w), b)`
+描述：对输入的 Tensor 进行 二维卷积操作，输出卷积后的数据
+输入：`x` 输入数据  
+输入：`padding` `IntArray4Dx2D`
+   在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+   在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+输入：`w` `Tensor4D` 格式为 `[output_channels, input_channels, kernel_height, kernel_width]`
+输出：`y` `Tensor`
 
 参数：
-包含 `pad`、`conv2d` 和 `bias` 参数。
+- `format` `String` 为 `NCHW` 或者 `NHWC`
+- `padding_value` `Scalar Default(0)` `[Optional]` 表示 `padding` 时填充的参数
+- `stride` `IntArray4D`
+在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+- `dialations` `IntArray4D`
+在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+
+说明：  
+`type` 在当前版本中，固定为 `NCHW`。
+输出大小计算除法时，向下取整，最小为1。默认0padding。  
+输出大小的计算公式为：  
+```
+pad_h = pad_h_top + pad_h_bottom
+pad_w = pad_w_left + pad_h_right
+output_h = floor((height + pad_h -
+			(dilation_h * (kernel_h - 1) + 1)) / stride_h + 1);
+output_w = floor((width + pad_w -
+			(dilation_w * (kernel_w - 1) + 1)) / stride_w + 1);
+```
+
+
+### padding_depthwise_conv2d(x, padding, w) -> y
+描述：对输入的 Tensor 进行`Depthwise`二维卷积操作，输出卷积后的数据
+输入：`x` 输入数据  
+输入：`padding` `IntArray4Dx2D`
+   在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+   在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+输入：`w` `Tensor4D` 格式为 `[multiplier_channels, input_channels, kernel_height, kernel_width]`
+输出：`y` `Tensor` 输出的 channel 数量为 `multiplier_channels * input_channels`。
+
+参数：
+- `format` `String` 为 `NCHW` 或者 `NHWC`
+- `padding_value` `Scalar Default(0)` `[Optional]` 表示 `padding` 时填充的参数
+- `stride` `IntArray4D`
+在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+- `dialations` `IntArray4D`
+在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+
+说明：  
+输出大小计算除法时，向下取整，最小为1。默认0padding。
 
 ### batch_norm(x, mean, variance) -> y
 描述：单纯进行 BN
