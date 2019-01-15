@@ -1,6 +1,5 @@
 #include <kernels/cpu/pooling2d_v2.h>
 #include <core/tensor_builder.h>
-#include "backend/common_function.h"
 #include "backend/name.h"
 #include "runtime/stack.h"
 #include "runtime/instruction/instruction_factory.h"
@@ -14,7 +13,7 @@ namespace ts {
 	{
 		field(name::format, REQUIRED);
 		field(name::type, REQUIRED);
-		field(name::padding, REQUIRED);
+		//field(name::padding, REQUIRED);
 		Tensor default_padding_type(INT32, { 1 });
 		default_padding_type.data<int>()[0] = 0;
 		field(name::padding_type, OPTIONAL, default_padding_type);
@@ -48,8 +47,8 @@ namespace ts {
 		auto pooling_type_tensor = this->get(name::type);
 		m_operator->set(name::type, pooling_type_tensor);
 
-		auto padding_tensor = this->get(name::padding);
-		m_operator->set(name::padding, padding_tensor);
+		//auto padding_tensor = this->get(name::padding);
+		//m_operator->set(name::padding, padding_tensor);
 
 		if (has("padding_type"))
 		{
@@ -62,19 +61,23 @@ namespace ts {
 	int Pooling2dV2::run(ts::Stack &stack)
 	{
 		TS_AUTO_CHECK(stack.size() != 0);
-		TS_AUTO_CHECK(stack.size() == 3 && stack.index(0)->dims() == 4);
+		TS_AUTO_CHECK(stack.size() == 4 && stack.index(0)->dims() == 4);
 		TS_AUTO_CHECK(stack.index(0)->dtype() == FLOAT32 || stack.index(0)->dtype() == FLOAT64);
 
-		auto ksize_tensor = tensor::cast(INT32, *stack.index(1));
+		auto padding_tensor = tensor::cast(INT32, *stack.index(1));
+		m_operator->set(name::padding, padding_tensor);
+
+		auto ksize_tensor = tensor::cast(INT32, *stack.index(2));
 		m_operator->set(name::ksize, ksize_tensor);
 
-		auto stride_tensor = tensor::cast(INT32, *stack.index(2));
+		auto stride_tensor = tensor::cast(INT32, *stack.index(3));
 		m_operator->set(name::stride, stride_tensor);
 
 		m_operator->init();
 
-		//stack.pop();
-		//stack.pop();
+		stack.pop();
+		stack.pop();
+		stack.pop();
 
 		try
 		{
