@@ -138,6 +138,15 @@ namespace ts {
             return casted;
         }
 
+        Tensor clone(DTYPE dtype, const Tensor &value) {
+            if (value.dtype() == dtype) {
+                auto cpu_controller = std::make_shared<DynamicMemoryController>(MemoryDevice(CPU));
+                return value.clone(cpu_controller);
+            }
+
+            return cast(dtype, value);
+        }
+
         int to_int(const Tensor &value) {
             if (value.dtype() == CHAR8) {
                 try {
