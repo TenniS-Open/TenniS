@@ -189,7 +189,7 @@ output_w = floor((width + pad_w -
 `format` 和 `dim` 至少设置一项即可。
 
 
-### padding_conv2d(x, padding, w) -> y
+### conv2d_v2(x, padding, w) -> y
 描述：对输入的 Tensor 进行 二维卷积操作，输出卷积后的数据
 输入：`x` 输入数据  
 输入：`padding` `IntArray4Dx2D`
@@ -222,7 +222,7 @@ output_w = floor((width + pad_w -
 ```
 
 
-### padding_depthwise_conv2d(x, padding, w) -> y
+### depthwise_conv2d_v2(x, padding, w) -> y
 描述：对输入的 Tensor 进行`Depthwise`二维卷积操作，输出卷积后的数据
 输入：`x` 输入数据  
 输入：`padding` `IntArray4Dx2D`

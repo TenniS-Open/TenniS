@@ -13,11 +13,11 @@ namespace ts {
             const string &transpose() TS_NOEXCEPT { static string str = "_transpose"; return str; }
             const string &reshape() TS_NOEXCEPT { static string str = "_reshape"; return str; }
             const string &conv2d() TS_NOEXCEPT { static string str = "conv2d"; return str; }
-            const string &padding_conv2d() TS_NOEXCEPT { static string str = "padding_conv2d"; return str; }
+            const string &conv2d_v2() TS_NOEXCEPT { static string str = "conv2d_v2"; return str; }
             const string &shape() TS_NOEXCEPT { static string str = "_shape"; return str; }
             const string &pad() TS_NOEXCEPT { static string str = "pad"; return str; }
             const string &depthwise_conv2d() TS_NOEXCEPT { static string str = "depthwise_conv2d"; return str; }
-            const string &padding_depthwise_conv2d() TS_NOEXCEPT { static string str = "padding_depthwise_conv2d"; return str; }
+            const string &depthwise_conv2d_v2() TS_NOEXCEPT { static string str = "depthwise_conv2d_v2"; return str; }
             const string &add_bias() TS_NOEXCEPT { static string str = "add_bias"; return str; }
             const string &batch_norm() TS_NOEXCEPT { static string str = "batch_norm"; return str; }
             const string &batch_scale() TS_NOEXCEPT { static string str = "batch_scale"; return str; }
