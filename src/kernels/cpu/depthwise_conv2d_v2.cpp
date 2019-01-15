@@ -41,7 +41,7 @@ int Depthwise_Conv2d_V2::infer_private(ts::Stack &stack, ts::Tensor::Prototype &
     if(tensor_padding->dims() != 2 || tensor_padding->dtype() != ts::INT32 || tensor_padding->count() != 8) {
         throw ts::Exception("conv2d_v2 input parameter padding check failed");
     }
-;
+
     m_padding.resize(8);
     for(int i=0; i<4; i++) {
         if(i==0 || i== 1) {
