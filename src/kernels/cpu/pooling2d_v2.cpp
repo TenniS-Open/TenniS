@@ -64,16 +64,16 @@ namespace ts {
 		TS_AUTO_CHECK(stack.size() == 4 && stack.index(0)->dims() == 4);
 		TS_AUTO_CHECK(stack.index(0)->dtype() == FLOAT32 || stack.index(0)->dtype() == FLOAT64);
 
-		auto controller = std::make_shared<DynamicMemoryController>(MemoryDevice(CPU));
+		//auto controller = std::make_shared<DynamicMemoryController>(MemoryDevice(CPU));
 
 		auto padding_tensor = tensor::cast(INT32, *stack.index(1));
-		m_operator->set(name::padding, padding_tensor.clone(controller));
+		m_operator->set(name::padding, tensor::clone(padding_tensor.dtype(), padding_tensor));
 
 		auto ksize_tensor = tensor::cast(INT32, *stack.index(2));
-		m_operator->set(name::ksize, ksize_tensor.clone(controller));
+		m_operator->set(name::ksize, tensor::clone(ksize_tensor.dtype(), ksize_tensor));
 
 		auto stride_tensor = tensor::cast(INT32, *stack.index(3));
-		m_operator->set(name::stride, stride_tensor.clone(controller));
+		m_operator->set(name::stride, tensor::clone(stride_tensor.dtype(), stride_tensor));
 
 		m_operator->init();
 
@@ -81,7 +81,9 @@ namespace ts {
 		stack.pop();
 		stack.pop();
 
-		return m_operator->run(stack);
+		RunOperator(m_operator, stack, 1);
+
+		return 1;
 	}
 
 	int Pooling2dV2::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output)
@@ -98,4 +100,4 @@ namespace ts {
 }
 
 using namespace ts;
-TS_REGISTER_OPERATOR(Pooling2dV2, ts::CPU, "pooling2d_v2")
+TS_REGISTER_OPERATOR(Pooling2dV2, ts::CPU, name::layer::pooling2d_v2())
