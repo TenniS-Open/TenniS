@@ -514,4 +514,6 @@ namespace ts {
         module->sort_inputs(inputs);
         return module;
     }
+
+    template class _RawNodeWithValue<Node>;
 }
