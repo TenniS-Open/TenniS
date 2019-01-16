@@ -75,6 +75,8 @@ namespace ts {
 
         Tensor cast(DTYPE dtype, const Tensor &value);
 
+        Tensor clone(DTYPE dtype, const Tensor &value);
+
         template<typename T>
         inline Tensor build(DTYPE dtype, T &value) {
             return cast(dtype, tensor_builder<T>::build(value));

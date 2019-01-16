@@ -2,6 +2,7 @@
 // Created by kier on 2018/11/3.
 //
 
+#include <backend/name.h>
 #include "runtime/instruction/tensor_instruction.h"
 
 #include "runtime/workbench.h"
@@ -50,7 +51,7 @@ namespace ts {
             TS_AUTO_CHECK(bubble.output_count() == 1);
 
             std::vector<Instruction::shared> inst;
-            int offset = tensor::to_int(bubble.get("offset"));
+            int offset = tensor::to_int(bubble.get(name::offset));
 
             TS_AUTO_CHECK(offset >= 0);
 
@@ -72,5 +73,5 @@ namespace ts {
     }
 }
 
-TS_STATIC_ACTION(ts::InstructionCreator::Register, "_field", ts::instruction::create_instruction_field);
-TS_STATIC_ACTION(ts::InstructionCreator::Register, "_pack", ts::instruction::create_instruction_pack);
+TS_STATIC_ACTION(ts::InstructionCreator::Register, ts::name::layer::field(), ts::instruction::create_instruction_field);
+TS_STATIC_ACTION(ts::InstructionCreator::Register, ts::name::layer::pack(), ts::instruction::create_instruction_pack);
