@@ -2,7 +2,7 @@
 #include <core/tensor_builder.h>
 #include <set>
 #include <global/operator_factory.h>
-
+#include <backend/name.h>
 
 namespace ts {
 
@@ -124,6 +124,6 @@ int Dimshuffle::run(ts::Stack &stack) {
 
 ///////////////////////////////////////////
 
-TS_REGISTER_OPERATOR(Dimshuffle, ts::CPU, "_dimshuffle")
+TS_REGISTER_OPERATOR(Dimshuffle, ts::CPU, ts::name::layer::dimshuffle())
 
 }

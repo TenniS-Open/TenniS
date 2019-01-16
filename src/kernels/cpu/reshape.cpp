@@ -1,6 +1,8 @@
 #include <kernels/cpu/reshape.h>
 #include <core/tensor_builder.h>
 #include <global/operator_factory.h>
+#include <backend/name.h>
+
 
 namespace ts {
 
@@ -96,6 +98,6 @@ int Reshape::run(ts::Stack &stack) {
 
 
 /////////////////////////////////////////////////////
-TS_REGISTER_OPERATOR(Reshape, ts::CPU, "_reshape")
+TS_REGISTER_OPERATOR(Reshape, ts::CPU, ts::name::layer::reshape())
 
 }

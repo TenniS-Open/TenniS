@@ -1,6 +1,8 @@
 #include <kernels/cpu/to_float.h>
 #include <core/tensor_builder.h>
 #include <global/operator_factory.h>
+#include <backend/name.h>
+
 
 namespace ts {
 
@@ -40,6 +42,6 @@ int To_Float::run(ts::Stack &stack) {
 
 
 /////////////////////////////////////////////////////
-TS_REGISTER_OPERATOR(To_Float, ts::CPU, "_to_float")
+TS_REGISTER_OPERATOR(To_Float, ts::CPU, ts::name::layer::to_float())
 
 }

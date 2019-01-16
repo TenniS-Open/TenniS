@@ -1,7 +1,7 @@
 #include <kernels/cpu/batch_scale.h>
 #include <core/tensor_builder.h>
 #include <global/operator_factory.h>
-
+#include <backend/name.h>
 
 namespace ts {
 
@@ -128,6 +128,6 @@ int Batch_Scale::run(ts::Stack &stack) {
 
 
 /////////////////////////////////////////////////
-TS_REGISTER_OPERATOR(Batch_Scale, ts::CPU, "batch_scale")
+TS_REGISTER_OPERATOR(Batch_Scale, ts::CPU, ts::name::layer::batch_scale())
 
 }
