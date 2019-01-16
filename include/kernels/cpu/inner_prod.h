@@ -1,10 +1,9 @@
 #ifndef TS_KERNELS_INNER_PROD_H
 #define TS_KERNELS_INNER_PROD_H
 
-#include <global/operator_factory.h>
 #include <core/tensor.h>
 #include <runtime/stack.h>
-
+#include <runtime/operator.h>
 
 
 namespace ts {

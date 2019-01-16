@@ -1,14 +1,9 @@
 #ifndef TS_KERNELS_DIMSHUFFLE_H
 #define TS_KERNELS_DIMSHUFFLE_H
 
-#include <global/operator_factory.h>
 #include <core/tensor.h>
 #include <runtime/stack.h>
-//#include <cstring>
-//#include <math.h>
-
-//#include <string.h>
-//#include <set>
+#include <runtime/operator.h>
 
 namespace ts {
 
@@ -36,7 +31,6 @@ private:
 
 
 
-//TS_REGISTER_OPERATOR(Dimshuffle, ts::CPU, "_dimshuffle")
 
 
 }

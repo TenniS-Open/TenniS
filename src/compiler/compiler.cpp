@@ -13,6 +13,7 @@
 #include <unordered_set>
 
 #include <algorithm>
+#include <backend/name.h>
 
 #include "runtime/instruction/instruction_factory.h"
 #include "runtime/instruction/stack_instruction.h"
@@ -20,6 +21,8 @@
 #include "global/operator_factory.h"
 #include "global/memory_device.h"
 #include "core/tensor_builder.h"
+#include "core/device_context.h"
+#include "utils/ctxmgr_lite.h"
 
 
 namespace ts {
@@ -98,6 +101,9 @@ namespace ts {
 
     // TODO: inputs only support Parameter, try support other op
     InstructionBlock Compiler::compile(const std::vector<Node> &inputs, const std::vector<Node> &outputs) {
+        DeviceContext device_context(m_computing_device);
+        ctx::bind<DeviceContext> _bind_device_context(device_context);
+
         InstructionBlock block;
         block.nargs = int(inputs.size());
         block.nresults = int(outputs.size());
@@ -128,10 +134,10 @@ namespace ts {
                 return node_it->second;
             }
             auto &bubble = node.ref<Bubble>();
-            auto value = bubble.get("value");
+            auto value = bubble.get(name::value);
             auto data_index = int(block.data_sagment.size());
-            if (bubble.has("#device")) {
-                block.data_sagment.push_back(DeviceTensor(value, tensor::to_string(bubble.get("#device"))));
+            if (bubble.has(name::device)) {
+                block.data_sagment.push_back(DeviceTensor(value, tensor::to_string(bubble.get(name::device))));
             } else {
                 block.data_sagment.push_back(DeviceTensor(value));
             }

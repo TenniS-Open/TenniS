@@ -1,5 +1,6 @@
 #include <kernels/cpu/mul.h>
 #include <core/tensor_builder.h>
+#include <global/operator_factory.h>
 
 
 namespace ts {

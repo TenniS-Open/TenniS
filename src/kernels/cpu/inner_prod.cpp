@@ -1,6 +1,8 @@
 #include <kernels/cpu/inner_prod.h>
 #include <core/tensor_builder.h>
 #include <kernels/cpu/math_cpu.h>
+#include <global/operator_factory.h>
+
 
 namespace ts {
 

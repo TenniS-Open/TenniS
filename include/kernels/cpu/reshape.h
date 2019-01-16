@@ -1,12 +1,9 @@
-#ifndef TS_KERNELS_DIMSHUFFLE_H
-#define TS_KERNELS_DIMSHUFFLE_H
+#ifndef TS_KERNELS_RESHAPE_H
+#define TS_KERNELS_RESHAPE_H
 
-#include <global/operator_factory.h>
 #include <core/tensor.h>
 #include <runtime/stack.h>
-//#include <cstring>
-//#include <math.h>
-
+#include <runtime/operator.h>
 
 
 namespace ts {
@@ -32,7 +29,6 @@ private:
 };
 
 
-//TS_REGISTER_OPERATOR(Reshape, ts::CPU, "_reshape")
 
 
 }
