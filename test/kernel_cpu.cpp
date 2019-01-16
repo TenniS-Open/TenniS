@@ -93,11 +93,13 @@ void test_blas(ts::Random &rand, float *ratio = nullptr)
 
 int main() {
     using namespace ts;
-    ts::ThreadPool pool(16);
+    ts::ThreadPool pool(2);
+
+    std::ostringstream oss;
 
     ts::ctx::bind<ts::ThreadPool> _bind_thread_pool(pool);
 
-    openblas_set_num_threads(16);
+//    openblas_set_num_threads(16);
 
 //    int i = 0;
 //    double A[6] = { 1.0, 2.0, 1.0, -3.0, 4.0, -1.0 };

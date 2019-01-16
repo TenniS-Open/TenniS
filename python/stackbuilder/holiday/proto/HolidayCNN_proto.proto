@@ -1,0 +1,246 @@
+syntax = "proto2";
+
+
+message Holiday_BlobShape {
+    repeated int64 dim = 1;
+}
+
+
+message Holiday_BlobProto {
+    optional Holiday_BlobShape shape = 1;
+    repeated float data = 2;
+}
+
+
+message Holiday_PreluParameter {
+    optional Holiday_BlobProto param = 1;
+}
+
+message Holiday_CropParameter {
+    optional int32 axis = 1 [default = 2];
+    repeated uint32 offset = 2;
+}
+
+
+message Holiday_ConvolutionParameter {
+    optional Holiday_BlobProto bias_param = 1;
+    optional Holiday_BlobProto kernel_param = 2;
+    optional uint32 dilation_height = 3;
+    optional uint32 dilation_width = 4;
+    optional uint32 num_output = 5;
+    optional uint32 pad_height = 6 [default = 0];
+    optional uint32 pad_width = 7 [default = 0];
+    optional uint32 kernel_height = 8;
+    optional uint32 kernel_width = 9;
+    optional uint32 stride_height = 10;
+    optional uint32 stride_width = 11;
+    optional uint32 group = 12 [default = 1];
+    optional int32 axis = 13 [default = 1];
+    optional bool force_nd_im2col = 14 [default = false];
+
+    // for tf padding setting, supporting VALID and SAME option
+    optional string tf_padding = 15;
+
+}
+
+
+message Holiday_BatchNormliseParameter {
+    optional Holiday_BlobProto mean_param = 1;
+    optional Holiday_BlobProto covariance_param = 2;
+}
+
+message Holiday_ScaleParameter {
+    optional Holiday_BlobProto scale_param = 1;
+    optional Holiday_BlobProto bias_param = 2;
+}
+
+message Holiday_ConcatParameter {
+    optional uint32 concat_dim = 1 [default = 1];
+    optional int32 axis = 2 [default = 1];
+}
+
+message Holiday_EltwiseParameter {
+    enum EltwiseOp {
+        PROD = 0;
+        SUM = 1;
+        MAX = 2;
+    }
+
+    optional EltwiseOp operation = 1 [default = SUM];
+    repeated float coeff = 2;
+    optional bool stable_prod_grad = 3 [default = true];
+}
+
+message Holiday_ExpParameter {
+    optional float base = 1 [default = -1.0];
+    optional float scale = 2 [default = 1.0];
+    optional float shift = 3 [default = 0.0];
+
+}
+
+message Holiday_MemoryDataParameterProcess {
+    optional uint32 batch_size = 1;
+    optional uint32 channels = 2;
+    optional uint32 height = 3;
+    optional uint32 width = 4;
+    optional uint32 new_height = 5 [default = 0];
+    optional uint32 new_width = 6 [default = 0];
+    optional float scale = 7 [default = 1];
+    optional Holiday_BlobProto mean_file = 8;
+    repeated float mean_value = 9;
+    optional uint32 crop_size_height = 10 [default = 0];
+    optional uint32 crop_size_width = 11 [default = 0];
+
+    // for channels swap supprt push [2, 1, 0] means convert BGR2RGB
+    repeated uint32 channel_swaps = 12;
+
+    // for prewhiten action after above actions
+    optional bool prewhiten = 13 [default = false];
+}
+
+
+message Holiday_TransformationParameter {
+    optional float scale = 1 [default = 1];
+    optional bool mirror = 2 [default = false];
+    optional uint32 crop_height = 3 [default = 0];
+    optional uint32 crop_width = 4 [default = 0];
+    optional string mean_file = 5;
+    repeated float mean_value = 6;
+    optional bool force_color = 7 [default = false];
+    optional bool force_gray = 8 [default = false];
+}
+
+message Holiday_InnerProductParameter {
+    optional uint32 num_output = 1;
+    optional int32 axis = 2 [default = 1];
+    optional bool transpose = 3 [default = false];
+    optional Holiday_BlobProto bias_param = 4;
+    optional Holiday_BlobProto Inner_param = 5;
+}
+
+message Holiday_LRNParameter {
+    optional uint32 local_size = 1 [default = 5];
+    optional float alpha = 2 [default = 1.];
+    optional float beta = 3 [default = 0.75];
+
+    enum NormRegion {
+        ACROSS_CHANNELS = 0;
+        WITHIN_CHANNEL = 1;
+    }
+
+    optional NormRegion norm_region = 4 [default = ACROSS_CHANNELS];
+    optional float k = 5 [default = 1.];
+}
+
+
+message Holiday_PoolingParameter {
+    enum PoolMethod {
+        MAX = 0;
+        AVE = 1;
+        STOCHASTIC = 2;
+    }
+
+    optional PoolMethod pool = 1 [default = MAX];
+    optional uint32 pad_height = 2 [default = 0];
+    optional uint32 pad_width = 3 [default = 0];
+    optional uint32 kernel_height = 4;
+    optional uint32 kernel_width = 5;
+    optional uint32 stride_height = 6;
+    optional uint32 stride_width = 7;
+    optional bool global_pooling = 8 [default = false];
+
+    // for mxnet valid pooling support
+    optional bool valid = 9 [default = false];
+
+    // for tf padding setting, supporting VALID and SAME option
+    optional string tf_padding = 10;
+}
+
+message Holiday_PowerParameter {
+    optional float power = 1 [default = 1.0];
+    optional float scale = 2 [default = 1.0];
+    optional float shift = 3 [default = 0.0];
+}
+
+message Holiday_ReLUParameter {
+    optional float negative_slope = 1 [default = 0];
+    optional float max = 2;
+}
+
+
+message Holiday_SoftmaxParameter {
+    optional int32 axis = 1 [default = 1];
+}
+
+message Holiday_SliceParameter {
+    optional int32 axis = 1 [default = 1];
+    repeated uint32 slice_point = 2;
+    optional uint32 slice_dim = 3 [default = 1];
+}
+
+message Holiday_SigmoidParameter {
+}
+
+message Holiday_SpaceToBatchNDLayer {
+    // size should be 2, like [2, 2]
+    repeated int32 block_shape = 1;
+
+    // size should be 2x2, like [1, 1, 2, 2]
+    repeated int32 paddings = 2;
+}
+
+message Holiday_BatchToSpaceNDLayer {
+    // size should be 2, like [2, 2]
+    repeated int32 block_shape = 1;
+
+    // size should be 2x2, like [1, 1, 2, 2]
+    repeated int32 crops = 2;
+}
+
+message Holiday_ReshapeLayer {
+    // new shape
+    repeated int32 shape = 1;
+
+    // for tf, NCHW -> NHWC
+    repeated int32 permute = 2;
+}
+
+message Holiday_RealMulLayer {
+    // got x * y
+    optional Holiday_BlobProto y = 1;
+}
+
+message Holiday_LayerParameter {
+    repeated string bottom = 1;
+    repeated string top = 2;
+    optional string name = 3;
+    optional uint32 type = 4;
+    repeated uint32 top_index = 5;
+    repeated uint32 bottom_index = 6;
+
+    optional Holiday_ConcatParameter concat_param = 7;
+    optional Holiday_ConvolutionParameter convolution_param = 8;
+    optional Holiday_EltwiseParameter eltwise_param = 9;
+    optional Holiday_ExpParameter exp_param = 10;
+    optional Holiday_InnerProductParameter inner_product_param = 11;
+    optional Holiday_LRNParameter lrn_param = 12;
+    optional Holiday_MemoryDataParameterProcess memory_data_param = 13;
+    optional Holiday_PoolingParameter pooling_param = 14;
+    optional Holiday_PowerParameter power_param = 15;
+    optional Holiday_ReLUParameter relu_param = 16;
+    optional Holiday_SoftmaxParameter softmax_param = 17;
+    optional Holiday_SliceParameter slice_param = 18;
+    optional Holiday_TransformationParameter transform_param = 19;
+    optional Holiday_BatchNormliseParameter batchNormlise_param = 20;
+    optional Holiday_ScaleParameter scale_param = 21;
+    optional Holiday_PreluParameter prelu_param = 22;
+    optional Holiday_CropParameter crop_parameter = 23;
+    optional Holiday_SigmoidParameter sigmoid_param = 24;
+    optional Holiday_SpaceToBatchNDLayer spaceToBatchND_param = 25;
+    optional Holiday_BatchToSpaceNDLayer batchToSpaceND_param = 26;
+    optional Holiday_ReshapeLayer reshape_param = 27;
+    optional Holiday_RealMulLayer real_mul_param = 28;
+
+    optional uint32 layer_index = 30;
+}
+

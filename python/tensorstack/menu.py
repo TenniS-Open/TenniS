@@ -7,9 +7,19 @@
 from node import Node
 
 
-def param(name):
+class Name(object):
+    class Layer(object):
+        field = "_field"
+        pack = "_pack"
+
+    offset = "offset"
+    value = "value"
+    device = "device"
+
+
+def param(name, shape=None):
     # type: (str) -> Node
-    return Node(op=Node.Parameter, name=name)
+    return Node(op=Node.Parameter, name=name, shape=shape)
 
 
 def op(name, op_name, inputs, output_count=1):
@@ -22,22 +32,22 @@ def op(name, op_name, inputs, output_count=1):
 def data(name, value, device=None):
     # type: (str, object, Union[str]) -> Node
     node = Node(op=Node.Const, name=name)
-    node.set("value", value)
+    node.set(Name.value, value)
     if device is not None:
-        node.set("#device", device)
+        node.set(Name.device, device)
     return node
 
 
 def field(name, input, offset):
     # type: (str, Node, int) -> Node
-    node = Node(op="_field", name=name)
-    node.set("offset", offset)
+    node = Node(op=Name.Layer.field, name=name)
+    node.set(Name.offset, offset)
     Node.Link(node=node, inputs=[input])
     return node
 
 
 def pack(name, inputs):
     # type: (str, list[Node]) -> Node
-    node = Node(op="_pack", name=name)
+    node = Node(op=Name.Layer.pack, name=name)
     Node.Link(node=node, inputs=inputs)
     return node

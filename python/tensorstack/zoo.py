@@ -18,13 +18,13 @@ class Name(object):
         transpose = "_transpose"
         reshape = "_reshape"
         conv2d = "conv2d"
-        padding_conv2d = "padding_conv2d"
+        conv2d_v2 = "conv2d_v2"
         # conv2d_bias = "conv2d_bias"
         # padding_conv2d_bias = "padding_conv2d_bias"
         shape = "_shape"
         pad = "pad"
         depthwise_conv2d = "depthwise_conv2d"
-        padding_depthwise_conv2d = "padding_depthwise_conv2d"
+        depthwise_conv2d_v2 = "depthwise_conv2d_v2"
         # depthwise_conv2d_bias = "depthwise_conv2d_bias"
         # padding_depthwise_conv2d_bias = "padding_depthwise_conv2d_bias"
         add_bias = "add_bias"
@@ -64,6 +64,7 @@ class Name(object):
     type = "type"
     padding_type = "padding_type"
     ksize = "ksize"
+    device = "device"
 
 
 class Default(object):
@@ -198,8 +199,8 @@ def conv2d(name, x, w,
     node = None
 
     if isinstance(padding, None):
-        node = menu.op(name=name, op_name=Name.Layer.padding_conv2d, inputs=[x, padding, w])
-        node.set(Name.padding, Default.padding())
+        node = menu.op(name=name, op_name=Name.Layer.conv2d_v2, inputs=[x, padding, w])
+        # node.set(Name.padding, Default.padding())
     else:
         node = menu.op(name=name, op_name=Name.Layer.conv2d, inputs=[x, w])
         node.set(Name.padding, padding)
@@ -251,8 +252,8 @@ def depthwise_conv2d(name, x, w,
 
     node = None
     if isinstance(padding, None):
-        node = menu.op(name=name, op_name=Name.Layer.padding_depthwise_conv2d, inputs=[x, padding, w])
-        node.set(Name.padding, Default.padding())
+        node = menu.op(name=name, op_name=Name.Layer.depthwise_conv2d_v2, inputs=[x, padding, w])
+        # node.set(Name.padding, Default.padding())
     else:
         node = menu.op(name=name, op_name=Name.Layer.depthwise_conv2d, inputs=[x, w])
         node.set(Name.padding, padding)
@@ -283,44 +284,6 @@ def add_bias(name, x, b, format=Name.NCHW):
     node.set(Name.dim, dim)
 
     return node
-
-
-def conv2d_bias(name, x, w, b=None,
-                format=Name.NCHW,
-                padding=None,
-                padding_value=None,
-                stride=None,
-                dialations=None):
-    if b is None:
-        return conv2d(name=name, x=x, w=w,
-                      format=format,
-                      padding=padding, padding_value=padding_value,
-                      stride=stride, dialations=dialations)
-    else:
-        conv_node = conv2d(name="_op_" + name + "_conv2d", x=x, w=w,
-                           format=format,
-                           padding=padding, padding_value=padding_value,
-                           stride=stride, dialations=dialations)
-        return add_bias(name=name, x=conv_node, b=b, format=format)
-
-
-def depthwise_conv2d_bias(name, x, w, b=None,
-                          format=Name.NCHW,
-                          padding=None,
-                          padding_value=None,
-                          stride=None,
-                          dialations=None):
-    if b is None:
-        return depthwise_conv2d(name=name, x=x, w=w,
-                      format=format,
-                      padding=padding, padding_value=padding_value,
-                      stride=stride, dialations=dialations)
-    else:
-        conv_node = depthwise_conv2d(name="_op_" + name + "_conv2d", x=x, w=w,
-                           format=format,
-                           padding=padding, padding_value=padding_value,
-                           stride=stride, dialations=dialations)
-        return add_bias(name=name, x=conv_node, b=b, format=format)
 
 
 def batch_norm(name, x, mean, variance, dim, epsilon):
