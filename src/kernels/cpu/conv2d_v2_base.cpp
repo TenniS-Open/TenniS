@@ -4,7 +4,7 @@
 
 namespace ts {
 
-
+/*
 int Conv2d_V2_Base::Caculate(const int height, const int width, const int kernel_h, const int kernel_w,
                     const int pad_h_top, const int pad_h_bottom, const int pad_w_left, 
                     const int pad_w_right, const int stride_h, const int stride_w,
@@ -17,7 +17,7 @@ int Conv2d_V2_Base::Caculate(const int height, const int width, const int kernel
 
     return 0;
 }
-
+*/
 
 std::function<Operator::shared(void)> Conv2d_V2_Base::GetCreator(const std::string & name) {
     auto creator = ts::OperatorCreator::Query(computing_device().type(), name);
@@ -32,6 +32,7 @@ std::function<Operator::shared(void)> Conv2d_V2_Base::GetCreator(const std::stri
     TS_AUTO_CHECK_NQ(creator, nullptr);
     return creator; 
 }
+
 ////////////////////////////////////////////
 Conv2d_V2_Base::Conv2d_V2_Base() {
     field("format", REQUIRED);
