@@ -1,8 +1,13 @@
 #include <kernels/cpu/conv2d_v2.h>
 #include <core/tensor_builder.h>
-#include <kernels/cpu/math_cpu.h>
-#include <kernels/cpu/im2col.h>
+//#include <kernels/cpu/math_cpu.h>
+//#include <kernels/cpu/im2col.h>
+
+#include <kernels/cpu/conv2d_base.h>
+
 #include <global/operator_factory.h>
+
+
 
 namespace ts {
 
@@ -70,7 +75,7 @@ int Conv2d_V2::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) {
     }
 
     int output_h,output_w;
-    Caculate(shape[2], shape[3], weight_shape[2], weight_shape[3],m_padding[4], m_padding[5], m_padding[6], m_padding[7],
+    ts::Conv2d_Base::Caculate(shape[2], shape[3], weight_shape[2], weight_shape[3],m_padding[4], m_padding[5], m_padding[6], m_padding[7],
                  m_stride[2], m_stride[3], m_dialations[2], m_dialations[3], output_h, output_w);
 
     shape[1] = weight_shape[0];
@@ -88,73 +93,40 @@ int Conv2d_V2::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &outpu
     return infer_private(stack, output[0]);
 }
 
-template<typename T>
-void Conv2d_V2::compute_conv(const Tensor *input_tensor, const Tensor *weight_tensor, Tensor *tensor, const Shape& shape,
-                      const Shape &reshape, const Shape &weight_shape ) {
-
-    int kernel_dims = weight_shape[1] * weight_shape[2] * weight_shape[3];
-    int conv_out_spatial_dim = reshape[2] * reshape[3];
-    //int col_offset = kernel_dims * conv_out_spatial_dim;
-    //int weight_offset = weight_shape[0] * kernel_dims;
-    int output_number_offset = reshape[1] * conv_out_spatial_dim;
-    int input_number_offset = shape[1] * shape[2] * shape[3];
-    int col_buffer_size = shape[1] * weight_shape[2] * weight_shape[3] * reshape[2] * reshape[3];
-
-
-    T * col_buffer = new T [col_buffer_size];
-    const T *pinput = input_tensor->data<T>();
-    const T *pweight = weight_tensor->data<T>();
-    T *poutput = tensor->sync(memory_device()).data<T>();
-    for(int i=0; i<shape[0]; i++) {
-        ::memset(col_buffer, 0, col_buffer_size * sizeof(T));
-        im2col_cpu(pinput, shape[1], shape[2], shape[3], weight_shape[2], weight_shape[3],
-                   m_padding[2], m_padding[3], m_stride[2], m_stride[3],m_dialations[2],m_dialations[3], col_buffer, m_padding_value);
-
-
-        ts::cpu::math<T>::gemm(ts::blas::NoTrans,ts::blas::NoTrans, weight_shape[0], conv_out_spatial_dim,
-                               kernel_dims, 1.0, pweight, col_buffer, 0, poutput);
-        pinput += input_number_offset;
-        poutput+= output_number_offset;
-    }
-
-    delete [] col_buffer;
-
-}
-
 
 int Conv2d_V2::run(ts::Stack &stack) {
     ts::Tensor::Prototype output;
-    //Shape padding;
     infer_private(stack, output);
 
     ts::Tensor *input_tensor = stack.index(0);
-    const Shape& shape = input_tensor->sizes();
-    const Shape& reshape = output.sizes();
+    //const Shape& shape = input_tensor->sizes();
+    //const Shape& reshape = output.sizes();
+    //int type_len = ts::type_bytes(input_tensor->dtype());
+    //stack.push(output, memory_device());
+    //ts::Tensor *tensor = stack.index(-1);
 
-    int type_len = ts::type_bytes(input_tensor->dtype());
+    ts::Tensor *weight_tensor = stack.index(2);
 
-    stack.push(output, memory_device());
-    ts::Tensor *tensor = stack.index(-1);
+    auto conv2d_creator = ts::Conv2d_V2_Base::GetCreator("conv2d");
+    ts::Operator::shared conv2d_op = conv2d_creator();
 
-    ts::Tensor *weight_tensor = stack.index(1);
-    const Shape& weight_shape = weight_tensor->sizes();
-
-    switch(tensor->dtype()) {
-        case ts::FLOAT32: {
-             compute_conv<float>(input_tensor, weight_tensor, tensor, shape,reshape,
-                                 weight_shape);
-             break;
-        }
-        case ts::FLOAT64: {
-             compute_conv<double>(input_tensor, weight_tensor, tensor, shape,reshape,
-                                 weight_shape);
-             break;
-        }
-        default: {
-            throw ts::Exception("conv2d_v2 only support FLOAT32 and FLOAT64 type");
-            break;
-        }
+    conv2d_op->set("stride",get("stride"));
+    conv2d_op->set("dialations", get("dialations"));
+    conv2d_op->set("format",get("format"));
+    if(has("padding_value")) {
+        conv2d_op->set("padding_value", get("padding_value"));
     }
+
+    if(has("group")) {
+        conv2d_op->set("group", get("group"));
+    }
+
+    conv2d_op->set("padding",ts::tensor::clone(stack.index(1)->dtype(), *stack.index(1)));
+
+    stack.push(*input_tensor);
+    stack.push(*weight_tensor);
+    conv2d_op->init();
+    RunOperator(conv2d_op, stack, 2);
 
     return 1;
 }

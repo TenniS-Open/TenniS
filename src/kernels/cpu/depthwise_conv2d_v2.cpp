@@ -1,4 +1,5 @@
 #include <kernels/cpu/depthwise_conv2d_v2.h>
+#include <kernels/cpu/conv2d_base.h>
 #include <core/tensor_builder.h>
 #include <global/operator_factory.h>
 
@@ -69,7 +70,7 @@ int Depthwise_Conv2d_V2::infer_private(ts::Stack &stack, ts::Tensor::Prototype &
     }
 
     int output_h,output_w;
-    Caculate(shape[2], shape[3], weight_shape[2], weight_shape[3],m_padding[4], m_padding[5], m_padding[6], m_padding[7],
+    ts::Conv2d_Base::Caculate(shape[2], shape[3], weight_shape[2], weight_shape[3],m_padding[4], m_padding[5], m_padding[6], m_padding[7],
                  m_stride[2], m_stride[3], m_dialations[2], m_dialations[3], output_h, output_w);
 
     //shape[1] = weight_shape[];
@@ -87,81 +88,34 @@ int Depthwise_Conv2d_V2::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototy
     return infer_private(stack, output[0]);
 }
 
-template<typename T>
-void Depthwise_Conv2d_V2::compute_conv(const Tensor *input_tensor, const Tensor *weight_tensor, Tensor *tensor, const Shape& shape,
-                      const Shape &reshape, const Shape &weight_shape ) {
-
-    int kernel_dims = weight_shape[1] * weight_shape[2] * weight_shape[3];
-    int conv_out_spatial_dim = reshape[2] * reshape[3];
-    //int col_offset = kernel_dims * conv_out_spatial_dim;
-    //int weight_offset = weight_shape[0] * kernel_dims;
-    int output_number_offset = reshape[1] * conv_out_spatial_dim;
-    int input_number_offset = shape[1] * shape[2] * shape[3];
-    int col_buffer_size = shape[1] * weight_shape[2] * weight_shape[3] * reshape[2] * reshape[3];
-
-
-    const T *pinput = input_tensor->data<T>();
-    const T *pweight_base = weight_tensor->data<T>();
-    T *poutput = tensor->sync(memory_device()).data<T>();
-    for(int n=0; n<reshape[0]; n++) {
-        for(int c=0; c < reshape[1]; c++) {
-            for(int h=0; h<reshape[2]; h++) {
-                for(int w=0; w<reshape[3]; w++) {
-                    const T * pweight = pweight_base + c * weight_shape[2] * weight_shape[3];
-                    T value = 0;
-                    for(int kh=0; kh<weight_shape[2]; kh++) {
-                        for(int kw=0; kw<weight_shape[3]; kw++) {
-                            int h_in = -m_padding[4] + h * m_stride[2] + kh * m_dialations[2];
-                            int w_in = -m_padding[6] + w * m_stride[3] + kw * m_dialations[3];
-                            if((h_in>=0 ) && (h_in<shape[2]) && (w_in>=0) && (w_in<shape[3])) {
-                                int offset = ((n * reshape[1] + c) * shape[2] + h_in) * shape[3] + w_in;
-                                value += (*pweight) * pinput[offset];
-                            }
-                            ++pweight;
-                        }
-                    }
-                    *poutput++ = value;
-                } 
-            }
-        }
-    }
-
-}
-
 
 int Depthwise_Conv2d_V2::run(ts::Stack &stack) {
     ts::Tensor::Prototype output;
-    //Shape padding;
     infer_private(stack, output);
 
     ts::Tensor *input_tensor = stack.index(0);
-    const Shape& shape = input_tensor->sizes();
-    const Shape& reshape = output.sizes();
+    ts::Tensor *weight_tensor = stack.index(2);
 
-    int type_len = ts::type_bytes(input_tensor->dtype());
+    auto conv2d_creator = ts::Conv2d_V2_Base::GetCreator("depthwise_conv2d");
+    auto conv2d_op = conv2d_creator();
 
-    stack.push(output, memory_device());
-    ts::Tensor *tensor = stack.index(-1);
-
-    ts::Tensor *weight_tensor = stack.index(1);
-    const Shape& weight_shape = weight_tensor->sizes();
-
-    switch(tensor->dtype()) {
-        case ts::FLOAT32: {
-             compute_conv<float>(input_tensor, weight_tensor, tensor, shape,reshape,
-                                 weight_shape);
-             break;
-        }
-        case ts::FLOAT64: {
-             compute_conv<double>(input_tensor, weight_tensor, tensor, shape,reshape,
-                                 weight_shape);
-             break;
-        }
-        default: {
-            throw ts::Exception("depthwise_conv2d_v2 only support FLOAT32 and FLOAT64 type");
-            break;
-        }
-    }
+    conv2d_op->set("stride",get("stride"));
+    conv2d_op->set("dialations", get("dialations"));
+    conv2d_op->set("format",get("format"));
+    if(has("padding_value")) {
+        conv2d_op->set("padding_value", get("padding_value"));
+    }   
+    
+    if(has("group")) {
+        conv2d_op->set("group", get("group"));
+    }   
+    
+    conv2d_op->set("padding",ts::tensor::clone(stack.index(1)->dtype(), *stack.index(1)));
+    
+    stack.push(*input_tensor);
+    stack.push(*weight_tensor);
+    conv2d_op->init();
+    RunOperator(conv2d_op, stack, 2);
 
     return 1;
 }
