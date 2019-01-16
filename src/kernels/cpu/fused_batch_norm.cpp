@@ -134,19 +134,23 @@ int Fused_Batch_Norm::run(ts::Stack &stack) {
     stack.push(*mean_tensor);
     stack.push(*variance_tensor);
 
-    stack.push_base(-3);
     batch_norm->init();
-    batch_norm->run(stack);
-    stack.pop_base(); 
+
+    //stack.push_base(-3);
+    //batch_norm->run(stack);
+    //stack.pop_base(); 
+    RunOperator(batch_norm, stack, 3);
 
     batch_scale->set("dim", get("dim"));
     stack.push(*gamma_tensor);
     stack.push(*beta_tensor);
 
-    stack.push_base(-3);
     batch_scale->init();
-    batch_scale->run(stack);
-    stack.pop_base(); 
+
+    RunOperator(batch_scale, stack, 3);
+    //stack.push_base(-3);
+    //batch_scale->run(stack);
+    //stack.pop_base(); 
 
     return 1;
 }
