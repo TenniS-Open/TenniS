@@ -118,12 +118,10 @@ int Dimshuffle::run(ts::Stack &stack) {
 
 
 
-
+}
 
 
 
 ///////////////////////////////////////////
-
+using namespace ts;
 TS_REGISTER_OPERATOR(Dimshuffle, ts::CPU, ts::name::layer::dimshuffle())
-
-}

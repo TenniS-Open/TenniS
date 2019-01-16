@@ -123,13 +123,11 @@ int Depthwise_Conv2d_V2::run(ts::Stack &stack) {
 }
 
 
-
+}
 
 ////////////////////////////////////////////
 
 
 
-
+using namespace ts;
 TS_REGISTER_OPERATOR(Depthwise_Conv2d_V2, ts::CPU, ts::name::layer::depthwise_conv2d_v2())
-
-}

@@ -95,9 +95,7 @@ int Reshape::run(ts::Stack &stack) {
 }
 
 
-
-
-/////////////////////////////////////////////////////
-TS_REGISTER_OPERATOR(Reshape, ts::CPU, ts::name::layer::reshape())
-
 }
+
+using namespace ts;
+TS_REGISTER_OPERATOR(Reshape, ts::CPU, ts::name::layer::reshape())

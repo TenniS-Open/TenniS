@@ -198,16 +198,9 @@ int Pad::run(ts::Stack &stack) {
 }
 
 
-
-
-
-
-
-
-
-
-////////////////////////////////////////////
-
-TS_REGISTER_OPERATOR(Pad, ts::CPU, ts::name::layer::pad())
-
 }
+
+
+
+using namespace ts;
+TS_REGISTER_OPERATOR(Pad, ts::CPU, ts::name::layer::pad())

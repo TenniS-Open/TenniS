@@ -39,9 +39,7 @@ int To_Float::run(ts::Stack &stack) {
 }
 
 
-
-
-/////////////////////////////////////////////////////
-TS_REGISTER_OPERATOR(To_Float, ts::CPU, ts::name::layer::to_float())
-
 }
+
+using namespace ts;
+TS_REGISTER_OPERATOR(To_Float, ts::CPU, ts::name::layer::to_float())

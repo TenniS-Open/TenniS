@@ -125,9 +125,9 @@ int Batch_Scale::run(ts::Stack &stack) {
 
 
 
-
+}
 
 /////////////////////////////////////////////////
+using namespace ts;
 TS_REGISTER_OPERATOR(Batch_Scale, ts::CPU, ts::name::layer::batch_scale())
 
-}

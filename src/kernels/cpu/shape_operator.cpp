@@ -53,14 +53,9 @@ int Shape_Operator::run(ts::Stack &stack) {
 
 
 
-
-
-
-
-
-
-
-////////////////////////////////////////////////////
-TS_REGISTER_OPERATOR(Shape_Operator, ts::CPU, ts::name::layer::shape())
-
 }
+
+
+
+using namespace ts;
+TS_REGISTER_OPERATOR(Shape_Operator, ts::CPU, ts::name::layer::shape())
