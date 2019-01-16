@@ -193,9 +193,8 @@ int Mul::run(ts::Stack &stack) {
 
 
 
-
-/////////////////////////////////////////////////
-
-TS_REGISTER_OPERATOR(Mul, ts::CPU, ts::name::layer::mul())
-
 }
+
+
+using namespace ts;
+TS_REGISTER_OPERATOR(Mul, ts::CPU, ts::name::layer::mul())

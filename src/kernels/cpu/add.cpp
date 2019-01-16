@@ -194,6 +194,10 @@ int Add::run(ts::Stack &stack) {
 
 /////////////////////////////////////////////////
 
-TS_REGISTER_OPERATOR(Add, ts::CPU, ts::name::layer::add())
+//TS_REGISTER_OPERATOR(Add, ts::CPU, ts::name::layer::add())
 
 }
+
+using namespace ts;
+TS_REGISTER_OPERATOR(Add, ts::CPU, ts::name::layer::add())
+

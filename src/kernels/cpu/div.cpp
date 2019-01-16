@@ -200,10 +200,8 @@ int Div::run(ts::Stack &stack) {
 
 
 
-
+}
 
 /////////////////////////////////////////////////
-
+using namespace ts;
 TS_REGISTER_OPERATOR(Div, ts::CPU, ts::name::layer::div())
-
-}

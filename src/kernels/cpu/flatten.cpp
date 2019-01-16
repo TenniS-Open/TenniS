@@ -46,9 +46,7 @@ int Flatten::run(ts::Stack &stack) {
 }
 
 
-
-
-/////////////////////////////////////////////////////
-TS_REGISTER_OPERATOR(Flatten, ts::CPU, ts::name::layer::flatten())
-
 }
+
+using namespace ts;
+TS_REGISTER_OPERATOR(Flatten, ts::CPU, ts::name::layer::flatten())

@@ -160,8 +160,9 @@ int Add_Bias::run(ts::Stack &stack) {
 
 
 
-
+}
 /////////////////////////////////////////////////
+
+using namespace ts;
 TS_REGISTER_OPERATOR(Add_Bias, ts::CPU, ts::name::layer::add_bias())
 
-}

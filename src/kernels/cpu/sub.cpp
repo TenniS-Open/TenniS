@@ -193,9 +193,8 @@ int Sub::run(ts::Stack &stack) {
 
 
 
-
-
-/////////////////////////////////////////////////
-TS_REGISTER_OPERATOR(Sub, ts::CPU, ts::name::layer::sub())
-
 }
+
+
+using namespace ts;
+TS_REGISTER_OPERATOR(Sub, ts::CPU, ts::name::layer::sub())

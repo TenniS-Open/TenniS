@@ -133,12 +133,9 @@ int Conv2d_V2::run(ts::Stack &stack) {
 
 
 
-
-////////////////////////////////////////////
-
-
-
-
-TS_REGISTER_OPERATOR(Conv2d_V2, ts::CPU, ts::name::layer::conv2d_v2())
-
 }
+
+
+
+using namespace ts;
+TS_REGISTER_OPERATOR(Conv2d_V2, ts::CPU, ts::name::layer::conv2d_v2())

@@ -224,9 +224,9 @@ int Transpose::run(ts::Stack &stack) {
 
 
 
-
-
-/////////////////////////////////////////////////////////////
-TS_REGISTER_OPERATOR(Transpose, ts::CPU, ts::name::layer::transpose())
-
 }
+
+
+
+using namespace ts;
+TS_REGISTER_OPERATOR(Transpose, ts::CPU, ts::name::layer::transpose())
