@@ -1,4 +1,5 @@
 #include <kernels/cpu/shape_operator.h>
+#include <global/operator_factory.h>
 
 namespace ts {
 

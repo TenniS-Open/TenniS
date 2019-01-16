@@ -1,6 +1,8 @@
 #include <kernels/cpu/dimshuffle.h>
 #include <core/tensor_builder.h>
 #include <set>
+#include <global/operator_factory.h>
+
 
 namespace ts {
 

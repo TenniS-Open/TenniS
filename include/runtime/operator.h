@@ -88,6 +88,16 @@ namespace ts {
         hash_set<std::string> m_required_fields;
         // std::string m_name;
     };
+
+    /**
+     * Run operator directly
+     * @param op operator ready to run
+     * @param stack the stack running on
+     * @param nargs the number of input arguments
+     * @return the number of return values
+     * @note all input argument would be pop after running
+     */
+    int RunOperator(Operator::shared op, Stack &stack, int nargs);
 }
 
 

@@ -1,12 +1,9 @@
 #ifndef TS_KERNELS_MUL_H
 #define TS_KERNELS_MUL_H
 
-#include <global/operator_factory.h>
 #include <core/tensor.h>
 #include <runtime/stack.h>
-//#include <cstring>
-//#include <math.h>
-
+#include <runtime/operator.h>
 
 
 namespace ts {
@@ -36,7 +33,6 @@ private:
 };
 
 
-//TS_REGISTER_OPERATOR(Mul, ts::CPU, "add")
 
 
 }

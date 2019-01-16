@@ -1,4 +1,4 @@
-#include <kernels/cpu/conv2d.h>
+#include <kernels/cpu/conv2d_v2.h>
 #include <core/tensor_builder.h>
 #include <kernels/cpu/math_cpu.h>
 #include <kernels/cpu/im2col.h>
@@ -9,10 +9,10 @@ namespace ts {
 
 
 ////////////////////////////////////////////
-Conv2d::Conv2d() {
+Conv2d_V2::Conv2d_V2() {
 /*
     field("format", REQUIRED);
-    field("padding", REQUIRED);
+    //field("padding", REQUIRED);
     field("stride", REQUIRED);
     field("dialations", REQUIRED);
     field("group", OPTIONAL);
@@ -22,32 +22,51 @@ Conv2d::Conv2d() {
 */
 }
 
-void Conv2d::init() {
+void Conv2d_V2::init() {
     supper::init();
+
 
 }
 
 
-int Conv2d::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) {
+int Conv2d_V2::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) {
     int input_num = stack.size();
-    if(input_num != 2) {
-        throw ts::Exception("conv2d must have tow input parameters");
+    if(input_num != 3) {
+        throw ts::Exception("conv2d_v2 must have tow input parameters");
     }
 
     Shape shape = stack.index(0)->sizes();
 
     if(shape.size()  != 4 ) {
-        throw ts::Exception("conv2d first parameter's dims is not 4");
+        throw ts::Exception("conv2d_v2 first parameter's dims is not 4");
     }
 
-    const Shape& weight_shape = stack.index(1)->sizes();
+    const Tensor * tensor_padding = stack.index(1);
+    if(tensor_padding->dims() != 2 || tensor_padding->dtype() != ts::INT32 || tensor_padding->count() != 8) {
+        throw ts::Exception("conv2d_v2 input parameter padding check failed");
+    }
+;
+    m_padding.resize(8);
+    for(int i=0; i<4; i++) {
+        if(i==0 || i== 1) {
+            if(tensor_padding->data<int>()[2*i] != 0 ||
+               tensor_padding->data<int>()[2*i + 1] != 0) {
+                throw ts::Exception("conv2d_v2 input parameter padding  check failed");
+            }
+        }
+        m_padding[2*i] = tensor_padding->data<int>()[2*i];
+        m_padding[2*i + 1] = tensor_padding->data<int>()[2*i + 1];
+    }
+
+
+    const Shape& weight_shape = stack.index(2)->sizes();
 
     if(weight_shape.size()  != 4 ) {
-        throw ts::Exception("conv2d second parameter's dims is not 4");
+        throw ts::Exception("conv2d_v2 second parameter's dims is not 4");
     }
 
     if(shape[1] % weight_shape[1] != 0) {
-        throw ts::Exception("conv2d input parameters channels check failed");
+        throw ts::Exception("conv2d_v2 input parameters channels check failed");
     }
 
     int output_h,output_w;
@@ -64,13 +83,13 @@ int Conv2d::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) {
 }
 
 
-int Conv2d::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output) {
+int Conv2d_V2::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output) {
     output.resize(1);
     return infer_private(stack, output[0]);
 }
 
 template<typename T>
-void Conv2d::compute_conv(const Tensor *input_tensor, const Tensor *weight_tensor, Tensor *tensor, const Shape& shape,
+void Conv2d_V2::compute_conv(const Tensor *input_tensor, const Tensor *weight_tensor, Tensor *tensor, const Shape& shape,
                       const Shape &reshape, const Shape &weight_shape ) {
 
     int kernel_dims = weight_shape[1] * weight_shape[2] * weight_shape[3];
@@ -103,7 +122,7 @@ void Conv2d::compute_conv(const Tensor *input_tensor, const Tensor *weight_tenso
 }
 
 
-int Conv2d::run(ts::Stack &stack) {
+int Conv2d_V2::run(ts::Stack &stack) {
     ts::Tensor::Prototype output;
     //Shape padding;
     infer_private(stack, output);
@@ -132,7 +151,7 @@ int Conv2d::run(ts::Stack &stack) {
              break;
         }
         default: {
-            throw ts::Exception("conv2d only support FLOAT32 and FLOAT64 type");
+            throw ts::Exception("conv2d_v2 only support FLOAT32 and FLOAT64 type");
             break;
         }
     }
@@ -148,6 +167,6 @@ int Conv2d::run(ts::Stack &stack) {
 
 
 
-TS_REGISTER_OPERATOR(Conv2d, ts::CPU, "conv2d")
+TS_REGISTER_OPERATOR(Conv2d_V2, ts::CPU, "conv2d_v2")
 
 }

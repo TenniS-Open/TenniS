@@ -25,6 +25,11 @@ namespace ts {
     const char *const Bubble::Variable = "<var>";
     static const std::unordered_set<std::string> EndPoints = {Bubble::Parameter, Bubble::Const, Bubble::Variable};
 
+    std::string Bubble::RetentionParam::name = "#name";
+    std::string Bubble::RetentionParam::op = "#op";
+    std::string Bubble::RetentionParam::output_count = "#output_count";
+    std::string Bubble::RetentionParam::shape = "#shape";
+
     bool Bubble::IsEndPoint(const std::string &op) {
         return EndPoints.find(op) != EndPoints.end();
     }
@@ -59,6 +64,28 @@ namespace ts {
 
     Bubble::Bubble(const std::string &op, const std::string &name, int output_count)
             : m_op(op), m_name(name), m_output_count(output_count) {
+        TS_AUTO_CHECK(output_count >= 1);
+        update_retention_params();
+    }
+
+    Bubble::Bubble(const std::string &op, const Shape &shape)
+            : m_op(op), m_shape(shape) {
+        update_retention_params();
+    }
+
+    Bubble::Bubble(const std::string &op, const std::string &name, const Shape &shape)
+            : m_op(op), m_name(name), m_shape(shape) {
+        update_retention_params();
+    }
+
+    Bubble::Bubble(const std::string &op, int output_count, const Shape &shape)
+            : m_op(op), m_output_count(output_count), m_shape(shape) {
+        TS_AUTO_CHECK(output_count >= 1);
+        update_retention_params();
+    }
+
+    Bubble::Bubble(const std::string &op, const std::string &name, int output_count, const Shape &shape)
+            : m_op(op), m_name(name), m_output_count(output_count), m_shape(shape) {
         TS_AUTO_CHECK(output_count >= 1);
         update_retention_params();
     }
@@ -123,9 +150,12 @@ namespace ts {
 
     void Bubble::update_retention_params() {
         TS_AUTO_CHECK(retention_param_sign == '#');
-        set("#op", tensor::from(m_op));
-        set("#name", tensor::from(m_name));
-        set("#output_count", tensor::from(m_output_count));
+        set(RetentionParam::op, tensor::from(m_op));
+        set(RetentionParam::name, tensor::from(m_name));
+        set(RetentionParam::output_count, tensor::from(m_output_count));
+        if (!m_shape.empty()) {
+            set(RetentionParam::shape, tensor::from(m_shape));
+        }
     }
 
     static size_t write_param(StreamWriter &stream, const std::pair<std::string, Tensor> &param) {
@@ -178,9 +208,19 @@ namespace ts {
             read_size += read_param(stream, param);
             m_params.insert(param);
         }
-        m_op = tensor::to_string(m_params["#op"]);
-        m_name = tensor::to_string(m_params["#name"]);
-        m_output_count = tensor::to_int(m_params["#output_count"]);
+        m_op = tensor::to_string(m_params[RetentionParam::op]);
+        m_name = tensor::to_string(m_params[RetentionParam::name]);
+        m_output_count = tensor::to_int(m_params[RetentionParam::output_count]);
+        {
+            auto it = m_params.find(RetentionParam::shape);
+            if (it != m_params.end()) {
+                auto tshape = tensor::cast(INT32, it->second);
+                m_shape.resize(tshape.count());
+                for (size_t i = 0; i < m_shape.size(); ++i) {
+                    m_shape[i] = tshape.data<int32_t>(i);
+                }
+            }
+        }
         return read_size;
     }
 

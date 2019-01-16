@@ -1,5 +1,5 @@
-#ifndef TS_KERNELS_RESHAPE_H
-#define TS_KERNELS_RESHAPE_H
+#ifndef TS_KERNELS_TO_FLOAT_H
+#define TS_KERNELS_TO_FLOAT_H
 
 #include <core/tensor.h>
 #include <runtime/stack.h>
@@ -9,11 +9,11 @@
 namespace ts {
 
 
-class Reshape : public ts::Operator {
+class To_Float : public ts::Operator {
 public:
 
     using supper = ts::Operator;
-    Reshape();
+    To_Float();
 
     virtual void init();
 
@@ -21,10 +21,6 @@ public:
 
     virtual int infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output);
 
-private:
-    Shape m_shape;
-    int   m_index;
-    int   m_dims;
 
 };
 

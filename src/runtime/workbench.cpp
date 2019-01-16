@@ -35,6 +35,13 @@ namespace ts {
     }
 
     Workbench::~Workbench() {
+        this->m_program.clear();
+        this->m_stack->clear();
+        this->m_data_sagment->clear();
+        this->m_map_input_slots.clear();
+        this->m_map_output_slots.clear();
+        this->m_inputs.clear();
+        this->m_outputs.clear();
         this->m_device_context.finalize();
     }
 

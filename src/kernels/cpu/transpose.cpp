@@ -1,5 +1,8 @@
 #include <kernels/cpu/transpose.h>
 #include <set>
+#include <global/operator_factory.h>
+
+
 
 namespace ts {
 
