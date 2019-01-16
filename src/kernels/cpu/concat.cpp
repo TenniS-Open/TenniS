@@ -2,6 +2,7 @@
 #include <core/tensor_builder.h>
 
 #include "backend/name.h"
+#include "core/memory.h"
 
 namespace ts {
 
@@ -23,9 +24,6 @@ namespace ts {
 	int Concat::run(ts::Stack &stack)
 	{
 		int input_num = stack.size();
-
-		TS_AUTO_CHECK(input_num != 0);
-		TS_AUTO_CHECK(stack.index(0)->dtype() == FLOAT32 || stack.index(0)->dtype() == FLOAT64);
 
 		std::vector<ts::Tensor::Prototype> output;
 
@@ -98,14 +96,12 @@ namespace ts {
 
 		for (int i = 1; i < input_num; i++)
 		{
-			if (stack.index(i)->dtype() != dtype)
-				throw ts::Exception("Can not concat on different data type");
+			TS_CHECK(stack.index(i)->dtype() == dtype) << "Can not concat on different data type" << ts::eject;
 		}
 		
 		Shape output_shape(stack.index(0)->sizes());
 
-		if (m_dim > output_shape.size())
-			throw ts::Exception("Concat dim should be less than input dim!");
+		TS_CHECK(m_dim < output_shape.size()) << "Concat dim should be less than input dim!" << ts::eject;
 
 		int num_dims = output_shape.size();
 		int concat_dim_output_num = output_shape[m_dim];
@@ -113,14 +109,13 @@ namespace ts {
 		for (int i = 1; i < input_num; i++)
 		{
 			auto shape = stack.index(i)->sizes();
-			if (shape.size() != num_dims)
-				throw ts::Exception("All inputs must have the same dims!");
+			TS_CHECK(shape.size() == num_dims) << "All inputs must have the same dims!" << ts::eject;
+
 			for (int j = 0; j < shape.size(); j++)
 			{
 				if (j == m_dim)
 					continue;
-				if (shape[j] != output_shape[j])
-					throw ts::Exception("All inputs must have the same shape, except at concat_axis!");
+				TS_CHECK(shape[j] == output_shape[j]) << "All inputs must have the same shape, except at concat_axis!" << ts::eject;
 			}
 			concat_dim_output_num += shape[m_dim];
 		}
@@ -129,6 +124,8 @@ namespace ts {
 
 		output.resize(1);
 		output[0] = ts::Tensor::Prototype(stack.index(0)->dtype(), output_shape);
+
+		return 1;
 	}
 
 	template<typename T>
@@ -137,12 +134,10 @@ namespace ts {
 		auto input_shape = stack.index(0)->sizes();
 		ts::Tensor& output_tensor = *stack.index(-1);
 		auto output_shape = output_tensor.sizes();
-		T* output_data = output_tensor.sync(memory_device()).data<T>();
-		if (output_data == nullptr)
-			return false;
+		T* output_data = output_tensor.sync(MemoryDevice(CPU)).data<T>();
 
-		int num_concats = 1;              //concats num of each featureMap
-		int bottom_concat_size = 1;       //size of each concat in bottom
+		int num_concats = 1;              
+		int bottom_concat_size = 1;      
 		int output_concat_axis = output_shape[m_dim];
 		
 		if (m_dim == 0)
@@ -167,9 +162,8 @@ namespace ts {
 			int input_concat_axis = stack.index(i)->sizes()[m_dim];
 			for (int j = 0; j < num_concats; j++)
 			{
-				::memcpy(output_data + (j * output_concat_axis + offset_concat_axis)* bottom_concat_size,
-					input_data + j * input_concat_axis * bottom_concat_size, 
-					input_concat_axis * bottom_concat_size * sizeof(T));
+				memcpy(output_data + (j * output_concat_axis + offset_concat_axis)* bottom_concat_size,MemoryDevice(CPU), input_concat_axis * bottom_concat_size * sizeof(T),
+					input_data + j * input_concat_axis * bottom_concat_size, MemoryDevice(CPU), input_concat_axis * bottom_concat_size * sizeof(T));
 			}
 			offset_concat_axis += input_concat_axis;
 		}
