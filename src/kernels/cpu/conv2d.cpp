@@ -3,6 +3,8 @@
 #include <kernels/cpu/math_cpu.h>
 #include <kernels/cpu/im2col.h>
 #include <global/operator_factory.h>
+#include <backend/name.h>
+
 
 namespace ts {
 
@@ -148,6 +150,6 @@ int Conv2d::run(ts::Stack &stack) {
 
 
 
-TS_REGISTER_OPERATOR(Conv2d, ts::CPU, "conv2d")
+TS_REGISTER_OPERATOR(Conv2d, ts::CPU, ts::name::layer::conv2d())
 
 }

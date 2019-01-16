@@ -1,7 +1,7 @@
 #include <kernels/cpu/pad.h>
 #include <core/tensor_builder.h>
 #include <global/operator_factory.h>
-
+#include <backend/name.h>
 
 
 namespace ts {
@@ -208,6 +208,6 @@ int Pad::run(ts::Stack &stack) {
 
 ////////////////////////////////////////////
 
-TS_REGISTER_OPERATOR(Pad, ts::CPU, "pad")
+TS_REGISTER_OPERATOR(Pad, ts::CPU, ts::name::layer::pad())
 
 }

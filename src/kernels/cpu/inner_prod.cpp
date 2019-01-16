@@ -2,7 +2,7 @@
 #include <core/tensor_builder.h>
 #include <kernels/cpu/math_cpu.h>
 #include <global/operator_factory.h>
-
+#include <backend/name.h>
 
 namespace ts {
 
@@ -134,6 +134,6 @@ int Inner_Prod::run(ts::Stack &stack) {
 
 /////////////////////////////////////////////////
 
-TS_REGISTER_OPERATOR(Inner_Prod, ts::CPU, "inner_prod")
+TS_REGISTER_OPERATOR(Inner_Prod, ts::CPU, ts::name::layer::inner_prod())
 
 }
