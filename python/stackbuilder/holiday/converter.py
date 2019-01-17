@@ -71,6 +71,8 @@ def convert(input_file, output_file,
         OPType.Enum_ConvolutionLayer: convert_convolution_layer,
         OPType.Enum_BatchNormliseLayer: convert_batch_norm_layer,
         OPType.Enum_ScaleLayer: convert_batch_scale_layer,
+        OPType.Enum_ReLULayer: convert_relu_layer,
+        OPType.Enum_PoolingLayer: convert_pooling_layer,
     }
 
     nodes = []
@@ -362,6 +364,151 @@ def convert_batch_scale_layer(layer, input_nodes, output_names):
     node = ts.zoo.batch_scale(node_name, x=x, scale=scale, bias=bias, dim=1)
 
     return node,
+
+
+def convert_relu_layer(layer, input_nodes, output_names):
+    # type: (hd.Holiday_LayerParameter, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# ==# Converting Layer: {}".format(output_names))
+
+    assert len(input_nodes) == 1
+    assert len(output_names) == 1
+
+    x = input_nodes[0]
+    node_name = output_names[0]
+
+    node = ts.zoo.relu(node_name, x=x)
+
+    return node,
+
+
+def convert_pooling_layer(layer, input_nodes, output_names):
+    # type: (hd.Holiday_LayerParameter, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# ==# Converting Layer: {}".format(output_names))
+
+    assert len(input_nodes) == 1
+    assert len(output_names) == 1
+
+    x = input_nodes[0]
+    node_name = output_names[0]
+
+    param = layer.pooling_param
+
+    pool = param.pool
+
+    holiday_pool_type_to_ts_pool_type = {
+        param.MAX: ts.zoo.Type.pooling_type.max,
+        param.AVE: ts.zoo.Type.pooling_type.avg,
+        param.STOCHASTIC: None,
+    }
+
+    holiday_pool_type_to_string = {
+        param.MAX: "MAX",
+        param.AVE: "AVE",
+        param.STOCHASTIC: "STOCHASTIC",
+    }
+
+    print("--## Type : {}".format(holiday_pool_type_to_string[pool]))
+
+    type = holiday_pool_type_to_ts_pool_type[pool]
+    if type is None:
+        raise NotImplementedError("Pooling type(code): {}({})".format(holiday_pool_type_to_string[pool], pool))
+
+    padding = [param.pad_height, param.pad_width]
+
+    print("--## Padding: {}".format(padding))
+
+    kernel = [param.kernel_height, param.kernel_width]
+
+    print("--## Kernel: {}".format(kernel))
+
+    stride = [param.stride_height, param.stride_width]
+
+    print("--## Stride: {}".format(stride))
+
+    global_pooling = False
+    if param.HasField("global_pooling"):
+        global_pooling = param.global_pooling
+        print("--## Global pooling: {}".format(global_pooling))
+
+    tf_padding = None
+    if param.HasField("tf_padding"):
+        tf_padding = param.tf_padding
+        print("--## TF padding: {}".format(tf_padding))
+
+    valid = None
+    if param.HasField("valid"):
+        valid = param.valid
+        print("--## MX valid: {}".format(valid))
+
+    assert tf_padding is None or tf_padding == "SAME" or tf_padding == "VALID"
+
+    if global_pooling:
+        raise NotImplementedError("Global pooling: {}".format(global_pooling))
+
+    if tf_padding is not None:
+        raise NotImplementedError("TF padding: {}".format(tf_padding))
+
+    is_holiday = valid is None and tf_padding is None
+    is_mxnet = valid is not None and tf_padding is None
+    is_tf = valid is None and tf_padding is not None
+
+    node = None
+
+    if is_holiday:
+        node = ts.zoo.pooling2d(node_name, x=x,
+                                ksize=[1, 1, kernel[0], kernel[1]],
+                                stride=[1, 1, stride[0], stride[1]],
+                                type=type,
+                                format=ts.zoo.Name.NCHW,
+                                padding=[[0, 0], [0, 0], [padding[0], padding[0]], [padding[1], padding[1]]])
+    elif is_mxnet:
+        node = ts.frontend.mxnet.pooling2d(node_name, x=x,
+                                           ksize=[1, 1, kernel[0], kernel[1]],
+                                           stride=[1, 1, stride[0], stride[1]],
+                                           type=type,
+                                           format=ts.zoo.Name.NCHW,
+                                           padding=[[0, 0], [0, 0], [padding[0], padding[0]], [padding[1], padding[1]]],
+                                           valid=valid)
+
+    if node is None:
+        raise NotImplementedError(layer)
+
+    return node,
+
+
+def convert_inner_product_layer(layer, input_nodes, output_names):
+    # type: (hd.Holiday_LayerParameter, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# ==# Converting Layer: {}".format(output_names))
+
+    assert len(input_nodes) == 1
+    assert len(output_names) == 1
+
+    x = input_nodes[0]
+    node_name = output_names[0]
+
+    param = layer.inner_product_param
+
+    num_output = None
+    if param.HasField("num_output"):
+        num_output = param.num_output
+
+    axis = 1
+    if param.HasField("axis"):
+        axis = param.axis
+
+    assert axis == 1
+
+    transpose = False
+    if param.HasField("transpose"):
+        transpose = param.transpose
+
+    bias_blob = blob2numpy(param.bias_param)
+    weights_blob = blob2numpy(param.Inner_param)
+
+    print("--## Bias shape: {}".format(bias_blob.shape))
+    print("--## Weights shape: {}".format(weights_blob.shape))
+
+    exit()
 
 
 if __name__ == "__main__":
