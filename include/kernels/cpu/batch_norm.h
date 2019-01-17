@@ -23,8 +23,8 @@ public:
 
 private:
     template<typename T>
-    void compute_batch_norm(const ts::Tensor *input_tensor, const ts::Tensor *mean_tensor,
-                            const ts::Tensor *variance_tensor, ts::Tensor *output_tensor);
+    void compute_batch_norm(Tensor *input_tensor, Tensor *mean_tensor,
+                            Tensor *variance_tensor, ts::Tensor *output_tensor);
     void infer_private(ts::Stack &stack, ts::Tensor::Prototype &output);
 
 private:
