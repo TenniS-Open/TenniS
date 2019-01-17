@@ -82,10 +82,10 @@ namespace ts {
 		int axis = output_shape[m_dim];
 		T* input_data = stack.index(0)->sync(memory_device()).data<T>();
 		T* output_data = output_tensor.sync(memory_device()).data<T>();
-		if (output_data == nullptr || input_data == nullptr)
-			return false;
 
-		std::memcpy(output_data,input_data, output_tensor.count() * sizeof(T));
+		int count = output_tensor.count();
+		memcpy(output_data, MemoryDevice(CPU), count * sizeof(T), input_data, MemoryDevice(CPU), count * sizeof(T));
+
 		int scale_data_size = output_tensor.count() / axis;
 		T* scale_data = new T[scale_data_size];
 		T* denominator_data = new T[scale_data_size];
@@ -93,7 +93,8 @@ namespace ts {
 		{
 			std::memset(denominator_data, 0, scale_data_size * sizeof(T));
 			//Caculate max value
-			std::memcpy(scale_data,input_data + i * axis * inner_num, inner_num * sizeof(T));
+			memcpy(scale_data, MemoryDevice(CPU), inner_num * sizeof(T), input_data + i * axis * inner_num, MemoryDevice(CPU), inner_num * sizeof(T));
+			//std::memcpy(scale_data,input_data + i * axis * inner_num, inner_num * sizeof(T));
 			for (int j = 0; j < axis; j++)
 			{
 				for (int k = 0; k < inner_num; k++)
