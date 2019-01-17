@@ -284,7 +284,7 @@ namespace ts {
         return view_tensor;
     }
 
-    bool Tensor::check(const Shape &shape) {
+    bool Tensor::has_shape(const Shape &shape) const {
         auto this_shape = this->sizes();
         if (this_shape.size() != shape.size()) return false;
         for (size_t i = 0; i < shape.size(); ++i) {

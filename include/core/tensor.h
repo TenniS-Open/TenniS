@@ -10,6 +10,7 @@
 #include "core/sync/sync_controller.h"
 #include "module/serialization.h"
 #include "sync/sync_memory.h"
+#include <initializer_list>
 
 #include <vector>
 #include <cassert>
@@ -256,7 +257,11 @@ namespace ts {
 
         Tensor view(const MemoryDevice &device) const;
 
-        bool check(const Shape &shape);
+        bool has_shape(const Shape &shape) const;
+
+        bool has_shape(const std::initializer_list<int> &shape) const {
+            return has_shape(Shape(shape.begin(), shape.end()));
+        }
 
     private:
         TensorMemory m_memory;
