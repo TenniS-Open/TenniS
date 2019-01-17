@@ -90,6 +90,7 @@ namespace ts {
 		{
 			output.resize(1);
 			output[0] = ts::Tensor::Prototype(stack.index(0)->dtype(), stack.index(0)->sizes());
+			return 1;
 		}
 
 		auto dtype = stack.index(0)->dtype();
@@ -137,22 +138,17 @@ namespace ts {
 		T* output_data = output_tensor.sync(MemoryDevice(CPU)).data<T>();
 
 		int num_concats = 1;              
-		int bottom_concat_size = 1;      
+		int input_concat_size = 1;      
 		int output_concat_axis = output_shape[m_dim];
 		
-		if (m_dim == 0)
-			num_concats = 1;
-		else
+		for (int i = 0; i < m_dim; i++)
 		{
-			for (int i = 0; i < m_dim; i++)
-			{
 				num_concats *= input_shape[i];
-			}
 		}
 
 		for (int i = m_dim + 1; i < input_shape.size(); i++)
 		{
-			bottom_concat_size *= input_shape[i];
+			input_concat_size *= input_shape[i];
 		}
 
 		int offset_concat_axis = 0;
@@ -162,8 +158,8 @@ namespace ts {
 			int input_concat_axis = stack.index(i)->sizes()[m_dim];
 			for (int j = 0; j < num_concats; j++)
 			{
-				memcpy(output_data + (j * output_concat_axis + offset_concat_axis)* bottom_concat_size,MemoryDevice(CPU), input_concat_axis * bottom_concat_size * sizeof(T),
-					input_data + j * input_concat_axis * bottom_concat_size, MemoryDevice(CPU), input_concat_axis * bottom_concat_size * sizeof(T));
+				memcpy(output_data + (j * output_concat_axis + offset_concat_axis)* input_concat_size,MemoryDevice(CPU), input_concat_axis * input_concat_size * sizeof(T),
+					input_data + j * input_concat_axis * input_concat_size, MemoryDevice(CPU), input_concat_axis * input_concat_size * sizeof(T));
 			}
 			offset_concat_axis += input_concat_axis;
 		}
@@ -177,15 +173,15 @@ namespace ts {
 		//	{
 		//		int output_index_temp = output_index;
 		//		int input_index_temp = input_index;
-		//		for (int num = 0; num < input_concat_axis * bottom_concat_size; num++)
+		//		for (int num = 0; num < input_concat_axis * input_concat_size; num++)
 		//		{
 		//			output_data[output_index_temp++] = input_data[input_index_temp++];
 		//		}
-		//		input_index += input_concat_axis * bottom_concat_size;
-		//		output_index += output_concat_axis * bottom_concat_size;
+		//		input_index += input_concat_axis * input_concat_size;
+		//		output_index += output_concat_axis * input_concat_size;
 		//	}
 		//	offset_concat_axis += input_concat_axis;
-		//	output_index = offset_concat_axis * bottom_concat_size;
+		//	output_index = offset_concat_axis * input_concat_size;
 		//}
 
 		return true;
