@@ -58,12 +58,13 @@ namespace ts {
 		T* input_data = stack.index(0)->sync(memory_device()).data<T>();
 		T* output_data = output_tensor.sync(memory_device()).data<T>();
 		//::memcpy(output_data, input_data, stack.index(0)*sizeof(T));
+		int count = output_tensor.count();
+		memcpy(output_data, MemoryDevice(CPU), count * sizeof(T), input_data, MemoryDevice(CPU), count * sizeof(T));
 
 		for (int i = 0; i < output_tensor.count(); i++)
 		{
-			//*output_data = *input_data > 0 ? *input_data : 0;
-			*output_data = std::max(*input_data,T(0.0));
-			input_data++;
+			T val = *output_data;
+			*output_data = std::max(val,T(0.0));
 			output_data++;
 		}
 

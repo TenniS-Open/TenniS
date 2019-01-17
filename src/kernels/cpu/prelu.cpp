@@ -16,20 +16,17 @@ namespace ts {
 	{
 		supper::init();
 
-		ts::Tensor slope = get(name::slope);
+		ts::Tensor slope = tensor::cast(FLOAT32,get(name::slope));
 
 		if (slope.count() != 1)
 		{
-			if (!has(name::dim))
-				throw ts::Exception("Must input dim parameter");
+			TS_CHECK(has(name::dim)) << "Must input dim parameter" << ts::eject;
 			m_dim = tensor::to_int(get(name::dim));
-			auto dtype = slope.dtype();
-			TS_AUTO_CHECK(dtype == FLOAT32);
 
-			auto slope_mem = slope.sync(memory_device());
+			float* slope_data = slope.sync(memory_device()).data<float>();
 			for (int i = 0; i < slope.count(); i++)
 			{
-				m_slope.emplace_back(static_cast<float>(slope_mem.data<float>()[i]));
+				m_slope.emplace_back(*slope_data++);
 			}
 		}
 		else
