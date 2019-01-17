@@ -1,7 +1,7 @@
 #include <kernels/cpu/transpose.h>
 #include <set>
 #include <global/operator_factory.h>
-
+#include <backend/name.h>
 
 
 namespace ts {
@@ -224,9 +224,9 @@ int Transpose::run(ts::Stack &stack) {
 
 
 
-
-
-/////////////////////////////////////////////////////////////
-TS_REGISTER_OPERATOR(Transpose, ts::CPU, "_transpose")
-
 }
+
+
+
+using namespace ts;
+TS_REGISTER_OPERATOR(Transpose, ts::CPU, ts::name::layer::transpose())

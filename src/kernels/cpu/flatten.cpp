@@ -1,6 +1,6 @@
 #include <kernels/cpu/flatten.h>
 #include <core/tensor_builder.h>
-
+#include <backend/name.h>
 
 namespace ts {
 
@@ -46,9 +46,7 @@ int Flatten::run(ts::Stack &stack) {
 }
 
 
-
-
-/////////////////////////////////////////////////////
-TS_REGISTER_OPERATOR(Flatten, ts::CPU, "flatten")
-
 }
+
+using namespace ts;
+TS_REGISTER_OPERATOR(Flatten, ts::CPU, ts::name::layer::flatten())

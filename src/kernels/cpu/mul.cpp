@@ -1,7 +1,7 @@
 #include <kernels/cpu/mul.h>
 #include <core/tensor_builder.h>
 #include <global/operator_factory.h>
-
+#include <backend/name.h>
 
 namespace ts {
 
@@ -193,9 +193,8 @@ int Mul::run(ts::Stack &stack) {
 
 
 
-
-/////////////////////////////////////////////////
-
-TS_REGISTER_OPERATOR(Mul, ts::CPU, "mul")
-
 }
+
+
+using namespace ts;
+TS_REGISTER_OPERATOR(Mul, ts::CPU, ts::name::layer::mul())

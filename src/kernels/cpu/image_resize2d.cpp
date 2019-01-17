@@ -2,7 +2,7 @@
 #include <core/tensor_builder.h>
 #include <memory>
 #include <global/operator_factory.h>
-
+#include <backend/name.h>
 
 namespace ts {
 
@@ -368,9 +368,8 @@ int Image_Resize2d::run(ts::Stack &stack) {
     return 1;
 }
 
-////////////////////////////////////////////////////////////////
-
-
-TS_REGISTER_OPERATOR(Image_Resize2d, ts::CPU, "_image_resize2d")
-
 }
+
+
+using namespace ts;
+TS_REGISTER_OPERATOR(Image_Resize2d, ts::CPU, "_image_resize2d")
