@@ -28,18 +28,18 @@ namespace ts {
 		std::vector<ts::Tensor::Prototype> output;
 
 		this->infer(stack, output);
-		auto out_device_type = memory_device();
-		stack.push(output[0], out_device_type);
+		auto device_type = memory_device();
+		stack.push(output[0], device_type);
 
 		auto dtype = stack.index(0)->dtype();
 		int bytes = type_bytes(dtype);
 		bool flag;
 		switch (bytes)
 		{
-			case 1 : flag = concat<char>(stack, input_num, out_device_type); break;
-			case 2 : flag = concat<short>(stack, input_num, out_device_type); break;
-			case 4 : flag = concat<float>(stack, input_num, out_device_type); break;
-			case 8 : flag = concat<double>(stack, input_num, out_device_type); break;
+			case 1 : flag = concat<char>(stack, input_num, device_type); break;
+			case 2 : flag = concat<short>(stack, input_num, device_type); break;
+			case 4 : flag = concat<float>(stack, input_num, device_type); break;
+			case 8 : flag = concat<double>(stack, input_num, device_type); break;
 			default : break;
 		}
 		return 1;
