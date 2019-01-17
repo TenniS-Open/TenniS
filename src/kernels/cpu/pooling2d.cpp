@@ -11,8 +11,7 @@ namespace ts {
 		field(name::format, REQUIRED);
 		field(name::type, REQUIRED);
 		field(name::padding, REQUIRED);
-		Tensor default_padding_type(INT32, { 1 });
-		default_padding_type.data<int>()[0] = 0;
+		Tensor default_padding_type = tensor::from<int32_t>(PDDINGTYPE::black);
 		field(name::padding_type, OPTIONAL, default_padding_type);
 		field(name::ksize, REQUIRED);
 		field(name::stride, REQUIRED);
@@ -30,8 +29,10 @@ namespace ts {
 		TS_AUTO_CHECK(static_padding.dims() == 2 && static_padding.size(0) == 4 && static_padding.size(1) == 2);
 
 		auto ksize_tensor = tensor::cast(INT32, this->get(name::ksize));
+		TS_AUTO_CHECK(ksize_tensor.dims() == 1 && ksize_tensor.count() == 4);
 
 		auto stride_tensor = tensor::cast(INT32, this->get(name::stride));
+		TS_AUTO_CHECK(stride_tensor.dims() == 1 && stride_tensor.count() == 4);
 
 		if (m_format == name::NCHW)
 		{
@@ -64,11 +65,9 @@ namespace ts {
 			m_stride.width = stride_tensor.data<int32_t>()[2];
 		}
 
-		if (has(name::padding_type))
-		{
-			ts::Tensor& padding_type_param = get(name::padding_type);
-			m_padding_type = (PDDINGTYPE)tensor::to_int(padding_type_param);
-		}
+		ts::Tensor& padding_type_param = get(name::padding_type);
+		m_padding_type = (PDDINGTYPE)tensor::to_int(padding_type_param);
+
 
 		TS_AUTO_CHECK(m_padding_type == black);
 
@@ -149,7 +148,7 @@ namespace ts {
 
 		ts::Tensor& output_tensor = *stack.index(-1);
 		Shape output_shape = output_tensor.sizes();
-		T* output_data = output_tensor.sync(memory_device()).data<T>();
+		T* output_data = output_tensor.data<T>();
 
 		bool flag;
 
