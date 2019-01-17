@@ -1,10 +1,9 @@
 #ifndef TS_KERNELS_ADD_H
 #define TS_KERNELS_ADD_H
 
-#include <global/operator_factory.h>
 #include <core/tensor.h>
 #include <runtime/stack.h>
-
+#include <runtime/operator.h>
 
 
 namespace ts {
@@ -23,11 +22,10 @@ public:
 
 
 private:
-    template<typename T>
-    void dimshuffle(const Shape & shape, int dim, int add_dim, const T* src, T* dst);
 
+    int to_index(const HypeShape &hype, const Shape & shape, const Shape &curshape);
     template<typename T>
-    void compute_add(const ts::Tensor *input_tensor, const ts::Tensor *add_tensor, ts::Tensor *output_tensor);
+    void compute_run(const Tensor &input_tensor, const Tensor &right_tensor,Tensor *left_tensor);
     void infer_private(ts::Stack &stack, ts::Tensor::Prototype &output);
 
 
