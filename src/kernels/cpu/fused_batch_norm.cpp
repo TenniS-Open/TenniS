@@ -5,7 +5,7 @@
 #include <core/tensor_builder.h>
 
 #include <global/operator_factory.h>
-
+#include <backend/name.h>
 
 
 namespace ts {
@@ -156,15 +156,9 @@ int Fused_Batch_Norm::run(ts::Stack &stack) {
 }
 
 
-
-
-
-/////////////////////////////////////////////////
-TS_REGISTER_OPERATOR(Fused_Batch_Norm, ts::CPU, "fused_batch_norm")
-
-
-
-
-
 }
+
+
+using namespace ts;
+TS_REGISTER_OPERATOR(Fused_Batch_Norm, ts::CPU, ts::name::layer::fused_batch_norm())
 

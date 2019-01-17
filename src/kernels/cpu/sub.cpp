@@ -1,6 +1,8 @@
 #include <kernels/cpu/sub.h>
 #include <core/tensor_builder.h>
 #include <global/operator_factory.h>
+#include <backend/name.h>
+
 
 namespace ts {
 
@@ -191,9 +193,8 @@ int Sub::run(ts::Stack &stack) {
 
 
 
-
-
-/////////////////////////////////////////////////
-TS_REGISTER_OPERATOR(Sub, ts::CPU, "sub")
-
 }
+
+
+using namespace ts;
+TS_REGISTER_OPERATOR(Sub, ts::CPU, ts::name::layer::sub())

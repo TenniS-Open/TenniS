@@ -1,6 +1,7 @@
 #include <kernels/cpu/add_bias.h>
 #include <core/tensor_builder.h>
 #include <global/operator_factory.h>
+#include <backend/name.h>
 
 namespace ts {
 
@@ -159,8 +160,9 @@ int Add_Bias::run(ts::Stack &stack) {
 
 
 
-
-/////////////////////////////////////////////////
-TS_REGISTER_OPERATOR(Add_Bias, ts::CPU, "add_bias")
-
 }
+/////////////////////////////////////////////////
+
+using namespace ts;
+TS_REGISTER_OPERATOR(Add_Bias, ts::CPU, ts::name::layer::add_bias())
+

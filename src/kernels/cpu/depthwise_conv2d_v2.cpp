@@ -2,6 +2,8 @@
 #include <kernels/cpu/conv2d_base.h>
 #include <core/tensor_builder.h>
 #include <global/operator_factory.h>
+#include <backend/name.h>
+
 
 namespace ts {
 
@@ -121,13 +123,11 @@ int Depthwise_Conv2d_V2::run(ts::Stack &stack) {
 }
 
 
-
+}
 
 ////////////////////////////////////////////
 
 
 
-
-TS_REGISTER_OPERATOR(Depthwise_Conv2d_V2, ts::CPU, "depthwise_conv2d_v2")
-
-}
+using namespace ts;
+TS_REGISTER_OPERATOR(Depthwise_Conv2d_V2, ts::CPU, ts::name::layer::depthwise_conv2d_v2())

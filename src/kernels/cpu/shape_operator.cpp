@@ -1,5 +1,8 @@
 #include <kernels/cpu/shape_operator.h>
 #include <global/operator_factory.h>
+#include <backend/name.h>
+
+
 
 namespace ts {
 
@@ -50,14 +53,9 @@ int Shape_Operator::run(ts::Stack &stack) {
 
 
 
-
-
-
-
-
-
-
-////////////////////////////////////////////////////
-TS_REGISTER_OPERATOR(Shape_Operator, ts::CPU, "_shape")
-
 }
+
+
+
+using namespace ts;
+TS_REGISTER_OPERATOR(Shape_Operator, ts::CPU, ts::name::layer::shape())
