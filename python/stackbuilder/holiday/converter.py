@@ -73,6 +73,7 @@ def convert(input_file, output_file,
         OPType.Enum_ScaleLayer: convert_batch_scale_layer,
         OPType.Enum_ReLULayer: convert_relu_layer,
         OPType.Enum_PoolingLayer: convert_pooling_layer,
+        OPType.Enum_InnerProductLayer: convert_inner_product_layer,
     }
 
     nodes = []
@@ -501,14 +502,33 @@ def convert_inner_product_layer(layer, input_nodes, output_names):
     transpose = False
     if param.HasField("transpose"):
         transpose = param.transpose
+    print("--## Transpose: {}".format(transpose))
 
-    bias_blob = blob2numpy(param.bias_param)
     weights_blob = blob2numpy(param.Inner_param)
-
-    print("--## Bias shape: {}".format(bias_blob.shape))
     print("--## Weights shape: {}".format(weights_blob.shape))
 
-    exit()
+    bias_blob = None
+    if param.HasField("bias_param"):
+        bias_blob = blob2numpy(param.bias_param)
+        print("--## Bias shape: {}".format(bias_blob.shape))
+
+    assert num_output == weights_blob.shape[0]
+    num_input = weights_blob.shape[1]
+
+    if transpose:
+        weights_blob = numpy.reshape(weights_blob, newshape=[num_input, num_output])
+    else:
+        weights_blob = weights_blob.transpose()
+
+    node = ts.zoo.flatten("_flatten_" + node_name, x=x)
+    node = ts.zoo.inner_prod("_ip_" + node_name, node, weights_blob)
+
+    if bias_blob is not None:
+        node = ts.zoo.add_bias("_add_bias_" + node_name, x=node, b=bias_blob, format=ts.zoo.Name.NCHW)
+
+    node = ts.zoo.reshape(name=node_name, x=node, shape=[-1, num_output, 1, 1])
+
+    return node,
 
 
 if __name__ == "__main__":
