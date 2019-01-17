@@ -36,7 +36,7 @@ namespace ts {
 
             auto static_padding = tensor::cast(INT32, this->get(name::padding));
 
-            TS_AUTO_CHECK(static_padding.dims() == 2 && static_padding.size(0) == 4 && static_padding.size(1) == 2);
+            TS_AUTO_CHECK(static_padding.has_shape({4, 2}));
 
             if (format == name::NCHW) {
                 this->static_padding.top = static_padding.data<int32_t>()[4];
@@ -98,6 +98,8 @@ namespace ts {
                     input_size.height = shape[1];
                     input_size.width = shape[2];
                 }
+
+                TS_UNUSED(valid_pooling2d_forward);
 
                 /* Heavy version
                 Size2D expected_output_size = valid_pooling2d_forward(input_size, static_padding, ksize, stride);
