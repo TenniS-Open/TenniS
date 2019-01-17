@@ -283,4 +283,13 @@ namespace ts {
 
         return view_tensor;
     }
+
+    bool Tensor::check(const Shape &shape) {
+        auto this_shape = this->sizes();
+        if (this_shape.size() != shape.size()) return false;
+        for (size_t i = 0; i < shape.size(); ++i) {
+            if (shape[i] >= 0 && this_shape[i] != shape[i]) return false;
+        }
+        return true;
+    }
 }

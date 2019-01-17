@@ -186,6 +186,22 @@ namespace ts {
             if (value.count() == 0) TS_LOG_ERROR("Can not convert empty tensor to int") << eject;
             return cast(FLOAT64, value).data<double>(0);
         }
+
+        static std::string to_lower(const std::string &str) {
+            auto str_copy = str;
+            for (auto &ch : str_copy) ch = static_cast<char>(std::tolower(ch));
+            return str_copy;
+        }
+
+        bool to_bool(const Tensor &value) {
+            if (value.dtype() == CHAR8) {
+                try {
+                    return to_lower(to_string(value)) == "true";
+                } catch (const Exception &) {}
+            }
+            if (value.count() == 0) TS_LOG_ERROR("Can not convert empty tensor to bool") << eject;
+            return cast(BOOLEAN, value).data<dtype<BOOLEAN>::declare>(0) != 0;
+        }
     }
 
     template<typename T>

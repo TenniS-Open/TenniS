@@ -256,6 +256,8 @@ namespace ts {
 
         Tensor view(const MemoryDevice &device) const;
 
+        bool check(const Shape &shape);
+
     private:
         TensorMemory m_memory;
         Prototype m_proto;
