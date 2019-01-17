@@ -19,20 +19,29 @@ namespace ts {
 
 		auto dtype = stack.index(0)->dtype();
 		bool flag;
-		switch (dtype)
+		int bytes = type_bytes(dtype);
+		switch (bytes)
 		{
-			case ts::FLOAT32:
-			{
-				flag = relu<float>(stack);
-				break;
-			}
-			case ts::FLOAT64:
-			{
-				flag = relu<double>(stack);
-				break;
-			}
-			default:break;
+		case 1: flag = relu<char>(stack); break;
+		case 2: flag = relu<short>(stack); break;
+		case 4: flag = relu<float>(stack); break;
+		case 8: flag = relu<double>(stack); break;
+		default:break;
 		}
+		//switch (dtype)
+		//{
+		//	case ts::FLOAT32:
+		//	{
+		//		flag = relu<float>(stack);
+		//		break;
+		//	}
+		//	case ts::FLOAT64:
+		//	{
+		//		flag = relu<double>(stack);
+		//		break;
+		//	}
+		//	default:break;
+		//}
 
 		return 1;
 	}
@@ -55,11 +64,12 @@ namespace ts {
 	{
 		ts::Tensor& output_tensor = *stack.index(-1);
 		auto output_shape = output_tensor.sizes();
-		T* input_data = stack.index(0)->sync(memory_device()).data<T>();
-		T* output_data = output_tensor.sync(memory_device()).data<T>();
-		//::memcpy(output_data, input_data, stack.index(0)*sizeof(T));
+		auto input_memory = stack.index(0)->sync(memory_device());
+		auto device_type = input_memory.device();
+		T* input_data = input_memory.data<T>();
+		T* output_data = output_tensor.data<T>();
 		int count = output_tensor.count();
-		memcpy(output_data, MemoryDevice(CPU), count * sizeof(T), input_data, MemoryDevice(CPU), count * sizeof(T));
+		memcpy(output_data, device_type, count * sizeof(T), input_data, device_type, count * sizeof(T));
 
 		for (int i = 0; i < output_tensor.count(); i++)
 		{

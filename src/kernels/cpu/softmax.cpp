@@ -30,20 +30,29 @@ namespace ts {
 
 		auto dtype = stack.index(0)->dtype();
 		bool flag;
-		switch (dtype)
+		int bytes = type_bytes(dtype);
+		switch (bytes)
 		{
-			case ts::FLOAT32:
-			{
-				flag = softmax<float>(stack);
-				break;
-			}
-			case ts::FLOAT64:
-			{
-				flag = softmax<double>(stack);
-				break;
-			}
-			default:break;
+		case 1: flag = softmax<char>(stack); break;
+		case 2: flag = softmax<short>(stack); break;
+		case 4: flag = softmax<float>(stack); break;
+		case 8: flag = softmax<double>(stack); break;
+		default:break;
 		}
+		//switch (dtype)
+		//{
+		//	case ts::FLOAT32:
+		//	{
+		//		flag = softmax<float>(stack);
+		//		break;
+		//	}
+		//	case ts::FLOAT64:
+		//	{
+		//		flag = softmax<double>(stack);
+		//		break;
+		//	}
+		//	default:break;
+		//}
 		return 1;
 	}
 
@@ -80,11 +89,14 @@ namespace ts {
 		}
 
 		int axis = output_shape[m_dim];
-		T* input_data = stack.index(0)->sync(memory_device()).data<T>();
-		T* output_data = output_tensor.sync(memory_device()).data<T>();
+
+		auto input_memory = stack.index(0)->sync(memory_device());
+		auto device_type = input_memory.device();
+		T* input_data = input_memory.data<T>();
+		T* output_data = output_tensor.data<T>();
 
 		int count = output_tensor.count();
-		memcpy(output_data, MemoryDevice(CPU), count * sizeof(T), input_data, MemoryDevice(CPU), count * sizeof(T));
+		memcpy(output_data, device_type, count * sizeof(T), input_data, device_type, count * sizeof(T));
 
 		int scale_data_size = output_tensor.count() / axis;
 		T* scale_data = new T[scale_data_size];
@@ -93,7 +105,7 @@ namespace ts {
 		{
 			std::memset(denominator_data, 0, scale_data_size * sizeof(T));
 			//Caculate max value
-			memcpy(scale_data, MemoryDevice(CPU), inner_num * sizeof(T), input_data + i * axis * inner_num, MemoryDevice(CPU), inner_num * sizeof(T));
+			memcpy(scale_data, device_type, inner_num * sizeof(T), input_data + i * axis * inner_num, device_type, inner_num * sizeof(T));
 			//std::memcpy(scale_data,input_data + i * axis * inner_num, inner_num * sizeof(T));
 			for (int j = 0; j < axis; j++)
 			{
