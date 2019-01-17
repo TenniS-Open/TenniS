@@ -69,6 +69,8 @@ def convert(input_file, output_file,
     layer_converters = {
         OPType.Enum_MemoryDataLayer: convert_memorydata_layer,
         OPType.Enum_ConvolutionLayer: convert_convolution_layer,
+        OPType.Enum_BatchNormliseLayer: convert_batch_norm_layer,
+        OPType.Enum_ScaleLayer: convert_batch_scale_layer,
     }
 
     nodes = []
@@ -138,7 +140,7 @@ def convert(input_file, output_file,
 
 def convert_memorydata_layer(layer, input_nodes, output_names):
     # type: (hd.Holiday_LayerParameter, List[ts.Node], List[str]) -> List[ts.Node]
-    print("--# Converting Layer: {}".format(output_names))
+    print("--# ==# Converting Layer: {}".format(output_names))
 
     assert len(input_nodes) == 0
     assert len(output_names) == 2
@@ -211,7 +213,7 @@ def convert_memorydata_layer(layer, input_nodes, output_names):
 
 def convert_convolution_layer(layer, input_nodes, output_names):
     # type: (hd.Holiday_LayerParameter, List[ts.Node], List[str]) -> List[ts.Node]
-    print("--# Converting Layer: {}".format(output_names))
+    print("--# ==# Converting Layer: {}".format(output_names))
 
     assert len(input_nodes) == 1
     assert len(output_names) == 1
@@ -305,6 +307,61 @@ def convert_convolution_layer(layer, input_nodes, output_names):
         raise NotImplementedError(layer)
 
     return conv2d,
+
+
+def convert_batch_norm_layer(layer, input_nodes, output_names):
+    # type: (hd.Holiday_LayerParameter, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# ==# Converting Layer: {}".format(output_names))
+
+    assert len(input_nodes) == 1
+    assert len(output_names) == 1
+
+    x = input_nodes[0]
+    node_name = output_names[0]
+
+    param = layer.batchNormlise_param
+
+    mean = param.mean_param
+    covariance = param.covariance_param
+
+    mean = blob2numpy(mean)
+    covariance = blob2numpy(covariance)
+
+    print("--## Mean shape: {}".format(mean.shape))
+    print("--## Covariance shape: {}".format(covariance.shape))
+
+    epsilon = 1e-5
+    variance = covariance ** 2 - epsilon
+
+    node = ts.zoo.batch_norm(node_name, x=x, mean=mean, variance=variance, dim=1, epsilon=epsilon)
+
+    return node,
+
+
+def convert_batch_scale_layer(layer, input_nodes, output_names):
+    # type: (hd.Holiday_LayerParameter, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# ==# Converting Layer: {}".format(output_names))
+
+    assert len(input_nodes) == 1
+    assert len(output_names) == 1
+
+    x = input_nodes[0]
+    node_name = output_names[0]
+
+    param = layer.scale_param
+
+    scale = param.scale_param
+    bias = param.bias_param
+
+    scale = blob2numpy(scale)
+    bias = blob2numpy(bias)
+
+    print("--## Scale shape: {}".format(scale.shape))
+    print("--## Bias shape: {}".format(bias.shape))
+
+    node = ts.zoo.batch_scale(node_name, x=x, scale=scale, bias=bias, dim=1)
+
+    return node,
 
 
 if __name__ == "__main__":
