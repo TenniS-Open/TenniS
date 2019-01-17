@@ -45,6 +45,11 @@ class Node(object):
     def name(self):
         return self.__name
 
+    @name.setter
+    def name(self, value):
+        self.__params[self.RetentionParam.name] = value
+        self.__name = value
+
     @property
     def op(self):
         return self.__op

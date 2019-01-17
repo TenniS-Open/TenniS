@@ -47,6 +47,8 @@ class Name(object):
         pooling2d = "pooling2d"
         pooling2d_v2 = "pooling2d_v2"
         resize2d = "resize2d"
+        copy = "_copy"
+        prewhiten = "prewhiten"
 
     dim = "dim"
     shuffle = "shuffle"
@@ -478,6 +480,18 @@ def pooling2d(name, x, ksize, stride, type=Type.pooling_type.max, format=Name.NC
     node.set(Name.type, type)
     node.set(Name.padding_type, padding_type)
 
+    return node
+
+
+def copy(name, x):
+    assert isinstance(x, Node)
+    node = menu.op(name=name, op_name=Name.Layer.copy, inputs=[x, ])
+    return node
+
+
+def prewhiten(name, x):
+    assert isinstance(x, Node)
+    node = menu.op(name=name, op_name=Name.Layer.prewhiten, inputs=[x, ])
     return node
 
 
