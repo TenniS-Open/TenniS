@@ -4,6 +4,10 @@
 
 #include "global/operator_factory.h"
 #include <map>
+#include <global/operator_factory.h>
+
+#include "global/memory_device.h"
+
 
 namespace ts {
     using Name = std::pair<DeviceType, std::string>;
@@ -38,5 +42,35 @@ namespace ts {
     void OperatorCreator::Clear() {
         auto &map_name_creator = MapNameCreator();
         map_name_creator.clear();
+    }
+
+    static OperatorCreator::function TalentQuery(const DeviceType &device_type,
+            const std::string &operator_name, bool strict) {
+        // step 1: check in strict mode
+        auto creator = OperatorCreator::Query(device_type, operator_name);
+
+        if (strict) return creator;
+
+        if (creator == nullptr) {
+            // step 2.x: try find operator on memory device, if computing device failed
+            auto memory_device = ComputingMemory::Query(device_type);
+            creator = OperatorCreator::Query(memory_device, operator_name);
+        }
+
+        if (creator == nullptr) {
+            // step 2.y: try find operator on CPU version
+            if (device_type != CPU) {
+                creator = OperatorCreator::Query(CPU, operator_name);
+            }
+        }
+
+        return creator;
+    }
+
+    Operator::shared
+    OperatorCreator::Create(const DeviceType &device_type, const std::string &operator_name, bool strict) TS_NOEXCEPT {
+        auto creator = TalentQuery(device_type, operator_name, strict);
+        if (!creator) return nullptr;
+        return creator();
     }
 }
