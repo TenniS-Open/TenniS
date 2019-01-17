@@ -18,7 +18,7 @@ namespace ts {
 		auto dim_tensor = get(name::dim);
 		m_dim = tensor::to_int(dim_tensor);
 		
-		TS_AUTO_CHECK(m_dim > 0);
+		TS_AUTO_CHECK(m_dim >= 0);
 	}
 
 	int Concat::run(ts::Stack &stack)
@@ -28,53 +28,19 @@ namespace ts {
 		std::vector<ts::Tensor::Prototype> output;
 
 		this->infer(stack, output);
-		stack.push(output[0], memory_device());
+		auto out_device_type = memory_device();
+		stack.push(output[0], out_device_type);
 
 		auto dtype = stack.index(0)->dtype();
+		int bytes = type_bytes(dtype);
 		bool flag;
-		switch (dtype)
+		switch (bytes)
 		{
-			case ts::INT8:
-			{
-				flag = concat<char>(stack, input_num);
-				break;
-			}
-			case ts::UINT8:
-			{
-				flag = concat<unsigned char>(stack, input_num);
-				break;
-			}
-			case ts::INT16:
-			{
-				flag = concat<short>(stack, input_num);
-				break;
-			}
-			case ts::UINT16:
-			{
-				flag = concat<unsigned short>(stack, input_num);
-				break;
-			}
-			case ts::INT32:
-			{
-				flag = concat<int>(stack, input_num);
-				break;
-			}
-			case ts::UINT32:
-			{
-				flag = concat<unsigned int>(stack, input_num);
-				break;
-			}
-			case ts::FLOAT32:
-			{
-				flag = concat<float>(stack, input_num);
-				break;
-			}
-			case ts::FLOAT64:
-			{
-				flag = concat<double>(stack, input_num);
-				break;
-			}
-			default:break;
+			case 1 : flag = concat<char>(stack, input_num, out_device_type); break;
+			case 2 : flag = concat<short>(stack, input_num, out_device_type); break;
+			case 4 : flag = concat<float>(stack, input_num, out_device_type); break;
+			case 8 : flag = concat<double>(stack, input_num, out_device_type); break;
+			default : break;
 		}
 		return 1;
 	}
@@ -130,12 +96,12 @@ namespace ts {
 	}
 
 	template<typename T>
-	bool Concat::concat(ts::Stack &stack,int input_num)
+	bool Concat::concat(ts::Stack &stack,int input_num, MemoryDevice device_type)
 	{
 		auto input_shape = stack.index(0)->sizes();
 		ts::Tensor& output_tensor = *stack.index(-1);
 		auto output_shape = output_tensor.sizes();
-		T* output_data = output_tensor.sync(MemoryDevice(CPU)).data<T>();
+		T* output_data = output_tensor.data<T>();
 
 		int num_concats = 1;              
 		int input_concat_size = 1;      
@@ -143,7 +109,7 @@ namespace ts {
 		
 		for (int i = 0; i < m_dim; i++)
 		{
-				num_concats *= input_shape[i];
+			num_concats *= input_shape[i];
 		}
 
 		for (int i = m_dim + 1; i < input_shape.size(); i++)
@@ -152,14 +118,17 @@ namespace ts {
 		}
 
 		int offset_concat_axis = 0;
+		
+		
 		for (int i = 0; i < input_num; i++)
 		{
-			const T* input_data = stack.index(i)->sync(memory_device()).data<T>();
+			auto input_memory = stack.index(i)->sync(memory_device());
+			const T* input_data = input_memory.data<T>();
 			int input_concat_axis = stack.index(i)->sizes()[m_dim];
 			for (int j = 0; j < num_concats; j++)
 			{
-				memcpy(output_data + (j * output_concat_axis + offset_concat_axis)* input_concat_size,MemoryDevice(CPU), input_concat_axis * input_concat_size * sizeof(T),
-					input_data + j * input_concat_axis * input_concat_size, MemoryDevice(CPU), input_concat_axis * input_concat_size * sizeof(T));
+				memcpy(output_data + (j * output_concat_axis + offset_concat_axis)* input_concat_size, device_type, input_concat_axis * input_concat_size * sizeof(T),
+					input_data + j * input_concat_axis * input_concat_size, input_memory.device(), input_concat_axis * input_concat_size * sizeof(T));
 			}
 			offset_concat_axis += input_concat_axis;
 		}
