@@ -6,16 +6,19 @@
 #include "utils/assert.h"
 
 #include "global/memory_device.h"
+#include "backend/common_function.h"
 
 namespace ts {
 
 	Pooling2dV2::Pooling2dV2()
+        :m_padding(0,0,0,0)
+        , m_ksize(0,0)
+        , m_stride(0,0)
 	{
 		field(name::format, REQUIRED);
 		field(name::type, REQUIRED);
 		//field(name::padding, REQUIRED);
-		Tensor default_padding_type(INT32, { 1 });
-		default_padding_type.data<int>()[0] = 0;
+		Tensor default_padding_type = tensor::from<int32_t>(PDDINGTYPE::black);
 		field(name::padding_type, OPTIONAL, default_padding_type);
 	}
 
@@ -43,6 +46,7 @@ namespace ts {
 
 		auto format_tensor = this->get(name::format);
 		m_operator->set(name::format, format_tensor);
+		m_format = tensor::to_string(format_tensor);
 
 		auto pooling_type_tensor = this->get(name::type);
 		m_operator->set(name::type, pooling_type_tensor);
@@ -50,12 +54,8 @@ namespace ts {
 		//auto padding_tensor = this->get(name::padding);
 		//m_operator->set(name::padding, padding_tensor);
 
-		if (has(name::padding_type))
-		{
-			auto padding_tensor = this->get(name::padding_type);
-			m_operator->set(name::padding_type, padding_tensor);
-		}
-
+		auto padding_tensor = this->get(name::padding_type);
+		m_operator->set(name::padding_type, padding_tensor);
 	}
 
 	int Pooling2dV2::run(ts::Stack &stack)
@@ -65,17 +65,45 @@ namespace ts {
 		TS_AUTO_CHECK(stack.index(0)->dtype() == FLOAT32 || stack.index(0)->dtype() == FLOAT64);
 
 		//auto controller = std::make_shared<DynamicMemoryController>(MemoryDevice(CPU));
+        Padding2D padding;
+        KSize2D ksize;
+        Stride2D stride;
 
 		auto padding_tensor = tensor::cast(INT32, *stack.index(1));
-		m_operator->set(name::padding, tensor::clone(padding_tensor.dtype(), padding_tensor));
+        auto ksize_tensor = tensor::cast(INT32, *stack.index(2));
+        auto stride_tensor = tensor::cast(INT32, *stack.index(3));
+        
+        if (m_format == name::NCHW)
+        {
+            padding.top = padding_tensor.data<int32_t>()[4];
+            padding.bottom = padding_tensor.data<int32_t>()[5];
+            padding.left = padding_tensor.data<int32_t>()[6];
+            padding.right = padding_tensor.data<int32_t>()[7];
+            ksize.height = ksize_tensor.data<int32_t>()[2];
+            ksize.width = ksize_tensor.data<int32_t>()[3];
+            stride.height = stride_tensor.data<int32_t>()[2];
+            stride.width = stride_tensor.data<int32_t>()[3];
+        }
+        else
+        {
+            padding.top = padding_tensor.data<int32_t>()[2];
+            padding.bottom = padding_tensor.data<int32_t>()[3];
+            padding.left = padding_tensor.data<int32_t>()[4];
+            padding.right = padding_tensor.data<int32_t>()[5];
+            ksize.height = ksize_tensor.data<int32_t>()[1];
+            ksize.width = ksize_tensor.data<int32_t>()[2];
+            stride.height = stride_tensor.data<int32_t>()[1];
+            stride.width = stride_tensor.data<int32_t>()[2];
+        }
 
-		auto ksize_tensor = tensor::cast(INT32, *stack.index(2));
-		m_operator->set(name::ksize, tensor::clone(ksize_tensor.dtype(), ksize_tensor));
-
-		auto stride_tensor = tensor::cast(INT32, *stack.index(3));
-		m_operator->set(name::stride, tensor::clone(stride_tensor.dtype(), stride_tensor));
-
-		m_operator->init();
+        if (!m_init_pooling2d_flag || !check_equale_input_param(padding, ksize, stride))
+        {
+            m_operator->set(name::padding, tensor::clone(padding_tensor.dtype(), padding_tensor));
+            m_operator->set(name::ksize, tensor::clone(ksize_tensor.dtype(), ksize_tensor));
+            m_operator->set(name::stride, tensor::clone(stride_tensor.dtype(), stride_tensor));
+            m_operator->init();
+            m_init_pooling2d_flag = true;
+        }
 
 		stack.pop();
 		stack.pop();
@@ -88,15 +116,51 @@ namespace ts {
 
 	int Pooling2dV2::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output)
 	{
-		try
-		{
-			return m_operator->infer(stack, output);
-		}
-		catch (const Exception &e) {
-			std::cout << e.what() << std::endl;
-			return -1;
-		}
+        TS_AUTO_CHECK(stack.size() == 1 && stack.index(0)->dims() == 4);
+        TS_AUTO_CHECK(stack.index(0)->dtype() == FLOAT32 || stack.index(0)->dtype() == FLOAT64);
+
+        Size2D input_size;
+
+        if (m_format == name::NCHW)
+        {
+            input_size.height = stack.index(0)->sizes()[2];
+            input_size.width = stack.index(0)->sizes()[3];
+        }
+        else
+        {
+            input_size.height = stack.index(0)->sizes()[1];
+            input_size.width = stack.index(0)->sizes()[2];
+        }
+
+        Size2D output_size;
+        output_size = pooling2d_forward(input_size, m_padding, m_ksize, m_stride);
+
+        Shape output_shape(stack.index(0)->sizes());
+        if (m_format == name::NCHW)
+        {
+            output_shape[2] = output_size.height;
+            output_shape[3] = output_size.width;
+        }
+        else
+        {
+            output_shape[1] = output_size.height;
+            output_shape[2] = output_size.width;
+        }
+        output.resize(1);
+        output[0] = ts::Tensor::Prototype(stack.index(0)->dtype(), output_shape);
+        return 1;
 	}
+
+    bool Pooling2dV2::check_equale_input_param(const Padding2D& padding, const KSize2D& ksize, const Stride2D& stride)
+    {
+        if (padding.bottom != m_padding.bottom || padding.top != m_padding.top || padding.left != m_padding.left || padding.right != m_padding.right)
+            return false;
+        if (ksize.height != m_ksize.height || ksize.width != m_ksize.width)
+            return false;
+        if (stride.height != m_ksize.height || stride.width != m_ksize.width)
+            return false;
+        return true;
+    }
 }
 
 using namespace ts;
