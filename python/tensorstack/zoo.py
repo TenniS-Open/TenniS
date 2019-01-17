@@ -200,7 +200,7 @@ def conv2d(name, x, w,
 
     node = None
 
-    if isinstance(padding, None):
+    if isinstance(padding, Node):
         node = menu.op(name=name, op_name=Name.Layer.conv2d_v2, inputs=[x, padding, w])
         # node.set(Name.padding, Default.padding())
     else:
@@ -253,7 +253,7 @@ def depthwise_conv2d(name, x, w,
     w = to_node(w, name="_const_" + name + "_weights")
 
     node = None
-    if isinstance(padding, None):
+    if isinstance(padding, Node):
         node = menu.op(name=name, op_name=Name.Layer.depthwise_conv2d_v2, inputs=[x, padding, w])
         # node.set(Name.padding, Default.padding())
     else:
@@ -269,7 +269,7 @@ def depthwise_conv2d(name, x, w,
 
 
 def add_bias(name, x, b, format=Name.NCHW):
-    assert isinstance(x, None)
+    assert isinstance(x, Node)
     assert format == Name.NCHW or format == Name.NHWC
 
     b = to_node(b, name="_const_" + name + "_bias")
@@ -289,7 +289,7 @@ def add_bias(name, x, b, format=Name.NCHW):
 
 
 def batch_norm(name, x, mean, variance, dim, epsilon):
-    assert isinstance(x, None)
+    assert isinstance(x, Node)
     mean = to_node(mean, name="_const_" + name + "_mean")
     variance = to_node(variance, name="_const_" + name + "_variance")
 
@@ -301,7 +301,7 @@ def batch_norm(name, x, mean, variance, dim, epsilon):
 
 
 def batch_scale(name, x, scale, bias, dim):
-    assert isinstance(x, None)
+    assert isinstance(x, Node)
     scale = to_node(scale, name="_const_" + name + "_mean")
     bias = to_node(bias, name="_const_" + name + "_variance")
 
@@ -312,7 +312,7 @@ def batch_scale(name, x, scale, bias, dim):
 
 
 def fused_batch_norm(name, x, mean, variance, scale, bias, dim, epsilon):
-    assert isinstance(x, None)
+    assert isinstance(x, Node)
     mean = to_node(mean, name="_const_" + name + "_mean")
     variance = to_node(variance, name="_const_" + name + "_variance")
     scale = to_node(scale, name="_const_" + name + "_mean")
