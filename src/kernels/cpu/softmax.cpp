@@ -9,6 +9,8 @@ namespace ts {
 	Softmax::Softmax() :m_dim(-1)
 	{
 		field(name::dim, REQUIRED);
+		Tensor default_smooth = tensor::from<bool>(true);
+		field(name::smooth, OPTIONAL, default_smooth);
 	}
 
 	void Softmax::init()
@@ -17,6 +19,8 @@ namespace ts {
 
 		auto dim_tensor = get(name::dim);
 		m_dim = tensor::to_int(dim_tensor);
+
+		m_smooth = tensor::to_int(get(name::smooth)) ? true:false;
 
 		TS_AUTO_CHECK(m_dim >= 0);
 	}
@@ -99,29 +103,52 @@ namespace ts {
 		memcpy(output_data, device_type, count * sizeof(T), input_data, device_type, count * sizeof(T));
 
 		int scale_data_size = output_tensor.count() / axis;
-		T* scale_data = new T[scale_data_size];
+
+		T* scale_data = nullptr;
+		if (m_smooth)
+		{
+			scale_data = new T[scale_data_size];
+		}
+			 
 		T* denominator_data = new T[scale_data_size];
+
 		for (int i = 0; i < pre_num; i++)
 		{
 			std::memset(denominator_data, 0, scale_data_size * sizeof(T));
-			//Caculate max value
-			memcpy(scale_data, device_type, inner_num * sizeof(T), input_data + i * axis * inner_num, device_type, inner_num * sizeof(T));
-			//std::memcpy(scale_data,input_data + i * axis * inner_num, inner_num * sizeof(T));
-			for (int j = 0; j < axis; j++)
+			if (m_smooth)
 			{
-				for (int k = 0; k < inner_num; k++)
+				//Caculate max value
+				memcpy(scale_data, device_type, inner_num * sizeof(T), input_data + i * axis * inner_num, device_type, inner_num * sizeof(T));
+				//std::memcpy(scale_data,input_data + i * axis * inner_num, inner_num * sizeof(T));
+				for (int j = 0; j < axis; j++)
 				{
-					scale_data[k] = std::max(scale_data[k], input_data[i*axis*inner_num + j*inner_num + k]);
+					for (int k = 0; k < inner_num; k++)
+					{
+						scale_data[k] = std::max(scale_data[k], input_data[i*axis*inner_num + j*inner_num + k]);
+					}
+				}
+				//Caculate numerator and denominator
+				for (int j = 0; j < axis; j++)
+				{
+					for (int k = 0; k < inner_num; k++)
+					{
+						output_data[i*axis*inner_num + j*inner_num + k] = output_data[i*axis*inner_num + j*inner_num + k] - scale_data[k];
+						output_data[i*axis*inner_num + j*inner_num + k] = exp(output_data[i*axis*inner_num + j*inner_num + k]);
+						denominator_data[k] += output_data[i*axis*inner_num + j*inner_num + k];
+					}
 				}
 			}
-			//Caculate numerator and denominator
-			for (int j = 0; j < axis; j++)
+			else
 			{
-				for (int k = 0; k < inner_num; k++)
+				//Caculate numerator and denominator
+				for (int j = 0; j < axis; j++)
 				{
-					output_data[i*axis*inner_num + j*inner_num + k] = output_data[i*axis*inner_num + j*inner_num + k] - scale_data[k];
-					output_data[i*axis*inner_num + j*inner_num + k] = exp(output_data[i*axis*inner_num + j*inner_num + k]);
-					denominator_data[k] += output_data[i*axis*inner_num + j*inner_num + k];
+					for (int k = 0; k < inner_num; k++)
+					{
+						output_data[i*axis*inner_num + j*inner_num + k] = output_data[i*axis*inner_num + j*inner_num + k];
+						output_data[i*axis*inner_num + j*inner_num + k] = exp(output_data[i*axis*inner_num + j*inner_num + k]);
+						denominator_data[k] += output_data[i*axis*inner_num + j*inner_num + k];
+					}
 				}
 			}
 			//Caculte output

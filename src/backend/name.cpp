@@ -62,6 +62,7 @@ namespace ts {
         string valid = "valid";
         string device = "device";
         string offset = "offset";
+		string smooth = "smooth";
 
     }
 }
