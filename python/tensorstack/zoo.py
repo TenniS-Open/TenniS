@@ -8,6 +8,8 @@ from node import Node
 import menu as menu
 import device as device
 
+import numpy
+
 
 class Name(object):
     NCHW = "NCHW"
@@ -67,6 +69,7 @@ class Name(object):
     padding_type = "padding_type"
     ksize = "ksize"
     device = "device"
+    smooth = "smooth"
 
 
 class Default(object):
@@ -128,8 +131,8 @@ def dimsuffle(name, x, dim, shuffle):
     shuffle = to_const(shuffle, "shuffle")
 
     node = menu.op(name=name, op_name=Name.Layer.dimshuffle, inputs=[x, ])
-    node.set(Name.dim, dim)
-    node.set(Name.shuffle, shuffle)
+    node.set(Name.dim, dim, numpy.int32)
+    node.set(Name.shuffle, shuffle, numpy.int32)
 
     return node
 
@@ -140,7 +143,7 @@ def transpose(name, x, pemute):
     pemute = to_const(pemute, "pemute")
 
     node = menu.op(name=name, op_name=Name.Layer.transpose, inputs=[x, ])
-    node.set(Name.permute, pemute)
+    node.set(Name.permute, pemute, numpy.int32)
 
     return node
 
@@ -151,7 +154,7 @@ def reshape(name, x, shape):
     shape = to_const(shape, "shape")
 
     node = menu.op(name=name, op_name=Name.Layer.reshape, inputs=[x, ])
-    node.set(Name.shape, shape)
+    node.set(Name.shape, shape, numpy.int32)
 
     return node
 
@@ -205,12 +208,12 @@ def conv2d(name, x, w,
         # node.set(Name.padding, Default.padding())
     else:
         node = menu.op(name=name, op_name=Name.Layer.conv2d, inputs=[x, w])
-        node.set(Name.padding, padding)
+        node.set(Name.padding, padding, numpy.int32)
 
     node.set(Name.format, format)
     node.set(Name.padding_value, padding_value)
-    node.set(Name.stride, stride)
-    node.set(Name.dialations, dialations)
+    node.set(Name.stride, stride, numpy.int32)
+    node.set(Name.dialations, dialations, numpy.int32)
 
     return node
 
@@ -258,12 +261,12 @@ def depthwise_conv2d(name, x, w,
         # node.set(Name.padding, Default.padding())
     else:
         node = menu.op(name=name, op_name=Name.Layer.depthwise_conv2d, inputs=[x, w])
-        node.set(Name.padding, padding)
+        node.set(Name.padding, padding, numpy.int32)
 
     node.set(Name.format, format)
     node.set(Name.padding_value, padding_value)
-    node.set(Name.stride, stride)
-    node.set(Name.dialations, dialations)
+    node.set(Name.stride, stride, numpy.int32)
+    node.set(Name.dialations, dialations, numpy.int32)
 
     return node
 
@@ -283,7 +286,7 @@ def add_bias(name, x, b, format=Name.NCHW):
         dim = 3
 
     node.set(Name.format, format)
-    node.set(Name.dim, dim)
+    node.set(Name.dim, dim, numpy.int32)
 
     return node
 
@@ -294,7 +297,7 @@ def batch_norm(name, x, mean, variance, dim, epsilon):
     variance = to_node(variance, name="_const_" + name + "_variance")
 
     node = menu.op(name=name, op_name=Name.Layer.batch_norm, inputs=[x, mean, variance])
-    node.set(Name.dim, dim)
+    node.set(Name.dim, dim, numpy.int32)
     node.set(Name.epsilon, epsilon)
 
     return node
@@ -306,7 +309,7 @@ def batch_scale(name, x, scale, bias, dim):
     bias = to_node(bias, name="_const_" + name + "_variance")
 
     node = menu.op(name=name, op_name=Name.Layer.batch_scale, inputs=[x, scale, bias])
-    node.set(Name.dim, dim)
+    node.set(Name.dim, dim, numpy.int32)
 
     return node
 
@@ -319,7 +322,7 @@ def fused_batch_norm(name, x, mean, variance, scale, bias, dim, epsilon):
     bias = to_node(bias, name="_const_" + name + "_variance")
 
     node = menu.op(name=name, op_name=Name.Layer.fused_batch_norm, inputs=[x, mean, variance, scale, bias])
-    node.set(Name.dim, dim)
+    node.set(Name.dim, dim, numpy.int32)
     node.set(Name.epsilon, epsilon)
 
     return node
@@ -386,7 +389,7 @@ def relu_max(name, x, max):
 def prelu(name, x, dim, slope):
     assert isinstance(x, Node)
     node = menu.op(name=name, op_name=Name.Layer.prelu, inputs=[x, ])
-    node.set(Name.dim, dim)
+    node.set(Name.dim, dim, numpy.int32)
     node.set(Name.slope, slope)
     return node
 
@@ -397,10 +400,11 @@ def sigmoid(name, x):
     return node
 
 
-def softmax(name, x, dim):
+def softmax(name, x, dim, smooth=True):
     assert isinstance(x, Node)
     node = menu.op(name=name, op_name=Name.Layer.softmax, inputs=[x, ])
-    node.set(Name.dim, dim)
+    node.set(Name.dim, dim, numpy.int32)
+    node.set(Name.smooth, smooth, numpy.bool)
     return node
 
 
@@ -408,7 +412,7 @@ def concat(name, inputs, dim):
     for x in inputs:
         assert isinstance(x, Node)
     node = menu.op(name=name, op_name=Name.Layer.concat, inputs=inputs)
-    node.set(Name.dim, dim)
+    node.set(Name.dim, dim, numpy.int32)
     return node
 
 
@@ -430,7 +434,7 @@ def resize2d(name, x, size, type=Type.resize2d_type.linear):
     size = to_node(size, name="_const_" + name + "_size", device=device.CPU)
 
     node = menu.op(name=name, op_name=Name.Layer.resize2d, inputs=[x, size])
-    node.set(Name.type, type)
+    node.set(Name.type, type, numpy.int32)
 
     return node
 
@@ -449,8 +453,8 @@ def pooling2d_v2(name, x, ksize, stride, type=Type.pooling_type.max, format=Name
 
     node = menu.op(name=name, op_name=Name.Layer.pooling2d_v2, inputs=[x, padding, ksize, stride])
     node.set(Name.format, format)
-    node.set(Name.type, type)
-    node.set(Name.padding_type, padding_type)
+    node.set(Name.type, type, numpy.int32)
+    node.set(Name.padding_type, padding_type, numpy.int32)
 
     return node
 
@@ -473,12 +477,12 @@ def pooling2d(name, x, ksize, stride, type=Type.pooling_type.max, format=Name.NC
     stride = to_const(stride, name="stride")
 
     node = menu.op(name=name, op_name=Name.Layer.pooling2d, inputs=[x])
-    node.set(Name.padding, padding)
-    node.set(Name.ksize, ksize)
-    node.set(Name.stride, stride)
+    node.set(Name.padding, padding, numpy.int32)
+    node.set(Name.ksize, ksize, numpy.int32)
+    node.set(Name.stride, stride, numpy.int32)
     node.set(Name.format, format)
-    node.set(Name.type, type)
-    node.set(Name.padding_type, padding_type)
+    node.set(Name.type, type, numpy.int32)
+    node.set(Name.padding_type, padding_type, numpy.int32)
 
     return node
 

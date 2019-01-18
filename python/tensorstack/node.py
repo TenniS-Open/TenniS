@@ -69,8 +69,8 @@ class Node(object):
     def has(self, param):
         return param in self.__params
 
-    def set(self, param, value):
-        self.__params[param] = value
+    def set(self, param, value, dtype=None):
+        self.__params[param] = from_any(value, dtype=dtype)
 
     def get(self, param):
         return self.__params[param]
