@@ -78,6 +78,7 @@ def convert(input_file, output_file,
         OPType.Enum_ReLULayer: convert_relu_layer,
         OPType.Enum_PoolingLayer: convert_pooling_layer,
         OPType.Enum_InnerProductLayer: convert_inner_product_layer,
+        OPType.Enum_EltwiseLayer: convert_eltwise_layer,
     }
 
     nodes = []
@@ -187,6 +188,8 @@ def convert_memorydata_layer(layer, input_nodes, output_names):
     mean_value = list(param.mean_value)
 
     channel_waps = list(param.channel_swaps)
+    if len(channel_waps) > 0:
+        print("--##    Channel swap: {}".format(channel_waps))
 
     prewhiten = False
     if param.HasField("prewhiten"):
@@ -533,6 +536,81 @@ def convert_inner_product_layer(layer, input_nodes, output_names):
     node = ts.zoo.reshape(name=node_name, x=node, shape=[-1, num_output, 1, 1])
 
     return node,
+
+
+def convert_eltwise_layer(layer, input_nodes, output_names):
+    # type: (hd.Holiday_LayerParameter, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} ]=-".format(OPType.EnumString[layer.type], output_names))
+
+    assert len(input_nodes) >= 2
+    assert len(output_names) == 1
+
+    x = input_nodes[0]
+    node_name = output_names[0]
+
+    param = layer.eltwise_param
+
+    holiday_eltwise_op_to_ts_op = {
+        param.PROD: ts.zoo.mul,
+        param.SUM: ts.zoo.add,
+        param.MAX: None,
+    }
+
+    holiday_eltwise_op_to_string = {
+        param.PROD: "PROD",
+        param.SUM: "SUM",
+        param.MAX: "MAX",
+    }
+
+    operation = param.operation
+    print("--##    Operation : {}".format(holiday_eltwise_op_to_string[operation]))
+
+    coeff = param.coeff
+    assert len(coeff) == 0 or len(coeff) == len(input_nodes)
+    print("--##    Coeff shape: [{}, ]".format(len(coeff)))
+
+    stable_prod_grad = True
+    if param.HasField("stable_prod_grad"):
+        stable_prod_grad = param.stable_prod_grad
+    print("--##    Ignore param stable_prod_grad: {}".format(stable_prod_grad))
+
+    ts_op = holiday_eltwise_op_to_ts_op[operation]
+
+    if ts_op is None:
+        NotImplementedError("Operation : {}".format(holiday_eltwise_op_to_string[operation]))
+
+    is_sum = operation == param.SUM
+    is_mul = operation == param.PROD
+    is_max = operation == param.MAX
+
+    node = None
+
+    if is_mul:
+        lhs = input_nodes[0]
+        rhs = input_nodes[1:]
+        for i in range(len(rhs)):
+            lhs = ts.zoo.mul(name="_{}_{}".format(node_name, i), lhs=lhs, rhs=rhs[i])
+        node = lhs
+    elif is_sum:
+        if len(coeff) > 0:
+            for i in range(len(input_nodes)):
+                node = input_nodes[i]
+                input_nodes[i] = ts.zoo.mul(name="_coeff_{}_{}".format(node_name, i), lhs=node, rhs=coeff[i])
+        lhs = input_nodes[0]
+        rhs = input_nodes[1:]
+        for i in range(len(rhs)):
+            lhs = ts.zoo.add(name="_{}_{}".format(node_name, i), lhs=lhs, rhs=rhs[i])
+        node = lhs
+    elif is_max:
+        NotImplementedError("Operation : {}".format(holiday_eltwise_op_to_string[operation]))
+
+    if node is None:
+        raise NotImplementedError(layer)
+
+    node.name = node_name
+
+    return node,
+
 
 
 if __name__ == "__main__":
