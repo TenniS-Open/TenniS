@@ -4,9 +4,9 @@
 :author Kier
 """
 
-from node import Node
-import menu as menu
-import device as device
+from .node import Node
+from . import menu as menu
+from . import device as device
 
 
 class Name(object):

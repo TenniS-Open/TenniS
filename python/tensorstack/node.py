@@ -5,14 +5,14 @@
 """
 
 import struct
-from tensor import compatible_string
+from .tensor import compatible_string
 from collections import OrderedDict
 
-from tensor import write_tensor
-from tensor import read_tensor
-from tensor import from_any
-from tensor import to_int
-from tensor import to_str
+from .tensor import write_tensor
+from .tensor import read_tensor
+from .tensor import from_any
+from .tensor import to_int
+from .tensor import to_str
 
 
 class Node(object):
