@@ -67,6 +67,7 @@ namespace ts {
         extern string ksize;
         extern string device;
         extern string offset;
+		extern string smooth;
 
 
         extern string valid;
