@@ -25,6 +25,10 @@ namespace ts {
                              const std::string &operator_name,
                              const function &operator_creator) TS_NOEXCEPT;
 
+        static Operator::shared Create(const DeviceType &device_type,
+                                       const std::string &operator_name,
+                                       bool strict = false) TS_NOEXCEPT;
+
         static void Clear();
     };
 }

@@ -5,14 +5,14 @@
 """
 
 import struct
-from tensor import compatible_string
+from .tensor import compatible_string
 from collections import OrderedDict
 
-from tensor import write_tensor
-from tensor import read_tensor
-from tensor import from_any
-from tensor import to_int
-from tensor import to_str
+from .tensor import write_tensor
+from .tensor import read_tensor
+from .tensor import from_any
+from .tensor import to_int
+from .tensor import to_str
 
 
 class Node(object):
@@ -45,6 +45,11 @@ class Node(object):
     def name(self):
         return self.__name
 
+    @name.setter
+    def name(self, value):
+        self.__params[self.RetentionParam.name] = value
+        self.__name = value
+
     @property
     def op(self):
         return self.__op
@@ -64,8 +69,8 @@ class Node(object):
     def has(self, param):
         return param in self.__params
 
-    def set(self, param, value):
-        self.__params[param] = value
+    def set(self, param, value, dtype=None):
+        self.__params[param] = from_any(value, dtype=dtype)
 
     def get(self, param):
         return self.__params[param]

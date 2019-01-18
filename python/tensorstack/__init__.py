@@ -12,5 +12,6 @@ import menu as bubble
 import menu
 import device
 import zoo
+import frontend
 
 __version__ = "beta"
