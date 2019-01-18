@@ -17,7 +17,7 @@ namespace ts {
 	private:
 
 		template<typename T>
-		bool concat(ts::Stack &stack, int input_num);
+		bool concat(ts::Stack &stack, int input_num, MemoryDevice device_type);
 
 	private:
 		int m_dim;

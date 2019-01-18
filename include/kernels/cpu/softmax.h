@@ -23,6 +23,7 @@ namespace ts {
 
 	private:
 		int m_dim;
+		bool m_smooth;
 	};
 
 	//TS_REGISTER_OPERATOR(Softmax, ts::CPU, "softmax")
