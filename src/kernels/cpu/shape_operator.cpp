@@ -1,7 +1,8 @@
 #include <kernels/cpu/shape_operator.h>
 #include <global/operator_factory.h>
 #include <backend/name.h>
-
+#include <core/device.h>
+#include <utils/assert.h>
 
 
 namespace ts {
@@ -18,9 +19,7 @@ void Shape_Operator::init() {
 
 int Shape_Operator::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output) {
     int input_num = stack.size();
-    if(input_num != 1) {
-        throw ts::Exception("shape_operator input parameters only support one");
-    }
+    TS_AUTO_CHECK(input_num == 1); 
 
     Shape shape;
     shape.resize(1);
@@ -33,15 +32,13 @@ int Shape_Operator::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &
 int Shape_Operator::run(ts::Stack &stack) {
     std::vector<ts::Tensor::Prototype> output;
     infer(stack, output);
-    if(output.size() < 1) {
-        throw ts::Exception("shape_operator infer() failed");
-    }
+    TS_AUTO_CHECK(output.size() > 0); 
 
-    stack.push(output[0], memory_device());
-    ts::Tensor *tensor = stack.index(-1);
+    stack.push(output[0], MemoryDevice(CPU));
+    Tensor *tensor = stack.index(-1);
 
     const Shape& shape = stack.index(0)->sizes();
-    int *pdata = tensor->sync(memory_device()).data<int>();
+    int *pdata = tensor->data<int>();
     for(int i=0; i<shape.size(); i++) {
         pdata[i] = shape[i];
     }
@@ -58,4 +55,4 @@ int Shape_Operator::run(ts::Stack &stack) {
 
 
 using namespace ts;
-TS_REGISTER_OPERATOR(Shape_Operator, ts::CPU, ts::name::layer::shape())
+TS_REGISTER_OPERATOR(Shape_Operator, CPU, name::layer::shape())

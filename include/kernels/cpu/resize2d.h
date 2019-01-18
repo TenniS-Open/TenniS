@@ -38,7 +38,7 @@ public:
 
 private:
 template<typename T>
-    void resize(ts::Stack &stack, ts::Tensor &tensor, int old_height, int old_width, 
+    void resize(Tensor *input_tensor, Tensor *tensor, int old_height, int old_width, 
            int new_height,int new_width, unsigned int oldstep, unsigned int newstep, 
            unsigned int step, int channels); 
 
