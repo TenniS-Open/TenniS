@@ -26,7 +26,7 @@ private:
     int infer_private(ts::Stack &stack, ts::Tensor::Prototype &output); 
 
     template<typename T>
-    void compute_conv(const Tensor *input_tensor, const Tensor *weight_tensor, Tensor *tensor, const Shape& shape, 
+    void compute_conv(Tensor *input_tensor, Tensor *weight_tensor, Tensor *tensor, const Shape& shape, 
                       const Shape &reshape, const Shape &weight_shape);
 private:
     //int m_group;

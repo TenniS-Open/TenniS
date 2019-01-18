@@ -2,7 +2,8 @@
 #include <core/tensor_builder.h>
 #include <global/operator_factory.h>
 #include <backend/name.h>
-
+#include <core/device.h>
+#include <utils/assert.h>
 
 namespace ts {
 
@@ -17,9 +18,7 @@ void To_Float::init() {
 
 int To_Float::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output) {
     int input_num = stack.size();
-    if(input_num != 1) {
-        throw ts::Exception("to_float input parameters is more than one");
-    }
+    TS_AUTO_CHECK(input_num == 1); 
 
     const Shape& shape = stack.index(0)->sizes();
     output.resize(1);
@@ -42,4 +41,4 @@ int To_Float::run(ts::Stack &stack) {
 }
 
 using namespace ts;
-TS_REGISTER_OPERATOR(To_Float, ts::CPU, ts::name::layer::to_float())
+TS_REGISTER_OPERATOR(To_Float, CPU, name::layer::to_float())

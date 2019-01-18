@@ -7,7 +7,8 @@
 
 #include <global/operator_factory.h>
 #include <backend/name.h>
-
+#include <core/device.h>
+#include <utils/assert.h>
 
 namespace ts {
 
@@ -36,43 +37,34 @@ void Conv2d_V2::init() {
 
 int Conv2d_V2::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) {
     int input_num = stack.size();
-    if(input_num != 3) {
-        throw ts::Exception("conv2d_v2 must have tow input parameters");
-    }
+    TS_AUTO_CHECK(input_num == 3); 
 
     Shape shape = stack.index(0)->sizes();
 
-    if(shape.size()  != 4 ) {
-        throw ts::Exception("conv2d_v2 first parameter's dims is not 4");
-    }
+    TS_AUTO_CHECK(shape.size()  == 4 ); 
 
-    const Tensor * tensor_padding = stack.index(1);
-    if(tensor_padding->dims() != 2 || tensor_padding->dtype() != ts::INT32 || tensor_padding->count() != 8) {
-        throw ts::Exception("conv2d_v2 input parameter padding check failed");
-    }
-;
+    Tensor tensor_padding = tensor::cast(INT32, *stack.index(1));
+    TS_AUTO_CHECK(tensor_padding.dims() == 2 && tensor_padding.count() == 8); 
+   
+     
     m_padding.resize(8);
     for(int i=0; i<4; i++) {
         if(i==0 || i== 1) {
-            if(tensor_padding->data<int>()[2*i] != 0 ||
-               tensor_padding->data<int>()[2*i + 1] != 0) {
-                throw ts::Exception("conv2d_v2 input parameter padding  check failed");
-            }
+            TS_AUTO_CHECK(tensor_padding.data<int>()[2*i] == 0 && 
+               tensor_padding.data<int>()[2*i + 1] == 0); 
         }
-        m_padding[2*i] = tensor_padding->data<int>()[2*i];
-        m_padding[2*i + 1] = tensor_padding->data<int>()[2*i + 1];
+        m_padding[2*i] = tensor_padding.data<int>()[2*i];
+        m_padding[2*i + 1] = tensor_padding.data<int>()[2*i + 1];
     }
 
 
     const Shape& weight_shape = stack.index(2)->sizes();
 
-    if(weight_shape.size()  != 4 ) {
-        throw ts::Exception("conv2d_v2 second parameter's dims is not 4");
-    }
+    TS_AUTO_CHECK(weight_shape.size()  == 4 ); 
 
-    if(shape[1] % weight_shape[1] != 0) {
-        throw ts::Exception("conv2d_v2 input parameters channels check failed");
-    }
+    //if(shape[1] % weight_shape[1] != 0) {
+    //    throw ts::Exception("conv2d_v2 input parameters channels check failed");
+    //}
 
     int output_h,output_w;
     ts::Conv2d_Base::Caculate(shape[2], shape[3], weight_shape[2], weight_shape[3],m_padding[4], m_padding[5], m_padding[6], m_padding[7],
@@ -82,8 +74,7 @@ int Conv2d_V2::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) {
     shape[2] = output_h;
     shape[3] = output_w;
 
-    std::cout << "output shape:n=" << shape[0] << ",c=" << shape[1] << ",h=" << shape[2] << ",w=" << shape[3] << std::endl;
-    output = ts::Tensor::Prototype(stack.index(0)->dtype(), shape);
+    output = Tensor::Prototype(stack.index(0)->dtype(), shape);
     return 1;
 }
 
@@ -95,33 +86,27 @@ int Conv2d_V2::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &outpu
 
 
 int Conv2d_V2::run(ts::Stack &stack) {
-    ts::Tensor::Prototype output;
+    Tensor::Prototype output;
     infer_private(stack, output);
 
-    ts::Tensor *input_tensor = stack.index(0);
-    //const Shape& shape = input_tensor->sizes();
-    //const Shape& reshape = output.sizes();
-    //int type_len = ts::type_bytes(input_tensor->dtype());
-    //stack.push(output, memory_device());
-    //ts::Tensor *tensor = stack.index(-1);
+    Tensor *input_tensor = stack.index(0);
+    Tensor *weight_tensor = stack.index(2);
 
-    ts::Tensor *weight_tensor = stack.index(2);
+    auto conv2d_creator = Conv2d_V2_Base::GetCreator(name::layer::conv2d());
+    Operator::shared conv2d_op = conv2d_creator();
 
-    auto conv2d_creator = ts::Conv2d_V2_Base::GetCreator("conv2d");
-    ts::Operator::shared conv2d_op = conv2d_creator();
-
-    conv2d_op->set("stride",get("stride"));
-    conv2d_op->set("dialations", get("dialations"));
-    conv2d_op->set("format",get("format"));
-    if(has("padding_value")) {
-        conv2d_op->set("padding_value", get("padding_value"));
+    conv2d_op->set(name::stride,get(name::stride));
+    conv2d_op->set(name::dialations, get(name::dialations));
+    conv2d_op->set(name::format,get(name::format));
+    if(has(name::padding_value)) {
+        conv2d_op->set(name::padding_value, get(name::padding_value));
     }
 
-    if(has("group")) {
-        conv2d_op->set("group", get("group"));
-    }
+    //if(has(name::group)) {
+    //    conv2d_op->set(name::group, get(name::group));
+    //}
 
-    conv2d_op->set("padding",ts::tensor::clone(stack.index(1)->dtype(), *stack.index(1)));
+    conv2d_op->set(name::padding,ts::tensor::clone(stack.index(1)->dtype(), *stack.index(1)));
 
     stack.push(*input_tensor);
     stack.push(*weight_tensor);
@@ -138,4 +123,4 @@ int Conv2d_V2::run(ts::Stack &stack) {
 
 
 using namespace ts;
-TS_REGISTER_OPERATOR(Conv2d_V2, ts::CPU, ts::name::layer::conv2d_v2())
+TS_REGISTER_OPERATOR(Conv2d_V2, CPU, name::layer::conv2d_v2())

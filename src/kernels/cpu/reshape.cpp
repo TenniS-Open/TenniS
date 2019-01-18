@@ -2,13 +2,14 @@
 #include <core/tensor_builder.h>
 #include <global/operator_factory.h>
 #include <backend/name.h>
-
+#include <core/device.h>
+#include <utils/assert.h>
 
 namespace ts {
 
 ////////////////////////////////////////////////////
 Reshape::Reshape() {
-    field("shape", REQUIRED);
+    field(name::shape, REQUIRED);
     m_index = -1;
     m_dims = 1;
 }
@@ -16,36 +17,24 @@ Reshape::Reshape() {
 void Reshape::init() {
     supper::init();
     
-    if(!has("shape")){
-        throw ts::Exception("reshape shape parameter do not find");
-    }
+    TS_AUTO_CHECK(has(name::shape));
 
-    const Tensor& tensor_shape  = get("shape");
-
-    if(tensor_shape.dtype() != INT32){
-        throw ts::Exception("reshape shape parameter dtype is not INT32");
-    }
+    Tensor tensor_shape  = tensor::cast(INT32, get(name::shape));
 
     int ncount = tensor_shape.count();
     bool bfind = false;
 
-    if(ncount < 1) {
-        throw ts::Exception("reshape shape parameter dims must bigger than 0");
-    }
+    TS_AUTO_CHECK(ncount >0); 
 
-    //int nindex = -1;
-    //Shape reshape(ncount);
     m_shape.resize(ncount);
-    //int ntotal = 1;
     for(int i=0; i<ncount; i++) {
         m_shape[i] = tensor_shape.data<int>()[i];
-        //std::cout << "i:" << reshape[i] << std::endl;
         if(m_shape[i] > 0) {
             m_dims *= m_shape[i];
         }
         if(tensor_shape.data<int>()[i] <= 0) {
             if(bfind) {
-                throw ts::Exception("reshape shape parameters only one less than 0 ");
+                throw Exception("reshape shape parameters only one less than 0 ");
             }else {
                bfind = true;
                m_index = i;
@@ -58,9 +47,7 @@ void Reshape::init() {
 
 int Reshape::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output) {
     int input_num = stack.size();
-    if(input_num != 1) {
-        throw ts::Exception("input parameters is more than one");
-    }
+    TS_AUTO_CHECK(input_num == 1); 
 
     const Shape& shape = stack.index(0)->sizes();
 
@@ -72,9 +59,7 @@ int Reshape::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output)
         m_dims *= m_shape[m_index];
     }
 
-    if(nsize != m_dims) {
-        throw ts::Exception("reshape shape parameter is invalid");
-    }
+    TS_AUTO_CHECK(nsize == m_dims); 
 
     output.resize(1);
     output[0] = ts::Tensor::Prototype(stack.index(0)->dtype(), m_shape);
@@ -85,9 +70,7 @@ int Reshape::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output)
 int Reshape::run(ts::Stack &stack) {
     std::vector<ts::Tensor::Prototype> output;
     infer(stack, output);
-    if(output.size() < 1) {
-        throw ts::Exception("Reshape infer() failed");
-    }
+    TS_AUTO_CHECK(output.size() > 0); 
 
     Tensor tensor = stack.index(0)->reshape(output[0].sizes());
     stack.push(tensor);
@@ -98,4 +81,4 @@ int Reshape::run(ts::Stack &stack) {
 }
 
 using namespace ts;
-TS_REGISTER_OPERATOR(Reshape, ts::CPU, ts::name::layer::reshape())
+TS_REGISTER_OPERATOR(Reshape, CPU, name::layer::reshape())

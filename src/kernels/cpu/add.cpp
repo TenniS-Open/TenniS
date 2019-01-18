@@ -68,30 +68,29 @@ int Add::to_index(const HypeShape &hype, const Shape & shape, const Shape &cursh
 
 
 template<typename T>
-void Add::compute_run(const Tensor &input_tensor, const Tensor &right_tensor, Tensor *left_tensor) {
-    const Shape& shape = input_tensor.sizes();
-    Shape right_shape = right_tensor.sizes();
+void Add::compute_run(Tensor *input_tensor, Tensor *right_tensor, Tensor *left_tensor) {
+    const Shape& shape = input_tensor->sizes();
+    Shape right_shape = right_tensor->sizes();
     const Shape& left_shape = left_tensor->sizes();
 
+    const T* pinput = input_tensor->sync(MemoryDevice(CPU)).data<T>();
+    const T* pright = right_tensor->sync(MemoryDevice(CPU)).data<T>();
     T* pleft = left_tensor->data<T>();
-    const T* pinput = input_tensor.data<T>();
-    const T* pright = right_tensor.data<T>();
-
 
     HypeShape left_hype(left_shape);
     HypeShape hype(shape);
     HypeShape right_hype(right_shape);
 
-    int ncount = right_tensor.count();
-    if(input_tensor.count() == 1) {
+    int ncount = right_tensor->count();
+    if(input_tensor->count() == 1) {
         for(int i=0; i<ncount; i++) {
             pleft[i] = pinput[0] + pright[i];
         } 
         return;
     }
 
-    ncount = input_tensor.count();
-    if(right_tensor.count() == 1) {
+    ncount = input_tensor->count();
+    if(right_tensor->count() == 1) {
         for(int i=0; i<ncount; i++) {
             pleft[i] = pinput[i] + pright[0];
         } 
@@ -116,8 +115,8 @@ int Add::run(ts::Stack &stack) {
     stack.push(output[0], MemoryDevice(CPU));
 
     Tensor *left_tensor = stack.index(-1);
-    Tensor input_tensor =  tensor::cast(left_tensor->dtype(), *stack.index(0));
-    Tensor right_tensor  = tensor::cast(left_tensor->dtype(), *stack.index(1));
+    Tensor *input_tensor =  stack.index(0);
+    Tensor *right_tensor  = stack.index(1);
 
     DTYPE type = stack.index(0)->dtype();
 

@@ -91,11 +91,11 @@ void Fused_Batch_Norm::compute_run(Tensor *input_tensor, Tensor *gamma_tensor,
     }
 
     T* psrc  = input_tensor->sync(MemoryDevice(CPU)).data<T>();
-    const T* pgamma = gamma_tensor->data<T>();
-    const T* pbeta = beta_tensor->data<T>();
+    const T* pgamma = gamma_tensor->sync(MemoryDevice(CPU)).data<T>();
+    const T* pbeta = beta_tensor->sync(MemoryDevice(CPU)).data<T>();
 
-    const T* pmean = mean_tensor->data<T>();
-    const T* pvariance = variance_tensor->data<T>();
+    const T* pmean = mean_tensor->sync(MemoryDevice(CPU)).data<T>();
+    const T* pvariance = variance_tensor->sync(MemoryDevice(CPU)).data<T>();
     T* pdst  = output_tensor->data<T>();
     int stridedims = backdims * shape[m_dim];
     int offset = 0;
@@ -124,21 +124,21 @@ int Fused_Batch_Norm::run(ts::Stack &stack) {
     stack.push(output[0], MemoryDevice(CPU));
 
     ts::Tensor *input_tensor =  stack.index(0);
-    ts::Tensor gamma_tensor  = tensor::cast(stack.index(0)->dtype(), *stack.index(1));
-    ts::Tensor beta_tensor  =  tensor::cast(stack.index(0)->dtype(), *stack.index(2));
-    ts::Tensor mean_tensor  = tensor::cast(stack.index(0)->dtype(), *stack.index(3));
-    ts::Tensor variance_tensor  =  tensor::cast(stack.index(0)->dtype(), *stack.index(4));
+    ts::Tensor *gamma_tensor  = stack.index(1);
+    ts::Tensor *beta_tensor  =  stack.index(2);
+    ts::Tensor *mean_tensor  = stack.index(3);
+    ts::Tensor *variance_tensor  =  stack.index(4);
     ts::Tensor *tensor = stack.index(-1);
 
     switch(input_tensor->dtype()) {
         case ts::FLOAT32: {
-            compute_run<float>(input_tensor, &gamma_tensor, &beta_tensor, 
-                               &mean_tensor, &variance_tensor,tensor);
+            compute_run<float>(input_tensor, gamma_tensor, beta_tensor, 
+                               mean_tensor, variance_tensor,tensor);
             break;
         }
         case ts::FLOAT64: {
-            compute_run<double>(input_tensor, &gamma_tensor, &beta_tensor, 
-                               &mean_tensor, &variance_tensor,tensor);
+            compute_run<double>(input_tensor, gamma_tensor, beta_tensor, 
+                               mean_tensor, variance_tensor,tensor);
             break;
         }
         default: {

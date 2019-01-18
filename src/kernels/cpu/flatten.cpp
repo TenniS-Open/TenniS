@@ -1,6 +1,8 @@
 #include <kernels/cpu/flatten.h>
 #include <core/tensor_builder.h>
 #include <backend/name.h>
+#include <utils/assert.h>
+
 
 namespace ts {
 
@@ -15,16 +17,12 @@ void Flatten::init() {
 
 int Flatten::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output) {
     int input_num = stack.size();
-    if(input_num != 1) {
-        throw ts::Exception("flatten input parameters is more than one");
-    }
+    TS_AUTO_CHECK(input_num == 1); 
 
     const Shape& shape = stack.index(0)->sizes();
     int nsize = stack.index(0)->count();
     
-    if(shape.size() < 1 || nsize <= 0) {
-        throw ts::Exception("flatten input parameters check failed");
-    }
+    TS_AUTO_CHECK(shape.size() > 0 && nsize > 0); 
 
     Shape flatten(2);
     flatten[0] = shape[0];
@@ -49,4 +47,4 @@ int Flatten::run(ts::Stack &stack) {
 }
 
 using namespace ts;
-TS_REGISTER_OPERATOR(Flatten, ts::CPU, ts::name::layer::flatten())
+TS_REGISTER_OPERATOR(Flatten, CPU, name::layer::flatten())

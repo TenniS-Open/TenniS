@@ -3,7 +3,8 @@
 #include <memory>
 #include <global/operator_factory.h>
 #include <backend/name.h>
-
+#include <core/device.h>
+#include <utils/assert.h>
 
 namespace ts {
 
@@ -12,7 +13,9 @@ template<typename T>
 void Resize2d::ResizeImageLinear( const T *src_im, int src_width, int src_height, int channels,
                                      T *dst_im, int dst_width, int dst_height){
   if (src_width == dst_width && src_height == dst_height) {
-    ::memcpy(dst_im, src_im, src_width * src_height * channels * sizeof(T));
+    //::memcpy(dst_im, src_im, src_width * src_height * channels * sizeof(T));
+    memcpy(dst_im, MemoryDevice(CPU), src_width * src_height * channels * sizeof(T),
+           src_im, MemoryDevice(CPU), src_width * src_height * channels * sizeof(T));
     return;
   }
 
@@ -138,14 +141,14 @@ template<typename T>
 
 ///////////////////////////////////////////////////////////
 Resize2d:: Resize2d() {
-    field("type", OPTIONAL);
+    field(name::type, OPTIONAL);
     m_type = 0;
 }
 
 void Resize2d::init() {
     supper::init();
-    if(has("type")) {
-        m_type = ts::tensor::to_int(get("type"));
+    if(has(name::type)) {
+        m_type = ts::tensor::to_int(get(name::type));
     }
 
 }
@@ -153,26 +156,20 @@ void Resize2d::init() {
 
 
 int Resize2d::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output) {
-    if(stack.size() != 2 || stack.index(0)->dims() < 2 || stack.index(0)->dims() != stack.index(1)->count()) {
-        throw ts::Exception("Resize2d input parameters is invalid");
-    }
-
-    if(stack.index(1)->dtype() != ts::INT32) {
-        throw ts::Exception("Resize2d input parameters 1 type only supported INT32");
-    }
+    TS_AUTO_CHECK(stack.size() == 2 && stack.index(0)->dims() >= 2 && stack.index(0)->dims() == stack.index(1)->count()); 
 
     int type_len = ts::type_bytes(stack.index(0)->dtype());
 
     int dims = stack.index(0)->dims();
     int i=0;
+
+    Tensor shape_tensor = tensor::cast(INT32, *stack.index(1));
     for(i=0; i< dims; i++) {
-        if((int)(stack.index(1)->data<int>()[i]) > 0)
+        if((int)(shape_tensor.data<int>()[i]) > 0)
             break;
     }
 
-    if(i >= dims - 1) {
-        throw ts::Exception("Resize2d input parameters dims invalid");
-    }
+    TS_AUTO_CHECK(i < dims - 1); 
 
     int new_height = (int)stack.index(1)->data<int>()[i];
     int new_width  = (int)stack.index(1)->data<int>()[i+1];
@@ -188,12 +185,12 @@ int Resize2d::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output
 }
 
 template<typename T>
-void Resize2d::resize(ts::Stack &stack, ts::Tensor &tensor, int old_height, int old_width,
+void Resize2d::resize(Tensor *input_tensor, Tensor *tensor, int old_height, int old_width,
                       int new_height,int new_width, unsigned int oldstep, unsigned int newstep, 
                       unsigned int step, int channels) {
 
-     const T*  psrc = stack.index(0)->data<T>() + oldstep;;
-     T*  pdst = tensor.sync(memory_device()).data<T>() + newstep;;
+     const T*  psrc = input_tensor->sync(MemoryDevice(CPU)).data<T>() + oldstep;;
+     T*  pdst = tensor->data<T>() + newstep;;
 
      if(m_type == 0) {
          ResizeImageLinear(psrc, old_width, old_height, channels, pdst,new_width,new_height);
@@ -206,35 +203,25 @@ void Resize2d::resize(ts::Stack &stack, ts::Tensor &tensor, int old_height, int 
 int Resize2d::run(ts::Stack &stack) {
     int input_num = stack.size();
 
-    if(input_num != 2 || stack.index(0)->dims() < 2 || stack.index(0)->dims() != stack.index(1)->count()) {
-        throw ts::Exception("Resize2d input parameters is invalid");
-    }
+    std::vector<ts::Tensor::Prototype> output;
+    infer(stack, output);
+    stack.push(output[0], MemoryDevice(CPU));
+    ts::Shape shape(output[0].sizes());
 
-    if(stack.index(1)->dtype() != ts::INT32) {
-        throw ts::Exception("Resize2d input parameters 1 type only supported INT32");
-    }
-    //int type_len = ts::type_bytes(stack.index(0)->dtype());
-
+    Tensor shape_tensor = tensor::cast(INT32, *stack.index(1));
     int dims = stack.index(0)->dims();
     int i=0;
     for(i=0; i< dims; i++) {
-        if((int)(stack.index(1)->sync(memory_device()).data<int>()[i]) > 0)
+        if(shape_tensor.data<int>()[i] > 0)
             break;
     }
 
-    if(i >= dims - 1) {
-         throw ts::Exception("Resize2d input parameters dims invalid");
-    }
+    TS_AUTO_CHECK(i < dims - 1); 
 
     int new_height = (int)stack.index(1)->data<int>()[i];
     int new_width  = (int)stack.index(1)->data<int>()[i+1];
     int old_height = (int)stack.index(0)->sizes()[i];
     int old_width  = (int)stack.index(0)->sizes()[i+1];
-
-    std::vector<ts::Tensor::Prototype> output;
-    infer(stack, output);
-
-    ts::Shape shape(output[0].sizes());
 
     int ntotalbuffer = 0;
     int batchs,channels;
@@ -248,41 +235,40 @@ int Resize2d::run(ts::Stack &stack) {
         channels *= shape[k];
     }
 
-    stack.push(output[0], memory_device());
-
     int newstep = channels * new_height * new_width;
     int oldstep = channels * old_height * old_width;
 
-    auto &tensor = *stack.index(-1);
-    ts::DTYPE type = tensor.dtype();
+    Tensor *input_tensor = stack.index(0);
+    Tensor *tensor = stack.index(-1);
+    ts::DTYPE type = tensor->dtype();
 
     for(int k=0; k<batchs; k++) {
         if(type == ts::UINT8){
-            resize<unsigned char>(stack, tensor, old_height,old_width,new_height,new_width,
+            resize<unsigned char>(input_tensor, tensor, old_height,old_width,new_height,new_width,
                                      k * oldstep, k * newstep, newstep, channels);
         }else if(type == ts::INT8) {
-            resize<char>(stack, tensor, old_height,old_width,new_height,new_width,
+            resize<char>(input_tensor, tensor, old_height,old_width,new_height,new_width,
                                      k * oldstep, k * newstep,  newstep, channels);
         }else if(type == ts::INT16) {
-            resize<short>(stack, tensor, old_height,old_width,new_height,new_width,
+            resize<short>(input_tensor, tensor, old_height,old_width,new_height,new_width,
                                      k * oldstep, k * newstep,  newstep, channels);
         }else if(type == ts::UINT16) {
-            resize<unsigned short>(stack, tensor, old_height,old_width,new_height,new_width,
+            resize<unsigned short>(input_tensor, tensor, old_height,old_width,new_height,new_width,
                                      k * oldstep, k * newstep,  newstep, channels);
         }else if(type == ts::INT32) {
-            resize<int>(stack, tensor, old_height,old_width,new_height,new_width,
+            resize<int>(input_tensor, tensor, old_height,old_width,new_height,new_width,
                                      k * oldstep, k * newstep,  newstep, channels);
         }else if(type == ts::UINT32) {
-            resize<unsigned int>(stack, tensor, old_height,old_width,new_height,new_width,
+            resize<unsigned int>(input_tensor, tensor, old_height,old_width,new_height,new_width,
                                      k * oldstep, k * newstep, newstep, channels);
         }else if(type == ts::FLOAT32) {
-            resize<float>(stack, tensor, old_height,old_width,new_height,new_width,
+            resize<float>(input_tensor, tensor, old_height,old_width,new_height,new_width,
                                      k * oldstep, k * newstep, newstep, channels);
         }else if(type == ts::FLOAT64) {
-            resize<double>(stack, tensor, old_height,old_width,new_height,new_width,
+            resize<double>(input_tensor, tensor, old_height,old_width,new_height,new_width,
                                    k * oldstep, k * newstep, newstep, channels);
         }else {
-            throw ts::Exception("Resize2d do not support data type");
+            throw Exception("Resize2d do not support data type");
         }
 
     }
@@ -296,4 +282,4 @@ int Resize2d::run(ts::Stack &stack) {
 }
 
 using namespace ts;
-TS_REGISTER_OPERATOR(Resize2d, ts::CPU, ts::name::layer::resize2d())
+TS_REGISTER_OPERATOR(Resize2d, CPU, name::layer::resize2d())
