@@ -10,6 +10,9 @@ from .. import Node
 from .. import device
 
 
+import numpy
+
+
 class Name(object):
     class Layer(object):
         pooling2d_padding = "_mx_pooling2d_padding"
@@ -36,8 +39,8 @@ def pooling2d_padding(name, x, padding, ksize, stride, format=zoo.Name.NCHW, val
     # operator
     node = menu.op(name=name, op_name=Name.Layer.pooling2d_padding, inputs=[x, ksize, stride])
     node.set(zoo.Name.format, format)
-    node.set(zoo.Name.padding, padding)
-    node.set(Name.valid, valid)
+    node.set(zoo.Name.padding, padding, numpy.int32)
+    node.set(Name.valid, valid, numpy.bool)
 
     return node
 
