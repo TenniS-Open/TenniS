@@ -24,7 +24,7 @@ public:
 
 private:
     template<typename T>
-    void compute_bias(const ts::Tensor *input_tensor, const ts::Tensor *bias_tensor, ts::Tensor *output_tensor);
+    void compute_bias(ts::Tensor *input_tensor, const ts::Tensor *bias_tensor, ts::Tensor *output_tensor);
     void infer_private(ts::Stack &stack, ts::Tensor::Prototype &output);
 
 private:

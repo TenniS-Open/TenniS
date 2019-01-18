@@ -1,6 +1,9 @@
 #include <kernels/cpu/add.h>
 #include <core/tensor_builder.h>
 #include <backend/name.h>
+#include <utils/assert.h>
+#include <global/operator_factory.h>
+#include <core/device.h>
 
 namespace ts {
 
@@ -17,34 +20,32 @@ void Add::init() {
 
 void Add::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) {
     int input_num = stack.size();
-    if(input_num != 2) {
-        throw ts::Exception("add must have tow input parameters");
-    }
+    TS_AUTO_CHECK(input_num == 2); 
 
-    const Shape& shape = stack.index(0)->sizes();
-    const Shape& add_shape = stack.index(1)->sizes();
+    Shape shape = stack.index(0)->sizes();
+    const Shape& right_shape = stack.index(1)->sizes();
 
-    if(add_shape.size()  != shape.size() ) {
-        throw ts::Exception("add two parameters's dims is not same");
-    }
+   TS_AUTO_CHECK(shape.size() > 0);
+   TS_AUTO_CHECK(right_shape.size() > 0);
+
+    if(shape.size() != right_shape.size()) {
+        TS_AUTO_CHECK((shape.size() == 1 && shape[0] == 1) || (right_shape.size() == 1 && right_shape[0] == 1));
+
+    } 
 
     for(int i=0; i<shape.size(); i++) {
-        if((shape[i] != add_shape[i]) && (add_shape[i] != 1)) {
-            throw ts::Exception("add two parameters's dims do not match");
-        }
-
-        if(shape[i] <= 0) {
-            throw ts::Exception("add input data shape check failed ");
+        TS_AUTO_CHECK(shape[i] > 0 && right_shape[i] > 0);
+        if(shape[i] != right_shape[i]) {
+            TS_AUTO_CHECK(shape[i] == 1 || right_shape[i] == 1); 
+            if(shape[i] == 1) {
+                shape[i] = right_shape[i];
+            }
         }
     }
 
-    if(stack.index(0)->dtype() != stack.index(1)->dtype()) {
-        throw ts::Exception("add two input data type do not match");
-    }
     output = ts::Tensor::Prototype(stack.index(0)->dtype(), shape);
     return;
 }
-
 
 
 int Add::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output) {
@@ -53,134 +54,108 @@ int Add::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output) {
     return 1;
 }
 
-template<typename T>
-void Add::dimshuffle(const Shape & shape, int dim, int add_dim, const T* src, T* dst) {
-    unsigned int preoffset = 1;
-    for(int i=0; i<dim; i++) {
-        preoffset *= shape[i];
+int Add::to_index(const HypeShape &hype, const Shape & shape, const Shape &curshape) {
+    TS_AUTO_CHECK(shape.size() == curshape.size());
+    Shape tmpshape(curshape);
+    for(int i=0; i<shape.size(); i++) {
+        if(shape[i] == 1) {
+            tmpshape[i] = 0;
+        } 
     }
 
-    unsigned int stride = 1;
-    for(int i=dim; i<shape.size(); i++) {
-        stride *= shape[i];
-    }
-
-    unsigned int backstride = 1;
-    backstride = stride / shape[dim];
-    unsigned int newstride = backstride * (add_dim + 1);
-
-    for(int k=0; k<preoffset; k++) {
-        for(int i=0; i<add_dim+1; i++) {
-            ::memcpy(dst + k * newstride + i * backstride,
-                     src + k * stride,
-                     backstride * sizeof(T));
-        }
-    }
-
+    return hype.to_index(tmpshape);
 }
 
 
-
-
 template<typename T>
-void Add::compute_add(const ts::Tensor *input_tensor, const ts::Tensor *add_tensor, ts::Tensor *output_tensor) {
-    const Shape& shape = input_tensor->sizes();
-    Shape add_shape = add_tensor->sizes();
-    const Shape& reshape = output_tensor->sizes();
+void Add::compute_run(const Tensor &input_tensor, const Tensor &right_tensor, Tensor *left_tensor) {
+    const Shape& shape = input_tensor.sizes();
+    Shape right_shape = right_tensor.sizes();
+    const Shape& left_shape = left_tensor->sizes();
 
-    const T* psrc = input_tensor->data<T>();
-    const T* padd = add_tensor->data<T>();
-    T* pdst = output_tensor->sync(memory_device()).data<T>();
+    T* pleft = left_tensor->data<T>();
+    const T* pinput = input_tensor.data<T>();
+    const T* pright = right_tensor.data<T>();
 
-    T* tmpbuffer = NULL;
-    T* dimshuffle_buffer = NULL;
-    T* ptr = NULL;
-    const T* pdata = NULL;
-    for(int i=0; i<shape.size(); i++) {
-        if((add_shape[i] == 1) && (shape[i] > 1)) {
-            if(tmpbuffer == NULL) {
-                tmpbuffer = new T [ output_tensor->count()];
-                dimshuffle_buffer = new T [ output_tensor->count()];
-                ::memcpy(tmpbuffer, padd, add_tensor->count() * sizeof(T));
-                ::memset(dimshuffle_buffer, 0, add_tensor->count() * sizeof(T));
-            }else {
-                ptr = tmpbuffer;
-                tmpbuffer = dimshuffle_buffer;
-                dimshuffle_buffer = ptr;                
-            }
-            dimshuffle(add_shape, i, shape[i] - add_shape[i], tmpbuffer, dimshuffle_buffer);
-            add_shape[i] = shape[i];
-        }
+
+    HypeShape left_hype(left_shape);
+    HypeShape hype(shape);
+    HypeShape right_hype(right_shape);
+
+    int ncount = right_tensor.count();
+    if(input_tensor.count() == 1) {
+        for(int i=0; i<ncount; i++) {
+            pleft[i] = pinput[0] + pright[i];
+        } 
+        return;
     }
 
-
-    if(dimshuffle_buffer != NULL) {
-        pdata = dimshuffle_buffer;
-    }else {
-        pdata = padd;
+    ncount = input_tensor.count();
+    if(right_tensor.count() == 1) {
+        for(int i=0; i<ncount; i++) {
+            pleft[i] = pinput[i] + pright[0];
+        } 
+        return;
     }
 
-    int ncount = input_tensor->count();
+    ncount = left_tensor->count();
     for(int i=0; i<ncount; i++) {
-        pdst[i] = psrc[i] + pdata[i];
+        std::vector<int> tmpshape = left_hype.to_coordinate(i);
+        pleft[i] = pinput[to_index(hype, shape, tmpshape)] + pright[to_index(right_hype,right_shape,tmpshape)];    
     }
-    
-    if(dimshuffle_buffer != NULL) {
-        delete [] dimshuffle_buffer;
-        delete [] tmpbuffer;
-    }
+
 }
 
 
 
 int Add::run(ts::Stack &stack) {
-    std::vector<ts::Tensor::Prototype> output;
+    std::vector<Tensor::Prototype> output;
     output.resize(1);
     infer_private(stack, output[0]);
 
-    ts::Tensor *input_tensor =  stack.index(0);
-    ts::Tensor *add_tensor  = stack.index(1);
+    stack.push(output[0], MemoryDevice(CPU));
 
-    stack.push(output[0], memory_device());
-    ts::Tensor *tensor = stack.index(-1);
+    Tensor *left_tensor = stack.index(-1);
+    Tensor input_tensor =  tensor::cast(left_tensor->dtype(), *stack.index(0));
+    Tensor right_tensor  = tensor::cast(left_tensor->dtype(), *stack.index(1));
 
-    ts::DTYPE type = stack.index(0)->dtype();
+    DTYPE type = stack.index(0)->dtype();
 
     switch(type) {
-        case ts::INT8: {
-            compute_add<char>(input_tensor, add_tensor, tensor);
+        case INT8: {
+            compute_run<char>(input_tensor, right_tensor, left_tensor);
             break;
         }
-        case ts::UINT8: {
-            compute_add<unsigned char>(input_tensor, add_tensor, tensor);
+        case UINT8: {
+            compute_run<unsigned char>(input_tensor, right_tensor, left_tensor);
             break;
         }
-        case ts::INT16: {
-            compute_add<short>(input_tensor, add_tensor, tensor);
+        case INT16: {
+            compute_run<short>(input_tensor, right_tensor, left_tensor);
             break;
         }
-        case ts::UINT16: {
-            compute_add<unsigned short>(input_tensor, add_tensor, tensor);
+        case UINT16: {
+            compute_run<unsigned short>(input_tensor, right_tensor, left_tensor);
             break;
         }
-        case ts::INT32: {
-            compute_add<int>(input_tensor, add_tensor, tensor);
+        case INT32: {
+            compute_run<int>(input_tensor, right_tensor, left_tensor);
             break;
         }
-        case ts::UINT32: {
-            compute_add<unsigned int>(input_tensor, add_tensor, tensor);
+        case UINT32: {
+            compute_run<unsigned int>(input_tensor, right_tensor, left_tensor);
             break;
         }
-        case ts::FLOAT32: {
-            compute_add<float>(input_tensor, add_tensor, tensor);
+        case FLOAT32: {
+            compute_run<float>(input_tensor, right_tensor, left_tensor);
             break;
         }
-        case ts::FLOAT64: {
-            compute_add<double>(input_tensor, add_tensor, tensor);
+        case FLOAT64: {
+            compute_run<double>(input_tensor, right_tensor, left_tensor);
             break;
         }
         defalut: {
-            throw ts::Exception("add not support this data type");
+            throw Exception("add not support this data type");
             break;
         }
     }
@@ -192,12 +167,9 @@ int Add::run(ts::Stack &stack) {
 
 
 
-/////////////////////////////////////////////////
-
-//TS_REGISTER_OPERATOR(Add, ts::CPU, ts::name::layer::add())
 
 }
 
 using namespace ts;
-TS_REGISTER_OPERATOR(Add, ts::CPU, ts::name::layer::add())
+TS_REGISTER_OPERATOR(Add, CPU, name::layer::add())
 

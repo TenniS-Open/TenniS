@@ -23,10 +23,14 @@ public:
 
 private:
     void infer_private(ts::Stack &stack, ts::Tensor::Prototype &output);
+    template<typename T>
+    void compute_run(Tensor *input_tensor, Tensor *gamma_tensor,
+                             Tensor *beta_tensor, Tensor *mean_tensor,
+                             Tensor *variance_tensor,Tensor *output_tensor);
 
 private:
     int m_dim;
-
+    float m_epsilon;
 };
 
 

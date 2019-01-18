@@ -22,11 +22,9 @@ public:
 
 
 private:
+    int to_index(const HypeShape &hype, const Shape & shape, const Shape &curshape);
     template<typename T>
-    void dimshuffle(const Shape & shape, int dim, int div_dim, const T* src, T* dst);
-
-    template<typename T>
-    void compute_div(const ts::Tensor *input_tensor, const ts::Tensor *div_tensor, ts::Tensor *output_tensor);
+    void compute_run(const Tensor &input_tensor, const Tensor &right_tensor,Tensor *left_tensor);
     void infer_private(ts::Stack &stack, ts::Tensor::Prototype &output);
 
 
