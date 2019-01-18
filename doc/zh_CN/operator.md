@@ -336,6 +336,19 @@ output_w = floor((width + pad_w -
 
 参数：  
 - `dim`: `Int` softmax 要处理的维度 
+- `smooth`: `Int` 非零表示真，0表示假
+
+说明：  
+smooth 为0时：
+```
+y_i = exp(-x_i) / \sum{exp(-x_i)}
+```
+smooth 为非0时：
+```
+t_i = x_i - max(x)
+y_i = exp(-t_i) / \sum{exp(-t_i)}
+```
+
 
 ### concat
 描述：链接算符
@@ -412,6 +425,37 @@ padding_type为black时，超出可计算区域的结果为0。
 
 ## to_float(x) -> y
 描述：把输入类型，调整成 `float` 类型。
+
+## prewhiten(x) -> y
+描述：进行图像白化
+
+说明：  
+对于输入的每一个样本 `x_i` 执行：
+```cpp
+template <typename T>
+void prewhiten(T *data, size_t len)
+{
+	double mean = 0;
+	double std_dev = 0;
+	T *at= nullptr;
+
+	at = data;
+	for (size_t i = 0; i < len; ++i, ++at) mean += *at;
+	mean /= len;
+
+	at = data;
+	for (size_t i = 0; i < len; ++i, ++at) std_dev += (*at - mean) * (*at - mean);
+	std_dev = std::sqrt(std_dev / len);
+	std_dev = std::max<T>(std_dev, 1 / std::sqrt(len));
+	double std_dev_rec = 1 / std_dev;
+
+	at = data;
+	for (size_t i = 0; i < len; ++i, ++at) {
+		*at -= mean;
+		*at *= std_dev_rec;
+	}
+}
+```
 
 ### tf_conv2d_padding
 

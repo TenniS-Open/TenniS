@@ -190,7 +190,10 @@ namespace ts {
         std::vector<Node> m_outputs;
         std::vector<Graph> m_graphs;
     };
+
+    extern template class _RawNodeWithValue<Node>;
 }
+
 
 
 
