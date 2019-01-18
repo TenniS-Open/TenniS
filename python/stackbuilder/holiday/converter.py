@@ -49,7 +49,8 @@ def blob2numpy(blob):
 
 def convert(input_file, output_file,
             output_blobs=None,
-            has_header=False):
+            has_header=False,
+            export_all=False):
     header, net = load_net(input_file, has_header)
 
     if output_blobs is None:
@@ -59,6 +60,9 @@ def convert(input_file, output_file,
         output_blobs = list(output_blobs)
     elif not isinstance(output_blobs, list):
         output_blobs = [output_blobs, ]
+
+    if export_all:
+        output_blobs.extend(net.blob_names)
 
     if header is not None and header.blob_name not in output_blobs:
         output_blobs.append(header.blob_name)
@@ -143,7 +147,7 @@ def convert(input_file, output_file,
 
 def convert_memorydata_layer(layer, input_nodes, output_names):
     # type: (hd.Holiday_LayerParameter, List[ts.Node], List[str]) -> List[ts.Node]
-    print("--# ==# Converting Layer: {}".format(output_names))
+    print("--# -=[ Converting {} layer: {} ]=-".format(OPType.EnumString[layer.type], output_names))
 
     assert len(input_nodes) == 0
     assert len(output_names) == 2
@@ -163,7 +167,7 @@ def convert_memorydata_layer(layer, input_nodes, output_names):
 
     input_shape = [input_batch_size, input_channels, input_height, input_width]
 
-    print("--## Input shape: {}".format(input_shape))
+    print("--##    Input shape: {}".format(input_shape))
 
     input = ts.menu.param("_input", shape=input_shape)
     label = ts.menu.data(output_names[1], value=0, device=ts.device.CPU)
@@ -173,12 +177,12 @@ def convert_memorydata_layer(layer, input_nodes, output_names):
     scale = 1
     if param.HasField("scale"):
         scale = param.scale
-        print("--## Scale: {}".format(scale))
+        print("--##    Scale: {}".format(scale))
 
     mean_file = None
     if param.HasField("mean_file"):
         mean_file = param.mean_file
-        print("--## Mean file: {}".format(mean_file is not None))
+        print("--##    Mean file: {}".format(mean_file is not None))
 
     mean_value = list(param.mean_value)
 
@@ -187,7 +191,7 @@ def convert_memorydata_layer(layer, input_nodes, output_names):
     prewhiten = False
     if param.HasField("prewhiten"):
         prewhiten = param.prewhiten
-        print("--## Prewhiten: {}".format(prewhiten))
+        print("--##    Prewhiten: {}".format(prewhiten))
 
     if mean_file is not None:
         mean = blob2numpy(mean_file)
@@ -216,7 +220,7 @@ def convert_memorydata_layer(layer, input_nodes, output_names):
 
 def convert_convolution_layer(layer, input_nodes, output_names):
     # type: (hd.Holiday_LayerParameter, List[ts.Node], List[str]) -> List[ts.Node]
-    print("--# ==# Converting Layer: {}".format(output_names))
+    print("--# -=[ Converting {} layer: {} ]=-".format(OPType.EnumString[layer.type], output_names))
 
     assert len(input_nodes) == 1
     assert len(output_names) == 1
@@ -228,33 +232,33 @@ def convert_convolution_layer(layer, input_nodes, output_names):
     bias_blob = None    # [output_channels, ]
     if param.HasField("bias_param"):
         bias_blob = blob2numpy(param.bias_param)
-        print("--## Bias shape: {}".format(bias_blob.shape))
+        print("--##    Bias shape: {}".format(bias_blob.shape))
 
     # is [output_channels, input_channels / group, input_height, input_width]
     weights_blob = blob2numpy(param.kernel_param)
-    print("--## Weights shape: {}".format(weights_blob.shape))
+    print("--##    Weights shape: {}".format(weights_blob.shape))
 
     dialation = [param.dilation_height, param.dilation_width]
-    print("--## Dialation: {}".format(dialation))
+    print("--##    Dialation: {}".format(dialation))
 
     num_output = None
     if param.HasField("num_output"):
         num_output = param.num_output
 
     padding = [param.pad_height, param.pad_width]
-    print("--## Dialation: {}".format(padding))
+    print("--##    Padding: {}".format(padding))
 
     kernel_size = [param.kernel_height, param.kernel_width]
 
     assert kernel_size[0] == weights_blob.shape[2] and kernel_size[1] == weights_blob.shape[3]
 
     stride = [param.stride_height, param.stride_width]
-    print("--## Stride: {}".format(stride))
+    print("--##    Stride: {}".format(stride))
 
     group = 1
     if param.HasField("group"):
         group = param.group
-        print("--## Group: {}".format(group))
+        print("--##    Group: {}".format(group))
 
     input_channels = weights_blob.shape[1]
 
@@ -275,7 +279,7 @@ def convert_convolution_layer(layer, input_nodes, output_names):
     tf_padding = None
     if param.HasField("tf_padding"):
         tf_padding = param.tf_padding
-        print("--## TF padding: {}".format(tf_padding))
+        print("--##    TF padding: {}".format(tf_padding))
 
     assert tf_padding is None or tf_padding == "SAME" or tf_padding == "VALID"
 
@@ -314,7 +318,7 @@ def convert_convolution_layer(layer, input_nodes, output_names):
 
 def convert_batch_norm_layer(layer, input_nodes, output_names):
     # type: (hd.Holiday_LayerParameter, List[ts.Node], List[str]) -> List[ts.Node]
-    print("--# ==# Converting Layer: {}".format(output_names))
+    print("--# -=[ Converting {} layer: {} ]=-".format(OPType.EnumString[layer.type], output_names))
 
     assert len(input_nodes) == 1
     assert len(output_names) == 1
@@ -330,8 +334,8 @@ def convert_batch_norm_layer(layer, input_nodes, output_names):
     mean = blob2numpy(mean)
     covariance = blob2numpy(covariance)
 
-    print("--## Mean shape: {}".format(mean.shape))
-    print("--## Covariance shape: {}".format(covariance.shape))
+    print("--##    Mean shape: {}".format(mean.shape))
+    print("--##    Covariance shape: {}".format(covariance.shape))
 
     epsilon = 1e-5
     variance = covariance ** 2 - epsilon
@@ -343,7 +347,7 @@ def convert_batch_norm_layer(layer, input_nodes, output_names):
 
 def convert_batch_scale_layer(layer, input_nodes, output_names):
     # type: (hd.Holiday_LayerParameter, List[ts.Node], List[str]) -> List[ts.Node]
-    print("--# ==# Converting Layer: {}".format(output_names))
+    print("--# -=[ Converting {} layer: {} ]=-".format(OPType.EnumString[layer.type], output_names))
 
     assert len(input_nodes) == 1
     assert len(output_names) == 1
@@ -359,8 +363,8 @@ def convert_batch_scale_layer(layer, input_nodes, output_names):
     scale = blob2numpy(scale)
     bias = blob2numpy(bias)
 
-    print("--## Scale shape: {}".format(scale.shape))
-    print("--## Bias shape: {}".format(bias.shape))
+    print("--##    Scale shape: {}".format(scale.shape))
+    print("--##    Bias shape: {}".format(bias.shape))
 
     node = ts.zoo.batch_scale(node_name, x=x, scale=scale, bias=bias, dim=1)
 
@@ -369,7 +373,7 @@ def convert_batch_scale_layer(layer, input_nodes, output_names):
 
 def convert_relu_layer(layer, input_nodes, output_names):
     # type: (hd.Holiday_LayerParameter, List[ts.Node], List[str]) -> List[ts.Node]
-    print("--# ==# Converting Layer: {}".format(output_names))
+    print("--# -=[ Converting {} layer: {} ]=-".format(OPType.EnumString[layer.type], output_names))
 
     assert len(input_nodes) == 1
     assert len(output_names) == 1
@@ -384,7 +388,7 @@ def convert_relu_layer(layer, input_nodes, output_names):
 
 def convert_pooling_layer(layer, input_nodes, output_names):
     # type: (hd.Holiday_LayerParameter, List[ts.Node], List[str]) -> List[ts.Node]
-    print("--# ==# Converting Layer: {}".format(output_names))
+    print("--# -=[ Converting {} layer: {} ]=-".format(OPType.EnumString[layer.type], output_names))
 
     assert len(input_nodes) == 1
     assert len(output_names) == 1
@@ -408,7 +412,7 @@ def convert_pooling_layer(layer, input_nodes, output_names):
         param.STOCHASTIC: "STOCHASTIC",
     }
 
-    print("--## Type : {}".format(holiday_pool_type_to_string[pool]))
+    print("--##    Type : {}".format(holiday_pool_type_to_string[pool]))
 
     type = holiday_pool_type_to_ts_pool_type[pool]
     if type is None:
@@ -416,30 +420,30 @@ def convert_pooling_layer(layer, input_nodes, output_names):
 
     padding = [param.pad_height, param.pad_width]
 
-    print("--## Padding: {}".format(padding))
+    print("--##    Padding: {}".format(padding))
 
     kernel = [param.kernel_height, param.kernel_width]
 
-    print("--## Kernel: {}".format(kernel))
+    print("--##    Kernel: {}".format(kernel))
 
     stride = [param.stride_height, param.stride_width]
 
-    print("--## Stride: {}".format(stride))
+    print("--##    Stride: {}".format(stride))
 
     global_pooling = False
     if param.HasField("global_pooling"):
         global_pooling = param.global_pooling
-        print("--## Global pooling: {}".format(global_pooling))
+        print("--##    Global pooling: {}".format(global_pooling))
 
     tf_padding = None
     if param.HasField("tf_padding"):
         tf_padding = param.tf_padding
-        print("--## TF padding: {}".format(tf_padding))
+        print("--##    TF padding: {}".format(tf_padding))
 
     valid = None
     if param.HasField("valid"):
         valid = param.valid
-        print("--## MX valid: {}".format(valid))
+        print("--##    MX valid: {}".format(valid))
 
     assert tf_padding is None or tf_padding == "SAME" or tf_padding == "VALID"
 
@@ -479,7 +483,7 @@ def convert_pooling_layer(layer, input_nodes, output_names):
 
 def convert_inner_product_layer(layer, input_nodes, output_names):
     # type: (hd.Holiday_LayerParameter, List[ts.Node], List[str]) -> List[ts.Node]
-    print("--# ==# Converting Layer: {}".format(output_names))
+    print("--# -=[ Converting {} layer: {} ]=-".format(OPType.EnumString[layer.type], output_names))
 
     assert len(input_nodes) == 1
     assert len(output_names) == 1
@@ -502,15 +506,15 @@ def convert_inner_product_layer(layer, input_nodes, output_names):
     transpose = False
     if param.HasField("transpose"):
         transpose = param.transpose
-    print("--## Transpose: {}".format(transpose))
+    print("--##    Transpose: {}".format(transpose))
 
     weights_blob = blob2numpy(param.Inner_param)
-    print("--## Weights shape: {}".format(weights_blob.shape))
+    print("--##    Weights shape: {}".format(weights_blob.shape))
 
     bias_blob = None
     if param.HasField("bias_param"):
         bias_blob = blob2numpy(param.bias_param)
-        print("--## Bias shape: {}".format(bias_blob.shape))
+        print("--##    Bias shape: {}".format(bias_blob.shape))
 
     assert num_output == weights_blob.shape[0]
     num_input = weights_blob.shape[1]
@@ -532,5 +536,5 @@ def convert_inner_product_layer(layer, input_nodes, output_names):
 
 
 if __name__ == "__main__":
-
-    convert("test.ext.dat", "test.tsm", output_blobs=["fc_pose_umd"], has_header=True)
+    # convert("test.ext.dat", "test.tsm", output_blobs=["fc_pose_umd"], has_header=True)
+    convert("test.ext.dat", "test.tsm", export_all=True, has_header=True)
