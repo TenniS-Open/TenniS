@@ -23,8 +23,8 @@ public:
 
 private:
     template<typename T>
-    void compute_batch_scale(const ts::Tensor *input_tensor, const ts::Tensor *scale_tensor,
-                             const ts::Tensor *bias_tensor, ts::Tensor *output_tensor);
+    void compute_batch_scale(Tensor *input_tensor, Tensor *scale_tensor,
+                             Tensor *bias_tensor, Tensor *output_tensor);
     void infer_private(ts::Stack &stack, ts::Tensor::Prototype &output);
 
 private:

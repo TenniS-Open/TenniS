@@ -2,6 +2,8 @@
 #include <core/tensor_builder.h>
 #include <global/operator_factory.h>
 #include <backend/name.h>
+#include <core/device.h>
+#include <utils/assert.h>
 
 namespace ts {
 
@@ -9,15 +11,15 @@ namespace ts {
 
 //////////////////////////////////////////////
 Batch_Scale::Batch_Scale() {
-    field("dim", REQUIRED);
+    field(name::dim, REQUIRED);
     m_dim = -1;   
 } 
 
 void Batch_Scale::init() {
     supper::init();
 
-    if(has("dim")){
-        const Tensor& tensor_dim = get("dim");
+    if(has(name::dim)){
+        const Tensor& tensor_dim = get(name::dim);
         m_dim = ts::tensor::to_int(tensor_dim);
     }else {
         throw ts::Exception("batch_scale must set dim parameter");
@@ -26,29 +28,19 @@ void Batch_Scale::init() {
 
 void Batch_Scale::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) {
     int input_num = stack.size();
-    if(input_num != 3) {
-        throw ts::Exception("batch_scale must have three input parameters");
-    }
+    TS_AUTO_CHECK(input_num == 3);
 
     const Shape& shape = stack.index(0)->sizes();
 
-    if(m_dim < 0 || m_dim >= shape.size() ) {
-        throw ts::Exception("batch_scale dim parameter check failed");
-    }
+    TS_AUTO_CHECK(m_dim >= 0 && m_dim < shape.size() ); 
    
     const Shape& scale_shape = stack.index(1)->sizes();
-    if(scale_shape.size()  != 1 ) {
-        throw ts::Exception("batch_scale scale parameter's dims is not 1");
-    }
+    TS_AUTO_CHECK(scale_shape.size()  == 1 ); 
 
     const Shape& bias_shape = stack.index(2)->sizes();
-    if(bias_shape.size()  != 1 ) {
-        throw ts::Exception("batch_scale bias parameter's dims is not 1");
-    }
+    TS_AUTO_CHECK(bias_shape.size()  == 1 ); 
 
-    if(scale_shape[0] != shape[m_dim] || bias_shape[0] != shape[m_dim]) {
-        throw ts::Exception("batch_scale scale and bias parameters check failed");
-    }
+    TS_AUTO_CHECK(scale_shape[0] == shape[m_dim] && bias_shape[0] == shape[m_dim]); 
 
     output = ts::Tensor::Prototype(stack.index(0)->dtype(), shape);
     return;
@@ -63,8 +55,8 @@ int Batch_Scale::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &out
 }
 
 template<typename T>
-void Batch_Scale::compute_batch_scale(const ts::Tensor *input_tensor, const ts::Tensor *scale_tensor, 
-                                      const ts::Tensor *bias_tensor, ts::Tensor *output_tensor) {
+void Batch_Scale::compute_batch_scale(Tensor *input_tensor, Tensor *scale_tensor, 
+                                      Tensor *bias_tensor, Tensor *output_tensor) {
     const Shape& shape = input_tensor->sizes();
     int predims = 1;
     int backdims = 1;
@@ -76,13 +68,12 @@ void Batch_Scale::compute_batch_scale(const ts::Tensor *input_tensor, const ts::
         backdims *= shape[i];
     }
 
-    const T* psrc  = input_tensor->data<T>();
+    const T* psrc  = input_tensor->sync(MemoryDevice(CPU)).data<T>();
     const T* pscale = scale_tensor->data<T>();
     const T* pbias = bias_tensor->data<T>();
-    T* pdst  = output_tensor->sync(memory_device()).data<T>();
+    T* pdst  = output_tensor->data<T>();
     int stridedims = backdims * shape[m_dim];
     int offset = 0;
-    //std::cout << "pre:" << predims << ",back:" << backdims << ",stride:" << stridedims << ",dim:" << m_dim << std::endl;
     for(int i=0; i<predims; i++) {
         for(int k=0; k<shape[m_dim]; k++) {
             offset = i * stridedims + k * backdims;
@@ -100,19 +91,19 @@ int Batch_Scale::run(ts::Stack &stack) {
     output.resize(1);
     infer_private(stack, output[0]);
 
+    stack.push(output[0], MemoryDevice(CPU));
     ts::Tensor *input_tensor =  stack.index(0);
-    ts::Tensor *scale_tensor  = stack.index(1);
-    ts::Tensor *bias_tensor  = stack.index(2);
-    stack.push(output[0], memory_device());
+    ts::Tensor scale_tensor  = tensor::cast(stack.index(0)->dtype(), *stack.index(1));
+    ts::Tensor bias_tensor  =  tensor::cast(stack.index(0)->dtype(), *stack.index(2));
     ts::Tensor *tensor = stack.index(-1);
 
     switch(input_tensor->dtype()) {
         case ts::FLOAT32: {
-            compute_batch_scale<float>(input_tensor, scale_tensor, bias_tensor, tensor);
+            compute_batch_scale<float>(input_tensor, &scale_tensor, &bias_tensor, tensor);
             break;
         }
         case ts::FLOAT64: {
-            compute_batch_scale<double>(input_tensor, scale_tensor, bias_tensor, tensor);
+            compute_batch_scale<double>(input_tensor, &scale_tensor, &bias_tensor, tensor);
             break;
         }
         default: {
@@ -129,5 +120,5 @@ int Batch_Scale::run(ts::Stack &stack) {
 
 /////////////////////////////////////////////////
 using namespace ts;
-TS_REGISTER_OPERATOR(Batch_Scale, ts::CPU, ts::name::layer::batch_scale())
+TS_REGISTER_OPERATOR(Batch_Scale, CPU, name::layer::batch_scale())
 

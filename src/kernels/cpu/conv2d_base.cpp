@@ -1,6 +1,9 @@
 #include <kernels/cpu/conv2d_base.h>
 #include <core/tensor_builder.h>
 #include <global/operator_factory.h>
+#include <utils/assert.h>
+#include <backend/name.h>
+
 
 namespace ts {
 
@@ -20,12 +23,12 @@ int Conv2d_Base::Caculate(const int height, const int width, const int kernel_h,
 
 
 std::function<Operator::shared(void)> Conv2d_Base::GetCreator(const std::string & name) {
-    auto creator = ts::OperatorCreator::Query(computing_device().type(), name);
+    auto creator = OperatorCreator::Query(computing_device().type(), name);
 
     if(creator == nullptr) {
-        creator = ts::OperatorCreator::Query(memory_device().type(), name);
+        creator = OperatorCreator::Query(memory_device().type(), name);
         if(creator == nullptr) {
-            creator = ts::OperatorCreator::Query(ts::CPU, name);
+            creator = OperatorCreator::Query(CPU, name);
         }
     }
 
@@ -34,95 +37,74 @@ std::function<Operator::shared(void)> Conv2d_Base::GetCreator(const std::string 
 }
 ////////////////////////////////////////////
 Conv2d_Base::Conv2d_Base() {
-    field("format", REQUIRED);
-    field("padding", REQUIRED);
-    field("stride", REQUIRED);
-    field("dialations", REQUIRED);
-    field("group", OPTIONAL);
-    field("padding_value",OPTIONAL);
-    m_group = 1;
+    field(name::format, REQUIRED);
+    field(name::padding, REQUIRED);
+    field(name::stride, REQUIRED);
+    field(name::dialations, REQUIRED);
+    //field(name::group, OPTIONAL);
+    field(name::padding_value,OPTIONAL);
+    //m_group = 1;
     m_padding_value = 0;
 }
 
 void Conv2d_Base::init() {
     supper::init();
   
-    if(!has("format")){
-        throw ts::Exception("conv2d_base format parameter do not find");
-    }
+    TS_AUTO_CHECK(has(name::format));
 
-    if(!has("padding")){
-        throw ts::Exception("conv2d_base padding parameter do not find");
-    }
+    TS_AUTO_CHECK(has(name::padding));
 
-    if(!has("stride")){
-        throw ts::Exception("conv2d_base stride parameter do not find");
-    }
+    TS_AUTO_CHECK(has(name::stride));
 
-    if(!has("dialations")){
-        throw ts::Exception("conv2d_base dialations parameter do not find");
-    }
+    TS_AUTO_CHECK(!has(name::dialations));
 
-    m_format = ts::tensor::to_string(get("format"));
-    if(m_format != "NCHW") {
-       throw ts::Exception("conv2d_base format parameter is not supported");
-    }
+    m_format = tensor::to_string(get(name::format));
+    TS_AUTO_CHECK(m_format == name::NCHW); 
 
-    const Tensor& tensor_padding = get("padding");
-    if(tensor_padding.dims() != 2 || tensor_padding.dtype() != ts::INT32 || tensor_padding.count() != 8) {
-        throw ts::Exception("conv2d_base input parameter padding check failed");
-    }
+    const Tensor& tensor_padding = get(name::padding);
+    TS_AUTO_CHECK(tensor_padding.dims() == 2 && tensor_padding.count() == 8);
 
     m_padding.resize(8);
     for(int i=0; i<4; i++) {
         if(i==0 || i== 1) {
-            if(tensor_padding.data<int>()[2*i] != 0 ||
-               tensor_padding.data<int>()[2*i + 1] != 0) {
-                throw ts::Exception("conv2d_base input parameter padding  check failed");
-            }
+            TS_AUTO_CHECK(tensor_padding.data<int>()[2*i] == 0 && 
+               tensor_padding.data<int>()[2*i + 1] == 0); 
         }
         m_padding[2*i] = tensor_padding.data<int>()[2*i];
         m_padding[2*i + 1] = tensor_padding.data<int>()[2*i + 1];
     }
 
-    const Tensor& tensor_stride = get("stride");
-    if(tensor_stride.dims() != 1 || tensor_stride.dtype() != ts::INT32 || tensor_stride.count() != 4) {
-        throw ts::Exception("conv2d_base input parameter stride check failed");
-    }
+    const Tensor& tensor_stride = get(name::stride);
+    TS_AUTO_CHECK(tensor_stride.dims() == 1 && tensor_stride.count() == 4); 
 
     m_stride.resize(4);
     for(int i=0; i<4; i++) {
         if(i==0 || i== 1) {
-            if(tensor_stride.data<int>()[i] != 0 ) {
-                throw ts::Exception("conv2d_base input parameter stride check failed");
-            }
+            TS_AUTO_CHECK(tensor_stride.data<int>()[i] == 0 );
         }
         m_stride[i] = tensor_stride.data<int>()[i];
     }
 
-    const Tensor& tensor_dialations = get("dialations");
-    if(tensor_dialations.dims() != 1 || tensor_dialations.dtype() != ts::INT32 || tensor_dialations.count() != 4) {
-        throw ts::Exception("conv2d_base input parameter dialations check failed");
-    }
+    const Tensor& tensor_dialations = get(name::dialations);
+    TS_AUTO_CHECK(tensor_dialations.dims() == 1 && tensor_dialations.count() == 4); 
 
     m_dialations.resize(4);
     for(int i=0; i<4; i++) {
         if(i==0 || i== 1) {
-            if(tensor_dialations.data<int>()[i] != 0 ) {
-                throw ts::Exception("conv2d_base input parameter dialations check failed");
-            }
+            TS_AUTO_CHECK(tensor_dialations.data<int>()[i] == 0 ); 
         }
         m_dialations[i] = tensor_dialations.data<int>()[i];
     }
 
-    if(has("group")){
-        const Tensor& tensor_group = get("group");
-        m_group = ts::tensor::to_int(tensor_group);
+    /*
+    if(has(name::group)){
+        const Tensor& tensor_group = get(name::group);
+        m_group = tensor::to_int(tensor_group);
     }
-
-    if(has("padding_value")){
-        const Tensor& tensor_padding_value = get("padding_value");
-        m_padding_value = ts::tensor::to_int(tensor_padding_value);
+    */
+    if(has(name::padding_value)){
+        const Tensor& tensor_padding_value = get(name::padding_value);
+        m_padding_value = tensor::to_int(tensor_padding_value);
     }
 
 }
