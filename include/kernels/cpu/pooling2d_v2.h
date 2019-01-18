@@ -28,10 +28,16 @@ namespace ts {
 		virtual void init();
 		virtual int run(ts::Stack &stack);
 		virtual int infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output);
-
+    private:
+		bool check_equale_input_param(const Padding2D& padding,const KSize2D& ksize,const Stride2D& stride);
 	private:
 
 		Operator::shared m_operator;
+		Padding2D m_padding;
+		KSize2D m_ksize;
+		Stride2D m_stride;
+		std::string m_format;
+		bool m_init_pooling2d_flag = false;
 
 	};
 	//TS_REGISTER_OPERATOR(Pooling2dV2, ts::CPU, "pooling2d_v2")
