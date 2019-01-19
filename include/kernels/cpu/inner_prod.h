@@ -23,7 +23,7 @@ public:
 
 private:
     template<typename T>
-    void compute_inner_prod(const ts::Tensor *input_tensor, const ts::Tensor *dot_tensor, ts::Tensor *output_tensor);
+    void compute_inner_prod(Tensor *input_tensor, Tensor *dot_tensor, Tensor *output_tensor);
     void infer_private(ts::Stack &stack, ts::Tensor::Prototype &output);
 
 

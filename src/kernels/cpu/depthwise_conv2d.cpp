@@ -2,6 +2,9 @@
 #include <core/tensor_builder.h>
 #include <global/operator_factory.h>
 #include <backend/name.h>
+#include <core/device.h>
+#include <utils/assert.h>
+
 
 namespace ts {
 
@@ -28,28 +31,18 @@ void Depthwise_Conv2d::init() {
 
 int Depthwise_Conv2d::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) {
     int input_num = stack.size();
-    if(input_num != 2) {
-        throw ts::Exception("depthwise conv2d must have tow input parameters");
-    }
+    TS_AUTO_CHECK(input_num == 2); 
 
     Shape shape = stack.index(0)->sizes();
 
-    if(shape.size()  != 4 ) {
-        throw ts::Exception("depthwise conv2d first parameter's dims is not 4");
-    }
+    TS_AUTO_CHECK(shape.size()  == 4 ); 
 
     const Shape& weight_shape = stack.index(1)->sizes();
 
-    if(weight_shape.size()  != 4 ) {
-        throw ts::Exception("depthwise conv2d second parameter's dims is not 4");
-    }
+    TS_AUTO_CHECK(weight_shape.size()  == 4 ); 
 
-    if(weight_shape[0] != 1) {
-        throw ts::Exception("depthwise conv2d weight parameters first dim is not 1");
-    }
-    if(weight_shape[1] != shape[1]) {
-        throw ts::Exception("depthwise conv2d two input parameters channels is not equal");
-    }
+    TS_AUTO_CHECK(weight_shape[0] == 1); 
+    TS_AUTO_CHECK(weight_shape[1] == shape[1]); 
 
     int output_h,output_w;
     Caculate(shape[2], shape[3], weight_shape[2], weight_shape[3],m_padding[4], m_padding[5], m_padding[6], m_padding[7],
@@ -59,7 +52,6 @@ int Depthwise_Conv2d::infer_private(ts::Stack &stack, ts::Tensor::Prototype &out
     shape[2] = output_h;
     shape[3] = output_w;
 
-    //std::cout << "output shape:n=" << shape[0] << ",c=" << shape[1] << ",h=" << shape[2] << ",w=" << shape[3] << std::endl;
     output = ts::Tensor::Prototype(stack.index(0)->dtype(), shape);
     return 1;
 }
@@ -71,7 +63,7 @@ int Depthwise_Conv2d::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype>
 }
 
 template<typename T>
-void Depthwise_Conv2d::compute_conv(const Tensor *input_tensor, const Tensor *weight_tensor, Tensor *tensor, const Shape& shape,
+void Depthwise_Conv2d::compute_conv(Tensor *input_tensor, Tensor *weight_tensor, Tensor *tensor, const Shape& shape,
                       const Shape &reshape, const Shape &weight_shape ) {
 
     int kernel_dims = weight_shape[1] * weight_shape[2] * weight_shape[3];
@@ -83,9 +75,9 @@ void Depthwise_Conv2d::compute_conv(const Tensor *input_tensor, const Tensor *we
     int col_buffer_size = shape[1] * weight_shape[2] * weight_shape[3] * reshape[2] * reshape[3];
 
 
-    const T *pinput = input_tensor->data<T>();
-    const T *pweight_base = weight_tensor->data<T>();
-    T *poutput = tensor->sync(memory_device()).data<T>();
+    const T *pinput = input_tensor->sync(MemoryDevice(CPU)).data<T>();
+    const T *pweight_base = weight_tensor->sync(MemoryDevice(CPU)).data<T>();
+    T *poutput = tensor->data<T>();
     for(int n=0; n<reshape[0]; n++) {
         for(int c=0; c < reshape[1]; c++) {
             for(int h=0; h<reshape[2]; h++) {
@@ -113,35 +105,32 @@ void Depthwise_Conv2d::compute_conv(const Tensor *input_tensor, const Tensor *we
 
 
 int Depthwise_Conv2d::run(ts::Stack &stack) {
-    ts::Tensor::Prototype output;
-    //Shape padding;
+    Tensor::Prototype output;
     infer_private(stack, output);
 
-    ts::Tensor *input_tensor = stack.index(0);
+    stack.push(output, MemoryDevice(CPU));
+    Tensor *tensor = stack.index(-1);
+
+    Tensor *input_tensor = stack.index(0);
     const Shape& shape = input_tensor->sizes();
     const Shape& reshape = output.sizes();
 
-    int type_len = ts::type_bytes(input_tensor->dtype());
-
-    stack.push(output, memory_device());
-    ts::Tensor *tensor = stack.index(-1);
-
-    ts::Tensor *weight_tensor = stack.index(1);
+    Tensor *weight_tensor = stack.index(1);
     const Shape& weight_shape = weight_tensor->sizes();
 
     switch(tensor->dtype()) {
-        case ts::FLOAT32: {
+        case FLOAT32: {
              compute_conv<float>(input_tensor, weight_tensor, tensor, shape,reshape,
                                  weight_shape);
              break;
         }
-        case ts::FLOAT64: {
+        case FLOAT64: {
              compute_conv<double>(input_tensor, weight_tensor, tensor, shape,reshape,
                                  weight_shape);
              break;
         }
         default: {
-            throw ts::Exception("depthwise conv2d only support FLOAT32 and FLOAT64 type");
+            throw Exception("depthwise conv2d only support FLOAT32 and FLOAT64 type");
             break;
         }
     }
@@ -157,4 +146,4 @@ int Depthwise_Conv2d::run(ts::Stack &stack) {
 
 
 using namespace ts;
-TS_REGISTER_OPERATOR(Depthwise_Conv2d, ts::CPU, ts::name::layer::depthwise_conv2d())
+TS_REGISTER_OPERATOR(Depthwise_Conv2d, CPU, name::layer::depthwise_conv2d())

@@ -24,7 +24,7 @@ public:
 private:
     int to_index(const HypeShape &hype, const Shape & shape, const Shape &curshape);
     template<typename T>
-    void compute_run(const Tensor &input_tensor, const Tensor &right_tensor,Tensor *left_tensor);
+    void compute_run(Tensor *input_tensor, Tensor *right_tensor,Tensor *left_tensor);
 
     void infer_private(ts::Stack &stack, ts::Tensor::Prototype &output);
 
