@@ -148,7 +148,8 @@ Resize2d:: Resize2d() {
 void Resize2d::init() {
     supper::init();
     if(has(name::type)) {
-        m_type = ts::tensor::to_int(get(name::type));
+        Tensor type = tensor::cast(INT32, get(name::type));
+        m_type = ts::tensor::to_int(type);
     }
 
 }
