@@ -23,15 +23,23 @@ void Sub::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) {
     TS_AUTO_CHECK(input_num == 2); 
 
     Shape shape = stack.index(0)->sizes();
-    const Shape& right_shape = stack.index(1)->sizes();
+    Shape right_shape = stack.index(1)->sizes();
 
     TS_AUTO_CHECK(shape.size() > 0);
     TS_AUTO_CHECK(right_shape.size() > 0);
     TS_AUTO_CHECK(stack.index(0)->dtype() == stack.index(1)->dtype());
     if(shape.size() != right_shape.size()) {
         TS_AUTO_CHECK((shape.size() == 1 && shape[0] == 1) || (right_shape.size() == 1 && right_shape[0] == 1));
+        if(shape.size() == 1) {
+            shape = Shape(right_shape.size(), 1);
+        } 
 
+        if(right_shape.size() == 1) {
+            right_shape = Shape(shape.size(), 1);
+        } 
     } 
+
+
 
     for(int i=0; i<shape.size(); i++) {
         TS_AUTO_CHECK(shape[i] > 0 && right_shape[i] > 0);
@@ -69,9 +77,17 @@ int Sub::to_index(const HypeShape &hype, const Shape & shape, const Shape &cursh
 
 template<typename T>
 void Sub::compute_run(Tensor *input_tensor, Tensor *right_tensor, Tensor *left_tensor) {
-    const Shape& shape = input_tensor->sizes();
+    Shape shape = input_tensor->sizes();
     Shape right_shape = right_tensor->sizes();
     const Shape& left_shape = left_tensor->sizes();
+
+    if(shape.size() == 1) {
+        shape = Shape(right_shape.size(), 1);
+    } 
+
+    if(right_shape.size() == 1) {
+        right_shape = Shape(shape.size(), 1);
+    } 
 
     const T* pinput = input_tensor->sync(MemoryDevice(CPU)).data<T>();
     const T* pright = right_tensor->sync(MemoryDevice(CPU)).data<T>();
