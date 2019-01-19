@@ -25,9 +25,10 @@ void Add::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) {
     Shape shape = stack.index(0)->sizes();
     const Shape& right_shape = stack.index(1)->sizes();
 
-   TS_AUTO_CHECK(shape.size() > 0);
-   TS_AUTO_CHECK(right_shape.size() > 0);
+    TS_AUTO_CHECK(shape.size() > 0);
+    TS_AUTO_CHECK(right_shape.size() > 0);
 
+    TS_AUTO_CHECK(stack.index(0)->dtype() == stack.index(1)->dtype());
     if(shape.size() != right_shape.size()) {
         TS_AUTO_CHECK((shape.size() == 1 && shape[0] == 1) || (right_shape.size() == 1 && right_shape[0] == 1));
 
