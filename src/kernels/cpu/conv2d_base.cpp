@@ -78,7 +78,7 @@ void Conv2d_Base::init() {
     m_stride.resize(4);
     for(int i=0; i<4; i++) {
         if(i==0 || i== 1) {
-            TS_AUTO_CHECK(tensor_stride.data<int>()[i] == 0 );
+            TS_AUTO_CHECK(tensor_stride.data<int>()[i] == 1 );
         }
         m_stride[i] = tensor_stride.data<int>()[i];
     }
@@ -89,7 +89,7 @@ void Conv2d_Base::init() {
     m_dialations.resize(4);
     for(int i=0; i<4; i++) {
         if(i==0 || i== 1) {
-            TS_AUTO_CHECK(tensor_dialations.data<int>()[i] == 0 ); 
+            TS_AUTO_CHECK(tensor_dialations.data<int>()[i] == 1 ); 
         }
         m_dialations[i] = tensor_dialations.data<int>()[i];
     }
