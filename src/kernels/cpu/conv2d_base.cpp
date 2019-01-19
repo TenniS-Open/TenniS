@@ -50,14 +50,10 @@ Conv2d_Base::Conv2d_Base() {
 void Conv2d_Base::init() {
     supper::init();
   
-    TS_AUTO_CHECK(has(name::format));
-
-    TS_AUTO_CHECK(has(name::padding));
-
-    TS_AUTO_CHECK(has(name::stride));
-
-    TS_AUTO_CHECK(!has(name::dialations));
-
+    //TS_AUTO_CHECK(has(name::format));
+    //TS_AUTO_CHECK(has(name::padding));
+    //TS_AUTO_CHECK(has(name::stride));
+    //TS_AUTO_CHECK(has(name::dialations));
     m_format = tensor::to_string(get(name::format));
     TS_AUTO_CHECK(m_format == name::NCHW); 
 

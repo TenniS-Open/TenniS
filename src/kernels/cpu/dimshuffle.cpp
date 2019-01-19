@@ -18,8 +18,8 @@ Dimshuffle::Dimshuffle() {
 void Dimshuffle::init() {
     supper::init();
  
-    TS_AUTO_CHECK(has(name::dim));
-    TS_AUTO_CHECK(has(name::shuffle));
+    //TS_AUTO_CHECK(has(name::dim));
+    //TS_AUTO_CHECK(has(name::shuffle));
 
     const Tensor& tensor_dim = get(name::dim);
     m_dim = ts::tensor::to_int(tensor_dim);

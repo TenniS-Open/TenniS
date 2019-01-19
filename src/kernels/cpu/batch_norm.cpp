@@ -27,19 +27,14 @@ void Batch_Norm::init() {
         m_epsilon = ts::tensor::to_float(tensor_epsilon); 
     }
 
-    if(has(name::dim)){
-        const Tensor& tensor_dim = get(name::dim);
-        m_dim = ts::tensor::to_int(tensor_dim);
-    }else {
-        throw ts::Exception("batch_norm missed dim parameter ");
-    }
+    const Tensor& tensor_dim = get(name::dim);
+    m_dim = ts::tensor::to_int(tensor_dim);
   
 }   
 
 void Batch_Norm::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) {
     int input_num = stack.size();
     TS_AUTO_CHECK(input_num == 3); 
-    std::cout << "input_num:" << input_num << std::endl;
     const Shape& shape = stack.index(0)->sizes();
 
     TS_AUTO_CHECK(m_dim >= 0 && m_dim < shape.size() ); 
