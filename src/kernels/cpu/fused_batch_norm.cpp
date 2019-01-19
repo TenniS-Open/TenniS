@@ -24,14 +24,9 @@ Fused_Batch_Norm::Fused_Batch_Norm() {
 void Fused_Batch_Norm::init() {
     supper::init();
 
-    if(has(name::dim)){
-        const Tensor& tensor_dim = get(name::dim);
-        m_dim = ts::tensor::to_int(tensor_dim);
+    const Tensor& tensor_dim = get(name::dim);
+    m_dim = ts::tensor::to_int(tensor_dim);
 
-    }else {
-        throw Exception("fused_batch_norm missed dim parameter ");
-    }
-  
     if(has(name::epsilon)){
         const Tensor& tensor_epsilon = get(name::epsilon);
         m_epsilon = ts::tensor::to_float(tensor_epsilon);

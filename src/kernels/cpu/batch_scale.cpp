@@ -18,12 +18,8 @@ Batch_Scale::Batch_Scale() {
 void Batch_Scale::init() {
     supper::init();
 
-    if(has(name::dim)){
-        const Tensor& tensor_dim = get(name::dim);
-        m_dim = ts::tensor::to_int(tensor_dim);
-    }else {
-        throw Exception("batch_scale must set dim parameter");
-    }
+    const Tensor& tensor_dim = get(name::dim);
+    m_dim = ts::tensor::to_int(tensor_dim);
 }   
 
 void Batch_Scale::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) {

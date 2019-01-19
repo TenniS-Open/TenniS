@@ -17,7 +17,7 @@ Reshape::Reshape() {
 void Reshape::init() {
     supper::init();
     
-    TS_AUTO_CHECK(has(name::shape));
+    //TS_AUTO_CHECK(has(name::shape));
 
     Tensor tensor_shape  = tensor::cast(INT32, get(name::shape));
 
