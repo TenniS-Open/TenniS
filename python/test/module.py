@@ -3,7 +3,7 @@
 import os
 import sys
 sys.path.append(
-    os.path.join(os.path.abspath(os.path.dirname(__file__)),".."))
+    os.path.join(os.path.abspath(os.path.dirname(__file__)), ".."))
 
 from tensorstack import Module
 from tensorstack import bubble
