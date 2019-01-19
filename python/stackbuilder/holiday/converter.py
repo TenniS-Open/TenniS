@@ -301,7 +301,7 @@ def convert_convolution_layer(layer, input_nodes, output_names):
         conv2d = ts.zoo.conv2d(conv2d_name, x=input_nodes[0], w=weights_blob, format=ts.zoo.Name.NCHW,
                                padding=[[0, 0], [0, 0], [padding[0], padding[0]], [padding[1], padding[1]]],
                                padding_value=0,
-                               stride=[0, 0, stride[0], stride[1]],
+                               stride=[1, 1, stride[0], stride[1]],
                                dialations=[1, 1, dialation[0], dialation[1]])
     elif is_depthwise_conv2d:
         weights_shape = weights_blob.shape
