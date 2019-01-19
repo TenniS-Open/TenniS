@@ -60,7 +60,8 @@ void Conv2d_V2_Base::init() {
 
     //TS_AUTO_CHECK(has(name::dialations));
 
-    m_format = ts::tensor::to_string(get(name::format));
+    Tensor format = tensor::cast(CHAR8, get(name::format));
+    m_format = tensor::to_string(format);
     TS_AUTO_CHECK(m_format == name::NCHW);
 
     /*
@@ -82,7 +83,7 @@ void Conv2d_V2_Base::init() {
     }
     */
 
-    const Tensor& tensor_stride = get(name::stride);
+    Tensor tensor_stride = tensor::cast(INT32, get(name::stride));
     TS_AUTO_CHECK(tensor_stride.dims() == 1 && tensor_stride.count() == 4);
 
     m_stride.resize(4);
@@ -93,7 +94,7 @@ void Conv2d_V2_Base::init() {
         m_stride[i] = tensor_stride.data<int>()[i];
     }
 
-    const Tensor& tensor_dialations = get(name::dialations);
+    Tensor tensor_dialations = tensor::cast(INT32, get(name::dialations));
     TS_AUTO_CHECK(tensor_dialations.dims() == 1 && tensor_dialations.count() == 4); 
 
     m_dialations.resize(4);
@@ -112,7 +113,7 @@ void Conv2d_V2_Base::init() {
     */
 
     if(has(name::padding_value)){
-        const Tensor& tensor_padding_value = get(name::padding_value);
+        Tensor tensor_padding_value = tensor::cast(INT32, get(name::padding_value));
         m_padding_value = ts::tensor::to_int(tensor_padding_value);
     }
 
