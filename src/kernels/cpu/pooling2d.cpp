@@ -38,8 +38,8 @@ namespace ts {
 		{
 			TS_AUTO_CHECK(static_padding.data<int32_t>()[0] == 0 && static_padding.data<int32_t>()[1] == 0
 				&& static_padding.data<int32_t>()[2] == 0 && static_padding.data<int32_t>()[3] == 0);
-			TS_AUTO_CHECK(ksize_tensor.data<int32_t>()[0] == 0 && ksize_tensor.data<int32_t>()[1] == 0);
-			TS_AUTO_CHECK(stride_tensor.data<int32_t>()[0] == 0 && stride_tensor.data<int32_t>()[1] == 0);
+			TS_AUTO_CHECK(ksize_tensor.data<int32_t>()[0] == 1 && ksize_tensor.data<int32_t>()[1] == 1);
+			TS_AUTO_CHECK(stride_tensor.data<int32_t>()[0] == 1 && stride_tensor.data<int32_t>()[1] == 1);
 			m_padding.top = static_padding.data<int32_t>()[4];
 			m_padding.bottom = static_padding.data<int32_t>()[5];
 			m_padding.left = static_padding.data<int32_t>()[6];
@@ -53,8 +53,8 @@ namespace ts {
 		{
 			TS_AUTO_CHECK(static_padding.data<int32_t>()[0] == 0 && static_padding.data<int32_t>()[1] == 0
 				&& static_padding.data<int32_t>()[6] == 0 && static_padding.data<int32_t>()[7] == 0);
-			TS_AUTO_CHECK(ksize_tensor.data<int32_t>()[0] == 0 && ksize_tensor.data<int32_t>()[3] == 0);
-			TS_AUTO_CHECK(stride_tensor.data<int32_t>()[0] == 0 && stride_tensor.data<int32_t>()[3] == 0);
+			TS_AUTO_CHECK(ksize_tensor.data<int32_t>()[0] == 1 && ksize_tensor.data<int32_t>()[3] == 1);
+			TS_AUTO_CHECK(stride_tensor.data<int32_t>()[0] == 1 && stride_tensor.data<int32_t>()[3] == 1);
 			m_padding.top = static_padding.data<int32_t>()[2];
 			m_padding.bottom = static_padding.data<int32_t>()[3];
 			m_padding.left = static_padding.data<int32_t>()[4];
