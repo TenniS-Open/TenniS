@@ -8,6 +8,7 @@
 #include <map>
 #include <cstdlib>
 #include <iostream>
+#include <algorithm>
 
 #include "global/hard_converter.h"
 

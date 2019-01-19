@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <unordered_set>
 #include <core/tensor_builder.h>
+#include <cctype>
 
 #include "core/tensor_builder.h"
 #include "utils/assert.h"
