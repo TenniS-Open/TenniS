@@ -25,6 +25,18 @@ def test():
     with open("test.module.txt", "wb") as fo:
         Module.Save(stream=fo, module=module)
 
+    with open("test.module.txt", "rb") as fi:
+        module = Module.Load(stream=fi)
+
+    with open("test.module.txt", "wb") as fo:
+        Module.Save(stream=fo, module=module)
+
+    with open("test.module.txt", "rb") as fi:
+        module = Module.Load(stream=fi)
+
+    with open("test.module.txt", "wb") as fo:
+        Module.Save(stream=fo, module=module)
+
 
 if __name__ == '__main__':
     test()
