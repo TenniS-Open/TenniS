@@ -22,7 +22,7 @@ void Batch_Scale::init() {
         const Tensor& tensor_dim = get(name::dim);
         m_dim = ts::tensor::to_int(tensor_dim);
     }else {
-        throw ts::Exception("batch_scale must set dim parameter");
+        throw Exception("batch_scale must set dim parameter");
     }
 }   
 
@@ -42,7 +42,7 @@ void Batch_Scale::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output)
 
     TS_AUTO_CHECK(scale_shape[0] == shape[m_dim] && bias_shape[0] == shape[m_dim]); 
 
-    output = ts::Tensor::Prototype(stack.index(0)->dtype(), shape);
+    output = Tensor::Prototype(stack.index(0)->dtype(), shape);
     return;
 }
 
@@ -69,8 +69,8 @@ void Batch_Scale::compute_batch_scale(Tensor *input_tensor, Tensor *scale_tensor
     }
 
     const T* psrc  = input_tensor->sync(MemoryDevice(CPU)).data<T>();
-    const T* pscale = scale_tensor->data<T>();
-    const T* pbias = bias_tensor->data<T>();
+    const T* pscale = scale_tensor->sync(MemoryDevice(CPU)).data<T>();
+    const T* pbias = bias_tensor->sync(MemoryDevice(CPU)).data<T>();
     T* pdst  = output_tensor->data<T>();
     int stridedims = backdims * shape[m_dim];
     int offset = 0;
@@ -92,22 +92,22 @@ int Batch_Scale::run(ts::Stack &stack) {
     infer_private(stack, output[0]);
 
     stack.push(output[0], MemoryDevice(CPU));
-    ts::Tensor *input_tensor =  stack.index(0);
-    ts::Tensor scale_tensor  = tensor::cast(stack.index(0)->dtype(), *stack.index(1));
-    ts::Tensor bias_tensor  =  tensor::cast(stack.index(0)->dtype(), *stack.index(2));
-    ts::Tensor *tensor = stack.index(-1);
+    Tensor *input_tensor =  stack.index(0);
+    Tensor *scale_tensor  = stack.index(1);
+    Tensor *bias_tensor  =  stack.index(2);
+    Tensor *tensor = stack.index(-1);
 
     switch(input_tensor->dtype()) {
-        case ts::FLOAT32: {
-            compute_batch_scale<float>(input_tensor, &scale_tensor, &bias_tensor, tensor);
+        case FLOAT32: {
+            compute_batch_scale<float>(input_tensor, scale_tensor, bias_tensor, tensor);
             break;
         }
-        case ts::FLOAT64: {
-            compute_batch_scale<double>(input_tensor, &scale_tensor, &bias_tensor, tensor);
+        case FLOAT64: {
+            compute_batch_scale<double>(input_tensor, scale_tensor, bias_tensor, tensor);
             break;
         }
         default: {
-            throw ts::Exception("batch_scale only support FLOAT32 and FLOAT64 type");
+            throw Exception("batch_scale only support FLOAT32 and FLOAT64 type");
             break;
         }
     }

@@ -79,13 +79,14 @@ void Batch_Norm::compute_batch_norm(Tensor *input_tensor, Tensor *mean_tensor,
     }
 
     const T* psrc  = input_tensor->sync(MemoryDevice(CPU)).data<T>();
-    const T* pmean = mean_tensor->data<T>();
-    const T* pvariance = variance_tensor->data<T>();
+    const T* pmean = mean_tensor->sync(MemoryDevice(CPU)).data<T>();
+    const T* pvariance = variance_tensor->sync(MemoryDevice(CPU)).data<T>();
     T* pdst  = output_tensor->data<T>();
+
+
     int stridedims = backdims * shape[m_dim];
     int offset = 0;
 
-    std::cout << "count:" << variance_tensor->count() << "," << shape[m_dim] << std::endl;
     std::vector<T> vec(variance_tensor->count());
     for(int i=0; i<vec.size(); i++) {
         vec[i] = sqrt(pvariance[i] + m_epsilon);
@@ -109,18 +110,18 @@ int Batch_Norm::run(ts::Stack &stack) {
     infer_private(stack, output[0]);
 
     stack.push(output[0], MemoryDevice(CPU));
-    ts::Tensor *input_tensor =  stack.index(0);
-    ts::Tensor mean_tensor  = tensor::cast(stack.index(0)->dtype(), *stack.index(1));
-    ts::Tensor variance_tensor  = tensor::cast(stack.index(0)->dtype(), *stack.index(2));
-    ts::Tensor *tensor = stack.index(-1);
+    Tensor *input_tensor =  stack.index(0);
+    Tensor *mean_tensor  = stack.index(1);
+    Tensor *variance_tensor  = stack.index(2);
+    Tensor *tensor = stack.index(-1);
 
     switch(input_tensor->dtype()) {
-        case ts::FLOAT32: {
-            compute_batch_norm<float>(input_tensor, &mean_tensor, &variance_tensor, tensor);
+        case FLOAT32: {
+            compute_batch_norm<float>(input_tensor, mean_tensor, variance_tensor, tensor);
             break;
         }
-        case ts::FLOAT64: {
-            compute_batch_norm<double>(input_tensor, &mean_tensor, &variance_tensor, tensor);
+        case FLOAT64: {
+            compute_batch_norm<double>(input_tensor, mean_tensor, variance_tensor, tensor);
             break;
         }
         default: {
