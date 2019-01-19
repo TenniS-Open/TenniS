@@ -23,11 +23,11 @@ void Batch_Norm::init() {
     supper::init();
 
     if(has(name::epsilon)){
-        const Tensor& tensor_epsilon = get(name::epsilon);
+        Tensor tensor_epsilon = tensor::cast(FLOAT32, get(name::epsilon));
         m_epsilon = ts::tensor::to_float(tensor_epsilon); 
     }
 
-    const Tensor& tensor_dim = get(name::dim);
+    Tensor tensor_dim = tensor::cast(INT32, get(name::dim));
     m_dim = ts::tensor::to_int(tensor_dim);
   
 }   

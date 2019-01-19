@@ -1,4 +1,4 @@
-#include <kernels/cpu/shape_operator.h>
+#include <kernels/cpu/shape.h>
 #include <global/operator_factory.h>
 #include <backend/name.h>
 #include <core/device.h>

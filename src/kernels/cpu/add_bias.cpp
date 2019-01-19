@@ -20,7 +20,7 @@ void Add_Bias::init() {
     supper::init();
 
     if(has(name::format)){
-        const Tensor& tensor_format = get(name::format);
+        Tensor tensor_format = tensor::cast(CHAR8,get(name::format));
         std::string format = tensor::to_string(tensor_format);
         TS_AUTO_CHECK(format == name::NCHW || format == name::NHWC);
 
@@ -31,7 +31,7 @@ void Add_Bias::init() {
     }
 
     if(has(name::dim)){
-        const Tensor& tensor_dim = get(name::dim);
+        Tensor tensor_dim = tensor::cast(INT32, get(name::dim));
         m_dim = tensor::to_int(tensor_dim);
     }
 

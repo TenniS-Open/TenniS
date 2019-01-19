@@ -21,7 +21,7 @@ void Dimshuffle::init() {
     //TS_AUTO_CHECK(has(name::dim));
     //TS_AUTO_CHECK(has(name::shuffle));
 
-    const Tensor& tensor_dim = get(name::dim);
+    Tensor tensor_dim = tensor::cast(INT32, get(name::dim));
     m_dim = ts::tensor::to_int(tensor_dim);
     TS_AUTO_CHECK(m_dim >= 0);   
     Tensor tensor_shuffle = tensor::cast(INT32, get(name::shuffle));
