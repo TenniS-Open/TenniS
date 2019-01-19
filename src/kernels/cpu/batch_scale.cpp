@@ -18,7 +18,7 @@ Batch_Scale::Batch_Scale() {
 void Batch_Scale::init() {
     supper::init();
 
-    const Tensor& tensor_dim = get(name::dim);
+    Tensor tensor_dim = tensor::cast(INT32, get(name::dim));
     m_dim = ts::tensor::to_int(tensor_dim);
 }   
 

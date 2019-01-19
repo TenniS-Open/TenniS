@@ -59,7 +59,7 @@ Pad::Pad() {
 void Pad::init() {
     supper::init();
     if(has(name::padding_value)){
-        const Tensor& tensor_padding_value = get(name::padding_value);
+        Tensor tensor_padding_value = tensor::cast(INT32, get(name::padding_value));
         m_padding_value = ts::tensor::to_int(tensor_padding_value); 
     }
 
