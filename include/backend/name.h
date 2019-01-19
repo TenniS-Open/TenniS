@@ -45,6 +45,7 @@ namespace ts {
             const string &pooling2d_v2() TS_NOEXCEPT;
             const string &resize2d() TS_NOEXCEPT;
             const string &mx_pooling2d_padding() TS_NOEXCEPT;
+            const string &copy() TS_NOEXCEPT;
         }
 
         extern string NCHW;
