@@ -207,6 +207,7 @@ def convert_memorydata_layer(layer, input_nodes, output_names):
         input = ts.zoo.sub("_sub_mean_input", input, mean)
 
     if scale != 1:
+        scale = numpy.asarray(scale, dtype=numpy.float32)
         input = ts.zoo.mul("_mul_scale_input", input, scale)
 
     if len(channel_waps) > 0:
@@ -610,7 +611,6 @@ def convert_eltwise_layer(layer, input_nodes, output_names):
     node.name = node_name
 
     return node,
-
 
 
 if __name__ == "__main__":
