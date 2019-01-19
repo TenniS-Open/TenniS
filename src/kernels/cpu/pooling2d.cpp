@@ -80,7 +80,7 @@ namespace ts {
 		std::vector<ts::Tensor::Prototype> output;
 
 		this->infer(stack, output);
-		stack.push(output[0], memory_device());
+		stack.push(output[0], MemoryDevice(CPU));
 
 		auto dtype = stack.index(0)->dtype();
 		bool flag;
@@ -144,7 +144,7 @@ namespace ts {
 	{
 		ts::Tensor input_tensor = *stack.index(0);
 		Shape input_shape = input_tensor.sizes();
-		T* input_data = input_tensor.sync(memory_device()).data<T>();
+		T* input_data = input_tensor.sync(MemoryDevice(CPU)).data<T>();
 
 		ts::Tensor& output_tensor = *stack.index(-1);
 		Shape output_shape = output_tensor.sizes();
