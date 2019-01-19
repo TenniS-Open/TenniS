@@ -30,7 +30,7 @@ void Inner_Prod::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) 
     TS_AUTO_CHECK(shape.size() == 2 && shape.size() == dot_shape.size() && shape[1] == dot_shape[0]); 
 
     TS_AUTO_CHECK(stack.index(0)->dtype() == ts::FLOAT32 || stack.index(0)->dtype() == ts::FLOAT64); 
-    
+    TS_AUTO_CHECK(stack.index(0)->dtype() == stack.index(1)->dtype());    
     shape[1] = dot_shape[1];
     output = ts::Tensor::Prototype(stack.index(0)->dtype(), shape);
     return;

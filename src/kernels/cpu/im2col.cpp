@@ -8,7 +8,7 @@
 namespace ts {
 
 template <typename Dtype>
-void caffe_set(const int N, const Dtype alpha, Dtype* Y) {
+void tensorstack_set(const int N, const Dtype alpha, Dtype* Y) {
 	if (alpha == 0) {
 		memset(Y, 0, sizeof(Dtype) * N);  // NOLINT(caffe/alt_fn)
 		return;
@@ -237,7 +237,7 @@ inline void im2col_nd_core_cpu(const Dtype* data_input, const bool im2col,
     for (int i = 0; i < num_spatial_axes; ++i) {
       im_size *= im_shape[1 + i];
     }
-    caffe_set(im_size, Dtype(0), data_output);
+    tensorstack_set(im_size, Dtype(0), data_output);
   }
   int kernel_size = 1;
   for (int i = 0; i < num_spatial_axes; ++i) {
@@ -330,7 +330,7 @@ void col2im_cpu(const Dtype* data_col, const int channels,
     const int stride_h, const int stride_w,
     const int dilation_h, const int dilation_w,
     Dtype* data_im) {
-  caffe_set(height * width * channels, Dtype(0), data_im);
+  tensorstack_set(height * width * channels, Dtype(0), data_im);
   const int output_h = (height + 2 * pad_h -
     (dilation_h * (kernel_h - 1) + 1)) / stride_h + 1;
   const int output_w = (width + 2 * pad_w -

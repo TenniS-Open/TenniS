@@ -50,15 +50,15 @@ Conv2d_V2_Base::Conv2d_V2_Base() {
 void Conv2d_V2_Base::init() {
     supper::init();
   
-    TS_AUTO_CHECK(has(name::format));
+    //TS_AUTO_CHECK(has(name::format));
 
     //if(!has("padding")){
     //    throw ts::Exception("conv2d_v2_base padding parameter do not find");
     //}
 
-    TS_AUTO_CHECK(has(name::stride));
+    //TS_AUTO_CHECK(has(name::stride));
 
-    TS_AUTO_CHECK(has(name::dialations));
+    //TS_AUTO_CHECK(has(name::dialations));
 
     m_format = ts::tensor::to_string(get(name::format));
     TS_AUTO_CHECK(m_format == name::NCHW);
