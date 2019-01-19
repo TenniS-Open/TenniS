@@ -1,0 +1,11 @@
+# for python
+*.pyc
+*.dll
+*.exe
+*.obj
+*.o
+*.so
+*.a
+/cmake-build-*
+
+

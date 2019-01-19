@@ -1,9 +1,9 @@
 #!/usr/env/bin python
 
-from dtype import from_numpy
-from dtype import to_numpy
-from dtype import dtype_bytes
-from dtype import dtype_str
+from .dtype import from_numpy
+from .dtype import to_numpy
+from .dtype import dtype_bytes
+from .dtype import dtype_str
 
 import numpy
 import struct

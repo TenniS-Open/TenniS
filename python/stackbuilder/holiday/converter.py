@@ -5,9 +5,9 @@ author: kier
 """
 
 
-from loadnet import load_net
-from loadnet import hd
-from loadnet import OPType
+from .loadnet import load_net
+from .loadnet import hd
+from .loadnet import OPType
 
 import tensorstack as ts
 
@@ -615,6 +615,6 @@ def convert_eltwise_layer(layer, input_nodes, output_names):
 
 if __name__ == "__main__":
     # convert("test.ext.dat", "test.tsm", output_blobs=["fc_pose_umd"], has_header=True)
-    # convert("test.ext.dat", "test.tsm", export_all=True, has_header=True)
-    convert("/Users/seetadev/Documents/Files/models/VIPLFaceRecognizer5.0.RN30.light.ext.dat",
-            "VIPLFaceRecognizer5.0.RN30.light.tsm", export_all=True, has_header=True)
+    convert("test.ext.dat", "test.tsm", export_all=True, has_header=True)
+    #convert("/Users/seetadev/Documents/Files/models/VIPLFaceRecognizer5.0.RN30.light.ext.dat",
+    #        "VIPLFaceRecognizer5.0.RN30.light.tsm", export_all=True, has_header=True)
