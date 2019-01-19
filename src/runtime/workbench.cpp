@@ -37,7 +37,6 @@ namespace ts {
     Workbench::~Workbench() {
         this->m_program.clear();
         this->m_stack->clear();
-        this->m_data_sagment->clear();
         this->m_map_input_slots.clear();
         this->m_map_output_slots.clear();
         this->m_inputs.clear();
@@ -124,9 +123,9 @@ namespace ts {
         }
         for (auto &data : block.data_sagment) {
             if (data.device.empty()) {
-                bench->m_data_sagment->clone_push(data);
+                bench->m_data_sagment->clone_push(data.tensor);
             } else {
-                bench->m_data_sagment->clone_push(data, data.device);
+                bench->m_data_sagment->clone_push(data.tensor, data.device);
             }
         }
 

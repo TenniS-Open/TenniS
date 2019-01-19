@@ -67,7 +67,7 @@ def from_any(val, dtype=None):
         return StringTensor(val)
 
     # do not convert ndarray
-    if dtype is not None and isinstance(val, numpy.ndarray):
+    if dtype is None and isinstance(val, numpy.ndarray):
         return val
 
     return numpy.asarray(val, dtype=dtype)
