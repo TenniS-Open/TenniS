@@ -103,14 +103,19 @@ namespace ts {
 		memcpy(output_data, device_type, count * sizeof(T), input_data, device_type, count * sizeof(T));
 
 		int scale_data_size = output_tensor.count() / axis;
+		int denominator_data_size = scale_data_size;
 
-		T* scale_data = nullptr;
-		if (m_smooth)
-		{
-			scale_data = new T[scale_data_size];
-		}
+		Shape scale_shape;
+		scale_shape.resize(1);
+		scale_shape[0] = scale_data_size;
+		Tensor scale_tensor(MemoryDevice(CPU), output_tensor.dtype(), scale_shape);
+		T* scale_data = scale_tensor.data<T>();
 			 
-		T* denominator_data = new T[scale_data_size];
+		Shape denominator_shape;
+		denominator_shape.resize(1);
+		denominator_shape[0] = denominator_data_size;
+		Tensor denominator_tensor(MemoryDevice(CPU), output_tensor.dtype(), denominator_shape);
+		T* denominator_data = denominator_tensor.data<T>();
 
 		for (int i = 0; i < pre_num; i++)
 		{
@@ -161,8 +166,6 @@ namespace ts {
 			}
 			
 		}
-		delete[] scale_data;
-		delete[] denominator_data;
 		
 		return true;
 	}
