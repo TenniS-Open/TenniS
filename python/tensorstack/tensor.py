@@ -8,11 +8,11 @@ import numpy
 import struct
 import sys
 
-from prototype import Prototype
-from prototype import write_prototype
-from prototype import read_prototype
+from .prototype import Prototype
+from .prototype import write_prototype
+from .prototype import read_prototype
 
-import dtype as ts_dtype
+from . import dtype as ts_dtype
 
 
 def compatible_string(obj):

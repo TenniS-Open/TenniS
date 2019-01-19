@@ -5,7 +5,7 @@ author: kier
 """
 
 try:
-    from proto import HolidayCNN_proto_pb2 as hd
+    from .proto import HolidayCNN_proto_pb2 as hd
 except:
     # compile proto
     import os
@@ -16,7 +16,7 @@ except:
     exit_status = os.system("protoc {} --proto_path={} --python_out={}".format(proto_file, proto_root, proto_root))
     if exit_status != 0:
         raise Exception("Can not compile proto: {}, please compile it by hand.".format(proto_file))
-    from proto import HolidayCNN_proto_pb2 as hd
+    from .proto import HolidayCNN_proto_pb2 as hd
 
 import io
 import struct

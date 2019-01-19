@@ -4,4 +4,4 @@
 :author Kier
 """
 
-import mxnet
+from . import mxnet

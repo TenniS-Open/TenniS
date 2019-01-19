@@ -5,22 +5,22 @@
 """
 
 
-from node import Node
-from graph import Graph
+from .node import Node
+from .graph import Graph
 
-from tensor import compatible_string
+from .tensor import compatible_string
 
-from binio import write_int
-from binio import write_int_list
-from binio import read_int_list
-from binio import read_int_list
+from .binio import write_int
+from .binio import write_int_list
+from .binio import read_int_list
+from .binio import read_int_list
 
-from header import Header
-from header import write_header
-from header import read_header
+from .header import Header
+from .header import write_header
+from .header import read_header
 
-from graph import write_nodes
-from graph import read_nodes
+from .graph import write_nodes
+from .graph import read_nodes
 
 import io
 
