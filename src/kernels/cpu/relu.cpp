@@ -15,7 +15,7 @@ namespace ts {
 		std::vector<ts::Tensor::Prototype> output;
 
 		this->infer(stack, output);
-		stack.push(output[0], memory_device());
+		stack.push(output[0], MemoryDevice(CPU));
 
 		auto dtype = stack.index(0)->dtype();
 		bool flag;
@@ -64,7 +64,7 @@ namespace ts {
 	{
 		ts::Tensor& output_tensor = *stack.index(-1);
 		auto output_shape = output_tensor.sizes();
-		auto input_memory = stack.index(0)->sync(memory_device());
+		auto input_memory = stack.index(0)->sync(MemoryDevice(CPU));
 		auto device_type = input_memory.device();
 		T* input_data = input_memory.data<T>();
 		T* output_data = output_tensor.data<T>();

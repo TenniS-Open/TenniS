@@ -28,7 +28,7 @@ namespace ts {
 		std::vector<ts::Tensor::Prototype> output;
 
 		this->infer(stack, output);
-		auto device_type = memory_device();
+		auto device_type = MemoryDevice(CPU);
 		stack.push(output[0], device_type);
 
 		auto dtype = stack.index(0)->dtype();
