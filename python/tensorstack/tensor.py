@@ -159,6 +159,8 @@ def write_unpacked_tensor(stream, tensor):
     proto = Prototype(dtype=tensor.dtype, shape=tensor.shape)
     # 2. write memory
     write_prototype(stream=stream, proto=proto)
+    if proto.dtype == ts_dtype.BOOLEAN:
+        tensor = numpy.asarray(tensor, dtype=numpy.uint8)   # using uint8 instead boolean
     tensor_bytes = tensor.newbyteorder('<').tobytes()
     assert proto.count * proto.dtype_bytes == len(tensor_bytes)
     stream.write(struct.pack("=%ds" % len(tensor_bytes), tensor_bytes))

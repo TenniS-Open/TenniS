@@ -145,6 +145,22 @@ def convert(input_file, output_file,
     with open(output_file, "wb") as fo:
         ts.Module.Save(stream=fo, module=module)
 
+    print("============ Summary ============")
+    print("Input file: {}".format(input_file))
+    print("Output file: {}".format(output_file))
+    index = 0
+    print("Input node: ")
+    for node in module.inputs:
+        assert isinstance(node, ts.Node)
+        print("{}: {}, shape={}".format(index, node.name, node.shape))
+        index += 1
+    index = 0
+    print("Output node: ")
+    for node in module.outputs:
+        assert isinstance(node, ts.Node)
+        print("{}: {}".format(index, node.name))
+        index += 1
+
 
 def convert_memorydata_layer(layer, input_nodes, output_names):
     # type: (hd.Holiday_LayerParameter, List[ts.Node], List[str]) -> List[ts.Node]

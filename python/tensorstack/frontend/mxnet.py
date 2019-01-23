@@ -40,7 +40,7 @@ def pooling2d_padding(name, x, padding, ksize, stride, format=zoo.Name.NCHW, val
     node = menu.op(name=name, op_name=Name.Layer.pooling2d_padding, inputs=[x, ksize, stride])
     node.set(zoo.Name.format, format)
     node.set(zoo.Name.padding, padding, numpy.int32)
-    node.set(Name.valid, valid, numpy.bool)
+    node.set(Name.valid, valid, numpy.uint8)
 
     return node
 
