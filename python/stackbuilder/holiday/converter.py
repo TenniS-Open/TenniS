@@ -40,7 +40,7 @@ class HolidayNode(object):
 
 def blob2numpy(blob):
     # type: (hd.Holiday_BlobProto) -> numpy.ndarray
-    data = numpy.asarray(blob.data, dtype=float)
+    data = numpy.asarray(blob.data, dtype=numpy.float32)
     if len(data) == 0:
         return data
     shape = tuple(blob.shape.dim)
@@ -357,7 +357,7 @@ def convert_batch_norm_layer(layer, input_nodes, output_names):
     print("--##    Mean shape: {}".format(mean.shape))
     print("--##    Covariance shape: {}".format(covariance.shape))
 
-    epsilon = 1e-5
+    epsilon = float(1e-5)
     variance = covariance ** 2 - epsilon
 
     node = ts.zoo.batch_norm(node_name, x=x, mean=mean, variance=variance, dim=1, epsilon=epsilon)
