@@ -136,11 +136,11 @@ namespace ts {
         bench->m_outputs.resize(module_outputs.size());
         int slot_i = 0;
         for (auto &input : module_inputs) {
-            bench->m_map_input_slots.insert(std::make_pair(input.ref<Bubble>().name(), slot_i++));
+            bench->m_map_input_slots.insert(std::make_pair(input.bubble().name(), slot_i++));
         }
         slot_i = 0;
         for (auto &output : module_outputs) {
-            bench->m_map_output_slots.insert(std::make_pair(output.ref<Bubble>().name(), slot_i++));
+            bench->m_map_output_slots.insert(std::make_pair(output.bubble().name(), slot_i++));
         }
 
         return bench;
