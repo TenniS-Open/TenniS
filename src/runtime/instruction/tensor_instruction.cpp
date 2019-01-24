@@ -47,7 +47,7 @@ namespace ts {
         static std::vector<Instruction::shared> create_instruction_field(const Node &node) {
             TS_AUTO_CHECK(node.inputs().size() == 1);
 
-            auto &bubble = node.ref<Bubble>();
+            auto &bubble = node.bubble();
             TS_AUTO_CHECK(bubble.output_count() == 1);
 
             std::vector<Instruction::shared> inst;
@@ -61,7 +61,7 @@ namespace ts {
         };
 
         static std::vector<Instruction::shared> create_instruction_pack(const Node &node) {
-            auto &bubble = node.ref<Bubble>();
+            auto &bubble = node.bubble();
             TS_AUTO_CHECK(bubble.output_count() == 1);
 
             std::vector<Instruction::shared> inst;
