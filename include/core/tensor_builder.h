@@ -73,6 +73,8 @@ namespace ts {
 
         std::string to_string(const Tensor &value);
 
+        bool to_bool(const Tensor &value);
+
         Tensor cast(DTYPE dtype, const Tensor &value);
 
         Tensor clone(DTYPE dtype, const Tensor &value);

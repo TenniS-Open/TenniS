@@ -8,11 +8,11 @@ import numpy
 import struct
 import sys
 
-from prototype import Prototype
-from prototype import write_prototype
-from prototype import read_prototype
+from .prototype import Prototype
+from .prototype import write_prototype
+from .prototype import read_prototype
 
-import dtype as ts_dtype
+from . import dtype as ts_dtype
 
 
 def compatible_string(obj):
@@ -67,7 +67,7 @@ def from_any(val, dtype=None):
         return StringTensor(val)
 
     # do not convert ndarray
-    if dtype is not None and isinstance(val, numpy.ndarray):
+    if dtype is None and isinstance(val, numpy.ndarray):
         return val
 
     return numpy.asarray(val, dtype=dtype)
@@ -159,6 +159,8 @@ def write_unpacked_tensor(stream, tensor):
     proto = Prototype(dtype=tensor.dtype, shape=tensor.shape)
     # 2. write memory
     write_prototype(stream=stream, proto=proto)
+    if proto.dtype == ts_dtype.BOOLEAN:
+        tensor = numpy.asarray(tensor, dtype=numpy.uint8)   # using uint8 instead boolean
     tensor_bytes = tensor.newbyteorder('<').tobytes()
     assert proto.count * proto.dtype_bytes == len(tensor_bytes)
     stream.write(struct.pack("=%ds" % len(tensor_bytes), tensor_bytes))

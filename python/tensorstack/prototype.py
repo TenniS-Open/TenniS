@@ -1,9 +1,9 @@
 #!/usr/env/bin python
 
-from dtype import from_numpy
-from dtype import to_numpy
-from dtype import dtype_bytes
-from dtype import dtype_str
+from .dtype import from_numpy
+from .dtype import to_numpy
+from .dtype import dtype_bytes
+from .dtype import dtype_str
 
 import numpy
 import struct
@@ -15,6 +15,8 @@ class Prototype(object):
             self.__dtype = dtype
         else:
             self.__dtype = from_numpy(dtype=dtype)
+        if len(shape) == 0:
+            shape = (1, )
         self.__shape = shape
         self.__dtype_bytes = dtype_bytes(self.__dtype)
 

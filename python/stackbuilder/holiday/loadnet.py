@@ -3,8 +3,9 @@
 """
 author: kier
 """
+
 try:
-    from proto import HolidayCNN_proto_pb2 as hd
+    from .proto import HolidayCNN_proto_pb2 as hd
 except:
     # compile proto
     import os
@@ -15,7 +16,7 @@ except:
     exit_status = os.system("protoc {} --proto_path={} --python_out={}".format(proto_file, proto_root, proto_root))
     if exit_status != 0:
         raise Exception("Can not compile proto: {}, please compile it by hand.".format(proto_file))
-    from proto import HolidayCNN_proto_pb2 as hd
+    from .proto import HolidayCNN_proto_pb2 as hd
 
 import io
 import struct
@@ -221,6 +222,37 @@ class OPType(object):
     Enum_ReshapeLayer = 22
     Enum_RealMulLayer = 23
 
+    EnumString = {
+        Enum_ConvolutionLayer: "Convolution",
+        Enum_EltwiseLayer: "Eltwise",
+        Enum_ConcatLayer: "Concat",
+        Enum_ExpLayer: "Exp",
+        Enum_InnerProductLayer: "InnerProduct",
+        Enum_LRNLayer: "LRN",
+        Enum_MemoryDataLayer: "MemoryData",
+        Enum_PoolingLayer: "Pooling",
+        Enum_PowerLayer: "Power",
+        Enum_ReLULayer: "ReLU",
+        Enum_SoftmaxLayer: "Softmax",
+        Enum_SliceLayer: "Slice",
+        Enum_BatchNormliseLayer: "BatchNormlise",
+        Enum_ScaleLayer: "Scale",
+        Enum_SplitLayer: "Split",
+        Enum_PreReLULayer: "PreReLU",
+        Enum_DeconvolutionLayer: "Deconvolution",
+        Enum_CropLayer: "Crop",
+        Enum_SigmoidLayer: "Sigmoid",
+        Enum_FinallyLayer: "Finally",
+
+        # for tf
+        Enum_SpaceToBatchNDLayer: "SpaceToBatchND",
+        Enum_BatchToSpaceNDLayer: "BatchToSpaceND",
+
+        # for tf
+        Enum_ReshapeLayer: "Reshape",
+        Enum_RealMulLayer: "RealMul",
+    }
+
 
 class Net(object):
     def __init__(self):
@@ -231,26 +263,32 @@ class Net(object):
 
     @property
     def blob_names(self):
+        # type: () -> List[str]
         return self.__blob_names
 
     @blob_names.setter
     def blob_names(self, value):
+        # type: (List[str]) -> None
         self.__blob_names = value
 
     @property
     def layer_names(self):
+        # type: () -> List[str]
         return self.__layer_names
 
     @layer_names.setter
     def layer_names(self, value):
+        # type: (List[str]) -> None
         self.__layer_names = value
 
     @property
     def layers(self):
+        # type: () -> List[hd.Holiday_LayerParameter]
         return self.__layers
 
     @layers.setter
     def layers(self, value):
+        # type: (List[hd.Holiday_LayerParameter]) -> None
         self.__layers = value
 
     @property
@@ -310,6 +348,7 @@ class Net(object):
 
 
 def load_net(path, has_header=True):
+    # type: (str, bool) -> (Header, Net)
     with open(path, 'rb') as fi:
         header = None
         if has_header:
@@ -319,6 +358,7 @@ def load_net(path, has_header=True):
 
 
 def save_net(path, net, header=None):
+    # type: (str, Net, Header)
     with open(path, 'wb') as fo:
         net.save(fo, header)
 

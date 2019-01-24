@@ -5,15 +5,15 @@
 """
 
 
-from node import Node
+from .node import Node
 
-from binio import read_int
-from binio import read_int_list
-from binio import write_int
-from binio import write_int_list
+from .binio import read_int
+from .binio import read_int_list
+from .binio import write_int
+from .binio import write_int_list
 
-from node import write_bubble
-from node import read_bubble
+from .node import write_bubble
+from .node import read_bubble
 
 class Graph(object):
     def __init__(self):

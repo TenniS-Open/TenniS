@@ -13,28 +13,28 @@ namespace ts {
     namespace bubble {
         Node param(const std::string &name) {
             auto &g = ctx::ref<Graph>();
-            return g.make<Bubble>(Bubble::Parameter, name);
+            return g.make(Bubble::Parameter, name);
         }
 
         Node op(const std::string &name, const std::string &op_name, const std::vector<Node> &inputs, int output_count) {
             auto &g = ctx::ref<Graph>();
-            Node result = g.make<Bubble>(op_name, name, output_count);
+            Node result = g.make(op_name, name, output_count);
             Node::Link(result, inputs);
             return result;
         }
 
         Node data(const std::string &name, const Tensor &value) {
             auto &g = ctx::ref<Graph>();
-            Node result = g.make<Bubble>(Bubble::Const, name);
-            result.ref<Bubble>().set(name::value, value);
+            Node result = g.make(Bubble::Const, name);
+            result->set(name::value, value);
             return result;
         }
 
         Node data(const std::string &name, const Tensor &value, const DeviceType &device) {
             auto &g = ctx::ref<Graph>();
-            Node result = g.make<Bubble>(Bubble::Const, name);
-            result.ref<Bubble>().set(name::value, value);
-            result.ref<Bubble>().set(name::device, tensor::from(device));
+            Node result = g.make(Bubble::Const, name);
+            result->set(name::value, value);
+            result->set(name::device, tensor::from(device));
             return result;
         }
     }
@@ -71,7 +71,7 @@ namespace ts {
                 node_input_index.push_back(input_it->second);
             }
             // 0.1 write bubble
-            auto &bubble = node.ref<Bubble>();
+            auto &bubble = node.bubble();
             writen_size += bubble.serialize(stream);
             // 0.2 write input index
             writen_size += binio::write<uint32_t>(stream, uint32_t(node_input_index.size()));
@@ -102,7 +102,7 @@ namespace ts {
             for (auto &input_index : node_input_index) {
                 read_size += binio::read<uint32_t>(stream, input_index);
             }
-            nodes.emplace_back(std::make_pair(g.make<Bubble>(bubble), node_input_index));
+            nodes.emplace_back(std::make_pair(g.make(bubble), node_input_index));
         }
         // 2. link nodes
         for (auto &node : nodes) {

@@ -4,7 +4,7 @@
 :author Kier
 """
 
-from node import Node
+from .node import Node
 
 
 class Name(object):
