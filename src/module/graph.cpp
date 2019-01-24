@@ -6,6 +6,11 @@
 
 #include "module/graph.h"
 
+#include "utils/ctxmgr_lite_support.h"
+
 namespace ts {
 
 }
+
+
+TS_LITE_CONTEXT(ts::Graph)

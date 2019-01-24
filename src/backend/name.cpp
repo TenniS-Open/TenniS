@@ -2,6 +2,8 @@
 // Created by kier on 2019/1/12.
 //
 
+#include <backend/name.h>
+
 #include "backend/name.h"
 
 namespace ts {
@@ -39,6 +41,11 @@ namespace ts {
             const string &pooling2d_v2() TS_NOEXCEPT { static string str = "pooling2d_v2"; return str; }
             const string &resize2d() TS_NOEXCEPT { static string str = "resize2d"; return str; }
             const string &mx_pooling2d_padding() TS_NOEXCEPT { static string str = "_mx_pooling2d_padding"; return str; }
+
+            const string &copy() TS_NOEXCEPT {
+                static string str = "_copy";
+                return str;
+            }
         }
 
         string NCHW = "NCHW";

@@ -56,33 +56,19 @@ namespace ts {
     }
 
     std::vector<Instruction::shared> Compiler::convert_operator_instruction(const Node &node) {
-        auto &bubble = node.ref<Bubble>();
+        auto &bubble = node.bubble();
 
         // step 1: check inner InstructionCreator
         auto icreator = InstructionCreator::Query(bubble.op());
         if (icreator != nullptr) {
             return icreator(node);
         }
+        auto op = OperatorCreator::Create(m_computing_device.type(), bubble.op(), false);
 
-        // step 2: try find operator on computing device
-        auto creator = OperatorCreator::Query(m_computing_device.type(), bubble.op());
-        if (creator == nullptr) {
-            // step 2.x: try find operator on memory device, if computing device failed
-            auto memory_device = ComputingMemory::Query(m_computing_device);
-            creator = OperatorCreator::Query(memory_device.type(), bubble.op());
-        }
-
-        if (creator == nullptr) {
-            // step 2.y: try find operator on CPU version
-            if (m_computing_device.type() != CPU) {
-                creator = OperatorCreator::Query(CPU, bubble.op());
-            }
-        }
-
-        if (creator == nullptr) TS_LOG_ERROR << "Not supported operator " << bubble.op() << eject;
+        if (op == nullptr) TS_LOG_ERROR << "Not supported operator " << bubble.op() << eject;
         std::string description = bubble.op() + "(in=" + std::to_string(node.inputs().size()) + ", out=" +
                                   std::to_string(1) + ")";
-        auto op = creator();
+
         for (auto &param : bubble.params()) {
             op->set(param.first, param.second);
         }
@@ -133,7 +119,7 @@ namespace ts {
             if (node_it != map_node_data_sagment_index.end()) {
                 return node_it->second;
             }
-            auto &bubble = node.ref<Bubble>();
+            auto &bubble = node.bubble();
             auto value = bubble.get(name::value);
             auto data_index = int(block.data_sagment.size());
             if (bubble.has(name::device)) {
@@ -150,7 +136,7 @@ namespace ts {
          * \param node node ready to push
          */
         auto simulator_push = [&](Node node) {
-            auto &bubble = node.ref<Bubble>();
+            auto &bubble = node.bubble();
             size_t i = simulator.size();
             auto it = working_nodes.find(node);
             if (it == working_nodes.end()) {
@@ -170,7 +156,7 @@ namespace ts {
         auto simulator_pop = [&]() {
             if (simulator.empty()) return;
             auto node = simulator.back();
-            auto &bubble = node.ref<Bubble>();
+            auto &bubble = node.bubble();
             size_t i = simulator.size() - 1;
             auto it = working_nodes.find(node);
             if (it != working_nodes.end() && it->second == i) {
@@ -218,7 +204,7 @@ namespace ts {
             int64_t i = int64_t(simulator.size()) - 1;
             while (i >= 0) {
                 auto &node = simulator[size_t(i)];
-                auto &bubble = node.ref<Bubble>();
+                auto &bubble = node.bubble();
                 if (bubble.op() != Bubble::Parameter) return i;
                 --i;
             }
@@ -248,7 +234,7 @@ namespace ts {
         // TODO: check if there are some repeating computing brach
         while (unsolved_node_count) {
             auto node = simulator.back();
-            auto bubble = node.ref<Bubble>();
+            auto bubble = node.bubble();
             // case1: check if node are same node
             auto i = simulator.size() - 1;
             auto it = working_nodes.find(node);

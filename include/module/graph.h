@@ -14,32 +14,25 @@
 #include "utils/except.h"
 #include "utils/assert.h"
 
-#include "utils/ctxmgr_lite_support.h"
+#include "bubble.h"
 
 namespace ts {
-
-    /**
-     * Tree node,
-     */
-    class _RawNode {
+    template <typename T>
+    class LinkedValue {
     public:
-        using self = _RawNode;    ///< self class
-        using shared = std::shared_ptr<self>;  ///< smart pointer
-        using weak = std::weak_ptr<self>;  ///< smart pointer
+        using self = LinkedValue;
+        using shared = std::shared_ptr<self>;
+        using weak = std::weak_ptr<self>;
 
-        _RawNode() = default;
+        template<typename... Args>
+        explicit LinkedValue(Args &&...args)
+                : m_value(std::forward<Args>(args)...) {}
 
-        virtual ~_RawNode() = default;
+        virtual ~LinkedValue() = default;
 
         const std::vector<weak> &inputs() const { return m_inputs; }
 
         const std::vector<weak> &outputs() const { return m_outputs; }
-
-        template<typename T>
-        T *ptr();
-
-        template<typename T>
-        const T *ptr() const { return const_cast<self *>(this)->ptr<T>(); }
 
         static void Link(const weak &node, const std::vector<weak> &inputs) {
             auto output = node.lock();
@@ -70,51 +63,33 @@ namespace ts {
             old_ptr->m_outputs.clear();
         }
 
-        virtual std::string str() const {
-            std::ostringstream oss;
-            oss << "<Node: " << this << ">";
-            return oss.str();
-        }
-
-        virtual std::string repr() const { return this->str(); }
-
-    private:
-        std::vector<weak> m_inputs;
-        std::vector<weak> m_outputs;
-    };
-
-    template<typename T>
-    class _RawNodeWithValue : public _RawNode {
-    public:
-        using self = _RawNodeWithValue;
-        using supper = _RawNode;
-
-        using _RawNode::_RawNode;
-
-        template<typename... Args>
-        explicit _RawNodeWithValue(Args &&...args)
-                : m_value(std::forward<Args>(args)...) {}
-
         T &value() { return m_value; }
 
         const T &value() const { return m_value; }
 
-        std::string str() const override {
+        std::string str() const {
             std::ostringstream oss;
             oss << "<Node: " << this->value() << ">";
             return oss.str();
         }
 
+        std::string repr() const { return this->str(); }
+
+        T *ptr() { return &m_value; }
+
+        const T *ptr() const { return &m_value; }
+
+        T &ref() { return m_value; }
+
+        const T &ref() const { return m_value; }
+
     private:
         T m_value;
+        std::vector<weak> m_inputs;
+        std::vector<weak> m_outputs;
     };
 
-    template<typename T>
-    T *_RawNode::ptr() {
-        auto value_ptr = dynamic_cast<_RawNodeWithValue<T> *>(this);
-        if (value_ptr == nullptr) return nullptr;
-        return &value_ptr->value();
-    }
+    using LinkedBubble = LinkedValue<Bubble>;
 
     /**
      * Node only support single output
@@ -158,11 +133,7 @@ namespace ts {
         void *ptr() const { return m_ptr.lock().get(); }
 
         template<typename T>
-        T *ptr() {
-            auto raw_ptr = m_ptr.lock();
-            if (!raw_ptr) return nullptr;
-            return raw_ptr->ptr<T>();
-        }
+        T *ptr();
 
         template<typename T>
         const T *ptr() const { return const_cast<self *>(this)->ptr<T>(); }
@@ -183,10 +154,10 @@ namespace ts {
          * @param inputs input nodes
          */
         static void Link(const Node &node, const std::vector<Node> &inputs) {
-            std::vector<_RawNode::weak> raw_inputs;
+            std::vector<LinkedBubble::weak> raw_inputs;
             raw_inputs.reserve(inputs.size());
-            for (auto &input : inputs) raw_inputs.emplace_back(_RawNode::weak(input));
-            _RawNode::Link(node.m_ptr, raw_inputs);
+            for (auto &input : inputs) raw_inputs.emplace_back(LinkedBubble::weak(input));
+            LinkedBubble::Link(node.m_ptr, raw_inputs);
         }
 
         /**
@@ -195,7 +166,7 @@ namespace ts {
          * @param new_node the new node
          */
         static void ReplaceOutput(const Node &old_node, const Node &new_node) {
-            _RawNode::ReplaceOutput(old_node.m_ptr, new_node.m_ptr);
+            LinkedBubble::ReplaceOutput(old_node.m_ptr, new_node.m_ptr);
         }
 
         std::string str() const {
@@ -210,13 +181,49 @@ namespace ts {
             return raw_ptr->repr();
         }
 
+        Bubble &bubble() {
+            auto raw_ptr = m_ptr.lock();
+            if (!raw_ptr) throw NullPointerException("Getting expired node's bubble");
+            return raw_ptr->value();
+        }
+
+        const Bubble &bubble() const {
+            auto raw_ptr = m_ptr.lock();
+            if (!raw_ptr) throw NullPointerException("Getting expired node's bubble");
+            return raw_ptr->value();
+        }
+
+        Bubble *operator->() {
+            return &bubble();
+        }
+
+        const Bubble *operator->() const {
+            return &bubble();
+        }
+
+        Bubble &operator*() {
+            return bubble();
+        }
+
+        const Bubble &operator*() const {
+            return bubble();
+        }
+
     private:
-        explicit Node(const _RawNode::weak &ptr) : m_ptr(ptr) {}
+        explicit Node(LinkedBubble::weak ptr) : m_ptr(std::move(ptr)) {}
 
-        explicit operator _RawNode::weak() const { return m_ptr; }
+        explicit operator LinkedBubble::weak() const { return m_ptr; }
 
-        _RawNode::weak m_ptr;
+        LinkedBubble::weak m_ptr;
     };
+
+    template<typename T>
+    T *Node::ptr() {
+        TS_LOG_ERROR << "Using not recommended API, please use \"Node::bubble\" instead.";
+        auto raw_ptr = m_ptr.lock();
+        if (!raw_ptr) return nullptr;
+        return raw_ptr->ptr();
+    }
 
     inline std::ostream &operator<<(std::ostream &out, const Node &node) {
         return out << node.str();
@@ -233,7 +240,15 @@ namespace ts {
 
         template<typename T, typename... Args>
         Node make(Args &&...args) {
-            auto node = std::make_shared<_RawNodeWithValue<T>>(std::forward<Args>(args)...);
+            TS_LOG_ERROR << "Using not recommended API, please use \"Graph::make\" instead.";
+            auto node = std::make_shared<LinkedBubble>(std::forward<Args>(args)...);
+            m_nodes.push_back(node);
+            return Node(node);
+        }
+
+        template<typename... Args>
+        Node make(Args &&...args) {
+            auto node = std::make_shared<LinkedBubble>(std::forward<Args>(args)...);
             m_nodes.push_back(node);
             return Node(node);
         }
@@ -246,7 +261,7 @@ namespace ts {
         }
 
     private:
-        std::vector<_RawNode::shared> m_nodes;
+        std::vector<LinkedBubble::shared> m_nodes;
     };
 
     inline bool operator==(const Node &lhs, const Node &rhs) { return lhs.ptr() == rhs.ptr(); }
@@ -273,7 +288,5 @@ namespace std {
         }
     };
 }
-
-TS_LITE_CONTEXT(ts::Graph)
 
 #endif //TENSORSTACK_MODULE_GRAPH_H

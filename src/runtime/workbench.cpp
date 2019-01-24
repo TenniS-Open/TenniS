@@ -37,7 +37,6 @@ namespace ts {
     Workbench::~Workbench() {
         this->m_program.clear();
         this->m_stack->clear();
-        this->m_data_sagment->clear();
         this->m_map_input_slots.clear();
         this->m_map_output_slots.clear();
         this->m_inputs.clear();
@@ -124,9 +123,9 @@ namespace ts {
         }
         for (auto &data : block.data_sagment) {
             if (data.device.empty()) {
-                bench->m_data_sagment->clone_push(data);
+                bench->m_data_sagment->clone_push(data.tensor);
             } else {
-                bench->m_data_sagment->clone_push(data, data.device);
+                bench->m_data_sagment->clone_push(data.tensor, data.device);
             }
         }
 
@@ -137,11 +136,11 @@ namespace ts {
         bench->m_outputs.resize(module_outputs.size());
         int slot_i = 0;
         for (auto &input : module_inputs) {
-            bench->m_map_input_slots.insert(std::make_pair(input.ref<Bubble>().name(), slot_i++));
+            bench->m_map_input_slots.insert(std::make_pair(input.bubble().name(), slot_i++));
         }
         slot_i = 0;
         for (auto &output : module_outputs) {
-            bench->m_map_output_slots.insert(std::make_pair(output.ref<Bubble>().name(), slot_i++));
+            bench->m_map_output_slots.insert(std::make_pair(output.bubble().name(), slot_i++));
         }
 
         return bench;
