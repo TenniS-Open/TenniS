@@ -46,7 +46,7 @@ namespace ts {
     }
 
     void HardMemory::expect(size_t size) {
-        if (!m_allocator) throw Exception("Borrowed memory can not be expected.");
+        if (!m_allocator) TS_LOG_ERROR("Borrowed memory can not be expected.") << eject;
         if (size > m_capacity) {
             m_data = m_allocator(m_device.id(), size, m_data, m_capacity);
             m_capacity = size;
@@ -54,7 +54,7 @@ namespace ts {
     }
 
     void HardMemory::shrink(size_t size) {
-        if (!m_allocator) throw Exception("Borrowed memory can not be shrunk.");
+        if (!m_allocator) TS_LOG_ERROR("Borrowed memory can not be shrunk.") << eject;
         if (size < m_capacity) {
             m_data = m_allocator(m_device.id(), size, m_data, m_capacity);
             m_capacity = size;
@@ -62,7 +62,7 @@ namespace ts {
     }
 
     void HardMemory::resize(size_t size) {
-        if (!m_allocator) throw Exception("Borrowed memory can not be resized.");
+        if (!m_allocator) TS_LOG_ERROR("Borrowed memory can not be resized.") << eject;
         if (size != m_capacity) {
             m_data = m_allocator(m_device.id(), size, m_data, 0);
             m_capacity = size;
