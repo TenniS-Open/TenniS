@@ -44,7 +44,7 @@ void Add_Bias::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) {
 
     const Shape & shape = stack.index(0)->sizes();
 
-    TS_AUTO_CHECK(shape.size()  == 4 ); 
+    //TS_AUTO_CHECK(shape.size()  == 4 ); 
    
     const Shape & bias_shape = stack.index(1)->sizes();
 
