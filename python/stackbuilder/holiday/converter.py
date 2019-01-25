@@ -552,6 +552,8 @@ def convert_inner_product_layer(layer, input_nodes, output_names):
 
     node = ts.zoo.reshape(name=node_name, x=node, shape=[-1, num_output, 1, 1])
 
+    node.name = node_name
+
     return node,
 
 
