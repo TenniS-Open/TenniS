@@ -2,9 +2,7 @@
 // Created by kier on 2019/1/25.
 //
 
-#include <backend/zoo/hwc_center_crop2d.h>
-
-#include "backend/zoo/hwc_center_crop2d.h"
+#include "backend/zoo/nhwc_center_crop2d.h"
 
 #include "backend/name.h"
 
@@ -90,4 +88,4 @@ namespace ts {
 using namespace ts;
 using namespace zoo;
 
-TS_REGISTER_OPERATOR(HWCCenterCrop2D, ts::CPU, ts::name::layer::nhwc_center_crop2d());
+TS_REGISTER_OPERATOR(NHWCCenterCrop2D, ts::CPU, ts::name::layer::nhwc_center_crop2d());
