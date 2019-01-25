@@ -11,12 +11,12 @@
 
 namespace ts {
     namespace zoo {
-        class HWCCenterCrop2D : public Operator {
+        class NHWCCenterCrop2D : public Operator {
         public:
-            using self = HWCCenterCrop2D;
+            using self = NHWCCenterCrop2D;
             using supper = Operator;
 
-            HWCCenterCrop2D();
+            NHWCCenterCrop2D();
 
             void init() override;
 

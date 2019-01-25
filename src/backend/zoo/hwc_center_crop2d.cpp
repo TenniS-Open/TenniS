@@ -18,11 +18,11 @@
 namespace ts {
     namespace zoo {
 
-        HWCCenterCrop2D::HWCCenterCrop2D() {
+        NHWCCenterCrop2D::NHWCCenterCrop2D() {
             field(name::size, REQUIRED);
         }
 
-        void HWCCenterCrop2D::init() {
+        void NHWCCenterCrop2D::init() {
             supper::init();
 
             auto size = tensor::cast(INT32, this->get(name::size));
@@ -43,27 +43,27 @@ namespace ts {
             m_pad_op->init();
         }
 
-        int HWCCenterCrop2D::infer(Stack &stack, std::vector<Tensor::Prototype> &output) {
+        int NHWCCenterCrop2D::infer(Stack &stack, std::vector<Tensor::Prototype> &output) {
             TS_AUTO_CHECK(stack.size() == 1);
 
             auto x = *stack.index(0);
 
-            TS_AUTO_CHECK(x.has_shape({-1, -1, -1}));
+            TS_AUTO_CHECK(x.has_shape({-1, -1, -1, -1}));
 
             output.resize(1);
-            output[0] = Tensor::Prototype(x.dtype(), {m_size.height, m_size.width, x.size(2)});
+            output[0] = Tensor::Prototype(x.dtype(), {x.size(0), m_size.height, m_size.width, x.size(3)});
 
             return 1;
         }
 
-        int HWCCenterCrop2D::run(Stack &stack) {
+        int NHWCCenterCrop2D::run(Stack &stack) {
             TS_AUTO_CHECK(stack.size() == 1);
 
             auto x = *stack.index(0);
 
-            TS_AUTO_CHECK(x.has_shape({-1, -1, -1}));
+            TS_AUTO_CHECK(x.has_shape({-1, -1, -1, -1}));
 
-            auto x_size = Size2D(x.size(0), x.size(1));
+            auto x_size = Size2D(x.size(1), x.size(2));
 
             auto x_padding_top = (m_size.height - x_size.height) / 2;
             auto x_padding_bottom = m_size.height - x_size.height - x_padding_top;
@@ -71,10 +71,11 @@ namespace ts {
             auto x_padding_left = (m_size.width - x_size.width) / 2;
             auto x_padding_right = m_size.width - x_size.width - x_padding_left;
 
-            auto x_padding_tensor = tensor::build(INT32, {3, 2}, {
+            auto x_padding_tensor = tensor::build(INT32, {4, 2}, {
+                    0, 0,
                     x_padding_top, x_padding_bottom,
                     x_padding_left, x_padding_right,
-                    0, 0
+                    0, 0,
             });
 
             stack.push(x_padding_tensor);
@@ -89,4 +90,4 @@ namespace ts {
 using namespace ts;
 using namespace zoo;
 
-TS_REGISTER_OPERATOR(HWCCenterCrop2D, ts::CPU, ts::name::layer::hwc_center_crop2d());
+TS_REGISTER_OPERATOR(HWCCenterCrop2D, ts::CPU, ts::name::layer::nhwc_center_crop2d());
