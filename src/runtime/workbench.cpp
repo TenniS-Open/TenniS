@@ -51,53 +51,16 @@ namespace ts {
             TS_LOG_ERROR << "Can not filter input with shape: " << to_string(input.sizes()) << eject;
         }
         if (input.dims() == 2) {
-            input = input.reshape({input.size(0), input.size(1), 1});
+            input = input.reshape({1, input.size(0), input.size(1), 1});
+            auto output = filter->run(input);
+            return output;
         }
         if (input.dims() == 3) {
-            return filter->run(input);
+            input = input.reshape({1, input.size(0), input.size(1), input.size(2)});
+            auto output = filter->run(input);
+            return output;
         }
-        if (input.size(0) == 1) {
-            input = input.reshape({input.size(1), input.size(2), input.size(3)});
-            auto result = filter->run(input);
-            result = result.reshape({1, input.size(0), input.size(1), input.size(2)});
-            return result;
-        }
-        // split batch and do filter
-        auto number = input.size(0);
-        auto left_size = input.sizes();
-        left_size.erase(left_size.begin());
-        auto left_count = 1;
-        for (auto &size : left_size) left_count *= size;
-        std::vector<Tensor> fields(number);
-        for (int i = 0; i < number; ++i) {
-            auto image_data = input.data<char>() + i * left_count * input.proto().type_bytes();
-            Tensor image(Memory(input.device(), image_data, left_count),
-                    Tensor::Prototype(input.dtype(), left_size));
-            fields[i] = filter->run(image);
-            // check shape
-            if (i == 0) continue;
-            if (!fields[i].has_shape(fields[i - 1].sizes())) {
-                TS_LOG_ERROR << "Can not concat image " << to_string(fields[i].sizes())
-                    << " vs. " << to_string(fields[i - 1].sizes());
-            }
-        }
-        auto new_size = fields[0].sizes();
-        new_size.insert(new_size.begin(), number);
-
-        Tensor result(input.device(), input.dtype(), new_size);
-        auto converter = HardConverter::Query(result.device().type(), input.device().type());
-        TS_AUTO_CHECK(converter != nullptr);
-
-        auto field_size = fields[0].proto().count() * fields[0].proto().type_bytes();
-
-        for (int i = 0; i < fields.size(); ++i) {
-            auto &field = fields[i];
-            auto result_data = result.data<char>() + i * field_size;
-            auto filed_data = result.data();
-            converter(result.device().id(), result_data, field.device().id(), filed_data, field_size);
-        }
-
-        return result;
+        return filter->run(input);
     }
 
     void Workbench::run() {

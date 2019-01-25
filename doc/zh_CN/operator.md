@@ -490,27 +490,27 @@ void prewhiten(T *data, size_t len)
 }
 ```
 
-### _hwc_resize2d(x..device) = delete
+### _nhwc_resize2d(x..device) = delete
 
 参数：  
 - `size` `Int[2]` 内容为 `{width, height}`。
 
-### _hwc_crop2d(x..device) = delete
+### _nhwc_crop2d(x..device) = delete
 
 参数：  
 - `rect` `Int[4]` 内容为 `{x, y, width, height}`。
 
-### _hwc_center_crop2d(x..device)
+### _nhwc_center_crop2d(x..device)
 
 参数：  
 - `size` `Int[2]` 内容为 `{width, height}`。
 
-### _hwc_channel_swap(x..device) = delete
+### _nhwc_channel_swap(x..device) = delete
 
 参数：  
 - `shuffle` `IntArray`
 
-### _hwc2chw(x..device) = delete
+### _nhwc2nchw(x..device) = delete
 
 参数：无
 
