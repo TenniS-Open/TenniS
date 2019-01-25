@@ -89,7 +89,7 @@ void Conv2d::compute_conv(Tensor *input_tensor, Tensor *weight_tensor, Tensor *t
     for(int i=0; i<shape[0]; i++) {
         ::memset(col_buffer, 0, col_buffer_size * sizeof(T));
         im2col_cpu(pinput, shape[1], shape[2], shape[3], weight_shape[2], weight_shape[3],
-                   m_padding[2], m_padding[3], m_stride[2], m_stride[3],m_dialations[2],m_dialations[3], col_buffer, m_padding_value);
+                   m_padding[4], m_padding[5],m_padding[6],m_padding[7], m_stride[2], m_stride[3],m_dialations[2],m_dialations[3], col_buffer, m_padding_value);
 
 
         cpu::math<T>::gemm(ts::blas::NoTrans,ts::blas::NoTrans, weight_shape[0], conv_out_spatial_dim,
