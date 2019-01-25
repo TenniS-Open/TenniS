@@ -18,6 +18,7 @@
 #include "inside/thread_pool.h"
 #include "global/device_admin.h"
 #include "runtime/runtime.h"
+#include "image_filter.h"
 
 namespace ts {
     class Workbench {
@@ -50,6 +51,11 @@ namespace ts {
 
         // clear all stack
         void clear() { this->m_stack->clear(); }
+
+        // bind image filter
+        void bind_filter(const std::string &name, ImageFilter::shared filter);
+
+        void bind_filter(int slot, ImageFilter::shared filter);
 
         // set input
         void input(const std::string &name, const Tensor &tensor);
@@ -93,6 +99,8 @@ namespace ts {
         // map tensor, means <tensor's index in stack, tensor>
         std::vector<Tensor> m_inputs;
         std::vector<Tensor> m_outputs;
+
+        std::vector<ImageFilter::shared> m_input_filters;
 
         // control device context
         DeviceContext m_device_context;

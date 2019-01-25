@@ -7,12 +7,14 @@
 
 #include <vector>
 #include "core/tensor.h"
-#include "workbench.h"
+#include "utils/implement.h"
 
 namespace ts {
     class ImageFilter {
     public:
         using self = ImageFilter;
+
+        using shared = std::shared_ptr<self>;
 
         explicit ImageFilter(const ComputingDevice &device);
 
@@ -52,11 +54,13 @@ namespace ts {
          */
         Tensor run(const Tensor &image);
 
+        shared clone() const;
+
     private:
-        ComputingDevice m_computing_device;
-        Workbench::shared m_workbench;
-        Graph::shared m_graph;
-        bool m_compiled = false;
+        class Implement;
+        Declare<Implement> m_impl;
+
+        explicit ImageFilter(const Implement &other);
 
         std::string serial_name() const;
     };

@@ -18,6 +18,17 @@
 namespace ts {
     using Shape = std::vector<int>;
 
+    inline std::string to_string(const Shape &shape) {
+        std::ostringstream oss;
+        oss << "[";
+        for (size_t i = 0; i < shape.size(); ++i) {
+            if (i) oss << ", ";
+            oss << shape[i];
+        }
+        oss << "]";
+        return oss.str();
+    }
+
     class HypeShape {
     public:
         using self = HypeShape;

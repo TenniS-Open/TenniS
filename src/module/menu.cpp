@@ -38,7 +38,7 @@ namespace ts {
             return result;
         }
 
-        Node bubble::param(const std::string &name, const Shape &shape) {
+        Node param(const std::string &name, const Shape &shape) {
             auto &g = ctx::ref<Graph>();
             auto result = g.make(Bubble::Parameter, name, 1, shape);
             return result;
