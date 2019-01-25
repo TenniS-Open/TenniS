@@ -54,6 +54,7 @@ namespace ts {
         // set input
         for (int i = 0; static_cast<size_t >(i) < this->m_inputs.size(); ++i) {
             auto &arg = this->m_inputs[i];
+            // TODO: direct set memory, without memory copy
             this->m_stack->clone_push(arg, arg.device());
         }
 
