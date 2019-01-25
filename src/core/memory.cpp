@@ -4,6 +4,8 @@
 
 
 #include <algorithm>
+#include <core/memory.h>
+
 
 #include "core/memory.h"
 #include "global/hard_converter.h"
@@ -76,6 +78,12 @@ namespace ts {
 
     Memory::Memory()
             : Memory(0) {
+    }
+
+    Memory::Memory(const MemoryDevice &device, void *data, size_t size) {
+        m_size = size;
+        m_shift = 0;
+        m_hard = std::make_shared<HardMemory>(device, data, size);
     }
 
     void memcpy(Memory &dst, const Memory &src, size_t size) {
