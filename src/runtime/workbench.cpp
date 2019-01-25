@@ -262,14 +262,15 @@ namespace ts {
             TS_LOG_ERROR << "Can not identify the name \"" << name << "\", did you mean: "
                          << fuzzy_name(m_map_input_slots, name) << eject;
         }
-        this->bind_filter(slot_it->second, filter);
+        this->bind_filter(slot_it->second, std::move(filter));
     }
 
     void Workbench::bind_filter(int slot, ImageFilter::shared filter) {
         if (slot < 0 || size_t(slot) >= m_input_filters.size()) {
             TS_LOG_ERROR << "Input index out of range. with index=" << slot << eject;
         }
-        m_input_filters[slot] = filter;
+        filter->compile();
+        m_input_filters[slot] = std::move(filter);
     }
 
     void Workbench::input(const std::string &name, const Tensor &tensor) {
