@@ -10,6 +10,8 @@
 #include "core/tensor.h"
 #include "utils/assert.h"
 
+#include <numeric>
+
 namespace ts {
     Tensor::Tensor(MemoryController::shared controller, DTYPE dtype, const Shape &_shape)
             : Tensor(controller, Prototype(dtype, _shape)) {}
@@ -111,7 +113,22 @@ namespace ts {
     }
 
     Tensor Tensor::reshape(const Shape &shape) const {
-        Prototype proto(this->dtype(), shape);
+        auto fixed_shape = shape;
+        int64_t fixed_index = -1;
+        for (size_t i = 0; i < fixed_shape.size(); ++i) {
+            if (fixed_shape[i] < 0) {
+                if (fixed_index >= 0) TS_LOG_ERROR << "Can not reshape to: " << to_string(shape) << eject;
+                fixed_shape[i] = -1;
+                fixed_index = int64_t(i);
+            }
+        }
+        if (fixed_index >= 0) {
+            auto up = std::accumulate(this->sizes().begin(), this->sizes().end(), 1, std::multiplies<int>());
+            auto down = std::accumulate(fixed_shape.begin(), fixed_shape.end(), 1, std::multiplies<int>());
+            fixed_shape[fixed_index] = up / -down;
+        }
+
+        Prototype proto(this->dtype(), fixed_shape);
         TS_AUTO_CHECK(proto.count() == this->count());
         Tensor t = *this;
         t.m_proto = proto;
