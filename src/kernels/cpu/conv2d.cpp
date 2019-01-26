@@ -42,7 +42,7 @@ int Conv2d::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) {
     const Shape& weight_shape = stack.index(1)->sizes();
 
     TS_AUTO_CHECK(weight_shape.size()  == 4 ); 
-
+    TS_AUTO_CHECK(stack.index(0)->dtype() == stack.index(1)->dtype());
     //if(shape[1] % weight_shape[1] != 0) {
     //    throw ts::Exception("conv2d input parameters channels check failed");
     //}

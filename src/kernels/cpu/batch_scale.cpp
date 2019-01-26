@@ -37,7 +37,8 @@ void Batch_Scale::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output)
     TS_AUTO_CHECK(bias_shape.size()  == 1 ); 
 
     TS_AUTO_CHECK(scale_shape[0] == shape[m_dim] && bias_shape[0] == shape[m_dim]); 
-
+    TS_AUTO_CHECK(stack.index(0)->dtype() == stack.index(1)->dtype());
+    TS_AUTO_CHECK(stack.index(0)->dtype() == stack.index(2)->dtype());
     output = Tensor::Prototype(stack.index(0)->dtype(), shape);
     return;
 }

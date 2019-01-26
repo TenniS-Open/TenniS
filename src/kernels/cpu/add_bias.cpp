@@ -44,15 +44,16 @@ void Add_Bias::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) {
 
     const Shape & shape = stack.index(0)->sizes();
 
-    TS_AUTO_CHECK(shape.size()  == 4 ); 
+    //TS_AUTO_CHECK(shape.size()  == 4 ); 
    
     const Shape & bias_shape = stack.index(1)->sizes();
 
     TS_AUTO_CHECK(bias_shape.size()  == 1 );
 
     TS_AUTO_CHECK(m_dim >= 0 && m_dim < shape.size()); 
-
+    
     TS_AUTO_CHECK(stack.index(1)->count() == shape[m_dim]);
+    TS_AUTO_CHECK(stack.index(0)->dtype() == stack.index(1)->dtype());
     output = Tensor::Prototype(stack.index(0)->dtype(), shape);
     return;
 }
@@ -66,7 +67,7 @@ int Add_Bias::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output
 }
 
 template<typename T>
-void Add_Bias::compute_bias(Tensor *input_tensor, const Tensor *bias_tensor, Tensor *output_tensor) {
+void Add_Bias::compute_bias(Tensor *input_tensor, Tensor *bias_tensor, Tensor *output_tensor) {
     const Shape& shape = input_tensor->sizes();
     int predims = 1;
     int backdims = 1;
@@ -80,7 +81,7 @@ void Add_Bias::compute_bias(Tensor *input_tensor, const Tensor *bias_tensor, Ten
 
     T* psrc  = input_tensor->sync(MemoryDevice(CPU)).data<T>();
     T* pdst  = output_tensor->data<T>();
-    const T* pbias = bias_tensor->data<T>();
+    T* pbias = bias_tensor->sync(MemoryDevice(CPU)).data<T>();
     int stridedims = backdims * shape[m_dim];
     int offset = 0;
     for(int i=0; i<predims; i++) {
@@ -101,7 +102,7 @@ int Add_Bias::run(ts::Stack &stack) {
     infer_private(stack, output[0]);
 
     stack.push(output[0], MemoryDevice(CPU));
-    Tensor bias_tensor  = tensor::cast(stack.index(0)->dtype(), *stack.index(1));
+    Tensor *bias_tensor  = stack.index(1);//tensor::cast(stack.index(0)->dtype(), *stack.index(1));
     Tensor *input_tensor =  stack.index(0);
 
     Tensor *tensor = stack.index(-1);
@@ -109,35 +110,35 @@ int Add_Bias::run(ts::Stack &stack) {
     switch(input_tensor->dtype()) {
 
         case INT8: {
-            compute_bias<char>(input_tensor, &bias_tensor, tensor);
+            compute_bias<char>(input_tensor, bias_tensor, tensor);
             break;
         }
         case UINT8: {
-            compute_bias<unsigned char>(input_tensor, &bias_tensor, tensor);
+            compute_bias<unsigned char>(input_tensor, bias_tensor, tensor);
             break;
         }
         case INT16: {
-            compute_bias<short>(input_tensor, &bias_tensor, tensor);
+            compute_bias<short>(input_tensor, bias_tensor, tensor);
             break;
         }
         case UINT16: {
-            compute_bias<unsigned short>(input_tensor, &bias_tensor, tensor);
+            compute_bias<unsigned short>(input_tensor, bias_tensor, tensor);
             break;
         }
         case INT32: {
-            compute_bias<int>(input_tensor, &bias_tensor, tensor);
+            compute_bias<int>(input_tensor, bias_tensor, tensor);
             break;
         }
         case UINT32: {
-            compute_bias<unsigned int>(input_tensor, &bias_tensor, tensor);
+            compute_bias<unsigned int>(input_tensor, bias_tensor, tensor);
             break;
         }
         case FLOAT32: {
-            compute_bias<float>(input_tensor, &bias_tensor, tensor);
+            compute_bias<float>(input_tensor, bias_tensor, tensor);
             break;
         }
         case FLOAT64: {
-            compute_bias<double>(input_tensor, &bias_tensor, tensor);
+            compute_bias<double>(input_tensor, bias_tensor, tensor);
             break;
         }
         default: {
