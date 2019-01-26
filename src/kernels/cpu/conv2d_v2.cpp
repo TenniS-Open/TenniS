@@ -66,6 +66,7 @@ int Conv2d_V2::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) {
     //    throw ts::Exception("conv2d_v2 input parameters channels check failed");
     //}
 
+    TS_AUTO_CHECK(stack.index(0)->dtype() == stack.index(1)->dtype());
     int output_h,output_w;
     ts::Conv2d_Base::Caculate(shape[2], shape[3], weight_shape[2], weight_shape[3],m_padding[4], m_padding[5], m_padding[6], m_padding[7],
                  m_stride[2], m_stride[3], m_dialations[2], m_dialations[3], output_h, output_w);

@@ -46,7 +46,8 @@ void Batch_Norm::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) 
     TS_AUTO_CHECK(variance_shape.size()  == 1 ); 
 
     TS_AUTO_CHECK(variance_shape[0] == shape[m_dim] && mean_shape[0] == shape[m_dim]); 
-
+    TS_AUTO_CHECK(stack.index(0)->dtype() == stack.index(1)->dtype());
+    TS_AUTO_CHECK(stack.index(0)->dtype() == stack.index(2)->dtype());
     output = ts::Tensor::Prototype(stack.index(0)->dtype(), shape);
     return;
 }
