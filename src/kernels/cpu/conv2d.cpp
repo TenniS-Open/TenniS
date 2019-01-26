@@ -133,7 +133,6 @@ void Conv2d::compute_conv<float>(Tensor *input_tensor, Tensor *weight_tensor, Te
                    m_padding[4], m_padding[5],m_padding[6],m_padding[7], m_stride[2], m_stride[3],m_dialations[2],m_dialations[3], col_buffer, m_padding_value);
 
 #ifdef TS_USE_CBLAS
-        std::cout << "use open cblas float" << std::endl; 
         cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, weight_shape[0], conv_out_spatial_dim,
                     kernel_dims, (float)1, pweight, kernel_dims, col_buffer, conv_out_spatial_dim, (float)0,  poutput, conv_out_spatial_dim);
 #else
@@ -172,7 +171,6 @@ void Conv2d::compute_conv<double>(Tensor *input_tensor, Tensor *weight_tensor, T
                    m_padding[4], m_padding[5],m_padding[6],m_padding[7], m_stride[2], m_stride[3],m_dialations[2],m_dialations[3], col_buffer, m_padding_value);
 
 #ifdef TS_USE_CBLAS
-        std::cout << "use open cblas double" << std::endl; 
         cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, weight_shape[0], conv_out_spatial_dim,
                     kernel_dims, (double)1, pweight, kernel_dims, col_buffer, conv_out_spatial_dim, (double)0,  poutput, conv_out_spatial_dim);
 #else
