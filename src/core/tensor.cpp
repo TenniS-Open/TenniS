@@ -56,6 +56,11 @@ namespace ts {
             : m_memory(memory)
             , m_proto(proto) {}
 
+    Tensor Tensor::clone() const {
+        std::shared_ptr<MemoryController> controller = std::make_shared<DynamicMemoryController>(this->device());
+        return clone(controller);
+    }
+
     Tensor Tensor::clone(MemoryController::shared controller) const {
         auto fields = this->unpack();
         for (auto &value : fields) {
@@ -94,6 +99,10 @@ namespace ts {
 
     Tensor::shared Tensor::clone_shared(MemoryController::shared controller) const {
         return std::make_shared<Tensor>(this->clone(std::move(controller)));
+    }
+
+    Tensor::shared Tensor::clone_shared() const {
+        return std::make_shared<Tensor>(this->clone());
     }
 
     Tensor::shared Tensor::clone_shared(SyncMemoryController::shared controller) const {
