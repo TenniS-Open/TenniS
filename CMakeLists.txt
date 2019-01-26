@@ -170,6 +170,8 @@ endforeach ()
 
 ts_add_library(${PROJECT_NAME}_LIB ${TARGET} ${INCLUDE_FILES} ${INCLUDE_SRC_FILES} ${SRC_FILES})
 
+target_link_libraries(${PROJECT_NAME}_LIB ${third_libraries})
+
 set_target_properties(${PROJECT_NAME}_LIB PROPERTIES OUTPUT_NAME ${PROJECT_NAME}${ENV_SUFFIX})
 
 if (WIN32)
