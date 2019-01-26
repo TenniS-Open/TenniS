@@ -7,5 +7,5 @@
 *.so
 *.a
 /cmake-build-*
-
+*_pb2.py
 
