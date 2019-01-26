@@ -53,6 +53,10 @@ void Fused_Batch_Norm::infer_private(ts::Stack &stack, ts::Tensor::Prototype &ou
     const Shape& variance_shape = stack.index(4)->sizes();
     TS_AUTO_CHECK(variance_shape.size()  == 1 ); 
 
+    TS_AUTO_CHECK(stack.index(0)->dtype() == stack.index(1)->dtype());
+    TS_AUTO_CHECK(stack.index(0)->dtype() == stack.index(2)->dtype());
+    TS_AUTO_CHECK(stack.index(0)->dtype() == stack.index(3)->dtype());
+    TS_AUTO_CHECK(stack.index(0)->dtype() == stack.index(4)->dtype());
     TS_AUTO_CHECK(gamma_shape[0] == shape[m_dim] && beta_shape[0] == shape[m_dim] && 
        variance_shape[0] == shape[m_dim] && mean_shape[0] == shape[m_dim]); 
 
