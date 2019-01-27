@@ -32,16 +32,21 @@ namespace ts {
         this->resize(size);
     }
 
+    HardMemory::HardMemory(const MemoryDevice &device, void *data, size_t size)
+            : m_device(device), m_capacity(size), m_data(data) {
+    }
+
     HardMemory::~HardMemory() {
         if (m_allocator) m_allocator(m_device.id(), 0, m_data, 0);
     }
 
     void HardMemory::dispose() {
-        m_allocator(m_device.id(), 0, m_data, 0);
+        if (m_allocator) m_allocator(m_device.id(), 0, m_data, 0);
         m_data = nullptr;
     }
 
     void HardMemory::expect(size_t size) {
+        if (!m_allocator) TS_LOG_ERROR("Borrowed memory can not be expected.") << eject;
         if (size > m_capacity) {
             m_data = m_allocator(m_device.id(), size, m_data, m_capacity);
             m_capacity = size;
@@ -49,6 +54,7 @@ namespace ts {
     }
 
     void HardMemory::shrink(size_t size) {
+        if (!m_allocator) TS_LOG_ERROR("Borrowed memory can not be shrunk.") << eject;
         if (size < m_capacity) {
             m_data = m_allocator(m_device.id(), size, m_data, m_capacity);
             m_capacity = size;
@@ -56,6 +62,7 @@ namespace ts {
     }
 
     void HardMemory::resize(size_t size) {
+        if (!m_allocator) TS_LOG_ERROR("Borrowed memory can not be resized.") << eject;
         if (size != m_capacity) {
             m_data = m_allocator(m_device.id(), size, m_data, 0);
             m_capacity = size;

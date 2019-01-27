@@ -41,6 +41,7 @@ namespace ts {
             const string &pooling2d_v2() TS_NOEXCEPT { static string str = "pooling2d_v2"; return str; }
             const string &resize2d() TS_NOEXCEPT { static string str = "resize2d"; return str; }
             const string &mx_pooling2d_padding() TS_NOEXCEPT { static string str = "_mx_pooling2d_padding"; return str; }
+            const string &nhwc_center_crop2d() TS_NOEXCEPT { static string str = "_nhwc_center_crop2d"; return str; }
 
             const string &copy() TS_NOEXCEPT {
                 static string str = "_copy";
@@ -70,6 +71,7 @@ namespace ts {
         string device = "device";
         string offset = "offset";
 		string smooth = "smooth";
+        string size = "size";
 
     }
 }

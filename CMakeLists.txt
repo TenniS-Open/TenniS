@@ -1,12 +1,13 @@
 cmake_minimum_required(VERSION 2.7)
 project(TensorStack)
 
-set(TARGET "STATIC" CACHE STRING "STATIC or SHARED" FORCE)
+set(TARGET "SHARED" CACHE STRING "STATIC or SHARED" FORCE)
+add_definitions(-DBUILDING_TENSORSTACK)
 
 # global root dir
 set(SOLUTION_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 add_definitions(-DTS_SOLUTION_DIR="${SOLUTION_DIR}")
-add_definitions("-Wall -g")
+# add_definitions("-Wall -g") # add gcc option in FLAGS_GCC, not here!
 
 add_definitions(-DTS_DISABLE_PARALLEL)
 # dir for common cmake files
@@ -43,7 +44,7 @@ include_directories(${SOLUTION_DIR}/src)
 
 set(SOURCE_DIR ${SOLUTION_DIR})
 
-set(TENSORSTACK_MODULES backend compiler core engine global memory module runtime utils)
+set(TENSORSTACK_MODULES api backend compiler core engine global memory module runtime utils)
 set(TENSORSTACK_ACHIVES common cpu) # in kernels and ops
 
 add_definitions(-DTS_USE_SSE)
@@ -184,6 +185,8 @@ foreach (achive ${TENSORSTACK_ACHIVES})
 endforeach ()
 
 ts_add_library(${PROJECT_NAME}_LIB ${TARGET} ${INCLUDE_FILES} ${INCLUDE_SRC_FILES} ${SRC_FILES})
+
+target_link_libraries(${PROJECT_NAME}_LIB ${third_libraries})
 
 set_target_properties(${PROJECT_NAME}_LIB PROPERTIES OUTPUT_NAME ${PROJECT_NAME}${ENV_SUFFIX})
 
