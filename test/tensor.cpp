@@ -76,17 +76,6 @@ int main() {
 
     std::cout << "count: " << hype_shape.count() << std::endl;
 
-    for (int i = 0; i < hype_shape.count(); ++i) {
-        // std::cout << hype_shape.to_coordinate(i) << std::endl;
-        auto c = hype_shape.to_coordinate(i);
-        std::vector<int> new_c(c.size());
-        for (int j = 0; j < c.size(); ++j) {
-            new_c[j] = c[new_dims[j]];
-        }
-        auto new_i = hype_shape.to_index(new_c);
-        to_data[new_i] = from_data[i];
-    }
-
     for (int i = 0; i < shape[0]; ++i) {
         for (int j = 0; j < shape[1]; ++j) {
             for (int k = 0; k < shape[2]; ++k) {

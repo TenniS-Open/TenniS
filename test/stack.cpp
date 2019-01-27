@@ -10,7 +10,9 @@
 int main() {
     ts::setup();
 
-    ts::Stack ss(ts::MemoryDevice(ts::CPU));
+    ts::MemoryDevice device(ts::CPU);
+
+    ts::Stack ss(device);
     ss.push(ts::DTYPE::INT8, {1});
     std::cout << ss.size() << std::endl;
     ss.push(-1);
