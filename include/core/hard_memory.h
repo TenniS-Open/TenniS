@@ -51,6 +51,14 @@ namespace ts {
          */
         explicit HardMemory(const MemoryDevice &device, const HardAllocator::function &allocator, size_t size);
 
+        /**
+         * Initialize hardware memory
+         * @param device memory @sa Device
+         * @param data borrowed memory pointer
+         * @param size borrowed memory size
+         */
+        explicit HardMemory(const MemoryDevice &device, void *data, size_t size);
+
         ~HardMemory();
 
         /**

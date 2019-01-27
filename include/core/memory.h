@@ -60,6 +60,14 @@ namespace ts {
         Memory(const MemoryDevice &device, size_t size);
 
         /**
+         * Initialize Memory
+         * @param device memory device
+         * @param data borrowed memory
+         * @param size sizeof this memory block
+         */
+        Memory(const MemoryDevice &device, void *data, size_t size);
+
+        /**
          * Initialize Memory, with cpu zero memory
          * @param size sizeof the memory block
          */

@@ -46,6 +46,7 @@ namespace ts {
             const string &resize2d() TS_NOEXCEPT;
             const string &mx_pooling2d_padding() TS_NOEXCEPT;
             const string &copy() TS_NOEXCEPT;
+            const string &nhwc_center_crop2d() TS_NOEXCEPT;
         }
 
         extern string NCHW;
@@ -69,6 +70,7 @@ namespace ts {
         extern string device;
         extern string offset;
 		extern string smooth;
+        extern string size;
 
 
         extern string valid;

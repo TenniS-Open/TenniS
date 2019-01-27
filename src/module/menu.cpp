@@ -37,6 +37,12 @@ namespace ts {
             result->set(name::device, tensor::from(device));
             return result;
         }
+
+        Node param(const std::string &name, const Shape &shape) {
+            auto &g = ctx::ref<Graph>();
+            auto result = g.make(Bubble::Parameter, name, 1, shape);
+            return result;
+        }
     }
 
     size_t serialize_graph(StreamWriter &stream, const Graph &graph) {
