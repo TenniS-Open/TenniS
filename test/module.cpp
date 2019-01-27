@@ -93,7 +93,7 @@ public:
 
     ~time_log() {
         m_end = system_clock::now();
-        m_duration = m_end - m_start;
+        m_duration = std::chrono::duration_cast<microseconds>(m_end - m_start);
 
         std::ostringstream oss;
         ts::LogStream(m_level) << m_header << m_duration.count() / 1000.0 << "ms";
