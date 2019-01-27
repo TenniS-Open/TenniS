@@ -20,6 +20,7 @@ set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Debug or Release")
 set(CONFIGURATION ${CMAKE_BUILD_TYPE})
 
 option(TS_USE_OPENMP "[Optional] Use OpenMP" ON)
+option(TS_USE_OPENCV "[Optional] Use OpenCV" ON)
 
 option(TS_USE_CUDA "[Optional] Use CUDA" OFF)
 option(TS_USE_CBLAS "[Optional] Use CBLAS" OFF)
@@ -56,8 +57,21 @@ add_definitions(-DTS_USE_SSE)
 
 set(third_libraries)
 
-list(APPEND third_libraries -lopenblas)
-list(APPEND third_libraries -lpthread)
+if (TS_USE_OPENCV)
+    add_definitions(-DTS_USE_OPENCV)
+    message(STATUS "[Optional] Use OpenCV: [ON]")
+
+    find_package(OpenCV REQUIRED)
+    message(STATUS "OpenCV library status:")
+    message(STATUS "    version: ${OpenCV_VERSION}")
+    message(STATUS "    libraries: ${OpenCV_LIBS}")
+    message(STATUS "    include path: ${OpenCV_INCLUDE_DIRS}")
+
+    include_directories(${OpenCV_INCLUDE_DIRS})
+    list(APPEND third_libraries ${OpenCV_LIBS})
+else ()
+    message(STATUS "[Optional] Use OpenCV: [OFF]")
+endif ()
 
 if (TS_USE_OPENMP)
     add_definitions(-DTS_USE_OPENMP)
@@ -88,18 +102,6 @@ elseif (UNIX)
     list(APPEND third_libraries pthread)
 else ()
 endif ()
-
-message(STATUS "Build with opencv")
-find_package(OpenCV REQUIRED)
-message(STATUS "OpenCV library status:")
-message(STATUS "    version: ${OpenCV_VERSION}")
-message(STATUS "    libraries: ${OpenCV_LIBS}")
-message(STATUS "    include path: ${OpenCV_INCLUDE_DIRS}")
-
-include_directories(${OpenCV_INCLUDE_DIRS})
-list(APPEND third_libraries ${OpenCV_LIBS})
-
-
 
 if (TS_USE_CBLAS)
     message(STATUS "[Optional] Use CBLAS: [ON]")
