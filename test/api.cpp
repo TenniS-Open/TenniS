@@ -45,6 +45,8 @@ int main() {
 
     ts_Workbench_output(workbench, 0, output);
 
+    ts_Tensor_sync_cpu(output); // sync to cpu, ready to write
+
     std::cout << "output: " << reinterpret_cast<float*>(ts_Tensor_data(input_a))[0] << std::endl;
 
     ts_free_Tensor(input_a);
