@@ -12,19 +12,8 @@
 #include <module/menu.h>
 #include <utils/box.h>
 #include <module/io/fstream.h>
-#include <core/tensor_builder.h>
 
 #include <cstring>
-
-#include <kernels/cpu/resize2d.h>
-#include <kernels/cpu/reshape.h>
-#include <kernels/cpu/pooling2d.h>
-
-#include <opencv2/core/core.hpp>
-#include <opencv2/opencv.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-
-
 
 class Sum : public ts::Operator {
 public:
@@ -104,7 +93,7 @@ public:
 
     ~time_log() {
         m_end = system_clock::now();
-		m_duration = std::chrono::duration_cast<std::chrono::microseconds>(m_end - m_start);
+        m_duration = m_end - m_start;
 
         std::ostringstream oss;
         ts::LogStream(m_level) << m_header << m_duration.count() / 1000.0 << "ms";
@@ -123,334 +112,59 @@ private:
 
 int main()
 {
-	//using namespace ts;
-	//setup();
-
-
-
-	//// build graph
-	//Graph g;
-	//ctx::bind<Graph> _graph(g);
-
-	////    auto a = bubble::param("a");
-	////    auto b = bubble::param("b");
-	////    auto b1 = block_n_times("block1", a, 1000);
-	////    auto b2 = block_n_times("block1", b, 1000);
-	////    auto c = bubble::op("c", "sum", {b1, b2});
-
-	///*
-	//auto a = bubble::param("a");
-	//auto b = bubble::param("b");
-	//auto data = bubble::data("data", tensor::from<float>(3), CPU);
-
-	//auto c = bubble::op("c", "sum", {a, b, data});
-	//*/
-
-
-	//cv::Mat srcimage = cv::imread("C:/Users/woshi/Desktop/test/1.jpg");
-	//auto a = bubble::param("a");
-	//auto b = bubble::param("b");
-	//auto c = bubble::op("c", "_resize2d", { a,b });
-
-	//ts::Shape type_shape = { 1 };
-	//Tensor param_type(INT32, type_shape);
-	//param_type.data<int>()[0] = 0;
-	//c.ref<Bubble>().set("type", param_type);
-
-
-	///*
-	//auto a = bubble::param("a");
-	//auto c = bubble::op("c","_reshape",{a});
-
-	//ts::Shape type_shape = {4};
-	//Tensor param_type(INT32, type_shape);
-	//param_type.data<int>()[0] = 2;
-	//param_type.data<int>()[1] = -1;
-
-	//param_type.data<int>()[2] = 3;
-	//param_type.data<int>()[3] = 4;
-	//c.ref<Bubble>().set("shape",param_type);
-	//*/
-	///*
-	//{
-	//// test graph
-	//ts::FileStreamWriter out("test.graph.txt");
-	//serialize_graph(out, g);
-	//out.close();
-
-	//ts::Graph tg;
-	//ts::FileStreamReader in("test.graph.txt");
-	//externalize_graph(in, tg);
-	//g = tg;
-	//}
-	//*/
-	//// setup module
-	//std::shared_ptr<Module> m = std::make_shared<Module>();
-	//m->load(g, { "c" });
-	////m->sort_inputs({"a", "b"});
-
-	//{
-	//	// test graph
-	//	Module::Save("test.module.txt", m);
-
-	//	m = Module::Load("test.module.txt");
-	//}
-
-	///*
-	//std::cout << "Input nodes:" << std::endl;
-	//for (auto &node : m->inputs()) {
-	//std::cout << node.ref<Bubble>().op() << ":" << node.ref<Bubble>().name() << std::endl;
-	//}
-
-	//std::cout << "Output nodes:" << std::endl;
-	//for (auto &node : m->outputs()) {
-	//std::cout << node.ref<Bubble>().op() << ":" << node.ref<Bubble>().name() << std::endl;
-	//}
-	//*/
-	//// run workbench
-	//ComputingDevice device(CPU, 0);
-	//// Workbench bench(device);
-
-	//Workbench::shared bench;
-
-	//try {
-	//	bench = Workbench::Load(m, device);
-	//	bench = bench->clone();
-	//}
-	//catch (const Exception &e) {
-	//	std::cout << e.what() << std::endl;
-	//	return -1;
-	//}
-
-
-	////Tensor input_a(INT32, {3,16});
-	////Tensor input_b(FLOAT32, {2,24});
-
-	////for(int i=0; i<48; i++)
-	////    input_a.data<int>()[i] = i+1;
-	////input_a.data<float>()[0] = 1;
-	////input_b.data<float>()[0] = 3;
-
-
-
-	//ts::Shape shape = { 2,srcimage.rows, srcimage.cols, srcimage.channels() };
-
-	////ts::Shape shape = {1,1,4, 4};
-	//Tensor input_a(FLOAT32, shape);
-
-	////Tensor input_a(UINT8, shape);
-	//Tensor input_b(INT32, { 4 });
-
-	//cv::Mat srcimage2 = cv::imread("C:/Users/woshi/Desktop/test/1.jpg");
-
-	//std::cout << "old:" << srcimage.channels() * srcimage.rows * srcimage.cols << std::endl;
-	//std::cout << "count:" << input_a.count() << std::endl;
-	//int num = input_a.count();
-	//float * buffer = new float[num];
-	////unsigned char * buffer = new unsigned char[num];
-
-	//num = num / 2;
-	//for (int i = 0; i<num; i++) {
-	//	buffer[i] = srcimage.data[i];
-	//}
-
-	//for (int i = 0; i<num; i++) {
-	//	buffer[i + num] = srcimage2.data[i];
-	//}
-
-	//memcpy(input_a.data<float>(), buffer, num * sizeof(float) * 2);
-	//delete[] buffer;
-
-	//input_b.data<int>()[0] = -1;
-	//input_b.data<int>()[1] = 400;
-	//input_b.data<int>()[2] = 400;
-	//input_b.data<int>()[3] = -1;
-
-
-	//bench->input("a", input_a);
-	//bench->input("b", input_b);
-	//{
-	//	time_log _log(ts::LOG_INFO, "Spent ");
-
-	//	bench->run();
-	//}
-
-	//auto output_c = bench->output("c");
-	//std::vector<int> vec = output_c.sizes();
-	//std::cout << vec.size() << ",count:" << output_c.count() << std::endl;
-	//for (int i = 0; i<vec.size(); i++)
-	//	std::cout << vec[i] << ",";
-	//std::cout << std::endl;
-
-	////for(int i=0; i<output_c.count(); i++)
-	////    std::cout << output_c.data<int>()[i] << ",";
-	////std::cout << std::endl;  
-	//cv::Mat dstimage(400, 400, CV_32FC3, output_c.data<float>());
-	//cv::Mat dstimage2(400, 400, CV_32FC3, output_c.data<float>() + 400 * 400 * 3);
-
-	////cv::Mat dstimage(400,400,CV_8UC3,output_c.data<unsigned char>());
-	////cv::Mat dstimage2(400,400,CV_8UC3,output_c.data<unsigned char>() + 400 * 400 * 3);
-	//cv::imwrite("/tmp/mm3.png", dstimage);
-	//cv::imwrite("/tmp/mm4.png", dstimage2);
-
-	//std::cout << "-----ok-----" << std::endl;
-	////std::cout << "output: " << output_c.data<float>()[0] << std::endl;
-
-	/********************************************************************************************/
-	//using namespace ts;
-	//setup();
-
-
-
-	//// build graph
-	//Graph g;
-	//ctx::bind<Graph> _graph(g);
-
-	////    auto a = bubble::param("a");
-	////    auto b = bubble::param("b");
-	////    auto b1 = block_n_times("block1", a, 1000);
-	////    auto b2 = block_n_times("block1", b, 1000);
-	////    auto c = bubble::op("c", "sum", {b1, b2});
-
-	//auto a = bubble::param("a");
-	//auto b = bubble::param("b");
-	//auto data = bubble::data("data", tensor::from<float>(3), CPU);
-
-	//auto c = bubble::op("c", "sum", { a, b, data });
-
-	//{
-	//	// test graph
-	//	ts::FileStreamWriter out("test.graph.txt");
-	//	serialize_graph(out, g);
-	//	out.close();
-
-	//	ts::Graph tg;
-	//	ts::FileStreamReader in("test.graph.txt");
-	//	externalize_graph(in, tg);
-	//	g = tg;
-	//}
-
-	//// setup module
-	//std::shared_ptr<Module> m = std::make_shared<Module>();
-	//m->load(g, { "c" });
-	//m->sort_inputs({ "a", "b" });
-
-	//{
-	//	// test graph
-	//	Module::Save("test.module.txt", m);
-
-	//	m = Module::Load("test.module.txt");
-	//}
-
-	//std::cout << "Input nodes:" << std::endl;
-	//for (auto &node : m->inputs()) {
-	//	std::cout << node.ref<Bubble>().op() << ":" << node.ref<Bubble>().name() << std::endl;
-	//}
-
-	//std::cout << "Output nodes:" << std::endl;
-	//for (auto &node : m->outputs()) {
-	//	std::cout << node.ref<Bubble>().op() << ":" << node.ref<Bubble>().name() << std::endl;
-	//}
-
-	//// run workbench
-	//ComputingDevice device(CPU, 0);
-	//// Workbench bench(device);
-
-	//Workbench::shared bench;
-
-	//try {
-	//	bench = Workbench::Load(m, device);
-	//	bench = bench->clone();
-	//}
-	//catch (const Exception &e) {
-	//	std::cout << e.what() << std::endl;
-	//	return -1;
-	//}
-
-	//Tensor input_a(FLOAT32, { 1 });
-	//Tensor input_b(FLOAT32, { 1 });
-
-	//input_a.data<float>()[0] = 1;
-	//input_b.data<float>()[0] = 3;
-
-	//bench->input("a", input_a);
-	//bench->input("b", input_b);
-	//{
-	//	time_log _log(ts::LOG_INFO, "Spent ");
-
-	//	bench->run();
-	//}
-
-	//auto output_c = bench->output("c");
-
-	//std::cout << "output: " << output_c.data<float>()[0] << std::endl;
-/********************************************************************************************/
     using namespace ts;
     setup();
+
+
+
     // build graph
     Graph g;
     ctx::bind<Graph> _graph(g);
 
-	auto input = bubble::param("input");
-	auto pooling_op = bubble::op("pooling_op", "pooling2d", { input });
+//    auto a = bubble::param("a");
+//    auto b = bubble::param("b");
+//    auto b1 = block_n_times("block1", a, 1000);
+//    auto b2 = block_n_times("block1", b, 1000);
+//    auto c = bubble::op("c", "sum", {b1, b2});
 
-	ts::Shape format_shape = { 4 };
-	Tensor format_param_type = ts::tensor::from("NCHW");
-	pooling_op.ref<Bubble>().set("format", format_param_type);
+    auto a = bubble::param("a");
+    auto b = bubble::param("b");
+    auto data = bubble::data("data", tensor::from<float>(3), CPU);
 
-	ts::Shape type_shape = { 1 };
-	Tensor type_param_type(INT32, type_shape);
-	type_param_type.data<int>()[0] = 0;
-	pooling_op.ref<Bubble>().set("type", type_param_type);
+    auto c = bubble::op("c", "sum", {a, b, data});
 
-	ts::Shape padding_shape = { 4,2 };
-	Tensor padding_param_type(INT32, padding_shape);
-	padding_param_type.data<int>()[0] = 0;
-	padding_param_type.data<int>()[1] = 0;
-	padding_param_type.data<int>()[2] = 0;
-	padding_param_type.data<int>()[3] = 0;
-	padding_param_type.data<int>()[4] = 2;
-	padding_param_type.data<int>()[5] = 2;
-	padding_param_type.data<int>()[6] = 2;
-	padding_param_type.data<int>()[7] = 2;
-	pooling_op.ref<Bubble>().set("padding", padding_param_type);
+    {
+        // test graph
+        ts::FileStreamWriter out("test.graph.txt");
+        serialize_graph(out, g);
+        out.close();
 
-	ts::Shape padding_type_shape = { 1 };
-	Tensor padding_type(INT32, padding_type_shape);
-	padding_type.data<int>()[0] = 0;
-	pooling_op.ref<Bubble>().set("padding_type", padding_type);
+        ts::Graph tg;
+        ts::FileStreamReader in("test.graph.txt");
+        externalize_graph(in, tg);
+        g = tg;
+    }
 
-	//ts::Shape padding_value_shape = { 1 };
-	//Tensor padding_value_param_type(FLOAT32, padding_value_shape);
-	//padding_value_param_type.data<int>()[0] = 1;
-	//pooling_op.ref<Bubble>().set("padding_value", padding_value_param_type);
-
-	ts::Shape ksize_shape = { 4,1 };
-	Tensor ksize_param_type(FLOAT32, ksize_shape);
-	ksize_param_type.data<int>()[0] = 0;
-	ksize_param_type.data<int>()[1] = 0;
-	ksize_param_type.data<int>()[2] = 3;
-	ksize_param_type.data<int>()[3] = 3;
-	pooling_op.ref<Bubble>().set("ksize", ksize_param_type);
-
-	ts::Shape stride_shape = { 4,1 };
-	Tensor stride_param_type(FLOAT32, stride_shape);
-	stride_param_type.data<int>()[0] = 0;
-	stride_param_type.data<int>()[1] = 0;
-	stride_param_type.data<int>()[2] = 1;
-	stride_param_type.data<int>()[3] = 1;
-	pooling_op.ref<Bubble>().set("stride", stride_param_type);
-   
     // setup module
     std::shared_ptr<Module> m = std::make_shared<Module>();
-    m->load(g, {"pooling_op"});
-    //m->sort_inputs({"a", "b"});
+    m->load(g, {"c"});
+    m->sort_inputs({"a", "b"});
 
     {
         // test graph
         Module::Save("test.module.txt", m);
 
         m = Module::Load("test.module.txt");
+    }
+
+    std::cout << "Input nodes:" << std::endl;
+    for (auto &node : m->inputs()) {
+        std::cout << node.ref<Bubble>().op() << ":" << node.ref<Bubble>().name() << std::endl;
+    }
+
+    std::cout << "Output nodes:" << std::endl;
+    for (auto &node : m->outputs()) {
+        std::cout << node.ref<Bubble>().op() << ":" << node.ref<Bubble>().name() << std::endl;
     }
 
     // run workbench
@@ -467,40 +181,21 @@ int main()
         return -1;
     }
 
-	ts::Shape shape = { 2,3, 5,5 };
-	ts::Tensor input_param(FLOAT32, shape);
-	for (int i = 0; i < input_param.count(); i++)
-	{
-		input_param.data<float>()[i] = i;
-	}
+    Tensor input_a(FLOAT32, {1});
+    Tensor input_b(FLOAT32, {1});
 
-	bench->input("input", input_param);
+    input_a.data<float>()[0] = 1;
+    input_b.data<float>()[0] = 3;
+
+    bench->input("a", input_a);
+    bench->input("b", input_b);
     {
         time_log _log(ts::LOG_INFO, "Spent ");
 
         bench->run();
     }
 
-    auto output_c = bench->output("pooling_op");
-    std::vector<int> vec = output_c.sizes();
-    std::cout << vec.size() << ",count:" << output_c.count() << std::endl;
-	for (int i = 0; i<vec.size(); i++)
-		std::cout << vec[i] << ",";
-	std::cout << std::endl;
-	float* data = output_c.data<float>();
-	for (int n = 0; n < vec[0]; n++)
-	{
-		for (int c = 0; c < vec[1]; c++)
-		{
-			for (int h = 0; h < vec[2]; h++)
-			{
-				for (int w = 0; w < vec[3]; w++)
-				{
-					std::cout << *data << " ";
-					data++;
-				}
-				std::cout << std::endl;
-			}
-		}
-	}
+    auto output_c = bench->output("c");
+
+    std::cout << "output: " << output_c.data<float>()[0] << std::endl;
 }
