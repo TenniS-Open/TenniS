@@ -7,9 +7,7 @@
 #include <utils/assert.h>
 
 #ifdef TS_USE_CBLAS
-extern "C" {
-#include <cblas.h>
-}
+#include <kernels/cblas/math_cblas.h>
 #endif
 
 
@@ -61,46 +59,13 @@ void Inner_Prod::compute_inner_prod(Tensor *input_tensor, Tensor *dot_tensor, Te
     const T* psrc = input_tensor->sync(MemoryDevice(CPU)).data<T>();
     const T* pdot = dot_tensor->sync(MemoryDevice(CPU)).data<T>();
     T* pdst = output_tensor->data<T>();
+#ifdef TS_USE_CBLAS
+    cblas::math<T>::gemm(blas::NoTrans,blas::NoTrans,shape[0],dot_shape[1],shape[1],
+                       (T)1,psrc,pdot,(T)0,pdst);
+#else
     cpu::math<T>::gemm(blas::NoTrans,blas::NoTrans,shape[0],dot_shape[1],shape[1],
                            (T)1,psrc,pdot,(T)0,pdst);
-  
-}
-
-template<>
-void Inner_Prod::compute_inner_prod<float>(Tensor *input_tensor, Tensor *dot_tensor, Tensor *output_tensor) {
-    const Shape& shape = input_tensor->sizes();
-    const Shape& dot_shape = dot_tensor->sizes();
-    const Shape& reshape = output_tensor->sizes();
-
-    const float* psrc = input_tensor->sync(MemoryDevice(CPU)).data<float>();
-    const float* pdot = dot_tensor->sync(MemoryDevice(CPU)).data<float>();
-    float* pdst = output_tensor->data<float>();
-#ifdef TS_USE_CBLAS
-    cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, shape[0], dot_shape[1],
-                shape[1], (float)1, psrc, shape[1], pdot, dot_shape[1], (float)0,  pdst, dot_shape[1]);
-#else
-    cpu::math<float>::gemm(blas::NoTrans,blas::NoTrans,shape[0],dot_shape[1],shape[1],
-                           (float)1,psrc,pdot,(float)0,pdst);
-#endif  
-  
-}
-
-template<>
-void Inner_Prod::compute_inner_prod<double>(Tensor *input_tensor, Tensor *dot_tensor, Tensor *output_tensor) {
-    const Shape& shape = input_tensor->sizes();
-    const Shape& dot_shape = dot_tensor->sizes();
-    const Shape& reshape = output_tensor->sizes();
-
-    const double* psrc = input_tensor->sync(MemoryDevice(CPU)).data<double>();
-    const double* pdot = dot_tensor->sync(MemoryDevice(CPU)).data<double>();
-    double* pdst = output_tensor->data<double>();
-#ifdef TS_USE_CBLAS
-    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, shape[0], dot_shape[1],
-                shape[1], (double)1, psrc, shape[1], pdot, dot_shape[1], (double)0,  pdst, dot_shape[1]);
-#else
-    cpu::math<double>::gemm(blas::NoTrans,blas::NoTrans,shape[0],dot_shape[1],shape[1],
-                           (double)1,psrc,pdot,(double)0,pdst);
-#endif  
+#endif
   
 }
 
