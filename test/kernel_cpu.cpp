@@ -11,14 +11,8 @@
 #include <runtime/inside/thread_pool.h>
 #include <utils/ctxmgr.h>
 
-#if TS_PLATFORM_OS_MAC || TS_PLATFORM_OS_IOS
-#include <Accelerate/Accelerate.h>
-#elif TS_PLATFORM_OS_LINUX
-#include <openblas/cblas.h>
-#elif TS_PLATFORM_OS_WINDOWS && TS_PLATFORM_CC_MINGW
-#include <OpenBLAS/cblas.h>
-#else
-#incldue <cblas.h>
+#ifdef TS_USE_CBLAS
+#include <kernels/cblas/math_cblas.h>
 #endif
 
 void test_blas(ts::Random &rand, float *ratio = nullptr)
@@ -51,10 +45,6 @@ void test_blas(ts::Random &rand, float *ratio = nullptr)
         ldc = M;
     }
 
-    CBLAS_ORDER cblas_order = order == ts::blas::RowMajor ? CblasRowMajor : CblasColMajor;
-    CBLAS_TRANSPOSE cblas_TransA = TransA == ts::blas::NoTrans ? CblasNoTrans : CblasTrans;
-    CBLAS_TRANSPOSE cblas_TransB = TransB == ts::blas::NoTrans ? CblasNoTrans : CblasTrans;
-
     for (int i = 0; i < M * K; ++i) A[i] = rand.next(-100, 100) / 10.0;
     for (int i = 0; i < K * N; ++i) B[i] = rand.next(-100, 100) / 10.0;
     for (int i = 0; i < M * N; ++i) C[i] = rand.next(-100, 100) / 10.0;
@@ -75,7 +65,11 @@ void test_blas(ts::Random &rand, float *ratio = nullptr)
 
     duration = microseconds(0);
     start = system_clock::now();
-    cblas_sgemm(cblas_order, cblas_TransA, cblas_TransB, M, N, K, alpha, A.get(), lda, B.get(), ldb, beta, cblas_C.get(), ldc);
+#ifdef TS_USE_CBLAS
+    ts::cblas::math<T>::gemm(order, TransA, TransB, M, N, K, alpha, A.get(), lda, B.get(), ldb, beta, cblas_C.get(), ldc);
+#else
+    ts::cpu::math<T>::gemm(order, TransA, TransB, M, N, K, alpha, A.get(), lda, B.get(), ldb, beta, C.get(), ldc);
+#endif
     end = system_clock::now();
     duration += duration_cast<microseconds>(end - start);
     double spent2 = 1.0 * duration.count() / 1000;
