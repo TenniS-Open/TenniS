@@ -35,8 +35,8 @@ int main() {
     auto input_b = ts_new_Tensor(input_shape, 1, TS_FLOAT32, nullptr);
     auto output = ts_new_Tensor(nullptr, 0, TS_VOID, nullptr);  // build empty tensor for output
 
-    reinterpret_cast<float*>(ts_Tensor_data(input_a))[0] = 3;
-    reinterpret_cast<float*>(ts_Tensor_data(input_b))[0] = 4;
+    reinterpret_cast<float*>(ts_Tensor_data(input_a))[0] = 1;
+    reinterpret_cast<float*>(ts_Tensor_data(input_b))[0] = 3;
 
     ts_Workbench_input(workbench, 0, input_a);
     ts_Workbench_input(workbench, 1, input_b);
@@ -47,7 +47,16 @@ int main() {
 
     ts_Tensor_sync_cpu(output); // sync to cpu, ready to write
 
-    std::cout << "output: " << reinterpret_cast<float*>(ts_Tensor_data(input_a))[0] << std::endl;
+    auto output_shape = ts_Tensor_shape(output);
+    auto output_shape_size = ts_Tensor_shape_size(output);
+
+    std::cout << "output shape: [";
+    for (int i = 0; i < output_shape_size; ++i) {
+        std::cout << output_shape[i] << ", ";
+    }
+    std::cout << "]" << std::endl;
+
+    std::cout << "output: " << reinterpret_cast<float*>(ts_Tensor_data(output))[0] << std::endl;
 
     ts_free_Tensor(input_a);
     ts_free_Tensor(input_b);
