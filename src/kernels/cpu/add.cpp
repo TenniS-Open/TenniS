@@ -168,7 +168,7 @@ int Add::run(ts::Stack &stack) {
             compute_run<double>(input_tensor, right_tensor, left_tensor);
             break;
         }
-        defalut: {
+        default: {
             throw Exception("add not support this data type");
             break;
         }

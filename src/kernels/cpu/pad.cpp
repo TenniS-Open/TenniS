@@ -168,7 +168,7 @@ int Pad::run(ts::Stack &stack) {
             padding_run<double>(psrc, ncount, pdst, padding, shape, reshape);
             break;
         }
-        defalut: {
+        default: {
             throw Exception("pad not support this data type");
             break;
         }
