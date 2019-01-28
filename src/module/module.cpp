@@ -283,6 +283,7 @@ namespace ts {
     Module::shared Module::Load(const std::string &filename, Module::SerializationFormat format) {
         TS_AUTO_CHECK(format == BINARY);
         FileStreamReader stream(filename);
+        TS_CHECK(stream.is_open()) << "Can not access: " << filename << eject;
         size_t read_size = 0;
 
         // 0. read header
