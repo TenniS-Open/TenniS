@@ -7,10 +7,6 @@
 
 #if TS_PLATFORM_OS_MAC || TS_PLATFORM_OS_IOS
 #include <Accelerate/Accelerate.h>
-#include <kernels/cpu/math_cpu.h>
-#include <kernels/cblas/math_cblas.h>
-
-
 #elif TS_PLATFORM_OS_LINUX
 #include <openblas/cblas.h>
 #elif TS_PLATFORM_OS_WINDOWS && TS_PLATFORM_CC_MINGW
@@ -18,6 +14,8 @@
 #else
 #incldue <cblas.h>
 #endif
+
+#include <kernels/cpu/math_cpu.h>
 
 namespace ts {
     namespace cblas {
