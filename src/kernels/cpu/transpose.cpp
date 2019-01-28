@@ -195,7 +195,7 @@ int Transpose::run(ts::Stack &stack) {
             transpose_run<double>(psrc, ncount, pdst, shape, reshape);
             break;
         }
-        defalut: {
+        default: {
             throw Exception("transpose not support this data type");
             break;
         }
