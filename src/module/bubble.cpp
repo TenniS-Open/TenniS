@@ -6,6 +6,8 @@
 
 #include <unordered_map>
 #include <unordered_set>
+#include <cstdint>
+#include <climits>
 
 #include "utils/assert.h"
 #include "core/tensor_builder.h"

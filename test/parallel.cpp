@@ -10,18 +10,16 @@ void test_parallel_for() {
     for (int i = 0; i < 10; ++i) {
         TS_PARALLEL_FOR_BEGIN(j, 0, 10, i)
                     TS_LOG_INFO << i * 10 + j;
-        TS_PARALLEL_FOR_END(false)
+        TS_PARALLEL_FOR_END()
     }
-    TS_PARALLEL_SYNC
 }
 
 void test_parallel_range() {
     for (int i = 0; i < 10; ++i) {
         TS_PARALLEL_RANGE_BEGIN(j, i * 10, i * 10 + 10)
                     TS_LOG_INFO << "Range: [" << j.first << ", " << j.second << ")";
-        TS_PARALLEL_RANGE_END(false)
+        TS_PARALLEL_RANGE_END()
     }
-    TS_PARALLEL_SYNC
 }
 
 int main() {

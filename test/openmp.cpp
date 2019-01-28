@@ -114,7 +114,7 @@ float dot6(const float *x, const float *y, int N) {
 float dot7(const float *x, const float *y, int N) {
     float sum = 0;
     ts::float32x4 sumx4 = 0;
-#pragma omp parallel for reduction(+:sumx4) num_threads(ts::openmp_threads(N / 4))
+//#pragma omp parallel for reduction(+:sumx4) num_threads(ts::openmp_threads(N / 4))
     for (int i = 0; i < N - 3; i += 4) {
         sumx4 += ts::float32x4(&x[i]) * ts::float32x4(&y[i]);
     }
