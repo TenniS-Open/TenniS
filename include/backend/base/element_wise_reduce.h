@@ -14,7 +14,7 @@ namespace ts {
         using self = ElementWiseReduce;
         using supper = Operator;
 
-        ElementWiseReduce(const MemoryDevice &device);  // tell me the operator memory
+        explicit ElementWiseReduce(const MemoryDevice &device);  // tell me the operator memory
 
         void init() override;
 
@@ -22,8 +22,22 @@ namespace ts {
 
         int infer(Stack &stack, std::vector<Tensor::Prototype> &output) override;
 
+        /**
+         *
+         * @param lhs
+         * @param rhs
+         * @param out
+         * @note all tensor's dtype is same, and all tensors' memory device are give in constructor
+         */
         virtual void reduce_with_broadcast(const Tensor &lhs, const Tensor &rhs, Tensor &out) = 0;
 
+        /**
+         *
+         * @param lhs
+         * @param rhs
+         * @param out
+         * @note all tensor's dtype is same, and all tensors' memory device are give in constructor
+         */
         virtual void reduce_with_same_shape(const Tensor &lhs, const Tensor &rhs, Tensor &out);
 
         /**
@@ -31,6 +45,7 @@ namespace ts {
          * @param lhs not specific
          * @param rhs is bias on dim
          * @param out
+         * @note all tensor's dtype is same, and all tensors' memory device are give in constructor
          */
         virtual void reduce_with_bias(const Tensor &lhs, const Tensor &rhs, Tensor &out, int dim);
 
@@ -39,6 +54,7 @@ namespace ts {
          * @param lhs not specific
          * @param rhs is scalar
          * @param out
+         * @note all tensor's dtype is same, and all tensors' memory device are give in constructor
          */
         virtual void reduce_with_scalar(const Tensor &lhs, const Tensor &rhs, Tensor &out);
 
@@ -51,8 +67,20 @@ namespace ts {
          */
         static bool reduce(Shape &lhs_shape, Shape &rhs_shape, Shape &out_shape, bool broadcast = true);
 
+        /**
+         * return if is an scalar, also seen as count == 1
+         * @param shape
+         * @return
+         */
         static bool is_scalar(const Shape &shape);
 
+        /**
+         * return if is bias on RHS
+         * @param lhs_shape
+         * @param rhs_shape
+         * @param dim
+         * @return
+         */
         static bool is_bias(Shape &lhs_shape, Shape &rhs_shape, int &dim);
 
         const MemoryDevice &running_memory_device() const { return m_memory_device; }
