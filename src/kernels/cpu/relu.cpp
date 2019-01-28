@@ -71,7 +71,8 @@ namespace ts {
 		int count = output_tensor.count();
 		memcpy(output_data, device_type, count * sizeof(T), input_data, device_type, count * sizeof(T));
 
-		for (int i = 0; i < output_tensor.count(); i++)
+		int counts = output_tensor.count();
+		for (int i = 0; i < counts; i++)
 		{
 			T val = *output_data;
 			*output_data = std::max(val,T(0.0));
