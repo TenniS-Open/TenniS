@@ -33,7 +33,7 @@ public:
         TS_AUTO_CHECK(output[0].dtype() == ts::FLOAT32);
         stack.push(output[0], memory_device()); // Notice push tensor device, default is DeviceContext.memory_device
         auto sum = stack.index(-1);
-        auto sum_ptr = sum->sync(memory_device()).data<float>();    // Get CPU data ptr
+        auto sum_ptr = sum->sync(ts::MemoryDevice(ts::CPU)).data<float>();    // Get CPU data ptr
         std::memset(sum_ptr, 0, sum->count() * sizeof(float));
         for (int i = 0; i < input_num; ++i) {
             auto input_ptr = stack.index(i)->sync(memory_device()).data<float>();   // Get CPU data ptr
@@ -115,23 +115,24 @@ int main()
     using namespace ts;
     setup();
 
+    GlobalLogLevel(LOG_DEBUG);
+
 
 
     // build graph
     Graph g;
     ctx::bind<Graph> _graph(g);
 
-//    auto a = bubble::param("a");
-//    auto b = bubble::param("b");
-//    auto b1 = block_n_times("block1", a, 1000);
-//    auto b2 = block_n_times("block1", b, 1000);
-//    auto c = bubble::op("c", "sum", {b1, b2});
-
     auto a = bubble::param("a");
     auto b = bubble::param("b");
-    auto data = bubble::data("data", tensor::from<float>(3), CPU);
+    auto b1 = block_n_times("block1", a, 1000);
+    auto b2 = block_n_times("block1", b, 1000);
+    auto c = bubble::op("c", "sum", {b1, b2});
 
-    auto c = bubble::op("c", "sum", {a, b, data});
+//    auto a = bubble::param("a");
+//    auto b = bubble::param("b");
+//    auto data = bubble::data("data", tensor::from<float>(3), CPU);
+//    auto c = bubble::op("c", "sum", {a, b, data});
 
     {
         // test graph
@@ -181,18 +182,23 @@ int main()
         return -1;
     }
 
-    Tensor input_a(FLOAT32, {1});
-    Tensor input_b(FLOAT32, {1});
+    Tensor input_a(FLOAT32, {100, 1024});
+    Tensor input_b(FLOAT32, {100, 1024});
 
     input_a.data<float>()[0] = 1;
     input_b.data<float>()[0] = 3;
 
     bench->input("a", input_a);
     bench->input("b", input_b);
+    bench->run();
+
     {
         time_log _log(ts::LOG_INFO, "Spent ");
 
-        bench->run();
+        for (int i = 0; i < 10; ++i) {
+            bench->run();
+        }
+
     }
 
     auto output_c = bench->output("c");

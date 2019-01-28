@@ -11,6 +11,9 @@
 #include <vector>
 #include <map>
 
+#include <bitset>
+#include <chrono>
+
 #include <immintrin.h>
 
 int find_first_i(int i) {
