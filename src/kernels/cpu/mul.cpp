@@ -170,7 +170,7 @@ int Mul::run(ts::Stack &stack) {
             compute_run<double>(input_tensor, right_tensor, left_tensor);
             break;
         }
-        defalut: {
+        default: {
             throw Exception("mul not support this data type");
             break;
         }
