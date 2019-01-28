@@ -14,13 +14,15 @@ namespace ts {
         using self = ElementWiseReduce;
         using supper = Operator;
 
-        explicit ElementWiseReduce(const MemoryDevice &device);  // tell me the operator memory
+        ElementWiseReduce() = default;  // tell me the operator memory
 
         void init() override;
 
         int run(Stack &stack) override;
 
         int infer(Stack &stack, std::vector<Tensor::Prototype> &output) override;
+
+        virtual MemoryDevice running_memory_device() = 0;
 
         /**
          *
@@ -82,11 +84,6 @@ namespace ts {
          * @return
          */
         static bool is_bias(Shape &lhs_shape, Shape &rhs_shape, int &dim);
-
-        const MemoryDevice &running_memory_device() const { return m_memory_device; }
-
-    private:
-        MemoryDevice m_memory_device;
     };
 }
 
