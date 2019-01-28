@@ -3,37 +3,32 @@
 
 #include <core/tensor.h>
 #include <runtime/stack.h>
-#include <runtime/operator.h>
+#include <backend/base/element_wise_reduce.h>
 
 
 namespace ts {
+namespace cpu {
 
-
-class Add : public ts::Operator {
+class Add : public ElementWiseReduce {
 public:
+    using self = Add;
+    using supper = ElementWiseReduce;
 
-    using supper = ts::Operator;
     Add();
 
-    virtual void init(); 
+    MemoryDevice running_memory_device() override;
 
-    virtual int run(ts::Stack &stack);
-    virtual int infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output); 
+    void reduce_with_broadcast(const Tensor &lhs, const Tensor &rhs, Tensor &out) override;
 
+    void reduce_with_same_shape(const Tensor &lhs, const Tensor &rhs, Tensor &out) override;
 
-private:
+    void reduce_with_bias(const Tensor &lhs, const Tensor &rhs, Tensor &out, int dim) override;
 
-    int to_index(const HypeShape &hype, const Shape & shape, const Shape &curshape);
-    template<typename T>
-    void compute_run(Tensor *input_tensor, Tensor *right_tensor,Tensor *left_tensor);
-    void infer_private(ts::Stack &stack, ts::Tensor::Prototype &output);
-
+    void reduce_with_scalar(const Tensor &lhs, const Tensor &rhs, Tensor &out) override;
 
 };
 
-
-
-
+}
 }
 
 #endif
