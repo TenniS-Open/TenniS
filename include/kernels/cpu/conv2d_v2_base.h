@@ -1,5 +1,5 @@
 #ifndef TS_KERNELS_CONV2D_V2_BASE_H
-#define TS_KERNELS_CONV2D_v2_BASE_H
+#define TS_KERNELS_CONV2D_V2_BASE_H
 
 
 #include <core/tensor.h>
@@ -48,4 +48,4 @@ protected:
 
 }
 
-#endif
+#endif  // TS_KERNELS_CONV2D_V2_BASE_H

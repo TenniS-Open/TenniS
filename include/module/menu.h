@@ -19,6 +19,14 @@ namespace ts {
         Node param(const std::string &name);
 
         /**
+         * get Parameter node
+         * @param name Node name
+         * @return new Node belonging to context-Graph
+         * @note Must call `ts::ctx::bind<Graph>` to bind context firstly
+         */
+        Node param(const std::string &name, const Shape &shape);
+
+        /**
          * get Operator node
          * @param name Node name
          * @param op_name Operator name

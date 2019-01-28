@@ -13,6 +13,7 @@
 #include "utils/box.h"
 
 #include "memory/flow.h"
+#include "global/hard_converter.h"
 
 #include <climits>
 
@@ -40,8 +41,26 @@ namespace ts {
         this->m_map_input_slots.clear();
         this->m_map_output_slots.clear();
         this->m_inputs.clear();
+        this->m_input_filters.clear();
         this->m_outputs.clear();
         this->m_device_context.finalize();
+    }
+
+    static Tensor filter_images(ImageFilter::shared filter, Tensor input) {
+        if (input.dims() < 2 || input.dims() > 4) {
+            TS_LOG_ERROR << "Can not filter input with shape: " << to_string(input.sizes()) << eject;
+        }
+        if (input.dims() == 2) {
+            input = input.reshape({1, input.size(0), input.size(1), 1});
+            auto output = filter->run(input);
+            return output;
+        }
+        if (input.dims() == 3) {
+            input = input.reshape({1, input.size(0), input.size(1), input.size(2)});
+            auto output = filter->run(input);
+            return output;
+        }
+        return filter->run(input);
     }
 
     void Workbench::run() {
@@ -54,7 +73,13 @@ namespace ts {
         // set input
         for (int i = 0; static_cast<size_t >(i) < this->m_inputs.size(); ++i) {
             auto &arg = this->m_inputs[i];
-            this->m_stack->clone_push(arg, arg.device());
+            auto &filter = this->m_input_filters[i];
+            if (filter == nullptr) {
+                this->m_stack->push(arg);
+            } else {
+                // TODO: do filter
+                this->m_stack->push(filter_images(filter, arg));
+            }
         }
 
         // bind thread pool to any operator can using thread speed up
@@ -97,6 +122,13 @@ namespace ts {
         dolly->m_map_output_slots = this->m_map_output_slots;
         dolly->m_data_sagment = this->m_data_sagment;
         dolly->m_runtime_context = this->m_runtime_context.clone();
+        dolly->m_input_filters.resize(this->m_input_filters.size(), nullptr);
+
+        for (size_t i = 0; i < this->m_input_filters.size(); ++i) {
+            if (this->m_input_filters[i] == nullptr) continue;
+            dolly->m_input_filters[i] = this->m_input_filters[i]->clone();
+        }
+
         return dolly;
     }
 
@@ -133,6 +165,7 @@ namespace ts {
         bench->m_program = block.instructions;
         // binding input and output shots
         bench->m_inputs.resize(module_inputs.size());
+        bench->m_input_filters.resize(module_inputs.size());
         bench->m_outputs.resize(module_outputs.size());
         int slot_i = 0;
         for (auto &input : module_inputs) {
@@ -184,6 +217,23 @@ namespace ts {
             }
         }
         return closest_name;
+    }
+
+    void Workbench::bind_filter(const std::string &name, ImageFilter::shared filter) {
+        auto slot_it = m_map_input_slots.find(name);
+        if (slot_it == m_map_input_slots.end()) {
+            TS_LOG_ERROR << "Can not identify the name \"" << name << "\", did you mean: "
+                         << fuzzy_name(m_map_input_slots, name) << eject;
+        }
+        this->bind_filter(slot_it->second, std::move(filter));
+    }
+
+    void Workbench::bind_filter(int slot, ImageFilter::shared filter) {
+        if (slot < 0 || size_t(slot) >= m_input_filters.size()) {
+            TS_LOG_ERROR << "Input index out of range. with index=" << slot << eject;
+        }
+        filter->compile();
+        m_input_filters[slot] = std::move(filter);
     }
 
     void Workbench::input(const std::string &name, const Tensor &tensor) {

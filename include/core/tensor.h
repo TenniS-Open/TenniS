@@ -18,6 +18,17 @@
 namespace ts {
     using Shape = std::vector<int>;
 
+    inline std::string to_string(const Shape &shape) {
+        std::ostringstream oss;
+        oss << "[";
+        for (size_t i = 0; i < shape.size(); ++i) {
+            if (i) oss << ", ";
+            oss << shape[i];
+        }
+        oss << "]";
+        return oss.str();
+    }
+
     class HypeShape {
     public:
         using self = HypeShape;
@@ -215,11 +226,15 @@ namespace ts {
         template<typename T>
         const T &data(size_t i) const { return m_memory.data<T>()[i]; }
 
+        Tensor clone() const;
+
         Tensor clone(MemoryController::shared controller) const;
 
         Tensor clone(SyncMemoryController::shared controller) const;
 
         Tensor clone(SyncMemoryController::shared controller, const MemoryDevice &device) const;
+
+        Tensor::shared clone_shared() const;
 
         Tensor::shared clone_shared(MemoryController::shared controller) const;
 
