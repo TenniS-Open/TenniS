@@ -12,11 +12,6 @@
 #include <numeric>
 
 namespace ts {
-
-    ElementWiseReduce::ElementWiseReduce(const MemoryDevice &device)
-        : m_memory_device(device) {
-    }
-
     static inline void front_append_ones(Shape &shape, int count) {
         Shape ones(count, 1);
         shape.insert(shape.begin(), ones.begin(), ones.end());
@@ -127,9 +122,11 @@ namespace ts {
 
         auto out_proto = Tensor::Prototype(lhs.dtype(), out_shape);
 
-        lhs = lhs.view(running_memory_device());    // do sync, and set default data to given device
-        rhs = rhs.view(running_memory_device());
-        auto out = *stack.push(out_proto, running_memory_device());
+        auto memory_device = running_memory_device();
+
+        lhs = lhs.view(memory_device);    // do sync, and set default data to given device
+        rhs = rhs.view(memory_device);
+        auto out = *stack.push(out_proto, memory_device);
 
         int dim;
         if (!do_broadcast) {
