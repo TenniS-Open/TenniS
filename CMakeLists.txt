@@ -20,7 +20,7 @@ set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Debug or Release")
 set(CONFIGURATION ${CMAKE_BUILD_TYPE})
 
 option(TS_USE_OPENMP "[Optional] Use OpenMP" ON)
-option(TS_USE_OPENCV "[Optional] Use OpenCV" ON)
+option(TS_USE_OPENCV "[Optional] Use OpenCV" OFF)
 
 option(TS_USE_CUDA "[Optional] Use CUDA" OFF)
 option(TS_USE_CBLAS "[Optional] Use CBLAS" OFF)
