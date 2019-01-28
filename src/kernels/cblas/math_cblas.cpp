@@ -12,7 +12,7 @@
 #elif TS_PLATFORM_OS_WINDOWS && TS_PLATFORM_CC_MINGW
 #include <OpenBLAS/cblas.h>
 #else
-#incldue <cblas.h>
+#include <cblas.h>
 #endif
 
 #include <kernels/cpu/math_cpu.h>
