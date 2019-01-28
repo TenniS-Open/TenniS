@@ -10,6 +10,7 @@
 #include <list>
 #include <unordered_map>
 #include <numeric>
+#include <string>
 
 namespace ts {
     template <typename T>
@@ -18,6 +19,10 @@ namespace ts {
         using self = Statistics;
         using Datum = T;
 
+    private:
+        std::vector<Datum> m_data;
+
+    public:
         void append(const Datum datum) {
             this->m_data.push_back(datum);
         }
@@ -48,8 +53,21 @@ namespace ts {
             return this->m_data.size();
         }
 
-    private:
-        std::list<Datum> m_data;
+        auto begin() -> decltype(this->m_data.begin()) {
+            return this->m_data.begin();
+        }
+
+        auto end() -> decltype(this->m_data.end()) {
+            return this->m_data.end();
+        }
+
+        auto begin() const -> decltype(this->m_data.begin()) {
+            return this->m_data.begin();
+        }
+
+        auto end() const -> decltype(this->m_data.end()) {
+            return this->m_data.end();
+        }
     };
 
     template <typename T>
@@ -61,6 +79,10 @@ namespace ts {
         using value_type = Statistics<T>;
         using pair = std::pair<name_type, value_type>;
 
+    private:
+        std::unordered_map<name_type, value_type> m_board;
+
+    public:
         void append(const name_type &name, const Datum datum) {
             this->m_board[name].append(datum);
         }
@@ -106,7 +128,7 @@ namespace ts {
         }
 
         auto end() const -> decltype(this->m_board.end()) {
-            return m_board.end();
+            return this->m_board.end();
         }
 
         value_type query(const name_type &name) const {
@@ -114,9 +136,6 @@ namespace ts {
             if (it == this->m_board.end()) return Statistics<Datum>();
             return it->second;
         }
-
-    private:
-        std::unordered_map<name_type, value_type> m_board;
     };
 }
 
