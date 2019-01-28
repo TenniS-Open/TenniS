@@ -116,7 +116,7 @@ int Inner_Prod::run(ts::Stack &stack) {
             compute_inner_prod<double>(input_tensor, dot_tensor, tensor);
             break;
         }
-        defalut: {
+        default: {
             throw Exception("inner_prod do not support this data type");
             break;
         }
