@@ -13,6 +13,7 @@
 #include <utils/box.h>
 #include <module/io/fstream.h>
 #include <core/tensor_builder.h>
+#include "runtime/image_filter.h"
 
 #include <cstring>
 
@@ -52,6 +53,8 @@
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include "backend/name.h"
+
+#include <memory>
 
 std::ofstream f("test.txt");
 
@@ -155,12 +158,11 @@ inline int offset(const std::vector<int>& indices, const std::vector<int>& shape
 
 int main()
 {
-	using namespace ts;
 	setup();
 
 	std::shared_ptr<Module> m = std::make_shared<Module>();
-	//m = Module::Load("../model/test.tsm");
-	m = Module::Load("../model/SeetaFaceRecognizer5.0.RN30.light.1out.tsm");
+	std::string model_path = "D:/yang/workPro/tensorStack/TensorStack/model/SeetaFaceRecognizer5.0.RN30.light.1out.tsm";
+	m = Module::Load(model_path);
 	std::cout << "Input nodes:" << std::endl;
 	for (auto &node : m->inputs()) {
 		std::cout << node.bubble().op() << ":" << node.bubble().name() << std::endl;
@@ -185,7 +187,7 @@ int main()
 		std::cout << e.what() << std::endl;
 		return -1;
 	}
-	m.reset();
+	//m.reset();
 
 	//cv::Mat image = cv::imread("../photo/1.jpg");
 	//float scale = 0.3125;
@@ -221,6 +223,9 @@ int main()
 	//std::memcpy(input_param.data<uchar>(), buffer, num * sizeof(uchar));
 	//delete[] buffer;
 
+	//ImageFilter::shared filter = std::make_shared<ImageFilter>(ComputingDevice(ts::CPU));
+	//filter->to_chw();
+
 	ts::Shape shape = { 1,3, 248,248 };
 	Tensor input_param(FLOAT32, shape);
 
@@ -229,11 +234,13 @@ int main()
 		input_param.data<float>()[i] = 100;
 	}
 
+	bench->input("_input", input_param);
+	//bench->bind_filter("_input", filter);
+	//time count
 	float count_time = 0;
 	int num_count = 1000;
 	for (size_t i = 0; i < num_count; i++)
 	{
-		bench->input("_input", input_param);
 		{
 			//time_log _log(ts::LOG_INFO, "Spent ");
 			time_point start;
@@ -247,25 +254,27 @@ int main()
 			count_time += duration.count() / 1000.0;
 		}
 	}
-	std::cout << "spent time: " << count_time / num_count << "ms" << std::endl;
+	ts::LogStream(LOG_INFO) << "spent time: " << count_time / num_count << "ms";
 
 
-	//for (auto &node : m->outputs()) {
-	//	std::cout << node.bubble().op() << ":" << node.bubble().name() << std::endl;
-	//	f << node.bubble().name() << std::endl;
-	//	auto data = bench->output(node.bubble().name());
-	//	std::vector<int> vec = data.sizes();
-	//	std::cout << vec.size() << ",count:" << data.count() << std::endl;
-	//	for (int i = 0; i<vec.size(); i++)
-	//		std::cout << vec[i] << ",";
-	//	std::cout << std::endl;
-	//	float* data_t = data.data<float>();
-	//	for (int n = 0; n < data.count(); n++)
-	//	{
-	//		f << *data_t << " ";
-	//		data_t++;
-	//	}
-	//	f << std::endl;
-	//}
+	//output data
+	for (auto &node : m->outputs()) {
+		std::cout << node.bubble().op() << ":" << node.bubble().name() << std::endl;
+		f << node.bubble().name() << std::endl;
+		auto data = bench->output(node.bubble().name());
+		std::vector<int> vec = data.sizes();
+		std::cout << vec.size() << ",count:" << data.count() << std::endl;
+		for (int i = 0; i<vec.size(); i++)
+			std::cout << vec[i] << ",";
+		std::cout << std::endl;
+		float* data_t = data.data<float>();
+		for (int n = 0; n < data.count(); n++)
+		{
+			f << *data_t << " ";
+			data_t++;
+		}
+		f << std::endl;
+	}
+
 	return 1;
 }
