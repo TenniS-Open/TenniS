@@ -123,16 +123,16 @@ int main()
     Graph g;
     ctx::bind<Graph> _graph(g);
 
-    auto a = bubble::param("a");
-    auto b = bubble::param("b");
-    auto b1 = block_n_times("block1", a, 1000);
-    auto b2 = block_n_times("block1", b, 1000);
-    auto c = bubble::op("c", "sum", {b1, b2});
-
 //    auto a = bubble::param("a");
 //    auto b = bubble::param("b");
-//    auto data = bubble::data("data", tensor::from<float>(3), CPU);
-//    auto c = bubble::op("c", "sum", {a, b, data});
+//    auto b1 = block_n_times("block1", a, 1000);
+//    auto b2 = block_n_times("block1", b, 1000);
+//    auto c = bubble::op("c", "sum", {b1, b2});
+
+    auto a = bubble::param("a");
+    auto b = bubble::param("b");
+    auto data = bubble::data("data", tensor::from<float>(3), CPU);
+    auto c = bubble::op("c", "sum", {a, b, data});
 
     {
         // test graph
@@ -160,12 +160,12 @@ int main()
 
     std::cout << "Input nodes:" << std::endl;
     for (auto &node : m->inputs()) {
-        std::cout << node.ref<Bubble>().op() << ":" << node.ref<Bubble>().name() << std::endl;
+        std::cout << node->op() << ":" << node->name() << std::endl;
     }
 
     std::cout << "Output nodes:" << std::endl;
     for (auto &node : m->outputs()) {
-        std::cout << node.ref<Bubble>().op() << ":" << node.ref<Bubble>().name() << std::endl;
+        std::cout << node->op() << ":" << node->name() << std::endl;
     }
 
     // run workbench

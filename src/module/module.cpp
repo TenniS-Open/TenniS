@@ -146,7 +146,7 @@ namespace ts {
         std::unordered_map<std::string, Node> map_name_input_node;
         // map nodes
         for (auto &input : m_inputs) {
-            auto &bubble = input.ref<Bubble>();
+            auto &bubble = input.bubble();
             if (map_name_input_node.find(bubble.name()) != map_name_input_node.end()) {
                 auto it = map_name_input_node.find(bubble.name());
                 TS_LOG_ERROR << "Can not sort inputs with duplicate names: " << input.str() << " and "
