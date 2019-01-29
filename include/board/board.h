@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <list>
+#include <map>
 #include <unordered_map>
 #include <numeric>
 #include <string>
@@ -42,11 +43,11 @@ namespace ts {
         }
 
         Datum avg() const {
-            return this->sum() / this->count();
+            return this->m_data.empty() ? Datum(0) : (this->sum() / this->count());
         }
 
         Datum sum() const {
-            return std::accumulate(this->m_data.begin(), this->m_data.end(), 0);
+            return std::accumulate(this->m_data.begin(), this->m_data.end(), Datum(0));
         }
 
         size_t count() const {
@@ -75,39 +76,39 @@ namespace ts {
     public:
         using self = Board;
         using Datum = typename Statistics<T>::Datum;
-        using name_type = std::string;
+        using key_type = std::string;
         using value_type = Statistics<T>;
-        using pair = std::pair<name_type, value_type>;
+        using pair = std::pair<key_type, value_type>;
 
     private:
-        std::unordered_map<name_type, value_type> m_board;
+        std::unordered_map<key_type, value_type> m_board;
 
     public:
-        void append(const name_type &name, const Datum datum) {
+        void append(const key_type &name, const Datum datum) {
             this->m_board[name].append(datum);
         }
 
-        void clear(const name_type &name) {
+        void clear(const key_type &name) {
             this->query(name).clear();
         }
 
-        Datum max(const name_type &name) const {
+        Datum max(const key_type &name) const {
             return this->query(name).max();
         }
 
-        Datum min(const name_type &name) const {
+        Datum min(const key_type &name) const {
             return this->query(name).min();
         }
 
-        Datum avg(const name_type &name) const {
+        Datum avg(const key_type &name) const {
             return this->query(name).avg();
         }
 
-        Datum sum(const name_type &name) const {
+        Datum sum(const key_type &name) const {
             return this->query(name).sum();
         }
 
-        size_t count(const name_type &name) const {
+        size_t count(const key_type &name) const {
             return this->query(name).count();
         }
 
@@ -131,7 +132,15 @@ namespace ts {
             return this->m_board.end();
         }
 
-        value_type query(const name_type &name) const {
+        auto find(const key_type &name) -> decltype(this->m_board.find(name)) {
+            return this->m_board.find(name);
+        }
+
+        auto find(const key_type &name) const -> decltype(this->m_board.find(name)) {
+            return this->m_board.find(name);
+        }
+
+        value_type query(const key_type &name) const {
             auto it = this->m_board.find(name);
             if (it == this->m_board.end()) return Statistics<Datum>();
             return it->second;
