@@ -161,7 +161,7 @@ int main()
 	setup();
 
 	std::shared_ptr<Module> m = std::make_shared<Module>();
-	std::string model_path = "D:/yang/workPro/tensorStack/TensorStack/model/SeetaFaceRecognizer5.0.RN30.light.1out.tsm";
+	std::string model_path = "./model/SeetaFaceRecognizer5.0.RN30.light.1out.tsm";
 	m = Module::Load(model_path);
 	std::cout << "Input nodes:" << std::endl;
 	for (auto &node : m->inputs()) {
@@ -235,7 +235,7 @@ int main()
 	}
 
 	bench->input("_input", input_param);
-	//bench->bind_filter("_input", filter);
+	bench->do_profile(true);
 	//time count
 	float count_time = 0;
 	int num_count = 1000;
@@ -255,6 +255,7 @@ int main()
 		}
 	}
 	ts::LogStream(LOG_INFO) << "spent time: " << count_time / num_count << "ms";
+	bench->profiler().log(std::cout);
 
 
 	//output data
