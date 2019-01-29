@@ -132,21 +132,21 @@ namespace ts {
 
         void *ptr() const { return m_ptr.lock().get(); }
 
-        template<typename T>
-        T *ptr();
+//        template<typename T>
+//        T *ptr();
+//
+//        template<typename T>
+//        const T *ptr() const { return const_cast<self *>(this)->ptr<T>(); }
 
-        template<typename T>
-        const T *ptr() const { return const_cast<self *>(this)->ptr<T>(); }
-
-        template<typename T>
-        T &ref() {
-            auto value_ptr = this->ptr<T>();
-            if (value_ptr == nullptr) throw NullPointerException("Getting reference from null pointer");
-            return *value_ptr;
-        }
-
-        template<typename T>
-        const T &ref() const { return const_cast<self *>(this)->ref<T>(); }
+//        template<typename T>
+//        T &ref() {
+//            auto value_ptr = this->ptr<T>();
+//            if (value_ptr == nullptr) throw NullPointerException("Getting reference from null pointer");
+//            return *value_ptr;
+//        }
+//
+//        template<typename T>
+//        const T &ref() const { return const_cast<self *>(this)->ref<T>(); }
 
         /**
          * Link node perform as (inputs[0], ..., inputs[n - 1]) -> node
@@ -217,13 +217,13 @@ namespace ts {
         LinkedBubble::weak m_ptr;
     };
 
-    template<typename T>
-    T *Node::ptr() {
-        TS_LOG_ERROR << "Using not recommended API, please use \"Node::bubble\" instead.";
-        auto raw_ptr = m_ptr.lock();
-        if (!raw_ptr) return nullptr;
-        return raw_ptr->ptr();
-    }
+//    template<typename T>
+//    T *Node::ptr() {
+//        TS_LOG_ERROR << "Using not recommended API, please use \"Node::bubble\" instead.";
+//        auto raw_ptr = m_ptr.lock();
+//        if (!raw_ptr) return nullptr;
+//        return raw_ptr->ptr();
+//    }
 
     inline std::ostream &operator<<(std::ostream &out, const Node &node) {
         return out << node.str();
@@ -238,13 +238,13 @@ namespace ts {
         using self = Graph;    ///< self class
         using shared = std::shared_ptr<self>;  ///< smart pointer
 
-        template<typename T, typename... Args>
-        Node make(Args &&...args) {
-            TS_LOG_ERROR << "Using not recommended API, please use \"Graph::make\" instead.";
-            auto node = std::make_shared<LinkedBubble>(std::forward<Args>(args)...);
-            m_nodes.push_back(node);
-            return Node(node);
-        }
+//        template<typename T, typename... Args>
+//        Node make(Args &&...args) {
+//            TS_LOG_ERROR << "Using not recommended API, please use \"Graph::make\" instead.";
+//            auto node = std::make_shared<LinkedBubble>(std::forward<Args>(args)...);
+//            m_nodes.push_back(node);
+//            return Node(node);
+//        }
 
         template<typename... Args>
         Node make(Args &&...args) {

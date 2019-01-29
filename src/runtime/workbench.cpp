@@ -63,6 +63,11 @@ namespace ts {
         return filter->run(input);
     }
 
+    static inline std::unique_ptr<ctx::bind<Profiler>> bind_profiler(bool _do, Profiler &profiler) {
+        if (!_do) return nullptr;
+        return std::unique_ptr<ctx::bind<Profiler>>(new ctx::bind<Profiler>(profiler));
+    }
+
     void Workbench::run() {
         // clear pre output
         this->m_pointer = 0;
@@ -90,6 +95,8 @@ namespace ts {
 
         // bind runtime context
         ctx::bind<RuntimeContext> bind_runtime_context(m_runtime_context);
+
+        auto _bind_profiler = bind_profiler(m_do_profile, m_profiler);
 
         // run
         while (m_pointer < m_program.size()) {

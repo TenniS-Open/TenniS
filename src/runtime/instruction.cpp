@@ -9,11 +9,24 @@
 #include "runtime/instruction.h"
 #include "runtime/workbench.h"
 
+#include "board/profiler.h"
+#include "core/tensor_builder.h"
+#include "module/bubble.h"
+
 namespace ts {
 
     OperatorInstruction::OperatorInstruction(const Operator::shared &func, int nargs, int nresults)
             : m_func(func), m_nargs(nargs), m_nresults(nresults) {
         TS_AUTO_CHECK(m_func != nullptr);
+    }
+
+    Later profiler_run(const Operator::shared &op) {
+        if (!profiler_on()) return Later();
+        std::ostringstream oss;
+        oss << "op(%04d):"
+            << tensor::to_string(op->get(Bubble::RetentionParam::op)) << ":"
+            << tensor::to_string(op->get(Bubble::RetentionParam::name));
+        return profiler_serial_timer(oss.str());
     }
 
     void OperatorInstruction::run(Workbench &workbench) {
@@ -26,7 +39,12 @@ namespace ts {
         ts::need pop_base(&Stack::pop_base, &stack);
 
         // call function
-        auto return_size = m_func->run(stack);
+        int return_size = 0;
+        {
+            auto _timer = profiler_run(this->m_func);
+            return_size = m_func->run(stack);
+        }
+
         (void)(return_size);
 
         TS_AUTO_CHECK(return_size == m_nresults);  // must return given sizes

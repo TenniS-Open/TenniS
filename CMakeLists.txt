@@ -45,7 +45,19 @@ include_directories(${SOLUTION_DIR}/src)
 
 set(SOURCE_DIR ${SOLUTION_DIR})
 
-set(TENSORSTACK_MODULES api backend compiler core engine global memory module runtime utils)
+set(TENSORSTACK_MODULES
+        api
+        backend
+        board
+        compiler
+        core
+        engine
+        global
+        memory
+        module
+        runtime
+        utils
+        )
 set(TENSORSTACK_ACHIVES common cpu) # in kernels and ops
 
 add_definitions(-DTS_USE_SSE)
