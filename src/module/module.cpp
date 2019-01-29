@@ -146,7 +146,7 @@ namespace ts {
         std::unordered_map<std::string, Node> map_name_input_node;
         // map nodes
         for (auto &input : m_inputs) {
-            auto &bubble = input.ref<Bubble>();
+            auto &bubble = input.bubble();
             if (map_name_input_node.find(bubble.name()) != map_name_input_node.end()) {
                 auto it = map_name_input_node.find(bubble.name());
                 TS_LOG_ERROR << "Can not sort inputs with duplicate names: " << input.str() << " and "
@@ -283,6 +283,7 @@ namespace ts {
     Module::shared Module::Load(const std::string &filename, Module::SerializationFormat format) {
         TS_AUTO_CHECK(format == BINARY);
         FileStreamReader stream(filename);
+        TS_CHECK(stream.is_open()) << "Can not access: " << filename << eject;
         size_t read_size = 0;
 
         // 0. read header

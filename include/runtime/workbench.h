@@ -19,6 +19,7 @@
 #include "global/device_admin.h"
 #include "runtime/runtime.h"
 #include "image_filter.h"
+#include "board/profiler.h"
 
 namespace ts {
     class Workbench {
@@ -85,6 +86,12 @@ namespace ts {
 
         RuntimeContext &runtime() { return m_runtime_context; }
 
+        void do_profile(bool _do) { m_do_profile = _do; }
+
+        Profiler &profiler() { return m_profiler; }
+
+        const Profiler &profiler() const { return m_profiler; }
+
     private:
         size_t m_pointer = 0;   // pointer to running function
         std::vector<Instruction::shared> m_program; // running function, program area
@@ -107,6 +114,9 @@ namespace ts {
 
         // runtime setting, shared in working thread
         RuntimeContext m_runtime_context;
+
+        bool m_do_profile = false;
+        Profiler m_profiler;
     };
 }
 
