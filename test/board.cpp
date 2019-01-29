@@ -30,14 +30,7 @@ int main() {
         test_time(1000000);
     }
 
-    for (auto &name_value : board) {
-        std::cout << name_value.first << ": ";
-        for (auto &datum : name_value.second) {
-            std::cout << datum << ", ";
-        }
-        std::cout << "avg = " << name_value.second.avg() << "ms.";
-        std::cout << std::endl;
-    }
+    profiler.log(std::cout);
 
     return 0;
 }
