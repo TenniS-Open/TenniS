@@ -34,7 +34,7 @@ def pooling2d_padding(name, x, padding, ksize, stride, format=zoo.Name.NCHW, val
 
     # input
     ksize = zoo.to_node(ksize, name="_const_" + name + "_ksize", device=device.CPU)
-    stride = zoo.to_node(stride, name="_const_" + name + "_ksize", device=device.CPU)
+    stride = zoo.to_node(stride, name="_const_" + name + "_stride", device=device.CPU)
 
     # operator
     node = menu.op(name=name, op_name=Name.Layer.pooling2d_padding, inputs=[x, ksize, stride])
@@ -60,7 +60,7 @@ def pooling2d(name, x, ksize, stride, type=zoo.Type.pooling_type.max, format=zoo
 
     # input
     ksize = zoo.to_node(ksize, name="_const_" + name + "_ksize", device=device.CPU)
-    stride = zoo.to_node(stride, name="_const_" + name + "_ksize", device=device.CPU)
+    stride = zoo.to_node(stride, name="_const_" + name + "_stride", device=device.CPU)
 
     # operator
     dynamic_padding = pooling2d_padding(name="_op_" + name + "_valid_padding",
