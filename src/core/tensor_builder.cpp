@@ -12,6 +12,8 @@
 #include "core/tensor_builder.h"
 #include "utils/assert.h"
 
+#include <cctype>
+
 namespace ts {
     namespace tensor {
         Tensor from(const std::string &value) {
