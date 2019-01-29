@@ -26,13 +26,16 @@ namespace ts {
 		TS_AUTO_CHECK(m_format == name::NCHW);    // only support NCHW now
 
 		auto static_padding = tensor::cast(INT32, this->get(name::padding));
-		TS_AUTO_CHECK(static_padding.dims() == 2 && static_padding.size(0) == 4 && static_padding.size(1) == 2);
+		TS_AUTO_CHECK(static_padding.has_shape({ 4,2 }));
+		//TS_AUTO_CHECK(static_padding.dims() == 2 && static_padding.size(0) == 4 && static_padding.size(1) == 2);
 
 		auto ksize_tensor = tensor::cast(INT32, this->get(name::ksize));
-		TS_AUTO_CHECK(ksize_tensor.dims() == 1 && ksize_tensor.count() == 4);
+		TS_AUTO_CHECK(ksize_tensor.has_shape({ 4 }));
+		//TS_AUTO_CHECK(ksize_tensor.dims() == 1 && ksize_tensor.count() == 4);
 
 		auto stride_tensor = tensor::cast(INT32, this->get(name::stride));
-		TS_AUTO_CHECK(stride_tensor.dims() == 1 && stride_tensor.count() == 4);
+		TS_AUTO_CHECK(stride_tensor.has_shape({ 4 }));
+		//TS_AUTO_CHECK(stride_tensor.dims() == 1 && stride_tensor.count() == 4);
 
 		if (m_format == name::NCHW)
 		{
