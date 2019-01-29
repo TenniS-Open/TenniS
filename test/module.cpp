@@ -125,8 +125,8 @@ int main()
 
 //    auto a = bubble::param("a");
 //    auto b = bubble::param("b");
-//    auto b1 = block_n_times("block1", a, 1000);
-//    auto b2 = block_n_times("block1", b, 1000);
+//    auto b1 = block_n_times("block1", a, 100);
+//    auto b2 = block_n_times("block1", b, 100);
 //    auto c = bubble::op("c", "sum", {b1, b2});
 
     auto a = bubble::param("a");
@@ -182,11 +182,13 @@ int main()
         return -1;
     }
 
-    Tensor input_a(FLOAT32, {100, 1024});
-    Tensor input_b(FLOAT32, {100, 1024});
+    Tensor input_a(FLOAT32, {10, 1024});
+    Tensor input_b(FLOAT32, {10, 1024});
 
     input_a.data<float>()[0] = 1;
     input_b.data<float>()[0] = 3;
+
+    bench->do_profile(true);
 
     bench->input("a", input_a);
     bench->input("b", input_b);
@@ -195,11 +197,13 @@ int main()
     {
         time_log _log(ts::LOG_INFO, "Spent ");
 
-        for (int i = 0; i < 10; ++i) {
+        for (int i = 0; i < 100; ++i) {
             bench->run();
         }
 
     }
+
+    bench->profiler().log(std::cout);
 
     auto output_c = bench->output("c");
 
