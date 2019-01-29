@@ -70,7 +70,7 @@ namespace ts {
 
         const Board<float> &board() const;
 
-        void log();
+        void log(std::ostream &out) const;
     private:
         Board<float> m_board;
         std::unordered_map<std::string, int32_t> m_serial;

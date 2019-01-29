@@ -5,6 +5,7 @@
 #include "board/profiler.h"
 #include <chrono>
 #include <board/profiler.h>
+#include <iomanip>
 
 
 #include "utils/ctxmgr_lite_support.h"
@@ -36,6 +37,22 @@ namespace ts {
 
     const Board<float> &Profiler::board() const {
         return m_board;
+    }
+
+    template <typename T>
+    static std::string to_string(const T* ptr) {
+        std::ostringstream oss;
+        oss << "0x" << std::setfill('0') << std::setw(sizeof(T*) * 2) << uint64_t(ptr);
+        return oss.str();
+    }
+
+    void Profiler::log(std::ostream &out) const {
+        std::map<Board<float>::key_type, Board<float>::value_type>
+                sorted_board(this->board().begin(), this->board().end());
+        out << "============= " << "Profiler(" << to_string(this) << ")" << " timer" << " =============" << std::endl;
+        for (auto &key_value : sorted_board) {
+            out << "[" << key_value.first << "]: avg spent = " << key_value.second.avg() << "ms" << std::endl;
+        }
     }
 
     Later profiler_timer(const std::string &name) {
