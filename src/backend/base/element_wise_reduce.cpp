@@ -124,8 +124,8 @@ namespace ts {
 
         auto memory_device = running_memory_device();
 
-        lhs = lhs.view(memory_device);    // do sync, and set default data to given device
-        rhs = rhs.view(memory_device);
+        lhs = lhs.view(memory_device).reshape(lhs_shape);    // do sync, and set default data to given device
+        rhs = rhs.view(memory_device).reshape(rhs_shape);
         auto out = *stack.push(out_proto, memory_device);
 
         int dim;
