@@ -27,7 +27,7 @@ private:
 
     template<typename T>
     void compute_conv(Tensor *input_tensor, Tensor *weight_tensor, Tensor *tensor, const Shape& shape, 
-                      const Shape &reshape, const Shape &weight_shape);
+                      const Shape &reshape, const Shape &weight_shape, Stack &stack);
 private:
     //int m_group;
     //int m_padding_value;
