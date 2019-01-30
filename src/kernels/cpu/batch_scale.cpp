@@ -69,13 +69,20 @@ void Batch_Scale::compute_batch_scale(Tensor *input_tensor, Tensor *scale_tensor
     const T* pscale = scale_tensor->sync(MemoryDevice(CPU)).data<T>();
     const T* pbias = bias_tensor->sync(MemoryDevice(CPU)).data<T>();
     T* pdst  = output_tensor->data<T>();
+	std::memcpy(pdst,psrc,sizeof(T)*output_tensor->count());
+
     int stridedims = backdims * shape[m_dim];
     int offset = 0;
     for(int i=0; i<predims; i++) {
         for(int k=0; k<shape[m_dim]; k++) {
             offset = i * stridedims + k * backdims;
+			T scale_val = pscale[k];
+			T bias_val = pbias[k];
+			T* pdst_temp = pdst + offset;
             for(int m=0; m<backdims; m++) {
-                pdst[offset + m] = psrc[offset + m] * pscale[k] + pbias[k];
+				*pdst_temp = *pdst_temp * scale_val + bias_val;
+				pdst_temp++;
+                //pdst[offset + m] = psrc[offset + m] * pscale[k] + pbias[k];
             }
         }
     }
