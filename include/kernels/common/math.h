@@ -8,6 +8,7 @@
 #include <cfloat>
 #include <cmath>
 #include <cstdlib>
+#include <math.h>
 
 namespace ts {
     inline bool near(double value1, double value2) {
@@ -25,7 +26,8 @@ namespace ts {
 
     template <>
     inline float abs(float value) {
-        return std::fabsf(value);
+        using namespace std;
+        return fabsf(value);
     }
 
     template <>
