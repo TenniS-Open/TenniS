@@ -71,7 +71,7 @@ int Conv2d::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output) 
 
 template<typename T>
 void Conv2d::compute_conv(Tensor *input_tensor, Tensor *weight_tensor, Tensor *tensor, const Shape& shape,
-                      const Shape &reshape, const Shape &weight_shape ) {
+                      const Shape &reshape, const Shape &weight_shape, Stack &stack) {
 
     int kernel_dims = weight_shape[1] * weight_shape[2] * weight_shape[3];
     int conv_out_spatial_dim = reshape[2] * reshape[3];
@@ -85,7 +85,7 @@ void Conv2d::compute_conv(Tensor *input_tensor, Tensor *weight_tensor, Tensor *t
     col_shape.resize(1);
     col_shape[0] = col_buffer_size;
     // TODO: col_buffer should alloc in stack(flow memory), this is dynamic memory now
-    Tensor col_tensor(MemoryDevice(CPU), input_tensor->dtype(), col_shape); 
+	Tensor col_tensor = *stack.push(input_tensor->dtype(), col_shape, MemoryDevice(CPU));
     T * col_buffer = col_tensor.data<T>();
 
     const T *pinput = input_tensor->sync(MemoryDevice(CPU)).data<T>();
@@ -105,6 +105,7 @@ void Conv2d::compute_conv(Tensor *input_tensor, Tensor *weight_tensor, Tensor *t
         pinput += input_number_offset;
         poutput+= output_number_offset;
     }
+	stack.pop();
 }
 
 int Conv2d::run(ts::Stack &stack) {
@@ -122,12 +123,12 @@ int Conv2d::run(ts::Stack &stack) {
     switch(tensor->dtype()) {
         case FLOAT32: {
              compute_conv<float>(input_tensor, weight_tensor, tensor, shape,reshape,
-                                 weight_shape);
+                                 weight_shape, stack);
              break;
         }
         case FLOAT64: {
              compute_conv<double>(input_tensor, weight_tensor, tensor, shape,reshape,
-                                 weight_shape);
+                                 weight_shape, stack);
              break;
         }
         default: {
