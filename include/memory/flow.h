@@ -41,6 +41,25 @@ namespace ts {
         Declare<Implement> m_impl;
     };
 
+
+    class StackMemoryController : public MemoryController {
+    public:
+        using self = VatMemoryController;
+        using shared = std::shared_ptr<self>;  ///< smart pointer
+        using supper = MemoryController;
+        /**
+         * @param device the memory device
+         */
+        explicit StackMemoryController(const MemoryDevice &device);
+
+        Memory alloc(size_t size) override;
+
+    private:
+        class Implement;
+        Declare<Implement> m_impl;
+    };
+
+
     using FlowMemoryController = VatMemoryController;
 }
 
