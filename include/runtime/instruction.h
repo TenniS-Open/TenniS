@@ -6,6 +6,7 @@
 #define TENSORSTACK_RUNTIME_INSTRUCTION_H
 
 #include <memory>
+#include <global/operator_factory.h>
 #include "operator.h"
 
 namespace ts {
@@ -92,11 +93,17 @@ namespace ts {
 
         std::string str() const final;
 
+        void bind_creator(OperatorCreator::function creator);
+
+        shared clone() const;
+
     private:
         Operator::shared m_func = nullptr;
         int m_nargs = 0;
         int m_nresults = 0;
         std::string m_description;
+
+        OperatorCreator::function m_creator = nullptr;
     };
 
 }

@@ -16,9 +16,12 @@
 #include "global/hard_converter.h"
 
 #include <climits>
+#include "utils/need.h"
+
+#include "kernels/common/math.h"
 
 namespace ts {
-    Workbench::Workbench(const ComputingDevice &device) {
+    Workbench::Workbench(const ComputingDevice &device, std::shared_ptr<std::mutex> mutex) {
         this->m_device_context.initialize(device);
         auto &memory_device = this->m_device_context.memory_device;
 
@@ -28,11 +31,20 @@ namespace ts {
         this->m_dynamic_memory = DynamicSyncMemoryController::Make(memory_device, false);
         this->m_stack = std::make_shared<Stack>(memory_device, this->m_flow_memory);
         this->m_data_sagment = std::make_shared<Stack>(memory_device, this->m_static_memory);
+        this->m_mutex = std::move(mutex);
+    }
+
+    Workbench::Workbench(const ComputingDevice &device, std::shared_ptr<std::mutex> mutex, int computing_thread_number)
+            : self(device, std::move(mutex)) {
+        this->m_runtime_context.set_computing_thread_number(computing_thread_number);
+    }
+
+    Workbench::Workbench(const ComputingDevice &device)
+            : self(device, std::make_shared<std::mutex>()) {
     }
 
     Workbench::Workbench(const ComputingDevice &device, int computing_thread_number)
-            : self(device) {
-        this->m_runtime_context.set_computing_thread_number(computing_thread_number);
+            : self(device, std::make_shared<std::mutex>(), computing_thread_number) {
     }
 
     Workbench::~Workbench() {
@@ -120,7 +132,11 @@ namespace ts {
     }
 
     Workbench::shared Workbench::clone() const {
-        Workbench::shared dolly = std::make_shared<Workbench>(this->m_device_context.computing_device);
+        std::unique_lock<std::mutex> _lock_clone(*this->m_mutex);
+
+        Workbench::shared dolly = std::make_shared<Workbench>(
+                this->m_device_context.computing_device,
+                this->m_mutex);
         dolly->m_pointer = this->m_pointer;
         dolly->m_program = this->m_program;
         dolly->m_inputs.resize(this->m_inputs.size());
@@ -136,7 +152,37 @@ namespace ts {
             dolly->m_input_filters[i] = this->m_input_filters[i]->clone();
         }
 
-        return dolly;
+        for (auto &instruction : dolly->m_program) {
+            auto op = dynamic_cast<OperatorInstruction*>(instruction.get());
+            if (op == nullptr) continue;
+            instruction = op->clone();
+        }
+
+        return std::move(dolly);
+    }
+
+    template <typename T>
+    static inline void filter_values(T *value, size_t count) {
+        for (size_t i = 0; i < count; ++i) {
+            if (near(*value, T(0))) *value = T(0);
+            ++value;
+        }
+    }
+
+    template <>
+    static inline void filter_values(float *value, size_t count) {
+        for (size_t i = 0; i < count; ++i) {
+            if (*value < FLT_EPSILON && -*value < FLT_EPSILON) *value = 0;
+            ++value;
+        }
+    }
+
+    template <>
+    static inline void filter_values(double *value, size_t count) {
+        for (size_t i = 0; i < count; ++i) {
+            if (*value < DBL_EPSILON && -*value < DBL_EPSILON) *value = 0;
+            ++value;
+        }
     }
 
     Workbench::shared Workbench::Load(const Module::shared &module, const ComputingDevice &device) {
@@ -161,10 +207,18 @@ namespace ts {
             inst = std::make_shared<DataSagmentInstruction>(data_sagment_inst->data_index() + data_sagment_base);
         }
         for (auto &data : block.data_sagment) {
+            Tensor *value = nullptr;
             if (data.device.empty()) {
-                bench->m_data_sagment->clone_push(data.tensor);
+                value = bench->m_data_sagment->clone_push(data.tensor);
             } else {
-                bench->m_data_sagment->clone_push(data.tensor, data.device);
+                value = bench->m_data_sagment->clone_push(data.tensor, data.device);
+            }
+
+            // filter value
+            if (value->dtype() == FLOAT32) {
+                filter_values(value->data<float>(), value->count());
+            } else if (value->dtype() == FLOAT64) {
+                filter_values(value->data<double>(), value->count());
             }
         }
 
@@ -271,6 +325,7 @@ namespace ts {
     }
 
     void Workbench::push_data_sagment(int data_index) {
+        // TODO: deal with data_sagment, in case of thread sharing
         this->m_stack->push(*this->m_data_sagment->index(data_index));
     }
 }
