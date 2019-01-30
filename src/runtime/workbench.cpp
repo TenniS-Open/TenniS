@@ -18,6 +18,8 @@
 #include <climits>
 #include "utils/need.h"
 
+#include "kernels/common/math.h"
+
 namespace ts {
     Workbench::Workbench(const ComputingDevice &device, std::shared_ptr<std::mutex> mutex) {
         this->m_device_context.initialize(device);
@@ -159,6 +161,30 @@ namespace ts {
         return std::move(dolly);
     }
 
+    template <typename T>
+    static inline void filter_values(T *value, size_t count) {
+        for (size_t i = 0; i < count; ++i) {
+            if (near(*value, T(0))) *value = T(0);
+            ++value;
+        }
+    }
+
+    template <>
+    static inline void filter_values(float *value, size_t count) {
+        for (size_t i = 0; i < count; ++i) {
+            if (*value < FLT_EPSILON && -*value < FLT_EPSILON) *value = 0;
+            ++value;
+        }
+    }
+
+    template <>
+    static inline void filter_values(double *value, size_t count) {
+        for (size_t i = 0; i < count; ++i) {
+            if (*value < DBL_EPSILON && -*value < DBL_EPSILON) *value = 0;
+            ++value;
+        }
+    }
+
     Workbench::shared Workbench::Load(const Module::shared &module, const ComputingDevice &device) {
         auto bench = std::make_shared<Workbench>(device);
         // convert module to bench
@@ -181,10 +207,18 @@ namespace ts {
             inst = std::make_shared<DataSagmentInstruction>(data_sagment_inst->data_index() + data_sagment_base);
         }
         for (auto &data : block.data_sagment) {
+            Tensor *value = nullptr;
             if (data.device.empty()) {
-                bench->m_data_sagment->clone_push(data.tensor);
+                value = bench->m_data_sagment->clone_push(data.tensor);
             } else {
-                bench->m_data_sagment->clone_push(data.tensor, data.device);
+                value = bench->m_data_sagment->clone_push(data.tensor, data.device);
+            }
+
+            // filter value
+            if (value->dtype() == FLOAT32) {
+                filter_values(value->data<float>(), value->count());
+            } else if (value->dtype() == FLOAT64) {
+                filter_values(value->data<double>(), value->count());
             }
         }
 
