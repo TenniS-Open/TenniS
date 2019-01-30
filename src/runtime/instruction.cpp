@@ -67,6 +67,22 @@ namespace ts {
         return oss.str();
     }
 
+    OperatorInstruction::shared OperatorInstruction::clone() const {
+        if (m_creator == nullptr) {
+            TS_LOG_ERROR << "Can not clone operator without creator bind" << eject;
+        }
+        auto op = m_creator();
+        for (auto &param : m_func->params()) {
+            op->set(param.first, param.second);
+        }
+        op->init();
+        return std::make_shared<OperatorInstruction>(op, m_nargs, m_nresults, m_description);
+    }
+
+    void OperatorInstruction::bind_creator(OperatorCreator::function creator) {
+        m_creator = std::move(creator);
+    }
+
     void StackInstruction::run(Workbench &workbench) {
         this->run(workbench.stack());
     }

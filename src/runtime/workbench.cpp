@@ -136,6 +136,12 @@ namespace ts {
             dolly->m_input_filters[i] = this->m_input_filters[i]->clone();
         }
 
+        for (auto &instruction : dolly->m_program) {
+            auto op = dynamic_cast<OperatorInstruction*>(instruction.get());
+            if (op == nullptr) continue;
+            instruction = op->clone();
+        }
+
         return dolly;
     }
 
