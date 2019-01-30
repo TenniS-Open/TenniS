@@ -66,7 +66,7 @@ namespace ts {
 		int count = output_tensor.count();
 		memcpy(output_data, device_type, count * sizeof(T), input_data, device_type, count * sizeof(T));
 
-		for (int i = 0; i < output_tensor.count(); i++)
+		for (int i = 0; i < count; i++)
 		{
 			T val = *output_data;
 			*output_data = 1. / (1. + exp(-(val)));
