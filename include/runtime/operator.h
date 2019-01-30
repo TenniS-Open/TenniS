@@ -74,6 +74,8 @@ namespace ts {
 
         ComputingDevice computing_device() const;
 
+        const hash_map<std::string, Tensor> &params() const;
+
     private:
         bool is_in_fields(const std::string &name);
 

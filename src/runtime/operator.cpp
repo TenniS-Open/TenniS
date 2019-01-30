@@ -190,6 +190,9 @@ namespace ts {
         return device ? device->computing_device : ComputingDevice();
     }
 
+    const Operator::hash_map<std::string, Tensor> &Operator::params() const {
+        return m_params;
+    }
 
     int RunOperator(Operator::shared op, Stack &stack, int nargs) {
         TS_AUTO_CHECK(stack.size() >= static_cast<size_t>(nargs));
