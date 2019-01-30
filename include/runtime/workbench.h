@@ -34,6 +34,10 @@ namespace ts {
 
         explicit Workbench(const ComputingDevice &device, int computing_thread_number);
 
+        explicit Workbench(const ComputingDevice &device, std::shared_ptr<std::mutex> mutex);
+
+        explicit Workbench(const ComputingDevice &device, std::shared_ptr<std::mutex> mutex, int computing_thread_number);
+
         ~Workbench();
 
         Workbench(const self &) = delete;
@@ -92,6 +96,10 @@ namespace ts {
 
         const Profiler &profiler() const { return m_profiler; }
 
+        void lock() { m_mutex->lock(); }
+        
+        void unlock() { m_mutex->unlock(); }
+
     private:
         size_t m_pointer = 0;   // pointer to running function
         std::vector<Instruction::shared> m_program; // running function, program area
@@ -117,6 +125,8 @@ namespace ts {
 
         bool m_do_profile = false;
         Profiler m_profiler;
+
+        std::shared_ptr<std::mutex> m_mutex;
     };
 }
 
