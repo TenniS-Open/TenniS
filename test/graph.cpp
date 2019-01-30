@@ -11,7 +11,7 @@ public:
     T forward(const std::vector<ts::Node> &inputs) {
         T sum = 0;
         for (auto &input : inputs) {
-            sum += input.ref<int>();
+            // sum += input.ref<int>();
         }
         return sum;
     }
