@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include <numeric>
 #include <string>
+#include <algorithm>
 
 namespace ts {
     template <typename T>
