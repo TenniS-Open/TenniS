@@ -76,7 +76,9 @@ namespace ts {
             op->set(param.first, param.second);
         }
         op->init();
-        return std::make_shared<OperatorInstruction>(op, m_nargs, m_nresults, m_description);
+        auto dolly = std::make_shared<OperatorInstruction>(op, m_nargs, m_nresults, m_description);
+        dolly->m_creator = m_creator;
+        return std::move(dolly);
     }
 
     void OperatorInstruction::bind_creator(OperatorCreator::function creator) {
