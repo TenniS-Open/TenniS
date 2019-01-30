@@ -29,6 +29,9 @@ namespace ts {
                                        const std::string &operator_name,
                                        bool strict = false) TS_NOEXCEPT;
 
+        static function Query(const DeviceType &device_type,
+                              const std::string &operator_name, bool strict) TS_NOEXCEPT;
+
         static void Clear();
     };
 }

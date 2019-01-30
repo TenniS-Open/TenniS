@@ -63,11 +63,12 @@ namespace ts {
         if (icreator != nullptr) {
             return icreator(node);
         }
-        auto op = OperatorCreator::Create(m_computing_device.type(), bubble.op(), false);
+        auto creator = OperatorCreator::Query(m_computing_device.type(), bubble.op(), false);
 
-        if (op == nullptr) TS_LOG_ERROR << "Not supported operator " << bubble.op() << eject;
+        if (creator == nullptr) TS_LOG_ERROR << "Not supported operator " << bubble.op() << eject;
         std::string description = bubble.op() + "(in=" + std::to_string(node.inputs().size()) + ", out=" +
                                   std::to_string(1) + ")";
+        auto op = creator();
 
         for (auto &param : bubble.params()) {
             op->set(param.first, param.second);
@@ -78,7 +79,9 @@ namespace ts {
             TS_LOG_ERROR << "While initializing " << bubble.op() << ":" << bubble.name() << " got Exception: " << e.what() << eject;
         }
         std::vector<Instruction::shared> instructions;
-        instructions.emplace_back(std::make_shared<OperatorInstruction>(op, node.inputs().size(), bubble.output_count(), description));
+        auto op_inst = std::make_shared<OperatorInstruction>(op, node.inputs().size(), bubble.output_count(), description);
+        op_inst->bind_creator(creator);
+        instructions.emplace_back(std::move(op_inst));
         if (bubble.output_count() > 1) {
             instructions.emplace_back(instruction::Tensor::pack(size_t(bubble.output_count())));
         }

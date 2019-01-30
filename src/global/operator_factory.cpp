@@ -73,4 +73,9 @@ namespace ts {
         if (!creator) return nullptr;
         return creator();
     }
+
+    OperatorCreator::function
+    OperatorCreator::Query(const DeviceType &device_type, const std::string &operator_name, bool strict) TS_NOEXCEPT {
+        return TalentQuery(device_type, operator_name, strict);
+    }
 }
