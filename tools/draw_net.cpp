@@ -83,7 +83,7 @@ static void init_node_info() {
 static std::string get_node_id(const void * ptr) {
     char buf[100] = {0};
 #ifdef WIN32 
-    _snprintf_s(buf+2, sizeof(buf) - 3, "%p", ptr);
+    _snprintf_s(buf+2, sizeof(buf) - 2, sizeof(buf) - 3, "%p", ptr);
 #else
     snprintf(buf+2, sizeof(buf) - 3, "%p", ptr);
 #endif
