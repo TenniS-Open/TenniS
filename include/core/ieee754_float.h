@@ -123,6 +123,12 @@ namespace ts {
                 : self(ieee754_float<64, 1, 11, 52>(ts::bitset<64>(*reinterpret_cast<uint64_t *>(&f)))) {
         }
 
+        ieee754_float(char i) : ieee754_float(float(i)) {}
+
+        ieee754_float(char16_t i) : ieee754_float(float(i)) {}
+
+        ieee754_float(char32_t i) : ieee754_float(float(i)) {}
+
         ieee754_float(int8_t i) : ieee754_float(float(i)) {}
 
         ieee754_float(uint8_t i) : ieee754_float(float(i)) {}
@@ -154,6 +160,12 @@ namespace ts {
         }
 
 #define DECLARE_OPERATOR(type) operator type() const { return type(double(*this)); }
+        DECLARE_OPERATOR(char)
+
+        DECLARE_OPERATOR(char16_t)
+
+        DECLARE_OPERATOR(char32_t)
+
         DECLARE_OPERATOR(int8_t)
 
         DECLARE_OPERATOR(uint8_t)
@@ -223,12 +235,12 @@ namespace ts {
     };
 
     template<>
-    ieee754_float<32, 1, 8, 23>::ieee754_float(float f) {
+    inline ieee754_float<32, 1, 8, 23>::ieee754_float(float f) {
         m_bits = bitset(*reinterpret_cast<uint32_t *>(&f));
     }
 
     template<>
-    ieee754_float<64, 1, 11, 52>::ieee754_float(double f) {
+    inline ieee754_float<64, 1, 11, 52>::ieee754_float(double f) {
         m_bits = bitset(*reinterpret_cast<uint64_t *>(&f));
     }
 
