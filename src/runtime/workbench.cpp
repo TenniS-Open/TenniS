@@ -162,7 +162,7 @@ namespace ts {
     }
 
     template <typename T>
-    static inline void filter_values(T *value, size_t count) {
+    inline void filter_values(T *value, size_t count) {
         for (size_t i = 0; i < count; ++i) {
             if (near(*value, T(0))) *value = T(0);
             ++value;
@@ -170,7 +170,7 @@ namespace ts {
     }
 
     template <>
-    static inline void filter_values(float *value, size_t count) {
+    inline void filter_values(float *value, size_t count) {
         for (size_t i = 0; i < count; ++i) {
             if (*value < FLT_EPSILON && -*value < FLT_EPSILON) *value = 0;
             ++value;
@@ -178,7 +178,7 @@ namespace ts {
     }
 
     template <>
-    static inline void filter_values(double *value, size_t count) {
+    inline void filter_values(double *value, size_t count) {
         for (size_t i = 0; i < count; ++i) {
             if (*value < DBL_EPSILON && -*value < DBL_EPSILON) *value = 0;
             ++value;
