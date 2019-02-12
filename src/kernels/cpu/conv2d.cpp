@@ -91,15 +91,15 @@ void Conv2d::compute_conv(Tensor *input_tensor, Tensor *weight_tensor, Tensor *t
 	bool is_1x1_conv = m_stride[2] == 1 && m_stride[3] == 1 && weight_shape[2] == 1 && weight_shape[3] == 1 && m_padding[4] == 0 &&
 		m_padding[5] == 0 && m_padding[6] == 0 && m_padding[7] == 0;
 
-    const T *pinput = input_tensor->sync(MemoryDevice(CPU)).data<T>();
+    T *pinput = input_tensor->sync(MemoryDevice(CPU)).data<T>();
     const T *pweight = weight_tensor->sync(MemoryDevice(CPU)).data<T>();
     T *poutput = tensor->data<T>();
     for(int i=0; i<shape[0]; i++) {
         ::memset(col_buffer, 0, col_buffer_size * sizeof(T));
 		if (is_1x1_conv)
 		{
-			//TS_LOG_INFO << "THIS IS 1_1_CONV!";
-			std::memcpy(col_buffer,pinput,sizeof(T)*col_buffer_size);
+			//std::memcpy(col_buffer,pinput,sizeof(T)*col_buffer_size);
+			col_buffer = pinput;
 		}
 		else
 		{
