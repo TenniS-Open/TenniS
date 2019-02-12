@@ -56,6 +56,34 @@ namespace ts {
         explicit operator type() const { return code; }
     };
 
+    template<size_t _W>
+    class upper_type {
+    };
+
+    template<>
+    class upper_type<8> {
+    public:
+        using type = float;
+    };
+
+    template<>
+    class upper_type<16> {
+    public:
+        using type = float;
+    };
+
+    template<>
+    class upper_type<32> {
+    public:
+        using type = float;
+    };
+
+    template<>
+    class upper_type<64> {
+    public:
+        using type = double;
+    };
+
     template<size_t _W, size_t _SIGN, size_t _EXPONENT, size_t _FRACTION>
     class ieee754_float {
     public:
@@ -77,7 +105,7 @@ namespace ts {
         ieee754_float(const self &other) : m_bits(other.m_bits) {}
 
         template<size_t _T_W, size_t _T_SIGN, size_t _T_EXPONENT, size_t _T_FRACTION>
-        ieee754_float(const ieee754_float<_T_W, _T_SIGN, _T_EXPONENT, _T_FRACTION> &other) {
+        explicit ieee754_float(const ieee754_float<_T_W, _T_SIGN, _T_EXPONENT, _T_FRACTION> &other) {
             auto shift_left = int64_t(fraction) - int64_t(other.fraction);
             auto bits = (other.value_sign() << (W - 1)) |
                         (((other.value_exponent() + bias) << fraction) & this->mask_exponent().code) |
@@ -116,12 +144,12 @@ namespace ts {
         }
 
         operator float() const {
-            ieee754_float<32, 1, 8, 23> converted = *this;
+            ieee754_float<32, 1, 8, 23> converted(*this);
             return *reinterpret_cast<const float *>(&converted.code());
         }
 
         operator double() const {
-            ieee754_float<64, 1, 11, 52> converted = *this;
+            ieee754_float<64, 1, 11, 52> converted(*this);
             return *reinterpret_cast<const double *>(&converted.code());
         }
 
@@ -143,6 +171,26 @@ namespace ts {
         DECLARE_OPERATOR(uint64_t)
 
 #undef DECLARE_OPERATOR
+
+        friend self operator+(const self &lhs, const self &rhs) {
+            return self(typename upper_type<_W>::type(lhs) + typename upper_type<_W>::type(rhs));
+        }
+
+        friend self operator-(const self &lhs, const self &rhs) {
+            return self(typename upper_type<_W>::type(lhs) - typename upper_type<_W>::type(rhs));
+        }
+
+        friend self operator*(const self &lhs, const self &rhs) {
+            return self(typename upper_type<_W>::type(lhs) * typename upper_type<_W>::type(rhs));
+        }
+
+        friend self operator/(const self &lhs, const self &rhs) {
+            return self(typename upper_type<_W>::type(lhs) / typename upper_type<_W>::type(rhs));
+        }
+
+        friend self operator-(const self &x) {
+            return self(-typename upper_type<_W>::type(x));
+        }
 
     private:
         bitset m_bits;
