@@ -225,6 +225,30 @@ namespace ts {
             return self(-typename upper_float<_W>::type(x));
         }
 
+        friend bool operator==(const self &lhs, const self &rhs) {
+            return lhs.code() == rhs.code();
+        }
+
+        friend bool operator!=(const self &lhs, const self &rhs) {
+            return lhs.code() != rhs.code();
+        }
+
+        friend bool operator>(const self &lhs, const self &rhs) {
+            return typename upper_float<_W>::type(lhs) > typename upper_float<_W>::type(rhs);
+        }
+
+        friend bool operator<(const self &lhs, const self &rhs) {
+            return typename upper_float<_W>::type(lhs) < typename upper_float<_W>::type(rhs);
+        }
+
+        friend bool operator>=(const self &lhs, const self &rhs) {
+            return lhs == rhs || lhs > rhs;
+        }
+
+        friend bool operator<=(const self &lhs, const self &rhs) {
+            return lhs == rhs || lhs < rhs;
+        }
+
     private:
         bitset m_bits;
 
