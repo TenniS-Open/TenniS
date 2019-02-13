@@ -11,6 +11,9 @@
 
 #include "utils/except.h"
 
+#include "dtype.h"
+#include "tensor_builder.h"
+
 namespace ts {
 
     template<size_t _W>
@@ -42,44 +45,44 @@ namespace ts {
     };
 
     template<size_t _W>
-    class bitset {
+    class bitset_code {
     public:
-        using self = bitset;
+        using self = bitset_code;
         using type = typename bitset_type<_W>::type;
 
         type code;
 
-        bitset() : code(0) {}
+        bitset_code() : code(0) {}
 
-        explicit bitset(type value) : code(value) {}
+        explicit bitset_code(type value) : code(value) {}
 
         explicit operator type() const { return code; }
     };
 
     template<size_t _W>
-    class upper_type {
+    class upper_float {
     };
 
     template<>
-    class upper_type<8> {
+    class upper_float<8> {
     public:
         using type = float;
     };
 
     template<>
-    class upper_type<16> {
+    class upper_float<16> {
     public:
         using type = float;
     };
 
     template<>
-    class upper_type<32> {
+    class upper_float<32> {
     public:
         using type = float;
     };
 
     template<>
-    class upper_type<64> {
+    class upper_float<64> {
     public:
         using type = double;
     };
@@ -94,7 +97,7 @@ namespace ts {
         constexpr static const auto bias = (1 << (exponent - 1)) - 1;
 
         using self = ieee754_float;
-        using bitset = bitset<W>;
+        using bitset = bitset_code<W>;
 
         template<size_t _T_W, size_t _T_SIGN, size_t _T_EXPONENT, size_t _T_FRACTION>
         friend
@@ -116,11 +119,11 @@ namespace ts {
         }
 
         ieee754_float(float f)
-                : self(ieee754_float<32, 1, 8, 23>(ts::bitset<32>(*reinterpret_cast<uint32_t *>(&f)))) {
+                : self(ieee754_float<32, 1, 8, 23>(ts::bitset_code<32>(*reinterpret_cast<uint32_t *>(&f)))) {
         }
 
         ieee754_float(double f)
-                : self(ieee754_float<64, 1, 11, 52>(ts::bitset<64>(*reinterpret_cast<uint64_t *>(&f)))) {
+                : self(ieee754_float<64, 1, 11, 52>(ts::bitset_code<64>(*reinterpret_cast<uint64_t *>(&f)))) {
         }
 
         ieee754_float(char i) : ieee754_float(float(i)) {}
@@ -185,23 +188,23 @@ namespace ts {
 #undef DECLARE_OPERATOR
 
         friend self operator+(const self &lhs, const self &rhs) {
-            return self(typename upper_type<_W>::type(lhs) + typename upper_type<_W>::type(rhs));
+            return self(typename upper_float<_W>::type(lhs) + typename upper_float<_W>::type(rhs));
         }
 
         friend self operator-(const self &lhs, const self &rhs) {
-            return self(typename upper_type<_W>::type(lhs) - typename upper_type<_W>::type(rhs));
+            return self(typename upper_float<_W>::type(lhs) - typename upper_float<_W>::type(rhs));
         }
 
         friend self operator*(const self &lhs, const self &rhs) {
-            return self(typename upper_type<_W>::type(lhs) * typename upper_type<_W>::type(rhs));
+            return self(typename upper_float<_W>::type(lhs) * typename upper_float<_W>::type(rhs));
         }
 
         friend self operator/(const self &lhs, const self &rhs) {
-            return self(typename upper_type<_W>::type(lhs) / typename upper_type<_W>::type(rhs));
+            return self(typename upper_float<_W>::type(lhs) / typename upper_float<_W>::type(rhs));
         }
 
         friend self operator-(const self &x) {
-            return self(-typename upper_type<_W>::type(x));
+            return self(-typename upper_float<_W>::type(x));
         }
 
     private:
@@ -247,7 +250,13 @@ namespace ts {
     using float16 = ieee754_float<16, 1, 5, 10>;
     using float32 = ieee754_float<32, 1, 8, 23>;
     using float64 = ieee754_float<64, 1, 11, 52>;
+
+
+    template <> struct dtype<FLOAT16> { using declare = float16; };
+    template <> struct dtypeid<float16> { static const DTYPE id = FLOAT16; };
 }
+
+extern template class ts::tensor_builder<ts::dtype<ts::FLOAT16>::declare>;
 
 
 #endif //TENSORSTACK_CORE_IEEE754_FLOAT_H
