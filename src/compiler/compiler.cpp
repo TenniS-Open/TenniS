@@ -79,7 +79,7 @@ namespace ts {
             TS_LOG_ERROR << "While initializing " << bubble.op() << ":" << bubble.name() << " got Exception: " << e.what() << eject;
         }
         std::vector<Instruction::shared> instructions;
-        auto op_inst = std::make_shared<OperatorInstruction>(op, node.inputs().size(), bubble.output_count(), description);
+        auto op_inst = std::make_shared<OperatorInstruction>(op, int(node.inputs().size()), int(bubble.output_count()), description);
         op_inst->bind_creator(creator);
         instructions.emplace_back(std::move(op_inst));
         if (bubble.output_count() > 1) {
