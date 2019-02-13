@@ -110,11 +110,22 @@ namespace ts {
         template<size_t _T_W, size_t _T_SIGN, size_t _T_EXPONENT, size_t _T_FRACTION>
         explicit ieee754_float(const ieee754_float<_T_W, _T_SIGN, _T_EXPONENT, _T_FRACTION> &other) {
             auto shift_left = int64_t(fraction) - int64_t(other.fraction);
-            auto bits = (other.value_sign() << (W - 1)) |
-                        (((other.value_exponent() + bias) << fraction) & this->mask_exponent().code) |
-                        (shift_left > 0
-                         ? (other.value_fraction() << shift_left)
-                         : (other.value_fraction() >> -shift_left));
+            auto part_sign = (other.value_sign() << (W - 1));
+            auto part_fraction = shift_left > 0
+                                 ? (other.value_fraction() << shift_left)
+                                 : (other.value_fraction() >> -shift_left);
+            auto origin_exponent = other.value_exponent() + bias;
+            constexpr auto max_exponent = (decltype(origin_exponent)(1) << exponent) - 1;
+            constexpr auto max_fraction = (decltype(part_fraction)(1) << fraction) - 1;
+            if (origin_exponent < decltype(origin_exponent)(0)) {
+                origin_exponent = 0;
+                part_fraction = 0;
+            } else if (origin_exponent > max_exponent) {
+                origin_exponent = max_exponent;
+                part_fraction = max_fraction;
+            }
+            auto part_exponent = (origin_exponent << fraction) & this->mask_exponent().code;
+            auto bits = part_sign | part_exponent | part_fraction;
             this->m_bits.code = typename bitset::type(bits);
         }
 
@@ -247,6 +258,17 @@ namespace ts {
 
         friend bool operator<=(const self &lhs, const self &rhs) {
             return lhs == rhs || lhs < rhs;
+        }
+
+        friend std::ostream &operator<<(std::ostream &out, const self &x) {
+            return out << double(x);
+        }
+
+        friend std::istream &operator>>(std::istream &in, self &x) {
+            double d;
+            in >> d;
+            x = d;
+            return in;
         }
 
     private:
