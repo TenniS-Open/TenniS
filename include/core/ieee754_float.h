@@ -121,11 +121,13 @@ namespace ts {
                                  ? (other.value_fraction() << shift_left)
                                  : (other.value_fraction() >> -shift_left);
             auto origin_exponent = other.value_exponent() + bias;
-            constexpr auto max_exponent = (decltype(origin_exponent)(1) << exponent) - 1;
+            // read url: https://baike.baidu.com/item/IEEE%20754/3869922?fr=aladdin
+            // following code can make NaN number to max or min number
+            constexpr auto max_exponent = (decltype(origin_exponent)(1) << exponent) - 2;
             constexpr auto max_fraction = (decltype(part_fraction)(1) << fraction) - 1;
             if (origin_exponent < decltype(origin_exponent)(0)) {
                 origin_exponent = 0;
-                part_fraction = 0;
+                part_fraction = 1;  // smallest float
             } else if (origin_exponent > max_exponent) {
                 origin_exponent = max_exponent;
                 part_fraction = max_fraction;
