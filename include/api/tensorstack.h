@@ -5,34 +5,34 @@
 #ifndef TENSORSTACK_API_TENSORSTACK_H
 #define TENSORSTACK_API_TENSORSTACK_H
 
-#define TS_EXTERN_C extern "C"
+#define TENSOR_STACK_EXTERN_C extern "C"
 
 #if defined(_MSC_VER)
-#   define TS_DLL_IMPORT __declspec(dllimport)
-#   define TS_DLL_EXPORT __declspec(dllexport)
-#   define TS_DLL_LOCAL
+#   define TENSOR_STACK_DLL_IMPORT __declspec(dllimport)
+#   define TENSOR_STACK_DLL_EXPORT __declspec(dllexport)
+#   define TENSOR_STACK_DLL_LOCAL
 #else
 #   if defined(__GNUC__) && __GNUC__ >= 4
-#       define TS_DLL_IMPORT __attribute__((visibility("default")))
-#       define TS_DLL_EXPORT __attribute__((visibility("default")))
-#       define TS_DLL_LOCAL  __attribute__((visibility("hidden")))
+#       define TENSOR_STACK_DLL_IMPORT __attribute__((visibility("default")))
+#       define TENSOR_STACK_DLL_EXPORT __attribute__((visibility("default")))
+#       define TENSOR_STACK_DLL_LOCAL  __attribute__((visibility("hidden")))
 #   else
-#       define TS_DLL_IMPORT
-#       define TS_DLL_EXPORT
-#       define TS_DLL_LOCAL
+#       define TENSOR_STACK_DLL_IMPORT
+#       define TENSOR_STACK_DLL_EXPORT
+#       define TENSOR_STACK_DLL_LOCAL
 #   endif
 #endif
 
 #if defined(BUILDING_TENSORSTACK)
-#define TS_API TS_DLL_EXPORT
+#define TENSOR_STACK_API TENSOR_STACK_DLL_EXPORT
 #else
-#define TS_API TS_DLL_IMPORT
+#define TENSOR_STACK_API TENSOR_STACK_DLL_IMPORT
 #endif
 
 #ifdef __cplusplus
-#   define TS_C_API TS_EXTERN_C TS_API
+#   define TENSOR_STACK_C_API TENSOR_STACK_EXTERN_C TENSOR_STACK_API
 #else
-#   define TS_C_API TS_API
+#   define TENSOR_STACK_C_API TENSOR_STACK_API
 #endif
 
 #ifdef __cplusplus
@@ -79,54 +79,54 @@ typedef struct ts_Device ts_Device;
 /**
  * Happen nothing if failed.
  */
-TS_C_API ts_bool ts_setup();
+TENSOR_STACK_C_API ts_bool ts_setup();
 
 /**
  * Return NULL if failed.
  */
-TS_C_API const char *ts_last_error_message();
+TENSOR_STACK_C_API const char *ts_last_error_message();
 
 // Tensor's API
 
 /**
  * Return NULL if failed.
  */
-TS_C_API ts_Tensor *ts_new_Tensor(int32_t *shape, int32_t shape_len, ts_DTYPE dtype, const void *data);
+TENSOR_STACK_C_API ts_Tensor *ts_new_Tensor(int32_t *shape, int32_t shape_len, ts_DTYPE dtype, const void *data);
 
 /**
  * Happen nothing if failed.
  */
-TS_C_API void ts_free_Tensor(const ts_Tensor *tensor);
+TENSOR_STACK_C_API void ts_free_Tensor(const ts_Tensor *tensor);
 
 /**
  * Return NULL if failed.
  */
-TS_C_API const int32_t *ts_Tensor_shape(ts_Tensor *tensor);
+TENSOR_STACK_C_API const int32_t *ts_Tensor_shape(ts_Tensor *tensor);
 
 /**
  * Return zero if failed.
  */
-TS_C_API int32_t ts_Tensor_shape_size(ts_Tensor *tensor);
+TENSOR_STACK_C_API int32_t ts_Tensor_shape_size(ts_Tensor *tensor);
 
 /**
  * Return TS_VOID if failed.
  */
-TS_C_API ts_DTYPE ts_Tensor_dtype(ts_Tensor *tensor);
+TENSOR_STACK_C_API ts_DTYPE ts_Tensor_dtype(ts_Tensor *tensor);
 
 /**
  * Return NULL if failed.
  */
-TS_C_API void* ts_Tensor_data(ts_Tensor *tensor);
+TENSOR_STACK_C_API void* ts_Tensor_data(ts_Tensor *tensor);
 
 /**
  * Return NULL if failed.
  */
-TS_C_API ts_Tensor *ts_Tensor_clone(ts_Tensor *tensor);
+TENSOR_STACK_C_API ts_Tensor *ts_Tensor_clone(ts_Tensor *tensor);
 
 /**
  * Return false if failed.
  */
-TS_C_API ts_bool ts_Tensor_sync_cpu(ts_Tensor *tensor);
+TENSOR_STACK_C_API ts_bool ts_Tensor_sync_cpu(ts_Tensor *tensor);
 
 // Module's API
 
@@ -138,59 +138,59 @@ enum ts_SerializationFormat {
 /**
  * Return NULL if failed.
  */
-TS_C_API ts_Module *ts_Module_Load(const char *filename, ts_SerializationFormat format);
+TENSOR_STACK_C_API ts_Module *ts_Module_Load(const char *filename, ts_SerializationFormat format);
 
 /**
  * Happen nothing if failed.
  */
-TS_C_API void ts_free_Module(const ts_Module *module);
+TENSOR_STACK_C_API void ts_free_Module(const ts_Module *module);
 
 // Workbench API
 
 /**
  * Return NULL if failed.
  */
-TS_C_API ts_Workbench *ts_Workbench_Load(ts_Module *module, const ts_Device *device);
+TENSOR_STACK_C_API ts_Workbench *ts_Workbench_Load(ts_Module *module, const ts_Device *device);
 
 /**
  * Happen nothing if failed.
  */
-TS_C_API void ts_free_Workbench(const ts_Workbench *workbench);
+TENSOR_STACK_C_API void ts_free_Workbench(const ts_Workbench *workbench);
 
 /**
  * Return NULL if failed.
  */
-TS_C_API ts_Workbench *ts_Workbench_clone(ts_Workbench *workbench);
+TENSOR_STACK_C_API ts_Workbench *ts_Workbench_clone(ts_Workbench *workbench);
 
 /**
  * Return false if failed.
  */
-TS_C_API ts_bool ts_Workbench_input(ts_Workbench *workbench, int32_t i, const ts_Tensor *tensor);
+TENSOR_STACK_C_API ts_bool ts_Workbench_input(ts_Workbench *workbench, int32_t i, const ts_Tensor *tensor);
 
 /**
  * Return false if failed.
  */
-TS_C_API ts_bool ts_Workbench_input_by_name(ts_Workbench *workbench, const char *name, const ts_Tensor *tensor);
+TENSOR_STACK_C_API ts_bool ts_Workbench_input_by_name(ts_Workbench *workbench, const char *name, const ts_Tensor *tensor);
 
 /**
  * Return false if failed.
  */
-TS_C_API ts_bool ts_Workbench_run(ts_Workbench *workbench);
+TENSOR_STACK_C_API ts_bool ts_Workbench_run(ts_Workbench *workbench);
 
 /**
  * Return false if failed.
  */
-TS_C_API ts_bool ts_Workbench_output(ts_Workbench *workbench, int32_t i, ts_Tensor *tensor);
+TENSOR_STACK_C_API ts_bool ts_Workbench_output(ts_Workbench *workbench, int32_t i, ts_Tensor *tensor);
 
 /**
  * Return false if failed.
  */
-TS_C_API ts_bool ts_Workbench_output_by_name(ts_Workbench *workbench, const char *name, ts_Tensor *tensor);
+TENSOR_STACK_C_API ts_bool ts_Workbench_output_by_name(ts_Workbench *workbench, const char *name, ts_Tensor *tensor);
 
 /**
  * Happen Nothing if failed.
  */
-TS_C_API ts_bool ts_Workbench_set_computing_thread_number(ts_Workbench *workbench, int32_t number);
+TENSOR_STACK_C_API ts_bool ts_Workbench_set_computing_thread_number(ts_Workbench *workbench, int32_t number);
 
 /**
  * Image filter API
@@ -200,34 +200,34 @@ TS_C_API ts_bool ts_Workbench_set_computing_thread_number(ts_Workbench *workbenc
 /**
  * Return NULL if failed.
  */
-TS_C_API ts_ImageFilter *ts_new_ImageFilter(const ts_Device *device);
+TENSOR_STACK_C_API ts_ImageFilter *ts_new_ImageFilter(const ts_Device *device);
 
 /**
  * Happen nothing if failed.
  */
-TS_C_API void ts_free_ImageFilter(const ts_ImageFilter *filter);
+TENSOR_STACK_C_API void ts_free_ImageFilter(const ts_ImageFilter *filter);
 
-TS_C_API ts_bool ts_ImageFilter_clear(ts_ImageFilter *filter);
+TENSOR_STACK_C_API ts_bool ts_ImageFilter_clear(ts_ImageFilter *filter);
 
-TS_C_API ts_bool ts_ImageFilter_compile(ts_ImageFilter *filter);
+TENSOR_STACK_C_API ts_bool ts_ImageFilter_compile(ts_ImageFilter *filter);
 
-TS_C_API ts_bool ts_ImageFilter_to_float(ts_ImageFilter *filter);
+TENSOR_STACK_C_API ts_bool ts_ImageFilter_to_float(ts_ImageFilter *filter);
 
-TS_C_API ts_bool ts_ImageFilter_scale(ts_ImageFilter *filter, float f);
+TENSOR_STACK_C_API ts_bool ts_ImageFilter_scale(ts_ImageFilter *filter, float f);
 
-TS_C_API ts_bool ts_ImageFilter_sub_mean(ts_ImageFilter *filter, const float *mean, int32_t len);
+TENSOR_STACK_C_API ts_bool ts_ImageFilter_sub_mean(ts_ImageFilter *filter, const float *mean, int32_t len);
 
-TS_C_API ts_bool ts_ImageFilter_resize(ts_ImageFilter *filter, int width, int height);
+TENSOR_STACK_C_API ts_bool ts_ImageFilter_resize(ts_ImageFilter *filter, int width, int height);
 
-TS_C_API ts_bool ts_ImageFilter_center_crop(ts_ImageFilter *filter, int width, int height);
+TENSOR_STACK_C_API ts_bool ts_ImageFilter_center_crop(ts_ImageFilter *filter, int width, int height);
 
-TS_C_API ts_bool ts_ImageFilter_channel_swap(ts_ImageFilter *filter, const int *shuffle, int32_t len);
+TENSOR_STACK_C_API ts_bool ts_ImageFilter_channel_swap(ts_ImageFilter *filter, const int *shuffle, int32_t len);
 
-TS_C_API ts_bool ts_ImageFilter_to_chw(ts_ImageFilter *filter);
+TENSOR_STACK_C_API ts_bool ts_ImageFilter_to_chw(ts_ImageFilter *filter);
 
-TS_C_API ts_bool ts_Workbench_bind_filter(ts_Workbench *workbench, int32_t i, ts_ImageFilter *filter);
+TENSOR_STACK_C_API ts_bool ts_Workbench_bind_filter(ts_Workbench *workbench, int32_t i, ts_ImageFilter *filter);
 
-TS_C_API ts_bool ts_Workbench_bind_filter_by_name(ts_Workbench *workbench, const char *name, ts_ImageFilter *filter);
+TENSOR_STACK_C_API ts_bool ts_Workbench_bind_filter_by_name(ts_Workbench *workbench, const char *name, ts_ImageFilter *filter);
 
 
 #ifdef __cplusplus
