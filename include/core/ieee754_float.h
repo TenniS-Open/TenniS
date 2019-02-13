@@ -109,6 +109,12 @@ namespace ts {
 
         template<size_t _T_W, size_t _T_SIGN, size_t _T_EXPONENT, size_t _T_FRACTION>
         explicit ieee754_float(const ieee754_float<_T_W, _T_SIGN, _T_EXPONENT, _T_FRACTION> &other) {
+            // for float 0
+            if ((other.code() & ~other.mask_sign().code) == 0) {
+                this->m_bits.code = typename bitset::type((other.value_sign() << (W - 1)));
+                return;
+            }
+
             auto shift_left = int64_t(fraction) - int64_t(other.fraction);
             auto part_sign = (other.value_sign() << (W - 1));
             auto part_fraction = shift_left > 0
