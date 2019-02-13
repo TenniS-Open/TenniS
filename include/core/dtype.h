@@ -6,7 +6,6 @@
 #define TENSORSTACK_CORE_TYPE_H
 
 #include <cstdint>
-#include "ieee754_float.h"
 
 namespace ts {
     enum DTYPE {
@@ -137,7 +136,6 @@ namespace ts {
     template <> struct dtype<UINT32> { using declare = uint32_t; };
     template <> struct dtype<INT64> { using declare = int64_t; };
     template <> struct dtype<UINT64> { using declare = uint64_t; };
-    template <> struct dtype<FLOAT16> { using declare = float16; };
     template <> struct dtype<FLOAT32> { using declare = float; };
     template <> struct dtype<FLOAT64> { using declare = double; };
     template <> struct dtype<PTR> { using declare = void*; };
@@ -165,7 +163,6 @@ namespace ts {
     template <> struct dtypeid<uint32_t> { static const DTYPE id = UINT32; };
     template <> struct dtypeid<int64_t> { static const DTYPE id = INT64; };
     template <> struct dtypeid<uint64_t> { static const DTYPE id = UINT64; };
-    template <> struct dtypeid<float16> { static const DTYPE id = FLOAT16; };
     template <> struct dtypeid<float> { static const DTYPE id = FLOAT32; };
     template <> struct dtypeid<double> { static const DTYPE id = FLOAT64; };
     template <> struct dtypeid<void*> { static const DTYPE id = PTR; };
