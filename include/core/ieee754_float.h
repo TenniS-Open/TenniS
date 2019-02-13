@@ -118,12 +118,30 @@ namespace ts {
             this->m_bits.code = typename bitset::type(bits);
         }
 
+        inline uint32_t __f2i(float f) {
+            union {
+                uint32_t i;
+                float f;
+            } temp;
+            temp.f = f;
+            return temp.i;
+        }
+
+        inline uint64_t __f2i(double f) {
+            union {
+                uint64_t i;
+                double f;
+            } temp;
+            temp.f = f;
+            return temp.i;
+        }
+
         ieee754_float(float f)
-                : self(ieee754_float<32, 1, 8, 23>(ts::bitset_code<32>(*reinterpret_cast<uint32_t *>(&f)))) {
+                : self(ieee754_float<32, 1, 8, 23>(ts::bitset_code<32>(__f2i(f)))) {
         }
 
         ieee754_float(double f)
-                : self(ieee754_float<64, 1, 11, 52>(ts::bitset_code<64>(*reinterpret_cast<uint64_t *>(&f)))) {
+                : self(ieee754_float<64, 1, 11, 52>(ts::bitset_code<64>(__f2i(f)))) {
         }
 
         ieee754_float(char i) : ieee754_float(float(i)) {}
@@ -239,12 +257,12 @@ namespace ts {
 
     template<>
     inline ieee754_float<32, 1, 8, 23>::ieee754_float(float f) {
-        m_bits = bitset(*reinterpret_cast<uint32_t *>(&f));
+        m_bits = bitset(__f2i(f));
     }
 
     template<>
     inline ieee754_float<64, 1, 11, 52>::ieee754_float(double f) {
-        m_bits = bitset(*reinterpret_cast<uint64_t *>(&f));
+        m_bits = bitset(__f2i(f));
     }
 
     using float16 = ieee754_float<16, 1, 5, 10>;
