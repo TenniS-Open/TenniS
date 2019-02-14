@@ -24,24 +24,28 @@ namespace ts {
     class bitset_type<8> {
     public:
         using type = uint8_t;
+        using signed_type = int8_t ;
     };
 
     template<>
     class bitset_type<16> {
     public:
         using type = uint16_t;
+        using signed_type = int16_t ;
     };
 
     template<>
     class bitset_type<32> {
     public:
         using type = uint32_t;
+        using signed_type = int32_t ;
     };
 
     template<>
     class bitset_type<64> {
     public:
         using type = uint64_t;
+        using signed_type = int64_t ;
     };
 
     template<size_t _W>
@@ -135,6 +139,10 @@ namespace ts {
             auto part_exponent = (origin_exponent << fraction) & this->mask_exponent().code;
             auto bits = part_sign | part_exponent | part_fraction;
             this->m_bits.code = typename bitset::type(bits);
+        }
+
+        bool iszero() const {
+            return (this->m_bits.code & ~this->mask_sign().code) == 0;
         }
 
         inline uint32_t __f2i(float f) {
@@ -244,29 +252,39 @@ namespace ts {
             return self(-typename upper_float<_W>::type(x));
         }
 
-        // TODO: fix all comparation operators
         friend bool operator==(const self &lhs, const self &rhs) {
+            if (lhs.iszero()) {
+                return rhs.iszero();
+            } else if (rhs.iszero()) {
+                return false;
+            }
             return lhs.code() == rhs.code();
         }
 
         friend bool operator!=(const self &lhs, const self &rhs) {
-            return lhs.code() != rhs.code();
-        }
-
-        friend bool operator>(const self &lhs, const self &rhs) {
-            return typename upper_float<_W>::type(lhs) > typename upper_float<_W>::type(rhs);
-        }
-
-        friend bool operator<(const self &lhs, const self &rhs) {
-            return typename upper_float<_W>::type(lhs) < typename upper_float<_W>::type(rhs);
+            return !operator==(lhs, rhs);
         }
 
         friend bool operator>=(const self &lhs, const self &rhs) {
-            return lhs == rhs || lhs > rhs;
+            return lhs == rhs || (
+                    ((lhs.code() | rhs.code()) & self::mask_sign().code) == 0 ?
+                    lhs.code() > rhs.code() : lhs.code() < rhs.code()
+            );
         }
 
         friend bool operator<=(const self &lhs, const self &rhs) {
-            return lhs == rhs || lhs < rhs;
+            return lhs == rhs || (
+                    ((lhs.code() | rhs.code()) & self::mask_sign().code) == 0 ?
+                    lhs.code() < rhs.code() : lhs.code() > rhs.code()
+            );
+        }
+
+        friend bool operator>(const self &lhs, const self &rhs) {
+            return !operator<=(lhs, rhs);
+        }
+
+        friend bool operator<(const self &lhs, const self &rhs) {
+            return !operator>=(lhs, rhs);
         }
 
         friend std::ostream &operator<<(std::ostream &out, const self &x) {
