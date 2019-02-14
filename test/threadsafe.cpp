@@ -2,9 +2,10 @@
 // Created by kier on 2019/2/14.
 //
 
-#include "core/threadsafe/tsmemory.h"
 #include "utils/log.h"
 #include "global/hard_allocator.h"
+#include "core/memory.h"
+#include "core/threadsafe/smart.h"
 
 #define TS_LOG_CHECKING(condition) TS_LOG_INFO("Checking [")(condition)("]: ")(#condition)
 
@@ -40,6 +41,9 @@ int main() {
 
     HardAllocator::Register(fake_device_type, fake_allocator);
 
+    using TSMemory = Smart<Memory>;
+
+
     MemoryDevice fake_device(fake_device_type, 0);
     TSMemory a(Memory(fake_device, 100));
 
@@ -54,4 +58,8 @@ int main() {
     TS_LOG_CHECKING(b.use_count() == 1);
     TS_LOG_CHECKING(c.use_count() == 1);
     TS_LOG_CHECKING(d.use_count() == 1);
+
+    TSMemory e = d.strong();
+
+    TS_LOG_CHECKING(e.use_count() == 2);
 }
