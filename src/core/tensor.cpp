@@ -41,7 +41,7 @@ namespace ts {
             , m_proto(proto) {}
 
     Tensor::Tensor(const MemoryDevice &device, const Tensor::Prototype &proto)
-            : m_memory(device, static_cast<size_t>(proto.count() * proto.type_bytes()))
+            : m_memory(make_smart<TensorMemory>(device, static_cast<size_t>(proto.count() * proto.type_bytes())))
             , m_proto(proto) {}
 
     Tensor::Tensor(const Tensor::Prototype &proto)
@@ -56,6 +56,10 @@ namespace ts {
             : m_memory(memory)
             , m_proto(proto) {}
 
+    Tensor::Tensor(const Smart<TensorMemory> &memory, const Tensor::Prototype &proto)
+            : m_memory(memory)
+            , m_proto(proto) {}
+
     Tensor Tensor::clone() const {
         std::shared_ptr<MemoryController> controller = std::make_shared<DynamicMemoryController>(this->device());
         return clone(controller);
@@ -65,7 +69,7 @@ namespace ts {
         auto fields = this->unpack();
         for (auto &value : fields) {
             Tensor dolly(std::move(controller), value.m_proto);
-            memcpy(dolly.m_memory, value.m_memory, size_t(value.m_proto.count() * value.m_proto.type_bytes()));
+            memcpy(*dolly.m_memory, *value.m_memory, size_t(value.m_proto.count() * value.m_proto.type_bytes()));
             value = dolly;
         }
         Tensor dolly;
@@ -77,7 +81,7 @@ namespace ts {
         auto fields = this->unpack();
         for (auto &value : fields) {
             Tensor dolly(std::move(controller), value.m_proto);
-            memcpy(dolly.m_memory, value.m_memory, size_t(value.m_proto.count() * value.m_proto.type_bytes()));
+            memcpy(*dolly.m_memory, *value.m_memory, size_t(value.m_proto.count() * value.m_proto.type_bytes()));
             value = dolly;
         }
         Tensor dolly;
@@ -89,7 +93,7 @@ namespace ts {
         auto fields = this->unpack();
         for (auto &value : fields) {
             Tensor dolly(std::move(controller), value.m_proto, device);
-            memcpy(dolly.m_memory, value.m_memory, size_t(value.m_proto.count() * value.m_proto.type_bytes()));
+            memcpy(*dolly.m_memory, *value.m_memory, size_t(value.m_proto.count() * value.m_proto.type_bytes()));
             value = dolly;
         }
         Tensor dolly;
@@ -146,7 +150,7 @@ namespace ts {
 
     void Tensor::pack(const std::vector<Tensor::self> &fields) {
         if (fields.empty()) {
-            this->m_memory = Memory();
+            this->m_memory = make_smart<TensorMemory>();
             this->m_proto = Prototype();
             return;
         }
@@ -262,7 +266,7 @@ namespace ts {
         size_t writen_size = 0;
         writen_size += binio::write<uint32_t>(stream, uint32_t(this->fields_count()));
         for (auto &tensor : this->unpack()) {
-            auto cpu_memory = tensor.m_memory.sync(MemoryDevice(CPU));
+            auto cpu_memory = tensor.m_memory->sync(MemoryDevice(CPU));
             writen_size += serialize_prototype_memory(stream, tensor.m_proto, cpu_memory);
         }
         return writen_size;
@@ -295,7 +299,7 @@ namespace ts {
 
     Tensor Tensor::view(const MemoryDevice &device) const {
         Tensor view_tensor;
-        view_tensor.m_memory = TensorMemory(m_memory.sync(device), false);
+        view_tensor.m_memory = TensorMemory(m_memory->sync(device), false);
         view_tensor.m_proto = m_proto;
 
         if (!m_fields.empty()) {
@@ -308,6 +312,23 @@ namespace ts {
         }
 
         return view_tensor;
+    }
+
+    Tensor Tensor::weak() const {
+        Tensor weak_tensor;
+        weak_tensor.m_memory = m_memory.weak();
+        weak_tensor.m_proto = m_proto;
+
+        if (!m_fields.empty()) {
+            std::vector<self> weak_fields(m_fields.size());
+            for (size_t i = 0; i < m_fields.size(); ++i) {
+                weak_fields[i] = m_fields.at(i).weak();
+            }
+
+            weak_tensor.m_fields = std::vector<self>(std::move(weak_fields));
+        }
+
+        return weak_tensor;
     }
 
     bool Tensor::has_shape(const Shape &shape) const {

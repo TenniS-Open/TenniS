@@ -40,11 +40,11 @@ namespace ts {
 
         Smart() : self(Object()) {}
 
-        Smart(const Object &memory)
-                : self(memory, SMART) {}
+        Smart(const Object &object)
+                : self(object, SMART) {}
 
-        Smart(const Object &memory, SmartMode mode)
-                : m_mode(mode), m_counted(new CountedObject(memory, mode == SMART ? 1 : 0)) {}
+        Smart(const Object &object, SmartMode mode)
+                : m_mode(mode), m_counted(new CountedObject(object, mode == SMART ? 1 : 0)) {}
 
         Smart(const self &other) {
             *this = other;
@@ -91,22 +91,22 @@ namespace ts {
 
         Object &operator*() {
             if (m_counted == nullptr) throw NullPointerException();
-            return m_counted->memory;
+            return m_counted->object;
         }
 
         const Object &operator*() const {
             if (m_counted == nullptr) throw NullPointerException();
-            return m_counted->memory;
+            return m_counted->object;
         }
 
         Object *operator->() {
             if (m_counted == nullptr) throw NullPointerException();
-            return &m_counted->memory;
+            return &m_counted->object;
         }
 
         const Object *operator->() const {
             if (m_counted == nullptr) throw NullPointerException();
-            return &m_counted->memory;
+            return &m_counted->object;
         }
 
         self weak() const {

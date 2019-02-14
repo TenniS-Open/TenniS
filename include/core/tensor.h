@@ -12,6 +12,8 @@
 #include "sync/sync_memory.h"
 #include <initializer_list>
 
+#include "core/threadsafe/smart.h"
+
 #include <vector>
 #include <cassert>
 
@@ -184,6 +186,8 @@ namespace ts {
 
         Tensor(const SyncMemory &memory, const Prototype &proto);
 
+        Tensor(const Smart<TensorMemory> &memory, const Prototype &proto);
+
         Tensor();
 
         Tensor(const self &) = default;
@@ -196,7 +200,7 @@ namespace ts {
 
         bool empty() const;
 
-        const MemoryDevice &device() const { return m_memory.device(); }
+        const MemoryDevice &device() const { return m_memory->device(); }
 
         DTYPE dtype() const { return m_proto.dtype(); }
 
@@ -210,21 +214,21 @@ namespace ts {
 
         const Prototype &proto() const { return m_proto; }
 
-        void *data() { return m_memory.data(); }
+        void *data() { return m_memory->data(); }
 
-        const void *data() const { return m_memory.data(); }
-
-        template<typename T>
-        T *data() { return m_memory.data<T>(); }
+        const void *data() const { return m_memory->data(); }
 
         template<typename T>
-        const T *data() const { return m_memory.data<T>(); }
+        T *data() { return m_memory->data<T>(); }
 
         template<typename T>
-        T &data(size_t i) { return m_memory.data<T>()[i]; }
+        const T *data() const { return m_memory->data<T>(); }
 
         template<typename T>
-        const T &data(size_t i) const { return m_memory.data<T>()[i]; }
+        T &data(size_t i) { return m_memory->data<T>()[i]; }
+
+        template<typename T>
+        const T &data(size_t i) const { return m_memory->data<T>()[i]; }
 
         Tensor clone() const;
 
@@ -262,27 +266,33 @@ namespace ts {
 
         HypeShape hype_shape() const { return HypeShape(this->sizes()); }
 
-        TensorMemory::shared locked() { return m_memory.locked(); }
+        TensorMemory::shared locked() { return m_memory->locked(); }
 
         /**
          * @return weak memory
          */
-        Memory sync() { return m_memory.sync(); }
+        Memory sync() { return m_memory->sync(); }
 
         /**
          * @return weak memory
          */
-        Memory sync() const { return m_memory.sync(); }
+        Memory sync() const { return m_memory->sync(); }
 
         /**
          * @return weak memory
          */
-        Memory sync(const MemoryDevice &device) { return m_memory.sync(device); }
+        Memory sync(const MemoryDevice &device) { return m_memory->sync(device); }
 
         /**
          * @return weak tensor, can not used in long time
          */
         Tensor view(const MemoryDevice &device) const;
+
+        /**
+         * weak tensor can not used in long time
+         * @return weak tensor
+         */
+        Tensor weak() const;
 
         bool has_shape(const Shape &shape) const;
 
@@ -291,7 +301,7 @@ namespace ts {
         }
 
     private:
-        TensorMemory m_memory;
+        Smart<TensorMemory> m_memory;
         Prototype m_proto;
 
         // add field supporting structure data
