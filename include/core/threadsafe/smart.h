@@ -38,10 +38,10 @@ namespace ts {
         using Object = T;
         using CountedObject = Counter<Object>;
 
-        Smart() = default;
+        Smart() : self(Object()) {}
 
         Smart(const Object &memory)
-                : Smart(memory, SMART) {}
+                : self(memory, SMART) {}
 
         Smart(const Object &memory, SmartMode mode)
                 : m_mode(mode), m_counted(new CountedObject(memory, mode == SMART ? 1 : 0)) {}
@@ -139,6 +139,11 @@ namespace ts {
         SmartMode m_mode = MANUALLY;
         CountedObject *m_counted = nullptr;
     };
+
+    template <typename T, typename ...Args>
+    Smart<T> make_smart(Args &&...args) {
+        return Smart<T>(T(std::forward<Args>(args)...), SMART);
+    }
 }
 
 #endif //TENSORSTACK_CORE_THREADSAFE_SMART_H
