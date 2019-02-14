@@ -244,6 +244,7 @@ namespace ts {
             return self(-typename upper_float<_W>::type(x));
         }
 
+        // TODO: fix all comparation operators
         friend bool operator==(const self &lhs, const self &rhs) {
             return lhs.code() == rhs.code();
         }
