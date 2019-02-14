@@ -46,7 +46,7 @@ namespace ts {
             }
         }
 
-        _VALUE get(const _KEY &key) const {
+        _VALUE &get(const _KEY &key) const {
             auto _read = this->lock_read();
             if (key == m_default_key) return m_default_value;
             auto it = m_sync_values.find(key);
@@ -66,7 +66,7 @@ namespace ts {
             m_sync_values.erase(key);
         }
 
-        _VALUE sync(const _KEY &key) {
+        _VALUE &sync(const _KEY &key) {
             {
                 auto _read = this->lock_read();
                 if (key == m_default_key) return m_default_value;
@@ -124,15 +124,15 @@ namespace ts {
     private:
         SyncBlock() = default;
 
-        _VALUE sync_insert(const _KEY &key) {
+        _VALUE &sync_insert(const _KEY &key) {
             if (key == m_default_key) return m_default_value;
             auto it = m_sync_values.find(key);
             if (it != m_sync_values.end()) {
                 return it->second;
             }
             _VALUE value = m_hanlder(m_default_value, m_default_key, key);
-            m_sync_values.insert(std::make_pair(key, value));
-            return value;
+            auto pair_it = m_sync_values.insert(std::make_pair(key, value));
+            return pair_it.first->second;
         }
 
         using unique_read_lock = ts::unique_read_lock<ts::rwmutex>;

@@ -158,13 +158,18 @@ namespace ts {
          */
         const MemoryDevice &device() const { return  m_sync_memory->key(); }
 
-        // following sync part
+        /**
+         * @return weak memory
+         */
         Memory sync() const {
-            return m_sync_memory->value();
+            return m_sync_memory->value().weak();
         }
 
+        /**
+         * @return weak memory
+         */
         Memory sync(const MemoryDevice &device) const {
-            return m_sync_memory->sync(device);
+            return m_sync_memory->sync(device).weak();
         }
 
         void broadcast(const MemoryDevice &device) {
