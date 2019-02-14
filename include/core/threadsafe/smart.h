@@ -44,7 +44,7 @@ namespace ts {
                 : Smart(memory, SMART) {}
 
         Smart(const Object &memory, SmartMode mode)
-                : m_mode(mode), m_counted(new CountedObject(memory, 1)) {}
+                : m_mode(mode), m_counted(new CountedObject(memory, mode == SMART ? 1 : 0)) {}
 
         Smart(const self &other) {
             *this = other;
