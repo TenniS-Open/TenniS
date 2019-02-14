@@ -184,11 +184,11 @@ namespace ts {
 			{
 				for (int oh = 0; oh < output_shape[2]; oh++)
 				{
+					int ihStart = oh * stride.height - m_padding.top;
+					int ihEnd = std::min<T>(ihStart + ksize.height, input_h);
 					for (int ow = 0; ow < output_shape[3]; ow++)
-					{
-						int ihStart = oh * stride.height - m_padding.top;
+					{		
 						int iwStart = ow * stride.width - m_padding.left;
-						int ihEnd = std::min<T>(ihStart + ksize.height, input_h);
 						int iwEnd = std::min<T>(iwStart + ksize.width, input_w);
 						ihStart = std::max<T>(ihStart, 0);
 						iwStart = std::max<T>(iwStart, 0);
@@ -236,11 +236,11 @@ namespace ts {
 			{
 				for (int oh = 0; oh < output_shape[2]; oh++)
 				{
+					int ihStart = oh * stride.height - m_padding.top;
+					int ihEnd = std::min<T>(ihStart + ksize.height, input_h);
 					for (int ow = 0; ow < output_shape[3]; ow++)
 					{
-						int ihStart = oh * stride.height - m_padding.top;
-						int iwStart = ow * stride.width - m_padding.left;
-						int ihEnd = std::min<T>(ihStart + ksize.height, input_h);
+						int iwStart = ow * stride.width - m_padding.left;	
 						int iwEnd = std::min<T>(iwStart + ksize.width, input_w);
 						ihStart = std::max<T>(ihStart, 0);
 						iwStart = std::max<T>(iwStart, 0);
