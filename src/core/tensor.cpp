@@ -153,9 +153,9 @@ namespace ts {
         this->m_memory = fields[0].m_memory;
         this->m_proto = fields[0].m_proto;
         if (fields.size() > 1) {
-            this->m_fields = std::make_shared<std::vector<self>>(fields.begin() + 1, fields.end());
+            this->m_fields = std::vector<self>(fields.begin() + 1, fields.end());
         } else {
-            this->m_fields.reset();
+            this->m_fields.clear();
         }
     }
 
@@ -163,8 +163,8 @@ namespace ts {
         std::vector<Tensor::self> fields(1);
         fields[0].m_memory = this->m_memory;
         fields[0].m_proto = this->m_proto;
-        if (this->m_fields != nullptr) {
-            fields.insert(fields.end(), this->m_fields->begin(), this->m_fields->end());
+        if (!this->m_fields.empty()) {
+            fields.insert(fields.end(), this->m_fields.begin(), this->m_fields.end());
         }
         return std::move(fields);
     }
@@ -173,11 +173,11 @@ namespace ts {
         if (offset == 0) {
             return Tensor(m_memory, m_proto);
         }
-        if (m_fields == nullptr || offset - 1 >= m_fields->size()) {
+        if (offset - 1 >= m_fields.size()) {
             TS_LOG_ERROR << "Tensor offset output range error. Access index " << offset << " in range("
                          << fields_count() << ")" << eject;
         }
-        return m_fields->at(offset - 1);
+        return m_fields.at(offset - 1);
     }
 
     void Tensor::field(size_t offset, const Tensor::self &value) {
@@ -186,19 +186,19 @@ namespace ts {
             this->m_proto = value.m_proto;
             return;
         }
-        if (m_fields == nullptr || offset - 1 >= m_fields->size()) {
+        if (offset - 1 >= m_fields.size()) {
             TS_LOG_ERROR << "Tensor offset output range error. Access index " << offset << " in range("
                          << fields_count() << ")" << eject;
         }
-        m_fields->at(offset - 1) = value;
+        m_fields.at(offset - 1) = value;
     }
 
     size_t Tensor::fields_count() const {
-        return m_fields == nullptr ? 1 : 1 + m_fields->size();
+        return m_fields.empty() ? 1 : 1 + m_fields.size();
     }
 
     bool Tensor::packed() const {
-        return !(m_fields == nullptr || m_fields->empty());
+        return !m_fields.empty();
     }
 
     static size_t serialize_prototype_memory(StreamWriter &stream,
@@ -298,13 +298,13 @@ namespace ts {
         view_tensor.m_memory = TensorMemory(m_memory.sync(device), false);
         view_tensor.m_proto = m_proto;
 
-        if (m_fields != nullptr) {
-            std::vector<self> view_fields(m_fields->size());
-            for (size_t i = 0; i < m_fields->size(); ++i) {
-                view_fields[i] = m_fields->at(i).view(device);
+        if (!m_fields.empty()) {
+            std::vector<self> view_fields(m_fields.size());
+            for (size_t i = 0; i < m_fields.size(); ++i) {
+                view_fields[i] = m_fields.at(i).view(device);
             }
 
-            view_tensor.m_fields = std::make_shared<std::vector<self>>(std::move(view_fields));
+            view_tensor.m_fields = std::vector<self>(std::move(view_fields));
         }
 
         return view_tensor;

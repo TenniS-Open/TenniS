@@ -283,7 +283,7 @@ namespace ts {
         Prototype m_proto;
 
         // add field supporting structure data
-        std::shared_ptr<std::vector<self>> m_fields;
+        std::vector<self> m_fields;
     };
 }
 
