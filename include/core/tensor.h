@@ -264,12 +264,24 @@ namespace ts {
 
         TensorMemory::shared locked() { return m_memory.locked(); }
 
+        /**
+         * @return weak memory
+         */
         Memory sync() { return m_memory.sync(); }
 
+        /**
+         * @return weak memory
+         */
         Memory sync() const { return m_memory.sync(); }
 
+        /**
+         * @return weak memory
+         */
         Memory sync(const MemoryDevice &device) { return m_memory.sync(device); }
 
+        /**
+         * @return weak tensor, can not used in long time
+         */
         Tensor view(const MemoryDevice &device) const;
 
         bool has_shape(const Shape &shape) const;
