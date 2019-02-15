@@ -4,19 +4,18 @@
 #include <core/tensor.h>
 #include <runtime/stack.h>
 #include <backend/base/element_wise_reduce.h>
+#include "operator_on_cpu.h"
 
 
 namespace ts {
 namespace cpu {
 
-class Add : public ElementWiseReduce {
+class Add : public OperatorOnCPU<ElementWiseReduce> {
 public:
     using self = Add;
     using supper = ElementWiseReduce;
 
     Add();
-
-    MemoryDevice running_memory_device() override;
 
     void reduce_with_broadcast(const Tensor &lhs, const Tensor &rhs, Tensor &out) override;
 

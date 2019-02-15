@@ -214,11 +214,6 @@ void Add::reduce_with_broadcast(const Tensor &lhs, const Tensor &rhs, Tensor &ou
             }
         }
     }
-
-    MemoryDevice Add::running_memory_device() {
-        return MemoryDevice(CPU);
-    }
-
 }
 }
 
