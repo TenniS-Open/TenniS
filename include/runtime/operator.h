@@ -76,6 +76,12 @@ namespace ts {
 
         const hash_map<std::string, Tensor> &params() const;
 
+        std::string op() const;
+
+        std::string name() const;
+
+        int output_count() const;
+
     private:
         bool is_in_fields(const std::string &name);
 
@@ -88,7 +94,6 @@ namespace ts {
         hash_map<std::string, Tensor> m_params;
         hash_set<std::string> m_optional_fields;
         hash_set<std::string> m_required_fields;
-        // std::string m_name;
     };
 
     /**
