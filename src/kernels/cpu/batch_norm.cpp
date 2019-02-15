@@ -29,6 +29,9 @@ namespace ts {
             const T *pvariance = variance.data<T>();
             T *pdst = out.data<T>();
 
+            // only used in CPU
+            std::memcpy(pdst, psrc, out.count() * sizeof(T));
+
             int stridedims = backdims * shape[dim];
             int offset = 0;
 
@@ -41,7 +44,7 @@ namespace ts {
                 for (int k = 0; k < shape[dim]; k++) {
                     offset = i * stridedims + k * backdims;
                     for (int m = 0; m < backdims; m++) {
-                        pdst[offset + m] = (psrc[offset + m] - pmean[k]) * vec[k];//(sqrt(pvariance[k] + m_epsilon));
+                        pdst[offset + m] = (pdst[offset + m] - pmean[k]) * vec[k];//(sqrt(pvariance[k] + m_epsilon));
                     }
                 }
             }

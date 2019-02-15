@@ -23,13 +23,17 @@ namespace ts {
         const T *psrc = x.data<T>();
         const T *pbias = b.data<T>();
         T *pdst = out.data<T>();
+
+        // only used in CPU
+        std::memcpy(pdst, psrc, out.count() * sizeof(T));
+
         int stridedims = back_dims * shape[dim];
         int offset = 0;
         for (int i = 0; i < pre_dims; i++) {
             for (int k = 0; k < shape[dim]; k++) {
                 offset = i * stridedims + k * back_dims;
                 for (int m = 0; m < back_dims; m++) {
-                    pdst[offset + m] = pbias[k] + psrc[offset + m];
+                    pdst[offset + m] += pbias[k];
                 }
             }
         }
