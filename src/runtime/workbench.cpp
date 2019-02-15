@@ -325,7 +325,7 @@ namespace ts {
     }
 
     void Workbench::push_data_sagment(int data_index) {
-        // TODO: deal with data_sagment, in case of thread sharing
-        this->m_stack->push(*this->m_data_sagment->index(data_index));
+        // TODO: deal with data_sagment, in case of thread sharing, waitting testing
+        this->m_stack->push(this->m_data_sagment->index(data_index)->weak());
     }
 }

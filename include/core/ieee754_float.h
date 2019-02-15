@@ -24,24 +24,28 @@ namespace ts {
     class bitset_type<8> {
     public:
         using type = uint8_t;
+        using signed_type = int8_t ;
     };
 
     template<>
     class bitset_type<16> {
     public:
         using type = uint16_t;
+        using signed_type = int16_t ;
     };
 
     template<>
     class bitset_type<32> {
     public:
         using type = uint32_t;
+        using signed_type = int32_t ;
     };
 
     template<>
     class bitset_type<64> {
     public:
         using type = uint64_t;
+        using signed_type = int64_t ;
     };
 
     template<size_t _W>
@@ -109,13 +113,36 @@ namespace ts {
 
         template<size_t _T_W, size_t _T_SIGN, size_t _T_EXPONENT, size_t _T_FRACTION>
         explicit ieee754_float(const ieee754_float<_T_W, _T_SIGN, _T_EXPONENT, _T_FRACTION> &other) {
+            // for float 0
+            if ((other.code() & ~other.mask_sign().code) == 0) {
+                this->m_bits.code = typename bitset::type((other.value_sign() << (W - 1)));
+                return;
+            }
+
             auto shift_left = int64_t(fraction) - int64_t(other.fraction);
-            auto bits = (other.value_sign() << (W - 1)) |
-                        (((other.value_exponent() + bias) << fraction) & this->mask_exponent().code) |
-                        (shift_left > 0
-                         ? (other.value_fraction() << shift_left)
-                         : (other.value_fraction() >> -shift_left));
+            auto part_sign = (other.value_sign() << (W - 1));
+            auto part_fraction = shift_left > 0
+                                 ? (other.value_fraction() << shift_left)
+                                 : (other.value_fraction() >> -shift_left);
+            auto origin_exponent = other.value_exponent() + bias;
+            // read url: https://baike.baidu.com/item/IEEE%20754/3869922?fr=aladdin
+            // following code can make NaN number to max or min number
+            constexpr auto max_exponent = (decltype(origin_exponent)(1) << exponent) - 2;
+            constexpr auto max_fraction = (decltype(part_fraction)(1) << fraction) - 1;
+            if (origin_exponent < decltype(origin_exponent)(0)) {
+                origin_exponent = 0;
+                part_fraction = 1;  // smallest float
+            } else if (origin_exponent > max_exponent) {
+                origin_exponent = max_exponent;
+                part_fraction = max_fraction;
+            }
+            auto part_exponent = (origin_exponent << fraction) & this->mask_exponent().code;
+            auto bits = part_sign | part_exponent | part_fraction;
             this->m_bits.code = typename bitset::type(bits);
+        }
+
+        bool iszero() const {
+            return (this->m_bits.code & ~this->mask_sign().code) == 0;
         }
 
         inline uint32_t __f2i(float f) {
@@ -223,6 +250,52 @@ namespace ts {
 
         friend self operator-(const self &x) {
             return self(-typename upper_float<_W>::type(x));
+        }
+
+        friend bool operator==(const self &lhs, const self &rhs) {
+            if (lhs.iszero()) {
+                return rhs.iszero();
+            } else if (rhs.iszero()) {
+                return false;
+            }
+            return lhs.code() == rhs.code();
+        }
+
+        friend bool operator!=(const self &lhs, const self &rhs) {
+            return !operator==(lhs, rhs);
+        }
+
+        friend bool operator>=(const self &lhs, const self &rhs) {
+            return lhs == rhs || (
+                    ((lhs.code() | rhs.code()) & self::mask_sign().code) == 0 ?
+                    lhs.code() > rhs.code() : lhs.code() < rhs.code()
+            );
+        }
+
+        friend bool operator<=(const self &lhs, const self &rhs) {
+            return lhs == rhs || (
+                    ((lhs.code() | rhs.code()) & self::mask_sign().code) == 0 ?
+                    lhs.code() < rhs.code() : lhs.code() > rhs.code()
+            );
+        }
+
+        friend bool operator>(const self &lhs, const self &rhs) {
+            return !operator<=(lhs, rhs);
+        }
+
+        friend bool operator<(const self &lhs, const self &rhs) {
+            return !operator>=(lhs, rhs);
+        }
+
+        friend std::ostream &operator<<(std::ostream &out, const self &x) {
+            return out << double(x);
+        }
+
+        friend std::istream &operator>>(std::istream &in, self &x) {
+            double d;
+            in >> d;
+            x = d;
+            return in;
         }
 
     private:

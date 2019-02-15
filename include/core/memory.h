@@ -167,6 +167,12 @@ namespace ts {
          */
         const MemoryDevice &device() const;
 
+        /**
+         * got weak reference, it will be invalid after this memory deleted
+         * @return weak memory
+         */
+        Memory weak() const;
+
     private:
         HardMemory::shared m_hard = nullptr;  ///< hardware memory
         size_t m_size = 0;                              ///< sizeof this memory block
