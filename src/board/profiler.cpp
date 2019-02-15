@@ -42,7 +42,7 @@ namespace ts {
     template <typename T>
     static std::string to_string(const T* ptr) {
         std::ostringstream oss;
-        oss << "0x" << std::setfill('0') << std::setw(sizeof(T*) * 2) << uint64_t(ptr);
+        oss << "0x" << std::hex << std::setfill('0') << std::setw(sizeof(T*) * 2) << uint64_t(ptr);
         return oss.str();
     }
 
