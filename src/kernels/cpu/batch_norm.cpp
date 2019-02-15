@@ -34,14 +34,14 @@ namespace ts {
 
             std::vector<T> vec(variance.count());
             for (int i = 0; i < vec.size(); i++) {
-                vec[i] = sqrt(pvariance[i] + T(epsilon));
+                vec[i] = T(1) / sqrt(pvariance[i] + T(epsilon));
             }
 
             for (int i = 0; i < predims; i++) {
                 for (int k = 0; k < shape[dim]; k++) {
                     offset = i * stridedims + k * backdims;
                     for (int m = 0; m < backdims; m++) {
-                        pdst[offset + m] = (psrc[offset + m] - pmean[k]) / vec[k];//(sqrt(pvariance[k] + m_epsilon));
+                        pdst[offset + m] = (psrc[offset + m] - pmean[k]) * vec[k];//(sqrt(pvariance[k] + m_epsilon));
                     }
                 }
             }
