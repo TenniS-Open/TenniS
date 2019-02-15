@@ -7,18 +7,24 @@
 #include "core/memory.h"
 #include "core/threadsafe/smart.h"
 
-#define TS_LOG_CHECKING(condition) TS_LOG_INFO("Checking [")(condition)("]: ")(#condition)
+#define TS_LOG_CHECKING(condition) TS_LOG_INFO("Case [")((condition) ? "PASSED" : "FAILED")("]: ")(#condition)
 
 using namespace ts;
 
 static const std::string fake_device_type;
+
+std::string p(void *p) {
+    std::ostringstream oss;
+    oss << "0x" << std::hex << std::setw(sizeof(p) * 2) << std::setfill('0') << uint64_t(p);
+    return oss.str();
+}
 
 void *fake_allocator(int id, size_t new_size, void *mem, size_t mem_size) {
     if (new_size == 0 && mem == nullptr) return nullptr;
     void *new_mem = nullptr;
     if (new_size == 0) {
         std::free(mem);
-        TS_LOG_INFO << std::hex << "free(0x" << mem << ")";
+        TS_LOG_INFO << std::hex << "free(" << p(mem) << ")";
         return nullptr;
     } else if (mem != nullptr) {
         if (mem_size) {
@@ -27,10 +33,10 @@ void *fake_allocator(int id, size_t new_size, void *mem, size_t mem_size) {
             std::free(mem);
             new_mem = std::malloc(new_size);
         }
-        TS_LOG_INFO << std::hex << "realloc(0x" << mem << ", " << std::oct << new_size << ") -> " << std::hex << "0x" << new_mem;
+        TS_LOG_INFO << std::hex << "realloc(" << p(mem) << ", " << std::oct << new_size << ") -> " << std::hex << "0x" << new_mem;
     } else {
         new_mem = std::malloc(new_size);
-        TS_LOG_INFO << "malloc(" << new_size << ") -> " << std::hex << "0x" << new_mem;
+        TS_LOG_INFO << "malloc(" << new_size << ") -> " << std::hex << p(new_mem);
     }
     if (new_mem == nullptr) throw OutOfMemoryException(MemoryDevice(fake_device_type, id), new_size);
     return new_mem;
