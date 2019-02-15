@@ -5,156 +5,63 @@
 #include <utils/assert.h>
 #include <core/device.h>
 
+/////////////////////////////////////////////////
 namespace ts {
+    template<typename T>
+    void cpu_add_bias_compute_run(const Tensor &x, const Tensor &b, int dim, Tensor &out) {
+        const Shape &shape = x.sizes();
+        int pre_dims = 1;
+        int back_dims = 1;
+        for (int i = 0; i < dim; i++) {
+            pre_dims *= shape[i];
+        }
 
+        for (int i = dim + 1; i < shape.size(); i++) {
+            back_dims *= shape[i];
+        }
 
-
-//////////////////////////////////////////////
-Add_Bias::Add_Bias() {
-    field(name::format, OPTIONAL);
-    field(name::dim, OPTIONAL);
-    m_dim = -1;     
-} 
-
-void Add_Bias::init() {
-    supper::init();
-
-    if(has(name::format)){
-        Tensor tensor_format = tensor::cast(CHAR8,get(name::format));
-        std::string format = tensor::to_string(tensor_format);
-        TS_AUTO_CHECK(format == name::NCHW || format == name::NHWC);
-
-        int nfind = format.find("C");
-        if(nfind != std::string::npos) {
-            m_dim = nfind;
+        const T *psrc = x.data<T>();
+        const T *pbias = b.data<T>();
+        T *pdst = out.data<T>();
+        int stridedims = back_dims * shape[dim];
+        int offset = 0;
+        for (int i = 0; i < pre_dims; i++) {
+            for (int k = 0; k < shape[dim]; k++) {
+                offset = i * stridedims + k * back_dims;
+                for (int m = 0; m < back_dims; m++) {
+                    pdst[offset + m] = pbias[k] + psrc[offset + m];
+                }
+            }
         }
     }
 
-    if(has(name::dim)){
-        Tensor tensor_dim = tensor::cast(INT32, get(name::dim));
-        m_dim = tensor::to_int(tensor_dim);
-    }
-
-    TS_AUTO_CHECK(m_dim >= 0); 
-}   
-
-void Add_Bias::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) {
-    int input_num = stack.size();
-    TS_AUTO_CHECK(input_num == 2);
-
-    const Shape & shape = stack.index(0)->sizes();
-
-    //TS_AUTO_CHECK(shape.size()  == 4 ); 
-   
-    const Shape & bias_shape = stack.index(1)->sizes();
-
-    TS_AUTO_CHECK(bias_shape.size()  == 1 );
-
-    TS_AUTO_CHECK(m_dim >= 0 && m_dim < shape.size()); 
-    
-    TS_AUTO_CHECK(stack.index(1)->count() == shape[m_dim]);
-    TS_AUTO_CHECK(stack.index(0)->dtype() == stack.index(1)->dtype());
-    output = Tensor::Prototype(stack.index(0)->dtype(), shape);
-    return;
-}
-
-
-
-int Add_Bias::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output) {
-    output.resize(1);
-    infer_private(stack, output[0]);
-    return 1;
-}
-
-template<typename T>
-void Add_Bias::compute_bias(Tensor *input_tensor, Tensor *bias_tensor, Tensor *output_tensor) {
-    const Shape& shape = input_tensor->sizes();
-    int predims = 1;
-    int backdims = 1;
-    for(int i=0; i<m_dim; i++) {
-        predims *= shape[i];
-    }
-
-    for(int i=m_dim+1; i<shape.size(); i++) {
-        backdims *= shape[i];
-    }
-
-    T* psrc  = input_tensor->sync(MemoryDevice(CPU)).data<T>();
-    T* pdst  = output_tensor->data<T>();
-    T* pbias = bias_tensor->sync(MemoryDevice(CPU)).data<T>();
-    int stridedims = backdims * shape[m_dim];
-    int offset = 0;
-    for(int i=0; i<predims; i++) {
-        for(int k=0; k<shape[m_dim]; k++) {
-            offset = i * stridedims + k * backdims;
-            for(int m=0; m<backdims; m++) {
-                pdst[offset + m] = pbias[k] + psrc[offset + m];
+    void cpu::AddBias::add(const Tensor &x, const Tensor &b, int dim, Tensor &out) {
+        // Notice: the all tensor' memory device are CPU, as given in running_memory_device
+        DTYPE dtype = out.dtype();
+        switch (dtype) {
+#define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
+        case DTYPE: { cpu_add_bias_compute_run<TYPE>(x, b, dim, out); break; }
+            DECLARE_COMPUTE_RUN(INT8, int8_t);
+            DECLARE_COMPUTE_RUN(UINT8, uint8_t);
+            DECLARE_COMPUTE_RUN(INT16, int16_t);
+            DECLARE_COMPUTE_RUN(UINT16, uint16_t);
+            DECLARE_COMPUTE_RUN(INT32, int32_t);
+            DECLARE_COMPUTE_RUN(UINT32, uint32_t);
+            DECLARE_COMPUTE_RUN(INT64, int64_t);
+            DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+            DECLARE_COMPUTE_RUN(FLOAT32, float);
+            DECLARE_COMPUTE_RUN(FLOAT64, double);
+#undef DECLARE_COMPUTE_RUN
+            default: {
+                TS_LOG_ERROR << this->op() << " not support this data type: " << dtype << eject;
+                break;
             }
         }
     }
 }
-
-
-
-int Add_Bias::run(ts::Stack &stack) {
-    std::vector<ts::Tensor::Prototype> output;
-    output.resize(1);
-    infer_private(stack, output[0]);
-
-    stack.push(output[0], MemoryDevice(CPU));
-    Tensor *bias_tensor  = stack.index(1);//tensor::cast(stack.index(0)->dtype(), *stack.index(1));
-    Tensor *input_tensor =  stack.index(0);
-
-    Tensor *tensor = stack.index(-1);
-
-    switch(input_tensor->dtype()) {
-
-        case INT8: {
-            compute_bias<char>(input_tensor, bias_tensor, tensor);
-            break;
-        }
-        case UINT8: {
-            compute_bias<unsigned char>(input_tensor, bias_tensor, tensor);
-            break;
-        }
-        case INT16: {
-            compute_bias<short>(input_tensor, bias_tensor, tensor);
-            break;
-        }
-        case UINT16: {
-            compute_bias<unsigned short>(input_tensor, bias_tensor, tensor);
-            break;
-        }
-        case INT32: {
-            compute_bias<int>(input_tensor, bias_tensor, tensor);
-            break;
-        }
-        case UINT32: {
-            compute_bias<unsigned int>(input_tensor, bias_tensor, tensor);
-            break;
-        }
-        case FLOAT32: {
-            compute_bias<float>(input_tensor, bias_tensor, tensor);
-            break;
-        }
-        case FLOAT64: {
-            compute_bias<double>(input_tensor, bias_tensor, tensor);
-            break;
-        }
-        default: {
-            throw Exception("add_bias do not support data type");
-            break;
-        }
-    }
-    return 1;
-}
-
-
-
-
-}
 /////////////////////////////////////////////////
 
 using namespace ts;
-TS_REGISTER_OPERATOR(Add_Bias, CPU, name::layer::add_bias())
+using namespace cpu;
+TS_REGISTER_OPERATOR(AddBias, CPU, name::layer::add_bias())
 

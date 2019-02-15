@@ -5,36 +5,21 @@
 #include <core/tensor.h>
 #include <runtime/stack.h>
 
-
+#include <backend/base/base_add_bias.h>
+#include "operator_on_cpu.h"
 
 namespace ts {
+    namespace cpu {
+        class AddBias : public OperatorOnCPU<base::AddBias> {
+        public:
 
+            using supper = ts::Operator;
 
-class Add_Bias : public ts::Operator {
-public:
+            AddBias() = default;
 
-    using supper = ts::Operator;
-    Add_Bias();
-
-    virtual void init(); 
-
-    virtual int run(ts::Stack &stack);
-    virtual int infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output); 
-
-
-private:
-    template<typename T>
-    void compute_bias(ts::Tensor *input_tensor, ts::Tensor *bias_tensor, ts::Tensor *output_tensor);
-    void infer_private(ts::Stack &stack, ts::Tensor::Prototype &output);
-
-private:
-    int m_dim;
-
-};
-
-
-
-
+            void add(const Tensor &x, const Tensor &b, int dim, Tensor &out) override;
+        };
+    }
 }
 
 #endif

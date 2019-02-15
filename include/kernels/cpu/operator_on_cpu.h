@@ -9,6 +9,9 @@
 
 namespace ts {
     namespace cpu {
+        /**
+         * @tparam OP must be the sub class of Operator or OperatorOnDevice
+         */
         template<typename OP>
         class OperatorOnCPU : public OP {
         public:
