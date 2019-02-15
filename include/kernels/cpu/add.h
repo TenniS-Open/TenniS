@@ -8,26 +8,24 @@
 
 
 namespace ts {
-namespace cpu {
+    namespace cpu {
+        class Add : public OperatorOnCPU<ElementWiseReduce> {
+        public:
+            using self = Add;
+            using supper = OperatorOnCPU<ElementWiseReduce>;
 
-class Add : public OperatorOnCPU<ElementWiseReduce> {
-public:
-    using self = Add;
-    using supper = ElementWiseReduce;
+            Add();
 
-    Add();
+            void reduce_with_broadcast(const Tensor &lhs, const Tensor &rhs, Tensor &out) override;
 
-    void reduce_with_broadcast(const Tensor &lhs, const Tensor &rhs, Tensor &out) override;
+            void reduce_with_same_shape(const Tensor &lhs, const Tensor &rhs, Tensor &out) override;
 
-    void reduce_with_same_shape(const Tensor &lhs, const Tensor &rhs, Tensor &out) override;
+            void reduce_with_bias(const Tensor &lhs, const Tensor &rhs, Tensor &out, int dim) override;
 
-    void reduce_with_bias(const Tensor &lhs, const Tensor &rhs, Tensor &out, int dim) override;
+            void reduce_with_scalar(const Tensor &lhs, const Tensor &rhs, Tensor &out) override;
 
-    void reduce_with_scalar(const Tensor &lhs, const Tensor &rhs, Tensor &out) override;
-
-};
-
-}
+        };
+    }
 }
 
 #endif

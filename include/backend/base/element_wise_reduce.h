@@ -12,7 +12,7 @@ namespace ts {
     class ElementWiseReduce : public OperatorOnDevice {
     public:
         using self = ElementWiseReduce;
-        using supper = Operator;
+        using supper = OperatorOnDevice;
 
         ElementWiseReduce() = default;  // tell me the operator memory
 
