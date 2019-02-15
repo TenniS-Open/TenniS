@@ -6,10 +6,10 @@
 #define TENSORSTACK_BACKEND_BASE_ELEMENT_WISE_REDUCE_H
 
 
-#include <runtime/operator.h>
+#include "operator_on_device.h"
 
 namespace ts {
-    class ElementWiseReduce : public Operator {
+    class ElementWiseReduce : public OperatorOnDevice {
     public:
         using self = ElementWiseReduce;
         using supper = Operator;
@@ -21,8 +21,6 @@ namespace ts {
         int run(Stack &stack) override;
 
         int infer(Stack &stack, std::vector<Tensor::Prototype> &output) override;
-
-        virtual MemoryDevice running_memory_device() = 0;
 
         /**
          *
