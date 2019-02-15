@@ -12,8 +12,8 @@ namespace ts {
     namespace cpu {
         class AddBias : public OperatorOnCPU<base::AddBias> {
         public:
-
-            using supper = ts::Operator;
+            using self = AddBias;
+            using supper = OperatorOnCPU<base::AddBias>;
 
             AddBias() = default;
 

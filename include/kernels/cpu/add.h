@@ -3,16 +3,15 @@
 
 #include <core/tensor.h>
 #include <runtime/stack.h>
-#include <backend/base/element_wise_reduce.h>
 #include "operator_on_cpu.h"
-
+#include <backend/base/base_add.h>
 
 namespace ts {
     namespace cpu {
-        class Add : public OperatorOnCPU<ElementWiseReduce> {
+        class Add : public OperatorOnCPU<base::Add> {
         public:
             using self = Add;
-            using supper = OperatorOnCPU<ElementWiseReduce>;
+            using supper = OperatorOnCPU<base::Add>;
 
             Add();
 
