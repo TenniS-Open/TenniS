@@ -8,130 +8,72 @@
 #include <vector>
 
 namespace ts {
+    namespace cpu {
 
+        template<typename T>
+        static void cpu_batch_norm_compute_run(const Tensor &x, const Tensor &mean,
+                                               const Tensor &variance, int dim, float epsilon, Tensor &out) {
+            const Shape &shape = x.sizes();
+            int predims = 1;
+            int backdims = 1;
+            for (int i = 0; i < dim; i++) {
+                predims *= shape[i];
+            }
 
+            for (int i = dim + 1; i < shape.size(); i++) {
+                backdims *= shape[i];
+            }
 
-//////////////////////////////////////////////
-Batch_Norm::Batch_Norm() {
-    field(name::epsilon, OPTIONAL);
-    field(name::dim, REQUIRED);
-    m_dim = -1;   
-    m_epsilon = 0.001;  
-} 
+            const T *psrc = x.data<T>();
+            const T *pmean = mean.data<T>();
+            const T *pvariance = variance.data<T>();
+            T *pdst = out.data<T>();
 
-void Batch_Norm::init() {
-    supper::init();
+            int stridedims = backdims * shape[dim];
+            int offset = 0;
 
-    if(has(name::epsilon)){
-        Tensor tensor_epsilon = tensor::cast(FLOAT32, get(name::epsilon));
-        m_epsilon = ts::tensor::to_float(tensor_epsilon); 
-    }
+            std::vector<T> vec(variance.count());
+            for (int i = 0; i < vec.size(); i++) {
+                vec[i] = sqrt(pvariance[i] + T(epsilon));
+            }
 
-    Tensor tensor_dim = tensor::cast(INT32, get(name::dim));
-    m_dim = ts::tensor::to_int(tensor_dim);
-  
-}   
+            for (int i = 0; i < predims; i++) {
+                for (int k = 0; k < shape[dim]; k++) {
+                    offset = i * stridedims + k * backdims;
+                    for (int m = 0; m < backdims; m++) {
+                        pdst[offset + m] = (psrc[offset + m] - pmean[k]) / vec[k];//(sqrt(pvariance[k] + m_epsilon));
+                    }
+                }
+            }
+        }
 
-void Batch_Norm::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) {
-    int input_num = stack.size();
-    TS_AUTO_CHECK(input_num == 3); 
-    const Shape& shape = stack.index(0)->sizes();
-
-    TS_AUTO_CHECK(m_dim >= 0 && m_dim < shape.size() ); 
-   
-    const Shape& mean_shape = stack.index(1)->sizes();
-    TS_AUTO_CHECK(mean_shape.size()  == 1 ); 
-
-    const Shape& variance_shape = stack.index(2)->sizes();
-    TS_AUTO_CHECK(variance_shape.size()  == 1 ); 
-
-    TS_AUTO_CHECK(variance_shape[0] == shape[m_dim] && mean_shape[0] == shape[m_dim]); 
-    TS_AUTO_CHECK(stack.index(0)->dtype() == stack.index(1)->dtype());
-    TS_AUTO_CHECK(stack.index(0)->dtype() == stack.index(2)->dtype());
-    output = ts::Tensor::Prototype(stack.index(0)->dtype(), shape);
-    return;
-}
-
-
-
-int Batch_Norm::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output) {
-    output.resize(1);
-    infer_private(stack, output[0]);
-    return 1;
-}
-
-template<typename T>
-void Batch_Norm::compute_batch_norm(Tensor *input_tensor, Tensor *mean_tensor, 
-                                    Tensor *variance_tensor, Tensor *output_tensor) {
-    const Shape& shape = input_tensor->sizes();
-    int predims = 1;
-    int backdims = 1;
-    for(int i=0; i<m_dim; i++) {
-        predims *= shape[i];
-    }
-
-    for(int i=m_dim+1; i<shape.size(); i++) {
-        backdims *= shape[i];
-    }
-
-    const T* psrc  = input_tensor->sync(MemoryDevice(CPU)).data<T>();
-    const T* pmean = mean_tensor->sync(MemoryDevice(CPU)).data<T>();
-    const T* pvariance = variance_tensor->sync(MemoryDevice(CPU)).data<T>();
-    T* pdst  = output_tensor->data<T>();
-
-
-    int stridedims = backdims * shape[m_dim];
-    int offset = 0;
-
-    std::vector<T> vec(variance_tensor->count());
-    for(int i=0; i<vec.size(); i++) {
-        vec[i] = sqrt(pvariance[i] + m_epsilon);
-    }
-
-    for(int i=0; i<predims; i++) {
-        for(int k=0; k<shape[m_dim]; k++) {
-            offset = i * stridedims + k * backdims;
-            for(int m=0; m<backdims; m++) {
-                pdst[offset + m] = (psrc[offset + m] - pmean[k]) / vec[k];//(sqrt(pvariance[k] + m_epsilon));
+        void BatchNorm::batch_norm(const Tensor &x, const Tensor &mean, const Tensor &variance,
+                                   int dim, float epsilon, Tensor &out) {
+            // Notice: the all tensor' memory device are CPU, as given in running_memory_device
+            DTYPE dtype = out.dtype();
+            switch (dtype) {
+#define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
+        case DTYPE: { cpu_batch_norm_compute_run<TYPE>(x, mean, variance, dim, epsilon, out); break; }
+                DECLARE_COMPUTE_RUN(INT8, int8_t);
+                DECLARE_COMPUTE_RUN(UINT8, uint8_t);
+                DECLARE_COMPUTE_RUN(INT16, int16_t);
+                DECLARE_COMPUTE_RUN(UINT16, uint16_t);
+                DECLARE_COMPUTE_RUN(INT32, int32_t);
+                DECLARE_COMPUTE_RUN(UINT32, uint32_t);
+                DECLARE_COMPUTE_RUN(INT64, int64_t);
+                DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+                DECLARE_COMPUTE_RUN(FLOAT32, float);
+                DECLARE_COMPUTE_RUN(FLOAT64, double);
+#undef DECLARE_COMPUTE_RUN
+                default: {
+                    TS_LOG_ERROR << this->op() << " not support this data type: " << dtype << eject;
+                    break;
+                }
             }
         }
     }
 }
 
-
-
-int Batch_Norm::run(ts::Stack &stack) {
-    std::vector<ts::Tensor::Prototype> output;
-    output.resize(1);
-    infer_private(stack, output[0]);
-
-    stack.push(output[0], MemoryDevice(CPU));
-    Tensor *input_tensor =  stack.index(0);
-    Tensor *mean_tensor  = stack.index(1);
-    Tensor *variance_tensor  = stack.index(2);
-    Tensor *tensor = stack.index(-1);
-
-    switch(input_tensor->dtype()) {
-        case FLOAT32: {
-            compute_batch_norm<float>(input_tensor, mean_tensor, variance_tensor, tensor);
-            break;
-        }
-        case FLOAT64: {
-            compute_batch_norm<double>(input_tensor, mean_tensor, variance_tensor, tensor);
-            break;
-        }
-        default: {
-            throw Exception("batch_norm only support FLOAT32 and FLOAT64 type");
-            break;
-        }
-    }
-    return 1;
-}
-
-
-
-}
-
-/////////////////////////////////////////////////
 using namespace ts;
-TS_REGISTER_OPERATOR(Batch_Norm, CPU, name::layer::batch_norm())
+using namespace cpu;
+TS_REGISTER_OPERATOR(BatchNorm, CPU, name::layer::batch_norm())
