@@ -1,41 +1,23 @@
-#ifndef TS_KERNELS_BATCH_SCALE_H
-#define TS_KERNELS_BATCH_SCALE_H
+#ifndef TS_KERNELS_CPU_BATCH_SCALE_H
+#define TS_KERNELS_CPU_BATCH_SCALE_H
 
-#include <core/tensor.h>
-#include <runtime/stack.h>
-#include <runtime/operator.h>
+#include "operator_on_cpu.h"
+#include "backend/base/base_batch_scale.h"
 
 
 namespace ts {
+    namespace cpu {
+        class BatchScale : public OperatorOnCPU<base::BatchScale> {
+        public:
+            using self = BatchScale;
+            using supper = OperatorOnCPU<base::BatchScale>;
 
+            BatchScale() = default;
 
-class Batch_Scale : public ts::Operator {
-public:
-
-    using supper = ts::Operator;
-    Batch_Scale();
-
-    virtual void init(); 
-
-    virtual int run(ts::Stack &stack);
-    virtual int infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output); 
-
-
-private:
-    template<typename T>
-    void compute_batch_scale(Tensor *input_tensor, Tensor *scale_tensor,
-                             Tensor *bias_tensor, Tensor *output_tensor);
-    void infer_private(ts::Stack &stack, ts::Tensor::Prototype &output);
-
-private:
-    int m_dim;
-
-};
-
-
-
-
-
+            void batch_scale(const Tensor &x, const Tensor &scale, const Tensor &bias,
+                             int dim, Tensor &out) override;
+        };
+    }
 }
 
-#endif
+#endif  // TS_KERNELS_CPU_BATCH_SCALE_H

@@ -1,121 +1,77 @@
 #include <kernels/cpu/batch_scale.h>
 #include <core/tensor_builder.h>
+
 #include <global/operator_factory.h>
 #include <backend/name.h>
-#include <core/device.h>
 #include <utils/assert.h>
+#include <core/device.h>
+#include <vector>
 
 namespace ts {
+    namespace cpu {
 
+        template<typename T>
+        static void cpu_batch_scale_compute_run(const Tensor &x, const Tensor &scale,
+                                                const Tensor &bias, int dim, Tensor &out) {
+            const Shape &shape = x.sizes();
+            int predims = 1;
+            int backdims = 1;
+            for (int i = 0; i < dim; i++) {
+                predims *= shape[i];
+            }
 
+            for (int i = dim + 1; i < shape.size(); i++) {
+                backdims *= shape[i];
+            }
 
-//////////////////////////////////////////////
-Batch_Scale::Batch_Scale() {
-    field(name::dim, REQUIRED);
-    m_dim = -1;   
-} 
+            const T *psrc = x.data<T>();
+            const T *pscale = scale.data<T>();
+            const T *pbias = bias.data<T>();
+            T *pdst = out.data<T>();
 
-void Batch_Scale::init() {
-    supper::init();
+            // only used in CPU
+            std::memcpy(pdst, psrc, out.count() * sizeof(T));
 
-    Tensor tensor_dim = tensor::cast(INT32, get(name::dim));
-    m_dim = ts::tensor::to_int(tensor_dim);
-}   
+            int stridedims = backdims * shape[dim];
+            int offset = 0;
 
-void Batch_Scale::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) {
-    int input_num = stack.size();
-    TS_AUTO_CHECK(input_num == 3);
+            for (int i = 0; i < predims; i++) {
+                for (int k = 0; k < shape[dim]; k++) {
+                    offset = i * stridedims + k * backdims;
+                    for (int m = 0; m < backdims; m++) {
+                        pdst[offset + m] = pdst[offset + m] * pscale[k] + pbias[k];
+                    }
+                }
+            }
+        }
 
-    const Shape& shape = stack.index(0)->sizes();
-
-    TS_AUTO_CHECK(m_dim >= 0 && m_dim < shape.size() ); 
-   
-    const Shape& scale_shape = stack.index(1)->sizes();
-    TS_AUTO_CHECK(scale_shape.size()  == 1 ); 
-
-    const Shape& bias_shape = stack.index(2)->sizes();
-    TS_AUTO_CHECK(bias_shape.size()  == 1 ); 
-
-    TS_AUTO_CHECK(scale_shape[0] == shape[m_dim] && bias_shape[0] == shape[m_dim]); 
-    TS_AUTO_CHECK(stack.index(0)->dtype() == stack.index(1)->dtype());
-    TS_AUTO_CHECK(stack.index(0)->dtype() == stack.index(2)->dtype());
-    output = Tensor::Prototype(stack.index(0)->dtype(), shape);
-    return;
-}
-
-
-
-int Batch_Scale::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output) {
-    output.resize(1);
-    infer_private(stack, output[0]);
-    return 1;
-}
-
-template<typename T>
-void Batch_Scale::compute_batch_scale(Tensor *input_tensor, Tensor *scale_tensor, 
-                                      Tensor *bias_tensor, Tensor *output_tensor) {
-    const Shape& shape = input_tensor->sizes();
-    int predims = 1;
-    int backdims = 1;
-    for(int i=0; i<m_dim; i++) {
-        predims *= shape[i];
-    }
-
-    for(int i=m_dim+1; i<shape.size(); i++) {
-        backdims *= shape[i];
-    }
-
-    const T* psrc  = input_tensor->sync(MemoryDevice(CPU)).data<T>();
-    const T* pscale = scale_tensor->sync(MemoryDevice(CPU)).data<T>();
-    const T* pbias = bias_tensor->sync(MemoryDevice(CPU)).data<T>();
-    T* pdst  = output_tensor->data<T>();
-    int stridedims = backdims * shape[m_dim];
-    int offset = 0;
-    for(int i=0; i<predims; i++) {
-        for(int k=0; k<shape[m_dim]; k++) {
-            offset = i * stridedims + k * backdims;
-            for(int m=0; m<backdims; m++) {
-                pdst[offset + m] = psrc[offset + m] * pscale[k] + pbias[k];
+        void BatchScale::batch_scale(const Tensor &x, const Tensor &mean, const Tensor &variance,
+                                     int dim, Tensor &out) {
+            // Notice: the all tensor' memory device are CPU, as given in running_memory_device
+            DTYPE dtype = out.dtype();
+            switch (dtype) {
+#define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
+        case DTYPE: { cpu_batch_scale_compute_run<TYPE>(x, mean, variance, dim, out); break; }
+                DECLARE_COMPUTE_RUN(INT8, int8_t);
+                DECLARE_COMPUTE_RUN(UINT8, uint8_t);
+                DECLARE_COMPUTE_RUN(INT16, int16_t);
+                DECLARE_COMPUTE_RUN(UINT16, uint16_t);
+                DECLARE_COMPUTE_RUN(INT32, int32_t);
+                DECLARE_COMPUTE_RUN(UINT32, uint32_t);
+                DECLARE_COMPUTE_RUN(INT64, int64_t);
+                DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+                DECLARE_COMPUTE_RUN(FLOAT32, float);
+                DECLARE_COMPUTE_RUN(FLOAT64, double);
+#undef DECLARE_COMPUTE_RUN
+                default: {
+                    TS_LOG_ERROR << this->op() << " not support this data type: " << dtype << eject;
+                    break;
+                }
             }
         }
     }
 }
 
-
-
-int Batch_Scale::run(ts::Stack &stack) {
-    std::vector<ts::Tensor::Prototype> output;
-    output.resize(1);
-    infer_private(stack, output[0]);
-
-    stack.push(output[0], MemoryDevice(CPU));
-    Tensor *input_tensor =  stack.index(0);
-    Tensor *scale_tensor  = stack.index(1);
-    Tensor *bias_tensor  =  stack.index(2);
-    Tensor *tensor = stack.index(-1);
-
-    switch(input_tensor->dtype()) {
-        case FLOAT32: {
-            compute_batch_scale<float>(input_tensor, scale_tensor, bias_tensor, tensor);
-            break;
-        }
-        case FLOAT64: {
-            compute_batch_scale<double>(input_tensor, scale_tensor, bias_tensor, tensor);
-            break;
-        }
-        default: {
-            throw Exception("batch_scale only support FLOAT32 and FLOAT64 type");
-            break;
-        }
-    }
-    return 1;
-}
-
-
-
-}
-
-/////////////////////////////////////////////////
 using namespace ts;
-TS_REGISTER_OPERATOR(Batch_Scale, CPU, name::layer::batch_scale())
-
+using namespace cpu;
+TS_REGISTER_OPERATOR(BatchScale, CPU, name::layer::batch_norm())
