@@ -15,6 +15,7 @@
 
 #include "utils/need.h"
 #include "runtime/stack.h"
+#include "module/bubble.h"
 
 
 namespace ts {
@@ -192,6 +193,21 @@ namespace ts {
 
     const Operator::hash_map<std::string, Tensor> &Operator::params() const {
         return m_params;
+    }
+
+    std::string Operator::op() const {
+        auto &param = Bubble::RetentionParam::op;
+        return has(param) ? tensor::to_string(get(param)) : std::string();
+    }
+
+    std::string Operator::name() const {
+        auto &param = Bubble::RetentionParam::name;
+        return has(param) ? tensor::to_string(get(param)) : std::string();
+    }
+
+    int Operator::output_count() const {
+        auto &param = Bubble::RetentionParam::output_count;
+        return has(param) ? tensor::to_int(get(param)) : 0;
     }
 
     int RunOperator(Operator::shared op, Stack &stack, int nargs) {
