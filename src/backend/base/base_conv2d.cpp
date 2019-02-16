@@ -118,6 +118,8 @@ namespace ts {
 
             TS_AUTO_CHECK(x_tensor.dtype() == w_tensor.dtype());
 
+            TS_AUTO_CHECK(w_tensor.size(1) == x_tensor.size(1));
+
             Size2D x;
             Size2D ksize;
             Padding2D padding;
