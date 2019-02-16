@@ -15,7 +15,7 @@ namespace ts {
             Conv2D() = default;
 
             void conv2d(const Tensor &x, const Padding2D &padding, float padding_value,
-                        const Tensor &w, const Stride2D &stride, const Dialations2D &dialations,
+                        const Tensor &w, const Stride2D &stride, const Dilation2D &dilation,
                         Conv2DFormat format, Tensor &out, Stack &stack) override;
 		};
 	}

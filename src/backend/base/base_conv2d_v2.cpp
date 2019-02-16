@@ -2,9 +2,7 @@
 // Created by kier on 2019/2/16.
 //
 
-#include <backend/base/base_conv2d.h>
-
-#include "backend/base/base_conv2d.h"
+#include <backend/base/base_conv2d_v2.h>
 
 #include "backend/name.h"
 #include "core/tensor_builder.h"
@@ -14,9 +12,9 @@
 
 namespace ts {
     namespace base {
-        Conv2D::Conv2D() {
+        Conv2DV2::Conv2DV2() {
             field(name::format, REQUIRED);
-            field(name::padding, REQUIRED);
+            // field(name::padding, REQUIRED);
             field(name::padding_value, OPTIONAL, tensor::from(0.0f));
             field(name::stride, REQUIRED);
             field(name::dilation, OPTIONAL);
@@ -35,7 +33,7 @@ namespace ts {
         }
 
 
-        void Conv2D::init() {
+        void Conv2DV2::init() {
             supper::init();
 
             auto format = tensor::to_string(get(name::format));
@@ -66,8 +64,8 @@ namespace ts {
                 TS_LOG_ERROR << this->op() << " do not support format: " << format << eject;
             }
 
-            m_padding4x2.resize(8);
-            for (size_t i = 0; i < 8; ++i) m_padding4x2[i] = padding_tensor.data<int32_t>(i);
+            // m_padding4x2.resize(8);
+            // for (size_t i = 0; i < 8; ++i) m_padding4x2[i] = padding_tensor.data<int32_t>(i);
             m_stride4.resize(4);
             for (size_t i = 0; i < 4; ++i) m_stride4[i] = stride_tensor.data<int32_t>(i);
             m_dilation4.resize(4);
@@ -75,12 +73,12 @@ namespace ts {
 
             // only support native conv2d
             if (m_format == FORMAT_NCHW) {
-                if (m_padding4x2[0] != 0 ||
-                    m_padding4x2[1] != 0 ||
-                    m_padding4x2[2] != 0 ||
-                    m_padding4x2[3] != 0) {
-                    TS_LOG_ERROR << this->op() << " do not support padding: " << to_string(m_padding4x2) << eject;
-                }
+                // if (m_padding4x2[0] != 0 ||
+                //     m_padding4x2[1] != 0 ||
+                //     m_padding4x2[2] != 0 ||
+                //     m_padding4x2[3] != 0) {
+                //     TS_LOG_ERROR << this->op() << " do not support padding: " << to_string(m_padding4x2) << eject;
+                // }
                 if (m_stride4[0] != 1 ||
                     m_stride4[1] != 1) {
                     TS_LOG_ERROR << this->op() << " do not support stride: " << to_string(m_stride4) << eject;
@@ -90,12 +88,12 @@ namespace ts {
                     TS_LOG_ERROR << this->op() << " do not support dialations: " << to_string(m_dilation4) << eject;
                 }
             } else if (m_format == FORMAT_NHWC) {
-                if (m_padding4x2[0] != 0 ||
-                    m_padding4x2[1] != 0 ||
-                    m_padding4x2[6] != 0 ||
-                    m_padding4x2[7] != 0) {
-                    TS_LOG_ERROR << this->op() << " do not support padding: " << to_string(m_padding4x2) << eject;
-                }
+                // if (m_padding4x2[0] != 0 ||
+                //     m_padding4x2[1] != 0 ||
+                //     m_padding4x2[6] != 0 ||
+                //     m_padding4x2[7] != 0) {
+                //     TS_LOG_ERROR << this->op() << " do not support padding: " << to_string(m_padding4x2) << eject;
+                // }
                 if (m_stride4[0] != 1 ||
                     m_stride4[3] != 1) {
                     TS_LOG_ERROR << this->op() << " do not support stride: " << to_string(m_stride4) << eject;
@@ -107,11 +105,31 @@ namespace ts {
             }
         }
 
-        int Conv2D::infer(Stack &stack, std::vector<Tensor::Prototype> &output) {
+        int Conv2DV2::infer(Stack &stack, std::vector<Tensor::Prototype> &output) {
             TS_AUTO_CHECK(stack.size() == 2);
 
             auto x_tensor = stack[0];
-            auto w_tensor = stack[1];
+            auto padding_tensor = tensor::cast(INT32, stack[1]);
+            auto w_tensor = stack[2];
+
+            std::valarray<int> m_padding4x2(8);
+            for (size_t i = 0; i < 8; ++i) m_padding4x2[i] = padding_tensor.data<int32_t>(i);
+
+            if (m_format == FORMAT_NCHW) {
+                if (m_padding4x2[0] != 0 ||
+                    m_padding4x2[1] != 0 ||
+                    m_padding4x2[2] != 0 ||
+                    m_padding4x2[3] != 0) {
+                    TS_LOG_ERROR << this->op() << " do not support padding: " << to_string(m_padding4x2) << eject;
+                }
+            } else if (m_format == FORMAT_NHWC) {
+                if (m_padding4x2[0] != 0 ||
+                    m_padding4x2[1] != 0 ||
+                    m_padding4x2[6] != 0 ||
+                    m_padding4x2[7] != 0) {
+                    TS_LOG_ERROR << this->op() << " do not support padding: " << to_string(m_padding4x2) << eject;
+                }
+            }
 
             TS_AUTO_CHECK(x_tensor.has_shape({-1, -1, -1, -1}));
             TS_AUTO_CHECK(w_tensor.has_shape({-1, -1, -1, -1}));
@@ -158,7 +176,7 @@ namespace ts {
             return 1;
         }
 
-        int Conv2D::run(Stack &stack) {
+        int Conv2DV2::run(Stack &stack) {
             std::vector<Tensor::Prototype> output_protos;
             infer(stack, output_protos);
 
@@ -172,6 +190,10 @@ namespace ts {
             Padding2D padding;
             Stride2D stride;
             Dilation2D dilation;
+
+            auto padding_tensor = tensor::cast(INT32, stack[1]);
+            std::valarray<int> m_padding4x2(8);
+            for (size_t i = 0; i < 8; ++i) m_padding4x2[i] = padding_tensor.data<int32_t>(i);
 
             if (m_format == FORMAT_NCHW) {
                 padding = Padding2D(m_padding4x2[4], m_padding4x2[5], m_padding4x2[6], m_padding4x2[7]);

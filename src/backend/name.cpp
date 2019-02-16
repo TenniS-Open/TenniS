@@ -49,6 +49,10 @@ namespace ts {
             }
         }
 
+        namespace typo {
+            string dialations = "dialations";
+        }
+
         string NCHW = "NCHW";
         string NHWC = "NHWC";
         string dim = "dim";
@@ -60,7 +64,7 @@ namespace ts {
         string padding = "padding";
         string padding_value = "padding_value";
         string stride = "stride";
-        string dialations = "dialations";
+        string dilation = "dilation";
         string epsilon = "epsilon";
         string max = "max";
         string slope = "slope";

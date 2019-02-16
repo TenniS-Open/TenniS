@@ -62,7 +62,7 @@ namespace ts {
 
     using KSize2D = Form2D<int32_t>;
 
-    using Dialations2D = Form2D<int32_t>;
+    using Dilation2D = Form2D<int32_t>;
 
     using Size2D = Form2D<int32_t>;
 

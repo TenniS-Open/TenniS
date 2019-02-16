@@ -15,7 +15,7 @@ namespace ts {
 
         template<typename T>
         static void cpu_conv2d_nchw_compute_run(const Tensor &x, const Padding2D &padding, float padding_value,
-                                           const Tensor &w, const Stride2D &stride, const Dialations2D &dialations,
+                                           const Tensor &w, const Stride2D &stride, const Dilation2D &dilation,
                                            Tensor &out, Stack &stack) {
             auto weight_shape = w.sizes();
             auto output_shape = out.sizes();
@@ -63,7 +63,7 @@ namespace ts {
                                padding.top, padding.bottom,
                                padding.left, padding.right,
                                stride.height, stride.width,
-                               dialations.height, dialations.width,
+                               dilation.height, dilation.width,
                                col_buffer, T(padding_value));
                 }
 #ifdef TS_USE_CBLAS
@@ -79,7 +79,7 @@ namespace ts {
         }
 
         void Conv2D::conv2d(const Tensor &x, const Padding2D &padding, float padding_value, const Tensor &w,
-                            const Stride2D &stride, const Dialations2D &dialations, Conv2DFormat format, Tensor &out,
+                            const Stride2D &stride, const Dilation2D &dilation, Conv2DFormat format, Tensor &out,
                             Stack &stack) {
             if (format != FORMAT_NCHW) {
                 TS_LOG_ERROR << op() << " do not support format:" << tensor::to_string(get(name::format)) << eject;
@@ -87,7 +87,7 @@ namespace ts {
             DTYPE dtype = out.dtype();
             switch (dtype) {
 #define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
-        case DTYPE: { cpu_conv2d_nchw_compute_run<TYPE>(x, padding, padding_value, w, stride, dialations, out, stack);; break; }
+        case DTYPE: { cpu_conv2d_nchw_compute_run<TYPE>(x, padding, padding_value, w, stride, dilation, out, stack);; break; }
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN

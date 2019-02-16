@@ -2,8 +2,8 @@
 // Created by kier on 2019/2/16.
 //
 
-#ifndef TENSORSTACK_BACKEND_BASE_BASE_CONV2D_H
-#define TENSORSTACK_BACKEND_BASE_BASE_CONV2D_H
+#ifndef TENSORSTACK_BACKEND_BASE_BASE_CONV2D_V2_H
+#define TENSORSTACK_BACKEND_BASE_BASE_CONV2D_V2_H
 
 #include "operator_on_device.h"
 #include <valarray>
@@ -13,18 +13,18 @@
 namespace ts {
     namespace base {
 
-        class Conv2D : public OperatorOnDevice {
+        class Conv2DV2 : public OperatorOnDevice {
         public:
-            using self = Conv2D;
+            using self = Conv2DV2;
             using supper = OperatorOnDevice;
 
-            Conv2D();
+            Conv2DV2();
 
             void init() override;
 
             /**
              *
-             * @param stack Contains x, w
+             * @param stack Contains x, padding, w
              * @return 1
              */
             int run(Stack &stack) override;
@@ -37,7 +37,7 @@ namespace ts {
 
         private:
             Conv2DFormat m_format;
-            std::valarray<int> m_padding4x2;
+            // std::valarray<int> m_padding4x2;
             float m_padding_value;
             std::valarray<int> m_stride4;
             std::valarray<int> m_dilation4;
@@ -46,4 +46,4 @@ namespace ts {
 }
 
 
-#endif //TENSORSTACK_BACKEND_BASE_BASE_CONV2D_H
+#endif //TENSORSTACK_BACKEND_BASE_BASE_CONV2D_V2_H
