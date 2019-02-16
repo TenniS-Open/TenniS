@@ -28,7 +28,7 @@ namespace ts {
     }
 
     inline Size2D conv2d_forward(const Size2D &x, const Padding2D &padding, const KSize2D &ksize,
-                                 const Stride2D &stride, const Dialations2D &dialations) {
+                                 const Stride2D &stride, const Dilation2D &dialations) {
         Size2D y;
         y.height = Size2D::Dtype(std::floor(
                 (x.height + padding.top + padding.bottom -
@@ -40,7 +40,7 @@ namespace ts {
     }
 
     inline Size2D conv2d_backward(const Size2D &y, const Padding2D &padding, const KSize2D &ksize,
-                                  const Stride2D &stride, const Dialations2D &dialations) {
+                                  const Stride2D &stride, const Dilation2D &dialations) {
         Size2D x;
         x.height = (y.height - 1) * stride.height + (dialations.height * (ksize.height - 1) + 1)
                    - padding.top - padding.bottom;

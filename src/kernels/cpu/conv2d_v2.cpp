@@ -97,7 +97,7 @@ int Conv2d_V2::run(ts::Stack &stack) {
     Operator::shared conv2d_op = conv2d_creator();
 
     conv2d_op->set(name::stride,get(name::stride));
-    conv2d_op->set(name::dialations, get(name::dialations));
+    conv2d_op->set(name::dilation, get(name::dilation));
     conv2d_op->set(name::format,get(name::format));
     if(has(name::padding_value)) {
         conv2d_op->set(name::padding_value, get(name::padding_value));

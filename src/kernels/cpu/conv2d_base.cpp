@@ -40,7 +40,8 @@ Conv2d_Base::Conv2d_Base() {
     field(name::format, REQUIRED);
     field(name::padding, REQUIRED);
     field(name::stride, REQUIRED);
-    field(name::dialations, REQUIRED);
+    field(name::dilation, OPTIONAL);
+    field(name::typo::dialations, OPTIONAL);
     //field(name::group, OPTIONAL);
     field(name::padding_value,OPTIONAL);
     //m_group = 1;
@@ -82,16 +83,26 @@ void Conv2d_Base::init() {
         }
         m_stride[i] = tensor_stride.data<int>()[i];
     }
+    
+    Tensor dilation_tensor;
+    if (has(name::dilation)) {
+        dilation_tensor = tensor::cast(INT32, get(name::dilation));
+    } else if (has(name::typo::dialations)) {
+        dilation_tensor = tensor::cast(INT32, get(name::typo::dialations));
+    }
 
-    Tensor tensor_dialations = tensor::cast(INT32, get(name::dialations));
-    TS_AUTO_CHECK(tensor_dialations.dims() == 1 && tensor_dialations.count() == 4); 
+    if (dilation_tensor.empty()) {
+        TS_LOG_ERROR << this->op() << " must set " << name::dilation << " or " << name::typo::dialations << eject;
+    }
+    
+    TS_AUTO_CHECK(dilation_tensor.dims() == 1 && dilation_tensor.count() == 4); 
 
     m_dialations.resize(4);
     for(int i=0; i<4; i++) {
         if(i==0 || i== 1) {
-            TS_AUTO_CHECK(tensor_dialations.data<int>()[i] == 1 ); 
+            TS_AUTO_CHECK(dilation_tensor.data<int>()[i] == 1 ); 
         }
-        m_dialations[i] = tensor_dialations.data<int>()[i];
+        m_dialations[i] = dilation_tensor.data<int>()[i];
     }
 
     /*

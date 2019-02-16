@@ -258,8 +258,8 @@ def convert_convolution_layer(layer, input_nodes, output_names):
     weights_blob = blob2numpy(param.kernel_param)
     print("--##    Weights shape: {}".format(weights_blob.shape))
 
-    dialation = [param.dilation_height, param.dilation_width]
-    print("--##    Dialation: {}".format(dialation))
+    dilation = [param.dilation_height, param.dilation_width]
+    print("--##    Dilation: {}".format(dilation))
 
     num_output = None
     if param.HasField("num_output"):
@@ -319,7 +319,7 @@ def convert_convolution_layer(layer, input_nodes, output_names):
                                padding=[[0, 0], [0, 0], [padding[0], padding[0]], [padding[1], padding[1]]],
                                padding_value=0,
                                stride=[1, 1, stride[0], stride[1]],
-                               dialations=[1, 1, dialation[0], dialation[1]])
+                               dilation=[1, 1, dilation[0], dilation[1]])
     elif is_depthwise_conv2d:
         weights_shape = weights_blob.shape
         depthwise_weights_shape = (weights_shape[1], weights_shape[0], weights_shape[2], weights_shape[3])
@@ -328,7 +328,7 @@ def convert_convolution_layer(layer, input_nodes, output_names):
                                          padding=[[0, 0], [0, 0], [padding[0], padding[0]], [padding[1], padding[1]]],
                                          padding_value=0,
                                          stride=[0, 0, stride[0], stride[1]],
-                                         dialations=[1, 1, dialation[0], dialation[1]])
+                                         dilation=[1, 1, dilation[0], dilation[1]])
 
     if conv2d is None:
         raise NotImplementedError(layer)

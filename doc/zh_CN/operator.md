@@ -106,7 +106,7 @@
 - `stride` `Int[4]` `batch` 和 `channels` 的默认为 `1`
 在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
 在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
-- `dialations` `Int[4]` `batch` 和 `channels` 的默认为 `1`
+- `dilation` `Int[4]` `batch` 和 `channels` 的默认为 `1`
 在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
 在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
 
@@ -155,7 +155,7 @@ output_w = floor((width + pad_w -
 - `stride` `Int[4]` `batch` 和 `channels` 的默认为 `1`
 在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
 在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
-- `dialations` `Int[4]` `batch` 和 `channels` 的默认为 `1`
+- `dilation` `Int[4]` `batch` 和 `channels` 的默认为 `1`
 在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
 在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
 
@@ -192,7 +192,7 @@ output_w = floor((width + pad_w -
 - `stride` `Int[4]` `batch` 和 `channels` 的默认为 `1`
 在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
 在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
-- `dialations` `Int[4]` `batch` 和 `channels` 的默认为 `1`
+- `dilation` `Int[4]` `batch` 和 `channels` 的默认为 `1`
 在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
 在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
 
@@ -225,7 +225,7 @@ output_w = floor((width + pad_w -
 - `stride` `Int[4]` `batch` 和 `channels` 的默认为 `1`
 在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
 在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
-- `dialations` `Int[4]` `batch` 和 `channels` 的默认为 `1`
+- `dilation` `Int[4]` `batch` 和 `channels` 的默认为 `1`
 在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
 在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
 

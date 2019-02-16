@@ -61,7 +61,7 @@ class Name(object):
     padding = "padding"
     padding_value = "padding_value"
     stride = "stride"
-    dialations = "dialations"
+    dilation = "dilation"
     epsilon = "epsilon"
     max = "max"
     slope = "slope"
@@ -86,7 +86,7 @@ class Default(object):
         return [1, 1, 1, 1]
 
     @staticmethod
-    def dialations():
+    def dilation():
         return [1, 1, 1, 1]
 
     @staticmethod
@@ -188,7 +188,7 @@ def conv2d(name, x, w,
            padding=None,
            padding_value=None,
            stride=None,
-           dialations=None):
+           dilation=None):
     assert isinstance(x, Node)
 
     if padding is None:
@@ -197,8 +197,8 @@ def conv2d(name, x, w,
         padding_value = Default.padding_value()
     if stride is None:
         stride = Default.stride()
-    if dialations is None:
-        dialations = Default.dialations()
+    if dilation is None:
+        dilation = Default.dilation()
     w = to_node(w, name="_const_" + name + "_weights")
 
     node = None
@@ -213,7 +213,7 @@ def conv2d(name, x, w,
     node.set(Name.format, format)
     node.set(Name.padding_value, padding_value)
     node.set(Name.stride, stride, numpy.int32)
-    node.set(Name.dialations, dialations, numpy.int32)
+    node.set(Name.dilation, dilation, numpy.int32)
 
     return node
 
@@ -242,7 +242,7 @@ def depthwise_conv2d(name, x, w,
                      padding=None,
                      padding_value=None,
                      stride=None,
-                     dialations=None):
+                     dilation=None):
     assert isinstance(x, Node)
 
     if padding is None:
@@ -251,8 +251,8 @@ def depthwise_conv2d(name, x, w,
         padding_value = Default.padding_value()
     if stride is None:
         stride = Default.stride()
-    if dialations is None:
-        dialations = Default.dialations()
+    if dilation is None:
+        dilation = Default.dilation()
     w = to_node(w, name="_const_" + name + "_weights")
 
     node = None
@@ -266,7 +266,7 @@ def depthwise_conv2d(name, x, w,
     node.set(Name.format, format)
     node.set(Name.padding_value, padding_value)
     node.set(Name.stride, stride, numpy.int32)
-    node.set(Name.dialations, dialations, numpy.int32)
+    node.set(Name.dilation, dilation, numpy.int32)
 
     return node
 

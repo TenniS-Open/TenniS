@@ -49,6 +49,10 @@ namespace ts {
             const string &nhwc_center_crop2d() TS_NOEXCEPT;
         }
 
+        namespace typo {
+            extern string dialations;
+        }
+
         extern string NCHW;
         extern string NHWC;
         extern string dim;
@@ -60,7 +64,7 @@ namespace ts {
         extern string padding;
         extern string padding_value;
         extern string stride;
-        extern string dialations;
+        extern string dilation;
         extern string epsilon;
         extern string max;
         extern string slope;
