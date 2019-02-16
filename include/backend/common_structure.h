@@ -24,6 +24,16 @@ namespace ts {
     };
 
     template <typename T>
+    inline bool operator==(const Aspect2D<T> &lhs, const Aspect2D<T> &rhs) {
+        return lhs.top == rhs.top && lhs.bottom == rhs.bottom && lhs.left == rhs.left && lhs.right == rhs.right;
+    }
+
+    template <typename T>
+    inline bool operator!=(const Aspect2D<T> &lhs, const Aspect2D<T> &rhs) {
+        return !operator==(lhs, rhs);
+    }
+
+    template <typename T>
     class Form2D {
     public:
         using Dtype = T;
@@ -36,6 +46,16 @@ namespace ts {
         Dtype width;
     };
 
+    template <typename T>
+    inline bool operator==(const Form2D<T> &lhs, const Form2D<T> &rhs) {
+        return lhs.height == rhs.height && lhs.width == rhs.width;
+    }
+
+    template <typename T>
+    inline bool operator!=(const Form2D<T> &lhs, const Form2D<T> &rhs) {
+        return !operator==(lhs, rhs);
+    }
+
     using Padding2D = Aspect2D<int32_t>;
 
     using Stride2D = Form2D<int32_t>;
@@ -45,6 +65,11 @@ namespace ts {
     using Dialations2D = Form2D<int32_t>;
 
     using Size2D = Form2D<int32_t>;
+
+    enum Conv2DFormat {
+        FORMAT_NCHW = 0,
+        FORMAT_NHWC = 1,
+    };
 }
 
 #endif //TENSORSTACK_BACKEND_COMMON_STRUCTURE_H
