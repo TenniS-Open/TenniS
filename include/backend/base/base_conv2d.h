@@ -33,7 +33,7 @@ namespace ts {
 
             virtual void conv2d(const Tensor &x, const Padding2D &padding, float padding_value,
                     const Tensor &w, const Stride2D &stride, const Dialations2D &dialations,
-                    Conv2DFormat format, Tensor &out) = 0;
+                    Conv2DFormat format, Tensor &out, Stack &stack) = 0;
 
         private:
             Conv2DFormat m_format;
