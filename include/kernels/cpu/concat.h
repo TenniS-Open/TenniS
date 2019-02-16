@@ -1,29 +1,22 @@
 #ifndef TS_KERNELS_CONCAT_H
 #define TS_KERNELS_CONCAT_H
 
-#include <global/operator_factory.h>
-#include <core/tensor.h>
-#include <runtime/stack.h>
+#include "operator_on_cpu.h"
+#include "backend/base/base_concat.h"
+
 
 namespace ts {
+	namespace cpu {
+		class Concat : public OperatorOnAny<base::Concat> {
+		public:
+			using self = Concat;
+			using supper = OperatorOnAny<base::Concat>;
 
-	class Concat : public ts::Operator {
-	public:
-		using supper = ts::Operator;
-		Concat();
-		virtual void init();
-		virtual int run(ts::Stack &stack);
-		virtual int infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output);
-	private:
+			Concat() = default;
 
-		template<typename T>
-		bool concat(ts::Stack &stack, int input_num, MemoryDevice device_type);
-
-	private:
-		int m_dim;
-	};
-
-	//TS_REGISTER_OPERATOR(Concat, ts::CPU, "concat")
+			void concat(const std::vector<Tensor> &x, int dim, Tensor &out) override;
+		};
+	}
 }
 
 
