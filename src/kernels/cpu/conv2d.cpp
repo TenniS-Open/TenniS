@@ -18,15 +18,18 @@ namespace ts {
                                            const Tensor &w, const Stride2D &stride, const Dialations2D &dialations,
                                            Tensor &out, Stack &stack) {
             auto weight_shape = w.sizes();
-            auto reshape = out.sizes();
-            auto shape = x.sizes();
+            auto output_shape = out.sizes();
+            auto x_shape = x.sizes();
             int kernel_dims = weight_shape[1] * weight_shape[2] * weight_shape[3];
-            int conv_out_spatial_dim = reshape[2] * reshape[3];
-            //int col_offset = kernel_dims * conv_out_spatial_dim;
-            //int weight_offset = weight_shape[0] * kernel_dims;
-            int output_number_offset = reshape[1] * conv_out_spatial_dim;
-            int input_number_offset = shape[1] * shape[2] * shape[3];
-            int col_buffer_size = shape[1] * weight_shape[2] * weight_shape[3] * reshape[2] * reshape[3];
+            int conv_out_spatial_dim = output_shape[2] * output_shape[3];
+            int output_number_offset = output_shape[1] * conv_out_spatial_dim;
+            int input_number_offset = x_shape[1] * x_shape[2] * x_shape[3];
+            int col_buffer_size = x_shape[1] * weight_shape[2] * weight_shape[3] * output_shape[2] * output_shape[3];
+
+            auto number = x_shape[0];
+            auto input_channels = x_shape[1];
+            Size2D ksize(weight_shape[2], weight_shape[3]);
+            Size2D input(x_shape[2], x_shape[3]);
 
             const T *pinput = x.data<T>();
             const T *pweight = w.data<T>();
@@ -36,7 +39,7 @@ namespace ts {
             T *col_buffer = nullptr;
 
             bool is_1x1_conv = stride.height == 1 && stride.width == 1 &&
-                               weight_shape[2] == 1 && weight_shape[3] == 1 &&
+                               ksize.height == 1 && ksize.width == 1 &&
                                padding.top == 0 && padding.bottom == 0 &&
                                padding.left == 0 && padding.right == 0;
 
@@ -49,13 +52,14 @@ namespace ts {
                 col_buffer = col_tensor.data<T>();
             }
 
-            for (int i = 0; i < shape[0]; i++) {
+            for (int i = 0; i < number; i++) {
                 if (is_1x1_conv) {
                     //std::memcpy(col_buffer,pinput,sizeof(T)*col_buffer_size);
                     col_buffer = const_cast<T *>(pinput);
                 } else {
                     ::memset(col_buffer, 0, col_buffer_size * sizeof(T));
-                    im2col_cpu(pinput, shape[1], shape[2], shape[3], weight_shape[2], weight_shape[3],
+                    im2col_cpu(pinput, input_channels, input.height, input.width,
+                               ksize.height, ksize.width,
                                padding.top, padding.bottom,
                                padding.left, padding.right,
                                stride.height, stride.width,
