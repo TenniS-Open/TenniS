@@ -86,6 +86,10 @@ namespace ts {
         m_hard = std::make_shared<HardMemory>(device, data, size);
     }
 
+    Memory Memory::weak() const {
+        return Memory(device(), const_cast<void *>(this->data()), m_size);
+    }
+
     void memcpy(Memory &dst, const Memory &src, size_t size) {
         TS_AUTO_CHECK(dst.size() >= size);
         TS_AUTO_CHECK(src.size() >= size);

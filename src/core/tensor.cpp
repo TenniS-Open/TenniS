@@ -41,7 +41,7 @@ namespace ts {
             , m_proto(proto) {}
 
     Tensor::Tensor(const MemoryDevice &device, const Tensor::Prototype &proto)
-            : m_memory(device, static_cast<size_t>(proto.count() * proto.type_bytes()))
+            : m_memory(make_smart<TensorMemory>(device, static_cast<size_t>(proto.count() * proto.type_bytes())))
             , m_proto(proto) {}
 
     Tensor::Tensor(const Tensor::Prototype &proto)
@@ -56,6 +56,10 @@ namespace ts {
             : m_memory(memory)
             , m_proto(proto) {}
 
+    Tensor::Tensor(const Smart<TensorMemory> &memory, const Tensor::Prototype &proto)
+            : m_memory(memory)
+            , m_proto(proto) {}
+
     Tensor Tensor::clone() const {
         std::shared_ptr<MemoryController> controller = std::make_shared<DynamicMemoryController>(this->device());
         return clone(controller);
@@ -65,7 +69,7 @@ namespace ts {
         auto fields = this->unpack();
         for (auto &value : fields) {
             Tensor dolly(std::move(controller), value.m_proto);
-            memcpy(dolly.m_memory, value.m_memory, size_t(value.m_proto.count() * value.m_proto.type_bytes()));
+            memcpy(*dolly.m_memory, *value.m_memory, size_t(value.m_proto.count() * value.m_proto.type_bytes()));
             value = dolly;
         }
         Tensor dolly;
@@ -77,7 +81,7 @@ namespace ts {
         auto fields = this->unpack();
         for (auto &value : fields) {
             Tensor dolly(std::move(controller), value.m_proto);
-            memcpy(dolly.m_memory, value.m_memory, size_t(value.m_proto.count() * value.m_proto.type_bytes()));
+            memcpy(*dolly.m_memory, *value.m_memory, size_t(value.m_proto.count() * value.m_proto.type_bytes()));
             value = dolly;
         }
         Tensor dolly;
@@ -89,7 +93,7 @@ namespace ts {
         auto fields = this->unpack();
         for (auto &value : fields) {
             Tensor dolly(std::move(controller), value.m_proto, device);
-            memcpy(dolly.m_memory, value.m_memory, size_t(value.m_proto.count() * value.m_proto.type_bytes()));
+            memcpy(*dolly.m_memory, *value.m_memory, size_t(value.m_proto.count() * value.m_proto.type_bytes()));
             value = dolly;
         }
         Tensor dolly;
@@ -146,16 +150,16 @@ namespace ts {
 
     void Tensor::pack(const std::vector<Tensor::self> &fields) {
         if (fields.empty()) {
-            this->m_memory = Memory();
+            this->m_memory = make_smart<TensorMemory>();
             this->m_proto = Prototype();
             return;
         }
         this->m_memory = fields[0].m_memory;
         this->m_proto = fields[0].m_proto;
         if (fields.size() > 1) {
-            this->m_fields = std::make_shared<std::vector<self>>(fields.begin() + 1, fields.end());
+            this->m_fields = std::vector<self>(fields.begin() + 1, fields.end());
         } else {
-            this->m_fields.reset();
+            this->m_fields.clear();
         }
     }
 
@@ -163,8 +167,8 @@ namespace ts {
         std::vector<Tensor::self> fields(1);
         fields[0].m_memory = this->m_memory;
         fields[0].m_proto = this->m_proto;
-        if (this->m_fields != nullptr) {
-            fields.insert(fields.end(), this->m_fields->begin(), this->m_fields->end());
+        if (!this->m_fields.empty()) {
+            fields.insert(fields.end(), this->m_fields.begin(), this->m_fields.end());
         }
         return std::move(fields);
     }
@@ -173,11 +177,11 @@ namespace ts {
         if (offset == 0) {
             return Tensor(m_memory, m_proto);
         }
-        if (m_fields == nullptr || offset - 1 >= m_fields->size()) {
+        if (offset - 1 >= m_fields.size()) {
             TS_LOG_ERROR << "Tensor offset output range error. Access index " << offset << " in range("
                          << fields_count() << ")" << eject;
         }
-        return m_fields->at(offset - 1);
+        return m_fields.at(offset - 1);
     }
 
     void Tensor::field(size_t offset, const Tensor::self &value) {
@@ -186,19 +190,19 @@ namespace ts {
             this->m_proto = value.m_proto;
             return;
         }
-        if (m_fields == nullptr || offset - 1 >= m_fields->size()) {
+        if (offset - 1 >= m_fields.size()) {
             TS_LOG_ERROR << "Tensor offset output range error. Access index " << offset << " in range("
                          << fields_count() << ")" << eject;
         }
-        m_fields->at(offset - 1) = value;
+        m_fields.at(offset - 1) = value;
     }
 
     size_t Tensor::fields_count() const {
-        return m_fields == nullptr ? 1 : 1 + m_fields->size();
+        return m_fields.empty() ? 1 : 1 + m_fields.size();
     }
 
     bool Tensor::packed() const {
-        return !(m_fields == nullptr || m_fields->empty());
+        return !m_fields.empty();
     }
 
     static size_t serialize_prototype_memory(StreamWriter &stream,
@@ -262,7 +266,7 @@ namespace ts {
         size_t writen_size = 0;
         writen_size += binio::write<uint32_t>(stream, uint32_t(this->fields_count()));
         for (auto &tensor : this->unpack()) {
-            auto cpu_memory = tensor.m_memory.sync(MemoryDevice(CPU));
+            auto cpu_memory = tensor.m_memory->sync(MemoryDevice(CPU));
             writen_size += serialize_prototype_memory(stream, tensor.m_proto, cpu_memory);
         }
         return writen_size;
@@ -295,19 +299,36 @@ namespace ts {
 
     Tensor Tensor::view(const MemoryDevice &device) const {
         Tensor view_tensor;
-        view_tensor.m_memory = TensorMemory(m_memory.sync(device), false);
+        view_tensor.m_memory = TensorMemory(m_memory->sync(device), false);
         view_tensor.m_proto = m_proto;
 
-        if (m_fields != nullptr) {
-            std::vector<self> view_fields(m_fields->size());
-            for (size_t i = 0; i < m_fields->size(); ++i) {
-                view_fields[i] = m_fields->at(i).view(device);
+        if (!m_fields.empty()) {
+            std::vector<self> view_fields(m_fields.size());
+            for (size_t i = 0; i < m_fields.size(); ++i) {
+                view_fields[i] = m_fields.at(i).view(device);
             }
 
-            view_tensor.m_fields = std::make_shared<std::vector<self>>(std::move(view_fields));
+            view_tensor.m_fields = std::vector<self>(std::move(view_fields));
         }
 
         return view_tensor;
+    }
+
+    Tensor Tensor::weak() const {
+        Tensor weak_tensor;
+        weak_tensor.m_memory = m_memory.weak();
+        weak_tensor.m_proto = m_proto;
+
+        if (!m_fields.empty()) {
+            std::vector<self> weak_fields(m_fields.size());
+            for (size_t i = 0; i < m_fields.size(); ++i) {
+                weak_fields[i] = m_fields.at(i).weak();
+            }
+
+            weak_tensor.m_fields = std::vector<self>(std::move(weak_fields));
+        }
+
+        return weak_tensor;
     }
 
     bool Tensor::has_shape(const Shape &shape) const {
