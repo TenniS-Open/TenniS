@@ -26,13 +26,16 @@ namespace ts {
 		TS_AUTO_CHECK(m_format == name::NCHW);    // only support NCHW now
 
 		auto static_padding = tensor::cast(INT32, this->get(name::padding));
-		TS_AUTO_CHECK(static_padding.dims() == 2 && static_padding.size(0) == 4 && static_padding.size(1) == 2);
+		TS_AUTO_CHECK(static_padding.has_shape({ 4,2 }));
+		//TS_AUTO_CHECK(static_padding.dims() == 2 && static_padding.size(0) == 4 && static_padding.size(1) == 2);
 
 		auto ksize_tensor = tensor::cast(INT32, this->get(name::ksize));
-		TS_AUTO_CHECK(ksize_tensor.dims() == 1 && ksize_tensor.count() == 4);
+		TS_AUTO_CHECK(ksize_tensor.has_shape({ 4 }));
+		//TS_AUTO_CHECK(ksize_tensor.dims() == 1 && ksize_tensor.count() == 4);
 
 		auto stride_tensor = tensor::cast(INT32, this->get(name::stride));
-		TS_AUTO_CHECK(stride_tensor.dims() == 1 && stride_tensor.count() == 4);
+		TS_AUTO_CHECK(stride_tensor.has_shape({ 4 }));
+		//TS_AUTO_CHECK(stride_tensor.dims() == 1 && stride_tensor.count() == 4);
 
 		if (m_format == name::NCHW)
 		{
@@ -83,22 +86,25 @@ namespace ts {
 		stack.push(output[0], MemoryDevice(CPU));
 
 		auto dtype = stack.index(0)->dtype();
-		bool flag;
-		switch (dtype) 
-		{
-			case ts::FLOAT32: 
-			{
-				flag = pooling<float>(stack);
+		switch (dtype) {
+	#define DECLARE_TYPE_AND_RUN(DTYPE, TYPE) \
+					case DTYPE: { pooling<TYPE>(stack); break; }
+				DECLARE_TYPE_AND_RUN(INT8, int8_t);
+				DECLARE_TYPE_AND_RUN(UINT8, uint8_t);
+				DECLARE_TYPE_AND_RUN(INT16, int16_t);
+				DECLARE_TYPE_AND_RUN(UINT16, uint16_t);
+				DECLARE_TYPE_AND_RUN(INT32, int32_t);
+				DECLARE_TYPE_AND_RUN(UINT32, uint32_t);
+				DECLARE_TYPE_AND_RUN(INT64, int64_t);
+				DECLARE_TYPE_AND_RUN(UINT64, uint64_t);
+				DECLARE_TYPE_AND_RUN(FLOAT32, float);
+				DECLARE_TYPE_AND_RUN(FLOAT64, double);
+	#undef DECLARE_TYPE_AND_RUN
+			default: {
+				TS_LOG_ERROR << "pooling2d not support this data type: " << dtype << eject;
 				break;
 			}
-			case ts::FLOAT64: 
-			{
-				flag = pooling<double>(stack);
-				break;
-			}
-			default:break;
 		}
-
 		return 1;
 	}
 
@@ -178,11 +184,11 @@ namespace ts {
 			{
 				for (int oh = 0; oh < output_shape[2]; oh++)
 				{
+					int ihStart = oh * stride.height - m_padding.top;
+					int ihEnd = std::min<T>(ihStart + ksize.height, input_h);
 					for (int ow = 0; ow < output_shape[3]; ow++)
-					{
-						int ihStart = oh * stride.height - m_padding.top;
+					{		
 						int iwStart = ow * stride.width - m_padding.left;
-						int ihEnd = std::min<T>(ihStart + ksize.height, input_h);
 						int iwEnd = std::min<T>(iwStart + ksize.width, input_w);
 						ihStart = std::max<T>(ihStart, 0);
 						iwStart = std::max<T>(iwStart, 0);
@@ -230,11 +236,11 @@ namespace ts {
 			{
 				for (int oh = 0; oh < output_shape[2]; oh++)
 				{
+					int ihStart = oh * stride.height - m_padding.top;
+					int ihEnd = std::min<T>(ihStart + ksize.height, input_h);
 					for (int ow = 0; ow < output_shape[3]; ow++)
 					{
-						int ihStart = oh * stride.height - m_padding.top;
-						int iwStart = ow * stride.width - m_padding.left;
-						int ihEnd = std::min<T>(ihStart + ksize.height, input_h);
+						int iwStart = ow * stride.width - m_padding.left;	
 						int iwEnd = std::min<T>(iwStart + ksize.width, input_w);
 						ihStart = std::max<T>(ihStart, 0);
 						iwStart = std::max<T>(iwStart, 0);

@@ -18,30 +18,25 @@ namespace ts {
 		stack.push(output[0], MemoryDevice(CPU));
 
 		auto dtype = stack.index(0)->dtype();
-		bool flag;
-		int bytes = type_bytes(dtype);
-		switch (bytes)
-		{
-			case 1: flag = sigmoid<char>(stack); break;
-			case 2: flag = sigmoid<short>(stack); break;
-			case 4: flag = sigmoid<float>(stack); break;
-			case 8: flag = sigmoid<double>(stack); break;
-			default:break;
+		switch (dtype) {
+	#define DECLARE_TYPE_AND_RUN(DTYPE, TYPE) \
+					case DTYPE: { sigmoid<TYPE>(stack); break; }
+				DECLARE_TYPE_AND_RUN(INT8, int8_t);
+				DECLARE_TYPE_AND_RUN(UINT8, uint8_t);
+				DECLARE_TYPE_AND_RUN(INT16, int16_t);
+				DECLARE_TYPE_AND_RUN(UINT16, uint16_t);
+				DECLARE_TYPE_AND_RUN(INT32, int32_t);
+				DECLARE_TYPE_AND_RUN(UINT32, uint32_t);
+				DECLARE_TYPE_AND_RUN(INT64, int64_t);
+				DECLARE_TYPE_AND_RUN(UINT64, uint64_t);
+				DECLARE_TYPE_AND_RUN(FLOAT32, float);
+				DECLARE_TYPE_AND_RUN(FLOAT64, double);
+	#undef DECLARE_TYPE_AND_RUN
+			default: {
+				TS_LOG_ERROR << "sigmoid not support this data type: " << dtype << eject;
+				break;
+			}
 		}
-		//switch (dtype)
-		//{
-		//	case ts::FLOAT32:
-		//	{
-		//		flag = sigmoid<float>(stack);
-		//		break;
-		//	}
-		//	case ts::FLOAT64:
-		//	{
-		//		flag = sigmoid<double>(stack);
-		//		break;
-		//	}
-		//	default:break;
-		//}
 		return 1;
 	}
 
@@ -71,7 +66,7 @@ namespace ts {
 		int count = output_tensor.count();
 		memcpy(output_data, device_type, count * sizeof(T), input_data, device_type, count * sizeof(T));
 
-		for (int i = 0; i < output_tensor.count(); i++)
+		for (int i = 0; i < count; i++)
 		{
 			T val = *output_data;
 			*output_data = 1. / (1. + exp(-(val)));

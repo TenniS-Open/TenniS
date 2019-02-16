@@ -43,8 +43,12 @@ namespace ts {
             for (int i = 0; i < predims; i++) {
                 for (int k = 0; k < shape[dim]; k++) {
                     offset = i * stridedims + k * backdims;
+                    T mean_val = pmean[k];
+                    T vec_val = vec[k];
+                    T *pdst_temp = pdst + offset;
                     for (int m = 0; m < backdims; m++) {
-                        pdst[offset + m] = (pdst[offset + m] - pmean[k]) * vec[k];//(sqrt(pvariance[k] + m_epsilon));
+                        *pdst_temp = (*pdst_temp - mean_val) * vec_val;
+                        pdst_temp++;
                     }
                 }
             }

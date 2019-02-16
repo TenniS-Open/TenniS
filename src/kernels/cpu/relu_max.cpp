@@ -24,31 +24,25 @@ namespace ts {
 		stack.push(output[0], MemoryDevice(CPU));
 
 		auto dtype = stack.index(0)->dtype();
-		bool flag;
-		int bytes = type_bytes(dtype);
-		switch (bytes)
-		{
-			case 1: flag = relu_max<char>(stack); break;
-			case 2: flag = relu_max<short>(stack); break;
-			case 4: flag = relu_max<float>(stack); break;
-			case 8: flag = relu_max<double>(stack); break;
-			default:break;
+		switch (dtype) {
+#define DECLARE_TYPE_AND_RUN(DTYPE, TYPE) \
+				case DTYPE: { relu_max<TYPE>(stack); break; }
+				DECLARE_TYPE_AND_RUN(INT8, int8_t);
+				DECLARE_TYPE_AND_RUN(UINT8, uint8_t);
+				DECLARE_TYPE_AND_RUN(INT16, int16_t);
+				DECLARE_TYPE_AND_RUN(UINT16, uint16_t);
+				DECLARE_TYPE_AND_RUN(INT32, int32_t);
+				DECLARE_TYPE_AND_RUN(UINT32, uint32_t);
+				DECLARE_TYPE_AND_RUN(INT64, int64_t);
+				DECLARE_TYPE_AND_RUN(UINT64, uint64_t);
+				DECLARE_TYPE_AND_RUN(FLOAT32, float);
+				DECLARE_TYPE_AND_RUN(FLOAT64, double);
+	#undef DECLARE_TYPE_AND_RUN
+			default: {
+				TS_LOG_ERROR << "relu_max not support this data type: " << dtype << eject;
+				break;
+			}
 		}
-		//switch (dtype)
-		//{
-		//	case ts::FLOAT32:
-		//	{
-		//		flag = relu_max<float>(stack);
-		//		break;
-		//	}
-		//	case ts::FLOAT64:
-		//	{
-		//		flag = relu_max<double>(stack);
-		//		break;
-		//	}
-		//	default:break;
-		//}
-
 		return 1;
 	}
 
@@ -78,7 +72,7 @@ namespace ts {
 		int count = output_tensor.count();
 		memcpy(output_data, device_type, count * sizeof(T), input_data, device_type, count * sizeof(T));
 
-		for (int i = 0; i < output_tensor.count(); i++)
+		for (int i = 0; i < count; i++)
 		{
 			//*output_data = std::min(*input_data > 0 ? *input_data : 0 , m_max);
 			T val = *output_data;

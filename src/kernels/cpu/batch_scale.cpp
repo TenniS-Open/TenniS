@@ -38,8 +38,13 @@ namespace ts {
             for (int i = 0; i < predims; i++) {
                 for (int k = 0; k < shape[dim]; k++) {
                     offset = i * stridedims + k * backdims;
-                    for (int m = 0; m < backdims; m++) {
-                        pdst[offset + m] = pdst[offset + m] * pscale[k] + pbias[k];
+                    T scale_val = pscale[k];
+                    T bias_val = pbias[k];
+                    T* pdst_temp = pdst + offset;
+                    for(int m=0; m<backdims; m++) {
+                        *pdst_temp = *pdst_temp * scale_val + bias_val;
+                        pdst_temp++;
+                        //pdst[offset + m] = psrc[offset + m] * pscale[k] + pbias[k];
                     }
                 }
             }
