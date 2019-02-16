@@ -10,6 +10,7 @@
 #include "core/tensor_builder.h"
 
 #include "backend/common_function.h"
+#include "utils/need.h"
 
 namespace ts {
     namespace base {
@@ -133,11 +134,11 @@ namespace ts {
             if (m_format == FORMAT_NCHW) {
                 out_proto = Tensor::Prototype(
                         x_tensor.dtype(),
-                        {x_tensor.size(0), x_tensor.size(1), y.height, y.width});
+                        {x_tensor.size(0), w_tensor.size(0), y.height, y.width});
             } else if (m_format == FORMAT_NHWC) {
                 out_proto = Tensor::Prototype(
                         x_tensor.dtype(),
-                        {x_tensor.size(0), y.height, y.width, x_tensor.size(3)});
+                        {x_tensor.size(0), y.height, y.width, w_tensor.size(0)});
             }
 
             output.resize(1);
@@ -171,7 +172,16 @@ namespace ts {
                 dialations = Stride2D(m_dialations4[1], m_dialations4[2]);
             }
 
-            conv2d(x, padding, m_padding_value, w, stride, dialations, m_format, out);
+            {
+                stack.push_base(3); // empty base
+                need pop_base(&Stack::pop_base, &stack);
+
+                TS_AUTO_CHECK(stack.size() == 0);
+
+                conv2d(x, padding, m_padding_value, w, stride, dialations, m_format, out, stack);
+
+                stack.clear();
+            }
 
             return 1;
         }
