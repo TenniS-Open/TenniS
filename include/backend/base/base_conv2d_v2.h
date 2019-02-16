@@ -9,11 +9,11 @@
 #include <valarray>
 
 #include "backend/common_structure.h"
+#include "base_conv2d_core.h"
 
 namespace ts {
     namespace base {
-
-        class Conv2DV2 : public OperatorOnDevice {
+        class Conv2DV2 : public OperatorOnDevice, public Conv2DCore {
         public:
             using self = Conv2DV2;
             using supper = OperatorOnDevice;
@@ -30,10 +30,6 @@ namespace ts {
             int run(Stack &stack) override;
 
             int infer(Stack &stack, std::vector<Tensor::Prototype> &output) override;
-
-            virtual void conv2d(const Tensor &x, const Padding2D &padding, float padding_value,
-                    const Tensor &w, const Stride2D &stride, const Dilation2D &dilation,
-                    Conv2DFormat format, Tensor &out, Stack &stack) = 0;
 
         private:
             Conv2DFormat m_format;

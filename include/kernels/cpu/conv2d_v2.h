@@ -1,46 +1,16 @@
-#ifndef TS_KERNELS_CONV2D_V2_H
-#define TS_KERNELS_CONV2D_V2_H
+#ifndef TENSORSTACK_KERNELS_CPU_CONV2D_V2_H
+#define TENSORSTACK_KERNELS_CPU_CONV2D_V2_H
 
-#include <kernels/cpu/conv2d_v2_base.h>
-#include <core/tensor.h>
-#include <runtime/stack.h>
-#include <string.h>
+#include "operator_on_cpu.h"
+#include "backend/base/base_conv2d_v2.h"
+#include "conv2d_core.h"
+
 
 namespace ts {
-
-
-class Conv2d_V2: public ts::Conv2d_V2_Base {
-public:
-
-    using supper = ts::Conv2d_V2_Base;
-    Conv2d_V2();
-
-    virtual void init(); 
-
-    virtual int run(ts::Stack &stack); 
-
-
-    virtual int infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output); 
-
-private:
-    int infer_private(ts::Stack &stack, ts::Tensor::Prototype &output); 
-
-private:
-
-    Shape m_padding;
-/*
-    int m_group;
-    int m_padding_value;
-    //Shape m_padding;
-    Shape m_stride;
-    Shape m_dialations;
-    std::string m_format;
-*/
-};
-
-
-
-
+    namespace cpu {
+        using Conv2DV2 = base::Conv2DWithCore<OperatorOnCPU<base::Conv2DV2>, Conv2DCore>;
+    }
 }
 
-#endif
+
+#endif //TENSORSTACK_KERNELS_CPU_CONV2D_V2_H
