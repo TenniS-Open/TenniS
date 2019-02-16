@@ -18,17 +18,25 @@ namespace ts {
 		stack.push(output[0], memory_device());
 
 		auto dtype = stack.index(0)->dtype();
-		bool flag;
-		int bytes = type_bytes(dtype);
-		switch (bytes)
-		{
-			case 1: flag = pre_whiten<char>(stack); break;
-			case 2: flag = pre_whiten<short>(stack); break;
-			case 4: flag = pre_whiten<float>(stack); break;
-			case 8: flag = pre_whiten<double>(stack); break;
-			default:break;
+		switch (dtype) {
+#define DECLARE_TYPE_AND_RUN(DTYPE, TYPE) \
+				case DTYPE: { pre_whiten<TYPE>(stack); break; }
+				DECLARE_TYPE_AND_RUN(INT8, int8_t);
+				DECLARE_TYPE_AND_RUN(UINT8, uint8_t);
+				DECLARE_TYPE_AND_RUN(INT16, int16_t);
+				DECLARE_TYPE_AND_RUN(UINT16, uint16_t);
+				DECLARE_TYPE_AND_RUN(INT32, int32_t);
+				DECLARE_TYPE_AND_RUN(UINT32, uint32_t);
+				DECLARE_TYPE_AND_RUN(INT64, int64_t);
+				DECLARE_TYPE_AND_RUN(UINT64, uint64_t);
+				DECLARE_TYPE_AND_RUN(FLOAT32, float);
+				DECLARE_TYPE_AND_RUN(FLOAT64, double);
+	#undef DECLARE_TYPE_AND_RUN
+			default: {
+				TS_LOG_ERROR << "pre_whiten not support this data type: " << dtype << eject;
+				break;
+			}
 		}
-
 		return 1;
 	}
 

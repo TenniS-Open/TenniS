@@ -71,7 +71,7 @@ int Conv2d::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output) 
 
 template<typename T>
 void Conv2d::compute_conv(Tensor *input_tensor, Tensor *weight_tensor, Tensor *tensor, const Shape& shape,
-                      const Shape &reshape, const Shape &weight_shape ) {
+                      const Shape &reshape, const Shape &weight_shape, Stack &stack) {
 
     int kernel_dims = weight_shape[1] * weight_shape[2] * weight_shape[3];
     int conv_out_spatial_dim = reshape[2] * reshape[3];
@@ -85,16 +85,27 @@ void Conv2d::compute_conv(Tensor *input_tensor, Tensor *weight_tensor, Tensor *t
     col_shape.resize(1);
     col_shape[0] = col_buffer_size;
     // TODO: col_buffer should alloc in stack(flow memory), this is dynamic memory now
-    Tensor col_tensor(MemoryDevice(CPU), input_tensor->dtype(), col_shape); 
+	Tensor col_tensor = *stack.push(input_tensor->dtype(), col_shape, MemoryDevice(CPU));
     T * col_buffer = col_tensor.data<T>();
+	
+	bool is_1x1_conv = m_stride[2] == 1 && m_stride[3] == 1 && weight_shape[2] == 1 && weight_shape[3] == 1 && m_padding[4] == 0 &&
+		m_padding[5] == 0 && m_padding[6] == 0 && m_padding[7] == 0;
 
-    const T *pinput = input_tensor->sync(MemoryDevice(CPU)).data<T>();
+    T *pinput = input_tensor->sync(MemoryDevice(CPU)).data<T>();
     const T *pweight = weight_tensor->sync(MemoryDevice(CPU)).data<T>();
     T *poutput = tensor->data<T>();
     for(int i=0; i<shape[0]; i++) {
         ::memset(col_buffer, 0, col_buffer_size * sizeof(T));
-        im2col_cpu(pinput, shape[1], shape[2], shape[3], weight_shape[2], weight_shape[3],
-                   m_padding[4], m_padding[5],m_padding[6],m_padding[7], m_stride[2], m_stride[3],m_dialations[2],m_dialations[3], col_buffer, m_padding_value);
+		if (is_1x1_conv)
+		{
+			//std::memcpy(col_buffer,pinput,sizeof(T)*col_buffer_size);
+			col_buffer = pinput;
+		}
+		else
+		{
+			im2col_cpu(pinput, shape[1], shape[2], shape[3], weight_shape[2], weight_shape[3],
+				m_padding[4], m_padding[5], m_padding[6], m_padding[7], m_stride[2], m_stride[3], m_dialations[2], m_dialations[3], col_buffer, m_padding_value);
+		}
 #ifdef TS_USE_CBLAS
         cblas::math<T>::gemm(ts::blas::NoTrans,ts::blas::NoTrans, weight_shape[0], conv_out_spatial_dim,
                            kernel_dims, 1.0, pweight, col_buffer, 0, poutput);
@@ -105,6 +116,7 @@ void Conv2d::compute_conv(Tensor *input_tensor, Tensor *weight_tensor, Tensor *t
         pinput += input_number_offset;
         poutput+= output_number_offset;
     }
+	stack.pop();
 }
 
 int Conv2d::run(ts::Stack &stack) {
@@ -122,12 +134,12 @@ int Conv2d::run(ts::Stack &stack) {
     switch(tensor->dtype()) {
         case FLOAT32: {
              compute_conv<float>(input_tensor, weight_tensor, tensor, shape,reshape,
-                                 weight_shape);
+                                 weight_shape, stack);
              break;
         }
         case FLOAT64: {
              compute_conv<double>(input_tensor, weight_tensor, tensor, shape,reshape,
-                                 weight_shape);
+                                 weight_shape, stack);
              break;
         }
         default: {
