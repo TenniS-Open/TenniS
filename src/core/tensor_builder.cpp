@@ -11,6 +11,7 @@
 
 #include "core/tensor_builder.h"
 #include "utils/assert.h"
+#include "core/ieee754_float.h"
 
 #include <cctype>
 
@@ -227,3 +228,6 @@ template class ts::tensor_builder<ts::dtype<ts::INT64>::declare>;
 template class ts::tensor_builder<ts::dtype<ts::UINT64>::declare>;
 template class ts::tensor_builder<ts::dtype<ts::FLOAT32>::declare>;
 template class ts::tensor_builder<ts::dtype<ts::FLOAT64>::declare>;
+
+// declared in ieee754_float.h
+template class ts::tensor_builder<ts::dtype<ts::FLOAT16>::declare>;
