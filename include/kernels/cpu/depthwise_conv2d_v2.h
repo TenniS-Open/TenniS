@@ -1,44 +1,16 @@
-#ifndef TS_KERNELS_DEPTHWISE_CONV2D_V2_H
-#define TS_KERNELS_DEPTHWISE_CONV2D_V2_H
-#include <kernels/cpu/conv2d_v2_base.h>
-#include <global/operator_factory.h>
-#include <core/tensor.h>
-#include <runtime/stack.h>
+#ifndef TENSORSTACK_KERNELS_CPU_DEPTHWISE_CONV2D_V2_H
+#define TENSORSTACK_KERNELS_CPU_DEPTHWISE_CONV2D_V2_H
+
+#include "operator_on_cpu.h"
+#include "backend/base/base_depthwise_conv2d_v2.h"
+#include "depthwise_conv2d_core.h"
+
 
 namespace ts {
-
-
-class Depthwise_Conv2d_V2: public ts::Conv2d_V2_Base {
-public:
-
-    using supper = ts::Conv2d_V2_Base;
-    Depthwise_Conv2d_V2();
-
-    virtual void init(); 
-
-    virtual int run(ts::Stack &stack); 
-
-
-    virtual int infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output); 
-
-private:
-    int infer_private(ts::Stack &stack, ts::Tensor::Prototype &output); 
-
-
-private:
-    Shape m_padding;
-/*
-    int m_group;
-    int m_padding_value;
-    Shape m_padding;
-    Shape m_stride;
-    Shape m_dialations;
-    std::string m_format;
-*/
-};
-
-
-
+    namespace cpu {
+        using DepthwiseConv2DV2 = base::DepthwiseConv2DWithCore<OperatorOnCPU<base::DepthwiseConv2DV2>, DepthwiseConv2DCore>;
+    }
 }
 
-#endif
+
+#endif //TENSORSTACK_KERNELS_CPU_DEPTHWISE_CONV2D_V2_H

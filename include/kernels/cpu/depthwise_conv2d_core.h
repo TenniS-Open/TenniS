@@ -5,7 +5,8 @@
 
 namespace ts {
     namespace cpu {
-        class DepthwiseConv2DCore : base::DepthwiseConv2DCore {
+        class DepthwiseConv2DCore : public base::DepthwiseConv2DCore {
+        public:
             using self = DepthwiseConv2DCore;
             using supper = base::DepthwiseConv2DCore;
 
