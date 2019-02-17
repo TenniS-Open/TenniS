@@ -17,7 +17,7 @@ namespace ts {
             TS_AUTO_CHECK(w.size(0) == 1);
 
             auto output_shape = output[0].sizes();
-            output_shape[1] = x.size(1);
+            output_shape[1] = x.size(1) * w.size(0);
 
             output[0] = Tensor::Prototype(output[0].dtype(), output_shape);
 
