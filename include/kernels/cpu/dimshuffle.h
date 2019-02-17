@@ -1,38 +1,23 @@
-#ifndef TS_KERNELS_DIMSHUFFLE_H
-#define TS_KERNELS_DIMSHUFFLE_H
+#ifndef TENSORSTACK_KERNELS_CPU_DIMSHUFFLE_H
+#define TENSORSTACK_KERNELS_CPU_DIMSHUFFLE_H
 
-#include <core/tensor.h>
-#include <runtime/stack.h>
-#include <runtime/operator.h>
+#include "operator_on_cpu.h"
+#include "backend/base/base_dimshuffle.h"
+
 
 namespace ts {
+	namespace cpu {
+		class Dimshuffle : public OperatorOnAny<base::Dimshuffle> {
+		public:
+			using self = Dimshuffle;
+			using supper = OperatorOnAny<base::Dimshuffle>;
 
+            Dimshuffle() = default;
 
-class Dimshuffle : public ts::Operator {
-public:
-
-    using supper = ts::Operator;
-    Dimshuffle();
-
-    virtual void init(); 
-
-    virtual int run(ts::Stack &stack);
-    virtual int infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output);
-
-
-private:
-    void infer_private(ts::Stack &stack, ts::Tensor::Prototype &output);
-
-private:
-    int m_dim;
-    Shape m_shuffle;
-
-};
-
-
-
-
-
+            void dimshuffle(const Tensor &x, int dim, const std::vector<int> &shuffle, Tensor &out) override;
+		};
+	}
 }
 
-#endif
+
+#endif //TENSORSTACK_KERNELS_CPU_DIMSHUFFLE_H
