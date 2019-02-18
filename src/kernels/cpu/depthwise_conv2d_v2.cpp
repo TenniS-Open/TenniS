@@ -24,11 +24,11 @@ namespace ts {
 
             auto &context = ctx::ref<DeviceContext>();
 
-            m_op_conv2d = OperatorCreator::Create(context.computing_device.type(), name::layer::conv2d(), false);
+            m_op_conv2d = OperatorCreator::Create(context.computing_device.type(), name::layer::depthwise_conv2d(), false);
 
-            TS_CHECK_NQ(m_op_conv2d, nullptr) << "Can not find operator: " << name::layer::conv2d();
+            TS_CHECK_NQ(m_op_conv2d, nullptr) << "Can not find operator: " << name::layer::depthwise_conv2d();
 
-            m_op_conv2d->set(Bubble::RetentionParam::op, tensor::from(name::layer::conv2d_v2()));
+            m_op_conv2d->set(Bubble::RetentionParam::op, tensor::from(name::layer::depthwise_conv2d_v2()));
             m_op_conv2d->set(Bubble::RetentionParam::name, tensor::from("_core" + name()));
             m_op_conv2d->set(Bubble::RetentionParam::output_count, get(Bubble::RetentionParam::output_count));
 
