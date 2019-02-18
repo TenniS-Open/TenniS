@@ -1,41 +1,24 @@
-#ifndef TS_KERNELS_FUSED_BATCH_NORM_H
-#define TS_KERNELS_FUSED_BATCH_NORM_H
+#ifndef TENSORSTACK_KERNELS_CPU_FUSED_BATCH_NORM_H
+#define TENSORSTACK_KERNELS_CPU_FUSED_BATCH_NORM_H
 
-#include <core/tensor.h>
-#include <runtime/stack.h>
-#include <runtime/operator.h>
+#include "operator_on_cpu.h"
+#include "backend/base/base_fused_batch_norm.h"
 
 
 namespace ts {
+    namespace cpu {
+        class FusedBatchNorm : public OperatorOnCPU<base::FusedBatchNorm> {
+        public:
+            using self = FusedBatchNorm;
+            using supper = OperatorOnCPU<base::FusedBatchNorm>;
 
+            FusedBatchNorm() = default;
 
-class Fused_Batch_Norm : public ts::Operator {
-public:
-
-    using supper = ts::Operator;
-    Fused_Batch_Norm();
-
-    virtual void init(); 
-
-    virtual int run(ts::Stack &stack);
-    virtual int infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output); 
-
-
-private:
-    void infer_private(ts::Stack &stack, ts::Tensor::Prototype &output);
-    template<typename T>
-    void compute_run(Tensor *input_tensor, Tensor *gamma_tensor,
-                             Tensor *beta_tensor, Tensor *mean_tensor,
-                             Tensor *variance_tensor,Tensor *output_tensor);
-
-private:
-    int m_dim;
-    float m_epsilon;
-};
-
-
-
-
+            void batch_norm(const Tensor &x, const Tensor &mean, const Tensor &variance,
+                            const Tensor &scale, const Tensor &bias,
+                            int dim, float epsilon, Tensor &out) override;
+        };
+    }
 }
 
 #endif
