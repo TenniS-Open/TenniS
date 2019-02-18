@@ -1,40 +1,28 @@
-#ifndef TS_KERNELS_MUL_H
-#define TS_KERNELS_MUL_H
+#ifndef TENSORSTACK_KERNELS_CPU_MUL_H
+#define TENSORSTACK_KERNELS_CPU_MUL_H
 
 #include <core/tensor.h>
 #include <runtime/stack.h>
-#include <runtime/operator.h>
-
+#include "operator_on_cpu.h"
+#include <backend/base/base_mul.h>
 
 namespace ts {
+    namespace cpu {
+        class Mul : public OperatorOnCPU<base::Mul> {
+        public:
+            using self = Mul;
+            using supper = OperatorOnCPU<base::Mul>;
 
+            void reduce_with_broadcast(const Tensor &lhs, const Tensor &rhs, Tensor &out) override;
 
-class Mul : public ts::Operator {
-public:
+            void reduce_with_same_shape(const Tensor &lhs, const Tensor &rhs, Tensor &out) override;
 
-    using supper = ts::Operator;
-    Mul();
+            void reduce_with_bias(const Tensor &lhs, const Tensor &rhs, Tensor &out, int dim) override;
 
-    virtual void init(); 
+            void reduce_with_scalar(const Tensor &lhs, const Tensor &rhs, Tensor &out) override;
 
-    virtual int run(ts::Stack &stack);
-    virtual int infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output); 
-
-
-private:
-    int to_index(const HypeShape &hype, const Shape & shape, const Shape &curshape);
-
-    template<typename T>
-    void compute_run( Tensor *input_tensor, Tensor *right_tensor,Tensor *left_tensor);
-
-    void infer_private(ts::Stack &stack, ts::Tensor::Prototype &output);
-
-
-};
-
-
-
-
+        };
+    }
 }
 
-#endif
+#endif  // TENSORSTACK_KERNELS_CPU_MUL_H

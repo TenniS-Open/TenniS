@@ -1,5 +1,5 @@
-#ifndef TS_KERNELS_ADD_H
-#define TS_KERNELS_ADD_H
+#ifndef TENSORSTACK_KERNELS_CPU_ADD_H
+#define TENSORSTACK_KERNELS_CPU_ADD_H
 
 #include <core/tensor.h>
 #include <runtime/stack.h>
@@ -12,8 +12,6 @@ namespace ts {
         public:
             using self = Add;
             using supper = OperatorOnCPU<base::Add>;
-
-            Add();
 
             void reduce_with_broadcast(const Tensor &lhs, const Tensor &rhs, Tensor &out) override;
 
