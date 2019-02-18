@@ -5,187 +5,222 @@
 #include <global/operator_factory.h>
 #include <core/device.h>
 
+#include <numeric>
+
 namespace ts {
+    namespace cpu {
+        template <typename T>
+        static inline void reduce_operator(T &x, T lhs, T rhs) {
+            x = lhs - rhs;
+        }
+        template <typename T>
+        static inline void reduce_operator(T &x, T y) {
+            x -= y;
+        }
+
+        static inline int to_mod_index(const HypeShape &hype, const std::vector<int> &coordinate) {
+            auto temp = coordinate;
+            for (size_t i = 0; i < temp.size(); ++i) {
+                temp[i] %= hype.shape(i);
+            }
+            return hype.to_index(temp);
+        }
+
+        template<typename T>
+        static inline void compute_run(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
+            HypeShape lhs_hype(lhs.sizes());
+            HypeShape rhs_hype(rhs.sizes());
+            HypeShape out_hype(out.sizes());
+
+            auto plhs = lhs.data<T>();
+            auto prhs = rhs.data<T>();
+            auto pout = out.data<T>();
+
+            auto ncount = out.count();
+            for(int i = 0; i < ncount; i++) {
+                std::vector<int> tmpshape = out_hype.to_coordinate(i);
+                reduce_operator(pout[i], plhs[to_mod_index(lhs_hype, tmpshape)], prhs[to_mod_index(rhs_hype, tmpshape)]);
+            }
+        }
+
+        template<typename T>
+        static inline void compute_run_scalar(const T *plhs, T scalar, T *pout, size_t count) {
+            // this is CPU operator, so just using memcpy
+            if (pout != plhs) std::memcpy(pout, plhs, count * sizeof(T));
+
+            for (size_t i = 0; i < count; ++i) {
+                reduce_operator(pout[i], scalar);
+            }
+        }
+
+        template<typename T>
+        static inline void compute_run_same_shape(const T *plhs, const T *prhs, T *pout, size_t count) {
+            // this is CPU operator, so just using memcpy
+            if (pout != plhs) std::memcpy(pout, plhs, count * sizeof(T));
+
+            for (size_t i = 0; i < count;++i) {
+                reduce_operator(pout[i], prhs[i]);
+            }
+        }
+
+        template<typename T>
+        static inline void compute_run_scalar(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
+            auto plhs = lhs.data<T>();
+            auto prhs = rhs.data<T>();
+            auto pout = out.data<T>();
+
+            auto scalar = prhs[0];
+
+            compute_run_scalar(plhs, scalar, pout, size_t(out.count()));
+        }
 
 
+        template<typename T>
+        static inline void compute_run_same_shape(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
+            auto plhs = lhs.data<T>();
+            auto prhs = rhs.data<T>();
+            auto pout = out.data<T>();
 
-//////////////////////////////////////////////
-Sub::Sub() {
-} 
-
-void Sub::init() {
-    supper::init();
-
-}   
-
-void Sub::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) {
-    int input_num = stack.size();
-    TS_AUTO_CHECK(input_num == 2); 
-
-    Shape shape = stack.index(0)->sizes();
-    Shape right_shape = stack.index(1)->sizes();
-
-    TS_AUTO_CHECK(shape.size() > 0);
-    TS_AUTO_CHECK(right_shape.size() > 0);
-    TS_AUTO_CHECK(stack.index(0)->dtype() == stack.index(1)->dtype());
-    if(shape.size() != right_shape.size()) {
-        TS_AUTO_CHECK((shape.size() == 1 && shape[0] == 1) || (right_shape.size() == 1 && right_shape[0] == 1));
-        if(shape.size() == 1) {
-            shape = Shape(right_shape.size(), 1);
-        } 
-
-        if(right_shape.size() == 1) {
-            right_shape = Shape(shape.size(), 1);
-        } 
-    } 
+            compute_run_same_shape(plhs, prhs, pout, size_t(out.count()));
+        }
 
 
+        template<typename T>
+        static inline void compute_run_bias(const Tensor &lhs, const Tensor &rhs, Tensor &out, int dim) {
+            auto plhs = lhs.data<T>();
+            auto prhs = rhs.data<T>();
+            auto pout = out.data<T>();
 
-    for(int i=0; i<shape.size(); i++) {
-        TS_AUTO_CHECK(shape[i] > 0 && right_shape[i] > 0);
-        if(shape[i] != right_shape[i]) {
-            TS_AUTO_CHECK(shape[i] == 1 || right_shape[i] == 1); 
-            if(shape[i] == 1) {
-                shape[i] = right_shape[i];
+            if (pout != plhs) std::memcpy(pout, plhs, out.count() * sizeof(T));
+
+            auto &out_shape = out.sizes();
+
+            auto number = std::accumulate(out_shape.begin(), out_shape.begin() + dim, 1, std::multiplies<int>());
+            auto count = std::accumulate(out_shape.begin() + dim + 1, out_shape.end(), 1, std::multiplies<int>());
+
+            auto channels = out_shape[dim];
+
+            if (count == 1) {
+                for (int n = 0; n < number; ++n) {
+                    auto pchannels = pout + n * channels;
+                    auto pscalar = prhs;
+                    for (int c = 0; c < channels; ++c) {
+                        reduce_operator(*pchannels, *pscalar);
+                        ++pchannels;
+                        ++pscalar;
+                    }
+                }
+            } else {
+                for (int n = 0; n < number; ++n) {
+                    for (int c = 0; c < channels; ++c) {
+                        int offset = (n * channels + c) * count;
+                        auto local_pout = pout + offset;
+                        compute_run_scalar(local_pout, prhs[channels], local_pout, size_t(count));
+                    }
+                }
+            }
+        }
+
+
+        void Sub::reduce_with_broadcast(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
+            // Notice: the all tensor' memory device are CPU, as given in running_memory_device
+            DTYPE dtype = out.dtype();
+            switch(dtype) {
+#define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
+        case DTYPE: { compute_run<TYPE>(lhs, rhs, out); break; }
+                DECLARE_COMPUTE_RUN(INT8, int8_t);
+                DECLARE_COMPUTE_RUN(UINT8, uint8_t);
+                DECLARE_COMPUTE_RUN(INT16, int16_t);
+                DECLARE_COMPUTE_RUN(UINT16, uint16_t);
+                DECLARE_COMPUTE_RUN(INT32, int32_t);
+                DECLARE_COMPUTE_RUN(UINT32, uint32_t);
+                DECLARE_COMPUTE_RUN(INT64, int64_t);
+                DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+                DECLARE_COMPUTE_RUN(FLOAT32, float);
+                DECLARE_COMPUTE_RUN(FLOAT64, double);
+#undef DECLARE_COMPUTE_RUN
+                default: {
+                    TS_LOG_ERROR << "add not support this data type: " << dtype << eject;
+                    break;
+                }
+            }
+        }
+
+        void Sub::reduce_with_scalar(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
+            // Notice: the all tensor' memory device are CPU, as given in running_memory_device
+            DTYPE dtype = out.dtype();
+            switch(dtype) {
+#define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
+        case DTYPE: { compute_run_scalar<TYPE>(lhs, rhs, out); break; }
+                DECLARE_COMPUTE_RUN(INT8, int8_t);
+                DECLARE_COMPUTE_RUN(UINT8, uint8_t);
+                DECLARE_COMPUTE_RUN(INT16, int16_t);
+                DECLARE_COMPUTE_RUN(UINT16, uint16_t);
+                DECLARE_COMPUTE_RUN(INT32, int32_t);
+                DECLARE_COMPUTE_RUN(UINT32, uint32_t);
+                DECLARE_COMPUTE_RUN(INT64, int64_t);
+                DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+                DECLARE_COMPUTE_RUN(FLOAT32, float);
+                DECLARE_COMPUTE_RUN(FLOAT64, double);
+#undef DECLARE_COMPUTE_RUN
+                default: {
+                    TS_LOG_ERROR << "add not support this data type: " << dtype << eject;
+                    break;
+                }
+            }
+        }
+
+        void Sub::reduce_with_bias(const Tensor &lhs, const Tensor &rhs, Tensor &out, int dim) {
+            // Notice: the all tensor' memory device are CPU, as given in running_memory_device
+            DTYPE dtype = out.dtype();
+            switch(dtype) {
+#define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
+        case DTYPE: { compute_run_bias<TYPE>(lhs, rhs, out, dim); break; }
+                DECLARE_COMPUTE_RUN(INT8, int8_t);
+                DECLARE_COMPUTE_RUN(UINT8, uint8_t);
+                DECLARE_COMPUTE_RUN(INT16, int16_t);
+                DECLARE_COMPUTE_RUN(UINT16, uint16_t);
+                DECLARE_COMPUTE_RUN(INT32, int32_t);
+                DECLARE_COMPUTE_RUN(UINT32, uint32_t);
+                DECLARE_COMPUTE_RUN(INT64, int64_t);
+                DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+                DECLARE_COMPUTE_RUN(FLOAT32, float);
+                DECLARE_COMPUTE_RUN(FLOAT64, double);
+#undef DECLARE_COMPUTE_RUN
+                default: {
+                    TS_LOG_ERROR << "add not support this data type: " << dtype << eject;
+                    break;
+                }
+            }
+        }
+
+        void Sub::reduce_with_same_shape(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
+            // Notice: the all tensor' memory device are CPU, as given in running_memory_device
+            DTYPE dtype = out.dtype();
+            switch(dtype) {
+#define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
+        case DTYPE: { compute_run_same_shape<TYPE>(lhs, rhs, out); break; }
+                DECLARE_COMPUTE_RUN(INT8, int8_t);
+                DECLARE_COMPUTE_RUN(UINT8, uint8_t);
+                DECLARE_COMPUTE_RUN(INT16, int16_t);
+                DECLARE_COMPUTE_RUN(UINT16, uint16_t);
+                DECLARE_COMPUTE_RUN(INT32, int32_t);
+                DECLARE_COMPUTE_RUN(UINT32, uint32_t);
+                DECLARE_COMPUTE_RUN(INT64, int64_t);
+                DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+                DECLARE_COMPUTE_RUN(FLOAT32, float);
+                DECLARE_COMPUTE_RUN(FLOAT64, double);
+#undef DECLARE_COMPUTE_RUN
+                default: {
+                    TS_LOG_ERROR << "add not support this data type: " << dtype << eject;
+                    break;
+                }
             }
         }
     }
-
-    output = ts::Tensor::Prototype(stack.index(0)->dtype(), shape);
-    return;
-}
-
-
-int Sub::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output) {
-    output.resize(1);
-    infer_private(stack, output[0]);
-    return 1;
-}
-
-int Sub::to_index(const HypeShape &hype, const Shape & shape, const Shape &curshape) {
-    TS_AUTO_CHECK(shape.size() == curshape.size());
-    Shape tmpshape(curshape);
-    for(int i=0; i<shape.size(); i++) {
-        if(shape[i] == 1) {
-            tmpshape[i] = 0;
-        } 
-    }
-
-    return hype.to_index(tmpshape);
-}
-
-
-template<typename T>
-void Sub::compute_run(Tensor *input_tensor, Tensor *right_tensor, Tensor *left_tensor) {
-    Shape shape = input_tensor->sizes();
-    Shape right_shape = right_tensor->sizes();
-    const Shape& left_shape = left_tensor->sizes();
-
-    if(shape.size() == 1) {
-        shape = Shape(right_shape.size(), 1);
-    } 
-
-    if(right_shape.size() == 1) {
-        right_shape = Shape(shape.size(), 1);
-    } 
-
-    const T* pinput = input_tensor->sync(MemoryDevice(CPU)).data<T>();
-    const T* pright = right_tensor->sync(MemoryDevice(CPU)).data<T>();
-
-    T* pleft = left_tensor->data<T>();
-
-    HypeShape left_hype(left_shape);
-    HypeShape hype(shape);
-    HypeShape right_hype(right_shape);
-
-    int ncount = right_tensor->count();
-    if(input_tensor->count() == 1) {
-        for(int i=0; i<ncount; i++) {
-            pleft[i] = pinput[0] - pright[i];
-        } 
-        return;
-    }
-
-    ncount = input_tensor->count();
-    if(right_tensor->count() == 1) {
-        for(int i=0; i<ncount; i++) {
-            pleft[i] = pinput[i] - pright[0];
-        } 
-        return;
-    }
-
-    ncount = left_tensor->count();
-    for(int i=0; i<ncount; i++) {
-        std::vector<int> tmpshape = left_hype.to_coordinate(i);
-        pleft[i] = pinput[to_index(hype, shape, tmpshape)] - pright[to_index(right_hype,right_shape,tmpshape)];    
-    }
-
-}
-
-
-
-int Sub::run(ts::Stack &stack) {
-    std::vector<Tensor::Prototype> output;
-    output.resize(1);
-    infer_private(stack, output[0]);
-
-    stack.push(output[0], MemoryDevice(CPU));
-
-    Tensor *left_tensor = stack.index(-1);
-    Tensor *input_tensor =  stack.index(0);
-    Tensor *right_tensor  = stack.index(1);
-
-    DTYPE type = stack.index(0)->dtype();
-
-    switch(type) {
-        case INT8: {
-            compute_run<char>(input_tensor, right_tensor, left_tensor);
-            break;
-        }
-        case UINT8: {
-            compute_run<unsigned char>(input_tensor, right_tensor, left_tensor);
-            break;
-        }
-        case INT16: {
-            compute_run<short>(input_tensor, right_tensor, left_tensor);
-            break;
-        }
-        case UINT16: {
-            compute_run<unsigned short>(input_tensor, right_tensor, left_tensor);
-            break;
-        }
-        case INT32: {
-            compute_run<int>(input_tensor, right_tensor, left_tensor);
-            break;
-        }
-        case UINT32: {
-            compute_run<unsigned int>(input_tensor, right_tensor, left_tensor);
-            break;
-        }
-        case FLOAT32: {
-            compute_run<float>(input_tensor, right_tensor, left_tensor);
-            break;
-        }
-        case FLOAT64: {
-            compute_run<double>(input_tensor, right_tensor, left_tensor);
-            break;
-        }
-        default: {
-            throw Exception("sub not support this data type");
-            break;
-        }
-    }
-    
-    return 1;
-}
-
-
-
-
-
-
 }
 
 using namespace ts;
+using namespace cpu;
 TS_REGISTER_OPERATOR(Sub, CPU, name::layer::sub())
 
