@@ -1,37 +1,20 @@
-#ifndef TS_KERNELS_INNER_PROD_H
-#define TS_KERNELS_INNER_PROD_H
+#ifndef TENSORSTACK_KERNELS_CPU_INNER_PROD_H
+#define TENSORSTACK_KERNELS_CPU_INNER_PROD_H
 
-#include <core/tensor.h>
-#include <runtime/stack.h>
-#include <runtime/operator.h>
+#include "operator_on_cpu.h"
+#include "backend/base/base_inner_prod.h"
 
 
 namespace ts {
+    namespace cpu {
+        class InnerProd : public OperatorOnCPU<base::InnerProd> {
+        public:
+            using self = InnerProd;
+            using supper = OperatorOnCPU<base::InnerProd>;
 
-
-class Inner_Prod : public ts::Operator {
-public:
-
-    using supper = ts::Operator;
-    Inner_Prod();
-
-    virtual void init(); 
-
-    virtual int run(ts::Stack &stack);
-    virtual int infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output); 
-
-
-private:
-    template<typename T>
-    void compute_inner_prod(Tensor *input_tensor, Tensor *dot_tensor, Tensor *output_tensor);
-    void infer_private(ts::Stack &stack, ts::Tensor::Prototype &output);
-
-
-};
-
-
-
-
+            void inner_prod(const Tensor &lhs, const Tensor &rhs, Tensor &out) override;
+        };
+    }
 }
 
-#endif
+#endif  // TENSORSTACK_KERNELS_CPU_INNER_PROD_H
