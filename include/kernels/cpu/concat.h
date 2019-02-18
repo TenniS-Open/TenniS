@@ -1,5 +1,5 @@
-#ifndef TS_KERNELS_CONCAT_H
-#define TS_KERNELS_CONCAT_H
+#ifndef TENSORSTACK_KERNELS_CPU_CONCAT_H
+#define TENSORSTACK_KERNELS_CPU_CONCAT_H
 
 #include "operator_on_cpu.h"
 #include "backend/base/base_concat.h"
@@ -20,4 +20,4 @@ namespace ts {
 }
 
 
-#endif //TS_KERNELS_CONCAT_H
+#endif //TENSORSTACK_KERNELS_CPU_CONCAT_H

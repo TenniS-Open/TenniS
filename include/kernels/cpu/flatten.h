@@ -1,33 +1,14 @@
-#ifndef TS_KERNELS_FLATTEN_H
-#define TS_KERNELS_FLATTEN_H
+#ifndef TENSORSTACK_KERNELS_CPU_FLATTEN_H
+#define TENSORSTACK_KERNELS_CPU_FLATTEN_H
 
-#include <global/operator_factory.h>
-#include <core/tensor.h>
-#include <runtime/stack.h>
-
+#include "backend/base/base_flatten.h"
 
 
 namespace ts {
-
-
-class Flatten : public ts::Operator {
-public:
-
-    using supper = ts::Operator;
-    Flatten();
-
-    virtual void init();
-
-    virtual int run(ts::Stack &stack);
-
-    virtual int infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output);
-
-
-};
-
-
-
-
+	namespace cpu {
+	    using Flatten = OperatorOnAny<base::Flatten>;
+	}
 }
 
-#endif
+
+#endif //TENSORSTACK_KERNELS_CPU_FLATTEN_H
