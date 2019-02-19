@@ -1,39 +1,20 @@
-#ifndef TS_KERNELS_PAD_H
-#define TS_KERNELS_PAD_H
+#ifndef TENSORSTACK_KERNELS_CPU_PAD_H
+#define TENSORSTACK_KERNELS_CPU_PAD_H
 
-#include <core/tensor.h>
-#include <runtime/stack.h>
-#include <runtime/operator.h>
+#include "operator_on_cpu.h"
+#include "backend/base/base_pad.h"
+
 
 namespace ts {
+    namespace cpu {
+        class Pad : public OperatorOnAny<base::Pad> {
+        public:
+            using self = Pad;
+            using supper = OperatorOnCPU<base::Pad>;
 
-
-class Pad : public ts::Operator {
-public:
-
-    using supper = ts::Operator;
-    Pad();
-    
-
-    virtual void init();
-    virtual int run(ts::Stack &stack); 
-    virtual int infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output); 
-
-private:
-    void infer_private(ts::Stack &stack, ts::Tensor::Prototype &output); 
-
-    template <typename T>
-    void padding_run(const T * psrc, int len, T* pdst, const int* padding, const Shape &shape, const Shape &reshape);
-
-private:
-    int m_padding_value;
-
-};
-
-
-
-
-
+            void pad(const Tensor &x, const std::vector<std::array<int, 2>> &padding, float padding_value, Tensor &out) override;
+        };
+    }
 }
 
-#endif
+#endif  // TENSORSTACK_KERNELS_CPU_PAD_H

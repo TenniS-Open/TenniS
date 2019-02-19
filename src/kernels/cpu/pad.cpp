@@ -5,182 +5,193 @@
 #include <core/device.h>
 #include <utils/assert.h>
 
+#include <core/memory.h>
+#include <numeric>
+
 namespace ts {
+    namespace cpu {
+        namespace {
+            class copy_menu {
+            public:
+                int dst_index;
+                int src_index;
+                int count;
+            };
 
+            class set_menu {
+            public:
+                int dst_index;
+                int count;
+            };
 
-//////////////////////////////////////////
-static int stride(const std::vector<int> &shape, int start_dim){
-    int index = 1;
-    for(int i=start_dim; i<shape.size(); ++i) {
-        index *= shape[i];
-    }
-    return index;
-}
-
-static int to_index(const std::vector<int> &shape, const std::vector<int> & coordinate)
-{
-    if(shape.size() != coordinate.size())
-        return -1;
-
-    for(int i=0; i<shape.size(); i++) {
-        if(coordinate[i] > shape[i] || coordinate[i] <= 0)
-            return -1;
-    }
-
-    int index = 0;
-    for(int i=0; i<shape.size(); i++) {
-        index += (coordinate[i] - 1) * stride(shape, i+1);
-    }
-
-    return index;
-
-}
-
-static std::vector<int> to_coordinate(int index, const std::vector<int> &shape)
-{
-    std::vector<int> corrdinate(shape.size());
-    int ntmp = 0;
-    for(int i=0; i<shape.size(); i++) {
-        ntmp = stride(shape, i+1);
-
-        corrdinate[i] = index / ntmp + 1;
-        index %= ntmp;
-    }
-
-    return corrdinate;
-}
-
-/////////////////////////////////////////////
-Pad::Pad() {
-    field(name::padding_value, OPTIONAL);
-    m_padding_value = 0;
-}
-
-void Pad::init() {
-    supper::init();
-    if(has(name::padding_value)){
-        Tensor tensor_padding_value = tensor::cast(INT32, get(name::padding_value));
-        m_padding_value = ts::tensor::to_int(tensor_padding_value); 
-    }
-
-}
-
-void Pad::infer_private(ts::Stack &stack, ts::Tensor::Prototype &output) {
-    int input_num = stack.size();
-    TS_AUTO_CHECK(input_num == 2); 
-
-    const Shape &shape = stack.index(0)->sizes();
-    const Shape &pad_shape = stack.index(1)->sizes();;
-    Shape reshape;
-        
-    TS_AUTO_CHECK(shape.size()  > 0 && pad_shape.size() == 2 && pad_shape[0] == shape.size() && pad_shape[1] == 2); 
-
-    reshape.resize(shape.size());
-
-    Tensor padding_tensor = tensor::cast(INT32, *stack.index(1));
-    const int * padding = padding_tensor.data<int>();
-    for(int i=0; i<shape.size(); i++) {
-        reshape[i] = shape[i] + padding[2 * i] + padding[2 * i + 1];
-        TS_AUTO_CHECK(reshape[i] > 0); 
-    }
-
-    output = ts::Tensor::Prototype(stack.index(0)->dtype(), reshape);
-}
-
-
-
-int Pad::infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output) {
-     output.resize(1);
-     infer_private(stack, output[0]);
-     return 1;
-}
-
-template <typename T>
-void Pad::padding_run(const T * psrc, int len, T* pdst, const int* padding, const Shape &shape, const Shape &reshape) {
-    int index = 0;
-    Shape tmpshape;
-    tmpshape.resize(shape.size());
-
-    for(unsigned int i=0; i<len; i++) {
-        Shape oldshape = to_coordinate(i, reshape);
-
-        for(int k=0; k<oldshape.size(); k++) {
-            tmpshape[k] = oldshape[k] - padding[2 * k];// - padding[2 * k +1];       
+            class pad_menu {
+            public:
+                set_menu head;
+                copy_menu body;
+                set_menu tail;
+            };
         }
 
-        index = to_index(shape, tmpshape);
-        if(index >= 0 ) {
-            pdst[i] = psrc[index];
-        }else  {
-            pdst[i] = m_padding_value;
+        static inline pad_menu get_pad_menu(int size, const std::array<int, 2> &padding) {
+            int head = -padding[0];
+            int tail = size + padding[1];
+
+            if (head >= tail) {
+                return {{0, 0},
+                        {0, 0, 0},
+                        {0, 0}};
+            }
+
+            int head_count = -head;
+            set_menu menu_head = head_count > 0
+                                 ? set_menu({0, head_count})
+                                 : set_menu({0, 0});
+
+            int body_left = std::max<int>(head, 0);
+            int body_right = std::min<int>(tail, size);
+            int body_count = body_right - body_left;
+            copy_menu menu_body = body_count > 0
+                                  ? copy_menu({body_left - head, body_left, body_count})
+                                  : copy_menu({body_left - head, body_left, 0});
+
+            int tail_count = tail - size;
+            set_menu menu_tail = tail_count > 0
+                                 ? set_menu({size - head, tail_count})
+                                 : set_menu({size - head, 0});
+
+            return {menu_head, menu_body, menu_tail};
+        }
+
+        static void pad2d(const Tensor &x, int dim,
+                const std::array<int, 2> &padding_h, const std::array<int, 2> &padding_w, float padding_value, Tensor &out) {
+
+            auto &shape = x.sizes();
+            auto number = std::accumulate(shape.begin(), shape.begin() + dim, 1, std::multiplies<int>());
+            auto width = std::accumulate(shape.begin() + dim + 2, shape.end(), 1, std::multiplies<int>());
+
+            auto bytes = x.proto().type_bytes();
+            auto device_id = out.device().id();
+
+            Tensor cpu_padding_data;
+            if (tensor::support(x.dtype())) {
+                cpu_padding_data = tensor::build(x.dtype(), padding_value);
+            } else {
+                cpu_padding_data = Tensor(x.dtype(), {1});
+                std::memset(cpu_padding_data.data(), 0, size_t(bytes));
+            }
+            Tensor padding_data = cpu_padding_data.view(out.device());
+
+            auto menu_h = get_pad_menu(shape[dim], padding_h);
+            auto menu_w = get_pad_menu(shape[dim + 1], padding_h);
+
+            auto memcpy_handler = HardConverter::Query(out.device().type(), x.device().type());
+            TS_AUTO_CHECK(memcpy_handler != nullptr);
+
+            HypeShape src_shape({number, x.size(dim), x.size(dim + 1), width});
+            HypeShape dst_shape({number, out.size(dim), out.size(dim + 1), width});
+
+            for (int n = 0; n < number; ++n) {
+                // memset top
+                if (menu_h.head.count) {
+                    auto dst_index = dst_shape.to_index({n, menu_h.head.dst_index, 0, 0}) * bytes;
+                    auto set_count = menu_h.head.count * dst_shape.shape(2) * dst_shape.shape(3) * bytes;
+                    memset(out.data<char>() + dst_index, out.device(), set_count,
+                           padding_data.data(), padding_data.device(), bytes);
+                }
+                // memset left side
+                if (menu_w.head.count) {
+                    for (int h = 0; h < menu_h.body.count; ++h) {
+                        auto dst_index =
+                                dst_shape.to_index({n, menu_h.body.dst_index + h, menu_w.head.dst_index, 0}) * bytes;
+                        auto set_count = menu_w.head.count * dst_shape.shape(3) * bytes;
+                        memset(out.data<char>() + dst_index, out.device(), set_count,
+                               padding_data.data(), padding_data.device(), bytes);
+                    }
+                }
+                // memset right side
+                if (menu_w.tail.count) {
+                    for (int h = 0; h < menu_h.body.count; ++h) {
+                        auto dst_index =
+                                dst_shape.to_index({n, menu_h.body.dst_index + h, menu_w.tail.dst_index, 0}) * bytes;
+                        auto set_count = menu_w.tail.count * dst_shape.shape(3) * bytes;
+                        memset(out.data<char>() + dst_index, out.device(), set_count,
+                               padding_data.data(), padding_data.device(), bytes);
+                    }
+                }
+                // memset bottom
+                if (menu_h.tail.count) {
+                    auto dst_index = dst_shape.to_index({n, menu_h.tail.dst_index, 0, 0}) * bytes;
+                    auto set_count = menu_h.tail.count * dst_shape.shape(2) * dst_shape.shape(3) * bytes;
+                    memset(out.data<char>() + dst_index, out.device(), set_count,
+                           padding_data.data(), padding_data.device(), bytes);
+                }
+                // memcpy
+                if (menu_h.body.count && menu_w.body.count) {
+                    for (int h = 0; h < menu_h.body.count; ++h) {
+                        auto dst_index =
+                                dst_shape.to_index({n, menu_h.body.dst_index + h, menu_w.body.dst_index, 0}) * bytes;
+                        auto src_index =
+                                src_shape.to_index({n, menu_h.body.src_index + h, menu_w.body.src_index, 0}) * bytes;
+                        auto copy_count = menu_w.body.count * dst_shape.shape(3) * bytes;
+                        memcpy_handler(device_id, out.data<char>() + dst_index,
+                                       device_id, x.data<char>() + src_index, copy_count);
+                    }
+                }
+            }
+        }
+
+        static void pad1d(const Tensor &x, int dim,
+                          const std::array<int, 2> &padding, float padding_value, Tensor &out) {
+            if (dim > 0) {
+                pad2d(x, dim - 1, {0, 0}, padding, padding_value, out);
+            } else if (x.dims() > 1) {
+                pad2d(x, dim - 1, {0, 0}, padding, padding_value, out);
+            } else {
+                auto x_shape = x.sizes();
+                x_shape.insert(x_shape.begin(), 1);
+                auto out_shape = x.sizes();
+                out_shape.insert(out_shape.begin(), 1);
+                auto extend_x = x.reshape(x_shape);
+                auto extend_out = out.reshape(out_shape);
+                pad2d(extend_x, 0, {0, 0}, padding, padding_value, extend_out);
+            }
+        }
+
+        void Pad::pad(const Tensor &x, const std::vector<std::array<int, 2>> &padding, float padding_value, Tensor &out) {
+            int left = 0;
+            while (left < padding.size()) {
+                if (padding[left][0] != 0 || padding[left][1] != 0) break;
+                ++left;
+            }
+            if (left >= padding.size()) {
+                memcpy(out.data(), out.device(), size_t(out.count() * out.proto().type_bytes()),
+                        x.data(), x.device(), size_t(x.count() * x.proto().type_bytes()));
+                return;
+            }
+
+            int right = int(padding.size()) - 1;
+            while (right > left) {
+                if (padding[right][0] != 0 || padding[right][1] != 0) break;
+                --right;
+            }
+
+            if (left == right) {
+                pad1d(x, left, padding[left], padding_value, out);
+                return;
+            }
+
+            if (right - left == 1) {
+                pad2d(x, left, padding[left], padding[right], padding_value, out);
+                return;
+            }
+
+            TS_LOG_ERROR << "This version only support 2D or 1D padding" << eject;
         }
     }
-}
-
-
-int Pad::run(ts::Stack &stack) {
-    Tensor::Prototype output;
-    infer_private(stack, output);
-
-    stack.push(output, MemoryDevice(CPU));
-    Tensor *tensor = stack.index(-1);
-    Tensor *input_tensor = stack.index(0);
-    Tensor padding_tensor = tensor::cast(INT32, *stack.index(1));
-    const Shape& shape = input_tensor->sizes();
-    const Shape& reshape = output.sizes();
-
-    const int * padding = padding_tensor.data<int>();
-
-    Shape tmpshape;
-    tmpshape.resize(shape.size());
-
-    ts::DTYPE type = stack.index(0)->dtype();
-    unsigned int ncount = tensor->count();
-
-    switch(type) {
-        case ts::INT8: {
-            const char * psrc = input_tensor->sync(MemoryDevice(CPU)).data<char>();
-            char * pdst = tensor->data<char>();
-            padding_run<char>(psrc, ncount, pdst, padding, shape, reshape);
-            break;
-        }
-        case ts::INT16: {
-            const short * psrc = input_tensor->sync(MemoryDevice(CPU)).data<short>();
-            short * pdst = tensor->data<short>();
-            padding_run<short>(psrc, ncount, pdst, padding, shape, reshape);
-            break;
-        }
-        case ts::INT32: {
-            const int * psrc = input_tensor->sync(MemoryDevice(CPU)).data<int>();
-            int * pdst = tensor->data<int>();
-            padding_run<int>(psrc, ncount, pdst, padding, shape, reshape);
-            break;
-        }
-        case ts::FLOAT32: {
-            const float * psrc = input_tensor->sync(MemoryDevice(CPU)).data<float>();
-            float * pdst = tensor->data<float>();
-            padding_run<float>(psrc, ncount, pdst, padding, shape, reshape);
-            break;
-        }
-        case ts::FLOAT64: {
-            const double * psrc = input_tensor->sync(MemoryDevice(CPU)).data<double>();
-            double * pdst = tensor->data<double>();
-            padding_run<double>(psrc, ncount, pdst, padding, shape, reshape);
-            break;
-        }
-        default: {
-            throw Exception("pad not support this data type");
-            break;
-        }
-    }
-
-    return 1;
-}
-
-
 }
 
 
 
 using namespace ts;
+using namespace cpu;
 TS_REGISTER_OPERATOR(Pad, CPU, name::layer::pad())
