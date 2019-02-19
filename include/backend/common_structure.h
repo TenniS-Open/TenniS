@@ -70,6 +70,17 @@ namespace ts {
         FORMAT_NCHW = 0,
         FORMAT_NHWC = 1,
     };
+
+    enum class Pooling2DType : int {
+        MAX = 0,
+        AVG = 1,
+    };
+
+    enum class Padding2DType : int {
+        BLACK = 0,
+        COPY = 1,
+        LOOP = 2,
+    };
 }
 
 #endif //TENSORSTACK_BACKEND_COMMON_STRUCTURE_H
