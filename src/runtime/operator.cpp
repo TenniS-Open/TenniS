@@ -15,6 +15,7 @@
 
 #include "utils/need.h"
 #include "runtime/stack.h"
+#include "module/bubble.h"
 
 
 namespace ts {
@@ -28,7 +29,12 @@ namespace ts {
             TS_LOG_ERROR << "Unidentified param \"" << param << "\", did you mean \"" << fuzzy_param_name(param) << "\""
                          << eject;
         }
-        this->m_params.insert(std::make_pair(param, value));
+        auto param_it = m_params.find(param);
+        if (param_it == m_params.end()) {
+            this->m_params.insert(std::make_pair(param, value));
+        } else {
+            param_it->second = value;
+        }
     }
 
     Tensor &Operator::get(const std::string &param) {
@@ -76,7 +82,12 @@ namespace ts {
 
     void Operator::field(const std::string &param, Operator::FieldAttr attr, const Tensor &default_value) {
         this->field(param, attr);
-        m_params.insert(std::make_pair(param, default_value));
+        auto param_it = m_params.find(param);
+        if (param_it == m_params.end()) {
+            this->m_params.insert(std::make_pair(param, default_value));
+        } else {
+            param_it->second = default_value;
+        }
     }
 
     void Operator::field(const std::string &param, Operator::FieldAttr attr) {
@@ -192,6 +203,21 @@ namespace ts {
 
     const Operator::hash_map<std::string, Tensor> &Operator::params() const {
         return m_params;
+    }
+
+    std::string Operator::op() const {
+        auto &param = Bubble::RetentionParam::op;
+        return has(param) ? tensor::to_string(get(param)) : std::string();
+    }
+
+    std::string Operator::name() const {
+        auto &param = Bubble::RetentionParam::name;
+        return has(param) ? tensor::to_string(get(param)) : std::string();
+    }
+
+    int Operator::output_count() const {
+        auto &param = Bubble::RetentionParam::output_count;
+        return has(param) ? tensor::to_int(get(param)) : 0;
     }
 
     int RunOperator(Operator::shared op, Stack &stack, int nargs) {

@@ -36,7 +36,7 @@ namespace ts {
                                    const OperatorCreator::function &operator_creator) TS_NOEXCEPT {
         auto &map_name_creator = MapNameCreator();
         Name device_operator_name = std::make_pair(device_type, operator_name);
-        map_name_creator.insert(std::make_pair(device_operator_name, operator_creator));
+        map_name_creator[device_operator_name] = operator_creator;
     }
 
     void OperatorCreator::Clear() {

@@ -25,7 +25,7 @@ namespace ts {
 
     void DeviceAdmin::Register(const DeviceType &device_type, const function &device_admin) TS_NOEXCEPT {
         auto &map_device_type_admin = MapDeviceTypeAdmin();
-        map_device_type_admin.insert(std::make_pair(device_type, device_admin));
+        map_device_type_admin[device_type] = device_admin;
     }
 
     void DeviceAdmin::Clear() {

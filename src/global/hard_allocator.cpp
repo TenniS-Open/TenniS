@@ -30,7 +30,7 @@ namespace ts {
 
     void HardAllocator::Register(const DeviceType &device_type, const function &allocator) TS_NOEXCEPT {
         auto &map_device_allocator = MapDeviceAllocator();
-        map_device_allocator.insert(std::make_pair(device_type, allocator));
+        map_device_allocator[device_type] = allocator;
     }
 
     void HardAllocator::Clear() {
