@@ -88,7 +88,12 @@ namespace ts {
     }
 
     void Bubble::set(const std::string &param, const Tensor &value) {
-        this->m_params.insert(std::make_pair(param, value));
+        auto param_it = m_params.find(param);
+        if (param_it == m_params.end()) {
+            this->m_params.insert(std::make_pair(param, value));
+        } else {
+            param_it->second = value;
+        }
     }
 
     Tensor &Bubble::get(const std::string &param) {
