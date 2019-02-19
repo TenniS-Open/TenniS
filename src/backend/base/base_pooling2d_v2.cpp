@@ -2,7 +2,7 @@
 // Created by kier on 2019/2/19.
 //
 
-#include "backend/base/base_pooling2d.h"
+#include "backend/base/base_pooling2d_v2.h"
 
 #include "backend/name.h"
 #include "core/tensor_builder.h"
@@ -12,14 +12,13 @@
 
 namespace ts {
     namespace base {
-        Pooling2D::Pooling2D() {
+        Pooling2DV2::Pooling2DV2() {
             field(name::format, REQUIRED);
-            // field(name::type, OPTIONAL, tensor::from(int(Pooling2DType::MAX)));  // use optional running failed
-            field(name::type, REQUIRED);
-            field(name::padding, REQUIRED);
+            field(name::type, OPTIONAL, tensor::from(int(Pooling2DType::MAX)));
+            // field(name::padding, REQUIRED);
             field(name::padding_type, OPTIONAL, tensor::from(int(Padding2DType::BLACK)));
-            field(name::ksize, REQUIRED);
-            field(name::stride, REQUIRED);
+            // field(name::ksize, REQUIRED);
+            // field(name::stride, REQUIRED);
         }
 
         static std::string to_string(const std::valarray<int> &arr) {
@@ -34,19 +33,12 @@ namespace ts {
         }
 
 
-        void Pooling2D::init() {
+        void Pooling2DV2::init() {
             supper::init();
 
             auto format = tensor::to_string(get(name::format));
-            m_type = static_cast<Pooling2DType>(tensor::to_int(get(name::type)));
-            auto padding_tensor = tensor::cast(INT32, get(name::padding));
+            m_type = static_cast<Pooling2DType >(tensor::to_int(get(name::type)));
             m_padding_type = static_cast<Padding2DType>(tensor::to_int(get(name::padding_type)));
-            auto ksize_tensor = tensor::cast(INT32, get(name::ksize));
-            auto stride_tensor = tensor::cast(INT32, get(name::stride));
-
-            TS_AUTO_CHECK(padding_tensor.has_shape({4, 2}));
-            TS_AUTO_CHECK(ksize_tensor.has_shape({4,}));
-            TS_AUTO_CHECK(stride_tensor.has_shape({4,}));
 
             if (format == name::NCHW) {
                 m_format = FORMAT_NCHW;
@@ -55,12 +47,26 @@ namespace ts {
             } else {
                 TS_LOG_ERROR << this->op() << " do not support format: " << format << eject;
             }
+        }
 
-            m_padding4x2.resize(8);
+        int Pooling2DV2::infer(Stack &stack, std::vector<Tensor::Prototype> &output) {
+            TS_AUTO_CHECK(stack.size() == 4);
+
+            auto x_tensor = stack[0];
+            TS_AUTO_CHECK(x_tensor.has_shape({-1, -1, -1, -1}));
+            auto padding_tensor = tensor::cast(INT32, stack[1]);
+            auto ksize_tensor = tensor::cast(INT32, stack[2]);
+            auto stride_tensor = tensor::cast(INT32, stack[3]);
+
+            TS_AUTO_CHECK(padding_tensor.has_shape({4, 2}));
+            TS_AUTO_CHECK(ksize_tensor.has_shape({4,}));
+            TS_AUTO_CHECK(stride_tensor.has_shape({4,}));
+
+            std::valarray<int> m_padding4x2(8);
             for (size_t i = 0; i < 8; ++i) m_padding4x2[i] = padding_tensor.data<int32_t>(i);
-            m_ksize4.resize(4);
+            std::valarray<int> m_ksize4(4);
             for (size_t i = 0; i < 4; ++i) m_ksize4[i] = ksize_tensor.data<int32_t>(i);
-            m_stride4.resize(4);
+            std::valarray<int> m_stride4(4);
             for (size_t i = 0; i < 4; ++i) m_stride4[i] = stride_tensor.data<int32_t>(i);
 
             // only support native conv2d
@@ -95,14 +101,6 @@ namespace ts {
                     TS_LOG_ERROR << this->op() << " do not support stride: " << to_string(m_stride4) << eject;
                 }
             }
-        }
-
-        int Pooling2D::infer(Stack &stack, std::vector<Tensor::Prototype> &output) {
-            TS_AUTO_CHECK(stack.size() == 1);
-
-            auto x_tensor = stack[0];
-
-            TS_AUTO_CHECK(x_tensor.has_shape({-1, -1, -1, -1}));
 
             Size2D x;
             Size2D ksize;
@@ -141,13 +139,16 @@ namespace ts {
             return 1;
         }
 
-        int Pooling2D::run(Stack &stack) {
+        int Pooling2DV2::run(Stack &stack) {
             std::vector<Tensor::Prototype> output_protos;
             infer(stack, output_protos);
 
             auto memory_device = running_memory_device();
 
             Tensor x = stack[0].view(memory_device);
+            auto padding_tensor = tensor::cast(INT32, stack[1]);
+            auto ksize_tensor = tensor::cast(INT32, stack[2]);
+            auto stride_tensor = tensor::cast(INT32, stack[3]);
 
             Tensor out = *stack.push(output_protos[0], memory_device);
 
@@ -156,13 +157,17 @@ namespace ts {
             Stride2D stride;
 
             if (m_format == FORMAT_NCHW) {
-                ksize = Size2D(m_ksize4[2], m_ksize4[3]);
-                padding = Padding2D(m_padding4x2[4], m_padding4x2[5], m_padding4x2[6], m_padding4x2[7]);
-                stride = Stride2D(m_stride4[2], m_stride4[3]);
+                ksize = Size2D(ksize_tensor.data<int32_t>()[2], ksize_tensor.data<int32_t>()[3]);
+                padding = Padding2D(
+                        padding_tensor.data<int32_t>()[4], padding_tensor.data<int32_t>()[5],
+                        padding_tensor.data<int32_t>()[6], padding_tensor.data<int32_t>()[7]);
+                stride = Stride2D(stride_tensor.data<int32_t>()[2], stride_tensor.data<int32_t>()[3]);
             } else if (m_format == FORMAT_NHWC) {
-                ksize = Size2D(m_ksize4[1], m_ksize4[2]);
-                padding = Padding2D(m_padding4x2[2], m_padding4x2[3], m_padding4x2[4], m_padding4x2[5]);
-                stride = Stride2D(m_stride4[1], m_stride4[2]);
+                ksize = Size2D(ksize_tensor.data<int32_t>()[1], ksize_tensor.data<int32_t>()[2]);
+                padding = Padding2D(
+                        padding_tensor.data<int32_t>()[2], padding_tensor.data<int32_t>()[3],
+                        padding_tensor.data<int32_t>()[4], padding_tensor.data<int32_t>()[5]);
+                stride = Stride2D(stride_tensor.data<int32_t>()[1], stride_tensor.data<int32_t>()[2]);
             }
 
             pooling2d(x, m_type, padding, m_padding_type, ksize, stride, m_format, out);
