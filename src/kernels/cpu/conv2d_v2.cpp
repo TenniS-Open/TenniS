@@ -74,6 +74,7 @@ namespace ts {
                 m_op_conv2d->init();
             }
 
+            stack.push(0);
             return m_op_conv2d->run(stack);
         }
     }
