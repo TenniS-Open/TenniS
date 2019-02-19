@@ -5,7 +5,43 @@
 #ifndef TENSORSTACK_KERNELS_COMMON_SIMD_DEF_H
 #define TENSORSTACK_KERNELS_COMMON_SIMD_DEF_H
 
-#ifdef TS_USE_SSE
+#if defined(__ARM_NEON__) || defined(__ARM_NEON)
+#include <arm_neon.h>
+
+using _simd_f32x4 = float32x4_t;
+using _simd_f32 = float;
+
+inline _simd_f32x4 _simd_f32x4_load(const _simd_f32 *p){
+    return vld1q_f32(p);
+}
+
+inline _simd_f32x4 _simd_f32x4_set(_simd_f32 a, _simd_f32 b, _simd_f32 c, _simd_f32 d){
+    _simd_f32 array[4] = {a, b, c, d};
+    return vld1q_f32(array);
+}
+
+inline void _simd_f32x4_store(_simd_f32 *p, _simd_f32x4 m){
+    vst1q_f32(p, m);
+}
+
+inline _simd_f32x4 _simd_f32x4_add(_simd_f32x4 lhs, _simd_f32x4 rhs){
+    return vaddq_f32(lhs, rhs);
+}
+
+inline _simd_f32x4 _simd_f32x4_sub(_simd_f32x4 lhs, _simd_f32x4 rhs){
+    return vsubq_f32(lhs, rhs);
+}
+
+inline _simd_f32x4 _simd_f32x4_mul(_simd_f32x4 lhs, _simd_f32x4 rhs){
+    return vmulq_f32(lhs, rhs);
+}
+
+inline _simd_f32x4 _simd_f32x4_div(_simd_f32x4 lhs, _simd_f32x4 rhs){
+    _simd_f32x4 recip = vrecpeq_f32(rhs);
+    return vmulq_f32(lhs, recip);
+}
+
+#elif TS_USE_SSE
 #include <immintrin.h>
 
 using _simd_f32x4 = __m128;
