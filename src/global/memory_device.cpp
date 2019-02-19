@@ -28,7 +28,7 @@ namespace ts {
     void ComputingMemory::Register(const DeviceType &compute_device_type,
                                    const DeviceType &memory_device_type) TS_NOEXCEPT {
         auto &map_memory_device = MapMemoryDevice();
-        map_memory_device.insert(std::make_pair(compute_device_type, memory_device_type));
+        map_memory_device[compute_device_type] = memory_device_type;
     }
 
     void ComputingMemory::Clear() {

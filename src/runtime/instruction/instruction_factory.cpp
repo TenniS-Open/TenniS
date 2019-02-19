@@ -27,7 +27,7 @@ namespace ts {
     void InstructionCreator::Register(const std::string &op,
                                       const InstructionCreator::function &builder) TS_NOEXCEPT {
         auto &map_op_creator = MapOpInstructionCreator();
-        map_op_creator.insert(std::make_pair(op, builder));
+        map_op_creator[op] = builder;
     }
 
     void InstructionCreator::Clear() {
