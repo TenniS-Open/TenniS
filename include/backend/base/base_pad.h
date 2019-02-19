@@ -28,7 +28,8 @@ namespace ts {
 
             int infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output) override;
 
-            virtual void pad(const Tensor &x, const std::vector<std::array<int, 2>> &padding, Tensor &out) = 0;
+            virtual void
+            pad(const Tensor &x, const std::vector<std::array<int, 2>> &padding, float padding_value, Tensor &out) = 0;
 
         private:
             float m_padding_value;

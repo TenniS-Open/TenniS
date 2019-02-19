@@ -206,6 +206,31 @@ namespace ts {
             if (value.count() == 0) TS_LOG_ERROR("Can not convert empty tensor to bool") << eject;
             return cast(BOOLEAN, value).data<dtype<BOOLEAN>::declare>(0) != 0;
         }
+
+        bool support(DTYPE dtype) {
+            switch (dtype) {
+                default:
+                    return false;
+#define __CASE_TYPE_SUPPORTED(__type__) \
+                case __type__: return true;
+                __CASE_TYPE_SUPPORTED(BOOLEAN)
+                __CASE_TYPE_SUPPORTED(INT8)
+                __CASE_TYPE_SUPPORTED(UINT8)
+                __CASE_TYPE_SUPPORTED(INT16)
+                __CASE_TYPE_SUPPORTED(UINT16)
+                __CASE_TYPE_SUPPORTED(INT32)
+                __CASE_TYPE_SUPPORTED(UINT32)
+                __CASE_TYPE_SUPPORTED(INT64)
+                __CASE_TYPE_SUPPORTED(UINT64)
+                __CASE_TYPE_SUPPORTED(FLOAT16)
+                __CASE_TYPE_SUPPORTED(FLOAT32)
+                __CASE_TYPE_SUPPORTED(FLOAT64)
+                __CASE_TYPE_SUPPORTED(CHAR8)
+                __CASE_TYPE_SUPPORTED(CHAR16)
+                __CASE_TYPE_SUPPORTED(CHAR32)
+#undef __CASE_TYPE_SUPPORTED
+            }
+        }
     }
 
     template<typename T>

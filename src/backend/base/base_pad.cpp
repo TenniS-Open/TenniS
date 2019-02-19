@@ -51,6 +51,12 @@ namespace ts {
             auto memory_device = running_memory_device();
 
             auto x = stack[0].view(memory_device);
+
+            if (x.has_shape(output[0].sizes())) {
+                stack.push(x);
+                return 1;
+            }
+
             auto padding_tensor = tensor::cast(INT32, stack[1]);
             auto out = *stack.push(output[0], memory_device);
 
@@ -62,7 +68,7 @@ namespace ts {
                          padding_tensor.data<int32_t>(size_t(i * 2 + 1))}));
             }
 
-            pad(x, padding, out);
+            pad(x, padding, m_padding_value, out);
 
             return 1;
         }
