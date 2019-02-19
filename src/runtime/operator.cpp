@@ -29,7 +29,12 @@ namespace ts {
             TS_LOG_ERROR << "Unidentified param \"" << param << "\", did you mean \"" << fuzzy_param_name(param) << "\""
                          << eject;
         }
-        this->m_params.insert(std::make_pair(param, value));
+        auto param_it = m_params.find(param);
+        if (param_it == m_params.end()) {
+            this->m_params.insert(std::make_pair(param, value));
+        } else {
+            param_it->second = value;
+        }
     }
 
     Tensor &Operator::get(const std::string &param) {
@@ -77,7 +82,12 @@ namespace ts {
 
     void Operator::field(const std::string &param, Operator::FieldAttr attr, const Tensor &default_value) {
         this->field(param, attr);
-        m_params.insert(std::make_pair(param, default_value));
+        auto param_it = m_params.find(param);
+        if (param_it == m_params.end()) {
+            this->m_params.insert(std::make_pair(param, default_value));
+        } else {
+            param_it->second = default_value;
+        }
     }
 
     void Operator::field(const std::string &param, Operator::FieldAttr attr) {

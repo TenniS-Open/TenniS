@@ -36,7 +36,7 @@ namespace ts {
         auto dst_src_converter = map_dst_src_converter.find(dst_device_type);
         if (dst_src_converter != map_dst_src_converter.end()) {
             auto &map_src_converter = dst_src_converter->second;
-            map_src_converter.insert(std::make_pair(src_device_type, converter));
+            map_src_converter[src_device_type] = converter;
         } else {
             std::map<DeviceType, HardConverter::function> map_src_converter;
             map_src_converter.insert(std::make_pair(src_device_type, converter));
