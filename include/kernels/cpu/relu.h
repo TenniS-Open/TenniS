@@ -1,27 +1,21 @@
-#ifndef TS_KERNELS_RELU_H
-#define TS_KERNELS_RELU_H
+#ifndef TENSORSTACK_KERNELS_CPU_RELU_H
+#define TENSORSTACK_KERNELS_CPU_RELU_H
 
-#include <global/operator_factory.h>
-#include <core/tensor.h>
-#include <runtime/stack.h>
+#include "backend/base/base_relu.h"
+#include "operator_on_cpu.h"
 
 namespace ts {
-	class Relu : public ts::Operator {
-	public:
-		using supper = ts::Operator;
-		Relu() {}
-		virtual void init();
-		virtual int run(ts::Stack &stack);
-		virtual int infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output);
+	namespace cpu {
+		class ReLU : public OperatorOnCPU<base::ReLU> {
+		public:
+		    using self = ReLU;
+			using supper = ts::Operator;
 
-	private:
-		template<typename T>
-		bool relu(ts::Stack &stack);
-	};
-
-	//TS_REGISTER_OPERATOR(Relu, ts::CPU, "relu")
+            void active(const Tensor &x, Tensor &out) override;
+		};
+	}
 }
 
 
 
-#endif //TS_KERNELS_RELU_H
+#endif //TENSORSTACK_KERNELS_CPU_PRELU_H
