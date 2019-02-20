@@ -1,29 +1,21 @@
-#ifndef TS_KERNELS_RELUMAX_H
-#define TS_KERNELS_RELUMAX_H
+#ifndef TENSORSTACK_KERNELS_CPU_RELU_MAX_H
+#define TENSORSTACK_KERNELS_CPU_RELU_MAX_H
 
-#include <global/operator_factory.h>
-#include <core/tensor.h>
-#include <runtime/stack.h>
+#include "backend/base/base_relu_max.h"
+#include "operator_on_cpu.h"
 
 namespace ts {
-	class ReluMax : public ts::Operator {
-	public:
-		using supper = ts::Operator;
-		ReluMax();
-		virtual void init();
-		virtual int run(ts::Stack &stack);
-		virtual int infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output);
+	namespace cpu {
+		class ReLUMax : public OperatorOnCPU<base::ReLUMax> {
+		public:
+		    using self = ReLUMax;
+			using supper = ts::Operator;
 
-	private:
-		template<typename T>
-		bool relu_max(ts::Stack &stack);
-
-	private:
-		float m_max;
-	};
-	//TS_REGISTER_OPERATOR(ReluMax, ts::CPU, "relu_max")
+            void relu_max(const Tensor &x, float max, Tensor &out) override;
+		};
+	}
 }
 
 
 
-#endif //TS_KERNELS_RELUMAX_H
+#endif //TENSORSTACK_KERNELS_CPU_RELU_MAX_H
