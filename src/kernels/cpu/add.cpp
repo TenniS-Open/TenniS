@@ -222,5 +222,5 @@ namespace ts {
 
 using namespace ts;
 using namespace cpu;
-TS_REGISTER_OPERATOR(Add, CPU, name::layer::div())
+TS_REGISTER_OPERATOR(Add, CPU, name::layer::add())
 

@@ -79,4 +79,4 @@ namespace ts {
 
 using namespace ts;
 using namespace cpu;
-TS_REGISTER_OPERATOR(BatchScale, CPU, name::layer::batch_norm())
+TS_REGISTER_OPERATOR(BatchScale, CPU, name::layer::batch_scale())
