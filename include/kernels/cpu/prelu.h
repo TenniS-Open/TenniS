@@ -1,32 +1,21 @@
-#ifndef TS_KERNELS_PRELU_H
-#define TS_KERNELS_PRELU_H
+#ifndef TENSORSTACK_KERNELS_CPU_PRELU_H
+#define TENSORSTACK_KERNELS_CPU_PRELU_H
 
-#include <global/operator_factory.h>
-#include <core/tensor.h>
-#include <runtime/stack.h>
-
-#include <vector>
+#include "backend/base/base_prelu.h"
+#include "operator_on_cpu.h"
 
 namespace ts {
-	class Prelu : public ts::Operator {
-	public:
-		using supper = ts::Operator;
-		Prelu();
-		virtual void init();
-		virtual int run(ts::Stack &stack);
-		virtual int infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output);
+	namespace cpu {
+		class PReLU : public OperatorOnCPU<base::PReLU> {
+		public:
+		    using self = PReLU;
+			using supper = ts::Operator;
 
-	private:
-		template<typename T>
-		bool prelu(ts::Stack &stack);
-	private:
-		int m_dim;
-		std::vector<float> m_slope;
-	};
-
-	//TS_REGISTER_OPERATOR(Prelu, ts::CPU, "prelu")
+            void prelu(const Tensor &x, const Tensor &slope, int dim, Tensor &out) override;
+		};
+	}
 }
 
 
 
-#endif //TS_KERNELS_PRELU_H
+#endif //TENSORSTACK_KERNELS_CPU_PRELU_H
