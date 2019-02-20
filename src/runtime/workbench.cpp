@@ -152,6 +152,9 @@ namespace ts {
             dolly->m_input_filters[i] = this->m_input_filters[i]->clone();
         }
 
+        // bind device context
+        ctx::bind<DeviceContext> bind_device_context(const_cast<DeviceContext*>(&this->m_device_context));
+
         for (auto &instruction : dolly->m_program) {
             auto op = dynamic_cast<OperatorInstruction*>(instruction.get());
             if (op == nullptr) continue;
