@@ -81,6 +81,11 @@ namespace ts {
         COPY = 1,
         LOOP = 2,
     };
+
+    enum class Resize2DType : int {
+        LINEAR = 0,
+        CUBIC = 1,
+    };
 }
 
 #endif //TENSORSTACK_BACKEND_COMMON_STRUCTURE_H
