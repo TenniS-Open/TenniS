@@ -1,34 +1,21 @@
-#ifndef TS_KERNELS_SOFTMAX_H
-#define TS_KERNELS_SOFTMAX_H
+#ifndef TENSORSTACK_KERNELS_CPU_SOFTMAX_H
+#define TENSORSTACK_KERNELS_CPU_SOFTMAX_H
 
-#include <global/operator_factory.h>
-#include <core/tensor.h>
-#include <runtime/stack.h>
-
-#include <vector>
+#include "backend/base/base_softmax.h"
+#include "operator_on_cpu.h"
 
 namespace ts {
-	class Softmax : public ts::Operator {
-	public:
-		using supper = ts::Operator;
-		Softmax();
-		virtual void init();
-		virtual int run(ts::Stack &stack);
-		virtual int infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output);
+	namespace cpu {
+		class Softmax : public OperatorOnCPU<base::Softmax> {
+		public:
+			using self = Softmax;
+			using supper = OperatorOnCPU<base::Softmax>;
 
-	private:
-		template<typename T>
-		bool softmax(ts::Stack &stack);
-	private:
-
-	private:
-		int m_dim;
-		bool m_smooth;
-	};
-
-	//TS_REGISTER_OPERATOR(Softmax, ts::CPU, "softmax")
+			void softmax(const Tensor &x, int dim, bool smooth, Tensor &out) override;
+		};
+	}
 }
 
 
 
-#endif //TS_KERNELS_SOFTMAX_H
+#endif //TENSORSTACK_KERNELS_CPU_SOFTMAX_H
