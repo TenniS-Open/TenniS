@@ -77,6 +77,7 @@ namespace ts {
 		string smooth = "smooth";
         string size = "size";
         string prewhiten = "prewhiten";
+        string dtype = "dtype";
 
     }
 }
