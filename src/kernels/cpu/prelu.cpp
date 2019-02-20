@@ -65,8 +65,6 @@ namespace ts {
 			}
 		}
 	}
-
-
 }
 
 using namespace ts;
