@@ -58,6 +58,22 @@ namespace ts {
             }
 
             auto padding_tensor = tensor::cast(INT32, stack[1]);
+
+            bool is_zero_padding = true;
+            int padding_tensor_count = padding_tensor.count();
+            auto padding_tensor_data = padding_tensor.data<int32_t>();
+            for (int i = 0; i < padding_tensor_count; ++i) {
+                if (padding_tensor_data[i] != 0) {
+                    is_zero_padding = false;
+                    break;
+                }
+            }
+
+            if (is_zero_padding) {
+                stack.push(0);
+                return 1;
+            }
+
             auto out = *stack.push(output[0], memory_device);
 
             std::vector<std::array<int, 2>> padding;
