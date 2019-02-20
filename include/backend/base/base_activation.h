@@ -15,8 +15,6 @@ namespace ts {
             using self = Activation;
             using supper = OperatorOnDevice;
 
-            void init() override;
-
             int run(Stack &stack) override;
 
             int infer(Stack &stack, std::vector<Tensor::Prototype> &output) override;
