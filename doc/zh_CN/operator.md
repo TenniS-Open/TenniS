@@ -347,17 +347,18 @@ output_w = floor((width + pad_w -
 输入: `x`: `Tensor`  
 输出: `y`: `Tensor` `$y.shape == $x.shape`  
 
-### prelu(x) -> y
+### prelu(x..device, slope..device) -> y
 描述：`y = x > 0 ? x : slope * x`  
 输入: `x`: `Tensor`  
+输入: `slope`: `Array` 维度与`dim`给定的维度相同  
 输出: `y`: `Tensor` `$y.shape == $x.shape`  
 
 参数：
-- `dim`: `Int` slope 所在的维度，当slope维度不为1时，此参数必须设置。
-- `slope` `Array` 或者 `Scalar` 维度为1或者与`dim`给定的维度相同
+- `dim`: `Int` slope 所在的维度，此参数必须设置。
+
 
 说明：  
-`$slope.size == 1 or $slope.size == $x.shape($dim)`
+`$slope.size == $x.shape($dim)`
 
 ### softmax(x) -> y
 描述：  

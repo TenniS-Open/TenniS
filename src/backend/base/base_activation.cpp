@@ -8,10 +8,6 @@
 
 namespace ts {
     namespace base {
-        void Activation::init() {
-            supper::init();
-        }
-
         int Activation::infer(Stack &stack, std::vector<Tensor::Prototype> &output) {
             TS_AUTO_CHECK(stack.size() == 1);
 
