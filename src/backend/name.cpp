@@ -76,6 +76,7 @@ namespace ts {
         string offset = "offset";
 		string smooth = "smooth";
         string size = "size";
+        string prewhiten = "prewhiten";
 
     }
 }
