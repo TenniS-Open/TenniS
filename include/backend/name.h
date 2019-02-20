@@ -75,6 +75,7 @@ namespace ts {
         extern string offset;
 		extern string smooth;
         extern string size;
+        extern string prewhiten;
 
 
         extern string valid;
