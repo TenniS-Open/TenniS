@@ -1,36 +1,14 @@
-#ifndef TS_KERNELS_RESHAPE_H
-#define TS_KERNELS_RESHAPE_H
+#ifndef TENSORSTACK_KERNELS_CPU_RESHAPE_H
+#define TENSORSTACK_KERNELS_CPU_RESHAPE_H
 
-#include <core/tensor.h>
-#include <runtime/stack.h>
-#include <runtime/operator.h>
+#include "backend/base/base_reshape.h"
 
 
 namespace ts {
-
-
-class Reshape : public ts::Operator {
-public:
-
-    using supper = ts::Operator;
-    Reshape();
-
-    virtual void init();
-
-    virtual int run(ts::Stack &stack);
-
-    virtual int infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output);
-
-private:
-    Shape m_shape;
-    int   m_index;
-    int   m_dims;
-
-};
-
-
-
-
+	namespace cpu {
+	    using Reshape = OperatorOnAny<base::Reshape>;
+	}
 }
 
-#endif
+
+#endif //TENSORSTACK_KERNELS_CPU_RESHAPE_H
