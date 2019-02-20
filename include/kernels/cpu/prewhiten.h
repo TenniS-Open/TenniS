@@ -8,7 +8,8 @@ namespace ts {
 	namespace cpu {
 		class PreWhiten : public OperatorOnCPU<base::PreWhiten> {
 		public:
-			using supper = ts::Operator;
+		    using self = PreWhiten;
+			using supper = OperatorOnCPU<base::PreWhiten>;
 
 			void prewhiten(const Tensor &x, Tensor &out) override;
 		};

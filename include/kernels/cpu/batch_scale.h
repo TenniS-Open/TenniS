@@ -1,5 +1,5 @@
-#ifndef TS_KERNELS_CPU_BATCH_SCALE_H
-#define TS_KERNELS_CPU_BATCH_SCALE_H
+#ifndef TENSORSTACK_KERNELS_CPU_BATCH_SCALE_H
+#define TENSORSTACK_KERNELS_CPU_BATCH_SCALE_H
 
 #include "operator_on_cpu.h"
 #include "backend/base/base_batch_scale.h"
@@ -20,4 +20,4 @@ namespace ts {
     }
 }
 
-#endif  // TS_KERNELS_CPU_BATCH_SCALE_H
+#endif  // TENSORSTACK_KERNELS_CPU_BATCH_SCALE_H

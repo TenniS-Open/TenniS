@@ -1,5 +1,5 @@
-#ifndef TS_KERNELS_ADD_BIAS_H
-#define TS_KERNELS_ADD_BIAS_H
+#ifndef TENSORSTACK_KERNELS_CPU_ADD_BIAS_H
+#define TENSORSTACK_KERNELS_CPU_ADD_BIAS_H
 
 #include <runtime/operator.h>
 #include <core/tensor.h>
@@ -22,4 +22,4 @@ namespace ts {
     }
 }
 
-#endif
+#endif  // TENSORSTACK_KERNELS_CPU_ADD_BIAS_H

@@ -1,5 +1,5 @@
-#ifndef TS_KERNELS_IM2COL_H
-#define TS_KERNELS_IM2COL_H
+#ifndef TENSORSTACK_KERNELS_CPU_IM2COL_H
+#define TENSORSTACK_KERNELS_CPU_IM2COL_H
 
 #include <vector>
 
@@ -22,4 +22,4 @@ void col2im_cpu(const Dtype* data_col, const int channels,
 
 };
 
-#endif 
+#endif  // TENSORSTACK_KERNELS_CPU_IM2COL_H
