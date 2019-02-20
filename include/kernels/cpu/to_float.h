@@ -1,32 +1,14 @@
-#ifndef TS_KERNELS_TO_FLOAT_H
-#define TS_KERNELS_TO_FLOAT_H
+#ifndef TENSORSTACK_KERNELS_CPU_TO_FLOAT_H
+#define TENSORSTACK_KERNELS_CPU_TO_FLOAT_H
 
-#include <core/tensor.h>
-#include <runtime/stack.h>
-#include <runtime/operator.h>
+#include "backend/base/base_cast.h"
 
 
 namespace ts {
-
-
-class To_Float : public ts::Operator {
-public:
-
-    using supper = ts::Operator;
-    To_Float();
-
-    virtual void init();
-
-    virtual int run(ts::Stack &stack);
-
-    virtual int infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output);
-
-
-};
-
-
-
-
+	namespace cpu {
+	    using ToFloat = OperatorOnAny<base::CastTo<FLOAT32>>;
+	}
 }
 
-#endif
+
+#endif //TENSORSTACK_KERNELS_CPU_TO_FLOAT_H
