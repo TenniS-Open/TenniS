@@ -9,7 +9,7 @@ namespace ts {
 		class Sigmoid : public OperatorOnCPU<base::Sigmoid> {
 		public:
 		    using self = Sigmoid;
-			using supper = ts::Operator;
+			using supper = OperatorOnCPU<base::Sigmoid>;
 
             void active(const Tensor &x, Tensor &out) override;
 		};

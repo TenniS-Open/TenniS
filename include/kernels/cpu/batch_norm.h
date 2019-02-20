@@ -1,5 +1,5 @@
-#ifndef TS_KERNELS_BATCH_NORM_H
-#define TS_KERNELS_BATCH_NORM_H
+#ifndef TENSORSTACK_KERNELS_CPU_BATCH_NORM_H
+#define TENSORSTACK_KERNELS_CPU_BATCH_NORM_H
 
 #include "operator_on_cpu.h"
 #include "backend/base/base_batch_norm.h"
@@ -20,4 +20,4 @@ namespace ts {
     }
 }
 
-#endif
+#endif  // TENSORSTACK_KERNELS_CPU_BATCH_NORM_H

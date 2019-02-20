@@ -9,7 +9,7 @@ namespace ts {
 		class ReLUMax : public OperatorOnCPU<base::ReLUMax> {
 		public:
 		    using self = ReLUMax;
-			using supper = ts::Operator;
+			using supper = OperatorOnCPU<base::ReLUMax>;
 
             void relu_max(const Tensor &x, float max, Tensor &out) override;
 		};

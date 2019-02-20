@@ -1,5 +1,5 @@
-#ifndef TS_KERNELS_TRANSPOSE_H
-#define TS_KERNELS_TRANSPOSE_H
+#ifndef TENSORSTACK_KERNELS_CPU_TRANSPOSE_H
+#define TENSORSTACK_KERNELS_CPU_TRANSPOSE_H
 
 #include <core/tensor.h>
 #include <runtime/stack.h>
@@ -34,4 +34,4 @@ private:
 
 }
 
-#endif
+#endif  // TENSORSTACK_KERNELS_CPU_TRANSPOSE_H
