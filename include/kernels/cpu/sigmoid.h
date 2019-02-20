@@ -1,28 +1,21 @@
-#ifndef TS_KERNELS_SIGMOID_H
-#define TS_KERNELS_SIGMOID_H
+#ifndef TENSORSTACK_KERNELS_CPU_SIGMOID_H
+#define TENSORSTACK_KERNELS_CPU_SIGMOID_H
 
-#include <global/operator_factory.h>
-#include <core/tensor.h>
-#include <runtime/stack.h>
+#include "backend/base/base_sigmoid.h"
+#include "operator_on_cpu.h"
 
 namespace ts {
-	class Sigmoid : public ts::Operator {
-	public:
-		using supper = ts::Operator;
-		Sigmoid() {
-			
-		}
-		virtual void init();
-		virtual int run(ts::Stack &stack);
-		virtual int infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output);
+	namespace cpu {
+		class Sigmoid : public OperatorOnCPU<base::Sigmoid> {
+		public:
+		    using self = Sigmoid;
+			using supper = ts::Operator;
 
-	private:
-		template<typename T>
-		bool sigmoid(ts::Stack &stack);
-	};
-	//TS_REGISTER_OPERATOR(Sigmoid, ts::CPU, "sigmoid")
+            void active(const Tensor &x, Tensor &out) override;
+		};
+	}
 }
 
 
 
-#endif //TS_KERNELS_SIGMOID_H
+#endif //TENSORSTACK_KERNELS_CPU_SIGMOID_H
