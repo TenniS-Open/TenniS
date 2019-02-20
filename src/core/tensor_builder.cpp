@@ -120,9 +120,13 @@ namespace ts {
         }
 
         Tensor cast(DTYPE dtype, const Tensor &value) {
+            if (value.dtype() == dtype) {
+                auto device = MemoryDevice(CPU);
+                if (value.device() == device) return value;
+                auto cpu_controller = std::make_shared<DynamicMemoryController>(device);
+                return value.clone(cpu_controller);
+            }
             auto cpu_value = value.view(MemoryDevice(CPU));
-
-            if (cpu_value.dtype() == dtype) return cpu_value;
 
             auto cpu_controller = std::make_shared<DynamicMemoryController>(MemoryDevice(CPU));
 
@@ -238,7 +242,8 @@ namespace ts {
         auto controller = std::make_shared<DynamicMemoryController>(MemoryDevice(CPU));
         Tensor t(controller, dtypeid<T>::id, {int(count)});
         std::memcpy(t.data(), data, count * sizeof(T));
-        return t;
+
+        return std::move(t);
     }
 
 }
