@@ -17,10 +17,10 @@ namespace ts {
         Aspect2D(Dtype top, Dtype bottom, Dtype left, Dtype right)
                 : top(top), bottom(bottom), left(left), right(right) {}
 
-        Dtype top;
-        Dtype bottom;
-        Dtype left;
-        Dtype right;
+        Dtype top = 0;
+        Dtype bottom = 0;
+        Dtype left = 0;
+        Dtype right = 0;
     };
 
     template <typename T>
@@ -42,8 +42,8 @@ namespace ts {
         Form2D(Dtype height, Dtype width)
                 : height(height), width(width) {}
 
-        Dtype height;
-        Dtype width;
+        Dtype height = 0;
+        Dtype width = 0;
     };
 
     template <typename T>

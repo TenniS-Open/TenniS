@@ -66,6 +66,7 @@ namespace ts {
                 TS_LOG_ERROR << "Can not resize " << to_string(x.sizes())
                              << " to " << to_string(Shape(size_data, size_data + n)) << eject;
             }
+            dim = resized_height_dim;
 
             Shape resized_shape = x.sizes();
             resized_shape[resized_height_dim] = size_data[resized_height_dim];
