@@ -19,6 +19,7 @@ namespace ts {
             field(name::stride, REQUIRED);
             field(name::dilation, OPTIONAL);
             field(name::typo::dialations, OPTIONAL);
+            field(name::output_shape, OPTIONAL);
         }
 
         static std::string to_string(const std::valarray<int> &arr) {
@@ -49,7 +50,8 @@ namespace ts {
             }
 
             if (dilation_tensor.empty()) {
-                TS_LOG_ERROR << this->op() << " must set " << name::dilation << " or " << name::typo::dialations << eject;
+                TS_LOG_ERROR << this->op() << " must set " << name::dilation << " or " << name::typo::dialations
+                             << eject;
             }
 
             TS_AUTO_CHECK(padding_tensor.has_shape({4, 2}));
@@ -62,6 +64,22 @@ namespace ts {
                 m_format = FORMAT_NHWC;
             } else {
                 TS_LOG_ERROR << this->op() << " do not support format: " << format << eject;
+            }
+
+            if (has(name::output_shape)) {
+                auto shape_tensor = tensor::cast(INT32, get(name::output_shape));
+
+                TS_AUTO_CHECK(shape_tensor.dims() == 1);
+
+                auto count = size_t(shape_tensor.size(0));
+
+                m_output_shape.resize(count);
+
+                for (size_t i = 0; i < count; ++i) {
+                    m_output_shape[i] = shape_tensor.data<int32_t>(i);
+                }
+
+                TS_AUTO_CHECK(m_output_shape.size() == 4);
             }
 
             m_padding4x2.resize(8);
@@ -87,6 +105,11 @@ namespace ts {
                     m_dilation4[1] != 1) {
                     TS_LOG_ERROR << this->op() << " do not support dialations: " << to_string(m_dilation4) << eject;
                 }
+                if (m_output_shape[0] > 0 ||
+                    m_output_shape[1] > 0) {
+                    TS_LOG_ERROR << this->op() << " do not support output_shape: " << to_string(m_output_shape)
+                                 << eject;
+                }
             } else if (m_format == FORMAT_NHWC) {
                 if (m_padding4x2[0] != 0 ||
                     m_padding4x2[1] != 0 ||
@@ -101,6 +124,11 @@ namespace ts {
                 if (m_dilation4[0] != 1 ||
                     m_dilation4[3] != 1) {
                     TS_LOG_ERROR << this->op() << " do not support dialations: " << to_string(m_dilation4) << eject;
+                }
+                if (m_output_shape[0] > 0 ||
+                    m_output_shape[3] > 0) {
+                    TS_LOG_ERROR << this->op() << " do not support output_shape: " << to_string(m_output_shape)
+                                 << eject;
                 }
             }
         }
@@ -117,6 +145,26 @@ namespace ts {
             TS_AUTO_CHECK(x_tensor.dtype() == w_tensor.dtype());
 
             TS_AUTO_CHECK(w_tensor.size(0) == x_tensor.size(1));
+
+            if (m_output_shape.size() == 4) {
+                Tensor::Prototype out_proto;
+
+                if (m_format == FORMAT_NCHW) {
+                    Size2D y(m_output_shape[2], m_output_shape[3]);
+                    out_proto = Tensor::Prototype(
+                            x_tensor.dtype(),
+                            {x_tensor.size(0), w_tensor.size(1), y.height, y.width});
+                } else if (m_format == FORMAT_NHWC) {
+                    Size2D y(m_output_shape[1], m_output_shape[2]);
+                    out_proto = Tensor::Prototype(
+                            x_tensor.dtype(),
+                            {x_tensor.size(0), y.height, y.width, w_tensor.size(1)});
+                }
+
+                output.resize(1);
+                output[0] = out_proto;
+                return 1;
+            }
 
             Size2D x;
             Size2D ksize;

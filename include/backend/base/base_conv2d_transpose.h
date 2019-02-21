@@ -39,6 +39,8 @@ namespace ts {
             float m_padding_value;
             std::valarray<int> m_stride4;
             std::valarray<int> m_dilation4;
+
+            std::valarray<int> m_output_shape;
         };
     }
 }
