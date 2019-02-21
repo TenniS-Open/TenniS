@@ -78,6 +78,6 @@ namespace ts {
         string size = "size";
         string prewhiten = "prewhiten";
         string dtype = "dtype";
-
+        string output_shape = "output_shape";
     }
 }
