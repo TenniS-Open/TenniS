@@ -6,9 +6,14 @@
 #include <chrono>
 #include <board/profiler.h>
 #include <iomanip>
-
+#include <memory>
+#include <cstdio>
 
 #include "utils/ctxmgr_lite_support.h"
+
+#if _MSC_VER > 1600
+#define snprintf sprintf_s
+#endif
 
 namespace ts {
 
@@ -70,7 +75,8 @@ namespace ts {
         if (!profiler) return Later();
         auto size = name.length() * 2 + 1;
         std::unique_ptr<char[]> buffer(new char[size]);
-        std::snprintf(buffer.get(), size, name.c_str(), profiler->serial_of(name));
+        using namespace std;
+        snprintf(buffer.get(), size, name.c_str(), profiler->serial_of(name));
         return profiler->timer(buffer.get());
     }
 }
