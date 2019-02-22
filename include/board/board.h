@@ -23,6 +23,8 @@ namespace ts {
 
     private:
         std::vector<Datum> m_data;
+        using iterator = typename std::vector<Datum>::iterator;
+        using const_iterator = typename std::vector<Datum>::const_iterator;
 
     public:
         void append(const Datum datum) {
@@ -55,19 +57,19 @@ namespace ts {
             return this->m_data.size();
         }
 
-        auto begin() -> decltype(this->m_data.begin()) {
+        iterator begin() {
             return this->m_data.begin();
         }
 
-        auto end() -> decltype(this->m_data.end()) {
+        iterator end() {
             return this->m_data.end();
         }
 
-        auto begin() const -> decltype(this->m_data.begin()) {
+        const_iterator begin() const {
             return this->m_data.begin();
         }
 
-        auto end() const -> decltype(this->m_data.end()) {
+        const_iterator end() const {
             return this->m_data.end();
         }
     };
@@ -83,6 +85,8 @@ namespace ts {
 
     private:
         std::unordered_map<key_type, value_type> m_board;
+        using iterator = typename std::unordered_map<key_type, value_type>::iterator;
+        using const_iterator = typename std::unordered_map<key_type, value_type>::const_iterator;
 
     public:
         void append(const key_type &name, const Datum datum) {
@@ -117,27 +121,27 @@ namespace ts {
             this->m_board.clear();
         }
 
-        auto begin() -> decltype(this->m_board.begin()) {
+        iterator begin() {
             return this->m_board.begin();
         }
 
-        auto end() -> decltype(this->m_board.end()) {
+        iterator end() {
             return this->m_board.end();
         }
 
-        auto begin() const -> decltype(this->m_board.begin()) {
+        const_iterator begin() const {
             return this->m_board.begin();
         }
 
-        auto end() const -> decltype(this->m_board.end()) {
+        const_iterator end() const {
             return this->m_board.end();
         }
 
-        auto find(const key_type &name) -> decltype(this->m_board.find(name)) {
+        iterator find(const key_type &name) {
             return this->m_board.find(name);
         }
 
-        auto find(const key_type &name) const -> decltype(this->m_board.find(name)) {
+        const_iterator find(const key_type &name) const {
             return this->m_board.find(name);
         }
 
