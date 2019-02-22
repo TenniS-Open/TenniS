@@ -29,7 +29,7 @@ namespace ts {
 
             TS_AUTO_CHECK(padding.has_shape({-1, 2}));
 
-            TS_AUTO_CHECK(padding.size(1) == x.dims());
+            TS_AUTO_CHECK(padding.size(0) == x.dims());
 
             Shape output_shape = x.sizes();
 

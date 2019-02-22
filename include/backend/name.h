@@ -77,7 +77,7 @@ namespace ts {
         extern string size;
         extern string prewhiten;
         extern string dtype;
-
+        extern string output_shape;
 
         extern string valid;
     }
