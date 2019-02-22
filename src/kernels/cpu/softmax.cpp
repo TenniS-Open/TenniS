@@ -71,8 +71,6 @@ namespace ts {
 					//Caculate numerator and denominator
 					for (int j = 0; j < axis; j++) {
 						for (int k = 0; k < inner_num; k++) {
-							output_data[i * axis * inner_num + j * inner_num + k] =
-									output_data[i * axis * inner_num + j * inner_num + k];
 							output_data[i * axis * inner_num + j * inner_num + k] = exp(
 									output_data[i * axis * inner_num + j * inner_num + k]);
 							denominator_data[k] += output_data[i * axis * inner_num + j * inner_num + k];
