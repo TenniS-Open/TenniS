@@ -7,6 +7,14 @@
 
 #include <numeric>
 
+#ifdef TS_USE_SSE
+#include "kernels/common/simd.h"
+#endif
+
+//#ifdef TS_USE_OPENMP
+//#include "kernels/common/openmp.h"
+//#endif
+
 namespace ts {
     namespace cpu {
         template <typename T>
@@ -53,6 +61,24 @@ namespace ts {
             }
         }
 
+#ifdef TS_USE_SSE
+		template<>
+		static inline void compute_run_scalar(const float *plhs, float scalar, float *pout, size_t count) {
+//#ifdef TS_USE_OPENMP
+//			//#pragma omp parallel for num_threads(1)
+//#pragma omp parallel for num_threads(openmp_threads(count))
+//#endif
+			for (int i = 0; i < count - 3; i += 4) {
+				float32x4 pout_x4 = float32x4(&plhs[i]) * float32x4(scalar);
+				pout_x4.store(&pout[i]);
+			}
+			for (int i = count / 4 * 4; i < count; ++i)
+			{
+				reduce_operator(pout[i], plhs[i], scalar);
+			}
+		}
+#endif
+
         template<typename T>
         static inline void compute_run_same_shape(const T *plhs, const T *prhs, T *pout, size_t count) {
             // this is CPU operator, so just using memcpy
@@ -62,6 +88,24 @@ namespace ts {
                 reduce_operator(pout[i], prhs[i]);
             }
         }
+
+#ifdef TS_USE_SSE
+		template<>
+		static inline void compute_run_same_shape(const float *plhs, const float *prhs, float *pout, size_t count) {
+//#ifdef TS_USE_OPENMP
+//			//#pragma omp parallel for num_threads(1)
+//#pragma omp parallel for num_threads(openmp_threads(count))
+//#endif
+			for (int i = 0; i < count - 3; i += 4) {
+				float32x4 pout_x4 = float32x4(&plhs[i]) * float32x4(&prhs[i]);
+				pout_x4.store(&pout[i]);
+			}
+			for (int i = count / 4 * 4; i < count; ++i)
+			{
+				reduce_operator(pout[i], plhs[i], prhs[i]);
+			}
+		}
+#endif
 
         template<typename T>
         static inline void compute_run_scalar(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
