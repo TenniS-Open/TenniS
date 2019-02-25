@@ -21,9 +21,9 @@ namespace ts {
             ShapeIterator input_shape_it(input_shape);
 
             int index = 0;
-            for (unsigned int i = 0; i < len; i++) {
+            for (int i = 0; i < len; i++) {
                 auto &oldshape = input_shape_it.coordinate();
-                for (int k = 0; k < oldshape.size(); k++) {
+                for (size_t k = 0; k < oldshape.size(); k++) {
                     tmpshape[k] = oldshape[permute[k]];
                 }
 
