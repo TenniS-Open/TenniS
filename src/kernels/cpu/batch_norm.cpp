@@ -7,6 +7,10 @@
 #include <core/device.h>
 #include <vector>
 
+#ifdef TS_USE_SSE
+#include "kernels/common/simd.h"
+#endif
+
 namespace ts {
     namespace cpu {
 
@@ -53,6 +57,57 @@ namespace ts {
                 }
             }
         }
+
+#ifdef TS_USE_SSE
+        template<>
+        static void cpu_batch_norm_compute_run<float>(const Tensor &x, const Tensor &mean,
+                                                      const Tensor &variance, int dim, float epsilon, Tensor &out) {
+            const Shape &shape = x.sizes();
+            int predims = 1;
+            int backdims = 1;
+            for (int i = 0; i < dim; i++) {
+                predims *= shape[i];
+            }
+
+            for (int i = dim + 1; i < shape.size(); i++) {
+                backdims *= shape[i];
+            }
+
+            const float *psrc = x.data<float>();
+            const float *pmean = mean.data<float>();
+            const float *pvariance = variance.data<float>();
+            float *pdst = out.data<float>();
+
+            // only used in CPU
+            //std::memcpy(pdst, psrc, out.count() * sizeof(float));
+
+            int stridedims = backdims * shape[dim];
+            int offset = 0;
+
+            std::vector<float> vec(variance.count());
+            for (int i = 0; i < vec.size(); i++) {
+                vec[i] = float(1) / sqrt(pvariance[i] + float(epsilon));
+            }
+
+            for (int i = 0; i < predims; i++) {
+                for (int k = 0; k < shape[dim]; k++) {
+                    offset = i * stridedims + k * backdims;
+                    float mean_val = pmean[k];
+                    float vec_val = vec[k];
+                    float32x4 mean_val_x4(mean_val);
+                    float32x4 vec_val_x4(vec_val);
+                    for (int m = 0; m < backdims - 3; m += 4) {
+                        float32x4 psrc_x4(&psrc[m + offset]);
+                        float32x4 pdst_x4 = (psrc_x4 - mean_val_x4) * vec_val_x4;
+                        pdst_x4.store(&pdst[m + offset]);
+                    }
+                    for (int m = backdims/4*4; m < backdims; m++) {
+                        pdst[m + offset] = (psrc[m + offset] - mean_val) * vec_val;
+                    }
+                }
+            }
+        }
+#endif
 
         void BatchNorm::batch_norm(const Tensor &x, const Tensor &mean, const Tensor &variance,
                                    int dim, float epsilon, Tensor &out) {

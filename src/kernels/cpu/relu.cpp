@@ -27,28 +27,26 @@ namespace ts {
         }
 
 #ifdef TS_USE_SSE
-		template<>
-		static void cpu_relu_compute_run<float>(const Tensor &x, Tensor &out) {
-			const float *input_data = x.data<float>();
-			float *output_data = out.data<float>();
-			int count = out.count();
-			std::memcpy(output_data, input_data, count * sizeof(float));
-			for (int i = 0; i < count - 3; i += 4) {
-				float32x4 output_x4(output_data);
-				float fabs_one = std::fabs(*output_data++);
-				float fabs_two = std::fabs(*output_data++);
-				float fabs_three = std::fabs(*output_data++);
-				float fabs_four = std::fabs(*output_data++);
-				float32x4 fabs_output_x4(fabs_one, fabs_two, fabs_three, fabs_four);
-				output_x4 = (output_x4 + fabs_output_x4) * float32x4((float)0.5);
-			}
-			for (int i = count/4*4; i < count; i++)
-			{
-				float val = *output_data;
-				*output_data = std::max(val, float(0.0));
-				output_data++;
-			}
-		}
+        template<>
+        static void cpu_relu_compute_run<float>(const Tensor &x, Tensor &out) {
+            const float *input_data = x.data<float>();
+            float *output_data = out.data<float>();
+            int count = out.count();
+            float32x4 const_mul(float(0.0));
+            for (int i = 0; i < count - 3; i += 4) {
+                float32x4 input_x4(input_data);
+                float32x4 output_x4 = max_float32x4(input_x4, const_mul);
+                output_x4.store(output_data);
+                input_data += 4;
+                output_data += 4;
+            }
+            for (int i = count / 4 * 4; i < count; i++)
+            {
+                float val = *input_data++;
+                *output_data = std::max(val, float(0.0));
+                output_data++;
+            }
+        }
 #endif
 
         void ReLU::active(const Tensor &x, Tensor &out) {

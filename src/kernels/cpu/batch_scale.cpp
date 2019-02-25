@@ -7,6 +7,10 @@
 #include <core/device.h>
 #include <vector>
 
+#ifdef TS_USE_SSE
+#include "kernels/common/simd.h"
+#endif
+
 namespace ts {
     namespace cpu {
 
@@ -49,6 +53,53 @@ namespace ts {
                 }
             }
         }
+
+#ifdef TS_USE_SSE
+        template<>
+        static void cpu_batch_scale_compute_run<float>(const Tensor &x, const Tensor &scale,
+            const Tensor &bias, int dim, Tensor &out) {
+            const Shape &shape = x.sizes();
+            int predims = 1;
+            int backdims = 1;
+            for (int i = 0; i < dim; i++) {
+                predims *= shape[i];
+            }
+
+            for (int i = dim + 1; i < shape.size(); i++) {
+                backdims *= shape[i];
+            }
+
+            const float *psrc = x.data<float>();
+            const float *pscale = scale.data<float>();
+            const float *pbias = bias.data<float>();
+            float *pdst = out.data<float>();
+
+            // only used in CPU
+            //std::memcpy(pdst, psrc, out.count() * sizeof(float));
+
+            int stridedims = backdims * shape[dim];
+            int offset = 0;
+
+            for (int i = 0; i < predims; i++) {
+                for (int k = 0; k < shape[dim]; k++) {
+                    offset = i * stridedims + k * backdims;
+                    float scale_val = pscale[k];
+                    float bias_val = pbias[k];
+                    float32x4 scale_val_x4(scale_val);
+                    float32x4 bias_val_x4(bias_val);
+                    float* pdst_temp = pdst + offset;
+                    for (int m = 0; m < backdims - 3; m += 4) {
+                        float32x4 psrc_x4(&psrc[m + offset]);
+                        float32x4 pdst_x4 = psrc_x4 * scale_val_x4 + bias_val_x4;
+                        pdst_x4.store(&pdst[m + offset]);
+                    }
+                    for (int m = backdims/4*4; m < backdims; m++) {
+                        pdst[m + offset] = psrc[m + offset] * scale_val + bias_val;
+                    }
+                }
+            }
+        }
+#endif
 
         void BatchScale::batch_scale(const Tensor &x, const Tensor &mean, const Tensor &variance,
                                      int dim, Tensor &out) {
