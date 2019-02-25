@@ -52,7 +52,7 @@ inline _simd_f32x4 _simd_f32x4_load(const _simd_f32 *p) {
 }
 
 inline _simd_f32x4 _simd_f32x4_set(_simd_f32 a, _simd_f32 b, _simd_f32 c, _simd_f32 d) {
-    return _mm_set_ps(a, b, c, d);
+    return _mm_set_ps(d, c, b, a);
 }
 
 inline void _simd_f32x4_store(_simd_f32 *p, _simd_f32x4 m) {
@@ -73,6 +73,14 @@ inline _simd_f32x4 _simd_f32x4_mul(_simd_f32x4 lhs, _simd_f32x4 rhs) {
 
 inline _simd_f32x4 _simd_f32x4_div(_simd_f32x4 lhs, _simd_f32x4 rhs) {
     return _mm_div_ps(lhs, rhs);
+}
+
+inline _simd_f32x4 _simd_f32x4_max(_simd_f32x4 lhs, _simd_f32x4 rhs) {
+    return _mm_max_ps(lhs, rhs);
+}
+
+inline _simd_f32x4 _simd_f32x4_min(_simd_f32x4 lhs, _simd_f32x4 rhs) {
+    return _mm_min_ps(lhs, rhs);
 }
 
 #else

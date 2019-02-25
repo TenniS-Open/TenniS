@@ -87,6 +87,14 @@ namespace ts {
         return _simd_f32x4_div(lhs.value, rhs.value);
     }
 
+    inline simd<float, 4> max_float32x4(const simd<float, 4> &lhs, const simd<float, 4> &rhs) {
+        return _simd_f32x4_max(lhs.value, rhs.value);
+    }
+
+    inline simd<float, 4> min_float32x4(const simd<float, 4> &lhs, const simd<float, 4> &rhs) {
+        return _simd_f32x4_min(lhs.value, rhs.value);
+    }
+
 }
 
 #endif //TENSORSTACK_KERNELS_COMMON_SIMD_H
