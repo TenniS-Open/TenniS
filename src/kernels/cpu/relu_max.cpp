@@ -4,6 +4,10 @@
 #include "backend/name.h"
 #include "global/operator_factory.h"
 
+#ifdef TS_USE_SSE
+#include "kernels/common/simd.h"
+#endif
+
 namespace ts {
 	namespace cpu {
 		template<typename T>
@@ -22,6 +26,33 @@ namespace ts {
                 output_data++;
             }
 		}
+
+#ifdef TS_USE_SSE
+        template<>
+        static void cpu_relu_max_compute_run<float>(const Tensor &x, float max, Tensor &out) {
+            const float *input_data = x.data<float>();
+            float *output_data = out.data<float>();
+            int count = out.count();
+            //std::memcpy(output_data, input_data, count * sizeof(float));
+
+            float casted_max = float(max);
+            float32x4 casted_max_x4(casted_max);
+            int counts = out.count();
+            float32x4 const_num_x4(float(0.0));
+            for (int i = 0; i < counts - 3; i+=4) {
+                float32x4 val_x4(input_data);
+                float32x4 output_x4 = min_float32x4(max_float32x4(val_x4, const_num_x4), casted_max_x4);
+                output_x4.store(output_data);
+                input_data += 4;
+                output_data += 4;
+            }
+            for (int i = count/4*4; i < counts; i++) {
+                float val = *input_data++;
+                *output_data = std::min(std::max(val, float(0)), casted_max);
+                output_data++;
+            }
+        }
+#endif
 
 		void ReLUMax::relu_max(const Tensor &x, float max, Tensor &out) {
 			// Notice: the all tensor' memory device are CPU, as given in running_memory_device

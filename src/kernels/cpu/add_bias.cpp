@@ -5,6 +5,10 @@
 #include <utils/assert.h>
 #include <core/device.h>
 
+#ifdef TS_USE_SSE
+#include "kernels/common/simd.h"
+#endif
+
 /////////////////////////////////////////////////
 namespace ts {
     template<typename T>
@@ -38,6 +42,45 @@ namespace ts {
             }
         }
     }
+
+#ifdef TS_USE_SSE
+    template<>
+    void cpu_add_bias_compute_run<float>(const Tensor &x, const Tensor &b, int dim, Tensor &out) {
+        const Shape &shape = x.sizes();
+        int pre_dims = 1;
+        int back_dims = 1;
+        for (int i = 0; i < dim; i++) {
+            pre_dims *= shape[i];
+        }
+
+        for (int i = dim + 1; i < shape.size(); i++) {
+            back_dims *= shape[i];
+        }
+
+        const float *psrc = x.data<float>();
+        const float *pbias = b.data<float>();
+        float *pdst = out.data<float>();
+
+        // only used in CPU
+        //std::memcpy(pdst, psrc, out.count() * sizeof(float));
+
+        int stridedims = back_dims * shape[dim];
+        int offset = 0;
+        for (int i = 0; i < pre_dims; i++) {
+            for (int k = 0; k < shape[dim]; k++) {
+                float32x4 bias_x4(pbias[k]);
+                offset = i * stridedims + k * back_dims;
+                for (int m = 0; m < back_dims - 3; m += 4) {
+                    float32x4 src_x4(&psrc[offset + m]);
+                    float32x4 dst_x4 = src_x4 + bias_x4;
+                }
+                for (int m = back_dims/4*4; m < back_dims; m++) {
+                    pdst[offset + m] = psrc[offset + m] + pbias[k];
+                }
+            }
+        }
+    }
+#endif
 
     void cpu::AddBias::add(const Tensor &x, const Tensor &b, int dim, Tensor &out) {
         // Notice: the all tensor' memory device are CPU, as given in running_memory_device

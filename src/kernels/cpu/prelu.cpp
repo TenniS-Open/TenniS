@@ -6,6 +6,10 @@
 
 #include <algorithm>
 
+#ifdef TS_USE_SSE
+#include "kernels/common/simd.h"
+#endif
+
 namespace ts {
 	namespace cpu {
 
@@ -31,15 +35,62 @@ namespace ts {
 
 			for (int i = 0; i < pre_dims; i++) {
 				for (int j = 0; j < output_shape[dim]; j++) {
-					int offsert = i * output_shape[dim] * last_dims + j * last_dims;
+					int offset = i * output_shape[dim] * last_dims + j * last_dims;
 					T val = slope_data[j];
 					for (int k = 0; k < last_dims; k++) {
-						output_data[k + offsert] = std::max(output_data[k + offsert], T(0)) +
-													  val * std::min(output_data[k + offsert], T(0));
+						output_data[k + offset] = std::max(output_data[k + offset], T(0)) +
+													  val * std::min(output_data[k + offset], T(0));
 					}
 				}
 			}
 		}
+
+#ifdef TS_USE_SSE
+        template <>
+        static void cpu_prelu_compute_run<float>(const Tensor &x, const Tensor &slope, int dim, Tensor &out) {
+            auto output_shape = out.sizes();
+            const float *input_data = x.data<float>();
+            float *output_data = out.data<float>();
+            const float *slope_data = slope.data<float>();
+
+            int count = out.count();
+            // used in CPU
+            /*std::memcpy(output_data, input_data, count * sizeof(float));*/
+
+            int pre_dims = 1;
+            for (int i = 0; i < dim; i++) {
+                pre_dims *= output_shape[i];
+            }
+            int last_dims = 1;
+            for (int i = dim + 1; i < output_shape.size(); i++) {
+                last_dims *= output_shape[i];
+            }
+
+            for (int i = 0; i < pre_dims; i++) {
+                for (int j = 0; j < output_shape[dim]; j++) {
+                    int offset = i * output_shape[dim] * last_dims + j * last_dims;
+                    float val = slope_data[j];
+                    float32x4 val_x4(val);
+                    float32x4 mul_const(float(0.0));
+                    //float32x4 mul_const(float(0.5));
+                    for (int k = 0; k < last_dims - 3; k += 4) {
+                        int index = k + offset;
+                        float32x4 input_data_x4(&input_data[index]);
+                        float32x4 output_data_x4 = max_float32x4(input_data_x4, mul_const) + val_x4 * min_float32x4(input_data_x4, mul_const);
+                        float32x4 fabs_input_x4(input_data[index], input_data[index+1], input_data[index+2], input_data[index+3]); 
+                        //float32x4 output_data_x4 = (fabs_input_x4 + input_data_x4) * mul_const +
+                        //    val_x4 * (input_data_x4 - fabs_input_x4) * mul_const;
+                        output_data_x4.store(&output_data[index]);
+                    }
+                    for (int k = last_dims/4*4; k < last_dims; k++)
+                    {
+                        output_data[k + offset] = std::max(input_data[k + offset], float(0)) +
+                            val * std::min(output_data[k + offset], float(0));
+                    }
+                }
+            }
+        }
+#endif
 
 		void PReLU::prelu(const Tensor &x, const Tensor &slope, int dim, Tensor &out) {
 			// Notice: the all tensor' memory device are CPU, as given in running_memory_device
