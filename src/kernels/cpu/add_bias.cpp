@@ -5,9 +5,7 @@
 #include <utils/assert.h>
 #include <core/device.h>
 
-#ifdef TS_USE_SSE
 #include "kernels/common/simd.h"
-#endif
 
 /////////////////////////////////////////////////
 namespace ts {
@@ -43,7 +41,6 @@ namespace ts {
         }
     }
 
-#ifdef TS_USE_SSE
     template<>
     void cpu_add_bias_compute_run<float>(const Tensor &x, const Tensor &b, int dim, Tensor &out) {
         const Shape &shape = x.sizes();
@@ -80,7 +77,6 @@ namespace ts {
             }
         }
     }
-#endif
 
     void cpu::AddBias::add(const Tensor &x, const Tensor &b, int dim, Tensor &out) {
         // Notice: the all tensor' memory device are CPU, as given in running_memory_device

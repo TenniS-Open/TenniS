@@ -4,6 +4,8 @@
 #include "backend/name.h"
 #include "global/operator_factory.h"
 
+#include "kernels/common/simd.h"
+
 namespace ts {
     namespace cpu {
         template<typename T>
@@ -20,6 +22,30 @@ namespace ts {
                 output_data++;
             }
         }
+
+//#ifdef TS_USE_SSE
+//        template<>
+//        static void cpu_sigmoid_compute_run<float>(const Tensor &x, Tensor &out) {
+//            const float *input_data = x.data<float>();
+//            float *output_data = out.data<float>();
+//            int count = out.count();
+//            //std::memcpy(output_data, input_data, count * sizeof(float));
+//            float32x4 const_one(float(1.0));
+//            for (int i = 0; i < count - 3; i += 4) {
+//                float32x4 val_x4(input_data);
+//                float32x4 exp_val_x4(exp(-(input_data[i])), exp(-(input_data[i+1])), exp(-(input_data[i+2])), exp(-(input_data[i+3])));
+//                float32x4 output_x4 = const_one / (const_one + exp_val_x4);
+//                output_x4.store(output_data);
+//                output_data += 4;
+//            }
+//            for (int i = count/4*4; i < count; i++)
+//            {
+//                float val = *input_data++;
+//                *output_data = 1. / (1. + exp(-(val)));
+//                output_data++;
+//            }
+//        }
+//#endif
 
         void Sigmoid::active(const Tensor &x, Tensor &out) {
             // Notice: the all tensor' memory device are CPU, as given in running_memory_device
