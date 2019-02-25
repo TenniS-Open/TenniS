@@ -41,6 +41,14 @@ inline _simd_f32x4 _simd_f32x4_div(_simd_f32x4 lhs, _simd_f32x4 rhs){
     return vmulq_f32(lhs, recip);
 }
 
+inline _simd_f32x4 _simd_f32x4_max(_simd_f32x4 lhs, _simd_f32x4 rhs) {
+    return vmaxq_f32(lhs, rhs);
+}
+
+inline _simd_f32x4 _simd_f32x4_min(_simd_f32x4 lhs, _simd_f32x4 rhs) {
+    return vminq_f32(lhs, rhs);
+}
+
 #elif TS_USE_SSE
 #include <immintrin.h>
 
