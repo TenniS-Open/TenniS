@@ -7,9 +7,7 @@
 
 #include <numeric>
 
-#ifdef TS_USE_SSE
 #include "kernels/common/simd.h"
-#endif
 
 //#ifdef TS_USE_OPENMP
 //#include "kernels/common/openmp.h"
@@ -61,7 +59,6 @@ namespace ts {
             }
         }
 
-#ifdef TS_USE_SSE
 		template<>
 		static inline void compute_run_scalar(const float *plhs, float scalar, float *pout, size_t count) {
 //#ifdef TS_USE_OPENMP
@@ -77,7 +74,6 @@ namespace ts {
 				reduce_operator(pout[i], plhs[i], scalar);
 			}
 		}
-#endif
 
         template<typename T>
         static inline void compute_run_same_shape(const T *plhs, const T *prhs, T *pout, size_t count) {
@@ -89,7 +85,6 @@ namespace ts {
             }
         }
 
-#ifdef TS_USE_SSE
 		template<>
 		static inline void compute_run_same_shape(const float *plhs, const float *prhs, float *pout, size_t count) {
 //#ifdef TS_USE_OPENMP
@@ -105,7 +100,6 @@ namespace ts {
 				reduce_operator(pout[i], plhs[i], prhs[i]);
 			}
 		}
-#endif
 
         template<typename T>
         static inline void compute_run_scalar(const Tensor &lhs, const Tensor &rhs, Tensor &out) {

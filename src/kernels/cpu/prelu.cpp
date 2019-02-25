@@ -6,9 +6,7 @@
 
 #include <algorithm>
 
-#ifdef TS_USE_SSE
 #include "kernels/common/simd.h"
-#endif
 
 namespace ts {
 	namespace cpu {
@@ -45,7 +43,6 @@ namespace ts {
 			}
 		}
 
-#ifdef TS_USE_SSE
         template <>
         static void cpu_prelu_compute_run<float>(const Tensor &x, const Tensor &slope, int dim, Tensor &out) {
             auto output_shape = out.sizes();
@@ -90,7 +87,6 @@ namespace ts {
                 }
             }
         }
-#endif
 
 		void PReLU::prelu(const Tensor &x, const Tensor &slope, int dim, Tensor &out) {
 			// Notice: the all tensor' memory device are CPU, as given in running_memory_device

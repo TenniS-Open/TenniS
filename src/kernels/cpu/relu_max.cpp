@@ -4,9 +4,7 @@
 #include "backend/name.h"
 #include "global/operator_factory.h"
 
-#ifdef TS_USE_SSE
 #include "kernels/common/simd.h"
-#endif
 
 namespace ts {
 	namespace cpu {
@@ -27,7 +25,6 @@ namespace ts {
             }
 		}
 
-#ifdef TS_USE_SSE
         template<>
         static void cpu_relu_max_compute_run<float>(const Tensor &x, float max, Tensor &out) {
             const float *input_data = x.data<float>();
@@ -52,7 +49,6 @@ namespace ts {
                 output_data++;
             }
         }
-#endif
 
 		void ReLUMax::relu_max(const Tensor &x, float max, Tensor &out) {
 			// Notice: the all tensor' memory device are CPU, as given in running_memory_device

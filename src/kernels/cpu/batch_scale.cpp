@@ -7,9 +7,7 @@
 #include <core/device.h>
 #include <vector>
 
-#ifdef TS_USE_SSE
 #include "kernels/common/simd.h"
-#endif
 
 namespace ts {
     namespace cpu {
@@ -54,7 +52,6 @@ namespace ts {
             }
         }
 
-#ifdef TS_USE_SSE
         template<>
         static void cpu_batch_scale_compute_run<float>(const Tensor &x, const Tensor &scale,
             const Tensor &bias, int dim, Tensor &out) {
@@ -99,7 +96,6 @@ namespace ts {
                 }
             }
         }
-#endif
 
         void BatchScale::batch_scale(const Tensor &x, const Tensor &mean, const Tensor &variance,
                                      int dim, Tensor &out) {
