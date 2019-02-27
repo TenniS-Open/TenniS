@@ -16,13 +16,14 @@ namespace ts {
                 const Shape &input_shape, const Shape &output_shape) {
             Shape tmpshape(input_shape.size());
 
-            HypeShape hype_input_shape(input_shape);
+            // HypeShape hype_input_shape(input_shape);
             HypeShape hype_output_shape(output_shape);
+            ShapeIterator input_shape_it(input_shape);
 
             int index = 0;
-            for (unsigned int i = 0; i < len; i++) {
-                Shape oldshape = hype_input_shape.to_coordinate(i);//to_coordinate(i, shape);
-                for (int k = 0; k < oldshape.size(); k++) {
+            for (int i = 0; i < len; i++) {
+                auto &oldshape = input_shape_it.coordinate();
+                for (size_t k = 0; k < oldshape.size(); k++) {
                     tmpshape[k] = oldshape[permute[k]];
                 }
 
@@ -32,6 +33,7 @@ namespace ts {
                 //    throw ts::Exception("transpose operator failed, index is invalid");
                 //}
                 pdst[index] = psrc[i];
+                ++input_shape_it;
             }
         }
 
