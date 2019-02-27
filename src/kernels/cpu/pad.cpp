@@ -82,7 +82,7 @@ namespace ts {
             Tensor padding_data = cpu_padding_data.view(out.device());
 
             auto menu_h = get_pad_menu(shape[dim], padding_h);
-            auto menu_w = get_pad_menu(shape[dim + 1], padding_h);
+            auto menu_w = get_pad_menu(shape[dim + 1], padding_w);
 
             auto memcpy_handler = HardConverter::Query(out.device().type(), x.device().type());
             TS_AUTO_CHECK(memcpy_handler != nullptr);
