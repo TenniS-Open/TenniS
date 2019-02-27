@@ -9,7 +9,7 @@
 namespace ts {
     namespace cpu {
         template<typename T>
-        static void cpu_relu_compute_run(const Tensor &x, Tensor &out) {
+        void cpu_relu_compute_run(const Tensor &x, Tensor &out) {
             const T *input_data = x.data<T>();
             T *output_data = out.data<T>();
             int count = out.count();
@@ -25,7 +25,7 @@ namespace ts {
         }
 
         template<>
-        static void cpu_relu_compute_run<float>(const Tensor &x, Tensor &out) {
+        void cpu_relu_compute_run<float>(const Tensor &x, Tensor &out) {
             const float *input_data = x.data<float>();
             float *output_data = out.data<float>();
             int count = out.count();

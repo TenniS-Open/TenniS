@@ -26,7 +26,7 @@ namespace ts {
 		}
 
         template<>
-        static void cpu_relu_max_compute_run<float>(const Tensor &x, float max, Tensor &out) {
+        void cpu_relu_max_compute_run<float>(const Tensor &x, float max, Tensor &out) {
             const float *input_data = x.data<float>();
             float *output_data = out.data<float>();
             int count = out.count();
