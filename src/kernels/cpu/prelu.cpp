@@ -50,7 +50,6 @@ namespace ts {
             float *output_data = out.data<float>();
             const float *slope_data = slope.data<float>();
 
-            int count = out.count();
             // used in CPU
             /*std::memcpy(output_data, input_data, count * sizeof(float));*/
 
