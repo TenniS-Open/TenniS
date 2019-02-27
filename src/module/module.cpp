@@ -230,10 +230,8 @@ namespace ts {
         return std::move(computation_schedule);
     }
 
-    void Module::Save(const std::string &filename, Module::shared module, Module::SerializationFormat format) {
+    void Module::Save(StreamWriter &stream, Module::shared module, Module::SerializationFormat format) {
         TS_AUTO_CHECK(format == BINARY);
-        // get nodes ready to read
-        FileStreamWriter stream(filename);
         auto valued_nodes = list_reference_nodes(module->outputs());
         std::vector<Node> nodes;
         std::unordered_map<Node, size_t> map_node_index;
@@ -269,6 +267,14 @@ namespace ts {
         serialize_nodes(stream, nodes);
     }
 
+    void Module::Save(const std::string &filename, Module::shared module, Module::SerializationFormat format) {
+        TS_AUTO_CHECK(format == BINARY);
+        FileStreamWriter stream(filename);
+
+        TS_CHECK(stream.is_open()) << "Can not access: " << filename << eject;
+        Save(stream, module, format);  
+    }
+
     static size_t read_uint32_list(StreamReader &stream, std::vector<uint32_t> &list) {
         uint32_t size_buffer = 0;
         size_t read_size = 0;
@@ -280,10 +286,10 @@ namespace ts {
         return read_size;
     }
 
-    Module::shared Module::Load(const std::string &filename, Module::SerializationFormat format) {
+    Module::shared Module::Load(StreamReader &stream, Module::SerializationFormat format) {
         TS_AUTO_CHECK(format == BINARY);
-        FileStreamReader stream(filename);
-        TS_CHECK(stream.is_open()) << "Can not access: " << filename << eject;
+        //FileStreamReader stream(filename);
+        //TS_CHECK(stream.is_open()) << "Can not access: " << filename << eject;
         size_t read_size = 0;
 
         // 0. read header
@@ -311,5 +317,12 @@ namespace ts {
         module->load(g, outputs);
         module->sort_inputs(inputs);
         return module;
+    }
+
+    Module::shared Module::Load(const std::string &filename, Module::SerializationFormat format) {
+        TS_AUTO_CHECK(format == BINARY);
+        FileStreamReader stream(filename);
+        TS_CHECK(stream.is_open()) << "Can not access: " << filename << eject;
+        return Load(stream, format);
     }
 }
