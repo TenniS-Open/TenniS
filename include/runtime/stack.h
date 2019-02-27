@@ -97,6 +97,14 @@ namespace ts {
 
         const Tensor *index(int i) const { return &this->m_stack.at(relative2absolute(i)); }
 
+        Tensor &operator[](int i) { return *index(i); }
+
+        const Tensor &operator[](int i) const { return *index(i); }
+
+        Tensor &operator[](size_t i) { return *index(int(i)); }
+
+        const Tensor &operator[](size_t i) const { return *index(int(i)); }
+
         Tensor *top() { return &this->m_stack.back(); }
 
         const Tensor *top() const { return &this->m_stack.back(); }

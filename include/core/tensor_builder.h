@@ -115,6 +115,8 @@ namespace ts {
             for (auto &size : shape) count *= size;
             return cast(dtype, tensor_builder<T>::build(data, count)).reshape(shape);
         }
+
+        bool support(DTYPE dtype);
     }
 }
 

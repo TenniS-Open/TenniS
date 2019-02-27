@@ -8,6 +8,8 @@
 #include "utils/except.h"
 #include "core/memory.h"
 
+#include <atomic>
+
 namespace ts {
 
     template <typename T>

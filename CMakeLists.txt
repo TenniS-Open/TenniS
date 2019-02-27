@@ -1,14 +1,15 @@
 cmake_minimum_required(VERSION 2.7)
 project(TensorStack)
 
+set(TARGET "STATIC" CACHE STRING "STATIC or SHARED" FORCE)
 add_definitions(-DBUILDING_TENSORSTACK)
-
-set(TARGET "SHARED" CACHE STRING "STATIC or SHARED" FORCE)
 
 # global root dir
 set(SOLUTION_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 add_definitions(-DTS_SOLUTION_DIR="${SOLUTION_DIR}")
+# add_definitions("-Wall -g") # add gcc option in FLAGS_GCC, not here!
 
+add_definitions(-DTS_DISABLE_PARALLEL)
 # dir for common cmake files
 list(APPEND CMAKE_MODULE_PATH ${SOLUTION_DIR}/cmake)
 list(APPEND CMAKE_PREFIX_PATH ${SOLUTION_DIR}/cmake)
@@ -19,6 +20,7 @@ set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Debug or Release")
 set(CONFIGURATION ${CMAKE_BUILD_TYPE})
 
 option(TS_USE_OPENMP "[Optional] Use OpenMP" ON)
+option(TS_USE_OPENCV "[Optional] Use OpenCV" OFF)
 
 option(TS_USE_CUDA "[Optional] Use CUDA" OFF)
 option(TS_USE_CBLAS "[Optional] Use CBLAS" OFF)
@@ -49,6 +51,7 @@ set(TENSORSTACK_MODULES
         board
         compiler
         core
+        encryption
         engine
         global
         memory
@@ -66,6 +69,22 @@ add_definitions(-DTS_USE_SSE)
 # Ordinary with chipset result
 
 set(third_libraries)
+
+if (TS_USE_OPENCV)
+    add_definitions(-DTS_USE_OPENCV)
+    message(STATUS "[Optional] Use OpenCV: [ON]")
+
+    find_package(OpenCV REQUIRED)
+    message(STATUS "OpenCV library status:")
+    message(STATUS "    version: ${OpenCV_VERSION}")
+    message(STATUS "    libraries: ${OpenCV_LIBS}")
+    message(STATUS "    include path: ${OpenCV_INCLUDE_DIRS}")
+
+    include_directories(${OpenCV_INCLUDE_DIRS})
+    list(APPEND third_libraries ${OpenCV_LIBS})
+else ()
+    message(STATUS "[Optional] Use OpenCV: [OFF]")
+endif ()
 
 if (TS_USE_OPENMP)
     add_definitions(-DTS_USE_OPENMP)

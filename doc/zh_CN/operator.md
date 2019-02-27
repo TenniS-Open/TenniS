@@ -106,7 +106,7 @@
 - `stride` `Int[4]` `batch` 和 `channels` 的默认为 `1`
 在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
 在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
-- `dialations` `Int[4]` `batch` 和 `channels` 的默认为 `1`
+- `dilation` `Int[4]` `batch` 和 `channels` 的默认为 `1`
 在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
 在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
 
@@ -155,7 +155,7 @@ output_w = floor((width + pad_w -
 - `stride` `Int[4]` `batch` 和 `channels` 的默认为 `1`
 在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
 在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
-- `dialations` `Int[4]` `batch` 和 `channels` 的默认为 `1`
+- `dilation` `Int[4]` `batch` 和 `channels` 的默认为 `1`
 在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
 在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
 
@@ -192,7 +192,7 @@ output_w = floor((width + pad_w -
 - `stride` `Int[4]` `batch` 和 `channels` 的默认为 `1`
 在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
 在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
-- `dialations` `Int[4]` `batch` 和 `channels` 的默认为 `1`
+- `dilation` `Int[4]` `batch` 和 `channels` 的默认为 `1`
 在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
 在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
 
@@ -225,7 +225,7 @@ output_w = floor((width + pad_w -
 - `stride` `Int[4]` `batch` 和 `channels` 的默认为 `1`
 在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
 在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
-- `dialations` `Int[4]` `batch` 和 `channels` 的默认为 `1`
+- `dilation` `Int[4]` `batch` 和 `channels` 的默认为 `1`
 在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
 在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
 
@@ -241,7 +241,7 @@ output_w = floor((width + pad_w -
 
 参数：
 - `dim`: `Int` 表示`channel`所在的维度
-- `epsilon`: `Scalar Default(0.001)` 表示约束系数，作用见说明
+- `epsilon`: `Scalar Default(10e-5)` 表示约束系数，作用见说明
 
 说明：
 `y = (x - mean) / (sqrt(var + epsilon))`
@@ -347,17 +347,18 @@ output_w = floor((width + pad_w -
 输入: `x`: `Tensor`  
 输出: `y`: `Tensor` `$y.shape == $x.shape`  
 
-### prelu(x) -> y
+### prelu(x..device, slope..device) -> y
 描述：`y = x > 0 ? x : slope * x`  
 输入: `x`: `Tensor`  
+输入: `slope`: `Array` 维度与`dim`给定的维度相同  
 输出: `y`: `Tensor` `$y.shape == $x.shape`  
 
 参数：
-- `dim`: `Int` slope 所在的维度，当slope维度不为1时，此参数必须设置。
-- `slope` `Array` 或者 `Scalar` 维度为1或者与`dim`给定的维度相同
+- `dim`: `Int` slope 所在的维度，此参数必须设置。
+
 
 说明：  
-`$slope.size == 1 or $slope.size == $x.shape($dim)`
+`$slope.size == $x.shape($dim)`
 
 ### softmax(x) -> y
 描述：  
@@ -555,7 +556,7 @@ output_width = ceil((input_width + 2 * m_pad_w - m_kernel_w) / (float)m_stride_w
    `y_{ij} = x_{ij} + a_{i0}` 在 `a` 的第二个维度，实现了广播。  
    注意： 广播的维度可以在矩阵中存在多份，默认维度大小为 `1` 的都支持广播。
    
-2. 框架支持的 `padding` 类型。  
+2. `Pooling` 框架支持的 `padding` 类型。  
    tf_valid:
    ```
    output_height = ceil((input_height + 2 * m_pad_h - m_kernel_h + 1) / (float)m_stride_h);
@@ -566,12 +567,12 @@ output_width = ceil((input_width + 2 * m_pad_w - m_kernel_w) / (float)m_stride_w
    output_height = ceil((input_height + 2 * m_pad_h) / (float)m_stride_h);
    output_width = ceil((input_width + 2 * m_pad_w) / (float)m_stride_w);
    ```
-   caffe:
+   caffe(mx_same):
    ```
    output_height = ceil((input_height + 2 * m_pad_h - m_kernel_h) / (float)m_stride_h + 1);
    output_width = ceil((input_width + 2 * m_pad_w - m_kernel_w) / (float)m_stride_w + 1);
    ```
-   mx_valid:
+   mx_valid(tf_valid):
    ```
    output_height = floor((input_height + 2 * m_pad_h - m_kernel_h) / (float)m_stride_h + 1);
    output_width = floor((input_width + 2 * m_pad_w - m_kernel_w) / (float)m_stride_w + 1);

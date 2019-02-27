@@ -10,6 +10,7 @@
 #include "utils/ctxmgr.h"
 #include "utils/box.h"
 #include "utils/log.h"
+#include <algorithm>
 
 #include <algorithm>
 
