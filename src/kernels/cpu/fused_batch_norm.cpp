@@ -110,7 +110,6 @@ namespace ts {
                     float32x4 vec_val_x4(vec_val);
                     float32x4 scale_val_x4(scale_val);
                     float32x4 bias_val_x4(bias_val);
-                    float *pdst_temp = pdst + offset;
                     for (int m = 0; m < backdims - 3; m += 4) {
                         float32x4 psrc_x4(&psrc[m + offset]);
                         float32x4 pdst_x4 = (psrc_x4 - mean_val_x4) * vec_val_x4 * scale_val_x4 + bias_val_x4;
