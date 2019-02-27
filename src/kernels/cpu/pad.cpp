@@ -82,7 +82,7 @@ namespace ts {
             Tensor padding_data = cpu_padding_data.view(out.device());
 
             auto menu_h = get_pad_menu(shape[dim], padding_h);
-            auto menu_w = get_pad_menu(shape[dim + 1], padding_h);
+            auto menu_w = get_pad_menu(shape[dim + 1], padding_w);
 
             auto memcpy_handler = HardConverter::Query(out.device().type(), x.device().type());
             TS_AUTO_CHECK(memcpy_handler != nullptr);
@@ -149,7 +149,7 @@ namespace ts {
             } else {
                 auto x_shape = x.sizes();
                 x_shape.insert(x_shape.begin(), 1);
-                auto out_shape = x.sizes();
+                auto out_shape = out.sizes();
                 out_shape.insert(out_shape.begin(), 1);
                 auto extend_x = x.reshape(x_shape);
                 auto extend_out = out.reshape(out_shape);

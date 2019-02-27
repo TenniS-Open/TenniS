@@ -556,7 +556,7 @@ output_width = ceil((input_width + 2 * m_pad_w - m_kernel_w) / (float)m_stride_w
    `y_{ij} = x_{ij} + a_{i0}` 在 `a` 的第二个维度，实现了广播。  
    注意： 广播的维度可以在矩阵中存在多份，默认维度大小为 `1` 的都支持广播。
    
-2. 框架支持的 `padding` 类型。  
+2. `Pooling` 框架支持的 `padding` 类型。  
    tf_valid:
    ```
    output_height = ceil((input_height + 2 * m_pad_h - m_kernel_h + 1) / (float)m_stride_h);
@@ -567,12 +567,12 @@ output_width = ceil((input_width + 2 * m_pad_w - m_kernel_w) / (float)m_stride_w
    output_height = ceil((input_height + 2 * m_pad_h) / (float)m_stride_h);
    output_width = ceil((input_width + 2 * m_pad_w) / (float)m_stride_w);
    ```
-   caffe:
+   caffe(mx_same):
    ```
    output_height = ceil((input_height + 2 * m_pad_h - m_kernel_h) / (float)m_stride_h + 1);
    output_width = ceil((input_width + 2 * m_pad_w - m_kernel_w) / (float)m_stride_w + 1);
    ```
-   mx_valid:
+   mx_valid(tf_valid):
    ```
    output_height = floor((input_height + 2 * m_pad_h - m_kernel_h) / (float)m_stride_h + 1);
    output_width = floor((input_width + 2 * m_pad_w - m_kernel_w) / (float)m_stride_w + 1);

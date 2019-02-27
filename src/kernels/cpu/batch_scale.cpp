@@ -53,7 +53,7 @@ namespace ts {
         }
 
         template<>
-        static void cpu_batch_scale_compute_run<float>(const Tensor &x, const Tensor &scale,
+        void cpu_batch_scale_compute_run<float>(const Tensor &x, const Tensor &scale,
             const Tensor &bias, int dim, Tensor &out) {
             const Shape &shape = x.sizes();
             int predims = 1;
