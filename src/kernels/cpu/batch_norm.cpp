@@ -57,7 +57,7 @@ namespace ts {
         }
 
         template<>
-        static void cpu_batch_norm_compute_run<float>(const Tensor &x, const Tensor &mean,
+        void cpu_batch_norm_compute_run<float>(const Tensor &x, const Tensor &mean,
                                                       const Tensor &variance, int dim, float epsilon, Tensor &out) {
             const Shape &shape = x.sizes();
             int predims = 1;

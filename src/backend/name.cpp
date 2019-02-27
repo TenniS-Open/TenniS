@@ -39,7 +39,7 @@ namespace ts {
             const string &to_float() TS_NOEXCEPT { static string str = "to_float"; return str; }
             const string &pooling2d() TS_NOEXCEPT { static string str = "pooling2d"; return str; }
             const string &pooling2d_v2() TS_NOEXCEPT { static string str = "pooling2d_v2"; return str; }
-            const string &resize2d() TS_NOEXCEPT { static string str = "resize2d"; return str; }
+            const string &resize2d() TS_NOEXCEPT { static string str = "_resize2d"; return str; }
             const string &mx_pooling2d_padding() TS_NOEXCEPT { static string str = "_mx_pooling2d_padding"; return str; }
             const string &nhwc_center_crop2d() TS_NOEXCEPT { static string str = "_nhwc_center_crop2d"; return str; }
 

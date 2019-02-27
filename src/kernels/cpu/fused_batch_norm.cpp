@@ -66,7 +66,7 @@ namespace ts {
 
 #ifdef TS_USE_SSE
         template<>
-        static void cpu_batch_norm_compute_run<float>(const Tensor &x,
+        void cpu_batch_norm_compute_run<float>(const Tensor &x,
             const Tensor &mean, const Tensor &variance,
             const Tensor &scale, const Tensor &bias,
             int dim, float epsilon, Tensor &out) {

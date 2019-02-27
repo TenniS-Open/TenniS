@@ -16,11 +16,11 @@
 namespace ts {
     namespace cpu {
         template <typename T>
-        static inline void reduce_operator(T &x, T lhs, T rhs) {
+        inline void reduce_operator(T &x, T lhs, T rhs) {
             x = lhs * rhs;
         }
         template <typename T>
-        static inline void reduce_operator(T &x, T y) {
+        inline void reduce_operator(T &x, T y) {
             x *= y;
         }
 
@@ -33,10 +33,11 @@ namespace ts {
         }
 
         template<typename T>
-        static inline void compute_run(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
+        inline void compute_run(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
             HypeShape lhs_hype(lhs.sizes());
             HypeShape rhs_hype(rhs.sizes());
-            HypeShape out_hype(out.sizes());
+            //HypeShape out_hype(out.sizes());
+            ShapeIterator out_iterator(out.sizes());
 
             auto plhs = lhs.data<T>();
             auto prhs = rhs.data<T>();
@@ -44,13 +45,14 @@ namespace ts {
 
             auto ncount = out.count();
             for(int i = 0; i < ncount; i++) {
-                std::vector<int> tmpshape = out_hype.to_coordinate(i);
+                auto &tmpshape = out_iterator.coordinate();
                 reduce_operator(pout[i], plhs[to_mod_index(lhs_hype, tmpshape)], prhs[to_mod_index(rhs_hype, tmpshape)]);
+                ++out_iterator;
             }
         }
 
         template<typename T>
-        static inline void compute_run_scalar(const T *plhs, T scalar, T *pout, size_t count) {
+        inline void compute_run_scalar(const T *plhs, T scalar, T *pout, size_t count) {
             // this is CPU operator, so just using memcpy
             if (pout != plhs) std::memcpy(pout, plhs, count * sizeof(T));
 
@@ -60,7 +62,7 @@ namespace ts {
         }
 
 		template<>
-		static inline void compute_run_scalar(const float *plhs, float scalar, float *pout, size_t count) {
+		inline void compute_run_scalar(const float *plhs, float scalar, float *pout, size_t count) {
 //#ifdef TS_USE_OPENMP
 //			//#pragma omp parallel for num_threads(1)
 //#pragma omp parallel for num_threads(openmp_threads(count))
@@ -76,7 +78,7 @@ namespace ts {
 		}
 
         template<typename T>
-        static inline void compute_run_same_shape(const T *plhs, const T *prhs, T *pout, size_t count) {
+        inline void compute_run_same_shape(const T *plhs, const T *prhs, T *pout, size_t count) {
             // this is CPU operator, so just using memcpy
             if (pout != plhs) std::memcpy(pout, plhs, count * sizeof(T));
 
@@ -86,7 +88,7 @@ namespace ts {
         }
 
 		template<>
-		static inline void compute_run_same_shape(const float *plhs, const float *prhs, float *pout, size_t count) {
+		inline void compute_run_same_shape(const float *plhs, const float *prhs, float *pout, size_t count) {
 //#ifdef TS_USE_OPENMP
 //			//#pragma omp parallel for num_threads(1)
 //#pragma omp parallel for num_threads(openmp_threads(count))
@@ -102,7 +104,7 @@ namespace ts {
 		}
 
         template<typename T>
-        static inline void compute_run_scalar(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
+        inline void compute_run_scalar(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
             auto plhs = lhs.data<T>();
             auto prhs = rhs.data<T>();
             auto pout = out.data<T>();
@@ -114,7 +116,7 @@ namespace ts {
 
 
         template<typename T>
-        static inline void compute_run_same_shape(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
+        inline void compute_run_same_shape(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
             auto plhs = lhs.data<T>();
             auto prhs = rhs.data<T>();
             auto pout = out.data<T>();
@@ -124,7 +126,7 @@ namespace ts {
 
 
         template<typename T>
-        static inline void compute_run_bias(const Tensor &lhs, const Tensor &rhs, Tensor &out, int dim) {
+        inline void compute_run_bias(const Tensor &lhs, const Tensor &rhs, Tensor &out, int dim) {
             auto plhs = lhs.data<T>();
             auto prhs = rhs.data<T>();
             auto pout = out.data<T>();
