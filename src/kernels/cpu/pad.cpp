@@ -149,7 +149,7 @@ namespace ts {
             } else {
                 auto x_shape = x.sizes();
                 x_shape.insert(x_shape.begin(), 1);
-                auto out_shape = x.sizes();
+                auto out_shape = out.sizes();
                 out_shape.insert(out_shape.begin(), 1);
                 auto extend_x = x.reshape(x_shape);
                 auto extend_out = out.reshape(out_shape);
