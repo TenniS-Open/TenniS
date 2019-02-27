@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <unordered_set>
 #include <core/tensor_builder.h>
+#include <cctype>
 
 #include "core/tensor_builder.h"
 #include "utils/assert.h"
@@ -119,9 +120,13 @@ namespace ts {
         }
 
         Tensor cast(DTYPE dtype, const Tensor &value) {
+            if (value.dtype() == dtype) {
+                auto device = MemoryDevice(CPU);
+                if (value.device() == device) return value;
+                auto cpu_controller = std::make_shared<DynamicMemoryController>(device);
+                return value.clone(cpu_controller);
+            }
             auto cpu_value = value.view(MemoryDevice(CPU));
-
-            if (cpu_value.dtype() == dtype) return cpu_value;
 
             auto cpu_controller = std::make_shared<DynamicMemoryController>(MemoryDevice(CPU));
 
@@ -205,6 +210,31 @@ namespace ts {
             if (value.count() == 0) TS_LOG_ERROR("Can not convert empty tensor to bool") << eject;
             return cast(BOOLEAN, value).data<dtype<BOOLEAN>::declare>(0) != 0;
         }
+
+        bool support(DTYPE dtype) {
+            switch (dtype) {
+                default:
+                    return false;
+#define __CASE_TYPE_SUPPORTED(__type__) \
+                case __type__: return true;
+                __CASE_TYPE_SUPPORTED(BOOLEAN)
+                __CASE_TYPE_SUPPORTED(INT8)
+                __CASE_TYPE_SUPPORTED(UINT8)
+                __CASE_TYPE_SUPPORTED(INT16)
+                __CASE_TYPE_SUPPORTED(UINT16)
+                __CASE_TYPE_SUPPORTED(INT32)
+                __CASE_TYPE_SUPPORTED(UINT32)
+                __CASE_TYPE_SUPPORTED(INT64)
+                __CASE_TYPE_SUPPORTED(UINT64)
+                __CASE_TYPE_SUPPORTED(FLOAT16)
+                __CASE_TYPE_SUPPORTED(FLOAT32)
+                __CASE_TYPE_SUPPORTED(FLOAT64)
+                __CASE_TYPE_SUPPORTED(CHAR8)
+                __CASE_TYPE_SUPPORTED(CHAR16)
+                __CASE_TYPE_SUPPORTED(CHAR32)
+#undef __CASE_TYPE_SUPPORTED
+            }
+        }
     }
 
     template<typename T>
@@ -212,7 +242,8 @@ namespace ts {
         auto controller = std::make_shared<DynamicMemoryController>(MemoryDevice(CPU));
         Tensor t(controller, dtypeid<T>::id, {int(count)});
         std::memcpy(t.data(), data, count * sizeof(T));
-        return t;
+
+        return std::move(t);
     }
 
 }

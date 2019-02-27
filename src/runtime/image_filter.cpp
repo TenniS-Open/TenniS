@@ -141,6 +141,7 @@ namespace ts {
     void ImageFilter::channel_swap(const std::vector<int> &shuffle) {
         auto shuffle_tensor = tensor::build(INT32, shuffle);
         auto dim_tensor = tensor::build(INT32, {3, });
+        ctx::bind<Graph> _bind_graph(m_impl->m_graph.get());
         auto x = m_impl->m_graph->nodes().back();
         auto node = bubble::op(serial_name(), name::layer::dimshuffle(), {x});
         node->set(name::dim, dim_tensor);
@@ -150,6 +151,7 @@ namespace ts {
 
     void ImageFilter::to_chw() {
         auto permute_tensor = tensor::build(INT32, {0, 3, 1, 2});
+        ctx::bind<Graph> _bind_graph(m_impl->m_graph.get());
         auto x = m_impl->m_graph->nodes().back();
         auto node = bubble::op(serial_name(), name::layer::transpose(), {x});
         node->set(name::permute, permute_tensor);

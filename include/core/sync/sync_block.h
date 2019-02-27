@@ -46,7 +46,7 @@ namespace ts {
             }
         }
 
-        _VALUE &get(const _KEY &key) const {
+        _VALUE &get(const _KEY &key) {
             auto _read = this->lock_read();
             if (key == m_default_key) return m_default_value;
             auto it = m_sync_values.find(key);
@@ -54,6 +54,10 @@ namespace ts {
                 TS_LOG_ERROR << "Can not access key=" << key << eject;
             }
             return it->second;
+        }
+
+        const _VALUE &get(const _KEY &key) const {
+            return const_cast<self *>(this)->get(key);
         }
 
         void clear() {
