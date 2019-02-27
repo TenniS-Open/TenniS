@@ -27,7 +27,7 @@ namespace ts {
 
         int find_resized_height_dim(const int *size_data, int n) {
             auto resized_height_dim = -1;
-            for (int i = 0; i < n; ++n) {
+            for (int i = 0; i < n; ++i) {
                 if (size_data[i] == 0) {
                     return -1;
                 }

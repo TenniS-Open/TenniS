@@ -6,6 +6,8 @@
 
 #include "kernels/cpu/pooling2d_core.h"
 
+#include <algorithm>
+
 namespace ts {
     namespace cpu {
 

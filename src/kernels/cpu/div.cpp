@@ -34,7 +34,8 @@ namespace ts {
         static inline void compute_run(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
             HypeShape lhs_hype(lhs.sizes());
             HypeShape rhs_hype(rhs.sizes());
-            HypeShape out_hype(out.sizes());
+            //HypeShape out_hype(out.sizes());
+            ShapeIterator out_iterator(out.sizes());
 
             auto plhs = lhs.data<T>();
             auto prhs = rhs.data<T>();
@@ -42,8 +43,9 @@ namespace ts {
 
             auto ncount = out.count();
             for(int i = 0; i < ncount; i++) {
-                std::vector<int> tmpshape = out_hype.to_coordinate(i);
+                auto &tmpshape = out_iterator.coordinate();
                 reduce_operator(pout[i], plhs[to_mod_index(lhs_hype, tmpshape)], prhs[to_mod_index(rhs_hype, tmpshape)]);
+                ++out_iterator;
             }
         }
 
