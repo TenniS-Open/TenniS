@@ -70,6 +70,7 @@ namespace ts {
                 for (int m = 0; m < back_dims - 3; m += 4) {
                     float32x4 src_x4(&psrc[offset + m]);
                     float32x4 dst_x4 = src_x4 + bias_x4;
+                    dst_x4.store(&pdst[m + offset]);
                 }
                 for (int m = back_dims/4*4; m < back_dims; m++) {
                     pdst[offset + m] = psrc[offset + m] + pbias[k];
