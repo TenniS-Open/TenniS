@@ -18,7 +18,7 @@
 #elif TS_PLATFORM_OS_WINDOWS && TS_PLATFORM_CC_MINGW
 #include <OpenBLAS/cblas.h>
 #else
-#incldue <cblas.h>
+#include <cblas.h>
 #endif
 
 float dot0(const float *x, const float *y, int N) {
