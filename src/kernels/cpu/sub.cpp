@@ -62,7 +62,7 @@ namespace ts {
         }
 
 		template<>
-		static inline void compute_run_scalar(const float *plhs, float scalar, float *pout, size_t count) {
+		inline void compute_run_scalar(const float *plhs, float scalar, float *pout, size_t count) {
 //#ifdef TS_USE_OPENMP
 //			//#pragma omp parallel for num_threads(1)
 //#pragma omp parallel for num_threads(openmp_threads(count))
@@ -88,7 +88,7 @@ namespace ts {
         }
 
 		template<>
-		static inline void compute_run_same_shape(const float *plhs, const float *prhs, float *pout, size_t count) {
+		inline void compute_run_same_shape(const float *plhs, const float *prhs, float *pout, size_t count) {
 //#ifdef TS_USE_OPENMP
 //			//#pragma omp parallel for num_threads(1)
 //#pragma omp parallel for num_threads(openmp_threads(count))
