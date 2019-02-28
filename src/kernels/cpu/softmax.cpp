@@ -109,7 +109,6 @@ namespace ts {
             const float *input_data = x.data<float>();
             float *output_data = out.data<float>();
 
-            int count = out.count();
             //memcpy(output_data, device_type, count * sizeof(float), input_data, device_type, count * sizeof(float));
 
             int scale_data_size = out.count() / axis;
