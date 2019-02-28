@@ -73,7 +73,7 @@ namespace ts {
                         int index = k + offset;
                         float32x4 input_data_x4(&input_data[index]);
                         float32x4 output_data_x4 = max_float32x4(input_data_x4, mul_const) + val_x4 * min_float32x4(input_data_x4, mul_const);
-                        float32x4 fabs_input_x4(input_data[index], input_data[index+1], input_data[index+2], input_data[index+3]); 
+                        //float32x4 fabs_input_x4(input_data[index], input_data[index+1], input_data[index+2], input_data[index+3]); 
                         //float32x4 output_data_x4 = (fabs_input_x4 + input_data_x4) * mul_const +
                         //    val_x4 * (input_data_x4 - fabs_input_x4) * mul_const;
                         output_data_x4.store(&output_data[index]);
@@ -81,7 +81,7 @@ namespace ts {
                     for (int k = last_dims/4*4; k < last_dims; k++)
                     {
                         output_data[k + offset] = std::max(input_data[k + offset], float(0)) +
-                            val * std::min(output_data[k + offset], float(0));
+                            val * std::min(input_data[k + offset], float(0));
                     }
                 }
             }
