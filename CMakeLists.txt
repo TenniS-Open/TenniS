@@ -51,6 +51,7 @@ set(TENSORSTACK_MODULES
         board
         compiler
         core
+        encryption
         engine
         global
         memory
