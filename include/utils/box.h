@@ -50,6 +50,8 @@ namespace ts {
      * @see strftime
      */
     std::string now_time(const std::string &format = "%Y-%m-%d %H:%M:%S");
+
+    std::vector<std::string> Split(const std::string &str, const std::string &sep, size_t _size = 1);
 }
 
 
