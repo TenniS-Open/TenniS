@@ -72,7 +72,9 @@ namespace ts {
                 m_op_pooling2d->init();
             }
 
-            return m_op_pooling2d->infer(stack, output);
+            stack.push(0);
+
+            return InferOperator(m_op_pooling2d, stack, 1, output);
         }
 
         int Pooling2DV2::run(Stack &stack) {
@@ -103,11 +105,10 @@ namespace ts {
                 m_op_pooling2d->init();
             }
 
-            stack.pop();
-            stack.pop();
-            stack.pop();
 
-            return m_op_pooling2d->run(stack);
+            stack.push(0);
+
+            return RunOperator(m_op_pooling2d, stack, 1);
         }
     }
 }

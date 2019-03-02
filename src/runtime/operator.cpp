@@ -237,4 +237,18 @@ namespace ts {
 
         return return_size;
     }
+
+    int InferOperator(Operator::shared op, Stack &stack, int nargs, std::vector<Tensor::Prototype> &output) {
+        TS_AUTO_CHECK(stack.size() >= static_cast<size_t>(nargs));
+
+        // save base
+        stack.push_base(-nargs);
+        ts::need pop_base(&Stack::pop_base, &stack);
+
+        auto returned_value = op->infer(stack, output);
+
+        stack.clear();  // pop all arguments
+
+        return returned_value;
+    }
 }

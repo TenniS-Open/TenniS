@@ -60,7 +60,10 @@ namespace ts {
                 m_op_conv2d->init();
             }
 
-            return m_op_conv2d->infer(stack, output);
+            stack.push(0);
+            stack.push(2);
+
+            return InferOperator(m_op_conv2d, stack, 2, output);
         }
 
         int DepthwiseConv2DV2::run(Stack &stack) {

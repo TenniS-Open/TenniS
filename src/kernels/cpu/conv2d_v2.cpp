@@ -7,6 +7,7 @@
 
 #include "module/bubble.h"
 #include "core/tensor_builder.h"
+#include "utils/need.h"
 
 namespace ts {
     namespace cpu {
@@ -60,7 +61,10 @@ namespace ts {
                 m_op_conv2d->init();
             }
 
-            return m_op_conv2d->infer(stack, output);
+            stack.push(0);
+            stack.push(2);
+
+            return InferOperator(m_op_conv2d, stack, 2, output);
         }
 
         int Conv2DV2::run(Stack &stack) {
