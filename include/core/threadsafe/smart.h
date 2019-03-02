@@ -54,7 +54,7 @@ namespace ts {
 
         Smart &operator=(const self &other) {
             if (this == &other) return *this;
-            this->release();
+            this->dispose();
             this->m_mode = other.m_mode;
             this->m_counted = other.m_counted;
             if (m_counted && m_mode == SMART) {
@@ -64,7 +64,7 @@ namespace ts {
         }
 
         ~Smart() {
-            release();
+            dispose();
         }
 
         Smart(self &&other) {
@@ -76,7 +76,7 @@ namespace ts {
             return *this;
         }
 
-        void release() {
+        void dispose() {
             if (m_counted && m_mode == SMART) {
                 --m_counted->use_count;
                 if (m_counted->use_count <= 0) {
