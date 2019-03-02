@@ -75,7 +75,9 @@ namespace ts {
             }
 
             stack.push(0);
-            return m_op_conv2d->run(stack);
+            stack.push(2);
+
+            return RunOperator(m_op_conv2d, stack, 2);
         }
     }
 }
