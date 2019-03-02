@@ -180,4 +180,8 @@ namespace ts {
         m_impl->m_compiled = true;
     }
 
+    const Graph &ImageFilter::graph() const {
+        return *m_impl->m_graph;
+    }
+
 }
