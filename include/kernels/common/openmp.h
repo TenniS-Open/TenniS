@@ -8,6 +8,7 @@
 #ifdef TS_USE_OPENMP
 #include <omp.h>
 #include "runtime/runtime.h"
+#include <algorithm>
 
 #define TS_OPENMP_BLOCK_SIZE 10240
 
