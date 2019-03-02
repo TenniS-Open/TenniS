@@ -20,11 +20,31 @@ namespace ts {
 
         Counter() = default;
 
-        Counter(const Object &object, int count = 1)
-                : object(object), use_count(count) {}
+        Counter(Object *object, int count)
+            : object(object), use_count(count) {}
 
-        Object object;
-        std::atomic_int use_count;
+        Counter(const Object &object) : self(new Object(object), 1) {}
+
+        ~Counter() {
+            if (object) delete object;
+        }
+
+        Counter(const self &) = delete;
+
+        Counter &operator=(const self &) = delete;
+
+        Counter(self &&other) {
+            *this == std::move(other);
+        }
+
+        Counter &operator==(self &&other) {
+            std::swap(this->object, other.object);
+            std::swap(this->use_count, other.use_count);
+            return *this;
+        }
+
+        Object *object = nullptr;
+        int use_count = 0;
     };
 
     enum SmartMode {
@@ -43,9 +63,9 @@ namespace ts {
         Smart() : self(Object()) {}
 
         Smart(const Object &object)
-                : self(object, SMART) {}
+                : m_mode(SMART), m_counted(new CountedObject(object)) {}
 
-        Smart(const Object &object, SmartMode mode)
+        Smart(Object *object, SmartMode mode = SMART)
                 : m_mode(mode), m_counted(new CountedObject(object, mode == SMART ? 1 : 0)) {}
 
         Smart(const self &other) {
@@ -93,22 +113,22 @@ namespace ts {
 
         Object &operator*() {
             if (m_counted == nullptr) throw NullPointerException();
-            return m_counted->object;
+            return *m_counted->object;
         }
 
         const Object &operator*() const {
             if (m_counted == nullptr) throw NullPointerException();
-            return m_counted->object;
+            return *m_counted->object;
         }
 
         Object *operator->() {
             if (m_counted == nullptr) throw NullPointerException();
-            return &m_counted->object;
+            return m_counted->object;
         }
 
         const Object *operator->() const {
             if (m_counted == nullptr) throw NullPointerException();
-            return &m_counted->object;
+            return m_counted->object;
         }
 
         self weak() const {
@@ -144,7 +164,7 @@ namespace ts {
 
     template <typename T, typename ...Args>
     Smart<T> make_smart(Args &&...args) {
-        return Smart<T>(T(std::forward<Args>(args)...), SMART);
+        return Smart<T>(new T(std::forward<Args>(args)...), SMART);
     }
 }
 
