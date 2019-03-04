@@ -12,7 +12,7 @@ namespace ts {
             auto &x = stack[0];
 
             output.resize(1);
-            output[0] = Tensor::Prototype(x.dtype(), {int(x.dims())});
+            output[0] = Tensor::Prototype(INT32, {int(x.dims())});
 
             return 1;
         }
