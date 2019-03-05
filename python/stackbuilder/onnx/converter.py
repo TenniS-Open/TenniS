@@ -141,6 +141,7 @@ def convert(input_file, output_file):
         "Shape": convert_shape_layer,
         "Gather": convert_gather_layer,
         "Unsqueeze": convert_unsqueeze_layer,
+        "Concat": convert_concat_layer,
     }
 
     print("==================== Converting ====================")
@@ -474,5 +475,27 @@ def convert_unsqueeze_layer(node, input_nodes, output_names):
     print("--##    axes: {}".format(axes))
 
     ts_node = onnx_node.unsqueeze(node_name, x=x, axes=axes)
+
+    return ts_node,
+
+
+def convert_concat_layer(node, input_nodes, output_names):
+    # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} -> {} ]=-".format(node.op_type, [n.name for n in input_nodes], output_names))
+
+    attribute = node.attribute
+    attr_dict = {}
+    for attr in attribute:
+        attr_dict[str(attr.name)] = topy(attr)
+
+    assert len(output_names) == 1
+
+    node_name = output_names[0]
+    print("--##    input number: {}".format(len(input_nodes)))
+
+    axis = attr_dict[Name.Attr.axis]
+    print("--##    axis: {}".format(axis))
+
+    ts_node = ts.zoo.concat(node_name, inputs=input_nodes, dim=axis)
 
     return ts_node,
