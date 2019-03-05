@@ -24,7 +24,7 @@ def get_tensor_stack_passes():
         "eliminate_nop_transpose",
         "eliminate_unused_initializer",
         "extract_constant_to_initializer",
-        # "fuse_add_bias_into_conv",
+        "fuse_add_bias_into_conv",
         "fuse_bn_into_conv",
         "fuse_consecutive_concats",
         "fuse_consecutive_log_softmax",
@@ -33,7 +33,7 @@ def get_tensor_stack_passes():
         "fuse_consecutive_transposes",
         "fuse_matmul_add_bias_into_gemm",
         "fuse_pad_into_conv",
-        # "fuse_transpose_into_gemm",
+        "fuse_transpose_into_gemm",
         "lift_lexical_references",
         "nop",
         # "split_init",
@@ -58,6 +58,7 @@ class Name(object):
         beta = "beta"
         transA = "transA"
         transB = "transB"
+        epsilon = "epsilon"
 
     NOTSET = "NOTSET"
     SAME_UPPER = "SAME_UPPER"
@@ -150,6 +151,7 @@ def convert(input_file, output_file):
         "Unsqueeze": convert_unsqueeze_layer,
         "Reshape": convert_reshape_layer,
         "Gemm": convert_gemm_layer,
+        "BatchNormalization": convert_bn_layer,
     }
 
     print("==================== Converting ====================")
@@ -573,5 +575,37 @@ def convert_gemm_layer(node, input_nodes, output_names):
     print("--##    transB: {}".format(transB))
 
     ts_node = onnx_node.gemm(node_name, A=A, B=B, C=C, alpha=alpha, beta=beta, transA=transA, transB=transB)
+
+    return ts_node,
+
+
+def convert_bn_layer(node, input_nodes, output_names):
+    # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} -> {} ]=-".format(node.op_type, [n.name for n in input_nodes], output_names))
+
+    attribute = node.attribute
+    attr_dict = {}
+    for attr in attribute:
+        attr_dict[str(attr.name)] = topy(attr)
+
+    assert len(input_nodes) == 5
+    assert len(output_names) == 1
+
+    node_name = output_names[0]
+
+    x = input_nodes[0]
+    scale = input_nodes[1]
+    B = input_nodes[2]
+    mean = input_nodes[3]
+    var = input_nodes[4]
+
+    epsilon = 1e-5
+    if Name.Attr.epsilon in attr_dict:
+        epsilon = attr_dict[Name.Attr.epsilon]
+        print("--##    epsilon: {}".format(epsilon))
+
+    ts_node = ts.zoo.fused_batch_norm(node_name, x=x,
+                                      mean=mean, variance=var, scale=scale, bias=B,
+                                      dim=1, epsilon=epsilon)
 
     return ts_node,
