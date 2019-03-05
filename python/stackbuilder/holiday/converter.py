@@ -245,7 +245,9 @@ def convert_convolution_layer(layer, input_nodes, output_names):
     assert len(input_nodes) == 1
     assert len(output_names) == 1
 
-    conv2d_name = output_names[0]
+    conv2d_name = "_conv2d_" + output_names[0]
+    bias_name = "_bias_" + output_names[0]
+    node_name = output_names[0]
 
     param = layer.convolution_param
 
@@ -312,10 +314,10 @@ def convert_convolution_layer(layer, input_nodes, output_names):
     is_conv2d = group == 1
     is_depthwise_conv2d = weights_blob.shape[1] == 1
 
-    conv2d = None
+    node = None
 
     if is_conv2d:
-        conv2d = ts.zoo.conv2d(conv2d_name, x=input_nodes[0], w=weights_blob, format=ts.zoo.Name.NCHW,
+        node = ts.zoo.conv2d(conv2d_name, x=input_nodes[0], w=weights_blob, format=ts.zoo.Name.NCHW,
                                padding=[[0, 0], [0, 0], [padding[0], padding[0]], [padding[1], padding[1]]],
                                padding_value=0,
                                stride=[1, 1, stride[0], stride[1]],
@@ -324,16 +326,21 @@ def convert_convolution_layer(layer, input_nodes, output_names):
         weights_shape = weights_blob.shape
         depthwise_weights_shape = (weights_shape[1], weights_shape[0], weights_shape[2], weights_shape[3])
         weights_blob = weights_blob.reshape(shape=depthwise_weights_shape)
-        conv2d = ts.zoo.depthwise_conv2d(conv2d_name, x=input_nodes[0], w=weights_blob, format=ts.zoo.Name.NCHW,
+        node = ts.zoo.depthwise_conv2d(conv2d_name, x=input_nodes[0], w=weights_blob, format=ts.zoo.Name.NCHW,
                                          padding=[[0, 0], [0, 0], [padding[0], padding[0]], [padding[1], padding[1]]],
                                          padding_value=0,
                                          stride=[0, 0, stride[0], stride[1]],
                                          dilation=[1, 1, dilation[0], dilation[1]])
 
-    if conv2d is None:
+    if node is None:
         raise NotImplementedError(layer)
 
-    return conv2d,
+    if bias_blob is not None:
+        node = ts.zoo.add_bias(bias_name, x=node, b=bias_blob, format=ts.zoo.Name.NCHW)
+
+    node.name = node_name
+
+    return node,
 
 
 def convert_batch_norm_layer(layer, input_nodes, output_names):
