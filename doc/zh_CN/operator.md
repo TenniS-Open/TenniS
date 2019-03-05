@@ -522,6 +522,36 @@ void prewhiten(T *data, size_t len)
 此操作只影响 `Tensor` 的 `shape` 不会对内存布局产生影响。
 
 
+### gemm(a..device, b..device, c..device) -> Y..device
+描述：就是GEMM，嗯。  
+输入：`A` `Matrix`
+输入：`B` `Matrix`
+输入：`C` `Matrix` 或者可以广播的 `Tensor` 
+输入：`Y` `Matrix`
+
+参数：
+- `alpha` `Float`
+- `beta` `Float`
+- `transA` `Int` 布尔变量
+- `transB` `Int` 布尔变量
+
+说明：
+```
+A' = transpose(A) if transA else A
+B' = transpose(B) if transB else B
+Compute Y = alpha * A' * B' + beta * C,
+where input tensor A has shape (M, K) or (K, M),
+input tensor B has shape (K, N) or (N, K),
+input tensor C is broadcastable to shape (M, N),
+and output tensor Y has shape (M, N).
+A will be transposed before doing the computation
+if attribute transA is non-zero, same for B and transB.
+This operator supports unidirectional broadcasting
+(tensor C should be unidirectional broadcastable
+to tensor A * B); 
+```
+
+
 ### _nhwc_resize2d(x..device) = delete
 
 参数：  
