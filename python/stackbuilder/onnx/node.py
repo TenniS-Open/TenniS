@@ -15,8 +15,12 @@ import numpy
 class Name(object):
     class Layer(object):
         pooling2d_padding = "_onnx_pooling2d_padding"
+        gather = "gather"
+        unsqueeze = "unsqueeze"
 
     auto_pad = "auto_pad"
+    axis = "axis"
+    axes = "axes"
 
     NOTSET = "NOTSET"
     SAME_UPPER = "SAME_UPPER"
@@ -67,3 +71,29 @@ def pooling2d(name, x, ksize, stride, type=zoo.Type.pooling_type.max, format=zoo
 
     return zoo.pooling2d_v2(name=name, x=x, ksize=ksize, stride=stride,
                             type=type, format=format, padding=dynamic_padding, padding_type=padding_type)
+
+
+def gather(name, x, indices, axis=0):
+    assert isinstance(x, Node)
+
+    indices = zoo.to_node(indices, name="_const_" + name + "_indices", device=device.CPU)
+    axis = zoo.to_const(axis, "axis")
+
+    # operator
+    node = menu.op(name=name, op_name=Name.Layer.gather, inputs=[x, indices])
+    node.set(Name.axis, axis, numpy.int32)
+
+    return node
+
+
+def unsqueeze(name, x, axes):
+    assert isinstance(x, Node)
+
+    axes = zoo.to_const(axes, "axes")
+
+    # operator
+    node = menu.op(name=name, op_name=Name.Layer.unsqueeze, inputs=[x, ])
+    node.set(Name.axes, axes, numpy.int32)
+
+    return node
+

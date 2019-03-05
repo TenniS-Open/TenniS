@@ -51,6 +51,9 @@ class Name(object):
         strides = "strides"
         storage_order = "storage_order"
 
+        axis = "axis"
+        axes = "axes"
+
     NOTSET = "NOTSET"
     SAME_UPPER = "SAME_UPPER"
     SAME_LOWER = "SAME_LOWER"
@@ -441,13 +444,12 @@ def convert_gather_layer(node, input_nodes, output_names):
     x = input_nodes[0]
     indices = input_nodes[1]
 
-    print ts.zoo.to_const(indices, "indices")
+    axis = 0
+    if Name.Attr.axis in attr_dict:
+        axis = attr_dict[Name.Attr.axis]
+        print("--##    axis: {}".format(axis))
 
-    print attr_dict
-
-    # exit()
-
-    ts_node = ts.zoo.shape(node_name, x=x)
+    ts_node = onnx_node.gather(node_name, x=x, indices=indices, axis=axis)
 
     return ts_node,
 
@@ -468,10 +470,9 @@ def convert_unsqueeze_layer(node, input_nodes, output_names):
 
     x = input_nodes[0]
 
-    print attr_dict
+    axes = attr_dict[Name.Attr.axes]
+    print("--##    axes: {}".format(axes))
 
-    # exit()
-
-    ts_node = ts.zoo.shape(node_name, x=x)
+    ts_node = onnx_node.unsqueeze(node_name, x=x, axes=axes)
 
     return ts_node,

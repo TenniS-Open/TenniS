@@ -491,6 +491,23 @@ void prewhiten(T *data, size_t len)
 }
 ```
 
+### gather(x..device, indices..host) -> y
+
+参数：  
+- `axis` `Int` 要进行gather的维度。
+
+说明：  
+等价于`numpy.take(x, indices, axis=axis)`
+
+### unsqueeze(x..device) -> y
+
+参数：  
+- `axes` `IntArray` 要填充维度
+
+说明：  
+等价于`numpy.expend_dims(x, axis) for axis in axes`
+
+
 ### _nhwc_resize2d(x..device) = delete
 
 参数：  
@@ -515,11 +532,11 @@ void prewhiten(T *data, size_t len)
 
 参数：无
 
-### tf_conv2d_padding
+### tf_conv2d_padding = delete
 
-### tf_pooling2d_padding
+### tf_pooling2d_padding = delete
 
-### mx_conv2d_padding
+### mx_conv2d_padding = delete
 
 ### _mx_pooling2d_padding(x, ksize, stride) -> dynamic_padding
 描述：  
