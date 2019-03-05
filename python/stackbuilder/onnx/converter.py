@@ -4,7 +4,7 @@ from onnx import optimizer
 
 import tensorstack as ts
 import onnx_dtype as dtype
-import node as onnx_node
+import tensorstack.frontend.onnx as onnx_node
 
 
 def to_tensor_shape(tensor_shape):

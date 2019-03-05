@@ -4,10 +4,10 @@
 Author: Kier
 """
 
-from tensorstack import Node
-from tensorstack import zoo
-from tensorstack import menu
-from tensorstack import device
+from .. import Node
+from .. import zoo
+from .. import menu
+from .. import device
 
 import numpy
 
