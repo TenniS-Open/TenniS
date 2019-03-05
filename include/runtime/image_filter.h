@@ -8,6 +8,7 @@
 #include <vector>
 #include "core/tensor.h"
 #include "utils/implement.h"
+#include "module/graph.h"
 
 namespace ts {
     class ImageFilter {
@@ -55,6 +56,8 @@ namespace ts {
         Tensor run(const Tensor &image);
 
         shared clone() const;
+
+        const Graph &graph() const;
 
     private:
         class Implement;

@@ -34,12 +34,27 @@ namespace ts {
         virtual ~Operator() = default;
 
         // explicit Operator(const std::string &name) : m_name(name) {}
+        /**
+         * @note bind DeviceContext before.
+         */
         virtual void init();
 
         // work on tensor stack, same as call
+        /**
+         * @param stack running stack
+         * @return output param
+         * @note bind DeviceContext before
+         */
         virtual int run(Stack &stack) = 0;
 
         // infer output size by input size, only for size allocate
+        /**
+         *
+         * @param stack running stack
+         * @param output output tensor's proto
+         * @return keep value
+         * @note bind ThreadPool, DeviceContext, RuntimeContext before
+         */
         virtual int infer(Stack &stack, std::vector<Tensor::Prototype> &output) = 0;
 
         bool has(const std::string &param) const;

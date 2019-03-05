@@ -11,6 +11,7 @@
 #include <cfenv>
 #include <ctime>
 #include <iomanip>
+#include <sstream>
 
 
 namespace ts {
@@ -151,5 +152,14 @@ namespace ts {
             left = right + 1;
         }
         return std::move(result);
+    }
+
+    std::string Join(const std::vector<std::string>& list, const std::string &sep) {
+        std::ostringstream oss;
+        for (size_t i = 0; i < list.size(); ++i) {
+            if (i) oss << sep;
+            oss << list[i];
+        }
+        return oss.str();
     }
 }

@@ -100,6 +100,30 @@ namespace ts {
         
         void unlock() { m_mutex->unlock(); }
 
+        /**
+         *
+         * @param [in] bubble parameter
+         * @param [in] device operator device
+         * @param [in] strict if it in strict mode
+         * @return operator
+         */
+        Operator::shared offline_create(const Bubble &bubble, bool strict = true);
+
+        /**
+         *
+         * @param [in] op testing operator
+         * @param [in] input input tensor
+         * @param [out] output output tensor
+         */
+        void offline_run(Operator::shared op, const std::vector<Tensor> &input, std::vector<Tensor> &output);
+
+        /**
+         *
+         * @param [in] op testing operator
+         * @param [in] input input operators
+         * @param [out] output output oprators
+         */
+        void offline_infer(Operator::shared op, const std::vector<Tensor> &input, std::vector<Tensor::Prototype> &output);
     private:
         size_t m_pointer = 0;   // pointer to running function
         std::vector<Instruction::shared> m_program; // running function, program area
