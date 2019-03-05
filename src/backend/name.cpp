@@ -42,6 +42,8 @@ namespace ts {
             const string &resize2d() TS_NOEXCEPT { static string str = "_resize2d"; return str; }
             const string &mx_pooling2d_padding() TS_NOEXCEPT { static string str = "_mx_pooling2d_padding"; return str; }
             const string &nhwc_center_crop2d() TS_NOEXCEPT { static string str = "_nhwc_center_crop2d"; return str; }
+            const string &cast() TS_NOEXCEPT { static string str = "_cast"; return str; }
+            const string &onnx_pooling2d_padding() TS_NOEXCEPT { static string str = "_onnx_pooling2d_padding"; return str; }
 
             const string &copy() TS_NOEXCEPT {
                 static string str = "_copy";

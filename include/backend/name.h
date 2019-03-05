@@ -47,6 +47,8 @@ namespace ts {
             const string &mx_pooling2d_padding() TS_NOEXCEPT;
             const string &copy() TS_NOEXCEPT;
             const string &nhwc_center_crop2d() TS_NOEXCEPT;
+            const string &cast() TS_NOEXCEPT;
+            const string &onnx_pooling2d_padding() TS_NOEXCEPT;
         }
 
         namespace typo {
