@@ -129,8 +129,8 @@ def convert(input_file, output_file):
         elem_type = value[0]
         shape = value[1]
         ts_dtype = dtype.from_onnx(elem_type)
-        ts_node = ts.menu.param("_origin_" + name, shape=shape)
-        ts_node = ts.zoo.cast(name, x=ts_node, dtype=ts_dtype)
+        ts_node = ts.menu.param(name, shape=shape)
+        ts_node = ts.zoo.cast("_casted_" + name, x=ts_node, dtype=ts_dtype)
         name2node[name] = ts_node
 
     for name in initialized.keys():
@@ -185,6 +185,40 @@ def convert(input_file, output_file):
         for i in range(len(output_ts_nodes)):
             # update blob2nodes
             name2node[node_output[i]] = output_ts_nodes[i]
+
+    # get outputs from outout_blobs
+    ts_outputs = []
+    for name in output.keys():
+        if name not in name2node:
+            raise Exception("Not computed node: {}".format(name))
+        ts_outputs.append(name2node[name])
+
+    module = ts.Module()
+
+    # load module
+    module.load(ts_outputs)
+
+    # sort inputs
+    assert len(module.inputs) == 1
+
+    with open(output_file, "wb") as fo:
+        ts.Module.Save(stream=fo, module=module)
+
+    print("============ Summary ============")
+    print("Input file: {}".format(input_file))
+    print("Output file: {}".format(output_file))
+    index = 0
+    print("Input node: ")
+    for node in module.inputs:
+        assert isinstance(node, ts.Node)
+        print("{}: {}, shape={}".format(index, node.name, node.shape))
+        index += 1
+    index = 0
+    print("Output node: ")
+    for node in module.outputs:
+        assert isinstance(node, ts.Node)
+        print("{}: {}".format(index, node.name))
+        index += 1
 
 
 def topy(attr):
