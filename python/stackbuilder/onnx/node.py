@@ -17,6 +17,7 @@ class Name(object):
         pooling2d_padding = "_onnx_pooling2d_padding"
         gather = "gather"
         unsqueeze = "unsqueeze"
+        gemm = "gemm"
 
     auto_pad = "auto_pad"
     axis = "axis"
@@ -26,6 +27,11 @@ class Name(object):
     SAME_UPPER = "SAME_UPPER"
     SAME_LOWER = "SAME_LOWER"
     VALID = "VALID"
+
+    alpha = "alpha"
+    beta = "beta"
+    transA = "transA"
+    transB = "transB"
 
 
 def pooling2d_padding(name, x, padding, ksize, stride, auto_pad=Name.NOTSET):
@@ -94,6 +100,26 @@ def unsqueeze(name, x, axes):
     # operator
     node = menu.op(name=name, op_name=Name.Layer.unsqueeze, inputs=[x, ])
     node.set(Name.axes, axes, numpy.int32)
+
+    return node
+
+
+def gemm(name, A, B, C, alpha, beta, transA, transB):
+    A = zoo.to_node(value=A, name="A")
+    B = zoo.to_node(value=B, name="B")
+    C = zoo.to_node(value=C, name="C")
+
+    alpha = zoo.to_const(value=alpha, name="alpha")
+    beta = zoo.to_const(value=beta, name="beta")
+    transA = zoo.to_const(value=transA, name="transA")
+    transB = zoo.to_const(value=transB, name="transB")
+
+    # operator
+    node = menu.op(name=name, op_name=Name.Layer.unsqueeze, inputs=[A, B, C])
+    node.set(Name.alpha, alpha, numpy.float32)
+    node.set(Name.beta, beta, numpy.float32)
+    node.set(Name.transA, transA, numpy.uint8)
+    node.set(Name.transB, transB, numpy.uint8)
 
     return node
 

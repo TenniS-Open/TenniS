@@ -54,6 +54,11 @@ class Name(object):
         axis = "axis"
         axes = "axes"
 
+        alpha = "alpha"
+        beta = "beta"
+        transA = "transA"
+        transB = "transB"
+
     NOTSET = "NOTSET"
     SAME_UPPER = "SAME_UPPER"
     SAME_LOWER = "SAME_LOWER"
@@ -139,9 +144,12 @@ def convert(input_file, output_file):
         "Add": convert_add_layer,
         "AveragePool": convert_pooling2d_layer,
         "Shape": convert_shape_layer,
+        "Concat": convert_concat_layer,
+        # about new operator
         "Gather": convert_gather_layer,
         "Unsqueeze": convert_unsqueeze_layer,
-        "Concat": convert_concat_layer,
+        "Reshape": convert_reshape_layer,
+        "Gemm": convert_gemm_layer,
     }
 
     print("==================== Converting ====================")
@@ -166,6 +174,9 @@ def convert(input_file, output_file):
             output_names.append(name)
 
         output_ts_nodes = ts_converter(node, input_ts_nodes, output_names)
+
+        if isinstance(output_names, ts.Node):
+            output_ts_nodes = (output_ts_nodes, )
 
         assert len(output_names) == len(output_ts_nodes)
 
@@ -497,5 +508,70 @@ def convert_concat_layer(node, input_nodes, output_names):
     print("--##    axis: {}".format(axis))
 
     ts_node = ts.zoo.concat(node_name, inputs=input_nodes, dim=axis)
+
+    return ts_node,
+
+
+def convert_reshape_layer(node, input_nodes, output_names):
+    # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} -> {} ]=-".format(node.op_type, [n.name for n in input_nodes], output_names))
+
+    attribute = node.attribute
+    attr_dict = {}
+    for attr in attribute:
+        attr_dict[str(attr.name)] = topy(attr)
+
+    assert len(input_nodes) == 2
+    assert len(output_names) == 1
+
+    node_name = output_names[0]
+
+    x = input_nodes[0]
+    new_shape = input_nodes[1]
+
+    ts_node = ts.zoo.reshape(node_name, x, new_shape)
+
+    return ts_node,
+
+
+def convert_gemm_layer(node, input_nodes, output_names):
+    # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} -> {} ]=-".format(node.op_type, [n.name for n in input_nodes], output_names))
+
+    attribute = node.attribute
+    attr_dict = {}
+    for attr in attribute:
+        attr_dict[str(attr.name)] = topy(attr)
+
+    assert len(input_nodes) == 3
+    assert len(output_names) == 1
+
+    node_name = output_names[0]
+
+    A = input_nodes[0]
+    B = input_nodes[1]
+    C = input_nodes[2]
+
+    alpha = 1.0
+    if Name.Attr.alpha in attr_dict:
+        alpha = attr_dict[Name.Attr.alpha]
+    print("--##    alpha: {}".format(alpha))
+
+    beta = 1.0
+    if Name.Attr.beta in attr_dict:
+        beta = attr_dict[Name.Attr.beta]
+    print("--##    beta: {}".format(beta))
+
+    transA = 0
+    if Name.Attr.transA in attr_dict:
+        transA = attr_dict[Name.Attr.transA]
+    print("--##    transA: {}".format(transA))
+
+    transB = 0
+    if Name.Attr.transB in attr_dict:
+        transB = attr_dict[Name.Attr.transB]
+    print("--##    transB: {}".format(transB))
+
+    ts_node = onnx_node.gemm(node_name, A=A, B=B, C=C, alpha=alpha, beta=beta, transA=transA, transB=transB)
 
     return ts_node,
