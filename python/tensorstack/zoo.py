@@ -52,6 +52,7 @@ class Name(object):
         copy = "_copy"
         prewhiten = "prewhiten"
         cast = "_cast"
+        reshape_v2 = "_reshape_v2"
 
     dim = "dim"
     shuffle = "shuffle"
@@ -150,13 +151,25 @@ def transpose(name, x, pemute):
     return node
 
 
+def reshape_v2(name, x, shape):
+    assert isinstance(x, Node)
+
+    shape = to_node(shape, "shape", device=device.CPU)
+
+    node = menu.op(name=name, op_name=Name.Layer.reshape_v2, inputs=[x, shape])
+
+    return node
+
+
 def reshape(name, x, shape):
     assert isinstance(x, Node)
 
-    shape = to_const(shape, "shape")
-
-    node = menu.op(name=name, op_name=Name.Layer.reshape, inputs=[x, ])
-    node.set(Name.shape, shape, numpy.int32)
+    node = None
+    if isinstance(shape, Node):
+        node = menu.op(name=name, op_name=Name.Layer.reshape_v2, inputs=[x, shape])
+    else:
+        node = menu.op(name=name, op_name=Name.Layer.reshape, inputs=[x,])
+        node.set(Name.shape, shape, numpy.int32)
 
     return node
 

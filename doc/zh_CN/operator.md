@@ -508,6 +508,20 @@ void prewhiten(T *data, size_t len)
 等价于`numpy.expend_dims(x, axis) for axis in axes`
 
 
+### _reshape_v2(x..device, shape..host) -> y.device
+描述：对输入的 Tensor 进行维度变换，输出转换后的数据  
+输入：`x` `Tensor` 要转换的数据  
+输入：`shape`: `IntArray` 输出的 `shape` 要和此参数一致，中间可以出现最多一个 `-1` 表示维度填充，保证输出的元素个数和输入的元素个数一致。  
+输出：`y` 转换后的数据  
+
+举例：  
+如果 `x.shape` 为 `[4, 2700]`，`shape` 为 `[-1, 300, 300, 3]`，
+输出 `y.shape` 为 `[4, 300, 300, 3]`。数据类型不变。
+
+说明：  
+此操作只影响 `Tensor` 的 `shape` 不会对内存布局产生影响。
+
+
 ### _nhwc_resize2d(x..device) = delete
 
 参数：  
