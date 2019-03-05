@@ -53,6 +53,8 @@ namespace ts {
             const string &gather() TS_NOEXCEPT;
             const string &unsqueeze() TS_NOEXCEPT;
             const string &gemm() TS_NOEXCEPT;
+
+            const string &reshape_v2() TS_NOEXCEPT;
         }
 
         namespace typo {

@@ -47,6 +47,7 @@ namespace ts {
             const string &gather() TS_NOEXCEPT { static string str = "gather"; return str; }
             const string &unsqueeze() TS_NOEXCEPT { static string str = "unsqueeze"; return str; }
             const string &gemm() TS_NOEXCEPT { static string str = "gemm"; return str; }
+            const string &reshape_v2() TS_NOEXCEPT { static string str = "_reshape_v2"; return str; }
 
             const string &copy() TS_NOEXCEPT {
                 static string str = "_copy";
