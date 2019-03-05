@@ -549,6 +549,40 @@ output_width = ceil((input_width + 2 * m_pad_w - m_kernel_w) / (float)m_stride_w
 在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
 在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
 
+### _onnx_pooling2d_padding(x, ksize, stride) -> dynamic_padding
+描述：  
+- `x` `Tensor4D` 预计要进行 padding 的数据
+- `ksize` `Int[4]`
+在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+- `stride` `Int[4]`
+在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+- `dynamic_padding`  `Int[4, 2]`输出的padding形式，为4x2维
+
+参数：  
+- `auto_pad` `String` 为 `NOTSET`、`SAME_UPPER`、`SAME_LOWER`、`VALID`
+`NOTSET`表示计算为：
+```
+output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+* pad_shape[i] is sum of pads along axis i
+```
+`VALID`表示计算为：
+```
+output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
+```
+`SAME_UPPER`和`SAME_LOWER`表示计算为：
+```
+output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
+```
+动态padding大小为：
+```
+pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
+```
+- `padding` `Int[4, 2]` 静态进行padding的数据
+在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+
 ## 附录
 
 1. 在做基础运算的时候，`x`和`a`有会三种意义，分别为`标量`，`张量`和`广播张量`。这里的广播张量的意义为：
