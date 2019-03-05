@@ -10,6 +10,7 @@
 
 #include <cuda_runtime.h>
 #include <iostream>
+#include <algorithm>
 
 namespace ts {
     class CUDAException : public Exception {
