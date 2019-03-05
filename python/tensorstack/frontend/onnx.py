@@ -115,7 +115,7 @@ def gemm(name, A, B, C, alpha, beta, transA, transB):
     transB = zoo.to_const(value=transB, name="transB")
 
     # operator
-    node = menu.op(name=name, op_name=Name.Layer.unsqueeze, inputs=[A, B, C])
+    node = menu.op(name=name, op_name=Name.Layer.gemm, inputs=[A, B, C])
     node.set(Name.alpha, alpha, numpy.float32)
     node.set(Name.beta, beta, numpy.float32)
     node.set(Name.transA, transA, numpy.uint8)

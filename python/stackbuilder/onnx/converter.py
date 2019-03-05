@@ -146,12 +146,12 @@ def convert(input_file, output_file):
         "AveragePool": convert_pooling2d_layer,
         "Shape": convert_shape_layer,
         "Concat": convert_concat_layer,
+        "BatchNormalization": convert_bn_layer,
         # about new operator
         "Gather": convert_gather_layer,
         "Unsqueeze": convert_unsqueeze_layer,
         "Reshape": convert_reshape_layer,
         "Gemm": convert_gemm_layer,
-        "BatchNormalization": convert_bn_layer,
     }
 
     print("==================== Converting ====================")
