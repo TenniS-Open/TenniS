@@ -331,4 +331,68 @@ namespace ts {
         // TODO: deal with data_sagment, in case of thread sharing, waitting testing
         this->m_stack->push(this->m_data_sagment->index(data_index)->weak());
     }
+
+    Operator::shared Workbench::offline_create(const Bubble &bubble, bool strict) {
+        // bind device context
+        ctx::bind<DeviceContext> bind_device_context(m_device_context);
+
+        auto built_op = OperatorCreator::Create(m_device_context.computing_device.type(), bubble.op(), strict);
+
+        if (built_op == nullptr) return nullptr;
+
+        for (auto &param : bubble.params()) {
+            built_op->set(param.first, param.second);
+        }
+
+        built_op->init();
+
+        return built_op;
+    }
+
+    void Workbench::offline_run(Operator::shared op, const std::vector<Tensor> &input, std::vector<Tensor> &output) {
+        Stack stack(m_device_context.memory_device, m_dynamic_memory);
+
+        // bind thread pool to any operator can using thread speed up
+        ctx::bind<ThreadPool> bind_thread_pool(this->runtime().thread_pool());
+
+        // bind device context
+        ctx::bind<DeviceContext> bind_device_context(m_device_context);
+
+        // bind runtime context
+        ctx::bind<RuntimeContext> bind_runtime_context(m_runtime_context);
+
+        for (auto &tensor : input) {
+            stack.push(tensor);
+        }
+
+        auto output_count = RunOperator(op, stack, int(input.size()));
+
+        TS_AUTO_CHECK(output_count == stack.size());
+
+        output.resize(output_count);
+
+        for (int i = 0; i < output_count; ++i) {
+            output[i] = stack[i];
+        }
+    }
+
+    void Workbench::offline_infer(Operator::shared op, const std::vector<Tensor> &input,
+                                  std::vector<Tensor::Prototype> &output) {
+        Stack stack(m_device_context.memory_device, m_dynamic_memory);
+
+        // bind thread pool to any operator can using thread speed up
+        ctx::bind<ThreadPool> bind_thread_pool(this->runtime().thread_pool());
+
+        // bind device context
+        ctx::bind<DeviceContext> bind_device_context(m_device_context);
+
+        // bind runtime context
+        ctx::bind<RuntimeContext> bind_runtime_context(m_runtime_context);
+
+        for (auto &tensor : input) {
+            stack.push(tensor);
+        }
+
+        op->infer(stack, output);
+    }
 }
