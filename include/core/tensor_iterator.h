@@ -102,7 +102,7 @@ namespace ts {
         explicit HypeShape(const std::vector<int> &shape)
                 : m_shape(shape) {
             // update weights
-            if (m_shape.empty()) throw Exception("Not support empty shape.");
+            if (m_shape.empty()) return;
             m_weights.resize(m_shape.size());
             auto size = m_shape.size();
             auto weight_it = m_weights.rbegin();
@@ -117,7 +117,7 @@ namespace ts {
 
         T to_index(const std::initializer_list<T> &coordinate) const {
             // if (coordinate.size() > m_shape.size()) throw CoordinateOutOfShapeException(m_shape, coordinate);
-            assert(coordinate.size() != 0);
+            if (coordinate.size() == 0) return 0;
             auto size = coordinate.size();
             auto weight_it = m_weights.end() - size + 1;
             auto coordinate_it = coordinate.begin();
@@ -133,7 +133,7 @@ namespace ts {
 
         T to_index(const std::vector<T> &coordinate) const {
             // if (coordinate.size() > m_shape.size()) throw CoordinateOutOfShapeException(m_shape, coordinate);
-            assert(!coordinate.empty());
+            if (coordinate.empty()) return 0;
             auto size = coordinate.size();
             auto weight_it = m_weights.end() - size + 1;
             auto coordinate_it = coordinate.begin();
@@ -150,12 +150,18 @@ namespace ts {
         std::vector<T> to_coordinate(T index) const {
             // if (m_shape.empty()) return std::vector<T>();
             // if (index >= m_weights[0]) throw IndexOutOfShapeException(m_shape, index);
+            if (m_shape.empty())
+                return std::vector<T>();
             std::vector<T> coordinate(m_shape.size());
             to_coordinate(index, coordinate);
             return std::move(coordinate);
         }
 
         void to_coordinate(T index, std::vector<T> &coordinate) const {
+            if (m_shape.empty()) {
+                coordinate.clear();
+                return;
+            }
             coordinate.resize(m_shape.size());
             auto size = m_shape.size();
             auto weight_it = m_weights.begin() + 1;
@@ -169,7 +175,7 @@ namespace ts {
             *coordinate_it = index;
         }
 
-        T count() const { return m_weights[0]; }
+        T count() const { return m_weights.empty() ? 1 : m_weights[0]; }
 
         T weight(size_t i) const { return m_weights[i]; };
 

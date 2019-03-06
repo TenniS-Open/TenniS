@@ -608,6 +608,8 @@ def convert_gemm_layer(node, input_nodes, output_names):
         transB = attr_dict[Name.Attr.transB]
     print("--##    transB: {}".format(transB))
 
+    # TODO: try convert the reshape (before gemm) to flatten
+
     ts_node = onnx_node.gemm(node_name, A=A, B=B, C=C, alpha=alpha, beta=beta, transA=transA, transB=transB)
 
     return ts_node,
