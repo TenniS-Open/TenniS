@@ -491,6 +491,12 @@ void prewhiten(T *data, size_t len)
 }
 ```
 
+### _cast(x..device, ) -> y
+输入：`x`   
+
+参数：  
+- `dtype` `Int` 要转换成的类型
+
 ### gather(x..device, indices..host) -> y
 
 参数：  
