@@ -6,6 +6,8 @@ import tensorstack as ts
 import onnx_dtype as dtype
 import tensorstack.frontend.onnx as onnx_node
 
+import numpy
+
 
 def to_tensor_shape(tensor_shape):
     shape = []
@@ -60,10 +62,17 @@ class Name(object):
         transB = "transB"
         epsilon = "epsilon"
 
+        mode = "mode"
+        value = "value"
+
     NOTSET = "NOTSET"
     SAME_UPPER = "SAME_UPPER"
     SAME_LOWER = "SAME_LOWER"
     VALID = "VALID"
+
+    constant = "constant"
+    reflect = "reflect"
+    edge = "edge"
 
 
 def convert(input_file, output_file):
@@ -147,6 +156,8 @@ def convert(input_file, output_file):
         "Shape": convert_shape_layer,
         "Concat": convert_concat_layer,
         "BatchNormalization": convert_bn_layer,
+        "Pad": convert_pad_layer,
+        "Constant": convert_constant_layer,
         # about new operator
         "Gather": convert_gather_layer,
         "Unsqueeze": convert_unsqueeze_layer,
@@ -177,7 +188,7 @@ def convert(input_file, output_file):
 
         output_ts_nodes = ts_converter(node, input_ts_nodes, output_names)
 
-        if isinstance(output_names, ts.Node):
+        if isinstance(output_ts_nodes, ts.Node):
             output_ts_nodes = (output_ts_nodes, )
 
         assert len(output_names) == len(output_ts_nodes)
@@ -224,7 +235,9 @@ def convert(input_file, output_file):
 def topy(attr):
     # type: (onnx.AttributeProto) -> object
     type = attr.type
-    if type == onnx.AttributeProto.STRING:
+    if type == onnx.AttributeProto.TENSOR:
+        return numpy_helper.to_array(attr.t)
+    elif type == onnx.AttributeProto.STRING:
         return bytes(attr.s).decode("UTF-8")
     elif type == onnx.AttributeProto.FLOATS:
         return list(attr.floats)
@@ -646,3 +659,64 @@ def convert_bn_layer(node, input_nodes, output_names):
                                       dim=1, epsilon=epsilon)
 
     return ts_node,
+
+
+def convert_pad_layer(node, input_nodes, output_names):
+    # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} -> {} ]=-".format(node.op_type, [n.name for n in input_nodes], output_names))
+
+    attribute = node.attribute
+    attr_dict = {}
+    for attr in attribute:
+        attr_dict[str(attr.name)] = topy(attr)
+
+    assert len(input_nodes) == 1
+    assert len(output_names) == 1
+
+    node_name = output_names[0]
+
+    x = input_nodes[0]
+
+    mode = Name.constant
+    if Name.Attr.mode in attr_dict:
+        mode = attr_dict[Name.Attr.mode]
+        print("--##    mode: {}".format(mode))
+
+    if mode != Name.constant:
+        raise NotImplementedError("mode={}".format(mode))
+
+    pads = attr_dict[Name.Attr.pads]
+    print("--##    pads: {}".format(pads))
+
+    value = 0
+    if Name.Attr.value in attr_dict:
+        value = attr_dict[Name.Attr.value]
+        print("--##    value: {}".format(value))
+
+    pads = numpy.asarray(pads, dtype=numpy.int32).reshape((2, -1)).T
+
+    ts_node = ts.zoo.pad(node_name, x=x, padding=pads, padding_value=value)
+
+    return ts_node,
+
+
+def convert_constant_layer(node, input_nodes, output_names):
+    # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} -> {} ]=-".format(node.op_type, [n.name for n in input_nodes], output_names))
+
+    attribute = node.attribute
+    attr_dict = {}
+    for attr in attribute:
+        attr_dict[str(attr.name)] = topy(attr)
+
+    assert len(input_nodes) == 0
+    assert len(output_names) == 1
+
+    node_name = output_names[0]
+
+    value = attr_dict[Name.Attr.value]
+
+    ts_node = ts.menu.data(node_name, value=value)
+
+    return ts_node,
+
