@@ -3,7 +3,7 @@ from onnx import numpy_helper
 from onnx import optimizer
 
 import tensorstack as ts
-import onnx_dtype as dtype
+from . import onnx_dtype as dtype
 import tensorstack.frontend.onnx as onnx_node
 
 import numpy
