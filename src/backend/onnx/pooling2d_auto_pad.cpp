@@ -57,12 +57,121 @@ namespace ts {
             return 1;
         }
 
-        static Size2D valid_pooling2d_forward(const Size2D &x, const Padding2D &padding, const KSize2D &ksize,
-                                        const Stride2D &stride) {
+        static inline Size2D pooling2d_forward_notset(const Size2D &x, const Padding2D &padding, const KSize2D &ksize,
+                                               const Stride2D &stride) {
             Size2D y;
             y.height = int(std::floor((x.height + padding.top + padding.bottom - ksize.height) / (float)stride.height + 1));
             y.width = int(std::floor((x.width + padding.left + padding.right - ksize.width) / (float)stride.width + 1));
             return y;
+        }
+
+        static inline Padding2D dynamic_padding_notset(const Size2D &input_size, const Padding2D &static_padding, const KSize2D &ksize,
+                                         const Stride2D &stride) {
+
+            Padding2D dynamic_padding;
+
+            TS_UNUSED(pooling2d_forward_notset);
+
+            /*
+            Size2D expected_output_size = pooling2d_forward_notset(input_size, static_padding, ksize, stride);
+            Size2D expected_input_size = pooling2d_backward(expected_output_size, static_padding, ksize, stride);
+            dynamic_padding.top = static_padding.top;
+            dynamic_padding.left = static_padding.left;
+            dynamic_padding.bottom = static_padding.bottom + expected_input_size.height - input_size.height;
+            dynamic_padding.right = static_padding.right + expected_input_size.width - input_size.width;
+             */
+
+            dynamic_padding.top = static_padding.top;
+            dynamic_padding.left = static_padding.left;
+            dynamic_padding.bottom = static_padding.bottom
+                                     - (input_size.height + static_padding.top + static_padding.bottom - ksize.height) % stride.height;
+            dynamic_padding.right = static_padding.right
+                                    - (input_size.width + static_padding.left + static_padding.right - ksize.width) % stride.width;
+
+            return dynamic_padding;
+        }
+
+        // VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
+        static inline int forward_valid(int input_spatial_shape, int kernel_spatial_shape, int strides_spatial_shape) {
+            return int(std::ceil((input_spatial_shape - kernel_spatial_shape + 1) / float(strides_spatial_shape)));
+        }
+
+        static inline Size2D pooling2d_forward_valid(const Size2D &x, const Padding2D &padding, const KSize2D &ksize,
+                                                      const Stride2D &stride) {
+            Size2D y;
+            y.height = forward_valid(x.height + padding.top + padding.bottom, ksize.height, stride.height);
+            y.width = forward_valid(x.width + padding.left + padding.right, ksize.width, stride.width);
+            return y;
+        }
+
+        static inline Padding2D dynamic_padding_valid(const Size2D &input_size, const Padding2D &static_padding, const KSize2D &ksize,
+                                                       const Stride2D &stride) {
+
+            Padding2D dynamic_padding;
+
+            Size2D expected_output_size = pooling2d_forward_valid(input_size, static_padding, ksize, stride);
+            Size2D expected_input_size = pooling2d_backward(expected_output_size, static_padding, ksize, stride);
+            dynamic_padding.top = static_padding.top;
+            dynamic_padding.left = static_padding.left;
+            dynamic_padding.bottom = static_padding.bottom + expected_input_size.height - input_size.height;
+            dynamic_padding.right = static_padding.right + expected_input_size.width - input_size.width;
+
+            return dynamic_padding;
+        }
+
+        // SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
+        static inline int forward_same(int input_spatial_shape, int kernel_spatial_shape, int strides_spatial_shape) {
+            return int(std::ceil(input_spatial_shape / float(strides_spatial_shape)));
+        }
+
+        static inline Size2D pooling2d_forward_same(const Size2D &x, const Padding2D &padding, const KSize2D &ksize,
+                                                     const Stride2D &stride) {
+            Size2D y;
+            y.height = forward_same(x.height + padding.top + padding.bottom, ksize.height, stride.height);
+            y.width = forward_same(x.width + padding.left + padding.right, ksize.width, stride.width);
+            return y;
+        }
+
+        static inline Padding2D dynamic_padding_same_upper(const Size2D &input_size, const Padding2D &static_padding, const KSize2D &ksize,
+                                                      const Stride2D &stride) {
+
+            Padding2D dynamic_padding;
+
+            Size2D expected_output_size = pooling2d_forward_same(input_size, static_padding, ksize, stride);
+            Size2D expected_input_size = pooling2d_backward(expected_output_size, static_padding, ksize, stride);
+
+            auto padding_height = (expected_input_size.height - input_size.height);
+            auto padding_width = (expected_input_size.width - input_size.width);
+            auto half_padding_height = padding_height / 2;
+            auto half_padding_width = padding_width / 2;
+
+            dynamic_padding.top = static_padding.top + half_padding_height;
+            dynamic_padding.left = static_padding.left + half_padding_height;
+            dynamic_padding.bottom = static_padding.bottom + (padding_height - half_padding_height);
+            dynamic_padding.right = static_padding.right + (padding_width - half_padding_width);
+
+            return dynamic_padding;
+        }
+
+        static inline Padding2D dynamic_padding_same_lower(const Size2D &input_size, const Padding2D &static_padding, const KSize2D &ksize,
+                                                           const Stride2D &stride) {
+
+            Padding2D dynamic_padding;
+
+            Size2D expected_output_size = pooling2d_forward_same(input_size, static_padding, ksize, stride);
+            Size2D expected_input_size = pooling2d_backward(expected_output_size, static_padding, ksize, stride);
+
+            auto padding_height = (expected_input_size.height - input_size.height);
+            auto padding_width = (expected_input_size.width - input_size.width);
+            auto half_padding_height = padding_height / 2;
+            auto half_padding_width = padding_width / 2;
+
+            dynamic_padding.top = static_padding.top + (padding_height - half_padding_height);
+            dynamic_padding.left = static_padding.left + (padding_width - half_padding_width);
+            dynamic_padding.bottom = static_padding.bottom + half_padding_height;
+            dynamic_padding.right = static_padding.right + half_padding_width;
+
+            return dynamic_padding;
         }
 
         int Pooling2DAutoPad::run(Stack &stack) {
@@ -89,14 +198,20 @@ namespace ts {
             input_size.height = shape[2];
             input_size.width = shape[3];
 
-            TS_LOG_ERROR << "Not implement." << eject;
-
-            Size2D expected_output_size = valid_pooling2d_forward(input_size, static_padding, ksize, stride);
-            Size2D expected_input_size = pooling2d_backward(expected_output_size, static_padding, ksize, stride);
-            dynamic_padding.top = static_padding.top;
-            dynamic_padding.left = static_padding.left;
-            dynamic_padding.bottom = static_padding.bottom + expected_input_size.height - input_size.height;
-            dynamic_padding.right = static_padding.right + expected_input_size.width - input_size.width;
+            switch (this->auto_pad) {
+                case AutoPadType::NOTSET:
+                    dynamic_padding = dynamic_padding_notset(input_size, static_padding, ksize, stride);
+                    break;
+                case AutoPadType::VALID:
+                    dynamic_padding = dynamic_padding_valid(input_size, static_padding, ksize, stride);
+                    break;
+                case AutoPadType::SAME_UPPER:
+                    dynamic_padding = dynamic_padding_same_upper(input_size, static_padding, ksize, stride);
+                    break;
+                case AutoPadType::SAME_LOWER:
+                    dynamic_padding = dynamic_padding_same_lower(input_size, static_padding, ksize, stride);
+                    break;
+            }
 
             auto dynamic_padding_data = dynamic_padding_tensor.data<int32_t>();
 
