@@ -470,7 +470,8 @@ def convert_shape_layer(node, input_nodes, output_names):
 
     x = input_nodes[0]
 
-    ts_node = ts.zoo.shape(node_name, x=x)
+    ts_node = ts.zoo.shape("_int32_" + node_name, x=x)
+    ts_node = ts.zoo.cast(node_name, ts_node, dtype=ts.dtype.INT64);
 
     return ts_node,
 
