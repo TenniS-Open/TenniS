@@ -17,6 +17,8 @@ namespace ts {
 
         using shared = std::shared_ptr<self>;
 
+        ImageFilter();
+
         explicit ImageFilter(const ComputingDevice &device);
 
         ImageFilter(const self &) = delete;
