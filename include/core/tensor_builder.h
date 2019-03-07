@@ -117,6 +117,10 @@ namespace ts {
         }
 
         bool support(DTYPE dtype);
+
+        Tensor load(StreamReader &stream);
+
+        Tensor load(const std::string &filename);
     }
 }
 

@@ -25,6 +25,15 @@ option(TS_USE_OPENCV "[Optional] Use OpenCV" OFF)
 option(TS_USE_CUDA "[Optional] Use CUDA" OFF)
 option(TS_USE_CBLAS "[Optional] Use CBLAS" OFF)
 
+option(TS_USE_PROFILER "[Optional] Use Profiler" ON)
+if (TS_USE_PROFILER)
+    add_definitions(-DTS_USE_PROFILER)
+endif()
+option(TS_USE_HOOK "[Optional] Use Hook" ON)
+if (TS_USE_HOOK)
+    add_definitions(-DTS_USE_HOOK)
+endif()
+
 # set common compiler flags
 include(LOCAL_FLAGS)
 include(LOCAL_ENV)
