@@ -34,7 +34,8 @@ namespace ts {
                             ihStart = std::max<T>(ihStart, 0);
                             iwStart = std::max<T>(iwStart, 0);
                             int outIndex = oh * output_w + ow;
-                            T maxVlue = 0;
+                            //T maxVlue = 0;
+                            T maxVlue = input_data[ihStart * input_w + iwStart];
                             //int count = 0;
                             for (int ih = ihStart; ih < ihEnd; ih++) {
                                 for (int iw = iwStart; iw < iwEnd; iw++) {
