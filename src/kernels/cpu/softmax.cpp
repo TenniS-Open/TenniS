@@ -164,7 +164,7 @@ namespace ts {
                         int post_offset = j * inner_num;
                         for (int k = 0; k < inner_num; k++) {
                             output_data[pre_offset + post_offset + k] = exp(
-                                input_data[post_offset + post_offset + k]);
+                                input_data[pre_offset + post_offset + k]);
                             denominator_data[k] += output_data[pre_offset + post_offset + k];
                         }
                     }
