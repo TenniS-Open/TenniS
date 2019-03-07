@@ -138,8 +138,8 @@ def convert(input_file, output_file):
         elem_type = value[0]
         shape = value[1]
         ts_dtype = dtype.from_onnx(elem_type)
-        ts_node = ts.menu.param(name, shape=shape)
-        ts_node = ts.zoo.cast("_casted_" + name, x=ts_node, dtype=ts_dtype)
+        ts_node = ts.menu.param("_input_" + name, shape=shape)
+        ts_node = ts.zoo.cast(name, x=ts_node, dtype=ts_dtype)
         name2node[name] = ts_node
 
     for name in initialized.keys():
