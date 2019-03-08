@@ -3,6 +3,13 @@
 
 #include "backend/base/operator_on_device.h"
 
+#define CUDA_BLOCK(a,b)     (((a) + (b) - 1) / (b))
+#define TRANS_BLOCK_DIM     16
+#define CUDA_THREAD_NUM     512
+
+
+
+
 namespace ts {
     namespace gpu {
         /**
