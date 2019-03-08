@@ -66,33 +66,6 @@ namespace ts {
             gpu_fused_batch_norm_compute_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> (pdst, out.count(), backdims, shape[dim], pmean, pvar, pscale, pbias);
 
             cudaFree(pvar);
-  // only used in CPU
-            //std::memcpy(pdst, psrc, out.count() * sizeof(T));
-
-            //int stridedims = backdims * shape[dim];
-            //int offset = 0;
-
-            //std::vector<T> vec(variance.count());
-            //for (int i = 0; i < vec.size(); i++) {
-            //    vec[i] = T(1) / sqrt(pvariance[i] + T(epsilon));
-            //}
-
-            /*
-            for (int i = 0; i < predims; i++) {
-                for (int k = 0; k < shape[dim]; k++) {
-                    offset = i * stridedims + k * backdims;
-                    T mean_val = pmean[k];
-                    T vec_val = vec[k];
-                    T scale_val = pscale[k];
-                    T bias_val = pbias[k];
-                    T *pdst_temp = pdst + offset;
-                    for (int m = backdims; m < backdims; m++) {
-                        *pdst_temp = (*pdst_temp - mean_val) * vec_val * scale_val + bias_val;
-                        pdst_temp++;
-                    }
-                }
-            }
-            */
         }
 
         void FusedBatchNorm::batch_norm(const Tensor &x, const Tensor &mean, const Tensor &variance,

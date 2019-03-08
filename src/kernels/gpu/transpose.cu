@@ -43,13 +43,9 @@ namespace ts {
 
             *ptr = ntmp;
 
-
-            //////////////////////////////////
             for(i=0; i<shapelen; ++i) {
                 buffer2[i] = buffer1[permute[i]];
             } 
-
-            /////////////////////////////////
 
             int outindex = 0;
             for(i=0; i<shapelen; ++i) {
@@ -78,8 +74,6 @@ namespace ts {
 
             HypeShape hype_input_shape(input_shape);
             HypeShape hype_output_shape(output_shape);
-            //ShapeIterator input_shape_it(input_shape);
-            //std::cout << "permute:" << ((Tensor *)(&rhs))->locked()->device().type() << ",count:" << rhs.count() << std::endl;
 
             int *input_shape_dev = NULL;
             cudaMalloc((void **)&input_shape_dev, input_shape.size() * sizeof(int));
@@ -114,23 +108,6 @@ namespace ts {
             cudaFree(output_shape_dev);
             cudaFree(output_weight);
             cudaFree(permute_shape_dev);
-            /*
-            int index = 0;
-            for (int i = 0; i < len; i++) {
-                auto &oldshape = input_shape_it.coordinate();
-                for (size_t k = 0; k < oldshape.size(); k++) {
-                    tmpshape[k] = oldshape[permute[k]];
-                }
-
-                index = hype_output_shape.to_index(tmpshape);//to_index(reshape, tmpshape);
-
-                //if(index < 0) {
-                //    throw ts::Exception("transpose operator failed, index is invalid");
-                //}
-                pdst[index] = psrc[i];
-                ++input_shape_it;
-            }
-            */
         }
 
         template<typename T>

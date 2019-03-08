@@ -11,7 +11,6 @@
 #include <cuda_runtime.h>
 #include <math_functions.hpp>
 
-//#include "kernels/common/simd.h"
 
 namespace ts {
     namespace gpu {
@@ -45,12 +44,6 @@ namespace ts {
             const T *pvariance = variance.data<T>();
             T *pdst = out.data<T>();
 
-            // only used in CPU
-            //std::memcpy(pdst, psrc, out.count() * sizeof(T));
-
-            //int stridedims = backdims * shape[dim];
-            //int offset = 0;
-
             std::vector<T> vec(variance.count());
             cudaMemcpy((void *)vec.data(), (void*)pvariance, vec.size() * sizeof(T), cudaMemcpyDeviceToHost);
 
@@ -68,20 +61,6 @@ namespace ts {
             gpu_batch_norm_compute_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> (pdst, out.count(), backdims, shape[dim], pmean, pvar);
            
             cudaFree(pvar); 
-            /*
-            for (int i = 0; i < predims; i++) {
-                for (int k = 0; k < shape[dim]; k++) {
-                    offset = i * stridedims + k * backdims;
-                    T mean_val = pmean[k];
-                    T vec_val = vec[k];
-                    T *pdst_temp = pdst + offset;
-                    for (int m = 0; m < backdims; m++) {
-                        *pdst_temp = (*pdst_temp - mean_val) * vec_val;
-                        pdst_temp++;
-                    }
-                }
-            }
-            */
         }
 
 

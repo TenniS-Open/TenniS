@@ -66,21 +66,14 @@ namespace ts {
         static void gpu_inner_prod_compute_run(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
             const Shape &lhs_shape = lhs.sizes();
             const Shape &rhs_shape = rhs.sizes();
-            // const Shape &out_shape = out.sizes();
 
             const T *psrc = lhs.data<T>();
             const T *pdot = rhs.data<T>();
             T *pdst = out.data<T>();
 
-            //std::cout << "m:" << lhs_shape[0] << ",n:" << lhs_shape[1] << ",k:" << rhs_shape[1] << ",:" << rhs_shape[0] << std::endl;
 
             dim3 blocksize(CUDA_BLOCK(rhs_shape[1], TRANS_BLOCK_DIM), CUDA_BLOCK(lhs_shape[0], TRANS_BLOCK_DIM),1);
             dim3 threadsize(TRANS_BLOCK_DIM, TRANS_BLOCK_DIM,1);
-
-            //dim3 dimGrid((rhs_shape[1]-1)/TILE_WIDTH+1,(lhs_shape[0]-1)/TILE_WIDTH+1,1); 
-            //dim3 dimBlock(TILE_WIDTH,TILE_WIDTH,1);
-
-
             gpu_inner_prod_compute_run_kernel<T> <<<blocksize, threadsize>>> (lhs_shape[0], lhs_shape[1], rhs_shape[1], psrc, pdot, pdst);
 
         }
