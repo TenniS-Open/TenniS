@@ -11,7 +11,6 @@
 #include <cuda_runtime.h>
 
 
-//#include "kernels/common/simd.h"
 
 namespace ts {
     namespace gpu {
@@ -48,43 +47,10 @@ namespace ts {
             const T *pbias = bias.data<T>();
             T *pdst = out.data<T>();
 
-            //std::vector<T> vec(variance.count());
-            //cudaMemcpy((void *)vec.data(), (void*)pvariance, vec.size() * sizeof(T), cudaMemcpyDeviceToHost);
-
-            //for (int i = 0; i < vec.size(); i++) {
-            //    vec[i] = T(1) / sqrt(vec[i] + T(epsilon));
-            //}
-
-            //T * pvar = NULL;
-            //cudaMalloc((void **)&pvar, vec.size() * sizeof(T));
-            //cudaMemcpy((void *)pvar, (void *)vec.data(),  vec.size() * sizeof(T), cudaMemcpyHostToDevice);
-
-
             cudaMemcpy((void *)pdst, (void *)psrc, out.count() * sizeof(T), cudaMemcpyDeviceToDevice);
+            gpu_batch_scale_compute_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> 
+                                              (pdst, out.count(), backdims, shape[dim], pscale, pbias);
 
-            gpu_batch_scale_compute_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> (pdst, out.count(), backdims, shape[dim], pscale, pbias);
-
-
-            // only used in CPU
-            //std::memcpy(pdst, psrc, out.count() * sizeof(T));
-
-            //int stridedims = backdims * shape[dim];
-            //int offset = 0;
-
-            /*
-            for (int i = 0; i < predims; i++) {
-                for (int k = 0; k < shape[dim]; k++) {
-                    offset = i * stridedims + k * backdims;
-                    T scale_val = pscale[k];
-                    T bias_val = pbias[k];
-                    T* pdst_temp = pdst + offset;
-                    for(int m=0; m<backdims; m++) {
-                        *pdst_temp = *pdst_temp * scale_val + bias_val;
-                        pdst_temp++;
-                    }
-                }
-            }
-            */
         }
 
 

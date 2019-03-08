@@ -45,21 +45,6 @@ namespace ts {
             }
         }
 
-        /*
-        static __global__ int to_index(int * shape, int *coordinate, int * buf, int *weight, int shapelen) {
-            int index = 0;
-            int i,k;
-            for(i=0; i<shapelen; ++i) {
-                buf[i] = coordinate[i] % shape[i];    
-            } 
-                 
-            for(k=0, i=1; i < shapelen; ++k,++i) {
-                index += buf[k] * weight[i]; 
-            }
-            index += buf[k];
-            return index;
-        }
-        */
 
         template<typename T>
         static __global__ void reduce_operator_kernel(T* out, int size, const T* lhs,  const T* rhs, 
@@ -115,51 +100,12 @@ namespace ts {
             delete [] buffer2;
         }
 
-        /*
-        template <typename T>
-        static inline void reduce_operator(T &x, T lhs, T rhs) {
-            x = lhs + rhs;
-        }
-        template <typename T>
-        static inline void reduce_operator(T &x, T y) {
-            x += y;
-        }
-
-        static inline int to_mod_index(const HypeShape &hype, const std::vector<int> &coordinate) {
-            auto temp = coordinate;
-            for (size_t i = 0; i < temp.size(); ++i) {
-                temp[i] %= hype.shape(i);
-            }
-            return hype.to_index(temp);
-        }
-        */
-
-        /*
-        static void print(const Shape & shape) {
-            for(int i=0; i<shape.size(); i++) {
-                std::cout << shape[i] << ",";
-            }
-            std::cout << std::endl;
-        }
-        */
 
         template<typename T>
         static inline void add_gpu_compute_run(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
             HypeShape lhs_hype(lhs.sizes());
             HypeShape rhs_hype(rhs.sizes());
             HypeShape out_hype(out.sizes());
-
-            /*
-            std::cout << "lhs shape:";
-            print(lhs.sizes());
-            print(lhs_hype.weight());
-            std::cout << "rhs shape:";
-            print(rhs.sizes());
-            print(rhs_hype.weight());
-            std::cout << "out shape:";
-            print(out.sizes());
-            print(out_hype.weight());
-            */
 
             auto plhs = lhs.data<T>();
             auto prhs = rhs.data<T>();
@@ -200,80 +146,15 @@ namespace ts {
             cudaFree(outweight);
         }
 
-        /*
-        template<typename T>
-        static inline void compute_run_scalar(const T *plhs, T scalar, T *pout, size_t count) {
-            // this is CPU operator, so just using memcpy
-            if (pout != plhs) std::memcpy(pout, plhs, count * sizeof(T));
-
-            for (size_t i = 0; i < count; ++i) {
-                reduce_operator(pout[i], scalar);
-            }
-        }
-        */
-
-        /*
-	template<>
-	inline void compute_run_scalar(const float *plhs, float scalar, float *pout, size_t count) {
-//#ifdef TS_USE_OPENMP
-//			//#pragma omp parallel for num_threads(1)
-//#pragma omp parallel for num_threads(openmp_threads(count))
-//#endif
-		for (int i = 0; i < count - 3; i += 4) {
-			float32x4 pout_x4 = float32x4(&plhs[i]) + float32x4(scalar);
-			pout_x4.store(&pout[i]);
-		}
-		for (int i = count / 4 * 4; i < count; ++i)
-		{
-			reduce_operator(pout[i], plhs[i], scalar);
-		}
-	}
-        */
-
-        /*
-        template<typename T>
-        static inline void compute_run_same_shape(const T *plhs, const T *prhs, T *pout, size_t count) {
-            // this is CPU operator, so just using memcpy
-            if (pout != plhs) std::memcpy(pout, plhs, count * sizeof(T));
-
-            for (size_t i = 0; i < count;++i) {
-                reduce_operator(pout[i], prhs[i]);
-            }
-        }
-        */
-        /*
-	template<>
-	inline void compute_run_same_shape(const float *plhs, const float *prhs, float *pout, size_t count) {
-//#ifdef TS_USE_OPENMP
-////#pragma omp parallel for num_threads(1)
-//#pragma omp parallel for num_threads(openmp_threads(count))
-//#endif
-		for (int i = 0; i < count - 3; i += 4) {
-			float32x4 pout_x4 = float32x4(&plhs[i]) + float32x4(&prhs[i]);
-			pout_x4.store(&pout[i]);
-		}
-		for (int i = count / 4 * 4; i < count; ++i)
-		{
-			reduce_operator(pout[i], plhs[i], prhs[i]);
-		}
-	}
-        */
 
         template<typename T>
         static inline void add_gpu_compute_run_scalar(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
             auto plhs = lhs.data<T>();
             auto prhs = rhs.data<T>();
             auto pout = out.data<T>();
-            /*
-            std::cout << "run scalar" << std::endl;
-            std::cout << "lhs:" << ((Tensor *)(&lhs))->locked()->device().type() << ",count:" << lhs.count()<< std::endl;
-            std::cout << "rhs:" << ((Tensor *)(&rhs))->locked()->device().type() << ",count:" << rhs.count() << std::endl;
-            std::cout << "out:" << out.locked()->device().type() << ",count:" << out.count() << std::endl;
-            */
-            //auto scalar = prhs[0];
+            
             cudaMemcpy((void *)pout, (void *)plhs, out.count() * sizeof(T), cudaMemcpyDeviceToDevice);
             reduce_operator_scalar_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> (pout, out.count(), prhs);
-            //compute_run_scalar(plhs, scalar, pout, size_t(out.count()));
 
         }
 
@@ -286,7 +167,6 @@ namespace ts {
 
             cudaMemcpy((void *)pout, (void *)plhs, out.count() * sizeof(T), cudaMemcpyDeviceToDevice);
             reduce_operator_same_shape_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> (pout, prhs, out.count());
-            //compute_run_same_shape(plhs, prhs, pout, size_t(out.count()));
 
         }
 
@@ -296,8 +176,6 @@ namespace ts {
             auto plhs = lhs.data<T>();
             auto prhs = rhs.data<T>();
             auto pout = out.data<T>();
-
-            //if (pout != plhs) std::memcpy(pout, plhs, out.count() * sizeof(T));
 
             auto &out_shape = out.sizes();
 
@@ -310,28 +188,6 @@ namespace ts {
 
             reduce_operator_bias_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> (pout, out.count(), count, channels, prhs, rhs.count());
 
-
-            /*
-            if (count == 1) {
-                for (int n = 0; n < number; ++n) {
-                    auto pchannels = pout + n * channels;
-                    auto pscalar = prhs;
-                    for (int c = 0; c < channels; ++c) {
-                        reduce_operator(*pchannels, *pscalar);
-                        ++pchannels;
-                        ++pscalar;
-                    }
-                }
-            } else {
-                for (int n = 0; n < number; ++n) {
-                    for (int c = 0; c < channels; ++c) {
-                        int offset = (n * channels + c) * count;
-                        auto local_pout = pout + offset;
-                        compute_run_scalar(local_pout, prhs[channels], local_pout, size_t(count));
-                    }
-                }
-            }
-            */
         }
 
 

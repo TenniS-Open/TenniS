@@ -115,23 +115,17 @@ namespace ts {
             const T *pweight = w.data<T>();
             T *poutput = out.data<T>();
 
-            Tensor col_tensor;
             T *col_buffer = nullptr;
 
             bool is_1x1_conv = stride.height == 1 && stride.width == 1 &&
                                ksize.height == 1 && ksize.width == 1 &&
                                padding.top == 0 && padding.bottom == 0 &&
                                padding.left == 0 && padding.right == 0;
-                std::cout << "1*1" << std::endl;
 
-                int put_param = input_channels * output_shape[2]  * output_shape[3];
+            int put_param = input_channels * output_shape[2]  * output_shape[3];
             // 1x1 conv do not need im2col
             if (!is_1x1_conv) {
-                Shape col_shape;
-                col_shape.resize(1);
-                col_shape[0] = col_buffer_size;
-                col_tensor = stack.make(out.dtype(), col_shape, MemoryDevice(GPU));
-                col_buffer = col_tensor.data<T>();
+                cudaMalloc((void **)&col_buffer, col_buffer_size * sizeof(T));
             }
                   
             dim3 blocksize(CUDA_BLOCK(conv_out_spatial_dim, TRANS_BLOCK_DIM), CUDA_BLOCK(weight_shape[0], TRANS_BLOCK_DIM),1);
@@ -154,6 +148,11 @@ namespace ts {
                 pinput += input_number_offset;
                 poutput += output_number_offset;
             }//end for
+
+            if(col_buffer != nullptr) {
+                cudaFree(col_buffer);
+                col_buffer = nullptr;
+            }
 
         }
 

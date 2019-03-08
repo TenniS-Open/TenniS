@@ -13,13 +13,13 @@ namespace ts {
     namespace gpu {
 
         template <typename T>
-        static __global__ void gpu_depthwise_conv2d_nchw_compute_run_kernel(
-                                                                            int nthreads, const T* bottom_data, const T* weight_data, 
-                                                                            int num, int channels,
-                                                                            int top_height, int top_width, int bottom_height, int bottom_width,
-                                                                            int kernel_h,  int kernel_w,  int stride_h, int stride_w,
-                                                                            int pad_top, int pad_bottom, int pad_left, int pad_right, 
-                                                                            int dilation_h, int dilation_w, T* top_data) {
+        static __global__ void gpu_depthwise_conv2d_nchw_kernel(
+                                int nthreads, const T* bottom_data, const T* weight_data, 
+                                int num, int channels,
+                                int top_height, int top_width, int bottom_height, int bottom_width,
+                                int kernel_h,  int kernel_w,  int stride_h, int stride_w,
+                                int pad_top, int pad_bottom, int pad_left, int pad_right, 
+                                int dilation_h, int dilation_w, T* top_data) {
 
             for(int index = blockIdx.x * blockDim.x + threadIdx.x; index < nthreads; index += blockDim.x * gridDim.x) {
                 const int n = index / channels / top_height / top_width;
@@ -57,43 +57,12 @@ namespace ts {
             const T *pweight_base = weight.data<T>();
             T *poutput = out.data<T>();
 
-            //////////////////////////
-            gpu_depthwise_conv2d_nchw_compute_run_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> (
-                                                         out.count(), pinput, pweight_base, output_shape[0], output_shape[1],
-                                                         output_shape[2],output_shape[3],input_shape[2], input_shape[3], 
-                                                         weight_shape[2], weight_shape[3],stride.height, stride.width,
-                                                         padding.top, padding.bottom, padding.left, padding.right,
-                                                         dilation.height,dilation.width, poutput);
-
-
-            /*
-            for (int n = 0; n < output_shape[0]; n++) {
-                for (int c = 0; c < output_shape[1]; c++) {
-                    for (int h = 0; h < output_shape[2]; h++) {
-                        for (int w = 0; w < output_shape[3]; w++) {
-                            const T *pweight = pweight_base + c * weight_shape[2] * weight_shape[3];
-                            T value = 0;
-                            for (int kh = 0; kh < weight_shape[2]; kh++) {
-                                for (int kw = 0; kw < weight_shape[3]; kw++) {
-                                    int h_in = -padding.top + h * stride.height + kh * dilation.height;
-                                    int w_in = -padding.left + w * stride.width + kw * dilation.width;
-                                    if ((h_in >= 0) && (h_in < input_shape[2]) && (w_in >= 0) &&
-                                        (w_in < input_shape[3])) {
-                                        int offset =
-                                                ((n * output_shape[1] + c) * input_shape[2] + h_in) * input_shape[3] +
-                                                w_in;
-                                        value += (*pweight) * pinput[offset];
-                                    }
-                                    ++pweight;
-                                }
-                            }
-                            *poutput++ = value;
-                        }
-                    }
-                }
-            }
-
-            */
+            gpu_depthwise_conv2d_nchw_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> (
+                                               out.count(), pinput, pweight_base, output_shape[0], output_shape[1],
+                                               output_shape[2],output_shape[3],input_shape[2], input_shape[3], 
+                                               weight_shape[2], weight_shape[3],stride.height, stride.width,
+                                               padding.top, padding.bottom, padding.left, padding.right,
+                                               dilation.height,dilation.width, poutput);
         }
 
         void
