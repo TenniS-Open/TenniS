@@ -53,7 +53,7 @@ namespace ts {
             TS_AUTO_CHECK(stack.size() == 4);
 
             auto x_tensor = stack[0];
-            TS_AUTO_CHECK(x_tensor.has_shape({-1, -1, -1, -1}));
+            TS_AUTO_CHECK(x_tensor.dims() == 4);
             auto padding_tensor = tensor::cast(INT32, stack[1]);
             auto ksize_tensor = tensor::cast(INT32, stack[2]);
             auto stride_tensor = tensor::cast(INT32, stack[3]);
