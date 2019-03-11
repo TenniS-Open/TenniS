@@ -55,6 +55,9 @@ namespace ts {
             const string &gemm() TS_NOEXCEPT;
 
             const string &reshape_v2() TS_NOEXCEPT;
+
+            // 2019-03-11
+            const string &global_pooling2d() TS_NOEXCEPT;
         }
 
         namespace typo {

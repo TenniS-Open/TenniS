@@ -48,6 +48,7 @@ namespace ts {
             const string &unsqueeze() TS_NOEXCEPT { static string str = "unsqueeze"; return str; }
             const string &gemm() TS_NOEXCEPT { static string str = "gemm"; return str; }
             const string &reshape_v2() TS_NOEXCEPT { static string str = "_reshape_v2"; return str; }
+            const string &global_pooling2d() TS_NOEXCEPT { static string str = "global_pooling2d"; return str; }
 
             const string &copy() TS_NOEXCEPT {
                 static string str = "_copy";
