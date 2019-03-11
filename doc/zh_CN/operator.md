@@ -569,6 +569,16 @@ to tensor A * B);
 说明：  
 按照 `LRN` 的传统公式和做法
 
+### global_pooling2d(x)
+描述：进行全局下采样
+
+参数：
+- `format` `String` 为 `NCHW` 或者 `NHWC`
+- `type` `Enum[max=0, avg=1]` 
+
+说明：  
+输出大小固定为1x1。
+
 ### _nhwc_resize2d(x..device) = delete
 
 参数：  
