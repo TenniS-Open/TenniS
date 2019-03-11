@@ -163,6 +163,8 @@ def convert(input_file, output_file):
         "Unsqueeze": convert_unsqueeze_layer,
         "Reshape": convert_reshape_layer,
         "Gemm": convert_gemm_layer,
+        "GlobalAveragePool": convert_global_pooling2d_layer,
+        "Sigmoid": convert_sigmoid_layer,
     }
 
     print("==================== Converting ====================")
@@ -562,6 +564,66 @@ def convert_concat_layer(node, input_nodes, output_names):
     return ts_node,
 
 
+def __whose_flatten_shape(shape):
+    # type: (ts.Node) -> Union[ts.Node, None]
+    """
+    :return: return flatten tensor if it's flatten shape like(x.number, -1)
+    """
+    if not isinstance(shape, ts.Node):
+        return None
+
+    if shape.op != ts.zoo.Name.Layer.concat:
+        return None
+
+    unsqueeze_x_number = shape.inputs[0]
+    unsqueeze_neg_one = shape.inputs[1]
+
+    assert isinstance(unsqueeze_x_number, ts.Node)
+    assert isinstance(unsqueeze_neg_one, ts.Node)
+
+    if unsqueeze_x_number.op != onnx_node.Name.Layer.unsqueeze:
+        return None
+
+    if unsqueeze_neg_one.op != onnx_node.Name.Layer.unsqueeze:
+        return None
+
+    if list(unsqueeze_x_number.get(onnx_node.Name.axes)) != [0]:
+        return None
+
+    if list(unsqueeze_neg_one.get(onnx_node.Name.axes)) != [0]:
+        return None
+
+    neg_one = unsqueeze_neg_one.inputs[0]
+    x_number = unsqueeze_x_number.inputs[0]
+
+    assert isinstance(neg_one, ts.Node)
+    assert isinstance(x_number, ts.Node)
+
+    if neg_one.op != ts.Node.Const:
+        return None
+    elif int(neg_one.get(ts.menu.Name.value)) != -1:
+        return None
+
+    if x_number.op != onnx_node.Name.Layer.gather:
+        return None
+    elif int(x_number.get(onnx_node.Name.axis)) != 0:
+        return None
+
+    x_shape = x_number.inputs[0]
+
+    if x_shape.op == ts.zoo.Name.Layer.cast:
+        x_shape = x_shape.inputs[0]
+
+    if x_shape.op != ts.zoo.Name.Layer.shape:
+        return None
+
+    x = x_shape.inputs[0]
+
+    print x
+
+    return x
+
+
 def convert_reshape_layer(node, input_nodes, output_names):
     # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
     print("--# -=[ Converting {} layer: {} -> {} ]=-".format(node.op_type, [n.name for n in input_nodes], output_names))
@@ -578,6 +640,12 @@ def convert_reshape_layer(node, input_nodes, output_names):
 
     x = input_nodes[0]
     new_shape = input_nodes[1]
+
+    flatten_x = __whose_flatten_shape(new_shape)
+
+    if x == flatten_x:
+        print("--##    IsFlatten: {}".format(True))
+        return ts.zoo.flatten(node_name, x)
 
     ts_node = ts.zoo.reshape(node_name, x, new_shape)
 
@@ -621,8 +689,6 @@ def convert_gemm_layer(node, input_nodes, output_names):
     if Name.Attr.transB in attr_dict:
         transB = attr_dict[Name.Attr.transB]
     print("--##    transB: {}".format(transB))
-
-    # TODO: try convert the reshape (before gemm) to flatten
 
     ts_node = onnx_node.gemm(node_name, A=A, B=B, C=C, alpha=alpha, beta=beta, transA=transA, transB=transB)
 
@@ -717,6 +783,58 @@ def convert_constant_layer(node, input_nodes, output_names):
     value = attr_dict[Name.Attr.value]
 
     ts_node = ts.menu.data(node_name, value=value)
+
+    return ts_node,
+
+
+def convert_global_pooling2d_layer(node, input_nodes, output_names):
+    # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} -> {} ]=-".format(node.op_type, [n.name for n in input_nodes], output_names))
+
+    attribute = node.attribute
+    attr_dict = {}
+    for attr in attribute:
+        attr_dict[str(attr.name)] = topy(attr)
+
+    assert len(input_nodes) == 1
+    assert len(output_names) == 1
+
+    node_name = output_names[0]
+
+    x = input_nodes[0]
+
+    op_type = node.op_type
+    onnx_op_type_to_ts_pool_type = {
+        "GlobalMaxPool": ts.zoo.Type.pooling_type.max,
+        "GlobalAveragePool": ts.zoo.Type.pooling_type.avg,
+    }
+
+    if op_type not in onnx_op_type_to_ts_pool_type:
+        raise NotImplementedError("pooling type = {}".format(op_type))
+    pool_type = onnx_op_type_to_ts_pool_type[op_type]
+
+    ts_node = ts.zoo.global_pooling2d(node_name, x=x, type=pool_type, format=ts.zoo.Name.NCHW)
+
+    return ts_node,
+
+
+def convert_sigmoid_layer(node, input_nodes, output_names):
+    # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} -> {} ]=-".format(node.op_type, [n.name for n in input_nodes], output_names))
+
+    attribute = node.attribute
+    attr_dict = {}
+    for attr in attribute:
+        attr_dict[str(attr.name)] = topy(attr)
+
+    assert len(input_nodes) == 1
+    assert len(output_names) == 1
+
+    node_name = output_names[0]
+
+    x = input_nodes[0]
+
+    ts_node = ts.zoo.sigmoid(node_name, x=x)
 
     return ts_node,
 
