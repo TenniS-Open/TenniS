@@ -21,5 +21,8 @@ def convert(input_module, output_file, input, verbose=False):
     torch.onnx.export(torch_model, dummy_input, output_file, verbose=verbose)
 
     print("============ Summary ============")
-    # print("Input file: {}".format(input_module))
+    if isinstance(input_module, str):
+        print("Input file: {}".format(input_module))
+    elif isinstance(input_module, torch.nn.Module):
+        print("Input file is memory module")
     print("Output file: {}".format(output_file))
