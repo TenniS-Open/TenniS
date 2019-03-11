@@ -28,8 +28,8 @@ namespace ts {
             TS_LOG_ERROR << "Can not reduce shape: " << to_string(_lhs_shape) << " vs. " << to_string(_rhs_shape) << eject;
         }
 
-        TS_AUTO_CHECK(!_lhs_shape.empty());
-        TS_AUTO_CHECK(!_rhs_shape.empty());
+        // TS_AUTO_CHECK(!_lhs_shape.empty());
+        // TS_AUTO_CHECK(!_rhs_shape.empty());
 
         auto lhs_shape = _lhs_shape;
         auto rhs_shape = _rhs_shape;

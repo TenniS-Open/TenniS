@@ -51,6 +51,8 @@ class Name(object):
         resize2d = "resize2d"
         copy = "_copy"
         prewhiten = "prewhiten"
+        cast = "_cast"
+        reshape_v2 = "_reshape_v2"
 
     dim = "dim"
     shuffle = "shuffle"
@@ -70,6 +72,7 @@ class Name(object):
     ksize = "ksize"
     device = "device"
     smooth = "smooth"
+    dtype = "dtype"
 
 
 class Default(object):
@@ -148,13 +151,25 @@ def transpose(name, x, pemute):
     return node
 
 
+def reshape_v2(name, x, shape):
+    assert isinstance(x, Node)
+
+    shape = to_node(shape, "shape", device=device.CPU)
+
+    node = menu.op(name=name, op_name=Name.Layer.reshape_v2, inputs=[x, shape])
+
+    return node
+
+
 def reshape(name, x, shape):
     assert isinstance(x, Node)
 
-    shape = to_const(shape, "shape")
-
-    node = menu.op(name=name, op_name=Name.Layer.reshape, inputs=[x, ])
-    node.set(Name.shape, shape, numpy.int32)
+    node = None
+    if isinstance(shape, Node):
+        node = menu.op(name=name, op_name=Name.Layer.reshape_v2, inputs=[x, shape])
+    else:
+        node = menu.op(name=name, op_name=Name.Layer.reshape, inputs=[x,])
+        node.set(Name.shape, shape, numpy.int32)
 
     return node
 
@@ -496,6 +511,17 @@ def copy(name, x):
 def prewhiten(name, x):
     assert isinstance(x, Node)
     node = menu.op(name=name, op_name=Name.Layer.prewhiten, inputs=[x, ])
+    return node
+
+
+def cast(name, x, dtype):
+    assert isinstance(x, Node)
+
+    dtype = to_const(dtype, "dtype")
+
+    node = menu.op(name=name, op_name=Name.Layer.cast, inputs=[x, ])
+    node.set(Name.dtype, dtype, numpy.int32)
+
     return node
 
 

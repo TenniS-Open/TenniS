@@ -13,6 +13,8 @@
 #include "utils/assert.h"
 #include "core/ieee754_float.h"
 
+#include "module/io/fstream.h"
+
 #include <cctype>
 
 namespace ts {
@@ -234,6 +236,18 @@ namespace ts {
                 __CASE_TYPE_SUPPORTED(CHAR32)
 #undef __CASE_TYPE_SUPPORTED
             }
+        }
+
+        Tensor load(const std::string &filename) {
+            FileStreamReader stream(filename);
+            if (!stream.is_open()) return Tensor();
+            return load(stream);
+        }
+
+        Tensor load(StreamReader &stream) {
+            Tensor tensor;
+            tensor.externalize(stream);
+            return std::move(tensor);
         }
     }
 

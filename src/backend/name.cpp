@@ -42,6 +42,12 @@ namespace ts {
             const string &resize2d() TS_NOEXCEPT { static string str = "_resize2d"; return str; }
             const string &mx_pooling2d_padding() TS_NOEXCEPT { static string str = "_mx_pooling2d_padding"; return str; }
             const string &nhwc_center_crop2d() TS_NOEXCEPT { static string str = "_nhwc_center_crop2d"; return str; }
+            const string &cast() TS_NOEXCEPT { static string str = "_cast"; return str; }
+            const string &onnx_pooling2d_padding() TS_NOEXCEPT { static string str = "_onnx_pooling2d_padding"; return str; }
+            const string &gather() TS_NOEXCEPT { static string str = "gather"; return str; }
+            const string &unsqueeze() TS_NOEXCEPT { static string str = "unsqueeze"; return str; }
+            const string &gemm() TS_NOEXCEPT { static string str = "gemm"; return str; }
+            const string &reshape_v2() TS_NOEXCEPT { static string str = "_reshape_v2"; return str; }
 
             const string &copy() TS_NOEXCEPT {
                 static string str = "_copy";
@@ -79,5 +85,17 @@ namespace ts {
         string prewhiten = "prewhiten";
         string dtype = "dtype";
         string output_shape = "output_shape";
+
+        string auto_pad = "auto_pad";
+        string axis = "axis";
+        string axes = "axes";
+        string NOTSET = "NOTSET";
+        string SAME_UPPER = "SAME_UPPER";
+        string SAME_LOWER = "SAME_LOWER";
+        string VALID = "VALID";
+        string alpha = "alpha";
+        string beta = "beta";
+        string transA = "transA";
+        string transB = "transB";
     }
 }

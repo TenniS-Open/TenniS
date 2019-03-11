@@ -145,6 +145,12 @@ namespace ts {
         template<typename T>
         const T &data(size_t i) const { return m_memory->data<T>()[i]; }
 
+        template<typename T>
+        T &data(int i) { return m_memory->data<T>()[i]; }
+
+        template<typename T>
+        const T &data(int i) const { return m_memory->data<T>()[i]; }
+
         Tensor clone() const;
 
         Tensor clone(MemoryController::shared controller) const;

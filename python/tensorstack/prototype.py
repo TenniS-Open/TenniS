@@ -15,8 +15,9 @@ class Prototype(object):
             self.__dtype = dtype
         else:
             self.__dtype = from_numpy(dtype=dtype)
-        if len(shape) == 0:
-            shape = (1, )
+        # len(shape = 0) means scalar
+        # if len(shape) == 0:
+        #     shape = (1, )
         self.__shape = shape
         self.__dtype_bytes = dtype_bytes(self.__dtype)
 

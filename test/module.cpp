@@ -153,9 +153,9 @@ int main()
 
     {
         // test graph
-        Module::Save("test.module.txt", m);
+        // Module::Save("test.module.txt", m);
 
-        m = Module::Load("test.module.txt");
+        m = Module::Load("/Users/seetadev/Documents/SDK/CLion/TensorStack/python/test/test.module.txt");
     }
 
     std::cout << "Input nodes:" << std::endl;
@@ -182,8 +182,8 @@ int main()
         return -1;
     }
 
-    Tensor input_a(FLOAT32, {10, 1024});
-    Tensor input_b(FLOAT32, {10, 1024});
+    Tensor input_a(FLOAT32, {});
+    Tensor input_b(FLOAT32, {});
 
     input_a.data<float>()[0] = 1;
     input_b.data<float>()[0] = 3;
@@ -206,6 +206,8 @@ int main()
     bench->profiler().log(std::cout);
 
     auto output_c = bench->output("c");
+
+    std::cout << "output shape: " << to_string(output_c.sizes()) << std::endl;
 
     std::cout << "output: " << output_c.data<float>()[0] << std::endl;
 }

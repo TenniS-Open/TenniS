@@ -26,7 +26,7 @@ namespace ts {
 
             auto shuffle_tensor = tensor::cast(INT32, get(name::shuffle));
 
-            TS_AUTO_CHECK(shuffle_tensor.has_shape({-1}));
+            TS_AUTO_CHECK(shuffle_tensor.dims() == 1);
             TS_AUTO_CHECK(shuffle_tensor.size(0) > 0);
 
             auto count = shuffle_tensor.count();

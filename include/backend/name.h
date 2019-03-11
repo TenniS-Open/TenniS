@@ -47,6 +47,14 @@ namespace ts {
             const string &mx_pooling2d_padding() TS_NOEXCEPT;
             const string &copy() TS_NOEXCEPT;
             const string &nhwc_center_crop2d() TS_NOEXCEPT;
+            const string &cast() TS_NOEXCEPT;
+
+            const string &onnx_pooling2d_padding() TS_NOEXCEPT;
+            const string &gather() TS_NOEXCEPT;
+            const string &unsqueeze() TS_NOEXCEPT;
+            const string &gemm() TS_NOEXCEPT;
+
+            const string &reshape_v2() TS_NOEXCEPT;
         }
 
         namespace typo {
@@ -80,6 +88,18 @@ namespace ts {
         extern string output_shape;
 
         extern string valid;
+
+        extern string auto_pad;
+        extern string axis;
+        extern string axes;
+        extern string NOTSET;
+        extern string SAME_UPPER;
+        extern string SAME_LOWER;
+        extern string VALID;
+        extern string alpha;
+        extern string beta;
+        extern string transA;
+        extern string transB;
     }
 
 }

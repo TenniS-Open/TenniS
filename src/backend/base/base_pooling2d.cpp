@@ -102,7 +102,7 @@ namespace ts {
 
             auto x_tensor = stack[0];
 
-            TS_AUTO_CHECK(x_tensor.has_shape({-1, -1, -1, -1}));
+            TS_AUTO_CHECK(x_tensor.dims() == 4);
 
             Size2D x;
             Size2D ksize;

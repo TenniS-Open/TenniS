@@ -13,5 +13,6 @@ from . import menu
 from . import device
 from . import zoo
 from . import frontend
+from . import dtype
 
 __version__ = "beta"

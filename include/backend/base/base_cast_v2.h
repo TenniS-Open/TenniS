@@ -22,7 +22,7 @@ namespace ts {
 
             int infer(Stack &stack, std::vector<Tensor::Prototype> &output) override;
 
-            virtual void cast(const Tensor &x, DTYPE dtype, Tensor &out) = 0;
+            virtual void cast(const Tensor &x, DTYPE dtype, Tensor &out);
 
         protected:
             void set_dtype(DTYPE dtype);
