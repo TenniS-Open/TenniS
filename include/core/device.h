@@ -25,6 +25,10 @@ namespace ts {
     static const char *CUDNN = "cudnn";
     static const char *CUBLAS = "cublas";
 
+    // This device and id may used in tensor view and sync, means do-not change the memory device
+    static const char *PORTAL = "portal";   //
+    static const int PORTAL_ID = -233;  // fake portal device
+
     /**
      * Device: Sepcific device
      */
@@ -75,6 +79,11 @@ namespace ts {
          * @return string
          */
         const std::string str() const { return m_type + ":" + std::to_string(m_id); }
+
+        static const self &portal() {
+            static self _portal(PORTAL, PORTAL_ID);
+            return _portal;
+        }
 
     private:
         DeviceType m_type = CPU;  ///< Hardware device @see Device
@@ -129,7 +138,13 @@ namespace ts {
 
         MemoryDevice() : supper() {}
 
+        static const self &portal() {
+            static self _portal(PORTAL, PORTAL_ID);
+            return _portal;
+        }
+
     };
+
     class ComputingDevice : public Device {
     public:
         using self = ComputingDevice;
@@ -140,6 +155,11 @@ namespace ts {
         ComputingDevice(const DeviceType &type) : supper(type) {}
 
         ComputingDevice() : supper() {}
+
+        static const self &portal() {
+            static self _portal(PORTAL, PORTAL_ID);
+            return _portal;
+        }
     };
 
 }
