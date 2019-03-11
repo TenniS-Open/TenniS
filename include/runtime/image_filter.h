@@ -31,6 +31,8 @@ namespace ts {
 
         void sub_mean(const std::vector<float> &mean);
 
+        void div_std(const std::vector<float> &std);
+
         void resize(int width, int height);
 
         void center_crop(int width, int height);

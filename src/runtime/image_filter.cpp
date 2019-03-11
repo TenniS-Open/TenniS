@@ -127,7 +127,21 @@ namespace ts {
         auto node = bubble::op(serial_name(), name::layer::sub(), {lhs, rhs});
         (void)(node);
         m_impl->m_compiled = false;
+    }
 
+    void ImageFilter::div_std(const std::vector<float> &std) {
+        auto std_tensor = tensor::build(FLOAT32, {1, 1, 1, int(std.size())}, std);
+        auto count = std_tensor.count();
+        auto std_data = std_tensor.data<float>();
+        for (int i = 0; i < count; ++i) {
+            std_data[i] = 1.0f / std_data[i];
+        }
+        ctx::bind<Graph> _bind_graph(m_impl->m_graph.get());
+        auto lhs = m_impl->m_graph->nodes().back();
+        auto rhs = bubble::data(serial_name(), std_tensor);
+        auto node = bubble::op(serial_name(), name::layer::mul(), {lhs, rhs});
+        (void)(node);
+        m_impl->m_compiled = false;
     }
 
     void ImageFilter::resize(int width, int height) {
@@ -186,5 +200,4 @@ namespace ts {
     const Graph &ImageFilter::graph() const {
         return *m_impl->m_graph;
     }
-
 }
