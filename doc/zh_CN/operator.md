@@ -557,6 +557,17 @@ This operator supports unidirectional broadcasting
 to tensor A * B); 
 ```
 
+### lrn (x..device) -> y..device = delete
+
+参数：
+- `dim` `Int` 要进行LRN的维度
+- `alpha` `Float` `Default(0.0001)`
+- `beta` `Float` `Default(0.75)`
+- `bias` `Float` `Default(1)`
+- `size` `Int` `Required`
+
+说明：  
+按照 `LRN` 的传统公式和做法
 
 ### _nhwc_resize2d(x..device) = delete
 
