@@ -491,6 +491,84 @@ void prewhiten(T *data, size_t len)
 }
 ```
 
+### _cast(x..device, ) -> y
+输入：`x`   
+
+参数：  
+- `dtype` `Int` 要转换成的类型
+
+### gather(x..device, indices..host) -> y
+
+参数：  
+- `axis` `Int` 要进行gather的维度。
+
+说明：  
+等价于`numpy.take(x, indices, axis=axis)`
+
+### unsqueeze(x..device) -> y
+
+参数：  
+- `axes` `IntArray` 要填充维度
+
+说明：  
+等价于`numpy.expend_dims(x, axis) for axis in axes`
+
+
+### _reshape_v2(x..device, shape..host) -> y.device
+描述：对输入的 Tensor 进行维度变换，输出转换后的数据  
+输入：`x` `Tensor` 要转换的数据  
+输入：`shape`: `IntArray` 输出的 `shape` 要和此参数一致，中间可以出现最多一个 `-1` 表示维度填充，保证输出的元素个数和输入的元素个数一致。  
+输出：`y` 转换后的数据  
+
+举例：  
+如果 `x.shape` 为 `[4, 2700]`，`shape` 为 `[-1, 300, 300, 3]`，
+输出 `y.shape` 为 `[4, 300, 300, 3]`。数据类型不变。
+
+说明：  
+此操作只影响 `Tensor` 的 `shape` 不会对内存布局产生影响。
+
+
+### gemm(a..device, b..device, c..device) -> Y..device
+描述：就是GEMM，嗯。  
+输入：`A` `Matrix`
+输入：`B` `Matrix`
+输入：`C` `Matrix` 或者可以广播的 `Tensor` 
+输入：`Y` `Matrix`
+
+参数：
+- `alpha` `Float`
+- `beta` `Float`
+- `transA` `Int` 布尔变量
+- `transB` `Int` 布尔变量
+
+说明：
+```
+A' = transpose(A) if transA else A
+B' = transpose(B) if transB else B
+Compute Y = alpha * A' * B' + beta * C,
+where input tensor A has shape (M, K) or (K, M),
+input tensor B has shape (K, N) or (N, K),
+input tensor C is broadcastable to shape (M, N),
+and output tensor Y has shape (M, N).
+A will be transposed before doing the computation
+if attribute transA is non-zero, same for B and transB.
+This operator supports unidirectional broadcasting
+(tensor C should be unidirectional broadcastable
+to tensor A * B); 
+```
+
+### lrn (x..device) -> y..device = delete
+
+参数：
+- `dim` `Int` 要进行LRN的维度
+- `alpha` `Float` `Default(0.0001)`
+- `beta` `Float` `Default(0.75)`
+- `bias` `Float` `Default(1)`
+- `size` `Int` `Required`
+
+说明：  
+按照 `LRN` 的传统公式和做法
+
 ### _nhwc_resize2d(x..device) = delete
 
 参数：  
@@ -515,11 +593,11 @@ void prewhiten(T *data, size_t len)
 
 参数：无
 
-### tf_conv2d_padding
+### tf_conv2d_padding = delete
 
-### tf_pooling2d_padding
+### tf_pooling2d_padding = delete
 
-### mx_conv2d_padding
+### mx_conv2d_padding = delete
 
 ### _mx_pooling2d_padding(x, ksize, stride) -> dynamic_padding
 描述：  
@@ -544,6 +622,40 @@ output_width = floor((input_width + 2 * m_pad_w - m_kernel_w) / (float)m_stride_
 ```
 output_height = ceil((input_height + 2 * m_pad_h - m_kernel_h) / (float)m_stride_h + 1);
 output_width = ceil((input_width + 2 * m_pad_w - m_kernel_w) / (float)m_stride_w + 1);
+```
+- `padding` `Int[4, 2]` 静态进行padding的数据
+在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+
+### _onnx_pooling2d_padding(x, ksize, stride) -> dynamic_padding
+描述：  
+- `x` `Tensor4D` 预计要进行 padding 的数据
+- `ksize` `Int[4]`
+在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+- `stride` `Int[4]`
+在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+- `dynamic_padding`  `Int[4, 2]`输出的padding形式，为4x2维
+
+参数：  
+- `auto_pad` `String` 为 `NOTSET`、`SAME_UPPER`、`SAME_LOWER`、`VALID`
+`NOTSET`表示计算为：
+```
+output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+* pad_shape[i] is sum of pads along axis i
+```
+`VALID`表示计算为：
+```
+output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
+```
+`SAME_UPPER`和`SAME_LOWER`表示计算为：
+```
+output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
+```
+动态padding大小为：
+```
+pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
 ```
 - `padding` `Int[4, 2]` 静态进行padding的数据
 在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,

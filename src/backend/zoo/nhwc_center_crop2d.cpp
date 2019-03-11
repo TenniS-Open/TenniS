@@ -46,7 +46,7 @@ namespace ts {
 
             auto x = *stack.index(0);
 
-            TS_AUTO_CHECK(x.has_shape({-1, -1, -1, -1}));
+            TS_AUTO_CHECK(x.dims() == 4);
 
             output.resize(1);
             output[0] = Tensor::Prototype(x.dtype(), {x.size(0), m_size.height, m_size.width, x.size(3)});
@@ -59,7 +59,7 @@ namespace ts {
 
             auto x = *stack.index(0);
 
-            TS_AUTO_CHECK(x.has_shape({-1, -1, -1, -1}));
+            TS_AUTO_CHECK(x.dims() == 4);
 
             auto x_size = Size2D(x.size(1), x.size(2));
 

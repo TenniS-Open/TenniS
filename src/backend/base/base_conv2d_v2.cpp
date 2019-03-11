@@ -131,8 +131,8 @@ namespace ts {
                 }
             }
 
-            TS_AUTO_CHECK(x_tensor.has_shape({-1, -1, -1, -1}));
-            TS_AUTO_CHECK(w_tensor.has_shape({-1, -1, -1, -1}));
+            TS_AUTO_CHECK(x_tensor.dims() == 4);
+            TS_AUTO_CHECK(w_tensor.dims() == 4);
 
             TS_AUTO_CHECK(x_tensor.dtype() == w_tensor.dtype());
 

@@ -19,6 +19,11 @@ namespace ts {
 
             void init() override;
 
+            /**
+             *
+             * @param stack input_shape, ksize, stride
+             * @return
+             */
             int run(Stack &stack) override;
 
             int infer(Stack &stack, std::vector<Tensor::Prototype> &output) override;

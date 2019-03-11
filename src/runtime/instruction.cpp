@@ -13,6 +13,8 @@
 #include "core/tensor_builder.h"
 #include "module/bubble.h"
 
+#include "board/hook.h"
+
 namespace ts {
 
     OperatorInstruction::OperatorInstruction(const Operator::shared &func, int nargs, int nresults)
@@ -38,10 +40,19 @@ namespace ts {
         stack.push_base(-m_nargs);
         ts::need pop_base(&Stack::pop_base, &stack);
 
+#ifdef TS_USE_HOOK
+        {
+            auto hook = ctx::get<Hook>();
+            if (hook) hook->emit_before_run({&stack, &*m_func});
+        };
+#endif
+
         // call function
         int return_size = 0;
         {
+#ifdef TS_USE_PROFILER
             auto _timer = profiler_run(this->m_func);
+#endif
             return_size = m_func->run(stack);
         }
 
@@ -52,6 +63,13 @@ namespace ts {
 
         // add base
         stack.erase(0, -m_nresults);
+
+#ifdef TS_USE_HOOK
+        {
+            auto hook = ctx::get<Hook>();
+            if (hook) hook->emit_after_run({&stack, &*m_func});
+        };
+#endif
     }
 
     OperatorInstruction::OperatorInstruction(const Operator::shared &func, int nargs, int nresults,

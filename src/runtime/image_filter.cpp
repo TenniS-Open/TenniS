@@ -25,6 +25,9 @@ namespace ts {
         bool m_compiled = false;
     };
 
+    ImageFilter::ImageFilter() : self(ComputingDevice(CPU)) {
+    }
+
     ImageFilter::ImageFilter(const ComputingDevice &device) {
         m_impl->m_computing_device = device;
         this->clear();
