@@ -585,9 +585,6 @@ def __whose_flatten_shape(shape):
     unsqueeze_x_number = shape.inputs[0]
     unsqueeze_neg_one = shape.inputs[1]
 
-    assert isinstance(unsqueeze_x_number, ts.Node)
-    assert isinstance(unsqueeze_neg_one, ts.Node)
-
     if unsqueeze_x_number.op != onnx_node.Name.Layer.unsqueeze:
         return None
 
@@ -602,9 +599,6 @@ def __whose_flatten_shape(shape):
 
     neg_one = unsqueeze_neg_one.inputs[0]
     x_number = unsqueeze_x_number.inputs[0]
-
-    assert isinstance(neg_one, ts.Node)
-    assert isinstance(x_number, ts.Node)
 
     if neg_one.op != ts.Node.Const:
         return None
@@ -625,8 +619,6 @@ def __whose_flatten_shape(shape):
         return None
 
     x = x_shape.inputs[0]
-
-    print x
 
     return x
 
