@@ -39,6 +39,20 @@ namespace ts {
 
     private:
         DeviceAdmin::function m_device_admin;
+
+    public:
+        DeviceContext(self &&other) {
+            *this = std::move(other);
+        }
+        DeviceContext &operator=(self &&other) TS_NOEXCEPT {
+#define MOVE_MEMBER(member) this->member = std::move(other.member)
+            MOVE_MEMBER(handle);
+            MOVE_MEMBER(computing_device);
+            MOVE_MEMBER(memory_device);
+            MOVE_MEMBER(m_device_admin);
+#undef MOVE_MEMBER
+            return *this;
+        }
     };
 }
 
