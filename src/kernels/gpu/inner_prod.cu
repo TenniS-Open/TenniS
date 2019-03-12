@@ -81,10 +81,9 @@ namespace ts {
 
         }
 
-#define TS_USE_CUBLAS
 #ifdef TS_USE_CUBLAS
         template<>
-        static void gpu_inner_prod_compute_run<float>(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
+        void gpu_inner_prod_compute_run<float>(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
             const Shape &lhs_shape = lhs.sizes();
             const Shape &rhs_shape = rhs.sizes();
 
