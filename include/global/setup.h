@@ -5,9 +5,10 @@
 #ifndef TENSORSTACK_GLOBAL_SETUP_H
 #define TENSORSTACK_GLOBAL_SETUP_H
 
+#include <utils/api.h>
 
 namespace ts {
-    void setup();
+    TS_DEBUG_API void setup();
 }
 
 

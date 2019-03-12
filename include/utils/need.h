@@ -7,9 +7,11 @@
 
 #include "void_bind.h"
 
+#include "api.h"
+
 namespace ts {
 
-    class need {
+    class TS_DEBUG_API need {
     public:
 
         template<typename FUNC>

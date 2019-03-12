@@ -14,7 +14,7 @@
 #include <stack>
 
 namespace ts {
-    class Iteration {
+    class  Iteration {
     public:
         using step_t = long;    ///< step type
         static const step_t outer = LONG_MAX;   ///< means step into outer area

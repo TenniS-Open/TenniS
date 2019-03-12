@@ -13,98 +13,98 @@ namespace ts {
         using string = std::string;
 
         namespace layer {
-            const string &field() TS_NOEXCEPT;
-            const string &pack() TS_NOEXCEPT;
-            const string &dimshuffle() TS_NOEXCEPT;
-            const string &transpose() TS_NOEXCEPT;
-            const string &reshape() TS_NOEXCEPT;
-            const string &conv2d() TS_NOEXCEPT;
-            const string &conv2d_v2() TS_NOEXCEPT;
-            const string &shape() TS_NOEXCEPT;
-            const string &pad() TS_NOEXCEPT;
-            const string &depthwise_conv2d() TS_NOEXCEPT;
-            const string &depthwise_conv2d_v2() TS_NOEXCEPT;
-            const string &add_bias() TS_NOEXCEPT;
-            const string &batch_norm() TS_NOEXCEPT;
-            const string &batch_scale() TS_NOEXCEPT;
-            const string &fused_batch_norm() TS_NOEXCEPT;
-            const string &add() TS_NOEXCEPT;
-            const string &sub() TS_NOEXCEPT;
-            const string &mul() TS_NOEXCEPT;
-            const string &div() TS_NOEXCEPT;
-            const string &inner_prod() TS_NOEXCEPT;
-            const string &relu() TS_NOEXCEPT;
-            const string &prelu() TS_NOEXCEPT;
-            const string &relu_max() TS_NOEXCEPT;
-            const string &sigmoid() TS_NOEXCEPT;
-            const string &softmax() TS_NOEXCEPT;
-            const string &concat() TS_NOEXCEPT;
-            const string &flatten() TS_NOEXCEPT;
-            const string &to_float() TS_NOEXCEPT;
-            const string &pooling2d() TS_NOEXCEPT;
-            const string &pooling2d_v2() TS_NOEXCEPT;
-            const string &resize2d() TS_NOEXCEPT;
-            const string &mx_pooling2d_padding() TS_NOEXCEPT;
-            const string &copy() TS_NOEXCEPT;
-            const string &nhwc_center_crop2d() TS_NOEXCEPT;
-            const string &cast() TS_NOEXCEPT;
+            TS_DEBUG_API const string &field() TS_NOEXCEPT;
+            TS_DEBUG_API const string &pack() TS_NOEXCEPT;
+            TS_DEBUG_API const string &dimshuffle() TS_NOEXCEPT;
+            TS_DEBUG_API const string &transpose() TS_NOEXCEPT;
+            TS_DEBUG_API const string &reshape() TS_NOEXCEPT;
+            TS_DEBUG_API const string &conv2d() TS_NOEXCEPT;
+            TS_DEBUG_API const string &conv2d_v2() TS_NOEXCEPT;
+            TS_DEBUG_API const string &shape() TS_NOEXCEPT;
+            TS_DEBUG_API const string &pad() TS_NOEXCEPT;
+            TS_DEBUG_API const string &depthwise_conv2d() TS_NOEXCEPT;
+            TS_DEBUG_API const string &depthwise_conv2d_v2() TS_NOEXCEPT;
+            TS_DEBUG_API const string &add_bias() TS_NOEXCEPT;
+            TS_DEBUG_API const string &batch_norm() TS_NOEXCEPT;
+            TS_DEBUG_API const string &batch_scale() TS_NOEXCEPT;
+            TS_DEBUG_API const string &fused_batch_norm() TS_NOEXCEPT;
+            TS_DEBUG_API const string &add() TS_NOEXCEPT;
+            TS_DEBUG_API const string &sub() TS_NOEXCEPT;
+            TS_DEBUG_API const string &mul() TS_NOEXCEPT;
+            TS_DEBUG_API const string &div() TS_NOEXCEPT;
+            TS_DEBUG_API const string &inner_prod() TS_NOEXCEPT;
+            TS_DEBUG_API const string &relu() TS_NOEXCEPT;
+            TS_DEBUG_API const string &prelu() TS_NOEXCEPT;
+            TS_DEBUG_API const string &relu_max() TS_NOEXCEPT;
+            TS_DEBUG_API const string &sigmoid() TS_NOEXCEPT;
+            TS_DEBUG_API const string &softmax() TS_NOEXCEPT;
+            TS_DEBUG_API const string &concat() TS_NOEXCEPT;
+            TS_DEBUG_API const string &flatten() TS_NOEXCEPT;
+            TS_DEBUG_API const string &to_float() TS_NOEXCEPT;
+            TS_DEBUG_API const string &pooling2d() TS_NOEXCEPT;
+            TS_DEBUG_API const string &pooling2d_v2() TS_NOEXCEPT;
+            TS_DEBUG_API const string &resize2d() TS_NOEXCEPT;
+            TS_DEBUG_API const string &mx_pooling2d_padding() TS_NOEXCEPT;
+            TS_DEBUG_API const string &copy() TS_NOEXCEPT;
+            TS_DEBUG_API const string &nhwc_center_crop2d() TS_NOEXCEPT;
+            TS_DEBUG_API const string &cast() TS_NOEXCEPT;
 
-            const string &onnx_pooling2d_padding() TS_NOEXCEPT;
-            const string &gather() TS_NOEXCEPT;
-            const string &unsqueeze() TS_NOEXCEPT;
-            const string &gemm() TS_NOEXCEPT;
+            TS_DEBUG_API const string &onnx_pooling2d_padding() TS_NOEXCEPT;
+            TS_DEBUG_API const string &gather() TS_NOEXCEPT;
+            TS_DEBUG_API const string &unsqueeze() TS_NOEXCEPT;
+            TS_DEBUG_API const string &gemm() TS_NOEXCEPT;
 
-            const string &reshape_v2() TS_NOEXCEPT;
+            TS_DEBUG_API const string &reshape_v2() TS_NOEXCEPT;
 
             // 2019-03-11
-            const string &global_pooling2d() TS_NOEXCEPT;
+            TS_DEBUG_API const string &global_pooling2d() TS_NOEXCEPT;
             // 2019-03-12
-            const string &limit() TS_NOEXCEPT;
+            TS_DEBUG_API const string &limit() TS_NOEXCEPT;
         }
 
         namespace typo {
-            extern string dialations;
+            TS_DEBUG_API extern string dialations;
         }
 
-        extern string NCHW;
-        extern string NHWC;
-        extern string dim;
-        extern string shuffle;
-        extern string value;
-        extern string permute;
-        extern string shape;
-        extern string format;
-        extern string padding;
-        extern string padding_value;
-        extern string stride;
-        extern string dilation;
-        extern string epsilon;
-        extern string max;
-        extern string slope;
-        extern string type;
-        extern string padding_type;
-        extern string ksize;
-        extern string device;
-        extern string offset;
-		extern string smooth;
-        extern string size;
-        extern string prewhiten;
-        extern string dtype;
-        extern string output_shape;
+        TS_DEBUG_API extern string NCHW;
+        TS_DEBUG_API extern string NHWC;
+        TS_DEBUG_API extern string dim;
+        TS_DEBUG_API extern string shuffle;
+        TS_DEBUG_API extern string value;
+        TS_DEBUG_API extern string permute;
+        TS_DEBUG_API extern string shape;
+        TS_DEBUG_API extern string format;
+        TS_DEBUG_API extern string padding;
+        TS_DEBUG_API extern string padding_value;
+        TS_DEBUG_API extern string stride;
+        TS_DEBUG_API extern string dilation;
+        TS_DEBUG_API extern string epsilon;
+        TS_DEBUG_API extern string max;
+        TS_DEBUG_API extern string slope;
+        TS_DEBUG_API extern string type;
+        TS_DEBUG_API extern string padding_type;
+        TS_DEBUG_API extern string ksize;
+        TS_DEBUG_API extern string device;
+        TS_DEBUG_API extern string offset;
+        TS_DEBUG_API extern string smooth;
+        TS_DEBUG_API extern string size;
+        TS_DEBUG_API extern string prewhiten;
+        TS_DEBUG_API extern string dtype;
+        TS_DEBUG_API extern string output_shape;
 
-        extern string valid;
+        TS_DEBUG_API extern string valid;
 
-        extern string auto_pad;
-        extern string axis;
-        extern string axes;
-        extern string NOTSET;
-        extern string SAME_UPPER;
-        extern string SAME_LOWER;
-        extern string VALID;
-        extern string alpha;
-        extern string beta;
-        extern string transA;
-        extern string transB;
+        TS_DEBUG_API extern string auto_pad;
+        TS_DEBUG_API extern string axis;
+        TS_DEBUG_API extern string axes;
+        TS_DEBUG_API extern string NOTSET;
+        TS_DEBUG_API extern string SAME_UPPER;
+        TS_DEBUG_API extern string SAME_LOWER;
+        TS_DEBUG_API extern string VALID;
+        TS_DEBUG_API extern string alpha;
+        TS_DEBUG_API extern string beta;
+        TS_DEBUG_API extern string transA;
+        TS_DEBUG_API extern string transB;
     }
 
 }

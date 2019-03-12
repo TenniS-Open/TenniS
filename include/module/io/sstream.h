@@ -10,7 +10,7 @@
 #include <sstream>
 
 namespace ts {
-    class StringStreamReader : public StreamReader {
+    class TS_DEBUG_API StringStreamReader : public StreamReader {
     public:
         using self = StringStreamReader;
         using supper = StreamReader;
@@ -41,7 +41,7 @@ namespace ts {
         std_stream m_stream;
     };
 
-    class StringStreamWriter : public StreamWriter {
+    class TS_DEBUG_API StringStreamWriter : public StreamWriter {
     public:
         using self = StringStreamWriter;
         using supper = StreamWriter;
@@ -72,7 +72,7 @@ namespace ts {
         std_stream m_stream;
     };
 
-    class StringStream : public Stream {
+    class TS_DEBUG_API StringStream : public Stream {
     public:
         using self = StringStream;
         using supper = Stream;

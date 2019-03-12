@@ -12,7 +12,7 @@
 #include "graph.h"
 
 namespace ts {
-    class Module {
+    class TS_DEBUG_API Module {
     public:
         using self = Module;    ///< self class
         using shared = std::shared_ptr<self>;  ///< smart pointer

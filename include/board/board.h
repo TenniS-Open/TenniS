@@ -14,9 +14,11 @@
 #include <string>
 #include <algorithm>
 
+#include <utils/api.h>
+
 namespace ts {
     template <typename T>
-    class Statistics {
+    class TS_DEBUG_API Statistics {
     public:
         using self = Statistics;
         using Datum = T;
@@ -75,7 +77,7 @@ namespace ts {
     };
 
     template <typename T>
-    class Board {
+    class TS_DEBUG_API Board {
     public:
         using self = Board;
         using Datum = typename Statistics<T>::Datum;

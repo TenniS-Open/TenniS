@@ -11,7 +11,7 @@
 #include "module/graph.h"
 
 namespace ts {
-    class ImageFilter {
+    class TS_DEBUG_API ImageFilter {
     public:
         using self = ImageFilter;
 

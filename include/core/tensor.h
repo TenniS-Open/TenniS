@@ -35,7 +35,7 @@ namespace ts {
 
     using TensorMemory = SyncMemory;
 
-    class Tensor : public Serializable {
+    class TS_DEBUG_API Tensor : public Serializable {
     public:
         class Prototype {
         public:

@@ -9,7 +9,7 @@
 #include <fstream>
 
 namespace ts {
-    class FileStreamReader : public StreamReader {
+    class TS_DEBUG_API FileStreamReader : public StreamReader {
     public:
         using self = FileStreamReader;
         using supper = StreamReader;
@@ -39,7 +39,7 @@ namespace ts {
         std_stream m_stream;
     };
 
-    class FileStreamWriter : public StreamWriter {
+    class TS_DEBUG_API FileStreamWriter : public StreamWriter {
     public:
         using self = FileStreamWriter;
         using supper = StreamWriter;
@@ -69,7 +69,7 @@ namespace ts {
         std_stream m_stream;
     };
 
-    class FileStream : public Stream {
+    class TS_DEBUG_API FileStream : public Stream {
     public:
         using self = FileStream;
         using supper = Stream;

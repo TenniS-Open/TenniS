@@ -14,7 +14,7 @@ namespace ts {
     /**
      * Hardware memory
      */
-    class HardMemory {
+    class TS_DEBUG_API HardMemory {
     public:
         using self = HardMemory;    ///< self class
         using shared = std::shared_ptr<self>;  ///< smart pointer

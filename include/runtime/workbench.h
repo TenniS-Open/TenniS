@@ -22,7 +22,7 @@
 #include "board/profiler.h"
 
 namespace ts {
-    class Workbench {
+    class TS_DEBUG_API Workbench {
     public:
         using self = Workbench;    ///< self class
         using shared = std::shared_ptr<self>;  ///< smart pointer

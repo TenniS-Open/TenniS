@@ -13,7 +13,7 @@ namespace ts {
 
     class Workbench;
 
-    class Instruction {
+    class TS_DEBUG_API Instruction {
     public:
         using self = Instruction;    ///< self class
         using shared = std::shared_ptr<self>;  ///< smart pointer
@@ -27,7 +27,7 @@ namespace ts {
         virtual std::string repr() const;
     };
 
-    class LambdaInstruction : public Instruction {
+    class TS_DEBUG_API LambdaInstruction : public Instruction {
     public:
         using self = LambdaInstruction;    ///< self class
         using shared = std::shared_ptr<self>;  ///< smart pointer
@@ -48,7 +48,7 @@ namespace ts {
         std::string m_description;
     };
 
-    class StackInstruction : public Instruction {
+    class TS_DEBUG_API StackInstruction : public Instruction {
     public:
         using self = StackInstruction;    ///< self class
         using shared = std::shared_ptr<self>;  ///< smart pointer
@@ -62,7 +62,7 @@ namespace ts {
     /**
      * \brief push data sagment to stack
      */
-    class DataSagmentInstruction : public Instruction {
+    class TS_DEBUG_API DataSagmentInstruction : public Instruction {
     public:
         using self = DataSagmentInstruction;    ///< self class
         using shared = std::shared_ptr<self>;  ///< smart pointer
@@ -80,7 +80,7 @@ namespace ts {
         int m_data_index;
     };
 
-    class OperatorInstruction : public Instruction {
+    class TS_DEBUG_API OperatorInstruction : public Instruction {
     public:
         using self = OperatorInstruction;    ///< self class
         using shared = std::shared_ptr<self>;  ///< smart pointer

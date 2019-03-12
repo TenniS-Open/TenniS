@@ -9,24 +9,25 @@
 #include <cstddef>
 #include <string>
 
+#include <utils/api.h>
 
 
 namespace ts {
-    class StreamReader {
+    class TS_DEBUG_API StreamReader {
     public:
         using self = StreamReader;
 
         virtual size_t read(void *buffer, size_t size) = 0;
     };
 
-    class StreamWriter {
+    class TS_DEBUG_API StreamWriter {
     public:
         using self = StreamWriter;
 
         virtual size_t write(const void *buffer, size_t size) = 0;
     };
 
-    class Stream : public StreamWriter, public StreamReader {
+    class TS_DEBUG_API Stream : public StreamWriter, public StreamReader {
     public:
         using self = Stream;
     };

@@ -7,11 +7,13 @@
 
 #include "memory.h"
 
+#include <utils/api.h>
+
 namespace ts {
     /**
      * MemoryController: Malloc memory and control them
      */
-    class MemoryController {
+    class TS_DEBUG_API MemoryController {
     public:
         using self = MemoryController;
         using shared = std::shared_ptr<self>;  ///< smart pointer
@@ -25,7 +27,7 @@ namespace ts {
         virtual Memory alloc(size_t size) = 0;
     };
 
-    class DynamicMemoryController : public MemoryController {
+    class TS_DEBUG_API DynamicMemoryController : public MemoryController {
     public:
         using self = DynamicMemoryController;
         using shared = std::shared_ptr<self>;  ///< smart pointer

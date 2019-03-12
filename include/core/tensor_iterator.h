@@ -8,8 +8,10 @@
 #include <vector>
 #include "utils/except.h"
 
+#include <utils/api.h>
+
 namespace ts {
-    class ShapeIterator {
+    class TS_DEBUG_API ShapeIterator {
     public:
         using self = ShapeIterator;
 
@@ -109,7 +111,7 @@ namespace ts {
         }
     };
 
-    class HypeShape {
+    class TS_DEBUG_API HypeShape {
     public:
         using self = HypeShape;
         using T = int;

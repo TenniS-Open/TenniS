@@ -7,9 +7,11 @@
 
 #include <memory>
 
+#include "api.h"
+
 namespace ts {
     template <typename T>
-    class Declare {
+    class TS_DEBUG_API Declare {
     public:
         using self = Declare;
 

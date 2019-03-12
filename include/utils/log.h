@@ -16,7 +16,7 @@
 
 namespace ts {
 
-    class EjectionException : public Exception {
+    class TS_DEBUG_API EjectionException : public Exception {
     public:
         EjectionException() : Exception() {}
         explicit EjectionException(const std::string &message) : Exception(message) {}
@@ -50,11 +50,11 @@ namespace ts {
         }
     }
 
-    LogLevel GlobalLogLevel(LogLevel level);
+    TS_DEBUG_API LogLevel GlobalLogLevel(LogLevel level);
 
-    LogLevel GlobalLogLevel();
+    TS_DEBUG_API LogLevel GlobalLogLevel();
 
-    class LogStream {
+    class TS_DEBUG_API LogStream {
     public:
         using self = LogStream;
 

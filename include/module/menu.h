@@ -16,7 +16,7 @@ namespace ts {
          * @return new Node belonging to context-Graph
          * @note Must call `ts::ctx::bind<Graph>` to bind context firstly
          */
-        Node param(const std::string &name);
+        TS_DEBUG_API Node param(const std::string &name);
 
         /**
          * get Parameter node
@@ -24,7 +24,7 @@ namespace ts {
          * @return new Node belonging to context-Graph
          * @note Must call `ts::ctx::bind<Graph>` to bind context firstly
          */
-        Node param(const std::string &name, const Shape &shape);
+        TS_DEBUG_API Node param(const std::string &name, const Shape &shape);
 
         /**
          * get Operator node
@@ -34,7 +34,7 @@ namespace ts {
          * @return new Node belonging to context-Graph
          * @note Must call `ts::ctx::bind<Graph>` to bind context firstly
          */
-        Node op(const std::string &name, const std::string &op_name, const std::vector<Node> &inputs, int output_count = 1);
+        TS_DEBUG_API Node op(const std::string &name, const std::string &op_name, const std::vector<Node> &inputs, int output_count = 1);
 
         /**
          * get Data node
@@ -43,7 +43,7 @@ namespace ts {
          * @return new Node belonging to context-Graph
          * @note Must call `ts::ctx::bind<Graph>` to bind context firstly
          */
-        Node data(const std::string &name, const Tensor &value);
+        TS_DEBUG_API Node data(const std::string &name, const Tensor &value);
 
         /**
          * get Data node
@@ -53,7 +53,7 @@ namespace ts {
          * @return new Node belonging to context-Graph
          * @note Must call `ts::ctx::bind<Graph>` to bind context firstly
          */
-        Node data(const std::string &name, const Tensor &value, const DeviceType &device);
+        TS_DEBUG_API Node data(const std::string &name, const Tensor &value, const DeviceType &device);
     }
 
     /**
@@ -64,28 +64,28 @@ namespace ts {
      * @return writen size
      * @note do not parse param `base` in this version
      */
-    size_t serialize_nodes(StreamWriter &stream, const std::vector<Node> &nodes, size_t base = 0);
+    TS_DEBUG_API size_t serialize_nodes(StreamWriter &stream, const std::vector<Node> &nodes, size_t base = 0);
 
     /**
      * you need call ctx::bind<Graph> first
      * @param stream reader
      * @return read size
      */
-    size_t externalize_nodes(StreamReader &stream);
+    TS_DEBUG_API size_t externalize_nodes(StreamReader &stream);
 
     /**
      * @param stream writer
      * @param graph ready write graph
      * @return writen size
      */
-    size_t serialize_graph(StreamWriter &stream, const Graph &graph);
+    TS_DEBUG_API size_t serialize_graph(StreamWriter &stream, const Graph &graph);
 
     /**
      * @param stream reader
      * @param graph ready read graph
      * @return read size
      */
-    size_t externalize_graph(StreamReader &stream, Graph &graph);
+    TS_DEBUG_API size_t externalize_graph(StreamReader &stream, Graph &graph);
 }
 
 
