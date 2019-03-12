@@ -9,7 +9,7 @@
 
 #include "device_launch_parameters.h"
 #include <cuda_runtime.h>
-#include <math_functions.hpp>
+#include <math_functions.h>
 
 
 namespace ts {
@@ -20,7 +20,7 @@ namespace ts {
             int index = blockDim.x * blockIdx.x + threadIdx.x;
             if (index < size) {
                 int dim = index % ( step * slice ) / (step);
-                data[index] = (data[index] - mean[dim]) / variance[dim];
+                data[index] = (data[index] - mean[dim]) * variance[dim];
             }
         }
 
