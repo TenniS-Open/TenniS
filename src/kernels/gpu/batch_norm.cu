@@ -9,7 +9,7 @@
 
 #include "device_launch_parameters.h"
 #include <cuda_runtime.h>
-#include <math_functions.hpp>
+#include <math_functions.h>
 
 
 namespace ts {
@@ -20,7 +20,7 @@ namespace ts {
             int index = blockDim.x * blockIdx.x + threadIdx.x;
             if (index < size) {
                 int dim = index % ( step * slice ) / (step);
-                data[index] = (data[index] - mean[dim]) / variance[dim];
+                data[index] = (data[index] - mean[dim]) * variance[dim];
             }
         }
 
@@ -45,22 +45,32 @@ namespace ts {
             T *pdst = out.data<T>();
 
             std::vector<T> vec(variance.count());
-            cudaMemcpy((void *)vec.data(), (void*)pvariance, vec.size() * sizeof(T), cudaMemcpyDeviceToHost);
+
+            memcpy((void*)vec.data(), MemoryDevice(CPU), vec.size() * sizeof(T),
+                   (void*)pvariance, variance.device(), vec.size() * sizeof(T));
+
 
             for (int i = 0; i < vec.size(); i++) {
                 vec[i] = T(1) / sqrt(vec[i] + T(epsilon));
             }
 
-            T * pvar = NULL;
-            cudaMalloc((void **)&pvar, vec.size() * sizeof(T));
-            cudaMemcpy((void *)pvar, (void *)vec.data(),  vec.size() * sizeof(T), cudaMemcpyHostToDevice);
+            T * pvar = nullptr;
+
+            Shape tmpshape;
+            tmpshape.resize(1);
+            tmpshape[0] = vec.size();
+            Tensor variance_tensor(variance.device(), variance.dtype(), tmpshape);
+            pvar = variance_tensor.data<T>();
+
+            memcpy((void*)pvar, variance.device(), vec.size() * sizeof(T),
+                   (void*)vec.data(), MemoryDevice(CPU), vec.size() * sizeof(T));
 
 
-            cudaMemcpy((void *)pdst, (void *)psrc, out.count() * sizeof(T), cudaMemcpyDeviceToDevice);
+            memcpy((void*)pdst, out.device(), out.count() * sizeof(T),
+                   (void*)psrc, x.device(), x.count() * sizeof(T));
 
             gpu_batch_norm_compute_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> (pdst, out.count(), backdims, shape[dim], pmean, pvar);
            
-            cudaFree(pvar); 
         }
 
 
