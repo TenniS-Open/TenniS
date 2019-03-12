@@ -54,6 +54,7 @@ class Name(object):
         cast = "_cast"
         reshape_v2 = "_reshape_v2"
         global_pooling2d = "global_pooling2d"
+        limit = "_limit"
 
     dim = "dim"
     shuffle = "shuffle"
@@ -532,6 +533,16 @@ def global_pooling2d(name, x, type=Type.pooling_type.max, format=Name.NCHW):
     node = menu.op(name=name, op_name=Name.Layer.global_pooling2d, inputs=[x])
     node.set(Name.format, format)
     node.set(Name.type, type, numpy.int32)
+
+    return node
+
+
+def limit(name, x, shape):
+    assert isinstance(x, Node)
+
+    shape = to_const(shape, "shape")
+    node = menu.op(name=name, op_name=Name.Layer.limit, inputs=[x, ])
+    node.set(Name.shape, shape, numpy.int32)
 
     return node
 

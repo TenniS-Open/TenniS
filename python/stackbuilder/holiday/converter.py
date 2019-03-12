@@ -191,6 +191,8 @@ def convert_memorydata_layer(layer, input_nodes, output_names):
 
     input = ts.zoo.to_float("_float_input", x=input)
 
+    input = ts.zoo.limit("_limit_input", input, shape=input_shape)
+
     scale = 1
     if param.HasField("scale"):
         scale = param.scale

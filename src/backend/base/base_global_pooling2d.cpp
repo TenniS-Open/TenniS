@@ -18,18 +18,6 @@ namespace ts {
             field(name::type, REQUIRED);
         }
 
-        static std::string to_string(const std::valarray<int> &arr) {
-            std::ostringstream out;
-            out << "[";
-            for (size_t i = 0; i < arr.size(); ++i) {
-                if (i) out << ", ";
-                out << arr[i];
-            }
-            out << "]";
-            return out.str();
-        }
-
-
         void GlobalPooling2D::init() {
             supper::init();
 
