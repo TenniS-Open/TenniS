@@ -76,9 +76,16 @@ class Name(object):
 
 
 def convert(input_file, output_file):
-    onnx_model = onnx.load(input_file)
-    onnx.checker.check_graph(onnx_model.graph)
+    onnx_model = None
+    if isinstance(input_file, onnx.ModelProto):
+        onnx_model = input_file
+    else:
+        onnx_model = onnx.load(input_file)
 
+    if onnx_model is None:
+        raise Exception("Can not load {}:{} to onnx model".format(type(input_file), input_file))
+
+    onnx.checker.check_graph(onnx_model.graph)
     onnx_model = optimizer.optimize(onnx_model, get_tensor_stack_passes())
 
     onnx_graph = onnx_model.graph
