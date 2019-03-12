@@ -92,6 +92,21 @@ namespace ts {
 
         std::vector<int> m_shape;
         std::vector<int> m_coordinate;
+
+    public:
+        ShapeIterator(const self &other) = default;
+        ShapeIterator &operator=(const self &other) = default;
+
+        ShapeIterator(self &&other) {
+            *this = std::move(other);
+        }
+        ShapeIterator &operator=(self &&other) TS_NOEXCEPT {
+#define MOVE_MEMBER(member) this->member = std::move(other.member)
+            MOVE_MEMBER(m_shape);
+            MOVE_MEMBER(m_coordinate);
+#undef MOVE_MEMBER
+            return *this;
+        }
     };
 
     class HypeShape {
@@ -190,6 +205,21 @@ namespace ts {
     private:
         std::vector<int> m_shape;
         std::vector<T> m_weights;
+
+    public:
+        HypeShape(const self &other) = default;
+        HypeShape &operator=(const self &other) = default;
+
+        HypeShape(self &&other) {
+            *this = std::move(other);
+        }
+        HypeShape &operator=(self &&other) TS_NOEXCEPT {
+#define MOVE_MEMBER(member) this->member = std::move(other.member)
+            MOVE_MEMBER(m_shape);
+            MOVE_MEMBER(m_weights);
+#undef MOVE_MEMBER
+            return *this;
+        }
     };
 }
 

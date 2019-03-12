@@ -13,6 +13,8 @@
 #include <ostream>
 #include <memory>
 
+#include <utils/assert.h>
+
 namespace ts {
     /**
      * DeviceType: hardware includeing CPU, GPU or other predictable device
@@ -88,6 +90,23 @@ namespace ts {
     private:
         DeviceType m_type = CPU;  ///< Hardware device @see Device
         int m_id = 0; ///< Device type's id, 0, 1, or ...
+
+    public:
+        Device(const self &other) = default;
+
+        Device &operator=(const self &other) = default;
+
+        Device(self &&other) {
+            *this = std::move(other);
+        }
+
+        Device &operator=(self &&other) {
+#define MOVE_MEMBER(member) this->member = std::move(other.member)
+            MOVE_MEMBER(m_type);
+            MOVE_MEMBER(m_id);
+#undef MOVE_MEMBER
+            return *this;
+        }
     };
 
     inline std::ostream &operator<<(std::ostream &out, const Device &device) {
@@ -114,6 +133,9 @@ namespace ts {
 
     class DeviceMismatchException : public Exception {
     public:
+        using self = DeviceMismatchException;
+        using supper = Exception;
+
         explicit DeviceMismatchException(const Device &needed, const Device &given);
 
         static std::string DeviceMismatchMessage(const Device &needed, const Device &given);
@@ -125,6 +147,23 @@ namespace ts {
     private:
         Device m_needed;
         Device m_given;
+
+    public:
+        DeviceMismatchException(const self &other) = default;
+
+        DeviceMismatchException &operator=(const self &other) = default;
+
+        DeviceMismatchException(self &&other) {
+            *this = std::move(other);
+        }
+
+        DeviceMismatchException &operator=(self &&other) TS_NOEXCEPT {
+#define MOVE_MEMBER(member) this->member = std::move(other.member)
+            MOVE_MEMBER(m_needed);
+            MOVE_MEMBER(m_given);
+#undef MOVE_MEMBER
+            return *this;
+        }
     };
 
     class MemoryDevice : public Device {
@@ -141,6 +180,19 @@ namespace ts {
         static const self &portal() {
             static self _portal(PORTAL, PORTAL_ID);
             return _portal;
+        }
+
+        MemoryDevice(const self &other) = default;
+
+        MemoryDevice &operator=(const self &other) = default;
+
+        MemoryDevice(self &&other) {
+            *this = std::move(other);
+        }
+
+        MemoryDevice &operator=(self &&other) {
+            supper::operator=(std::move(other));
+            return *this;
         }
 
     };
@@ -160,8 +212,20 @@ namespace ts {
             static self _portal(PORTAL, PORTAL_ID);
             return _portal;
         }
-    };
 
+        ComputingDevice(const self &other) = default;
+
+        ComputingDevice &operator=(const self &other) = default;
+
+        ComputingDevice(self &&other) {
+            *this = std::move(other);
+        }
+
+        ComputingDevice &operator=(self &&other) {
+            supper::operator=(std::move(other));
+            return *this;
+        }
+    };
 }
 
 namespace std {

@@ -97,7 +97,7 @@ namespace ts {
          * @param other other object
          */
         SyncMemory(self &&other) TS_NOEXCEPT {
-            this->swap(other);
+            *this = std::move(other);
         }
 
         /**
@@ -105,7 +105,9 @@ namespace ts {
          * @param other other object
          */
         SyncMemory &operator=(self &&other) TS_NOEXCEPT {
-            this->swap(other);
+#define MOVE_MEMBER(member) this->member = std::move(other.member)
+            MOVE_MEMBER(m_sync_memory);
+#undef MOVE_MEMBER
             return *this;
         }
 

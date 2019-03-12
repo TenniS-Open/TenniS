@@ -37,9 +37,11 @@ namespace ts {
             *this == std::move(other);
         }
 
-        Counter &operator==(self &&other) {
-            std::swap(this->object, other.object);
-            std::swap(this->use_count, other.use_count);
+        Counter &operator==(self &&other) TS_NOEXCEPT {
+#define MOVE_MEMBER(member) this->member = std::move(other.member)
+            MOVE_MEMBER(object);
+            MOVE_MEMBER(use_count);
+#undef MOVE_MEMBER
             return *this;
         }
 
