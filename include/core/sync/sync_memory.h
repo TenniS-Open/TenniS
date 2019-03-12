@@ -8,8 +8,10 @@
 #include <core/memory.h>
 #include "sync_block.h"
 
+#include <utils/api.h>
+
 namespace ts {
-    class SyncMemory {
+    class TS_DEBUG_API SyncMemory {
     public:
         using self = SyncMemory;
         using shared = std::shared_ptr<self>;

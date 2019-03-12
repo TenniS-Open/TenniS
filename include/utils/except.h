@@ -16,8 +16,10 @@
 #define TS_NOEXCEPT noexcept
 #endif
 
+#include "api.h"
+
 namespace ts {
-    class Exception : public std::exception {
+    class TS_DEBUG_API Exception : public std::exception {
     public:
         Exception();
         explicit Exception(const std::string &message);
@@ -28,7 +30,7 @@ namespace ts {
         std::string m_message;
     };
 
-    class NullPointerException : public Exception {
+    class TS_DEBUG_API NullPointerException : public Exception {
     public:
         NullPointerException() : Exception() {}
         explicit NullPointerException(const std::string &message) : Exception(message) {}

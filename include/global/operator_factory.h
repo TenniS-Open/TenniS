@@ -11,7 +11,7 @@
 
 namespace ts {
 
-    class OperatorCreator {
+    class TS_DEBUG_API OperatorCreator {
     public:
 
         using function =  std::function<Operator::shared(void)>;

@@ -15,7 +15,7 @@ namespace ts {
     /**
      * Memory, directly memory on specific device
      */
-    class Memory {
+    class TS_DEBUG_API Memory {
     public:
         using self = Memory;    ///< self class
         using shared = std::shared_ptr<self>;  ///< smart pointer
@@ -193,14 +193,14 @@ namespace ts {
      * @param src the src memory
      * @param size copy size
      */
-    void memcpy(Memory &dst, const Memory &src, size_t size);
+    TS_DEBUG_API void memcpy(Memory &dst, const Memory &src, size_t size);
 
     /**
      * copy memory in device or cross devices, copy src size
      * @param dst the dst memory
      * @param src the src memory
      */
-    void memcpy(Memory &dst, const Memory &src);
+    TS_DEBUG_API void memcpy(Memory &dst, const Memory &src);
 
     /**
      * copy memory in device or cross devices
@@ -212,7 +212,7 @@ namespace ts {
      * @param src_size the src memory size
      * @return really copy size
      */
-    size_t memcpy(void *dst_ptr, const Device &dst_device, size_t dst_size,
+    TS_DEBUG_API size_t memcpy(void *dst_ptr, const Device &dst_device, size_t dst_size,
                   const void *src_ptr, const Device &src_device, size_t src_size);
 
     /**
@@ -224,7 +224,7 @@ namespace ts {
      * @param src_device the src memory device
      * @param src_size the src memory size
      */
-    void memset(void *dst_ptr, const Device &dst_device, size_t dst_size,
+    TS_DEBUG_API void memset(void *dst_ptr, const Device &dst_device, size_t dst_size,
                 const void *src_ptr, const Device &src_device, size_t src_size);
 }
 

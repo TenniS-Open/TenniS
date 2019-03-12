@@ -13,7 +13,7 @@
 namespace ts {
     // TODO: add instruction factory, query instruction by name
     // Those instructions are cross computing and memory device operator
-    class InstructionCreator {
+    class TS_DEBUG_API InstructionCreator {
     public:
         using function = std::function<std::vector<Instruction::shared>(const Node &)>;
 

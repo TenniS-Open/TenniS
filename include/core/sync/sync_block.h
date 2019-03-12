@@ -12,9 +12,11 @@
 #include <utils/mutex.h>
 #include <utils/log.h>
 
+#include <utils/api.h>
+
 namespace ts {
     template <typename _KEY, typename _VALUE>
-    class SyncBlock {
+    class TS_DEBUG_API SyncBlock {
     public:
         using self = SyncBlock;
         using shared = std::shared_ptr<self>;

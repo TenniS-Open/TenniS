@@ -19,7 +19,7 @@
 
 namespace ts {
 
-    class Stack {
+    class TS_DEBUG_API Stack {
     public:
         using self = Stack;    ///< self class
         using shared = std::shared_ptr<self>;  ///< smart pointer

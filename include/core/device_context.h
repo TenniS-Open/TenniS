@@ -11,7 +11,7 @@
 
 namespace ts {
     class DeviceHandle;
-    class DeviceContext {
+    class TS_DEBUG_API DeviceContext {
     public:
         using self = DeviceContext;
         using shared = std::shared_ptr<self>;

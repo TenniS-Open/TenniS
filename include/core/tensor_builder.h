@@ -9,7 +9,7 @@
 
 namespace ts {
     template <typename T>
-    class tensor_builder
+    class TS_DEBUG_API tensor_builder
     {
     public:
         static Tensor build(const T &value) {
@@ -47,7 +47,7 @@ namespace ts {
     }
 
     namespace tensor {
-        Tensor from(const std::string &value);
+        TS_DEBUG_API Tensor from(const std::string &value);
 
         template<size_t _size>
         inline Tensor from(const char (&value)[_size]) { return from(std::string(value)); }
@@ -63,21 +63,21 @@ namespace ts {
         template <typename T>
         Tensor from(const std::vector<T> &value) { return tensor_builder<T>::build(value); }
 
-        int to_int(const Tensor &value);
+        TS_DEBUG_API int to_int(const Tensor &value);
 
-        unsigned int to_uint(const Tensor &value);
+        TS_DEBUG_API unsigned int to_uint(const Tensor &value);
 
-        float to_float(const Tensor &value);
+        TS_DEBUG_API float to_float(const Tensor &value);
 
-        double to_double(const Tensor &value);
+        TS_DEBUG_API double to_double(const Tensor &value);
 
-        std::string to_string(const Tensor &value);
+        TS_DEBUG_API std::string to_string(const Tensor &value);
 
-        bool to_bool(const Tensor &value);
+        TS_DEBUG_API bool to_bool(const Tensor &value);
 
-        Tensor cast(DTYPE dtype, const Tensor &value);
+        TS_DEBUG_API Tensor cast(DTYPE dtype, const Tensor &value);
 
-        Tensor clone(DTYPE dtype, const Tensor &value);
+        TS_DEBUG_API Tensor clone(DTYPE dtype, const Tensor &value);
 
         template<typename T>
         inline Tensor build(DTYPE dtype, T &value) {
@@ -116,11 +116,11 @@ namespace ts {
             return cast(dtype, tensor_builder<T>::build(data, count)).reshape(shape);
         }
 
-        bool support(DTYPE dtype);
+        TS_DEBUG_API bool support(DTYPE dtype);
 
-        Tensor load(StreamReader &stream);
+        TS_DEBUG_API Tensor load(StreamReader &stream);
 
-        Tensor load(const std::string &filename);
+        TS_DEBUG_API Tensor load(const std::string &filename);
     }
 }
 

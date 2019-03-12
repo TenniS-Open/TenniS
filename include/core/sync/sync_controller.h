@@ -13,8 +13,10 @@
 #include "sync_block.h"
 #include "sync_memory.h"
 
+#include <utils/api.h>
+
 namespace ts {
-    class SyncMemoryController {
+    class TS_DEBUG_API SyncMemoryController {
     public:
         using self = SyncMemoryController;
         using shared = std::shared_ptr<self>;  ///< smart pointer
@@ -38,7 +40,7 @@ namespace ts {
         virtual SyncMemory alloc(const MemoryDevice &device, size_t size) = 0;
     };
 
-    class SyncDeviceMemoryController : public SyncMemoryController {
+    class TS_DEBUG_API SyncDeviceMemoryController : public SyncMemoryController {
     public:
         using self = SyncDeviceMemoryController;
         using supper = SyncMemoryController;
@@ -58,7 +60,7 @@ namespace ts {
     };
 
     template <typename _MemoryController>
-    class HypeSyncMemoryController
+    class TS_DEBUG_API HypeSyncMemoryController
             : public SyncDeviceMemoryController,
             public std::enable_shared_from_this<HypeSyncMemoryController<_MemoryController>> {
     public:

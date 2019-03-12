@@ -5,8 +5,10 @@
 #ifndef TENSORSTACK_UTILS_RANDOM_H
 #define TENSORSTACK_UTILS_RANDOM_H
 
+#include "api.h"
+
 namespace ts {
-    class MT19937 {
+    class TS_DEBUG_API MT19937 {
     public:
         MT19937();
 
@@ -24,7 +26,7 @@ namespace ts {
         int m_seed;
     };
 
-    class Random {
+    class TS_DEBUG_API Random {
     public:
 
         Random();
@@ -65,7 +67,7 @@ namespace ts {
         MT19937 mt;
     };
 
-    extern Random random;
+    TS_DEBUG_API extern Random random;
 }
 
 

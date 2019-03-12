@@ -10,7 +10,7 @@
 #include "utils/implement.h"
 
 namespace ts {
-    class EncryptedFileStreamReader : public StreamReader {
+    class TS_DEBUG_API EncryptedFileStreamReader : public StreamReader {
     public:
         using self = EncryptedFileStreamReader;
         using supper = StreamReader;
@@ -43,7 +43,7 @@ namespace ts {
     };
 
 
-    class EncryptedFileStreamWriter : public StreamWriter {
+    class TS_DEBUG_API EncryptedFileStreamWriter : public StreamWriter {
     public:
         using self = EncryptedFileStreamWriter;
         using supper = StreamWriter;

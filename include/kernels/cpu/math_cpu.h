@@ -11,7 +11,7 @@
 namespace ts {
     namespace cpu {
         template <typename T>
-        class math {
+        class TS_DEBUG_API math {
         public:
             static void check(const Tensor &tensor) {
                 if (tensor.device().type() != CPU) throw DeviceMismatchException(Device(CPU), tensor.device());

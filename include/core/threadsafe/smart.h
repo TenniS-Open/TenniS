@@ -10,10 +10,12 @@
 
 #include <atomic>
 
+#include <utils/api.h>
+
 namespace ts {
 
     template <typename T>
-    class Counter {
+    class TS_DEBUG_API Counter {
     public:
         using self = Counter;
         using Object = T;
@@ -56,7 +58,7 @@ namespace ts {
 
     // This class can be copy in object
     template <typename T>
-    class Smart {
+    class TS_DEBUG_API Smart {
     public:
         using self = Smart;
         using Object = T;
@@ -165,7 +167,7 @@ namespace ts {
     };
 
     template <typename T, typename ...Args>
-    Smart<T> make_smart(Args &&...args) {
+    TS_DEBUG_API Smart<T> make_smart(Args &&...args) {
         return Smart<T>(new T(std::forward<Args>(args)...), SMART);
     }
 }

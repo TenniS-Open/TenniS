@@ -34,7 +34,7 @@ namespace ts {
     /**
      * Device: Sepcific device
      */
-    class Device {
+    class TS_DEBUG_API Device {
     public:
         using self = Device;    ///< self class
         using shared = std::shared_ptr<self>;  ///< smart pointer
@@ -119,19 +119,19 @@ namespace ts {
         return out << device.str();
     }
 
-    bool operator==(const Device &lhs, const Device &rhs);
+    TS_DEBUG_API bool operator==(const Device &lhs, const Device &rhs);
 
-    bool operator!=(const Device &lhs, const Device &rhs);
+    TS_DEBUG_API bool operator!=(const Device &lhs, const Device &rhs);
 
-    bool operator<(const Device &lhs, const Device &rhs);
+    TS_DEBUG_API bool operator<(const Device &lhs, const Device &rhs);
 
-    bool operator>(const Device &lhs, const Device &rhs);
+    TS_DEBUG_API bool operator>(const Device &lhs, const Device &rhs);
 
-    bool operator<=(const Device &lhs, const Device &rhs);
+    TS_DEBUG_API bool operator<=(const Device &lhs, const Device &rhs);
 
-    bool operator>=(const Device &lhs, const Device &rhs);
+    TS_DEBUG_API bool operator>=(const Device &lhs, const Device &rhs);
 
-    class DeviceMismatchException : public Exception {
+    class TS_DEBUG_API DeviceMismatchException : public Exception {
     public:
         using self = DeviceMismatchException;
         using supper = Exception;
@@ -166,7 +166,7 @@ namespace ts {
         }
     };
 
-    class MemoryDevice : public Device {
+    class TS_DEBUG_API MemoryDevice : public Device {
     public:
         using self = MemoryDevice;
         using supper = Device;
@@ -197,7 +197,7 @@ namespace ts {
 
     };
 
-    class ComputingDevice : public Device {
+    class TS_DEBUG_API ComputingDevice : public Device {
     public:
         using self = ComputingDevice;
         using supper = Device;
