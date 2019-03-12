@@ -26,7 +26,9 @@ namespace ts {
         T_OUT *pdst = out.data<T_OUT>();
 
         if(x.dtype() == out.dtype()) {
-            cudaMemcpy((void *)pdst, (void *)psrc, x.count() * sizeof(T_IN), cudaMemcpyDeviceToDevice);
+            memcpy((void*)pdst, out.device(), x.count() * sizeof(T_IN),
+                   (void*)psrc, x.device(), x.count() * sizeof(T_IN));
+
             return;
         }
 
