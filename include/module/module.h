@@ -52,6 +52,8 @@ namespace ts {
 
         static std::vector<std::pair<Node, int>> list_reference_nodes(const std::vector<Node> &nodes);
 
+        void set_param(const std::string &node_name, const std::string &param, const Tensor &value);
+
     private:
         /**
          * @param g reference Graph

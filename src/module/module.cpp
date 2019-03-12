@@ -325,4 +325,13 @@ namespace ts {
         TS_CHECK(stream.is_open()) << "Can not access: " << filename << eject;
         return Load(stream, format);
     }
+
+    void Module::set_param(const std::string &node_name, const std::string &param, const Tensor &value) {
+        for (auto &graph : m_graphs) {
+            for (auto &node : graph.nodes()) {
+                if (node->name() != node_name) continue;
+                node->set(param, value);
+            }
+        }
+    }
 }

@@ -97,6 +97,8 @@ namespace ts {
 
         shared clone() const;
 
+        Operator::shared op() const { return m_func; }
+
     private:
         Operator::shared m_func = nullptr;
         int m_nargs = 0;
