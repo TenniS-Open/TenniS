@@ -47,7 +47,9 @@ namespace ts {
             const T *pbias = bias.data<T>();
             T *pdst = out.data<T>();
 
-            cudaMemcpy((void *)pdst, (void *)psrc, out.count() * sizeof(T), cudaMemcpyDeviceToDevice);
+            memcpy((void*)pdst, out.device(), out.count() * sizeof(T),
+                   (void*)psrc, x.device(), out.count() * sizeof(T));
+
             gpu_batch_scale_compute_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> 
                                               (pdst, out.count(), backdims, shape[dim], pscale, pbias);
 

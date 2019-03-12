@@ -38,7 +38,9 @@ namespace ts {
         const T *pbias = b.data<T>();
         T *pdst = out.data<T>();
 
-        cudaMemcpy((void *)pdst, (void *)psrc, x.count() * sizeof(T), cudaMemcpyDeviceToDevice);
+        memcpy((void*)pdst, out.device(), x.count() * sizeof(T),
+               (void*)psrc, x.device(), x.count() * sizeof(T));
+
 
         add_bias_kernel<T> <<< CUDA_BLOCK(x.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> (pdst, x.count(), back_dims, shape[dim], pbias, b.count()); 
 
