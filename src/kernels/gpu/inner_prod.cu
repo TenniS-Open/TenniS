@@ -96,7 +96,7 @@ namespace ts {
             CublasDevice* handle = reinterpret_cast<CublasDevice*>(context.handle);
             auto cublas_handle = handle->get();
             const float alpha = 1.f;
-            const float beta = 1.f;
+            const float beta = 0.f;
             cublasSgemm(cublas_handle, CUBLAS_OP_N, CUBLAS_OP_N, rhs_shape[1], lhs_shape[0], lhs_shape[1], &alpha, pdot, rhs_shape[1], psrc, lhs_shape[1], &beta, pdst, rhs_shape[1]);
         }
 #endif
