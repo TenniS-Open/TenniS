@@ -58,6 +58,8 @@ namespace ts {
 
             // 2019-03-11
             const string &global_pooling2d() TS_NOEXCEPT;
+            // 2019-03-12
+            const string &limit() TS_NOEXCEPT;
         }
 
         namespace typo {
