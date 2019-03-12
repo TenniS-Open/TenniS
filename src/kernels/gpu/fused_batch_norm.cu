@@ -51,21 +51,28 @@ namespace ts {
             T *pdst = out.data<T>();
 
             std::vector<T> vec(variance.count());
-            cudaMemcpy((void *)vec.data(), (void*)pvariance, vec.size() * sizeof(T), cudaMemcpyDeviceToHost);
+            memcpy((void*)vec.data(), MemoryDevice(CPU), vec.size() * sizeof(T),
+                   (void*)pvariance, variance.device(), vec.size() * sizeof(T));
 
             for (int i = 0; i < vec.size(); i++) {
                 vec[i] = T(1) / sqrt(vec[i] + T(epsilon));
             }
 
-            T * pvar = NULL;
-            cudaMalloc((void **)&pvar, vec.size() * sizeof(T));
-            cudaMemcpy((void *)pvar, (void *)vec.data(),  vec.size() * sizeof(T), cudaMemcpyHostToDevice);
+            T * pvar = nullptr;
+            Shape tmpshape;
+            tmpshape.resize(1);
+            tmpshape[0] = vec.size();
+            Tensor variance_tensor(variance.device(), variance.dtype(), tmpshape);
+            pvar = variance_tensor.data<T>();
 
-            cudaMemcpy((void *)pdst, (void *)psrc, out.count() * sizeof(T), cudaMemcpyDeviceToDevice);
+            memcpy((void*)pvar, variance.device(), vec.size() * sizeof(T),
+                   (void*)vec.data(), MemoryDevice(CPU), vec.size() * sizeof(T));
+
+            memcpy((void*)pdst, out.device(), out.count() * sizeof(T),
+                   (void*)psrc, x.device(), x.count() * sizeof(T));
 
             gpu_fused_batch_norm_compute_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> (pdst, out.count(), backdims, shape[dim], pmean, pvar, pscale, pbias);
 
-            cudaFree(pvar);
         }
 
         void FusedBatchNorm::batch_norm(const Tensor &x, const Tensor &mean, const Tensor &variance,

@@ -115,28 +115,50 @@ namespace ts {
 
             auto ncount = out.count();
 
-            int *lhsshape = NULL;
-            cudaMalloc((void **)&lhsshape, lhs.sizes().size() * sizeof(int));
+            int *lhsshape = nullptr;
+            int *rhsshape = nullptr;
+            int *lhsweight = nullptr;
+            int *rhsweight = nullptr;
+            int *outweight = nullptr;
 
-            int *rhsshape = NULL;
-            cudaMalloc((void **)&rhsshape, rhs.sizes().size() * sizeof(int));
+            /////////////////////////////////////
+            Shape tmpshape;
+            tmpshape.resize(1);
+            tmpshape[0] = lhs.sizes().size();
+            Tensor lhs_tensor(out.device(), INT32, tmpshape);
+            lhsshape = lhs_tensor.data<int32_t>();
 
-            int *lhsweight = NULL;
-            cudaMalloc((void **)&lhsweight, lhs.sizes().size() * sizeof(int));
+            tmpshape[0] = rhs.sizes().size();
+            Tensor rhs_tensor(out.device(), INT32, tmpshape);
+            rhsshape = rhs_tensor.data<int32_t>();
 
-            int *rhsweight = NULL;
-            cudaMalloc((void **)&rhsweight, rhs.sizes().size() * sizeof(int));
+            tmpshape[0] = lhs.sizes().size();
+            Tensor lhs_weight_tensor(out.device(), INT32, tmpshape);
+            lhsweight = lhs_weight_tensor.data<int32_t>();
 
-            int *outweight = NULL;
-            cudaMalloc((void **)&outweight, out.sizes().size() * sizeof(int));
+            tmpshape[0] = rhs.sizes().size();
+            Tensor rhs_weight_tensor(out.device(), INT32, tmpshape);
+            rhsweight = rhs_weight_tensor.data<int32_t>();
+
+            tmpshape[0] = out.sizes().size();
+            Tensor out_weight_tensor(out.device(), INT32, tmpshape);
+            outweight = out_weight_tensor.data<int32_t>();
 
 
-            cudaMemcpy((void *)lhsshape, (void *)lhs.sizes().data(), lhs.sizes().size() * sizeof(int), cudaMemcpyHostToDevice);
-            cudaMemcpy((void *)rhsshape, (void *)rhs.sizes().data(), rhs.sizes().size() * sizeof(int), cudaMemcpyHostToDevice);
+            memcpy((void*)lhsshape, out.device(), lhs.sizes().size() * sizeof(int32_t),
+                   (void*)lhs.sizes().data(), MemoryDevice(CPU), lhs.sizes().size() * sizeof(int32_t));
 
-            cudaMemcpy((void *)lhsweight, (void *)lhs_hype.weight().data(), lhs_hype.weight().size() * sizeof(int), cudaMemcpyHostToDevice);
-            cudaMemcpy((void *)rhsweight, (void *)rhs_hype.weight().data(), rhs_hype.weight().size() * sizeof(int), cudaMemcpyHostToDevice);
-            cudaMemcpy((void *)outweight, (void *)out_hype.weight().data(), out_hype.weight().size() * sizeof(int), cudaMemcpyHostToDevice);
+            memcpy((void*)rhsshape, out.device(), rhs.sizes().size() * sizeof(int32_t),
+                   (void*)rhs.sizes().data(), MemoryDevice(CPU), rhs.sizes().size() * sizeof(int32_t));
+
+            memcpy((void*)lhsweight, out.device(), lhs_hype.weight().size() * sizeof(int32_t),
+                   (void*)lhs_hype.weight().data(), MemoryDevice(CPU), lhs_hype.weight().size() * sizeof(int32_t));
+
+            memcpy((void*)rhsweight, out.device(), rhs_hype.weight().size() * sizeof(int32_t),
+                   (void*)rhs_hype.weight().data(), MemoryDevice(CPU), rhs_hype.weight().size() * sizeof(int32_t));
+            memcpy((void*)outweight, out.device(), out_hype.weight().size() * sizeof(int32_t),
+                   (void*)out_hype.weight().data(), MemoryDevice(CPU), out_hype.weight().size() * sizeof(int32_t));
+            /////////////////////////////////////
 
             T maxvalue = std::numeric_limits<T>::max();
             T minvalue = std::numeric_limits<T>::lowest();
@@ -144,12 +166,6 @@ namespace ts {
             reduce_operator_kernel<T> <<< CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> (pout, ncount,
                         plhs, prhs, lhsshape, lhsweight, rhsshape, rhsweight, outweight, out.sizes().size(),maxvalue, minvalue);
 
-            cudaFree(lhsshape);
-            cudaFree(rhsshape);
-
-            cudaFree(lhsweight);
-            cudaFree(rhsweight);
-            cudaFree(outweight);
         }
 
 
@@ -161,7 +177,9 @@ namespace ts {
 
             T maxvalue = std::numeric_limits<T>::max();
             T minvalue = std::numeric_limits<T>::lowest();
-            cudaMemcpy((void *)pout, (void *)plhs, out.count() * sizeof(T), cudaMemcpyDeviceToDevice);
+            memcpy((void*)pout, out.device(), out.count() * sizeof(T),
+                   (void*)plhs, lhs.device(), out.count() * sizeof(T));
+
             reduce_operator_scalar_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> (pout, out.count(), prhs,maxvalue, minvalue);
 
         }
@@ -175,7 +193,10 @@ namespace ts {
 
             T maxvalue = std::numeric_limits<T>::max();
             T minvalue = std::numeric_limits<T>::lowest();
-            cudaMemcpy((void *)pout, (void *)plhs, out.count() * sizeof(T), cudaMemcpyDeviceToDevice);
+
+            memcpy((void*)pout, out.device(), out.count() * sizeof(T),
+                   (void*)plhs, lhs.device(), out.count() * sizeof(T));
+
             reduce_operator_same_shape_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> (pout, prhs, out.count(),maxvalue,minvalue);
 
         }
@@ -193,7 +214,8 @@ namespace ts {
 
             auto channels = out_shape[dim];
 
-            cudaMemcpy((void *)pout, (void *)plhs, out.count() * sizeof(T), cudaMemcpyDeviceToDevice);
+            memcpy((void*)pout, out.device(), out.count() * sizeof(T),
+                   (void*)plhs, lhs.device(), out.count() * sizeof(T));
 
             T maxvalue = std::numeric_limits<T>::max();
             T minvalue = std::numeric_limits<T>::lowest();
