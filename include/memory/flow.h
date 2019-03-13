@@ -18,9 +18,9 @@ namespace ts {
         /**
          * @param device the memory device
          */
-        explicit QueuedStackMemoryController(const MemoryDevice &device);
+        // explicit QueuedStackMemoryController(const MemoryDevice &device);
 
-        Memory alloc(size_t size) override;
+        // Memory alloc(size_t size) override;
     };
 
 
