@@ -348,13 +348,21 @@ class Net(object):
 
 
 def load_net(path, has_header=True):
-    # type: (str, bool) -> (Header, Net)
-    with open(path, 'rb') as fi:
-        header = None
-        if has_header:
-            header = Header().load(fi)
-        net = Net().load(fi)
-        return header, net
+    # type: (Union[str, file], bool) -> (Header, Net)
+    path = compatible_string(path)
+    if isinstance(path, str):
+        with open(path, 'rb') as fi:
+            return load_net_in_memory(fi, has_header=has_header)
+    return load_net_in_memory(path, has_header=has_header)
+
+
+def load_net_in_memory(stream, has_header=True):
+    # type: (Any, bool) -> (Header, Net)
+    header = None
+    if has_header:
+        header = Header().load(stream)
+    net = Net().load(stream)
+    return header, net
 
 
 def save_net(path, net, header=None):

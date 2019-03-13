@@ -51,7 +51,13 @@ def convert(input_file, output_file,
             output_blobs=None,
             has_header=False,
             export_all=False):
-    header, net = load_net(input_file, has_header)
+    # type:(Union[str, tuple], str, list, bool, bool) -> None
+    header = None
+    net = None
+    if isinstance(input_file, tuple) and len(input_file) == 2:
+        header, net = input_file[0], input_file[1]
+    else:
+        header, net = load_net(input_file, has_header)
 
     if output_blobs is None:
         output_blobs = []
