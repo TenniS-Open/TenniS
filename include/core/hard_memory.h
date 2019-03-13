@@ -14,7 +14,7 @@ namespace ts {
     /**
      * Hardware memory
      */
-    class HardMemory {
+    class TS_DEBUG_API HardMemory {
     public:
         using self = HardMemory;    ///< self class
         using shared = std::shared_ptr<self>;  ///< smart pointer
@@ -144,7 +144,7 @@ namespace ts {
         MemoryDevice m_device;                         ///< running device
         size_t m_capacity = 0;                   ///< memory capacity
         void *m_data = nullptr;                ///< memory start pointer
-        HardAllocator::function m_allocator = nullptr;    ///< memory allocator
+        HardAllocator::function m_allocator = nullptr;    ///< memory allocatorx
     };
 
     /**

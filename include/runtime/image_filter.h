@@ -11,7 +11,7 @@
 #include "module/graph.h"
 
 namespace ts {
-    class ImageFilter {
+    class TS_DEBUG_API ImageFilter {
     public:
         using self = ImageFilter;
 
@@ -30,6 +30,8 @@ namespace ts {
         void scale(float f);
 
         void sub_mean(const std::vector<float> &mean);
+
+        void div_std(const std::vector<float> &std);
 
         void resize(int width, int height);
 

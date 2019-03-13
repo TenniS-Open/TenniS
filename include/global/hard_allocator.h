@@ -15,7 +15,7 @@
 #include <iomanip>
 
 namespace ts {
-    class OutOfMemoryException : public Exception {
+    class TS_DEBUG_API OutOfMemoryException : public Exception {
     public:
         explicit OutOfMemoryException(const MemoryDevice &device, size_t failed_size)
                 : Exception(OutOfMemoryMessage(device, failed_size)), m_device(device), m_failed_size(failed_size) {
@@ -41,7 +41,7 @@ namespace ts {
         size_t m_failed_size;
     };
 
-    class HardAllocator {
+    class TS_DEBUG_API HardAllocator {
     public:
         /**
          * Memory allocator type, allocate memory from specific device

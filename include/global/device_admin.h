@@ -11,7 +11,7 @@
 
 namespace ts {
     class DeviceHandle;
-    class DeviceAdmin {
+    class TS_DEBUG_API DeviceAdmin {
     public:
 
         /**

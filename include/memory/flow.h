@@ -10,7 +10,7 @@
 
 
 namespace ts {
-    class QueuedStackMemoryController : public MemoryController {
+    class TS_DEBUG_API QueuedStackMemoryController : public MemoryController {
     public:
         using self = QueuedStackMemoryController;
         using shared = std::shared_ptr<self>;  ///< smart pointer
@@ -24,7 +24,7 @@ namespace ts {
     };
 
 
-    class VatMemoryController : public MemoryController {
+    class TS_DEBUG_API VatMemoryController : public MemoryController {
     public:
         using self = VatMemoryController;
         using shared = std::shared_ptr<self>;  ///< smart pointer
@@ -42,7 +42,7 @@ namespace ts {
     };
 
 
-    class StackMemoryController : public MemoryController {
+    class TS_DEBUG_API StackMemoryController : public MemoryController {
     public:
         using self = VatMemoryController;
         using shared = std::shared_ptr<self>;  ///< smart pointer

@@ -13,6 +13,8 @@
 #include <ostream>
 #include <memory>
 
+#include <utils/assert.h>
+
 namespace ts {
     /**
      * DeviceType: hardware includeing CPU, GPU or other predictable device
@@ -25,10 +27,14 @@ namespace ts {
     static const char *CUDNN = "cudnn";
     static const char *CUBLAS = "cublas";
 
+    // This device and id may used in tensor view and sync, means do-not change the memory device
+    static const char *PORTAL = "portal";   //
+    static const int PORTAL_ID = -233;  // fake portal device
+
     /**
      * Device: Sepcific device
      */
-    class Device {
+    class TS_DEBUG_API Device {
     public:
         using self = Device;    ///< self class
         using shared = std::shared_ptr<self>;  ///< smart pointer
@@ -76,9 +82,31 @@ namespace ts {
          */
         const std::string str() const { return m_type + ":" + std::to_string(m_id); }
 
+        static const self &portal() {
+            static self _portal(PORTAL, PORTAL_ID);
+            return _portal;
+        }
+
     private:
         DeviceType m_type = CPU;  ///< Hardware device @see Device
         int m_id = 0; ///< Device type's id, 0, 1, or ...
+
+    public:
+        Device(const self &other) = default;
+
+        Device &operator=(const self &other) = default;
+
+        Device(self &&other) {
+            *this = std::move(other);
+        }
+
+        Device &operator=(self &&other) {
+#define MOVE_MEMBER(member) this->member = std::move(other.member)
+            MOVE_MEMBER(m_type);
+            MOVE_MEMBER(m_id);
+#undef MOVE_MEMBER
+            return *this;
+        }
     };
 
     inline std::ostream &operator<<(std::ostream &out, const Device &device) {
@@ -91,20 +119,23 @@ namespace ts {
         return out << device.str();
     }
 
-    bool operator==(const Device &lhs, const Device &rhs);
+    TS_DEBUG_API bool operator==(const Device &lhs, const Device &rhs);
 
-    bool operator!=(const Device &lhs, const Device &rhs);
+    TS_DEBUG_API bool operator!=(const Device &lhs, const Device &rhs);
 
-    bool operator<(const Device &lhs, const Device &rhs);
+    TS_DEBUG_API bool operator<(const Device &lhs, const Device &rhs);
 
-    bool operator>(const Device &lhs, const Device &rhs);
+    TS_DEBUG_API bool operator>(const Device &lhs, const Device &rhs);
 
-    bool operator<=(const Device &lhs, const Device &rhs);
+    TS_DEBUG_API bool operator<=(const Device &lhs, const Device &rhs);
 
-    bool operator>=(const Device &lhs, const Device &rhs);
+    TS_DEBUG_API bool operator>=(const Device &lhs, const Device &rhs);
 
-    class DeviceMismatchException : public Exception {
+    class TS_DEBUG_API DeviceMismatchException : public Exception {
     public:
+        using self = DeviceMismatchException;
+        using supper = Exception;
+
         explicit DeviceMismatchException(const Device &needed, const Device &given);
 
         static std::string DeviceMismatchMessage(const Device &needed, const Device &given);
@@ -116,9 +147,26 @@ namespace ts {
     private:
         Device m_needed;
         Device m_given;
+
+    public:
+        DeviceMismatchException(const self &other) = default;
+
+        DeviceMismatchException &operator=(const self &other) = default;
+
+        DeviceMismatchException(self &&other) {
+            *this = std::move(other);
+        }
+
+        DeviceMismatchException &operator=(self &&other) TS_NOEXCEPT {
+#define MOVE_MEMBER(member) this->member = std::move(other.member)
+            MOVE_MEMBER(m_needed);
+            MOVE_MEMBER(m_given);
+#undef MOVE_MEMBER
+            return *this;
+        }
     };
 
-    class MemoryDevice : public Device {
+    class TS_DEBUG_API MemoryDevice : public Device {
     public:
         using self = MemoryDevice;
         using supper = Device;
@@ -129,8 +177,27 @@ namespace ts {
 
         MemoryDevice() : supper() {}
 
+        static const self &portal() {
+            static self _portal(PORTAL, PORTAL_ID);
+            return _portal;
+        }
+
+        MemoryDevice(const self &other) = default;
+
+        MemoryDevice &operator=(const self &other) = default;
+
+        MemoryDevice(self &&other) {
+            *this = std::move(other);
+        }
+
+        MemoryDevice &operator=(self &&other) {
+            supper::operator=(std::move(other));
+            return *this;
+        }
+
     };
-    class ComputingDevice : public Device {
+
+    class TS_DEBUG_API ComputingDevice : public Device {
     public:
         using self = ComputingDevice;
         using supper = Device;
@@ -140,8 +207,25 @@ namespace ts {
         ComputingDevice(const DeviceType &type) : supper(type) {}
 
         ComputingDevice() : supper() {}
-    };
 
+        static const self &portal() {
+            static self _portal(PORTAL, PORTAL_ID);
+            return _portal;
+        }
+
+        ComputingDevice(const self &other) = default;
+
+        ComputingDevice &operator=(const self &other) = default;
+
+        ComputingDevice(self &&other) {
+            *this = std::move(other);
+        }
+
+        ComputingDevice &operator=(self &&other) {
+            supper::operator=(std::move(other));
+            return *this;
+        }
+    };
 }
 
 namespace std {

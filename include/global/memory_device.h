@@ -10,7 +10,7 @@
 #include "core/device.h"
 
 namespace ts {
-    class NoMemoryDeviceException : public Exception {
+    class TS_DEBUG_API NoMemoryDeviceException : public Exception {
     public:
         explicit NoMemoryDeviceException(const DeviceType &device_type)
                 : Exception(NoMemoryDeviceMessage(device_type)), m_no_memory_device_type(device_type) {
@@ -31,7 +31,7 @@ namespace ts {
         DeviceType m_no_memory_device_type;
     };
 
-    class ComputingMemory {
+    class TS_DEBUG_API ComputingMemory {
     public:
         /**
          * Query memory device of compute device

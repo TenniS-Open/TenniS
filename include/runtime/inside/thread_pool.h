@@ -14,8 +14,10 @@
 #include <deque>
 #include <memory>
 
+#include <utils/api.h>
+
 namespace ts {
-    class Thread {
+    class TS_DEBUG_API Thread {
     public:
         using self = Thread;
         using shared = std::shared_ptr<self>;
@@ -62,7 +64,7 @@ namespace ts {
     /**
  * @brief The ThreadPool class the thread pool
  */
-    class ThreadPool {
+    class TS_DEBUG_API ThreadPool {
     public:
         using self = ThreadPool;
         using shared = std::shared_ptr<self>;

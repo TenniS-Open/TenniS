@@ -12,7 +12,7 @@
 #include "graph.h"
 
 namespace ts {
-    class Module {
+    class TS_DEBUG_API Module {
     public:
         using self = Module;    ///< self class
         using shared = std::shared_ptr<self>;  ///< smart pointer
@@ -51,6 +51,8 @@ namespace ts {
         static void Save(const std::string &filename, Module::shared module, SerializationFormat format = BINARY);
 
         static std::vector<std::pair<Node, int>> list_reference_nodes(const std::vector<Node> &nodes);
+
+        void set_param(const std::string &node_name, const std::string &param, const Tensor &value);
 
     private:
         /**

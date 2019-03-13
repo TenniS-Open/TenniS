@@ -14,7 +14,7 @@
 #define TS_MODULE_CODE_V1 0x19910929
 
 namespace ts {
-    class Header : public Serializable {
+    class TS_DEBUG_API Header : public Serializable {
     public:
         using data_type = std::array<char, 120>;
 

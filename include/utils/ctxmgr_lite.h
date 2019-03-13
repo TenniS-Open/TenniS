@@ -16,8 +16,10 @@
 #    define TS_LITE_THREAD_LOCAL thread_local
 #endif
 
+#include "api.h"
+
 namespace ts {
-    class NoLiteContextException : public Exception {
+    class TS_DEBUG_API NoLiteContextException : public Exception {
     public:
         NoLiteContextException()
                 : NoLiteContextException(std::this_thread::get_id()) {
@@ -38,7 +40,7 @@ namespace ts {
     };
 
     template<typename T>
-    class __thread_local_lite_context {
+    class TS_DEBUG_API __thread_local_lite_context {
     public:
         using self = __thread_local_lite_context;
 
@@ -57,7 +59,7 @@ namespace ts {
     };
 
     template<typename T>
-    class __lite_context {
+    class TS_DEBUG_API __lite_context {
     public:
         using self = __lite_context;
         using context = void *;
@@ -88,7 +90,7 @@ namespace ts {
     namespace ctx {
         namespace lite {
             template<typename T>
-            class bind {
+            class TS_DEBUG_API bind {
             public:
                 using self = bind;
 

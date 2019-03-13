@@ -8,8 +8,10 @@
 #include <vector>
 #include "utils/except.h"
 
+#include <utils/api.h>
+
 namespace ts {
-    class ShapeIterator {
+    class TS_DEBUG_API ShapeIterator {
     public:
         using self = ShapeIterator;
 
@@ -92,9 +94,24 @@ namespace ts {
 
         std::vector<int> m_shape;
         std::vector<int> m_coordinate;
+
+    public:
+        ShapeIterator(const self &other) = default;
+        ShapeIterator &operator=(const self &other) = default;
+
+        ShapeIterator(self &&other) {
+            *this = std::move(other);
+        }
+        ShapeIterator &operator=(self &&other) TS_NOEXCEPT {
+#define MOVE_MEMBER(member) this->member = std::move(other.member)
+            MOVE_MEMBER(m_shape);
+            MOVE_MEMBER(m_coordinate);
+#undef MOVE_MEMBER
+            return *this;
+        }
     };
 
-    class HypeShape {
+    class TS_DEBUG_API HypeShape {
     public:
         using self = HypeShape;
         using T = int;
@@ -190,6 +207,21 @@ namespace ts {
     private:
         std::vector<int> m_shape;
         std::vector<T> m_weights;
+
+    public:
+        HypeShape(const self &other) = default;
+        HypeShape &operator=(const self &other) = default;
+
+        HypeShape(self &&other) {
+            *this = std::move(other);
+        }
+        HypeShape &operator=(self &&other) TS_NOEXCEPT {
+#define MOVE_MEMBER(member) this->member = std::move(other.member)
+            MOVE_MEMBER(m_shape);
+            MOVE_MEMBER(m_weights);
+#undef MOVE_MEMBER
+            return *this;
+        }
     };
 }
 

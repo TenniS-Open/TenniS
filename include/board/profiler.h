@@ -13,8 +13,10 @@
 
 #include "board.h"
 
+#include <utils/api.h>
+
 namespace ts {
-    class Later {
+    class TS_DEBUG_API Later {
     public:
         using self = Later;
 
@@ -51,7 +53,7 @@ namespace ts {
         std::function<void(void)> m_later;
     };
 
-    class Profiler {
+    class TS_DEBUG_API Profiler {
     public:
         void clean() {
             this->m_serial.clear();
@@ -76,21 +78,21 @@ namespace ts {
         std::unordered_map<std::string, int32_t> m_serial;
     };
 
-    bool profiler_on();
+    TS_DEBUG_API bool profiler_on();
     /**
      *
      * @param name
      * @return
      * @note name must include format string of integer, such as "%04d".
      */
-    Later profiler_serial_timer(const std::string &name);
+    TS_DEBUG_API Later profiler_serial_timer(const std::string &name);
 
     /**
      *
      * @param name
      * @return just write name
      */
-    Later profiler_timer(const std::string &name);
+    TS_DEBUG_API Later profiler_timer(const std::string &name);
 }
 
 

@@ -9,7 +9,7 @@
 
 namespace ts {
     namespace instruction {
-        class Stack {
+        class TS_DEBUG_API Stack {
         public:
             // [-0, +1, -]
             static Instruction::shared push(int i);

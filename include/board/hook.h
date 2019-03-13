@@ -8,11 +8,13 @@
 #include <functional>
 #include "utils/ctxmgr_lite.h"
 
+#include <utils/api.h>
+
 namespace ts {
     class Stack;
     class Operator;
 
-    class Hook {
+    class TS_DEBUG_API Hook {
     public:
         using self = Hook;
         struct StructAfterRun {

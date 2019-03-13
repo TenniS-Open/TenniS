@@ -12,7 +12,7 @@ namespace ts {
      * Interface of serialize and externalize
      * @note Please call ctx::bind<MemoryController> before externalize
      */
-    class Serializable {
+    class TS_DEBUG_API Serializable {
     public:
         using self = Serializable;
 
@@ -37,7 +37,7 @@ namespace ts {
      * Interface of serialize and externalize
      * @note Please call ctx::bind<MemoryController> before externalize
      */
-    class SerializableText {
+    class TS_DEBUG_API SerializableText {
     public:
         using self = SerializableText;
 

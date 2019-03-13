@@ -569,6 +569,26 @@ to tensor A * B);
 说明：  
 按照 `LRN` 的传统公式和做法
 
+### global_pooling2d(x)
+描述：进行全局下采样
+
+参数：
+- `format` `String` 为 `NCHW` 或者 `NHWC`
+- `type` `Enum[max=0, avg=1]` 
+
+说明：  
+输出大小固定为1x1。
+
+### _limit(x..device) -> y..device
+描述：对blob大小进行限制，如果输入大于这个大小，则进行center_crop，
+否则保持原有大小。
+
+参数：  
+- `shape`: `IntArray` 输出限制，维度要小于x的维度。-1表示不进行限制。
+
+说明：  
+假如shape小于x的大小，则在shape高位补充-1，直到维度相同，再进行调整。
+
 ### _nhwc_resize2d(x..device) = delete
 
 参数：  

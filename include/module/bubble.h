@@ -11,7 +11,7 @@
 #include "core/tensor.h"
 
 namespace ts {
-    class Bubble : public Serializable {
+    class TS_DEBUG_API Bubble : public Serializable {
     public:
         using self = Bubble;
 

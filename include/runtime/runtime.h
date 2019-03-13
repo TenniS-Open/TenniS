@@ -10,7 +10,7 @@
 
 namespace ts {
 
-    class RuntimeContext {
+    class TS_DEBUG_API RuntimeContext {
     public:
         using self = RuntimeContext;
 
