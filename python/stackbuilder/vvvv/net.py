@@ -268,8 +268,14 @@ class Net(object):
         next_indent = indent + "    "
         lines = []
 
-        param_shape = ", ".join([str(param.shape) for param in self.params])
-        lines.append("{}{} attr:{} param:[{}]".format(indent, self.__type, self.hyper_params, param_shape))
+        attr_part = ""
+        if len(self.hyper_params) > 0:
+            attr_part = ", attr: {}".format(self.hyper_params)
+        param_part = ""
+        if len(self.params) > 0:
+            param_shape = ", ".join([str(param.shape) for param in self.params])
+            param_part = ", param: [{}]".format(param_shape)
+        lines.append("{}{}{}{}".format(indent, self.__type, attr_part, param_part))
         for net in self.__nets:
             assert isinstance(net, Net)
             lines.append("{}".format(net.to_string(next_indent)))
