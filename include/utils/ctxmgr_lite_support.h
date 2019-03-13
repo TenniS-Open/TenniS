@@ -9,6 +9,26 @@
 
 namespace ts {
 
+    // move from header to source
+    template<typename T>
+    class __thread_local_lite_context {
+    public:
+        using self = __thread_local_lite_context;
+
+        using context = void *;
+
+        static context swap(context ctx);
+
+        static void set(context ctx);
+
+        static const context get();
+
+        static const context try_get();
+
+    private:
+        static TS_LITE_THREAD_LOCAL context m_ctx;
+    };
+
     template<typename T>
     TS_LITE_THREAD_LOCAL
     typename __thread_local_lite_context<T>::context
