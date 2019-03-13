@@ -71,7 +71,7 @@ class Net(object):
     """
     Call construction, then set_hyper_params, setup, set_params, bind(create node), <set input and output plug>, link
     """
-    def __init__(self, type=None):
+    def __init__(self, name=None):
         # type: (str) -> None
         self.__net_count = None
         self.__input_count = None
@@ -85,9 +85,11 @@ class Net(object):
         self.__hyper_params = {}
         self.__plugs = []
 
-        self.__type = type
-        if self.__type is None:
-            self.__type = self.__class__.__name__
+        self.__type = self.__class__.__name__
+
+        if name is None:
+            name = ""
+        self.__name = name
 
     def set_hyper_params(self, hyper_params):
         self.__hyper_params = hyper_params
@@ -116,8 +118,8 @@ class Net(object):
         self.__inputs = [None for _ in range(input_count)]
         self.__outputs = [None for _ in range(output_count)]
 
-    def load(self, stream):
-        # type: (file) -> None
+    def load(self, stream, scope=None):
+        # type: (file, scope) -> None
         # load every params, the name layer has already parse
         self.__hyper_params = HyperParam.Load(stream=stream)
 
@@ -128,9 +130,11 @@ class Net(object):
         for _ in range(self.param_count):
             self.__params.append(Blob.Load(stream=stream))
 
+        net_type_count = {}
+
         self.__nets = []
-        for _ in range(self.net_count):
-            self.__nets.append(self.Load(stream))
+        for i in range(self.net_count):
+            self.__nets.append(self.Load(stream, scope=scope, net_type_count=net_type_count))
 
         self.__plugs = []
 
@@ -153,15 +157,36 @@ class Net(object):
         self.__plugs.append(plug_list)
 
     @classmethod
-    def Load(cls, stream, inputs=None):
-        # type: (Any) -> Net
+    def Load(cls, stream, inputs=None, **kwargs):
+        # type: (Any, list, str) -> Net
         net_type = param.read_param(stream, param.String)[0]
+
+        scope = None
+        if "scope" in kwargs:
+            scope = kwargs["scope"]
+
+        net_type_count = {}
+        if "net_type_count" in kwargs:
+            net_type_count = kwargs["net_type_count"]
 
         if net_type not in cls.NetCreatorMap:
             raise NotImplementedError("\"{}\"".format(net_type))
 
-        net = cls.NetCreatorMap[net_type]()
-        net.load(stream=stream)
+        net_name_head = net_type if scope is None else "/".join((scope, net_type))
+        net_name = net_name_head
+
+        if net_type in net_type_count:
+            count = net_type_count[net_type]
+            net_name = "{}_{}".format(net_name_head, str(count))
+            net_type_count[net_type] += 1
+        else:
+            net_name = net_name_head
+            net_type_count[net_type] = 1
+
+        next_scope = net_type if scope is None else "/".join((scope, net_name))
+
+        net = cls.NetCreatorMap[net_type](name=net_name)
+        net.load(stream=stream, scope=next_scope)
 
         if inputs != None:
             if len(inputs) != len(net.__inputs):
@@ -257,10 +282,18 @@ class Net(object):
     def __repr__(self):
         return self.__str__()
 
+    @property
+    def type(self):
+        return self.__type
+
+    @property
+    def name(self):
+        return self.__name
+
 
 class CommonNet(Net):
-    def __init__(self):
-        super(CommonNet, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(CommonNet, self).__init__(*args, **kwargs)
 
     def setup(self):
         self._init(
@@ -295,15 +328,15 @@ class CommonNet(Net):
                     net.inputs[j] = self.inputs[blob_i]
                 else:
                     net_i_output_i = self.nets[net_i].outputs[blob_i]
-                    if net_i_output_i is None or not linked[i]:
+                    if net_i_output_i is None or not linked[net_i]:
                         link_sub_net(net_i)
+                        linked[net_i] = True
                     net_i_output_i = self.nets[net_i].outputs[blob_i]
                     assert net_i_output_i is not None
                     net.inputs[j] = net_i_output_i
-                for input in net.inputs:
-                    assert isinstance(input, ts.Node)
-                net.link()
-                linked[i] = True
+            for input in net.inputs:
+                assert isinstance(input, ts.Node)
+            net.link()
 
         output_plug = self.plugs[self.net_count]
         for j in range(self.output_count):
@@ -326,170 +359,248 @@ GlobalNetCreatorMap["Common"] = CommonNet
 
 
 class ConvNet(Net):
-    def __init__(self):
-        super(ConvNet, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(ConvNet, self).__init__(*args, **kwargs)
 
     def setup(self):
         self._init(net_count=0, input_count=1, output_count=1, param_count=1)
 
     def bind(self):
-        self.outputs[0] = ts.Node(op="fake", name=self.__class__.__name__, output_count=1)
+        stride = self.hyper_params["stride"]
+        weight = self.params[0]
 
+        dummpy_input = ts.Node(op="dummy", name="_of_" + self.name)
+
+        self.outputs[0] = ts.zoo.conv2d(name=self.name, x=dummpy_input, w=weight,
+                                        stride=[1, 1, stride, stride])
     def link(self):
-        ts.Node.Link(self.outputs[0], self.inputs)
+        # repleace dummpy input
+        self.outputs[0].inputs[0] = self.inputs[0]
 
 
 GlobalNetCreatorMap["Conv"] = ConvNet
 
 
 class BiasAdderNet(Net):
-    def __init__(self):
-        super(BiasAdderNet, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(BiasAdderNet, self).__init__(*args, **kwargs)
 
     def setup(self):
         self._init(net_count=0, input_count=1, output_count=1, param_count=1)
 
     def bind(self):
-        self.outputs[0] = ts.Node(op="fake", name=self.__class__.__name__, output_count=1)
+        bias = self.params[0]
+        bias = bias.reshape(-1)
+
+        dummpy_input = ts.Node(op="dummy", name="_of_" + self.name)
+
+        self.outputs[0] = ts.zoo.add_bias(name=self.name, x=dummpy_input, b=bias)
 
     def link(self):
-        ts.Node.Link(self.outputs[0], self.inputs)
+        self.outputs[0].inputs[0] = self.inputs[0]
 
 
 GlobalNetCreatorMap["BiasAdder"] = BiasAdderNet
 
 
 class BnNet(Net):
-    def __init__(self):
-        super(BnNet, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(BnNet, self).__init__(*args, **kwargs)
 
     def setup(self):
         self._init(net_count=0, input_count=1, output_count=1, param_count=3)
 
     def bind(self):
-        self.outputs[0] = ts.Node(op="fake", name=self.__class__.__name__, output_count=1)
+        epsilon = self.hyper_params["epsilon"]
+        mean = self.params[0]
+        var = self.params[1]
+        scale = self.params[2]
+
+        mean = mean.reshape(-1)
+        var = var.reshape(-1)
+        scale = scale.reshape(-1)[0]
+
+        if scale > 0:
+            scale = 1.0 / scale
+        elif scale < 0:
+            scale = 1.0
+
+        if epsilon < 1e-5:
+            epsilon = 1e-5
+
+        mean = mean * scale
+        var = mean * scale
+
+        dummpy_input = ts.Node(op="dummy", name="_of_" + self.name)
+
+        self.outputs[0] = ts.zoo.batch_norm(name=self.name, x=dummpy_input, mean=mean, variance=var, dim=1, epsilon=epsilon)
 
     def link(self):
-        ts.Node.Link(self.outputs[0], self.inputs)
+        self.outputs[0].inputs[0] = self.inputs[0]
 
 
 GlobalNetCreatorMap["Bn"] = BnNet
 
 
 class ScaleNet(Net):
-    def __init__(self):
-        super(ScaleNet, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(ScaleNet, self).__init__(*args, **kwargs)
 
     def setup(self):
         self._init(net_count=0, input_count=1, output_count=1, param_count=2)
 
     def bind(self):
-        self.outputs[0] = ts.Node(op="fake", name=self.__class__.__name__, output_count=1)
+        alpha = self.params[0]
+        beta = self.params[1]
+
+        alpha = alpha.reshape(-1)
+        beta = beta.reshape(-1)
+
+        dummpy_input = ts.Node(op="dummy", name="_of_" + self.name)
+
+        self.outputs[0] = ts.zoo.batch_scale(name=self.name, x=dummpy_input, scale=alpha, bias=beta, dim=1)
 
     def link(self):
-        ts.Node.Link(self.outputs[0], self.inputs)
+        self.outputs[0].inputs[0] = self.inputs[0]
 
 
 GlobalNetCreatorMap["Scale"] = ScaleNet
 
 
 class ReLUNet(Net):
-    def __init__(self):
-        super(ReLUNet, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(ReLUNet, self).__init__(*args, **kwargs)
 
     def setup(self):
         self._init(net_count=0, input_count=1, output_count=1, param_count=0)
 
     def bind(self):
-        self.outputs[0] = ts.Node(op="fake", name=self.__class__.__name__, output_count=1)
+        dummpy_input = ts.Node(op="dummy", name="_of_" + self.name)
+        self.outputs[0] = ts.zoo.relu(name=self.name, x=dummpy_input)
 
     def link(self):
-        ts.Node.Link(self.outputs[0], self.inputs)
+        self.outputs[0].inputs[0] = self.inputs[0]
 
 
 GlobalNetCreatorMap["ReLU"] = ReLUNet
 
 
 class MaxPoolingNet(Net):
-    def __init__(self):
-        super(MaxPoolingNet, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(MaxPoolingNet, self).__init__(*args, **kwargs)
 
     def setup(self):
         self._init(net_count=0, input_count=1, output_count=1, param_count=0)
 
     def bind(self):
-        self.outputs[0] = ts.Node(op="fake", name=self.__class__.__name__, output_count=1)
+        kernel_size = self.hyper_params["kernel_size"]
+        stride = self.hyper_params["stride"]
+
+        dummpy_input = ts.Node(op="dummy", name="_of_" + self.name)
+        self.outputs[0] = ts.zoo.pooling2d(name=self.name, x=dummpy_input,
+                                           ksize=[1, 1, kernel_size, kernel_size],
+                                           stride=[1, 1, stride, stride])
 
     def link(self):
-        ts.Node.Link(self.outputs[0], self.inputs)
+        self.outputs[0].inputs[0] = self.inputs[0]
 
 
 GlobalNetCreatorMap["MaxPooling"] = MaxPoolingNet
 
 
 class PadNet(Net):
-    def __init__(self):
-        super(PadNet, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(PadNet, self).__init__(*args, **kwargs)
 
     def setup(self):
         self._init(net_count=0, input_count=1, output_count=1, param_count=0)
 
     def bind(self):
-        self.outputs[0] = ts.Node(op="fake", name=self.__class__.__name__, output_count=1)
+        pad = self.hyper_params["pad"]
+
+        dummpy_input = ts.Node(op="dummy", name="_of_" + self.name)
+        self.outputs[0] = ts.zoo.pad(name=self.name, x=dummpy_input, padding=[[0, 0], [0, 0], [pad, pad], [pad, pad]])
 
     def link(self):
-        ts.Node.Link(self.outputs[0], self.inputs)
+        self.outputs[0].inputs[0] = self.inputs[0]
 
 
 GlobalNetCreatorMap["Pad"] = PadNet
 
 
 class EltwiseOPNet(Net):
-    def __init__(self):
-        super(EltwiseOPNet, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(EltwiseOPNet, self).__init__(*args, **kwargs)
 
     def setup(self):
-        self._init(net_count=0, input_count=1, output_count=1, param_count=0)
+        self._init(net_count=0, input_count=2, output_count=1, param_count=0)
 
     def bind(self):
-        self.outputs[0] = ts.Node(op="fake", name=self.__class__.__name__, output_count=1)
+        eltwise_op = self.hyper_params["eltwise_op"]
+        assert eltwise_op == "SUM"
+
+        dummpy_lhs = ts.Node(op="dummy", name="_of_0_" + self.name)
+        dummpy_rhs = ts.Node(op="dummy", name="_of_1_" + self.name)
+        self.outputs[0] = ts.zoo.add(name=self.name, lhs=dummpy_lhs, rhs=dummpy_rhs)
 
     def link(self):
-        ts.Node.Link(self.outputs[0], self.inputs)
+        self.outputs[0].inputs[0] = self.inputs[0]
+        self.outputs[0].inputs[1] = self.inputs[1]
 
 
 GlobalNetCreatorMap["EltwiseOP"] = EltwiseOPNet
 
 
 class InnerProductNet(Net):
-    def __init__(self):
-        super(InnerProductNet, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(InnerProductNet, self).__init__(*args, **kwargs)
+
+        self.__raw_input = None
+        self.__raw_output = None
 
     def setup(self):
         self._init(net_count=0, input_count=1, output_count=1, param_count=1)
 
     def bind(self):
-        self.outputs[0] = ts.Node(op="fake", name=self.__class__.__name__, output_count=1)
+        weight_t = self.params[0]
+        weight = weight_t.reshape((weight_t.shape[0], weight_t.shape[1])).T
+
+        dummpy_input = ts.Node(op="dummy", name="_of_" + self.name)
+        self.__raw_input = ts.zoo.flatten(name=self.name + "_flatten_", x=dummpy_input)
+        inner_prod = ts.zoo.inner_prod(name=self.name + "_gemm_", lhs=self.__raw_input, rhs=weight)
+        self.__raw_output = ts.zoo.reshape(name=self.name, x=inner_prod, shape=(-1, weight.shape[1], 1, 1))
+
+        self.outputs[0] = self.__raw_output
 
     def link(self):
-        ts.Node.Link(self.outputs[0], self.inputs)
+        self.__raw_input.inputs[0] = self.inputs[0]
 
 
 GlobalNetCreatorMap["InnerProduct"] = InnerProductNet
 
 
 class ShapeIndexPatchNet(Net):
-    def __init__(self):
-        super(ShapeIndexPatchNet, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(ShapeIndexPatchNet, self).__init__(*args, **kwargs)
 
     def setup(self):
         self._init(net_count=0, input_count=2, output_count=1, param_count=0)
 
     def bind(self):
-        self.outputs[0] = ts.Node(op="fake", name=self.__class__.__name__, output_count=1)
+        origin_patch_h = self.hyper_params["origin_patch_h"]
+        origin_patch_w = self.hyper_params["origin_patch_w"]
+        origin_h = self.hyper_params["origin_h"]
+        origin_w = self.hyper_params["origin_w"]
+
+        dummpy_feat = ts.Node(op="dummy", name="_of_0_" + self.name)
+        dummpy_pos = ts.Node(op="dummy", name="_of_1_" + self.name)
+        self.outputs[0] = ts.frontend.vvvv.shape_index_patch(self.name, feat=dummpy_feat, pos=dummpy_pos,
+                                                             origin_patch=[origin_patch_h, origin_patch_w],
+                                                             origin=[origin_h, origin_w])
 
     def link(self):
-        ts.Node.Link(self.outputs[0], self.inputs)
+        self.outputs[0].inputs[0] = self.inputs[0]
+        self.outputs[0].inputs[1] = self.inputs[1]
 
 
 GlobalNetCreatorMap["ShapeIndexPatch"] = ShapeIndexPatchNet
