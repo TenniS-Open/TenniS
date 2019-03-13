@@ -35,10 +35,12 @@ namespace ts {
 
     using TensorMemory = SyncMemory;
 
-    class Tensor : public Serializable {
+    class TS_DEBUG_API Tensor : public Serializable {
     public:
         class Prototype {
         public:
+            using self = Prototype;
+
             Prototype() {}
 
             Prototype(const Shape &sizes) : m_sizes(sizes) {}
@@ -69,6 +71,21 @@ namespace ts {
             DTYPE m_dtype = VOID;
             std::vector<int> m_sizes = {};  ///< ?in reversed mode?
             // std::string m_layout; ///< NCHW or NHWC
+
+        public:
+            Prototype(const self &other) = default;
+            Prototype &operator=(const self &other) = default;
+
+            Prototype(self &&other) {
+                *this = std::move(other);
+            }
+            Prototype &operator=(self &&other) TS_NOEXCEPT {
+#define MOVE_MEMBER(member) this->member = std::move(other.member)
+                MOVE_MEMBER(m_dtype);
+                MOVE_MEMBER(m_sizes);
+#undef MOVE_MEMBER
+                return *this;
+            }
         };
 
         using self = Tensor;    ///< self class

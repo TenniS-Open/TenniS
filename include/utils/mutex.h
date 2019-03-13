@@ -8,9 +8,11 @@
 #include <mutex>
 #include <condition_variable>
 
+#include "api.h"
+
 namespace ts
 {
-    class rwmutex
+    class TS_DEBUG_API rwmutex
     {
     public:
         rwmutex() = default;
@@ -70,7 +72,7 @@ namespace ts
     };
 
     template <typename _RWLockable>
-    class unique_write_lock
+    class TS_DEBUG_API unique_write_lock
     {
     public:
         explicit unique_write_lock(_RWLockable& rw_lockable)
@@ -102,7 +104,7 @@ namespace ts
     };
 
     template <typename _RWLockable>
-    class unique_read_lock
+    class TS_DEBUG_API unique_read_lock
     {
     public:
         explicit unique_read_lock(_RWLockable& rw_lockable)

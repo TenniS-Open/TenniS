@@ -37,4 +37,10 @@
 #   define TS_UNUSED(x) ((void)(x))
 #endif
 
+#ifdef TS_USE_DEBUG_API
+#define TS_DEBUG_API TS_API
+#else
+#define TS_DEBUG_API
+#endif
+
 #endif //TENSORSTACK_UTILS_API_H

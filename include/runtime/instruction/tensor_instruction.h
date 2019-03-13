@@ -9,7 +9,7 @@
 
 namespace ts {
     namespace instruction {
-        class Tensor {
+        class TS_DEBUG_API Tensor {
         public:
             // [-size, +1, e]
             static Instruction::shared pack(size_t size);

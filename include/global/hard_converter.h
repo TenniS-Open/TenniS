@@ -11,7 +11,7 @@
 #include <functional>
 
 namespace ts {
-    class HardConverter {
+    class TS_DEBUG_API HardConverter {
     public:
         /**
          * HardConverter, convert memory between devices

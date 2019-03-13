@@ -77,11 +77,16 @@ namespace ts {
     }
 
 	HardMemory::HardMemory(self &&other) TS_NOEXCEPT{
-        this->swap(other);
+        *this = std::move(other);
     }
 
     HardMemory &HardMemory::operator=(self &&other) TS_NOEXCEPT {
-        this->swap(other);
+#define MOVE_MEMBER(member) this->member = std::move(other.member)
+        MOVE_MEMBER(m_device);
+        MOVE_MEMBER(m_capacity);
+        MOVE_MEMBER(m_data);
+        MOVE_MEMBER(m_allocator);
+#undef MOVE_MEMBER
         return *this;
     }
 }

@@ -13,7 +13,7 @@
 namespace ts {
     class Stack;
 
-    class Operator {
+    class TS_DEBUG_API Operator {
     public:
         using self = Operator;    ///< self class
         using shared = std::shared_ptr<self>;  ///< smart pointer
@@ -119,7 +119,7 @@ namespace ts {
      * @return the number of return values
      * @note all input argument would be pop after running
      */
-    int RunOperator(Operator::shared op, Stack &stack, int nargs);
+    TS_DEBUG_API int RunOperator(Operator::shared op, Stack &stack, int nargs);
 
     /**
      * Infer operator directly
@@ -129,7 +129,7 @@ namespace ts {
      * @return the number of return values
      * @note all input argument would be pop after running
      */
-    int InferOperator(Operator::shared op, Stack &stack, int nargs, std::vector<Tensor::Prototype> &output);
+    TS_DEBUG_API int InferOperator(Operator::shared op, Stack &stack, int nargs, std::vector<Tensor::Prototype> &output);
 }
 
 

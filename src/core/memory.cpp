@@ -52,11 +52,16 @@ namespace ts {
     }
 
     Memory::Memory(Memory::self &&other) TS_NOEXCEPT {
-        this->swap(other);
+        *this = std::move(other);
     }
 
     Memory &Memory::operator=(Memory::self &&other) TS_NOEXCEPT {
-        this->swap(other);
+#define MOVE_MEMBER(member) this->member = std::move(other.member)
+        MOVE_MEMBER(m_hard);
+        MOVE_MEMBER(m_size);
+        MOVE_MEMBER(m_shift);
+        MOVE_MEMBER(m_usage);
+#undef MOVE_MEMBER
         return *this;
     }
 

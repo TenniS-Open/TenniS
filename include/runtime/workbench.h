@@ -22,7 +22,7 @@
 #include "board/profiler.h"
 
 namespace ts {
-    class Workbench {
+    class TS_DEBUG_API Workbench {
     public:
         using self = Workbench;    ///< self class
         using shared = std::shared_ptr<self>;  ///< smart pointer
@@ -124,6 +124,8 @@ namespace ts {
          * @param [out] output output oprators
          */
         void offline_infer(Operator::shared op, const std::vector<Tensor> &input, std::vector<Tensor::Prototype> &output);
+
+        void set_operator_param(const std::string &node_name, const std::string &param, const Tensor &value);
     private:
         size_t m_pointer = 0;   // pointer to running function
         std::vector<Instruction::shared> m_program; // running function, program area

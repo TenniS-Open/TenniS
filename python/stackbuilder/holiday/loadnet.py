@@ -358,7 +358,7 @@ def load_net(path, has_header=True):
 
 
 def save_net(path, net, header=None):
-    # type: (str, Net, Header)
+    # type: (str, Net, Header) -> None
     with open(path, 'wb') as fo:
         net.save(fo, header)
 

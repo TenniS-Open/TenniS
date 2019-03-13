@@ -8,8 +8,10 @@
 #include <core/memory.h>
 #include "sync_block.h"
 
+#include <utils/api.h>
+
 namespace ts {
-    class SyncMemory {
+    class TS_DEBUG_API SyncMemory {
     public:
         using self = SyncMemory;
         using shared = std::shared_ptr<self>;
@@ -97,7 +99,7 @@ namespace ts {
          * @param other other object
          */
         SyncMemory(self &&other) TS_NOEXCEPT {
-            this->swap(other);
+            *this = std::move(other);
         }
 
         /**
@@ -105,7 +107,9 @@ namespace ts {
          * @param other other object
          */
         SyncMemory &operator=(self &&other) TS_NOEXCEPT {
-            this->swap(other);
+#define MOVE_MEMBER(member) this->member = std::move(other.member)
+            MOVE_MEMBER(m_sync_memory);
+#undef MOVE_MEMBER
             return *this;
         }
 
