@@ -16,10 +16,8 @@ class Name(object):
     class Layer(object):
         shape_index_patch = "shape_index_patch"
 
-    origin_patch_h = "origin_patch_h"
-    origin_patch_w = "origin_patch_w"
-    origin_h = "origin_h"
-    origin_w = "origin_w"
+    origin_patch = "origin_patch"
+    origin = "origin"
 
 
 def shape_index_patch(name, feat, pos, origin_patch, origin):
@@ -40,9 +38,7 @@ def shape_index_patch(name, feat, pos, origin_patch, origin):
 
     # operator
     node = menu.op(name=name, op_name=Name.Layer.shape_index_patch, inputs=[feat, pos])
-    node.set(Name.origin_patch_h, origin_patch[0], numpy.int32)
-    node.set(Name.origin_patch_w, origin_patch[1], numpy.int32)
-    node.set(Name.origin_h, origin[0], numpy.int32)
-    node.set(Name.origin_w, origin[1], numpy.int32)
+    node.set(Name.origin_patch, origin_patch, numpy.int32)
+    node.set(Name.origin, origin, numpy.int32)
 
     return node
