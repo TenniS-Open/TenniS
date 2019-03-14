@@ -121,6 +121,10 @@ namespace ts {
         TS_DEBUG_API Tensor load(StreamReader &stream);
 
         TS_DEBUG_API Tensor load(const std::string &filename);
+
+        TS_DEBUG_API void save(StreamWriter &stream, const Tensor &tensor);
+
+        TS_DEBUG_API void save(const std::string &filename, const Tensor &tensor);
     }
 }
 
