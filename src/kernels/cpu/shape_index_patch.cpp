@@ -29,7 +29,7 @@ namespace ts {
             const int landmark_num = out.size(3);
 
             HypeShape pos_offset({pos.size(0), pos.size(1)});
-            HypeShape feat_offset(pos.sizes());
+            HypeShape feat_offset(feat_blob.sizes());
             HypeShape out_offset(out.sizes());
 
             // offset
@@ -42,8 +42,8 @@ namespace ts {
             for (int i = 0; i < landmark_num; i++) {
                 for (int n = 0; n < num; n++) { // x1, y1, ..., xn, yn
                     // coordinate of the first patch pixel, scale to the feature map coordinate
-                    const int y = int(pos_data[pos_offset.to_index(n, 2 * i + 1)] * (feat_h - 1) - r_h + 0.5f);
-                    const int x = int(pos_data[pos_offset.to_index(n, 2 * i)] * (feat_w - 1) - r_w + 0.5f);
+                    const int y = int(pos_data[pos_offset.to_index({n, 2 * i + 1})] * (feat_h - 1) - r_h + 0.5f);
+                    const int x = int(pos_data[pos_offset.to_index({n, 2 * i})] * (feat_w - 1) - r_w + 0.5f);
 
                     for (int c = 0; c < channels; c++) {
                         for (int ph = 0; ph < feat_patch_h; ph++) {
@@ -52,10 +52,10 @@ namespace ts {
                                 const int x_p = x + pw;
                                 // set zero if exceed the img bound
                                 if (y_p < 0 || y_p >= feat_h || x_p < 0 || x_p >= feat_w)
-                                    buff[out_offset.to_index(n, c, ph, i, pw)] = zero;
+                                    buff[out_offset.to_index({n, c, ph, i, pw})] = zero;
                                 else
-                                    buff[out_offset.to_index(n, c, ph, i, pw)] =
-                                            feat_data[feat_offset.to_index(n, c, y_p, x_p)];
+                                    buff[out_offset.to_index({n, c, ph, i, pw})] =
+                                            feat_data[feat_offset.to_index({n, c, y_p, x_p})];
                             }
                         }
                     }
