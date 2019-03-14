@@ -60,6 +60,8 @@ namespace ts {
             TS_DEBUG_API const string &global_pooling2d() TS_NOEXCEPT;
             // 2019-03-12
             TS_DEBUG_API const string &limit() TS_NOEXCEPT;
+            // 2019-03-14
+            TS_DEBUG_API const string &shape_index_patch() TS_NOEXCEPT;
         }
 
         namespace typo {

@@ -51,6 +51,8 @@ namespace ts {
             const string &global_pooling2d() TS_NOEXCEPT { static string str = "global_pooling2d"; return str; }
             const string &limit() TS_NOEXCEPT { static string str = "_limit"; return str; }
 
+            const string &shape_index_patch() TS_NOEXCEPT { static string str = "shape_index_patch"; return str; }
+
             const string &copy() TS_NOEXCEPT {
                 static string str = "_copy";
                 return str;
