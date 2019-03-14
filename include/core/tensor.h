@@ -45,7 +45,11 @@ namespace ts {
 
             Prototype(const Shape &sizes) : m_sizes(sizes) {}
 
+            Prototype(Shape &&sizes) : m_sizes(sizes) {}
+
             Prototype(DTYPE dtype, const Shape &sizes) : m_dtype(dtype), m_sizes(sizes) {}
+
+            Prototype(DTYPE dtype, Shape &&sizes) : m_dtype(dtype), m_sizes(sizes) {}
 
             explicit Prototype(DTYPE dtype) : m_dtype(dtype) {}
 
@@ -237,6 +241,20 @@ namespace ts {
         bool has_shape(const std::initializer_list<int> &shape) const {
             return has_shape(Shape(shape.begin(), shape.end()));
         }
+
+        Tensor flatten(int dim = 0) const;
+
+        bool has_empty_shape() const;
+        bool has_shape(int arg0) const;
+        bool has_shape(int arg0, int arg1) const;
+        bool has_shape(int arg0, int arg1, int arg2) const;
+        bool has_shape(int arg0, int arg1, int arg2, int arg3) const;
+        bool has_shape(int arg0, int arg1, int arg2, int arg3, int arg4) const;
+        bool has_shape(int arg0, int arg1, int arg2, int arg3, int arg4, int arg5) const;
+        bool has_shape(int arg0, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6) const;
+        bool has_shape(int arg0, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7) const;
+        bool has_shape(int arg0, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8) const;
+        bool has_shape(int arg0, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8, int arg9) const;
 
     private:
         Smart<TensorMemory> m_memory;

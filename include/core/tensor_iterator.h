@@ -164,6 +164,81 @@ namespace ts {
             return index;
         }
 
+        T to_index(int arg0) {
+            return arg0;
+        }
+
+#define LOOP_HEAD(n) constexpr size_t size = (n); auto weight_it = m_weights.end() - size + 1; T index = 0;
+#define LOOP_ON(i) index += *weight_it * arg##i; ++weight_it;
+#define LOOP_END(i) index += arg##i; return index;
+
+        T to_index(int arg0, int arg1) {
+            LOOP_HEAD(2)
+            LOOP_ON(0)
+            LOOP_END(1)
+        }
+
+        T to_index(int arg0, int arg1, int arg2) {
+            LOOP_HEAD(3)
+            LOOP_ON(0) LOOP_ON(1)
+            LOOP_END(2)
+        }
+
+        T to_index(int arg0, int arg1, int arg2, int arg3) {
+            LOOP_HEAD(4)
+            LOOP_ON(0) LOOP_ON(1) LOOP_ON(2)
+            LOOP_END(3)
+        }
+
+        T to_index(int arg0, int arg1, int arg2, int arg3, int arg4) {
+            LOOP_HEAD(5)
+            LOOP_ON(0) LOOP_ON(1) LOOP_ON(2) LOOP_ON(3)
+            LOOP_END(4)
+        }
+
+        T to_index(int arg0, int arg1, int arg2, int arg3, int arg4,
+                   int arg5) {
+            LOOP_HEAD(6)
+            LOOP_ON(0) LOOP_ON(1) LOOP_ON(2) LOOP_ON(3) LOOP_ON(4)
+            LOOP_END(5)
+        }
+
+        T to_index(int arg0, int arg1, int arg2, int arg3, int arg4,
+                   int arg5, int arg6) {
+            LOOP_HEAD(7)
+            LOOP_ON(0) LOOP_ON(1) LOOP_ON(2) LOOP_ON(3) LOOP_ON(4)
+            LOOP_ON(5)
+            LOOP_END(6)
+        }
+
+        T to_index(int arg0, int arg1, int arg2, int arg3, int arg4,
+                   int arg5, int arg6, int arg7) {
+            LOOP_HEAD(8)
+            LOOP_ON(0) LOOP_ON(1) LOOP_ON(2) LOOP_ON(3) LOOP_ON(4)
+            LOOP_ON(5) LOOP_ON(6)
+            LOOP_END(7)
+        }
+
+        T to_index(int arg0, int arg1, int arg2, int arg3, int arg4,
+                   int arg5, int arg6, int arg7, int arg8) {
+            LOOP_HEAD(9)
+            LOOP_ON(0) LOOP_ON(1) LOOP_ON(2) LOOP_ON(3) LOOP_ON(4)
+            LOOP_ON(5) LOOP_ON(6) LOOP_ON(7)
+            LOOP_END(8)
+        }
+
+        T to_index(int arg0, int arg1, int arg2, int arg3, int arg4,
+                   int arg5, int arg6, int arg7, int arg8, int arg9) {
+            LOOP_HEAD(10)
+            LOOP_ON(0) LOOP_ON(1) LOOP_ON(2) LOOP_ON(3) LOOP_ON(4)
+            LOOP_ON(5) LOOP_ON(6) LOOP_ON(7) LOOP_ON(8)
+            LOOP_END(9)
+        }
+
+#undef LOOP_HEAD
+#undef LOOP_ON
+#undef LOOP_END
+
         std::vector<T> to_coordinate(T index) const {
             // if (m_shape.empty()) return std::vector<T>();
             // if (index >= m_weights[0]) throw IndexOutOfShapeException(m_shape, index);
