@@ -433,9 +433,10 @@ def concat(name, inputs, dim):
     return node
 
 
-def flatten(name, x):
+def flatten(name, x, dim=1):
     assert isinstance(x, Node)
     node = menu.op(name=name, op_name=Name.Layer.flatten, inputs=[x, ])
+    node.set(Name.dim, dim, numpy.int32)
     return node
 
 
