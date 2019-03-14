@@ -618,12 +618,23 @@ class ShapeIndexPatchNet(Net):
 GlobalNetCreatorMap["ShapeIndexPatch"] = ShapeIndexPatchNet
 
 
-def convert(stream, input_num=1):
-    inputs = [ts.menu.param("_input_" + str(i)) for i in range(input_num)]
+def convert(stream, input_num=None, inputs=None):
+    # type: (Any, int, tuple) -> ts.Module
+    if input_num is None and inputs is None:
+        raise Exception("Must set argument input_num or inputs")
+    if input_num is not None and inputs is not None:
+        raise Exception("len(inputs) != input_num")
+    if inputs is None:
+        assert input_num is not None
+        inputs = [ts.menu.param("_input_" + str(i)) for i in range(input_num)]
+
     float_inputs = [None] * len(inputs)
-    for i in range(input_num):
+    for i in range(len(inputs)):
         float_inputs[i] = ts.zoo.to_float(name="_float_input_" + str(i), x=inputs[i])
-    net = Net.Load(stream=stream, inputs=inputs)
+
+    for input in inputs:
+        assert isinstance(input, ts.Node)
+    net = Net.Load(stream=stream, inputs=float_inputs)
 
     print("============ Loaded vvvv model ============")
     print(net)

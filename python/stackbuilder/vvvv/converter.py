@@ -6,15 +6,15 @@ from . import net
 import tensorstack as ts
 
 
-def convert(input_model, output_file, input_num=1):
+def convert(input_model, output_file, input_num=None, inputs=None):
     input_model = net.compatible_string(input_model)
 
     module = None
     if isinstance(input_model, str):
         with open(input_model, "rb") as fi:
-            module = net.convert(fi, input_num)
+            module = net.convert(fi, input_num=input_num, inputs=inputs)
     else:
-        module = net.convert(input_model, input_num)
+        module = net.convert(input_model, input_num=input_num, inputs=inputs)
 
     with open(output_file, "wb") as fo:
         ts.Module.Save(stream=fo, module=module)
