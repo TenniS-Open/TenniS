@@ -50,7 +50,7 @@ namespace ts {
             int size = lhs_shape[i];
             if (lhs_shape[i] != rhs_shape[i]) {
                 if (lhs_shape[i] != 1 && rhs_shape[i] != 1)
-                    TS_LOG_ERROR << "Can not reduce shape: " << to_string(_lhs_shape) << " vs. " << to_string(_rhs_shape);
+                    TS_LOG_ERROR << "Can not reduce shape: " << to_string(_lhs_shape) << " vs. " << to_string(_rhs_shape) << eject;
                 do_broadcast = true;
                 size = lhs_shape[i] * rhs_shape[i];
             }
