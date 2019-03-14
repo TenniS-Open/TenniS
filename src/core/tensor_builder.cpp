@@ -249,6 +249,16 @@ namespace ts {
             tensor.externalize(stream);
             return std::move(tensor);
         }
+
+        void save(StreamWriter &stream, const Tensor &tensor) {
+            tensor.serialize(stream);
+        }
+
+        void save(const std::string &filename, const Tensor &tensor) {
+            FileStreamWriter stream(filename);
+            if (!stream.is_open()) TS_LOG_ERROR << "Can not access " << filename << eject;
+            return save(stream, tensor);
+        }
     }
 
     template<typename T>
