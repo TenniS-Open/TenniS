@@ -589,6 +589,9 @@ class ShapeIndexPatchNet(Net):
     def __init__(self, *args, **kwargs):
         super(ShapeIndexPatchNet, self).__init__(*args, **kwargs)
 
+        self.__raw_input = None
+        self.__raw_output = None
+
     def setup(self):
         self._init(net_count=0, input_count=2, output_count=1, param_count=0)
 
@@ -600,13 +603,16 @@ class ShapeIndexPatchNet(Net):
 
         dummpy_feat = ts.Node(op="dummy", name="_of_0_" + self.name)
         dummpy_pos = ts.Node(op="dummy", name="_of_1_" + self.name)
-        self.outputs[0] = ts.frontend.vvvv.shape_index_patch(self.name, feat=dummpy_feat, pos=dummpy_pos,
+        self.__raw_input = ts.frontend.vvvv.shape_index_patch(self.name + "_sip_", feat=dummpy_feat, pos=dummpy_pos,
                                                              origin_patch=[origin_patch_h, origin_patch_w],
                                                              origin=[origin_h, origin_w])
+        self.__raw_output = ts.zoo.flatten(self.name, self.__raw_input, dim=3)
+
+        self.outputs[0] = self.__raw_output
 
     def link(self):
-        self.outputs[0].inputs[0] = self.inputs[0]
-        self.outputs[0].inputs[1] = self.inputs[1]
+        self.__raw_input.inputs[0] = self.inputs[0]
+        self.__raw_input.inputs[1] = self.inputs[1]
 
 
 GlobalNetCreatorMap["ShapeIndexPatch"] = ShapeIndexPatchNet
