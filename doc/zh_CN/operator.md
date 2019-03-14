@@ -448,10 +448,13 @@ padding_type为black时，超出可计算区域的结果为0。
 输出: `y`: `Tensor`  
 
 参数：  
-无
+- `dim`: `Int` `[Optional] Default=1`
 
 说明：  
 输入 `x` 的 `shape` 为 `[1, 20, 3, 3]`，输出的 `shape` 为 `[1, 180]`。
+在对应 `dim` 位置进行拉伸。
+输入 `x` 的 `shape` 为 `[1, 20, 3, 3]`，`dim = 2`，输出的 `shape` 为 `[1, 20, 9]`。
+输入 `x` 的 `shape` 为 `[2, 3]`，`dim = 2`，输出的 `shape` 为 `[2, 3, 1]`。
 
 ## to_float(x) -> y
 描述：把输入类型，调整成 `float` 类型。  
@@ -588,6 +591,24 @@ to tensor A * B);
 
 说明：  
 假如shape小于x的大小，则在shape高位补充-1，直到维度相同，再进行调整。
+
+### shape_index_patch(x..device, pos..device) -> y..device
+描述：根据pos在x上进行采样。  
+输入：`x`: `Tensor4D` shape 为 `[number, channels, height, width]`  
+输入：`pos`: `Tensor4D` shape 为 `[number, landmark, 1, 1]`  
+
+输出：`y`: `Tensor5D` shape 为 `[number, channels, x_patch_h, landmark / 2, x_patch_w]`
+其中 `x_patch_h = int(origin_patch.h * x.height / origin.h + 0.5)`,  
+`x_patch_w = int(origin_patch.w * x.width / origin.w + 0.5)`,  
+Note: 这是对应某一个实现的版本。
+
+
+参数：  
+- `origin_patch`: `Int[2]{h, w}`  
+- `origin`: `Int[2]{h, w}`  
+
+说明：  
+`pos.number == x.number`，根据pos表示的位置信息，在对应位置crop出`[x_patch_h, x_patch_w]`大小。
 
 ### _nhwc_resize2d(x..device) = delete
 
