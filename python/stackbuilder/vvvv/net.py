@@ -435,7 +435,7 @@ class BnNet(Net):
             epsilon = 1e-5
 
         mean = mean * scale
-        var = mean * scale
+        var = var * scale
 
         dummpy_input = ts.Node(op="dummy", name="_of_" + self.name)
 
