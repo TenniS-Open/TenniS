@@ -12,7 +12,7 @@ int main() {
 
     ts::api::Device device = {"cpu", 0};
     // load module
-    auto module = ts::api::Module::Load("/Users/seetadev/Documents/SDK/CLion/TensorStack/python/test/test.module.txt", TS_BINARY);
+    auto module = ts::api::Module::Load("/Users/seetadev/Documents/SDK/CLion/TensorStack/bin/test.module.txt", TS_BINARY);
 
     // compile to workbench
     auto workbench = ts::api::Workbench::Load(module, device);
@@ -21,11 +21,8 @@ int main() {
     auto filter = ts::api::ImageFilter(device);
 
     // ts_Workbench_bind_filter(workbench, 0, filter);
-    auto input_a = ts::api::Tensor(TS_FLOAT32, {1}, nullptr);
-    auto input_b = ts::api::Tensor(TS_FLOAT32, {1}, nullptr);
-
-    input_a.data<float>()[0] = 1;
-    input_b.data<float>()[0] = 3;
+    auto input_a = ts::api::tensor::build(TS_FLOAT32, {1}, {1});
+    auto input_b = ts::api::tensor::build(TS_FLOAT32, {1}, {2});
 
     workbench.input(0, input_a);
     workbench.input(1, input_b);
