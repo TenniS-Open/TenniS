@@ -35,33 +35,33 @@ namespace ts {
             int tx = threadIdx.x;
             int ty = threadIdx.y;
 
-            int Row = by * TRANS_BLOCK_DIM + ty;
-            int Col = bx * TRANS_BLOCK_DIM + tx;
+            int Row = by * blockDim.y + ty;
+            int Col = bx * blockDim.x + tx;
 
             T comp = 0;
             T Cvalue = 0;
 
-            for (int t = 0; t<(K - 1) / TRANS_BLOCK_DIM + 1; ++t) {
-                if (Row < M && t * TRANS_BLOCK_DIM + tx < K) {
+            for (int t = 0; t< gridDim.x; ++t) {
+                if (Row < M && t * blockDim.y + tx < K) {
                     if (transA)
-                        ds_A[tx][ty] = alpha * A[tx*lda + t*TRANS_BLOCK_DIM + Row];
+                        ds_A[tx][ty] = alpha * A[tx*lda + t*blockDim.x + Row];
                     else
-                        ds_A[tx][ty] = alpha * A[Row*lda + t*TRANS_BLOCK_DIM + tx];
+                        ds_A[tx][ty] = alpha * A[Row*lda + t*blockDim.x + tx];
                 }
                 else
                     ds_A[tx][ty] = 0.0;
 
-                if (t * TRANS_BLOCK_DIM + ty < K && Col < N)
+                if (t * blockDim.y + ty < K && Col < N)
                     if (transB)
-                        ds_B[tx][ty] = B[(t*TRANS_BLOCK_DIM + Col)*ldb + ty];
+                        ds_B[tx][ty] = B[(t*blockDim.y + Col)*ldb + ty];
                     else
-                        ds_B[tx][ty] = B[(t*TRANS_BLOCK_DIM + ty)*ldb + Col];
+                        ds_B[tx][ty] = B[(t*blockDim.y + ty)*ldb + Col];
                 else
                     ds_B[tx][ty] = 0.0;
 
                 __syncthreads();
 
-                for (int i = 0; i < TRANS_BLOCK_DIM; ++i) {
+                for (int i = 0; i < blockDim.x; ++i) {
                     //Cvalue += ds_A[i][ty] * ds_B[tx][i];
                     T t;
                     comp -= ds_A[i][ty] * ds_B[tx][i];
