@@ -121,7 +121,7 @@ namespace ts {
                     for (int c = 0; c < channels; ++c) {
                         int offset = (n * channels + c) * count;
                         auto local_pout = pout + offset;
-                        compute_run_scalar(local_pout, prhs[channels], local_pout, count);
+                        compute_run_scalar(local_pout, prhs[c], local_pout, count);
                     }
                 }
             }
