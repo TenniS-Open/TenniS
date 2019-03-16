@@ -14,10 +14,21 @@
 
 namespace ts {
     namespace api {
-        enum SerializationFormat {
-            BINARY  = TS_BINARY,    // BINARY file format
-            TEXT    = TS_TEXT,      // TEXT file format
+        class SerializationFormat {
+        public:
+            using self = SerializationFormat;
+
+            SerializationFormat() : self(TS_BINARY) {}
+
+            SerializationFormat(ts_SerializationFormat dtype) : raw(dtype) {}
+
+            operator ts_SerializationFormat() const { return raw; }
+
+            ts_SerializationFormat raw;
         };
+
+        static const SerializationFormat BINARY = TS_BINARY;
+        static const SerializationFormat TEXT = TS_TEXT;
 
         class Module {
         public:
@@ -35,7 +46,7 @@ namespace ts {
 
             Module() = delete;
 
-            static Module Load(const std::string &path, SerializationFormat format = BINARY) {
+            static Module Load(const std::string &path, SerializationFormat format = TS_BINARY) {
                 Module loaded(ts_Module_Load(path.c_str(), ts_SerializationFormat(format)));
                 TS_API_AUTO_CHECK(loaded.m_impl != nullptr);
                 return std::move(loaded);

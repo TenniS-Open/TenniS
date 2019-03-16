@@ -93,14 +93,16 @@ namespace ts {
                 output(name, tensor.get_raw());
             }
 
-            void output(int slot) {
+            Tensor output(int slot) {
                 Tensor tensor;
                 output(slot, tensor);
+                return std::move(tensor);
             }
 
-            void output(const std::string &name) {
+            Tensor output(const std::string &name) {
                 Tensor tensor;
                 output(name, tensor);
+                return std::move(tensor);
             }
 
             void set_computing_thread_number(int number) {
