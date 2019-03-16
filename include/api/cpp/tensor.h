@@ -33,12 +33,9 @@ namespace ts {
 
             raw *get_raw() const { return m_impl.get(); }
 
-            Tensor() : self(VOID, {}, nullptr) {}
+            Tensor() : self(TS_VOID, {}, nullptr) {}
 
             Tensor(DTYPE dtype, const Shape &shape, const void *data = nullptr)
-                    : self(ts_DTYPE(dtype), shape, data) {}
-
-            Tensor(ts_DTYPE dtype, const Shape &shape, const void *data = nullptr)
                     : self(ts_new_Tensor(shape.data(), int32_t(shape.size()), ts_DTYPE(dtype), data)) {
                 TS_API_AUTO_CHECK(m_impl != nullptr);
             }
@@ -133,7 +130,7 @@ namespace ts {
             }
 
             Tensor from(const std::string &value) {
-                return Tensor(CHAR8, {int32_t(value.length())}, value.c_str());
+                return Tensor(TS_CHAR8, {int32_t(value.length())}, value.c_str());
             }
 
             template<size_t _size>
@@ -153,36 +150,36 @@ namespace ts {
             int to_int(const Tensor &value) {
                 auto cpu_value = value;
                 cpu_value.sync_cpu();
-                if (cpu_value.dtype() != INT32) cpu_value = cast(INT32, cpu_value);
-                return cast(INT32, cpu_value).data<int32_t>()[0];
+                if (cpu_value.dtype() != TS_INT32) cpu_value = cast(TS_INT32, cpu_value);
+                return cast(TS_INT32, cpu_value).data<int32_t>()[0];
             }
 
             unsigned int to_uint(const Tensor &value) {
                 auto cpu_value = value;
                 cpu_value.sync_cpu();
-                if (cpu_value.dtype() != UINT32) cpu_value = cast(UINT32, cpu_value);
-                return cast(UINT32, cpu_value).data<uint32_t>()[0];
+                if (cpu_value.dtype() != TS_UINT32) cpu_value = cast(TS_UINT32, cpu_value);
+                return cast(TS_UINT32, cpu_value).data<uint32_t>()[0];
             }
 
             float to_float(const Tensor &value) {
                 auto cpu_value = value;
                 cpu_value.sync_cpu();
-                if (cpu_value.dtype() != FLOAT32) cpu_value = cast(FLOAT32, cpu_value);
-                return cast(FLOAT32, cpu_value).data<float>()[0];
+                if (cpu_value.dtype() != TS_FLOAT32) cpu_value = cast(TS_FLOAT32, cpu_value);
+                return cast(TS_FLOAT32, cpu_value).data<float>()[0];
             }
 
             double to_double(const Tensor &value) {
                 auto cpu_value = value;
                 cpu_value.sync_cpu();
-                if (cpu_value.dtype() != FLOAT64) cpu_value = cast(FLOAT64, cpu_value);
-                return cast(FLOAT64, cpu_value).data<double>()[0];
+                if (cpu_value.dtype() != TS_FLOAT64) cpu_value = cast(TS_FLOAT64, cpu_value);
+                return cast(TS_FLOAT64, cpu_value).data<double>()[0];
             }
 
             std::string to_string(const Tensor &value) {
                 auto cpu_value = value;
                 cpu_value.sync_cpu();
-                if (cpu_value.dtype() != CHAR8) {
-                    cpu_value = cast(CHAR8, cpu_value);
+                if (cpu_value.dtype() != TS_CHAR8) {
+                    cpu_value = cast(TS_CHAR8, cpu_value);
                 }
                 return std::string(cpu_value.data<char>(), size_t(cpu_value.count()));
             }
