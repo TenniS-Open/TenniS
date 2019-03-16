@@ -272,6 +272,7 @@ namespace ts {
 
 }
 
+// template class ts::tensor_builder<ts::dtype<ts::CHAR8>::declare>;
 template class ts::tensor_builder<ts::dtype<ts::INT8>::declare>;
 template class ts::tensor_builder<ts::dtype<ts::UINT8>::declare>;
 template class ts::tensor_builder<ts::dtype<ts::INT16>::declare>;

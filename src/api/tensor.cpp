@@ -2,13 +2,15 @@
 // Created by kier on 2019/3/16.
 //
 
+#include <api/tensor.h>
+
 #include "declare_tensor.h"
 
 #include "core/tensor_builder.h"
 
 using namespace ts;
 
-ts_Tensor *ts_new_Tensor(int32_t *shape, int32_t shape_len, ts_DTYPE dtype, const void *data) {
+ts_Tensor *ts_new_Tensor(const int32_t *shape, int32_t shape_len, ts_DTYPE dtype, const void *data) {
     TRY_HEAD
     if (shape == nullptr) shape_len = 0;
     std::unique_ptr<ts_Tensor> tensor(new ts_Tensor());
@@ -40,6 +42,14 @@ ts_Tensor *ts_new_Tensor(int32_t *shape, int32_t shape_len, ts_DTYPE dtype, cons
         DECLARE_TENSOR_BUILD(TS_FLOAT64, double)
 
 #undef DECLARE_TENSOR_BUILD
+        case TS_CHAR8:  // this is for trying build string
+        {
+            Tensor tensor_string = tensor::build(INT8, Shape(shape, shape + shape_len),
+                                                             reinterpret_cast<const int8_t*>(data));
+            tensor_string = tensor::cast(CHAR8, tensor_string);
+            **tensor = tensor_string;
+            break;
+        }
     }
 
     RETURN_OR_CATCH(tensor.release(), nullptr)
@@ -91,5 +101,12 @@ ts_bool ts_Tensor_sync_cpu(ts_Tensor *tensor) {
     if (!tensor) throw Exception("NullPointerException: @param: 1");
     (*tensor)->sync(MemoryDevice(CPU));
     RETURN_OR_CATCH(true, false)
+}
+
+ts_Tensor *ts_Tensor_cast(ts_Tensor *tensor, ts_DTYPE dtype) {
+    TRY_HEAD
+    if (!tensor) throw Exception("NullPointerException: @param: 1");
+    std::unique_ptr<ts_Tensor> dolly(new ts_Tensor(tensor::cast(DTYPE(dtype), **tensor)));
+    RETURN_OR_CATCH(dolly.release(), nullptr)
 }
 
