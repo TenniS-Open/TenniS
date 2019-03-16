@@ -36,6 +36,9 @@ int main(int argc, const char *argv[]) {
 
     auto subdirs = FindFlodersRecursively(root);
 
+    int ok_count = 0;
+    int failed_count = 0;
+
     for (auto &subdir : subdirs) {
         auto case_root = Join({root, subdir}, FileSeparator());
         auto case_filenames = FindFiles(case_root);
@@ -56,14 +59,18 @@ int main(int argc, const char *argv[]) {
         } catch (const Exception &e) {
         }
         if (ok) {
+            ok_count++;
             std::cout << "[OK]" << std::endl;
             // std::cout << tc.log();
         } else {
+            failed_count++;
             std::cout << "[FAILED]" << std::endl;
             std::cout << tc.log();
 
         }
     }
+
+    TS_LOG_INFO << "[OK]: " << ok_count << ", [FAILED]: " << failed_count;
 
     return 0;
 }
