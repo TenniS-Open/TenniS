@@ -8,7 +8,7 @@
 #include "common.h"
 #include "tensor.h"
 #include "module.h"
-#import "image_filter.h"
+#include "image_filter.h"
 
 #ifdef __cplusplus
 extern "C" {
