@@ -16,12 +16,12 @@ namespace ts {
         using supper = Device;
 
         CublasDevice(int id) : supper(CUBLAS, id) { 
-            if(cublasCreate(&m_handle) != cudaSuccess)
+            if(cublasCreate(&m_handle) != CUBLAS_STATUS_SUCCESS)
                 TS_LOG_ERROR << "The cublasHandle initialize failed " << eject;
         }
 
         CublasDevice() : supper(CUBLAS) { 
-            if (cublasCreate(&m_handle) != cudaSuccess)
+            if (cublasCreate(&m_handle) != CUBLAS_STATUS_SUCCESS)
                 TS_LOG_ERROR << "The cublasHandle initialize failed " << eject;
         }
 

@@ -18,6 +18,20 @@ namespace ts {
             Trans = 112
         };
     }
+
+    namespace gpu {
+        namespace cublas {
+            enum Order {
+                RowMajor = 101,
+                ColMajor = 102
+            };
+            enum Transpose {
+                NoTrans = 0,
+                Trans = 1,
+                //ConjugateTrans = 2
+            };
+        }
+    }
 }
 
 
