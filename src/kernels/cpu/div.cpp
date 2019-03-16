@@ -50,21 +50,21 @@ namespace ts {
         }
 
         template<typename T>
-        static inline void compute_run_scalar(const T *plhs, T scalar, T *pout, size_t count) {
+        static inline void compute_run_scalar(const T *plhs, T scalar, T *pout, int count) {
             // this is CPU operator, so just using memcpy
             if (pout != plhs) std::memcpy(pout, plhs, count * sizeof(T));
 
-            for (size_t i = 0; i < count; ++i) {
+            for (int i = 0; i < count; ++i) {
                 reduce_operator(pout[i], scalar);
             }
         }
 
         template<typename T>
-        static inline void compute_run_same_shape(const T *plhs, const T *prhs, T *pout, size_t count) {
+        static inline void compute_run_same_shape(const T *plhs, const T *prhs, T *pout, int count) {
             // this is CPU operator, so just using memcpy
             if (pout != plhs) std::memcpy(pout, plhs, count * sizeof(T));
 
-            for (size_t i = 0; i < count;++i) {
+            for (int i = 0; i < count;++i) {
                 reduce_operator(pout[i], prhs[i]);
             }
         }
@@ -77,7 +77,7 @@ namespace ts {
 
             auto scalar = prhs[0];
 
-            compute_run_scalar(plhs, scalar, pout, size_t(out.count()));
+            compute_run_scalar(plhs, scalar, pout, out.count());
         }
 
 
@@ -87,7 +87,7 @@ namespace ts {
             auto prhs = rhs.data<T>();
             auto pout = out.data<T>();
 
-            compute_run_same_shape(plhs, prhs, pout, size_t(out.count()));
+            compute_run_same_shape(plhs, prhs, pout, out.count());
         }
 
 
@@ -121,7 +121,7 @@ namespace ts {
                     for (int c = 0; c < channels; ++c) {
                         int offset = (n * channels + c) * count;
                         auto local_pout = pout + offset;
-                        compute_run_scalar(local_pout, prhs[channels], local_pout, size_t(count));
+                        compute_run_scalar(local_pout, prhs[channels], local_pout, count);
                     }
                 }
             }
