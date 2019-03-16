@@ -116,6 +116,20 @@ namespace ts {
             static Tensor build(const T *data, size_t count) {
                 return Tensor(dtypeid<T>::id, {int(count)}, data);
             }
+
+            static Tensor build(const std::initializer_list<T> &value, const std::vector<int> &shape) {
+                return build(std::vector<T>(value.begin(), value.end()), shape);
+            }
+
+            static Tensor build(const std::vector<T> &value, const std::vector<int> &shape) {
+                return build(value.data(), value.size(), shape);
+            }
+
+            static Tensor build(const T *data, size_t count, const std::vector<int> &shape) {
+                auto shape_count = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int32_t>());
+                if (count != shape_count) throw Exception("Shape count mismatch.");
+                return Tensor(dtypeid<T>::id, shape, data);
+            }
         };
 
         namespace tensor {
@@ -206,19 +220,19 @@ namespace ts {
 
             template<typename T>
             inline Tensor build(DTYPE dtype, const Shape &shape, const std::initializer_list<T> &value) {
-                return cast(dtype, tensor_builder<T>::build(value)).reshape(shape);
+                return cast(dtype, tensor_builder<T>::build(value, shape));
             }
 
             template<typename T>
             inline Tensor build(DTYPE dtype, const Shape &shape, const std::vector<T> &value) {
-                return cast(dtype, tensor_builder<T>::build(value)).reshape(shape);
+                return cast(dtype, tensor_builder<T>::build(value, shape));
             }
 
             template<typename T>
             inline Tensor build(DTYPE dtype, const Shape &shape, const T *data) {
                 int count = 1;
                 for (auto &size : shape) count *= size;
-                return cast(dtype, tensor_builder<T>::build(data, size_t(count))).reshape(shape);
+                return cast(dtype, tensor_builder<T>::build(data, size_t(count), shape));
             }
         }
     }
