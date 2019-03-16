@@ -10,7 +10,7 @@
 #include <string>
 
 namespace ts {
-    namespace cpp {
+    namespace api {
         class Device {
         public:
             using self = Device;

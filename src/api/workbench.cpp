@@ -9,7 +9,7 @@
 
 using namespace ts;
 
-ts_Workbench *ts_Workbench_Load(ts_Module *module, const ts_Device *device) {
+ts_Workbench *ts_Workbench_Load(const ts_Module *module, const ts_Device *device) {
     TRY_HEAD
     if (!module) throw Exception("NullPointerException: @param: 1");
     if (!device) throw Exception("NullPointerException: @param: 2");
@@ -79,7 +79,7 @@ ts_bool ts_Workbench_set_computing_thread_number(ts_Workbench *workbench, int32_
     RETURN_OR_CATCH(ts_true, ts_false)
 }
 
-ts_bool ts_Workbench_bind_filter(ts_Workbench *workbench, int32_t i, ts_ImageFilter *filter) {
+ts_bool ts_Workbench_bind_filter(ts_Workbench *workbench, int32_t i, const ts_ImageFilter *filter) {
     TRY_HEAD
         if (!workbench) throw Exception("NullPointerException: @param: 1");
         if (!filter) throw Exception("NullPointerException: @param: 3");
@@ -87,7 +87,7 @@ ts_bool ts_Workbench_bind_filter(ts_Workbench *workbench, int32_t i, ts_ImageFil
     RETURN_OR_CATCH(ts_true, ts_false)
 }
 
-ts_bool ts_Workbench_bind_filter_by_name(ts_Workbench *workbench, const char *name, ts_ImageFilter *filter) {
+ts_bool ts_Workbench_bind_filter_by_name(ts_Workbench *workbench, const char *name, const ts_ImageFilter *filter) {
     TRY_HEAD
         if (!workbench) throw Exception("NullPointerException: @param: 1");
         if (!name) throw Exception("NullPointerException: @param: 2");
