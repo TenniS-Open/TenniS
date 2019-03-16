@@ -80,7 +80,7 @@ namespace ts {
         TS_DEBUG_API Tensor clone(DTYPE dtype, const Tensor &value);
 
         template<typename T>
-        inline Tensor build(DTYPE dtype, T &value) {
+        inline Tensor build(DTYPE dtype, const T &value) {
             return cast(dtype, tensor_builder<T>::build(value));
         }
 

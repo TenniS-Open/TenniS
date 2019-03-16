@@ -199,7 +199,7 @@ namespace ts {
             }
 
             template<typename T>
-            inline Tensor build(DTYPE dtype, T &value) {
+            inline Tensor build(DTYPE dtype, const T &value) {
                 return cast(dtype, tensor_builder<T>::build(value));
             }
 
