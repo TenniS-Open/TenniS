@@ -128,6 +128,7 @@ namespace ts {
     }
 }
 
+// extern template class ts::tensor_builder<ts::dtype<ts::CHAR8>::declare>;
 extern template class ts::tensor_builder<ts::dtype<ts::INT8>::declare>;
 extern template class ts::tensor_builder<ts::dtype<ts::UINT8>::declare>;
 extern template class ts::tensor_builder<ts::dtype<ts::INT16>::declare>;
