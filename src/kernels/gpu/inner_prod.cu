@@ -11,7 +11,7 @@
 #include "kernels/gpu/cublas_device.h"
 #include "core/device_context.h"
 #include "utils/ctxmgr_lite.h"
-
+#include "kernels/gpu/math_cublas.h"
 
 
 namespace ts {
@@ -63,8 +63,6 @@ namespace ts {
             }//end for
         }
 
-
-
         template<typename T>
         static void gpu_inner_prod_compute_run(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
             const Shape &lhs_shape = lhs.sizes();
@@ -74,32 +72,22 @@ namespace ts {
             const T *pdot = rhs.data<T>();
             T *pdst = out.data<T>();
 
-
-            dim3 blocksize(CUDA_BLOCK(rhs_shape[1], TRANS_BLOCK_DIM), CUDA_BLOCK(lhs_shape[0], TRANS_BLOCK_DIM), 1);
-            dim3 threadsize(TRANS_BLOCK_DIM, TRANS_BLOCK_DIM, 1);
-            gpu_inner_prod_compute_run_kernel<T> << <blocksize, threadsize >> > (lhs_shape[0], lhs_shape[1], rhs_shape[1], psrc, pdot, pdst);
-
-        }
-
 #ifdef TS_USE_CUBLAS
-        template<>
-        void gpu_inner_prod_compute_run<float>(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
-            const Shape &lhs_shape = lhs.sizes();
-            const Shape &rhs_shape = rhs.sizes();
-
-            float *psrc = const_cast<float*>(lhs.data<float>());
-            float *pdot = const_cast<float*>(rhs.data<float>());
-            float *pdst = out.data<float>();
-
-
             auto &context = ctx::ref<DeviceContext>();
             CublasDevice* handle = reinterpret_cast<CublasDevice*>(context.handle);
             auto cublas_handle = handle->get();
-            const float alpha = 1.f;
-            const float beta = 0.f;
-            cublasSgemm(cublas_handle, CUBLAS_OP_N, CUBLAS_OP_N, rhs_shape[1], lhs_shape[0], lhs_shape[1], &alpha, pdot, rhs_shape[1], psrc, lhs_shape[1], &beta, pdst, rhs_shape[1]);
-        }
+
+            cublas::math<T>::gemm(cublas_handle, cublas::NoTrans, cublas::NoTrans,
+                lhs_shape[0], rhs_shape[1], lhs_shape[1], 1, psrc, pdot, 0, pdst);
+            /*cublas::math<T>::gemm(cublas_handle,cublas::RowMajor,cublas::NoTrans, cublas::NoTrans, 
+                lhs_shape[0], rhs_shape[1], lhs_shape[1], 1,psrc, lhs_shape[1], pdot, rhs_shape[1], 0,pdst, rhs_shape[1]);*/
+            
+#else
+            dim3 blocksize(CUDA_BLOCK(rhs_shape[1], TRANS_BLOCK_DIM), CUDA_BLOCK(lhs_shape[0], TRANS_BLOCK_DIM), 1);
+            dim3 threadsize(TRANS_BLOCK_DIM, TRANS_BLOCK_DIM, 1);
+            gpu_inner_prod_compute_run_kernel<T> << <blocksize, threadsize >> > (lhs_shape[0], lhs_shape[1], rhs_shape[1], psrc, pdot, pdst);
 #endif
+        }
 
         void InnerProd::inner_prod(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
             // Notice: the all tensor' memory device are CPU, as given in running_memory_device
