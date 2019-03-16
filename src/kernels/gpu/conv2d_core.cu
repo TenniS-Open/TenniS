@@ -8,6 +8,11 @@
 #include "device_launch_parameters.h"
 #include <cuda_runtime.h>
 
+#include "kernels/gpu/cublas_device.h"
+#include "core/device_context.h"
+#include "utils/ctxmgr_lite.h"
+#include "kernels/gpu/math_cublas.h"
+
 
 
 namespace ts {
@@ -150,10 +155,21 @@ namespace ts {
                     col_buffer = const_cast<T *>(pinput);
                 }
 
+#ifdef TS_USE_CUBLAS
+                auto &context = ctx::ref<DeviceContext>();
+                CublasDevice* handle = reinterpret_cast<CublasDevice*>(context.handle);
+                auto cublas_handle = handle->get();
+
+                cublas::math<T>::gemm(cublas_handle, cublas::NoTrans, cublas::NoTrans,
+                    weight_shape[0], conv_out_spatial_dim, kernel_dims, 1, pweight, col_buffer, 0, poutput);
+
+#else
+
                 gpu_conv2d_compute_run_kernel<T> <<<blocksize, threadsize>>>
                       (weight_shape[0], kernel_dims,conv_out_spatial_dim, pweight, col_buffer, poutput);
                 pinput += input_number_offset;
                 poutput += output_number_offset;
+#endif
             }//end for
 
         }
