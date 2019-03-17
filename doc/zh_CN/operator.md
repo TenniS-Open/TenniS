@@ -634,9 +634,42 @@ Note: 这是对应某一个实现的版本。
 
 参数：无
 
-### tf_conv2d_padding = delete
+### _tf_conv2d_padding(x..device) -> dynamic_padding
 
-### tf_pooling2d_padding = delete
+参数：
+- `format` `String` 为 `NCHW` 或者 `NHWC`
+- `padding_method` `String` `[Required]` 表示 `padding` 方式为`SAME` 或 `VALID`
+- `stride` `Int[4]` `batch` 和 `channels` 的默认为 `1`
+在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+- `dilation` `Int[4]` `batch` 和 `channels` 的默认为 `1`
+在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+- `padding` `Int[4, 2]` `[Optional]` `[Default] Zero padding` 静态进行padding的数据
+在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+- `ksize` `Int[4]` `batch` 和 `channels` 的默认为 `1`
+在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+
+### _tf_pooling2d_padding（x, ksize, stride) -> dynamic_padding
+描述：  
+- `x` `Tensor4D` 预计要进行 padding 的数据
+- `ksize` `Int[4]`
+在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+- `stride` `Int[4]`
+在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+- `dynamic_padding`  `Int[4, 2]`输出的padding形式，为4x2维
+
+参数：  
+- `format` `String` 为 `NCHW` 或者 `NHWC`
+- `padding_method` `String` `[Required]` 表示 `padding` 方式为`SAME` 或 `VALID`
+- `padding` `Int[4, 2]` `[Optional]` `[Default] Zero padding` 静态进行padding的数据
+在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+
 
 ### mx_conv2d_padding = delete
 

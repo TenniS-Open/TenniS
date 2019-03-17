@@ -53,6 +53,9 @@ namespace ts {
 
             const string &shape_index_patch() TS_NOEXCEPT { static string str = "shape_index_patch"; return str; }
 
+            const string &tf_pooling2d_padding() TS_NOEXCEPT { static string str = "_tf_pooling2d_padding"; return str; }
+            const string &tf_conv2d_padding() TS_NOEXCEPT { static string str = "_tf_conv2d_padding"; return str; }
+
             const string &copy() TS_NOEXCEPT {
                 static string str = "_copy";
                 return str;
@@ -101,5 +104,8 @@ namespace ts {
         string beta = "beta";
         string transA = "transA";
         string transB = "transB";
+
+        string padding_method = "padding_method";
+        string SAME = "SAME";
     }
 }
