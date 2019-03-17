@@ -634,7 +634,7 @@ Note: 这是对应某一个实现的版本。
 
 参数：无
 
-### _tf_conv2d_padding(x..device) -> dynamic_padding
+### _tf_conv2d_padding(x..device, w..device) -> dynamic_padding
 
 参数：
 - `format` `String` 为 `NCHW` 或者 `NHWC`
@@ -646,9 +646,6 @@ Note: 这是对应某一个实现的版本。
 在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
 在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
 - `padding` `Int[4, 2]` `[Optional]` `[Default] Zero padding` 静态进行padding的数据
-在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
-在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
-- `ksize` `Int[4]` `batch` 和 `channels` 的默认为 `1`
 在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
 在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
 
