@@ -29,7 +29,7 @@ def pooling2d_padding(name, x, padding, ksize, stride, format=zoo.Name.NCHW, pad
     if padding_method not in {Name.SAME, Name.VALID}:
         raise NotImplementedError("padding_method = {}".format(padding_method))
 
-    if format not in {Name.SAME, Name.VALID}:
+    if format not in {zoo.Name.NCHW, zoo.Name.NHWC}:
         raise NotImplementedError("format = {}".format(format))
 
     # param
@@ -85,7 +85,7 @@ def conv2d_padding(name, x, w,
     if padding_method not in {Name.SAME, Name.VALID}:
         raise NotImplementedError("padding_method = {}".format(padding_method))
 
-    if format not in {Name.SAME, Name.VALID}:
+    if format not in {zoo.Name.NCHW, zoo.Name.NHWC}:
         raise NotImplementedError("format = {}".format(format))
 
     if padding is None:
@@ -118,7 +118,7 @@ def conv2d(name, x, w,
     if padding_method not in {Name.SAME, Name.VALID}:
         raise NotImplementedError("padding_method = {}".format(padding_method))
 
-    if format not in {Name.SAME, Name.VALID}:
+    if format not in {zoo.Name.NCHW, zoo.Name.NHWC}:
         raise NotImplementedError("format = {}".format(format))
 
     if padding is None:
