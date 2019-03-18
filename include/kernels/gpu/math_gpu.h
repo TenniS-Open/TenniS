@@ -43,12 +43,18 @@ namespace ts {
                 const T *x,
                 T* out
             );
+
+            static bool sum(
+                int N,
+                const T *x,
+                T* out
+            );
         };
     }
 }
 
-//extern template class ts::gpu::math<ts::dtype<ts::FLOAT32>::declare>;
-//extern template class ts::gpu::math<ts::dtype<ts::FLOAT64>::declare>;
+extern template class ts::gpu::math<ts::dtype<ts::FLOAT32>::declare>;
+extern template class ts::gpu::math<ts::dtype<ts::FLOAT64>::declare>;
 
 
 #endif //TENSORSTACK_KERNELS_GPU_MATH_GPU_H
