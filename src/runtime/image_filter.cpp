@@ -144,13 +144,24 @@ namespace ts {
         m_impl->m_compiled = false;
     }
 
-    void ImageFilter::resize(int width, int height) {
+    void ImageFilter::resize(int width, int height, ResizeMethod method) {
         auto size_tensor = tensor::build(INT32, {-1, height, width, -1});
         ctx::bind<Graph> _bind_graph(m_impl->m_graph.get());
         auto x = m_impl->m_graph->nodes().back();
         auto size = bubble::data(serial_name(), size_tensor);;
         auto node = bubble::op(serial_name(), name::layer::resize2d(), {x, size});
-        // node->set(name::type, tensor::from(0));  // set resize method
+        node->set(name::type, tensor::from(int32_t(method)));  // set resize method
+        (void)(node);
+        m_impl->m_compiled = false;
+    }
+
+    void ImageFilter::resize(int shot_size, ResizeMethod method) {
+        auto size_tensor = tensor::build(INT32, {shot_size});
+        ctx::bind<Graph> _bind_graph(m_impl->m_graph.get());
+        auto x = m_impl->m_graph->nodes().back();
+        auto node = bubble::op(serial_name(), name::layer::nhwc_scale_resize2d(), {x});
+        node->set(name::size, size_tensor);
+        node->set(name::type, tensor::from(int32_t(method)));  // set resize method
         (void)(node);
         m_impl->m_compiled = false;
     }
@@ -199,5 +210,9 @@ namespace ts {
 
     const Graph &ImageFilter::graph() const {
         return *m_impl->m_graph;
+    }
+
+    void ImageFilter::center_crop(int side) {
+        center_crop(side, side);
     }
 }

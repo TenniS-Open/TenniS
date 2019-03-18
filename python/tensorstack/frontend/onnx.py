@@ -64,6 +64,8 @@ def pooling2d(name, x, ksize, stride, type=zoo.Type.pooling_type.max, format=zoo
     if format != zoo.Name.NCHW:
         raise NotImplementedError("ONNX format = {}".format(format))
 
+    if padding is None:
+        padding = zoo.Default.padding()
     # param
     static_padding = zoo.to_const(padding, "padding")
 

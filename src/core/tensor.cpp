@@ -130,7 +130,10 @@ namespace ts {
         int64_t fixed_index = -1;
         for (size_t i = 0; i < fixed_shape.size(); ++i) {
             if (fixed_shape[i] < 0) {
-                if (fixed_index >= 0) TS_LOG_ERROR << "Can not reshape to: " << to_string(shape) << eject;
+                if (fixed_index >= 0) {
+                    TS_LOG_ERROR << "Can not reshape " << to_string(this->sizes()) << " to " << to_string(shape)
+                                 << eject;
+                }
                 fixed_shape[i] = -1;
                 fixed_index = int64_t(i);
             }
@@ -142,10 +145,12 @@ namespace ts {
         }
 
         Prototype proto(this->dtype(), fixed_shape);
-        TS_AUTO_CHECK(proto.count() == this->count());
+        if (proto.count() != this->count()) {
+            TS_LOG_ERROR << "Can not reshape " << to_string(this->sizes()) << " to " << to_string(shape) << eject;
+        }
         Tensor t = *this;
-        t.m_proto = proto;
-        return t;
+        t.m_proto = std::move(proto);
+        return std::move(t);
     }
 
     void Tensor::pack(const std::vector<Tensor::self> &fields) {
@@ -332,11 +337,107 @@ namespace ts {
     }
 
     bool Tensor::has_shape(const Shape &shape) const {
-        auto this_shape = this->sizes();
+        auto &this_shape = this->sizes();
         if (this_shape.size() != shape.size()) return false;
         for (size_t i = 0; i < shape.size(); ++i) {
             if (shape[i] >= 0 && this_shape[i] != shape[i]) return false;
         }
         return true;
     }
+
+    bool Tensor::has_empty_shape() const {
+        return this->sizes().empty();
+    }
+
+    static inline std::vector<int> flatten_shape(const Tensor &x, int m_dim) {
+        auto need_size = size_t(m_dim + 1);
+        auto x_size = x.sizes().size();
+        if (need_size < x_size) {
+            auto &size = x.sizes();
+            std::vector<int> shape(size.begin(), size.begin() + need_size);
+            shape.back() = std::accumulate(size.begin() + m_dim, size.end(), 1, std::multiplies<int>());
+            return std::move(shape);
+        } else if (need_size > x_size) {
+            std::vector<int> ones(need_size - x_size, 1);
+            auto shape = x.sizes();
+            shape.insert(shape.end(), ones.begin(), ones.end());
+            return std::move(shape);
+        } else {
+            return x.sizes();
+        }
+    }
+
+    Tensor Tensor::flatten(int dim) const {
+        auto fixed_shape = flatten_shape(*this, dim < 0 ? 0 : dim);
+        Prototype proto(this->dtype(), fixed_shape);
+        Tensor t = *this;
+        t.m_proto = proto;
+        return t;
+    }
+
+#define FAIL_SIZE(n) (this_shape.size() != (n))
+#define FAIL_ARG(i) (arg##i >= 0 && this_shape[i] != arg##i)
+
+    bool Tensor::has_shape(int arg0) const {
+        auto &this_shape = this->sizes();
+        return !(FAIL_SIZE(1) || FAIL_ARG(0));
+    }
+
+    bool Tensor::has_shape(int arg0, int arg1) const {
+        auto &this_shape = this->sizes();
+        return !(FAIL_SIZE(2) || FAIL_ARG(0) || FAIL_ARG(1));
+    }
+
+    bool Tensor::has_shape(int arg0, int arg1, int arg2) const {
+        auto &this_shape = this->sizes();
+        return !(FAIL_SIZE(3) || FAIL_ARG(0) || FAIL_ARG(1) || FAIL_ARG(2));
+    }
+
+    bool Tensor::has_shape(int arg0, int arg1, int arg2, int arg3) const {
+        auto &this_shape = this->sizes();
+        return !(FAIL_SIZE(4) || FAIL_ARG(0) || FAIL_ARG(1) || FAIL_ARG(2) || FAIL_ARG(3));
+    }
+
+    bool Tensor::has_shape(int arg0, int arg1, int arg2, int arg3, int arg4) const {
+        auto &this_shape = this->sizes();
+        return !(FAIL_SIZE(5) || FAIL_ARG(0) || FAIL_ARG(1) || FAIL_ARG(2) || FAIL_ARG(3) || FAIL_ARG(4));
+    }
+
+    bool Tensor::has_shape(int arg0, int arg1, int arg2, int arg3, int arg4,
+                           int arg5) const {
+        auto &this_shape = this->sizes();
+        return !(FAIL_SIZE(6) || FAIL_ARG(0) || FAIL_ARG(1) || FAIL_ARG(2) || FAIL_ARG(3) || FAIL_ARG(4) ||
+                 FAIL_ARG(5));
+    }
+
+    bool Tensor::has_shape(int arg0, int arg1, int arg2, int arg3, int arg4,
+                           int arg5, int arg6) const {
+        auto &this_shape = this->sizes();
+        return !(FAIL_SIZE(7) || FAIL_ARG(0) || FAIL_ARG(1) || FAIL_ARG(2) || FAIL_ARG(3) || FAIL_ARG(4) ||
+                 FAIL_ARG(5) || FAIL_ARG(6));
+    }
+
+    bool Tensor::has_shape(int arg0, int arg1, int arg2, int arg3, int arg4,
+                           int arg5, int arg6, int arg7) const {
+        auto &this_shape = this->sizes();
+        return !(FAIL_SIZE(8) || FAIL_ARG(0) || FAIL_ARG(1) || FAIL_ARG(2) || FAIL_ARG(3) || FAIL_ARG(4) ||
+                 FAIL_ARG(5) || FAIL_ARG(6) || FAIL_ARG(7));
+    }
+
+    bool Tensor::has_shape(int arg0, int arg1, int arg2, int arg3, int arg4,
+                           int arg5, int arg6, int arg7, int arg8) const {
+        auto &this_shape = this->sizes();
+        return !(FAIL_SIZE(9) || FAIL_ARG(0) || FAIL_ARG(1) || FAIL_ARG(2) || FAIL_ARG(3) || FAIL_ARG(4) ||
+                 FAIL_ARG(5) || FAIL_ARG(6) || FAIL_ARG(7) || FAIL_ARG(8));
+    }
+
+    bool Tensor::has_shape(int arg0, int arg1, int arg2, int arg3, int arg4,
+                           int arg5, int arg6, int arg7, int arg8, int arg9) const {
+        auto &this_shape = this->sizes();
+        return !(FAIL_SIZE(10) || FAIL_ARG(0) || FAIL_ARG(1) || FAIL_ARG(2) || FAIL_ARG(3) || FAIL_ARG(4) ||
+                 FAIL_ARG(5) || FAIL_ARG(6) || FAIL_ARG(7) || FAIL_ARG(8) || FAIL_ARG(9));
+    }
+
+#undef FAIL_ARG
+#undef FAIL_SIZE
 }

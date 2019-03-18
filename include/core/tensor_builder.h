@@ -80,7 +80,7 @@ namespace ts {
         TS_DEBUG_API Tensor clone(DTYPE dtype, const Tensor &value);
 
         template<typename T>
-        inline Tensor build(DTYPE dtype, T &value) {
+        inline Tensor build(DTYPE dtype, const T &value) {
             return cast(dtype, tensor_builder<T>::build(value));
         }
 
@@ -121,9 +121,14 @@ namespace ts {
         TS_DEBUG_API Tensor load(StreamReader &stream);
 
         TS_DEBUG_API Tensor load(const std::string &filename);
+
+        TS_DEBUG_API void save(StreamWriter &stream, const Tensor &tensor);
+
+        TS_DEBUG_API void save(const std::string &filename, const Tensor &tensor);
     }
 }
 
+// extern template class ts::tensor_builder<ts::dtype<ts::CHAR8>::declare>;
 extern template class ts::tensor_builder<ts::dtype<ts::INT8>::declare>;
 extern template class ts::tensor_builder<ts::dtype<ts::UINT8>::declare>;
 extern template class ts::tensor_builder<ts::dtype<ts::INT16>::declare>;
