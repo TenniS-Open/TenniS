@@ -625,6 +625,15 @@ Note: 这是对应某一个实现的版本。
 参数：  
 - `size` `Int[2]` 内容为 `{width, height}`。
 
+### _nhwc_scale_resize2d(x..device)
+参数：
+- `size` `Int[1]` 或 `Int[2]`
+- `type`: `Enum[linear=0, cubic=1] Default linear` `[Optional]` 图像缩放类型  
+
+说明：  
+如果输入为单个int值，则将输入图像的短边resize到这个int数，长边根据对应比例调整，图像长宽比保持不变。  
+如果输入为(h,w)，且h、w为int，则直接将输入图像resize到(h,w)尺寸，图像的长宽比可能会发生变化
+
 ### _nhwc_channel_swap(x..device) = delete
 
 参数：  
