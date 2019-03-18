@@ -37,6 +37,8 @@ int main(int argc, const char *argv[]) {
     auto subdirs = FindFlodersRecursively(root);
 
     int ok_count = 0;
+    int skip_count = 0;
+    int warning_count = 0;
     int failed_count = 0;
 
     for (auto &subdir : subdirs) {
@@ -50,27 +52,49 @@ int main(int argc, const char *argv[]) {
         } catch (const Exception &e) {
             continue;
         }
-        // run test
-        std::cout << "==================== " << subdir << " on " << computing_device << " ====================" << std::endl;
         // try infer
-        bool ok = false;
+        TestCase::Status status = TestCase::Status::FAILED;
         try {
-            ok = tc.run(computing_device, 100);
+            status = tc.run(computing_device, 1);
         } catch (const Exception &e) {
         }
-        if (ok) {
-            ok_count++;
-            std::cout << "[OK]" << std::endl;
-            // std::cout << tc.log();
-        } else {
-            failed_count++;
-            std::cout << "[FAILED]" << std::endl;
-            std::cout << tc.log();
-
+        // show log
+        switch (status) {
+            case TestCase::Status::OK: {
+                ok_count++;
+                std::cout << "[OK]: " << subdir << " on " << computing_device << std::endl;
+                // std::cout << tc.log();
+                break;
+            }
+            case TestCase::Status::SKIP: {
+                skip_count++;
+                std::cout << "[SKIP]: " << subdir << " on " << computing_device << std::endl;
+                // std::cout << tc.log();
+                break;
+            }
+            case TestCase::Status::WARNING: {
+                warning_count++;
+                std::cout << "-------------------------------------------------------------------------" << std::endl;
+                std::cout << "[WARNING]: " << subdir << " on " << computing_device << std::endl;
+                std::cout << tc.log();
+                std::cout << "-------------------------------------------------------------------------" << std::endl;
+                break;
+            }
+            case TestCase::Status::FAILED: {
+                failed_count++;
+                std::cout << "-------------------------------------------------------------------------" << std::endl;
+                std::cout << "[FAILED]: " << subdir << " on " << computing_device << std::endl;
+                std::cout << tc.log();
+                std::cout << "-------------------------------------------------------------------------" << std::endl;
+                break;
+            }
         }
     }
 
-    TS_LOG_INFO << "[OK]: " << ok_count << ", [FAILED]: " << failed_count;
+    TS_LOG_INFO << "[OK]: " << ok_count <<
+                ", [SKIP]: " << skip_count <<
+                ", [WARNING]: " << warning_count <<
+                ", [FAILED]: " << failed_count;
 
     return 0;
 }

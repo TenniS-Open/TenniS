@@ -109,6 +109,13 @@ namespace ts {
         std::map<int, Tensor> input;
         std::map<int, Tensor> output;
 
+        enum class Status : int {
+            OK,
+            SKIP,
+            WARNING,
+            FAILED,
+        };
+
         // try load test case in files, throw exception if there is an broken case
         bool load(const std::string &root, const std::vector<std::string> &filenames) {
             TestCase tc;
@@ -210,26 +217,39 @@ namespace ts {
             return true;
         }
 
-        bool run(const ComputingDevice &device, int loop_count = 100) {
+        Status run(const ComputingDevice &device, int loop_count = 100) {
             m_log.str("");
 
             if (op.empty()) {
                 m_log << "[ERROR]: " << "operator is empty." << std::endl;
-                return false;
+                return Status::FAILED;
             }
 
-            Workbench bench(device);
+            std::shared_ptr<Workbench> bench_ptr;
+            try {
+                bench_ptr = std::make_shared<Workbench>(device);   
+            } catch (const Exception &e) {
+                TS_LOG_ERROR << e.what();
+                return Status::FAILED;
+            }
+    
+            Workbench &bench = *bench_ptr;
 
             Bubble bubble(op, op, output_count);
             for (auto &param_pair: param) {
                 bubble.set(param_pair.first, param_pair.second);
             }
 
-            auto built_op = bench.offline_create(bubble, true);
+            Operator::shared built_op;
+            try {
+                built_op = bench.offline_create(bubble, true);
+            } catch (const Exception &e) {
+            }
 
             if (built_op == nullptr) {
-                m_log << "[ERROR]: " << "Not supported operator \"" << op << "\" for " << device << std::endl;
-                return false;
+                m_log << "[SKIP]: " << "Not supported operator \"" << op << "\" for " << device << std::endl;
+                return Status::SKIP;
+            } else {
             }
 
             std::vector<Tensor> input_vector(input_count);
@@ -250,7 +270,7 @@ namespace ts {
 
             if (!check_output(output_vector, output_protos)) {
                 m_log << "Infer:  " << plot_line(input_vector, output_protos) << std::endl;
-                return false;
+                return Status::FAILED;
             }
 
             std::vector<Tensor> run_output;
@@ -258,30 +278,35 @@ namespace ts {
 
             if (!check_output(output_vector, run_output)) {
                 m_log << "Run:    " << plot_line(input_vector, run_output) << std::endl;
-                return false;
+                return Status::FAILED;
             }
 
-            static const float MAX_MAX = 1e-4;
-            static const float MAX_AVG = 1e-5;
+            static const float MAX_MAX = 1e-4f;
+            static const float MAX_AVG = 1e-5f;
 
             // check diff
-            bool succeed = true;
+            Status succeed = Status::OK;
             float max, avg;
             for (int i = 0; i < output_count; ++i) {
                 auto &x = output_vector[i];
                 auto &y = run_output[i];
                 diff(x, y, max, avg);
                 if (max > MAX_MAX || avg > MAX_AVG)  {
-                    m_log << "[FAILED] Diff output " << i << ": max = " << max << ", " << "avg = " << avg << std::endl;
-                    succeed = false;
+                    if (max < MAX_MAX * 10 && avg < MAX_AVG * 10) {
+                        m_log << "[WARNING] Diff output " << i << ": max = " << max << ", " << "avg = " << avg << std::endl;
+                        if (succeed != Status::FAILED) succeed = Status::WARNING;
+                    } else {
+                        m_log << "[FAILED] Diff output " << i << ": max = " << max << ", " << "avg = " << avg << std::endl;
+                        succeed = Status::FAILED;
+                    }
                 } else {
                     m_log << "[OK] Diff output " << i << ": max = " << max << ", " << "avg = " << avg << std::endl;
                 }
             }
 
-            if (!succeed) return false;
+            if (succeed != Status::OK) return succeed;
 
-            return true;
+            return Status::OK;
         }
 
         std::string log() { return m_log.str(); }
