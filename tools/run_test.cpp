@@ -52,38 +52,40 @@ int main(int argc, const char *argv[]) {
         } catch (const Exception &e) {
             continue;
         }
-        // run test
-        std::cout << "==================== " << subdir << " on " << computing_device << " ===================="
-                  << std::endl;
         // try infer
         TestCase::Status status = TestCase::Status::FAILED;
         try {
             status = tc.run(computing_device, 1);
         } catch (const Exception &e) {
         }
+        // show log
         switch (status) {
             case TestCase::Status::OK: {
                 ok_count++;
-                std::cout << "[OK]" << std::endl;
+                std::cout << "[OK]: " << subdir << " on " << computing_device << std::endl;
                 // std::cout << tc.log();
                 break;
             }
             case TestCase::Status::SKIP: {
                 skip_count++;
-                std::cout << "[SKIP]" << std::endl;
+                std::cout << "[SKIP]: " << subdir << " on " << computing_device << std::endl;
                 // std::cout << tc.log();
                 break;
             }
             case TestCase::Status::WARNING: {
                 warning_count++;
-                std::cout << "[WARNING]" << std::endl;
-                // std::cout << tc.log();
+                std::cout << "-------------------------------------------------------------------------" << std::endl;
+                std::cout << "[WARNING]: " << subdir << " on " << computing_device << std::endl;
+                std::cout << tc.log();
+                std::cout << "-------------------------------------------------------------------------" << std::endl;
                 break;
             }
             case TestCase::Status::FAILED: {
                 failed_count++;
-                std::cout << "[FAILED]" << std::endl;
+                std::cout << "-------------------------------------------------------------------------" << std::endl;
+                std::cout << "[FAILED]: " << subdir << " on " << computing_device << std::endl;
                 std::cout << tc.log();
+                std::cout << "-------------------------------------------------------------------------" << std::endl;
                 break;
             }
         }

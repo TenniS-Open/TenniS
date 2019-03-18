@@ -225,18 +225,31 @@ namespace ts {
                 return Status::FAILED;
             }
 
-            Workbench bench(device);
+            std::shared_ptr<Workbench> bench_ptr;
+            try {
+                bench_ptr = std::make_shared<Workbench>(device);   
+            } catch (const Exception &e) {
+                TS_LOG_ERROR << e.what();
+                return Status::FAILED;
+            }
+    
+            Workbench &bench = *bench_ptr;
 
             Bubble bubble(op, op, output_count);
             for (auto &param_pair: param) {
                 bubble.set(param_pair.first, param_pair.second);
             }
 
-            auto built_op = bench.offline_create(bubble, true);
+            Operator::shared built_op;
+            try {
+                built_op = bench.offline_create(bubble, true);
+            } catch (const Exception &e) {
+            }
 
             if (built_op == nullptr) {
-                m_log << "[ERROR]: " << "Not supported operator \"" << op << "\" for " << device << std::endl;
+                m_log << "[SKIP]: " << "Not supported operator \"" << op << "\" for " << device << std::endl;
                 return Status::SKIP;
+            } else {
             }
 
             std::vector<Tensor> input_vector(input_count);
