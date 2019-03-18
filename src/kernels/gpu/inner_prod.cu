@@ -110,8 +110,5 @@ namespace ts {
 
 using namespace ts;
 using namespace gpu;
-#ifdef TS_USE_CUBLAS
 TS_REGISTER_OPERATOR(InnerProd, CUBLAS, name::layer::inner_prod())
-#else
 TS_REGISTER_OPERATOR(InnerProd, GPU, name::layer::inner_prod())
-#endif
