@@ -79,6 +79,10 @@ namespace ts {
 
         const Tensor &output(int slot) const;
 
+        int input_count() const;
+
+        int output_count() const;
+
         // clone an Workbench which can run
         Workbench::shared clone() const;
 

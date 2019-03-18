@@ -17,36 +17,6 @@
 #include <cstring>
 #include <map>
 
-#include <kernels/cpu/add.h>
-#include <kernels/cpu/add_bias.h>
-#include <kernels/cpu/batch_norm.h>
-#include <kernels/cpu/batch_scale.h>
-#include <kernels/cpu/concat.h>
-#include <kernels/cpu/conv2d.h>
-//#include <kernels/cpu/conv2d_v2.h>
-#include <kernels/cpu/depthwise_conv2d.h>
-//#include <kernels/cpu/depthwise_conv2d_v2.h>
-#include <kernels/cpu/dimshuffle.h>
-#include <kernels/cpu/div.h>
-#include <kernels/cpu/flatten.h>
-#include <kernels/cpu/fused_batch_norm.h>
-#include <kernels/cpu/inner_prod.h>
-#include <kernels/cpu/mul.h>
-#include <kernels/cpu/pad.h>
-#include <kernels/cpu/pooling2d.h>
-#include <kernels/cpu/pooling2d_v2.h>
-#include <kernels/cpu/prelu.h>
-#include <kernels/cpu/prewhiten.h>
-#include <kernels/cpu/relu.h>
-#include <kernels/cpu/relu_max.h>
-#include <kernels/cpu/reshape.h>
-#include <kernels/cpu/resize2d.h>
-#include <kernels/cpu/sigmoid.h>
-#include <kernels/cpu/softmax.h>
-#include <kernels/cpu/sub.h>
-#include <kernels/cpu/to_float.h>
-#include <kernels/cpu/transpose.h>
-#include "backend/mxnet/pooling2d_padding.h"
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/opencv.hpp>
@@ -55,37 +25,6 @@
 #include "backend/name.h"
 
 using namespace ts;
-using namespace ts::mxnet;
-using namespace cpu;
-TS_REGISTER_OPERATOR(Add, CPU, name::layer::add())
-TS_REGISTER_OPERATOR(AddBias, ts::CPU, ts::name::layer::add_bias())
-TS_REGISTER_OPERATOR(BatchNorm, ts::CPU, ts::name::layer::batch_norm())
-TS_REGISTER_OPERATOR(BatchScale, ts::CPU, ts::name::layer::batch_scale())
-TS_REGISTER_OPERATOR(Conv2D, ts::CPU, ts::name::layer::conv2d())
-//TS_REGISTER_OPERATOR(Conv2d_V2, ts::CPU, ts::name::layer::conv2d_v2())
-//TS_REGISTER_OPERATOR(Depthwise_Conv2d_V2, ts::CPU, ts::name::layer::depthwise_conv2d_v2())
-TS_REGISTER_OPERATOR(Dimshuffle, ts::CPU, ts::name::layer::dimshuffle())
-TS_REGISTER_OPERATOR(Div, ts::CPU, ts::name::layer::div())
-TS_REGISTER_OPERATOR(Flatten, ts::CPU, ts::name::layer::flatten())
-TS_REGISTER_OPERATOR(FusedBatchNorm, ts::CPU, ts::name::layer::fused_batch_norm())
-TS_REGISTER_OPERATOR(InnerProd, ts::CPU, ts::name::layer::inner_prod())
-TS_REGISTER_OPERATOR(Mul, ts::CPU, ts::name::layer::mul())
-TS_REGISTER_OPERATOR(Pad, ts::CPU, ts::name::layer::pad())
-TS_REGISTER_OPERATOR(Reshape, ts::CPU, ts::name::layer::reshape())
-TS_REGISTER_OPERATOR(Resize2D, ts::CPU, ts::name::layer::resize2d())
-TS_REGISTER_OPERATOR(ToFloat, ts::CPU, ts::name::layer::to_float())
-TS_REGISTER_OPERATOR(Transpose, ts::CPU, ts::name::layer::transpose())
-TS_REGISTER_OPERATOR(Pooling2DV2, ts::CPU, name::layer::pooling2d_v2())
-TS_REGISTER_OPERATOR(Pooling2D, ts::CPU, name::layer::pooling2d())
-TS_REGISTER_OPERATOR(PReLU, ts::CPU, name::layer::prelu())
-TS_REGISTER_OPERATOR(ReLU, ts::CPU, name::layer::relu())
-TS_REGISTER_OPERATOR(ReLUMax, ts::CPU, name::layer::relu_max())
-TS_REGISTER_OPERATOR(Sigmoid, ts::CPU, name::layer::sigmoid())
-TS_REGISTER_OPERATOR(Concat, ts::CPU, name::layer::concat())
-TS_REGISTER_OPERATOR(Softmax, ts::CPU, name::layer::softmax())
-TS_REGISTER_OPERATOR(DepthwiseConv2D, ts::CPU, ts::name::layer::depthwise_conv2d())
-TS_REGISTER_OPERATOR(PreWhiten, ts::CPU, "prewhiten")
-TS_REGISTER_OPERATOR(Pooling2dPadding, CPU, name::layer::mx_pooling2d_padding())
 
 namespace ts {
     Node block(const std::string &prefix, Node in) {
