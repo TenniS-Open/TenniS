@@ -80,7 +80,7 @@ namespace ts {
         }
 
         template<typename T>
-        __global__ static void abs_sum_kernel(const int N, const T *x, T * z) {
+        __global__ static void abs_sum_kernel(const int N, T *x, T * z) {
             int index = blockDim.x * blockIdx.x + threadIdx.x;
 
             __shared__ T cache[CUDA_THREAD_NUM];
@@ -127,7 +127,7 @@ namespace ts {
         }
 
         template<typename T>
-        __global__ static void sum_kernel(const int N, const T *x, T * z) {
+        __global__ static void sum_kernel(const int N, T *x, T * z) {
             int index = blockDim.x * blockIdx.x + threadIdx.x;
 
             __shared__ T cache[CUDA_THREAD_NUM];
@@ -178,7 +178,7 @@ namespace ts {
             int cache_index = threadIdx.x;
             T temp = T(0);
             for (; index < N; index += blockDim.x * gridDim.x) {
-                temp += x[index] * y[index];
+                temp += (x[index] * y[index]);
             }
             cache[cache_index] = temp;
 
@@ -198,7 +198,7 @@ namespace ts {
                 __syncthreads();
             }
 
-            for (int i = floor_pow / 2 / 2; i > 0; i /= 2)
+            for (int i = floor_pow / 2; i > 0; i /= 2)
             {
                 if (cache_index < i)
                 {
@@ -213,13 +213,17 @@ namespace ts {
 
         template<typename T>
         bool math<T>::dot(const int N, const T *x, const T *y, T *z) {
-            int dot_grid_size = CUDA_BLOCK(N, CUDA_THREAD_NUM);
+            int grid_size = CUDA_BLOCK(N, CUDA_THREAD_NUM);
             auto &context = ctx::ref<DeviceContext>();
             int device_id = context.memory_device.id();
-            T* tmp_z = (T*)gpu_allocator(device_id, dot_grid_size*sizeof(T),nullptr,0);
+            T* tmp_z = (T*)gpu_allocator(device_id, grid_size *sizeof(T),nullptr,0);
             dot_kernel<T> << < CUDA_BLOCK(N, CUDA_THREAD_NUM), CUDA_THREAD_NUM >> > (N,x,y,tmp_z);
-            int sum_thread_size = dot_grid_size;
-            sum_kernel<T> << <1, sum_thread_size >> > (dot_grid_size,tmp_z,z);
+            while (grid_size > CUDA_THREAD_NUM) {
+                int len = grid_size;
+                grid_size = CUDA_BLOCK(grid_size, CUDA_THREAD_NUM);
+                sum_kernel<T> << <grid_size, CUDA_THREAD_NUM >> > (len, tmp_z, tmp_z);
+            }
+            sum_kernel<T> << <1, grid_size >> > (grid_size,tmp_z,z);
             return true;
         }
 
@@ -283,15 +287,20 @@ namespace ts {
         }
 
         template<typename T>
-        bool math<T>::asum(int N, const T *x,T * out) {     
+        bool math<T>::asum(int N, const T *x, T * out) {
             auto &context = ctx::ref<DeviceContext>();
             int device_id = context.memory_device.id();
             int grid_size = CUDA_BLOCK(N, CUDA_THREAD_NUM);
             int block_size = CUDA_THREAD_NUM;
             //unsigned int shared_size = block_size * sizeof(T);
-            T* tmp_out = (T*)gpu_allocator(device_id, grid_size*sizeof(T), nullptr, 0);
-            abs_sum_kernel<T> << < grid_size, block_size >> > (N, x, tmp_out);
-            abs_sum_kernel<T> << <1, grid_size >> > (grid_size,tmp_out,out);
+            T* tmp_out = (T*)gpu_allocator(device_id, grid_size * sizeof(T), nullptr, 0);
+            abs_sum_kernel<T> << < grid_size, block_size >> > (N, const_cast<T*>(x), tmp_out);
+            while (grid_size > CUDA_THREAD_NUM) {
+                int len = grid_size;
+                grid_size = CUDA_BLOCK(grid_size, CUDA_THREAD_NUM);
+                abs_sum_kernel<T> << < grid_size, block_size >> > (len, tmp_out, tmp_out);
+            }
+            abs_sum_kernel<T> << <1, grid_size >> > (grid_size, tmp_out, out);
             return true;
         }
 
