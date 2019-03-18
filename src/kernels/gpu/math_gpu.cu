@@ -304,6 +304,24 @@ namespace ts {
             return true;
         }
 
+        template<typename T>
+        bool math<T>::sum(int N, const T *x, T * out) {
+            auto &context = ctx::ref<DeviceContext>();
+            int device_id = context.memory_device.id();
+            int grid_size = CUDA_BLOCK(N, CUDA_THREAD_NUM);
+            int block_size = CUDA_THREAD_NUM;
+            //unsigned int shared_size = block_size * sizeof(T);
+            T* tmp_out = (T*)gpu_allocator(device_id, grid_size * sizeof(T), nullptr, 0);
+            sum_kernel<T> << < grid_size, block_size >> > (N, const_cast<T*>(x), tmp_out);
+            while (grid_size > CUDA_THREAD_NUM) {
+                int len = grid_size;
+                grid_size = CUDA_BLOCK(grid_size, CUDA_THREAD_NUM);
+                abs_sum_kernel<T> << < grid_size, block_size >> > (len, tmp_out, tmp_out);
+            }
+            sum_kernel<T> << <1, grid_size >> > (grid_size, tmp_out, out);
+            return true;
+        }
+
     }
 }
 
