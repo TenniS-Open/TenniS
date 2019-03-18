@@ -155,13 +155,10 @@ namespace ts {
                 CublasDevice* handle = reinterpret_cast<CublasDevice*>(context.handle);
                 auto cublas_handle = handle->get();
 
-                std::cout << "---------use cublas conv----" << std::endl;
                 cublas::math<T>::gemm(cublas_handle, cublas::NoTrans, cublas::NoTrans,
                     weight_shape[0], conv_out_spatial_dim, kernel_dims, 1, pweight, col_buffer, 0, poutput);
 
 #else
-
-                std::cout << "---------use cuda conv----" << std::endl;
 
                 gpu_conv2d_compute_run_kernel<T> <<<blocksize, threadsize>>>
                       (weight_shape[0], kernel_dims,conv_out_spatial_dim, pweight, col_buffer, poutput);
