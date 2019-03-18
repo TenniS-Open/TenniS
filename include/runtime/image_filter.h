@@ -17,6 +17,11 @@ namespace ts {
 
         using shared = std::shared_ptr<self>;
 
+        enum class ResizeMethod : int32_t {
+            BILINEAR = 0,
+            BICUBIC = 1,
+        };
+
         ImageFilter();
 
         explicit ImageFilter(const ComputingDevice &device);
@@ -33,9 +38,13 @@ namespace ts {
 
         void div_std(const std::vector<float> &std);
 
-        void resize(int width, int height);
+        void resize(int width, int height, ResizeMethod method = ResizeMethod::BILINEAR);
+
+        void resize(int short_side, ResizeMethod method = ResizeMethod::BILINEAR);
 
         void center_crop(int width, int height);
+
+        void center_crop(int side);
 
         void channel_swap(const std::vector<int> &shuffle);
 

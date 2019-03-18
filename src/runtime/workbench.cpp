@@ -261,6 +261,14 @@ namespace ts {
         return m_outputs[slot];
     }
 
+    int Workbench::input_count() const {
+        return int(m_inputs.size());
+    }
+
+    int Workbench::output_count() const {
+        return int(m_outputs.size());
+    }
+
     const Tensor &Workbench::input(int slot) const {
         if (slot < 0 || size_t(slot) >= m_inputs.size()) {
             TS_LOG_ERROR << "Input index out of range. with index=" << slot << eject;

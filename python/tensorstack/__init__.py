@@ -15,4 +15,4 @@ from . import zoo
 from . import frontend
 from . import dtype
 
-__version__ = "beta"
+__version__ = "0.0.9"

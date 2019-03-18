@@ -11,7 +11,17 @@ namespace ts {
     namespace base {
         class Flatten : public NewShape {
         public:
-            Shape newshape(const Tensor &x) override;
+            using self = Flatten;
+            using supper = NewShape;
+
+            Flatten();
+
+            void init() override;
+
+            Shape newshape(const Tensor &x) final;
+
+        private:
+            int m_dim = 1;
         };
     }
 }

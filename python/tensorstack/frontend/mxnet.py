@@ -51,6 +51,8 @@ def pooling2d(name, x, ksize, stride, type=zoo.Type.pooling_type.max, format=zoo
               valid=False):
     assert isinstance(x, Node)
 
+    if padding is None:
+        padding = zoo.Default.padding()
     # param
     static_padding = zoo.to_const(padding, "padding")
 
