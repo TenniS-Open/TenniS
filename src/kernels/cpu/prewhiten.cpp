@@ -15,8 +15,7 @@ namespace ts {
 			int count = out.count();
 			std::memcpy(output_data, input_data, count * sizeof(T));
 
-			double mean = 0;
-			double std_dev = 0;
+			
 			T *at = nullptr;
 
 			// fot batch
@@ -25,6 +24,8 @@ namespace ts {
 			auto batch_outout_data = output_data;
 
 			for (int n = 0; n < batch; ++n) {
+                double mean = 0;
+                double std_dev = 0;
 				at = batch_outout_data;
 				for (size_t i = 0; i < count; ++i, ++at) mean += *at;
 				mean /= count;
