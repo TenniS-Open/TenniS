@@ -27,29 +27,29 @@ namespace ts {
             int tx = threadIdx.x;
             int ty = threadIdx.y;
 
-            int Row = by * blockDim.y + ty;
-            int Col = bx * blockDim.x + tx;
+            int Row = by * TRANS_BLOCK_DIM + ty;
+            int Col = bx * TRANS_BLOCK_DIM + tx;
 
             T comp = 0;
             T Cvalue = 0;
 
-            for (int t=0; t<gridDim.x; ++t) {
-                if (Row < m && t * blockDim.y + tx < n)
-                    ds_A[ty][tx] = A[Row*n+t*blockDim.x+tx];
+            for (int t=0; t<(n-1)/TRANS_BLOCK_DIM+1; ++t) {
+                if (Row < m && t * TRANS_BLOCK_DIM + tx < n)
+                    ds_A[tx][ty] = A[Row*n+t*TRANS_BLOCK_DIM+tx];
                 else
-                    ds_A[ty][tx] = 0.0;
+                    ds_A[tx][ty] = 0.0;
 
-                if (t * blockDim.y + ty < n && Col < k)
-                    ds_B[ty][tx] = B[(t*blockDim.y + ty)*k+Col];
+                if (t * TRANS_BLOCK_DIM + ty < n && Col < k)
+                    ds_B[tx][ty] = B[(t*TRANS_BLOCK_DIM + ty)*k+Col];
                 else
-                    ds_B[ty][tx] = 0.0;
+                    ds_B[tx][ty] = 0.0;
 
                 __syncthreads();
 
-                for (int i = 0; i < blockDim.x; ++i) {
-                    //Cvalue += ds_A[ty][i] * ds_B[i][tx];
+                for (int i = 0; i < TRANS_BLOCK_DIM; ++i) {
+                    //Cvalue += ds_A[i][ty] * ds_B[tx][i];
                     T t;
-                    comp -= ds_A[ty][i] * ds_B[i][tx];
+                    comp -= ds_A[i][ty] * ds_B[tx][i];
                     t = Cvalue - comp;
                     comp = (t - Cvalue) + comp;
                     Cvalue = t;
@@ -84,9 +84,10 @@ namespace ts {
                 lhs_shape[0], rhs_shape[1], lhs_shape[1], 1,psrc, lhs_shape[1], pdot, rhs_shape[1], 0,pdst, rhs_shape[1]);*/
             
 #else
-            dim3 blocksize(CUDA_BLOCK(rhs_shape[1], TRANS_BLOCK_DIM), CUDA_BLOCK(lhs_shape[0], TRANS_BLOCK_DIM), 1);
-            dim3 threadsize(TRANS_BLOCK_DIM, TRANS_BLOCK_DIM, 1);
-            gpu_inner_prod_compute_run_kernel<T> << <blocksize, threadsize >> > (lhs_shape[0], lhs_shape[1], rhs_shape[1], psrc, pdot, pdst);
+            dim3 blocksize(CUDA_BLOCK(rhs_shape[1], TRANS_BLOCK_DIM), CUDA_BLOCK(lhs_shape[0], TRANS_BLOCK_DIM),1);
+            dim3 threadsize(TRANS_BLOCK_DIM, TRANS_BLOCK_DIM,1);
+            gpu_inner_prod_compute_run_kernel<T> <<<blocksize, threadsize>>> (lhs_shape[0], lhs_shape[1], rhs_shape[1], psrc, pdot, pdst);
+
 #endif
         }
 
