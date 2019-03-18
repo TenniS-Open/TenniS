@@ -448,10 +448,13 @@ padding_type为black时，超出可计算区域的结果为0。
 输出: `y`: `Tensor`  
 
 参数：  
-无
+- `dim`: `Int` `[Optional] Default=1`
 
 说明：  
 输入 `x` 的 `shape` 为 `[1, 20, 3, 3]`，输出的 `shape` 为 `[1, 180]`。
+在对应 `dim` 位置进行拉伸。
+输入 `x` 的 `shape` 为 `[1, 20, 3, 3]`，`dim = 2`，输出的 `shape` 为 `[1, 20, 9]`。
+输入 `x` 的 `shape` 为 `[2, 3]`，`dim = 2`，输出的 `shape` 为 `[2, 3, 1]`。
 
 ## to_float(x) -> y
 描述：把输入类型，调整成 `float` 类型。  
@@ -589,6 +592,24 @@ to tensor A * B);
 说明：  
 假如shape小于x的大小，则在shape高位补充-1，直到维度相同，再进行调整。
 
+### shape_index_patch(x..device, pos..device) -> y..device
+描述：根据pos在x上进行采样。  
+输入：`x`: `Tensor4D` shape 为 `[number, channels, height, width]`  
+输入：`pos`: `Tensor4D` shape 为 `[number, landmark, 1, 1]`  
+
+输出：`y`: `Tensor5D` shape 为 `[number, channels, x_patch_h, landmark / 2, x_patch_w]`
+其中 `x_patch_h = int(origin_patch.h * x.height / origin.h + 0.5)`,  
+`x_patch_w = int(origin_patch.w * x.width / origin.w + 0.5)`,  
+Note: 这是对应某一个实现的版本。
+
+
+参数：  
+- `origin_patch`: `Int[2]{h, w}`  
+- `origin`: `Int[2]{h, w}`  
+
+说明：  
+`pos.number == x.number`，根据pos表示的位置信息，在对应位置crop出`[x_patch_h, x_patch_w]`大小。
+
 ### _nhwc_resize2d(x..device) = delete
 
 参数：  
@@ -604,6 +625,15 @@ to tensor A * B);
 参数：  
 - `size` `Int[2]` 内容为 `{width, height}`。
 
+### _nhwc_scale_resize2d(x..device)
+参数：
+- `size` `Int[1]` 或 `Int[2]`
+- `type`: `Enum[linear=0, cubic=1] Default linear` `[Optional]` 图像缩放类型  
+
+说明：  
+如果输入为单个int值，则将输入图像的短边resize到这个int数，长边根据对应比例调整，图像长宽比保持不变。  
+如果输入为(h,w)，且h、w为int，则直接将输入图像resize到(h,w)尺寸，图像的长宽比可能会发生变化
+
 ### _nhwc_channel_swap(x..device) = delete
 
 参数：  
@@ -613,9 +643,39 @@ to tensor A * B);
 
 参数：无
 
-### tf_conv2d_padding = delete
+### _tf_conv2d_padding(x..device, w..device) -> dynamic_padding
 
-### tf_pooling2d_padding = delete
+参数：
+- `format` `String` 为 `NCHW` 或者 `NHWC`
+- `padding_method` `String` `[Required]` 表示 `padding` 方式为`SAME` 或 `VALID`
+- `stride` `Int[4]` `batch` 和 `channels` 的默认为 `1`
+在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+- `dilation` `Int[4]` `batch` 和 `channels` 的默认为 `1`
+在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+- `padding` `Int[4, 2]` `[Optional]` `[Default] Zero padding` 静态进行padding的数据
+在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+
+### _tf_pooling2d_padding（x, ksize, stride) -> dynamic_padding
+描述：  
+- `x` `Tensor4D` 预计要进行 padding 的数据
+- `ksize` `Int[4]`
+在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+- `stride` `Int[4]`
+在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+- `dynamic_padding`  `Int[4, 2]`输出的padding形式，为4x2维
+
+参数：  
+- `format` `String` 为 `NCHW` 或者 `NHWC`
+- `padding_method` `String` `[Required]` 表示 `padding` 方式为`SAME` 或 `VALID`
+- `padding` `Int[4, 2]` `[Optional]` `[Default] Zero padding` 静态进行padding的数据
+在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+
 
 ### mx_conv2d_padding = delete
 

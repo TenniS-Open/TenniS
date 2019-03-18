@@ -60,6 +60,13 @@ namespace ts {
             TS_DEBUG_API const string &global_pooling2d() TS_NOEXCEPT;
             // 2019-03-12
             TS_DEBUG_API const string &limit() TS_NOEXCEPT;
+            // 2019-03-14
+            TS_DEBUG_API const string &shape_index_patch() TS_NOEXCEPT;
+            // 2019-03-17
+            TS_DEBUG_API const string &tf_pooling2d_padding() TS_NOEXCEPT;
+            TS_DEBUG_API const string &tf_conv2d_padding() TS_NOEXCEPT;
+            // 2019-03-18
+            TS_DEBUG_API const string &nhwc_scale_resize2d() TS_NOEXCEPT;
         }
 
         namespace typo {
@@ -105,6 +112,11 @@ namespace ts {
         TS_DEBUG_API extern string beta;
         TS_DEBUG_API extern string transA;
         TS_DEBUG_API extern string transB;
+
+        TS_DEBUG_API extern string padding_method;
+        TS_DEBUG_API extern string SAME;
+
+
     }
 
 }

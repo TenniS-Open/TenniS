@@ -16,11 +16,11 @@
 namespace ts {
     namespace cpu {
         template <typename T>
-        static inline void reduce_operator(T &x, T lhs, T rhs) {
+        inline void reduce_operator(T &x, T lhs, T rhs) {
             x = lhs * rhs;
         }
         template <typename T>
-        static inline void reduce_operator(T &x, T y) {
+        inline void reduce_operator(T &x, T y) {
             x *= y;
         }
 
@@ -52,56 +52,57 @@ namespace ts {
         }
 
         template<typename T>
-        static inline void compute_run_scalar(const T *plhs, T scalar, T *pout, size_t count) {
+        static inline void compute_run_scalar(const T *plhs, T scalar, T *pout, int count) {
             // this is CPU operator, so just using memcpy
             if (pout != plhs) std::memcpy(pout, plhs, count * sizeof(T));
 
-            for (size_t i = 0; i < count; ++i) {
+            for (int i = 0; i < count; ++i) {
                 reduce_operator(pout[i], scalar);
             }
         }
 
-	template<>
-	inline void compute_run_scalar(const float *plhs, float scalar, float *pout, size_t count) {
+        template<>
+        inline void compute_run_scalar(const float *plhs, float scalar, float *pout, int count) {
 //#ifdef TS_USE_OPENMP
 //			//#pragma omp parallel for num_threads(1)
 //#pragma omp parallel for num_threads(openmp_threads(count))
 //#endif
-		for (int i = 0; i < count - 3; i += 4) {
-			float32x4 pout_x4 = float32x4(&plhs[i]) * float32x4(scalar);
-			pout_x4.store(&pout[i]);
-		}
-		for (int i = count / 4 * 4; i < count; ++i)
-		{
-			reduce_operator(pout[i], plhs[i], scalar);
-		}
-	}
+            float32x4 scalarx4(scalar);
+            for (int i = 0; i < count - 3; i += 4) {
+                float32x4 pout_x4 = float32x4(&plhs[i]) * scalarx4;
+                pout_x4.store(&pout[i]);
+            }
+            for (int i = count / 4 * 4; i < count; ++i)
+            {
+                reduce_operator(pout[i], plhs[i], scalar);
+            }
+        }
 
         template<typename T>
-        static inline void compute_run_same_shape(const T *plhs, const T *prhs, T *pout, size_t count) {
+        static inline void compute_run_same_shape(const T *plhs, const T *prhs, T *pout, int count) {
             // this is CPU operator, so just using memcpy
             if (pout != plhs) std::memcpy(pout, plhs, count * sizeof(T));
 
-            for (size_t i = 0; i < count;++i) {
+            for (int i = 0; i < count;++i) {
                 reduce_operator(pout[i], prhs[i]);
             }
         }
 
-	template<>
-	inline void compute_run_same_shape(const float *plhs, const float *prhs, float *pout, size_t count) {
+        template<>
+        inline void compute_run_same_shape(const float *plhs, const float *prhs, float *pout, int count) {
 //#ifdef TS_USE_OPENMP
-//			//#pragma omp parallel for num_threads(1)
+////#pragma omp parallel for num_threads(1)
 //#pragma omp parallel for num_threads(openmp_threads(count))
 //#endif
-		for (int i = 0; i < count - 3; i += 4) {
-			float32x4 pout_x4 = float32x4(&plhs[i]) * float32x4(&prhs[i]);
-			pout_x4.store(&pout[i]);
-		}
-		for (int i = count / 4 * 4; i < count; ++i)
-		{
-			reduce_operator(pout[i], plhs[i], prhs[i]);
-		}
-	}
+            for (int i = 0; i < count - 3; i += 4) {
+                float32x4 pout_x4 = float32x4(&plhs[i]) * float32x4(&prhs[i]);
+                pout_x4.store(&pout[i]);
+            }
+            for (int i = count / 4 * 4; i < count; ++i)
+            {
+                reduce_operator(pout[i], plhs[i], prhs[i]);
+            }
+        }
 
         template<typename T>
         static inline void compute_run_scalar(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
@@ -111,7 +112,7 @@ namespace ts {
 
             auto scalar = prhs[0];
 
-            compute_run_scalar(plhs, scalar, pout, size_t(out.count()));
+            compute_run_scalar(plhs, scalar, pout, out.count());
         }
 
 
@@ -121,7 +122,7 @@ namespace ts {
             auto prhs = rhs.data<T>();
             auto pout = out.data<T>();
 
-            compute_run_same_shape(plhs, prhs, pout, size_t(out.count()));
+            compute_run_same_shape(plhs, prhs, pout, out.count());
         }
 
 
@@ -155,12 +156,11 @@ namespace ts {
                     for (int c = 0; c < channels; ++c) {
                         int offset = (n * channels + c) * count;
                         auto local_pout = pout + offset;
-                        compute_run_scalar(local_pout, prhs[channels], local_pout, size_t(count));
+                        compute_run_scalar(local_pout, prhs[c], local_pout, count);
                     }
                 }
             }
         }
-
 
         void Mul::reduce_with_broadcast(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
             // Notice: the all tensor' memory device are CPU, as given in running_memory_device
@@ -263,4 +263,5 @@ namespace ts {
 using namespace ts;
 using namespace cpu;
 TS_REGISTER_OPERATOR(Mul, CPU, name::layer::mul())
+
 
