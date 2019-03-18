@@ -8,6 +8,7 @@
 #include "device_launch_parameters.h"
 #include <cuda_runtime.h>
 
+
 #include "kernels/gpu/cublas_device.h"
 #include "core/device_context.h"
 #include "utils/ctxmgr_lite.h"
@@ -61,29 +62,29 @@ namespace ts {
             int tx = threadIdx.x;
             int ty = threadIdx.y;
 
-            int Row = by * blockDim.y + ty;
-            int Col = bx * blockDim.x + tx;
+            int Row = by * TRANS_BLOCK_DIM + ty;
+            int Col = bx * TRANS_BLOCK_DIM + tx;
 
             T comp = 0;
             T Cvalue = 0;
 
-            for (int t=0; t<gridDim.x; ++t) {
-                if (Row < m && t * blockDim.y + tx < n)
-                    ds_A[ty][tx] = A[Row*n+t*blockDim.x+tx];
+            for (int t=0; t<(n-1)/TRANS_BLOCK_DIM+1; ++t) {
+                if (Row < m && t * TRANS_BLOCK_DIM + tx < n)
+                    ds_A[tx][ty] = A[Row*n+t*TRANS_BLOCK_DIM+tx];
                 else
-                    ds_A[ty][tx] = 0.0;
+                    ds_A[tx][ty] = 0.0;
 
-                if (t * blockDim.y + ty < n && Col < k)
-                    ds_B[ty][tx] = B[(t*blockDim.y + ty)*k+Col];
+                if (t * TRANS_BLOCK_DIM + ty < n && Col < k)
+                    ds_B[tx][ty] = B[(t*TRANS_BLOCK_DIM + ty)*k+Col];
                 else
-                    ds_B[ty][tx] = 0.0;
+                    ds_B[tx][ty] = 0.0;
 
                 __syncthreads();
 
-                for (int i = 0; i < blockDim.x; ++i) {
-                    //Cvalue += ds_A[ty][i] * ds_B[i][tx];
+                for (int i = 0; i < TRANS_BLOCK_DIM; ++i) {
+                    //Cvalue += ds_A[i][ty] * ds_B[tx][i];
                     T t;
-                    comp -= ds_A[ty][i] * ds_B[i][tx];
+                    comp -= ds_A[i][ty] * ds_B[tx][i];
                     t = Cvalue - comp;
                     comp = (t - Cvalue) + comp;
                     Cvalue = t;
@@ -121,8 +122,7 @@ namespace ts {
             T *poutput = out.data<T>();
 
             T *col_buffer = nullptr;
-        
-            Tensor col_tensor;
+
             bool is_1x1_conv = stride.height == 1 && stride.width == 1 &&
                                ksize.height == 1 && ksize.width == 1 &&
                                padding.top == 0 && padding.bottom == 0 &&
@@ -131,16 +131,10 @@ namespace ts {
             int put_param = input_channels * output_shape[2]  * output_shape[3];
             // 1x1 conv do not need im2col
             if (!is_1x1_conv) {
-
-                Shape tmpshape;
-                tmpshape.resize(1);
-                tmpshape[0] = col_buffer_size;
-                col_tensor = Tensor(out.device(), out.dtype(), tmpshape);
-                col_buffer = col_tensor.data<T>();
- 
+                cudaMalloc((void **)&col_buffer, col_buffer_size * sizeof(T));
             }
                   
-            dim3 blocksize(CUDA_BLOCK(conv_out_spatial_dim, TRANS_BLOCK_DIM),CUDA_BLOCK(weight_shape[0], TRANS_BLOCK_DIM), 1);
+            dim3 blocksize(CUDA_BLOCK(conv_out_spatial_dim, TRANS_BLOCK_DIM), CUDA_BLOCK(weight_shape[0], TRANS_BLOCK_DIM),1);
             dim3 threadsize(TRANS_BLOCK_DIM, TRANS_BLOCK_DIM,1);
 
             for(int i=0; i<number; i++) { 
@@ -155,22 +149,31 @@ namespace ts {
                     col_buffer = const_cast<T *>(pinput);
                 }
 
+
 #ifdef TS_USE_CUBLAS
                 auto &context = ctx::ref<DeviceContext>();
                 CublasDevice* handle = reinterpret_cast<CublasDevice*>(context.handle);
                 auto cublas_handle = handle->get();
 
+                std::cout << "---------use cublas conv----" << std::endl;
                 cublas::math<T>::gemm(cublas_handle, cublas::NoTrans, cublas::NoTrans,
                     weight_shape[0], conv_out_spatial_dim, kernel_dims, 1, pweight, col_buffer, 0, poutput);
 
 #else
 
+                std::cout << "---------use cuda conv----" << std::endl;
+
                 gpu_conv2d_compute_run_kernel<T> <<<blocksize, threadsize>>>
                       (weight_shape[0], kernel_dims,conv_out_spatial_dim, pweight, col_buffer, poutput);
+#endif
                 pinput += input_number_offset;
                 poutput += output_number_offset;
-#endif
             }//end for
+
+            if(col_buffer != nullptr) {
+                cudaFree(col_buffer);
+                col_buffer = nullptr;
+            }
 
         }
 
