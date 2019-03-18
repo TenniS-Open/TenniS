@@ -316,7 +316,7 @@ namespace ts {
             while (grid_size > CUDA_THREAD_NUM) {
                 int len = grid_size;
                 grid_size = CUDA_BLOCK(grid_size, CUDA_THREAD_NUM);
-                abs_sum_kernel<T> << < grid_size, block_size >> > (len, tmp_out, tmp_out);
+                sum_kernel<T> << < grid_size, block_size >> > (len, tmp_out, tmp_out);
             }
             sum_kernel<T> << <1, grid_size >> > (grid_size, tmp_out, out);
             return true;
