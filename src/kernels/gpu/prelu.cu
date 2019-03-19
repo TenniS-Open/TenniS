@@ -38,8 +38,8 @@ namespace ts {
                 last_dims *= output_shape[i];
             }
 
-            dim3 blockSize(512);
-            dim3 gridSize((count + blockSize.x - 1) / blockSize.x);
+            dim3 blockSize(CUDA_THREAD_NUM);
+            dim3 gridSize(CUDA_BLOCK(count, blockSize.x));
             prelu_kernel<T> << <gridSize, blockSize >> > (input_data, output_data, slope_data, dim_num, last_dims, count);
         }
 
