@@ -68,7 +68,7 @@ namespace ts {
             T Cvalue = 0;
 
             for (int t=0; t<(n - 1) / TRANS_BLOCK_DIM + 1; ++t) {
-                if (Row < m && t * blockDim.y + tx < n)
+                if (Row < m && t * blockDim.x + tx < n)
                     ds_A[ty][tx] = A[Row*n+t*blockDim.x+tx];
                 else
                     ds_A[ty][tx] = 0.0;
