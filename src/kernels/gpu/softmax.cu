@@ -109,7 +109,7 @@ namespace ts {
             Tensor scale_tensor(out.device(), out.dtype(), scale_shape);
             T *scale_data = scale_tensor.data<T>();
 
-            dim3 block_size(512);
+            dim3 block_size(CUDA_THREAD_NUM);
 
             if (m_smooth)
             {
