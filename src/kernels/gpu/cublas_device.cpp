@@ -27,10 +27,10 @@ namespace ts {
         }
     }
 }
-
-TS_STATIC_ACTION(ts::HardAllocator::Register, ts::CUBLAS, ts::gpu_allocator)
-TS_STATIC_ACTION(ts::HardConverter::Register, ts::CUBLAS, ts::CUBLAS, ts::gpu2gpu_converter)
-TS_STATIC_ACTION(ts::HardConverter::Register, ts::CUBLAS, ts::CPU, ts::cpu2gpu_converter)
-TS_STATIC_ACTION(ts::HardConverter::Register, ts::CPU, ts::CUBLAS, ts::gpu2cpu_converter)
-TS_STATIC_ACTION(ts::ComputingMemory::Register, ts::CUBLAS, ts::GPU)
-TS_STATIC_ACTION(ts::DeviceAdmin::Register, ts::CUBLAS, ts::DeviceCuBLASAdminFunction)
+//
+//TS_STATIC_ACTION(ts::HardAllocator::Register, ts::CUBLAS, ts::gpu_allocator)
+//TS_STATIC_ACTION(ts::HardConverter::Register, ts::CUBLAS, ts::CUBLAS, ts::gpu2gpu_converter)
+//TS_STATIC_ACTION(ts::HardConverter::Register, ts::CUBLAS, ts::CPU, ts::cpu2gpu_converter)
+//TS_STATIC_ACTION(ts::HardConverter::Register, ts::CPU, ts::CUBLAS, ts::gpu2cpu_converter)
+//TS_STATIC_ACTION(ts::ComputingMemory::Register, ts::CUBLAS, ts::GPU)
+TS_STATIC_ACTION(ts::DeviceAdmin::Register, ts::GPU, ts::DeviceCuBLASAdminFunction)
