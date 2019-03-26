@@ -51,7 +51,11 @@ namespace ts {
 
             TS_AUTO_CHECK(m_dim < x.dims());
 
-            TS_AUTO_CHECK(b.has_shape({x.size(m_dim)}));
+            if(!b.has_shape(x.size(m_dim))) {
+                TS_LOG_ERROR << "Miss matched: x:" << to_string(x.sizes()) <<
+                             ", dim=" << m_dim <<
+                             ", b:" << to_string(b.sizes()) << eject;
+            }
 
             TS_AUTO_CHECK(x.dtype() == b.dtype());
 
