@@ -131,11 +131,12 @@ elseif (UNIX)
 else ()
 endif ()
 
-list(APPEND third_libraries ${CUDA_CUBLAS_LIBRARIES})
 if(TS_USE_CUBLAS)
 	message(STATUS "[Optional] Use CUBLAS: [ON]")
 	add_definitions(-DTS_USE_CUBLAS)
-	
+    list(APPEND third_libraries ${CUDA_CUBLAS_LIBRARIES})
+else()
+	message(STATUS "[Optional] Use CUBLAS: [OFF]")
 endif()
 
 if (TS_USE_CBLAS)
