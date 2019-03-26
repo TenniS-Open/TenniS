@@ -82,7 +82,7 @@ namespace ts {
         }
 
         template<typename T>
-        void cpu_softmax_compute_run(const Tensor &x, int m_dim, bool m_smooth, Tensor &out) {
+        void cpu_softmax_compute_run(const Tensor &x, int m_dim, bool m_smooth, Tensor &out, MemoryDevice& mem_device) {
             auto output_shape = out.sizes();
 
             int pre_num = 1;
@@ -103,13 +103,16 @@ namespace ts {
             memcpy(output_data, out.device(), count * sizeof(T), input_data, x.device(), count * sizeof(T));
 
             int scale_data_size = out.count() / axis;
+
+            
+
             Shape scale_shape;
             scale_shape.resize(1);
             scale_shape[0] = scale_data_size;
-            Tensor scale_tensor(out.device(), out.dtype(), scale_shape);
+            Tensor scale_tensor(mem_device, out.dtype(), scale_shape);
             T *scale_data = scale_tensor.data<T>();
 
-            dim3 block_size(512);
+            dim3 block_size(CUDA_THREAD_NUM);
 
             if (m_smooth)
             {
@@ -134,9 +137,10 @@ namespace ts {
         void Softmax::softmax(const Tensor &x, int dim, bool smooth, Tensor &out) {
             // Notice: the all tensor' memory device are CPU, as given in running_memory_device
             DTYPE dtype = out.dtype();
+            auto running_mem_device = running_memory_device();
             switch (dtype) {
 #define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
-        case DTYPE: { cpu_softmax_compute_run<TYPE>(x, dim, smooth, out); break; }
+        case DTYPE: { cpu_softmax_compute_run<TYPE>(x, dim, smooth, out, running_mem_device); break; }
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN

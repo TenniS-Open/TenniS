@@ -32,8 +32,8 @@ namespace ts {
 
             T casted_max = T(max);
             
-            dim3 blockSize(512);
-            dim3 gridSize((count + blockSize.x - 1) / blockSize.x);
+            dim3 blockSize(CUDA_THREAD_NUM);
+            dim3 gridSize(CUDA_BLOCK(count, blockSize.x));
 
             relu_max_kernel<T> << <gridSize, blockSize >> > (input_data, output_data, casted_max, count);
         }

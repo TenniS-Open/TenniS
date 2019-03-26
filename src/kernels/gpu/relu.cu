@@ -28,8 +28,8 @@ namespace ts {
             int count = out.count();
             int bytes_num = count * sizeof(T);
 
-            dim3 blockSize(512);
-            dim3 gridSize((count + blockSize.x - 1) / blockSize.x);
+            dim3 blockSize(CUDA_THREAD_NUM);
+            dim3 gridSize(CUDA_BLOCK(count, blockSize.x));
 
             relu_kernel<T> << <gridSize, blockSize >> > (input_data, output_data, count);
         }

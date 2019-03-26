@@ -16,16 +16,23 @@ namespace ts {
     namespace gpu {
 
         template<typename T>
-        static __global__ void gpu_fused_batch_norm_compute_kernel(T* data, int size, int step, int slice,
+        static __global__ void gpu_fused_batch_norm_compute_kernel(const T* data,T* out, int size, int step, int slice,
                                         const T* mean, const T* variance, const T* scale, const T* bias ) {
             int index = blockDim.x * blockIdx.x + threadIdx.x;
             if (index < size) {
                 int dim = index % ( step * slice ) / (step);
-                data[index] = (data[index] - mean[dim]) * variance[dim] * scale[dim] + bias[dim];
+                out[index] = (data[index] - mean[dim]) * variance[dim] * scale[dim] + bias[dim];
             }
         }
 
+        template<typename T>
+        static __global__ void inner_vec_kernel(const int N, float epsilon, const T* input, T* output) {
+            int index = blockDim.x * blockIdx.x + threadIdx.x;
 
+            for (; index < N; index += blockDim.x * gridDim.x) {
+                output[index] = T(1) / sqrt(input[index] + T(epsilon));
+            }
+        }
 
         template<typename T>
         static void gpu_fused_batch_norm_compute_run(const Tensor &x,
@@ -50,28 +57,15 @@ namespace ts {
             const T *pbias = bias.data<T>();
             T *pdst = out.data<T>();
 
-            std::vector<T> vec(variance.count());
-            memcpy((void*)vec.data(), MemoryDevice(CPU), vec.size() * sizeof(T),
-                   (void*)pvariance, variance.device(), vec.size() * sizeof(T));
+            Shape vec_shape = variance.sizes();
+            Tensor vec_tensor(MemoryDevice(variance.device()), variance.dtype(), vec_shape);
+            T* vec_data = vec_tensor.data<T>();
+            int vec_len = vec_tensor.count();
+            dim3 block_size(CUDA_THREAD_NUM);
+            dim3 grid_size(CUDA_BLOCK(vec_len, block_size.x));
+            inner_vec_kernel<T> << <grid_size,block_size >> > (vec_len,epsilon,pvariance, vec_data);
 
-            for (int i = 0; i < vec.size(); i++) {
-                vec[i] = T(1) / sqrt(vec[i] + T(epsilon));
-            }
-
-            T * pvar = nullptr;
-            Shape tmpshape;
-            tmpshape.resize(1);
-            tmpshape[0] = vec.size();
-            Tensor variance_tensor(variance.device(), variance.dtype(), tmpshape);
-            pvar = variance_tensor.data<T>();
-
-            memcpy((void*)pvar, variance.device(), vec.size() * sizeof(T),
-                   (void*)vec.data(), MemoryDevice(CPU), vec.size() * sizeof(T));
-
-            memcpy((void*)pdst, out.device(), out.count() * sizeof(T),
-                   (void*)psrc, x.device(), x.count() * sizeof(T));
-
-            gpu_fused_batch_norm_compute_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> (pdst, out.count(), backdims, shape[dim], pmean, pvar, pscale, pbias);
+            gpu_fused_batch_norm_compute_kernel<T> << < CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM >> > (psrc, pdst, out.count(), backdims, shape[dim], pmean, vec_data, pscale, pbias);
 
         }
 
@@ -83,14 +77,14 @@ namespace ts {
             switch (dtype) {
 #define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
         case DTYPE: { gpu_fused_batch_norm_compute_run<TYPE>(x, mean, variance, scale, bias, dim, epsilon, out); break; }
-                DECLARE_COMPUTE_RUN(INT8, int8_t);
-                DECLARE_COMPUTE_RUN(UINT8, uint8_t);
-                DECLARE_COMPUTE_RUN(INT16, int16_t);
-                DECLARE_COMPUTE_RUN(UINT16, uint16_t);
-                DECLARE_COMPUTE_RUN(INT32, int32_t);
-                DECLARE_COMPUTE_RUN(UINT32, uint32_t);
-                DECLARE_COMPUTE_RUN(INT64, int64_t);
-                DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+                //DECLARE_COMPUTE_RUN(INT8, int8_t);
+                //DECLARE_COMPUTE_RUN(UINT8, uint8_t);
+                //DECLARE_COMPUTE_RUN(INT16, int16_t);
+                //DECLARE_COMPUTE_RUN(UINT16, uint16_t);
+                //DECLARE_COMPUTE_RUN(INT32, int32_t);
+                //DECLARE_COMPUTE_RUN(UINT32, uint32_t);
+                //DECLARE_COMPUTE_RUN(INT64, int64_t);
+                //DECLARE_COMPUTE_RUN(UINT64, uint64_t);
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN

@@ -41,8 +41,8 @@ namespace ts {
             T comp = 0;
             T Cvalue = 0;
 
-            for (int t = 0; t< gridDim.x; ++t) {
-                if (Row < M && t * blockDim.y + tx < K) {
+            for (int t = 0; t< (K - 1) / TRANS_BLOCK_DIM + 1; ++t) {
+                if (Row < M && t * blockDim.x + tx < K) {
                     if (transA)
                         ds_A[tx][ty] = alpha * A[tx*lda + t*blockDim.x + Row];
                     else
