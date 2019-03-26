@@ -91,7 +91,7 @@ namespace ts {
         }
 
         template<typename T>
-        static void gpu_pre_whiten_compute_run(const Tensor &x, Tensor &out) {
+        static void gpu_pre_whiten_compute_run(const Tensor &x, Tensor &out, MemoryDevice& mem_device) {
             auto output_shape = out.sizes();
             const T *input_data = x.data<T>();
             T *output_data = out.data<T>();
@@ -99,16 +99,17 @@ namespace ts {
             memcpy(output_data, out.device(), count * sizeof(T), input_data, x.device(), count * sizeof(T));
             //memcpy(output_data, input_data, count * sizeof(T));
 
+
             Shape mean_shape;
             mean_shape.resize(1);
             mean_shape[0] = 1;
-            Tensor mean_tensor = Tensor(MemoryDevice(GPU), out.dtype(), mean_shape);
+            Tensor mean_tensor = Tensor(mem_device, out.dtype(), mean_shape);
             T *mean = mean_tensor.data<T>();
 
             Shape std_dev_shape;
             std_dev_shape.resize(1);
             std_dev_shape[0] = 1;
-            Tensor std_dev_tensor = Tensor(MemoryDevice(GPU), out.dtype(), std_dev_shape);
+            Tensor std_dev_tensor = Tensor(mem_device, out.dtype(), std_dev_shape);
             T *std_dev = std_dev_tensor.data<T>();
 
             T *at = nullptr;
@@ -129,7 +130,7 @@ namespace ts {
                 Shape dev_shape;
                 dev_shape.resize(1);
                 dev_shape[0] = 1;
-                Tensor dev_tensor = Tensor(MemoryDevice(GPU), out.dtype(), dev_shape);
+                Tensor dev_tensor = Tensor(mem_device, out.dtype(), dev_shape);
                 T* dev_buffer = dev_tensor.data<T>();
                 //T* tmp_dev_out = (T*)gpu_allocator(device_id, grid_size * sizeof(T), nullptr, 0);
                 dev_kernel<T> << < grid_size, block_size >> > (count, at, mean, dev_buffer);
@@ -145,9 +146,10 @@ namespace ts {
 
         void PreWhiten::prewhiten(const Tensor &x, Tensor &out) {
             auto dtype = out.dtype();
+            auto running_mem_device = this->running_memory_device();
             switch (dtype) {
 #define DECLARE_TYPE_AND_RUN(DTYPE, TYPE) \
-				case DTYPE: { gpu_pre_whiten_compute_run<TYPE>(x, out); break; }
+				case DTYPE: { gpu_pre_whiten_compute_run<TYPE>(x, out, running_mem_device); break; }
                 //DECLARE_TYPE_AND_RUN(INT8, int8_t);
                 //DECLARE_TYPE_AND_RUN(UINT8, uint8_t);
                 //DECLARE_TYPE_AND_RUN(INT16, int16_t);

@@ -26,30 +26,29 @@ namespace ts {
             int by = blockIdx.y;
             int tx = threadIdx.x;
             int ty = threadIdx.y;
-
-            int Row = by * TRANS_BLOCK_DIM + ty;
-            int Col = bx * TRANS_BLOCK_DIM + tx;
+            int Row = by * blockDim.y + ty;
+            int Col = bx * blockDim.x + tx;
 
             T comp = 0;
             T Cvalue = 0;
 
-            for (int t=0; t<(n-1)/TRANS_BLOCK_DIM+1; ++t) {
-                if (Row < m && t * TRANS_BLOCK_DIM + tx < n)
-                    ds_A[tx][ty] = A[Row*n+t*TRANS_BLOCK_DIM+tx];
+            for (int t=0; t<(n - 1) / TRANS_BLOCK_DIM + 1; ++t) {
+                if (Row < m && t * blockDim.x + tx < n)
+                    ds_A[ty][tx] = A[Row*n+t*blockDim.x+tx];
                 else
-                    ds_A[tx][ty] = 0.0;
+                    ds_A[ty][tx] = 0.0;
 
-                if (t * TRANS_BLOCK_DIM + ty < n && Col < k)
-                    ds_B[tx][ty] = B[(t*TRANS_BLOCK_DIM + ty)*k+Col];
+                if (t * blockDim.y + ty < n && Col < k)
+                    ds_B[ty][tx] = B[(t*blockDim.y + ty)*k+Col];
                 else
-                    ds_B[tx][ty] = 0.0;
+                    ds_B[ty][tx] = 0.0;
 
                 __syncthreads();
 
-                for (int i = 0; i < TRANS_BLOCK_DIM; ++i) {
-                    //Cvalue += ds_A[i][ty] * ds_B[tx][i];
+                for (int i = 0; i < blockDim.x; ++i) {
+                    //Cvalue += ds_A[ty][i] * ds_B[i][tx];
                     T t;
-                    comp -= ds_A[i][ty] * ds_B[tx][i];
+                    comp -= ds_A[ty][i] * ds_B[i][tx];
                     t = Cvalue - comp;
                     comp = (t - Cvalue) + comp;
                     Cvalue = t;
@@ -61,6 +60,8 @@ namespace ts {
                     C[Row*k+Col]=Cvalue;
                 }
             }//end for
+        
+        
         }
 
 
@@ -111,8 +112,4 @@ namespace ts {
 
 using namespace ts;
 using namespace gpu;
-#ifdef TS_USE_CUBLAS
-TS_REGISTER_OPERATOR(InnerProd, CUBLAS, name::layer::inner_prod())
-#else
 TS_REGISTER_OPERATOR(InnerProd, GPU, name::layer::inner_prod())
-#endif
