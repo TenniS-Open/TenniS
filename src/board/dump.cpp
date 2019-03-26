@@ -110,7 +110,7 @@ namespace ts {
 
         std::vector<Tensor> outputs(size_t(bench->output_count()));
         for (size_t i = 0; i < outputs.size(); ++i) {
-            outputs.push_back(bench->output(int(i)));
+            outputs[i] = bench->output(int(i));
         }
 
         for (size_t i = 0; i < building.size(); ++i) {

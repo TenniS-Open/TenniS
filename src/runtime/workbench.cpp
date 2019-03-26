@@ -218,10 +218,12 @@ namespace ts {
             }
 
             // filter value
-            if (value->dtype() == FLOAT32) {
-                filter_values(value->data<float>(), size_t(value->count()));
-            } else if (value->dtype() == FLOAT64) {
-                filter_values(value->data<double>(), size_t(value->count()));
+            if (value->device().type() == CPU) {
+                if (value->dtype() == FLOAT32) {
+                    filter_values(value->data<float>(), size_t(value->count()));
+                } else if (value->dtype() == FLOAT64) {
+                    filter_values(value->data<double>(), size_t(value->count()));
+                }
             }
         }
 
