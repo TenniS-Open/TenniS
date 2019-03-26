@@ -22,7 +22,58 @@
 #include <utils/ctxmgr_lite.h>
 #include <runtime/workbench.h>
 
+#include "utils/box.h"
+#include "utils/platform.h"
+
+#if TS_PLATFORM_OS_WINDOWS
+
+#include <direct.h>
+#include <io.h>
+
+#define ACCESS ::_access
+#define MKDIR(a) ::_mkdir((a))
+#define GETCWD(buffer, length) ::_getcwd((buffer), (length))
+#define CHDIR(path) ::_chdir(path)
+
+#include <Windows.h>
+#include <sys/stat.h>
+
+#elif TS_PLATFORM_OS_LINUX || TS_PLATFORM_OS_MAC || TS_PLATFORM_OS_IOS
+
+#include <unistd.h>
+#include <stdarg.h>
+#include <sys/stat.h>
+#include <fstream>
+
+#define ACCESS ::access
+#define MKDIR(a) ::mkdir((a),0755)
+#define GETCWD(buffer, length) ::getcwd((buffer), (length))
+#define CHDIR(path) ::chdir(path)
+
+#endif
+
 namespace ts {
+    static inline bool mkdir_core(const std::string &dir) {
+        int miss = ACCESS(dir.c_str(), 0);
+        if (miss) {
+            int failed = MKDIR(dir.c_str());
+            if (failed) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    static inline bool mkdir(const std::string &dir) {
+        auto path = Split(dir, "\\/");
+        for (size_t i = 1; i <= path.size(); ++i) {
+            if (path[i - 1].empty()) continue;
+            auto local_path = Join(std::vector<std::string>(path.begin(), path.begin() + i), "/");
+            if (!mkdir_core(local_path)) return false;
+        }
+        return true;
+    }
+
     static inline std::string plot_line(const std::vector<Tensor> &input, const std::vector<Tensor> &output) {
         std::ostringstream oss;
         oss << "{";
@@ -109,12 +160,81 @@ namespace ts {
         std::map<int, Tensor> input;
         std::map<int, Tensor> output;
 
+        TestCase() = default;
+
+        TestCase(const TestCase &other)
+            : op(other.op), name(other.name)
+            , output_count(other.output_count)
+            , param_count(other.param_count)
+            , input_count(other.input_count)
+            , param(other.param), input(other.input), output(other.output) {
+        }
+        TestCase(TestCase &&other) {
+            *this = std::move(other);
+        }
+
+        TestCase &operator=(const TestCase &other) {
+            op = other.op;
+            name = other.name;
+            output_count = other.output_count;
+            param_count = other.param_count;
+            input_count = other.input_count;
+            param = other.param;
+            input = other.input;
+            output = other.output;
+            m_log.str(other.m_log.str());
+            return *this;
+        }
+
+        TestCase &operator=(TestCase &&other) {
+            op = std::move(other.op);
+            name = std::move(other.name);
+            output_count = other.output_count;
+            param_count = other.param_count;
+            input_count = other.input_count;
+            param = std::move(other.param);
+            input = std::move(other.input);
+            output = std::move(other.output);
+            m_log = std::move(other.m_log);
+            return *this;
+        }
+
         enum class Status : int {
             OK,
             SKIP,
             WARNING,
             FAILED,
         };
+
+        bool save(const std::string &root) {
+            mkdir(root);
+            assert(param_count == param.size());
+            assert(input_count == input.size());
+            assert(output_count == output.size());
+            // write infos
+            {
+                std::ofstream fo(root + "/0." + op + ".txt");
+                fo << param_count << std::endl;
+                fo << input_count << std::endl;
+                fo << output_count << std::endl;
+            }
+            {
+                for (auto &pair : param) {
+                    tensor::save(root + "/1." + pair.first + ".t", pair.second);
+                }
+            }
+            {
+                for (int i = 0; i < input_count; ++i) {
+                    tensor::save(root + "/2.input_" + std::to_string(i) + ".t", input.at(i));
+                }
+            }
+            {
+                for (int i = 0; i < output_count; ++i) {
+                    tensor::save(root + "/3.output_" + std::to_string(i) + ".t", output.at(i));
+                }
+            }
+            return true;
+        }
 
         // try load test case in files, throw exception if there is an broken case
         bool load(const std::string &root, const std::vector<std::string> &filenames) {
