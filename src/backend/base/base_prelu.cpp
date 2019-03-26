@@ -33,7 +33,11 @@ namespace ts {
 
             TS_AUTO_CHECK(m_dim < x.dims());
 
-            TS_AUTO_CHECK(slope.has_shape({x.size(m_dim)}));
+            if(!slope.has_shape(x.size(m_dim))) {
+                TS_LOG_ERROR << "Miss matched: x:" << to_string(x.sizes()) <<
+                             ", dim=" << m_dim <<
+                             ", slope:" << to_string(slope.sizes()) << eject;
+            }
 
             TS_AUTO_CHECK(x.dtype() == slope.dtype());
 

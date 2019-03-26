@@ -40,8 +40,17 @@ namespace ts {
 
             TS_AUTO_CHECK(m_dim < x.dims());
 
-            TS_AUTO_CHECK(mean.has_shape({x.size(m_dim)}));
-            TS_AUTO_CHECK(variance.has_shape({x.size(m_dim)}));
+            if(!mean.has_shape(x.size(m_dim))) {
+                TS_LOG_ERROR << "Miss matched: x:" << to_string(x.sizes()) <<
+                             ", dim=" << m_dim <<
+                             ", mean:" << to_string(mean.sizes()) << eject;
+            }
+
+            if(!variance.has_shape(x.size(m_dim))) {
+                TS_LOG_ERROR << "Miss matched: x:" << to_string(x.sizes()) <<
+                             ", dim=" << m_dim <<
+                             ", variance:" << to_string(variance.sizes()) << eject;
+            }
 
             TS_AUTO_CHECK(x.dtype() == mean.dtype());
             TS_AUTO_CHECK(x.dtype() == variance.dtype());
