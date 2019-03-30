@@ -84,7 +84,7 @@ namespace ts {
             double scale_y = (double) src_height / dst_height;
 
             int srcrows = src_width * channels;
-            int dstrows = dst_width * channels;
+            // int dstrows = dst_width * channels;
 
             double fy = (double) ((j + 0.5) * scale_y - 0.5);
             int sy = floor(fy);

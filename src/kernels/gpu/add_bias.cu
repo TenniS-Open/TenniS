@@ -7,17 +7,18 @@
 
 #include "device_launch_parameters.h"
 #include <cuda_runtime.h>
+#include <cuda_fp16.h>
 
 /////////////////////////////////////////////////
 namespace ts {
     namespace gpu {
     template<typename T>
-    static __global__ void add_bias_kernel(T* data, int size, int step, int slice,
+    static __global__ void add_bias_kernel(const T* base, T* data, int size, int step, int slice,
                                         const T* bias, int biaslen ) {
         int index = blockDim.x * blockIdx.x + threadIdx.x;
         if (index < size) {
             int dim = index % ( step * slice ) / (step);
-            data[index] += bias[dim];
+            data[index] = base[index] + bias[dim];
         }
     }
 
@@ -38,11 +39,11 @@ namespace ts {
         const T *pbias = b.data<T>();
         T *pdst = out.data<T>();
 
-        memcpy((void*)pdst, out.device(), x.count() * sizeof(T),
-               (void*)psrc, x.device(), x.count() * sizeof(T));
+//        memcpy((void*)pdst, out.device(), x.count() * sizeof(T),
+//               (void*)psrc, x.device(), x.count() * sizeof(T));
 
 
-        add_bias_kernel<T> <<< CUDA_BLOCK(x.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> (pdst, x.count(), back_dims, shape[dim], pbias, b.count()); 
+        add_bias_kernel<T> <<< CUDA_BLOCK(x.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> (psrc, pdst, x.count(), back_dims, shape[dim], pbias, b.count());
 
         //cudaDeviceSynchronize();
     }

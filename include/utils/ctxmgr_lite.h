@@ -59,9 +59,7 @@ namespace ts {
 
         self &operator=(const self &) = delete;
 
-        context ctx();
-
-        const context ctx() const;
+        context ctx() const;
 
     private:
         context m_pre_ctx = nullptr;

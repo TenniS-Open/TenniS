@@ -49,7 +49,7 @@ namespace ts {
 
         SyncDeviceMemoryController(const MemoryDevice &device) : m_device(device) {}
 
-        SyncMemory alloc(size_t size) final {
+        SyncMemory alloc(size_t size) override {
             return this->alloc(m_device, size);
         }
 
@@ -85,6 +85,10 @@ namespace ts {
     public:
         void clear(const MemoryDevice &device) {
             m_sync_controllers.clear(device);
+        }
+
+        SyncMemory alloc(size_t size) override {
+            return this->alloc(m_device, size);
         }
 
         SyncMemory alloc(const MemoryDevice &device, size_t size) override {
