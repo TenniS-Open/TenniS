@@ -26,6 +26,7 @@ namespace ts {
         case ts::DeviceAdmin::FINALIZATION:
         {
             delete reinterpret_cast<CublasDevice*>(*handle);
+            *handle = nullptr;
             break;
         }
         case ts::DeviceAdmin::ACTIVATION:
