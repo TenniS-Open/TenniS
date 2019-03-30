@@ -7,6 +7,7 @@
 
 #include "device_launch_parameters.h"
 #include <cuda_runtime.h>
+#include <cuda_fp16.h>
 
 /////////////////////////////////////////////////
 namespace ts {
@@ -16,6 +17,29 @@ namespace ts {
         int index = blockDim.x * blockIdx.x + threadIdx.x;
         if (index < size) {
             dst[index] = static_cast<T_OUT>(src[index]);
+        }
+    }
+
+    template<typename T_IN>
+    static __global__ void gpu_cast_kernel(half * dst, const T_IN * src, int size) {
+        int index = blockDim.x * blockIdx.x + threadIdx.x;
+        if (index < size) {
+            dst[index] = __float2half(static_cast<float>(src[index]));
+        }
+    }
+
+    template<typename T_OUT>
+    static __global__ void gpu_cast_kernel(T_OUT * dst, const half * src, int size) {
+        int index = blockDim.x * blockIdx.x + threadIdx.x;
+        if (index < size) {
+            dst[index] = static_cast<T_OUT>(__half2float(src[index]));
+        }
+    }
+
+    static __global__ void gpu_cast_kernel(half * dst, const half * src, int size) {
+        int index = blockDim.x * blockIdx.x + threadIdx.x;
+        if (index < size) {
+            dst[index] = src[index];
         }
     }
 
@@ -32,7 +56,7 @@ namespace ts {
             return;
         }
 
-        gpu_cast_kernel<T_IN, T_OUT> <<< CUDA_BLOCK(x.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> (pdst, psrc, x.count()); 
+        gpu_cast_kernel<<< CUDA_BLOCK(x.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> (pdst, psrc, x.count());
 
     }
 
@@ -51,6 +75,7 @@ namespace ts {
             DECLARE_COMPUTE_RUN_TEMPLATE(UINT64, uint64_t);
             DECLARE_COMPUTE_RUN_TEMPLATE(FLOAT32, float);
             DECLARE_COMPUTE_RUN_TEMPLATE(FLOAT64, double);
+            DECLARE_COMPUTE_RUN_TEMPLATE(FLOAT16, half);
 #undef DECLARE_COMPUTE_RUN_TEMPLATE
             default: {
                 TS_LOG_ERROR << "_cast not support this data type: " << to_type << eject;
@@ -77,6 +102,7 @@ namespace ts {
             DECLARE_COMPUTE_RUN(UINT64, uint64_t);
             DECLARE_COMPUTE_RUN(FLOAT32, float);
             DECLARE_COMPUTE_RUN(FLOAT64, double);
+            DECLARE_COMPUTE_RUN(FLOAT16, half);
 #undef DECLARE_COMPUTE_RUN
             default: {
                 TS_LOG_ERROR << this->op() << " not support this data type: " << dtype << eject;
