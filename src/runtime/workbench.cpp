@@ -32,6 +32,9 @@ namespace ts {
         this->m_stack = std::make_shared<Stack>(memory_device, this->m_flow_memory);
         this->m_data_sagment = std::make_shared<Stack>(memory_device, this->m_static_memory);
         this->m_mutex = std::move(mutex);
+        // bind flow and dynamic memory, so you can use it to alloc memory in any where
+        this->m_runtime_context.bind_flow(this->m_flow_memory);
+        this->m_runtime_context.bind_dynamic(this->m_dynamic_memory);
     }
 
     Workbench::Workbench(const ComputingDevice &device, std::shared_ptr<std::mutex> mutex, int computing_thread_number)
