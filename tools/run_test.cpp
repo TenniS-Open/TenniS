@@ -35,6 +35,7 @@ int main(int argc, const char *argv[]) {
     ComputingDevice computing_device(device, id);
 
     auto subdirs = FindFlodersRecursively(root);
+    subdirs.emplace_back(".");
 
     int ok_count = 0;
     int skip_count = 0;
