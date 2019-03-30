@@ -85,12 +85,7 @@ namespace ts {
     }
 
     template<typename T>
-    typename __lite_context<T>::context __lite_context<T>::ctx() {
-        return m_now_ctx;
-    }
-
-    template<typename T>
-    typename __lite_context<T>::context const __lite_context<T>::ctx() const {
+    typename __lite_context<T>::context __lite_context<T>::ctx() const {
         return m_now_ctx;
     }
 }

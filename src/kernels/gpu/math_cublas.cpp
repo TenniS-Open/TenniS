@@ -118,14 +118,14 @@ namespace ts {
 
             template <>
             bool cublas_asum<float>(cublasHandle_t handle, int N, const float *x, int incx,float *out) {
-                if (cudaSuccess == cublasSasum(handle, N, x, incx, out))
+                if (CUBLAS_STATUS_SUCCESS == cublasSasum(handle, N, x, incx, out))
                     return true;
                 return false;
             }
 
             template <>
             bool cublas_asum<double>(cublasHandle_t handle, int N, const double *x, int incx, double *out) {
-                if (cudaSuccess == cublasDasum(handle, N, x, incx, out))
+                if (CUBLAS_STATUS_SUCCESS == cublasDasum(handle, N, x, incx, out))
                     return true;
                 return false;
             }
