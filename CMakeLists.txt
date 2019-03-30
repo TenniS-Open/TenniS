@@ -125,11 +125,7 @@ if (TS_USE_CUDA)
     if ("${CONFIGURATION}" STREQUAL "Debug")
         set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -O0 -g ")
     endif()
-
-    if (${CONFIGURATION} STREQUAL "Debug")
-        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -O0 -g ")
-    endif()
-
+    set(TS_USE_CUBLAS ON)
 
     list(APPEND TENSORSTACK_ACHIVES gpu)
     add_definitions(-DTS_USE_CUDA)
