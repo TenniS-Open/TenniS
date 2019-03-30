@@ -68,6 +68,7 @@ set(TENSORSTACK_MODULES
         core
         encryption
         engine
+        frontend
         global
         memory
         module
