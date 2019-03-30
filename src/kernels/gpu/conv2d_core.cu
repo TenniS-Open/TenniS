@@ -51,6 +51,46 @@ namespace ts {
             }
         }
 
+        __global__ static void gInputTrans_kernel(float *pfDataIn, float *pfDataOut, int dwSize, int dwRowIn, int dwColIn,
+                                                  int dwSliceIn, int dwRowOut, int dwColOut, int dwSliceOut, int dwStrideH, int dwStrideW,
+                                                  int dwPadH, int dwPadW,
+                                                  int dwShiftH, int dwShiftW,
+                                                  int dwDilationH, int dwDilationW, int dwKernelH, int dwKernelW)
+        {
+            dwPadH += dwShiftH;
+            dwPadW += dwShiftW;
+            int dwIdx = threadIdx.x + blockIdx.x * blockDim.x;
+            if (dwIdx < dwSize)
+            {
+                int dwDimN = dwIdx / (dwSliceOut * dwRowOut * dwColOut);
+                int dwDim2S = dwIdx % (dwSliceOut * dwRowOut * dwColOut) / (dwRowOut * dwColOut);
+                int dwDim2R = dwIdx % (dwRowOut * dwColOut) / dwColOut;
+                int dwDim2C = dwIdx % dwColOut;
+                int dwDim1R = dwDim2R * dwStrideH - dwPadH;
+                int dwDim1C = dwDim2C * dwStrideW - dwPadW;
+                int dwDim1S = dwDim2S;
+                int dwIdxOut = ((dwDimN * dwSliceOut + dwDim1S) * dwKernelH * dwKernelW * dwRowOut + dwDim2R) * dwColOut + dwDim2C;
+                int dwIdxIn = dwDim1C + dwColIn * (dwDim1R + dwRowIn * (dwDim1S + dwSliceIn * dwDimN));
+                for (int i = 0; i < dwKernelH; i++)
+                {
+                    for (int j = 0; j < dwKernelW; j++)
+                    {
+                        if (dwDim1R + i * dwDilationH >= 0 && dwDim1R + i * dwDilationH < dwRowIn
+                            && dwDim1C + j * dwDilationW >= 0 && dwDim1C + j * dwDilationW < dwColIn)
+                        {
+                            pfDataOut[dwIdxOut + dwColOut * dwRowOut * (i * dwKernelW + j)] =
+                                    pfDataIn[dwIdxIn + j * dwDilationW + dwColIn * i * dwDilationH];
+                        }
+                        else
+                        {
+                            pfDataOut[dwIdxOut + dwColOut * dwRowOut * (i * dwKernelW + j)] = 0;
+                        }
+                    }
+                }
+            }
+        }
+
+
         template<typename T>
         static __global__ void gpu_conv2d_compute_run_kernel(int m, int n, int k, const T *A, const T *B, T *C) {
             __shared__ T ds_A[TRANS_BLOCK_DIM][TRANS_BLOCK_DIM];
@@ -134,7 +174,7 @@ namespace ts {
                 Shape tmpshape;
                 tmpshape.resize(1);
                 tmpshape[0] = col_buffer_size;
-                col_tensor = Tensor(out.device(), out.dtype(), tmpshape);
+                col_tensor = stack.make(out.dtype(), tmpshape, x.device());
                 col_buffer = col_tensor.data<T>();
  
             }
