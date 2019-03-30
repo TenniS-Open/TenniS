@@ -32,6 +32,13 @@ namespace ts {
         }
     }
 
+    void DeviceContext::active() {
+        if (m_device_admin != nullptr && this->handle != nullptr) {
+            m_device_admin(&this->handle, computing_device.id(), DeviceAdmin::ACTIVATION);
+            this->handle = nullptr;
+        }
+    }
+
     DeviceContext::DeviceContext(ComputingDevice computing_device) {
         this->initialize(computing_device);
     }

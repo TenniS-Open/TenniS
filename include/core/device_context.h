@@ -28,6 +28,8 @@ namespace ts {
         void initialize(ComputingDevice computing_device);
         void finalize();
 
+        void active();
+
         /**
          * pointing to device operating self-defined structure
          * not using in out scope
