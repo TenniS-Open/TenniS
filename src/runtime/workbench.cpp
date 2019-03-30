@@ -107,6 +107,7 @@ namespace ts {
 
         // bind device context
         ctx::bind<DeviceContext> bind_device_context(m_device_context);
+        m_device_context.active();      // change context to computing device
 
         // bind runtime context
         ctx::bind<RuntimeContext> bind_runtime_context(m_runtime_context);

@@ -6,9 +6,15 @@
 #include "utils/static.h"
 #include "kernels/gpu/memory_gpu.h"
 
+#include <cuda_runtime.h>
+
 namespace ts {
     void DeviceCuBLASAdminFunction(DeviceHandle **handle, int device_id, DeviceAdmin::Action action)
     {
+        auto cuda_error = cudaSetDevice(device_id);
+        if (cuda_error != cudaSuccess) {
+            TS_LOG_ERROR << "cudaSetDevice(" << device_id << ") failed. error=" << cuda_error << eject;
+        }
         switch (action)
         {
         case ts::DeviceAdmin::INITIALIZATION:
@@ -20,6 +26,10 @@ namespace ts {
         case ts::DeviceAdmin::FINALIZATION:
         {
             delete reinterpret_cast<CublasDevice*>(*handle);
+            break;
+        }
+        case ts::DeviceAdmin::ACTIVATION:
+        {
             break;
         }
         default:
