@@ -62,6 +62,12 @@ namespace ts {
         }
 
         std::pair<SyncMemory, std::vector<GpuHypeShape>> MakeGPUHypeShape(const MemoryDevice &device, const std::vector<std::vector<int>> &shape) {
+            return MakeGPUHypeShape(device, shape, {}, {});
+        }
+
+        std::pair<SyncMemory, std::vector<GpuHypeShape>> MakeGPUHypeShape(const MemoryDevice &device, const std::vector<std::vector<int>> &shape,
+                                                                          const std::vector<CpuBlock> &cpu_part,
+                                                                          const std::vector<void **> &gpu_part) {
             std::vector<HypeShape> hype_shape_array;
             for (auto &item : shape) {
                 hype_shape_array.emplace_back(item);
@@ -78,6 +84,8 @@ namespace ts {
                 gpu.push_back((void**)(&gpu_shape.shape));
                 gpu.push_back((void**)(&gpu_shape.weights));
             }
+            cpu.insert(cpu.end(), cpu_part.begin(), cpu_part.end());
+            gpu.insert(gpu.end(), gpu_part.begin(), gpu_part.end());
             auto gpu_memory = convert_block_to_gpu(RuntimeContext::FlowMemory(), device, cpu, gpu);
 
             return std::make_pair(std::move(gpu_memory), gpu_shape_array);

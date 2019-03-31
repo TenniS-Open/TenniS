@@ -34,6 +34,9 @@ namespace ts {
 
         std::pair<SyncMemory, GpuHypeShape> MakeGPUHypeShape(const MemoryDevice &device, const std::vector<int> &shape);
         std::pair<SyncMemory, std::vector<GpuHypeShape>> MakeGPUHypeShape(const MemoryDevice &device, const std::vector<std::vector<int>> &shape);
+        std::pair<SyncMemory, std::vector<GpuHypeShape>> MakeGPUHypeShape(const MemoryDevice &device, const std::vector<std::vector<int>> &shape,
+                                                                          const std::vector<CpuBlock> &cpu,
+                                                                          const std::vector<void **> &gpu);
     }
 }
 
