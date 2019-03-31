@@ -8,52 +8,67 @@
 #include <core/memory.h>
 #include <numeric>
 
+#include "kernels/gpu/gpu_helper.h"
+
 namespace ts {
     namespace gpu {
-        /**
-         *
-         * @param [in] out_coord the coordinate in output map
-         * @param [in] padding padding
-         * @param [in] x_shape the input shape
-         * @param [out] x_coord the transpose back coordinate
-         * @return true if transposed, else return false
-         */
-        static inline bool transpose_pad(const std::vector<int> &out_coord,
-                const std::vector<std::array<int, 2>> &padding,
-                const std::vector<int> &x_shape,
-                std::vector<int> &x_coord) {
-            auto dims = out_coord.size();
-            x_coord.resize(dims);
-            for (size_t i = 0; i < dims; ++i) {
-                auto offset = out_coord[i] - padding[i][0];
-                if (offset < 0 || offset >= x_shape[i]) return false;
-                x_coord[i] = offset;
+        template <typename T>
+        static __global__ void pad_gpu_kernel(int count, const int *padding, T padding_value, const T *in, T *out, GpuHypeShape in_shape, GpuHypeShape out_shape) {
+            int index = blockDim.x * blockIdx.x + threadIdx.x;
+            if (index >= count) return;
+
+            int out_index = index;
+            int in_index = 0;
+
+            auto out_weight_it = out_shape.weights + 1;
+            auto in_weight_it = in_shape.weights + 1;
+            /* ============================================ */
+            auto in_shape_it = in_shape.shape;
+            auto padding_it = padding;
+            /* -------------------------------------------- */
+
+            for (int times = out_shape.dims - 1; times; --times) {
+                auto coord = index / *out_weight_it;
+                /* ============================================ */
+                coord -= *padding_it;
+                if (coord < 0 || coord >= *in_shape_it) {
+                    out[out_index] = padding_value;
+                    return;
+                }
+                ++in_shape_it;
+                padding_it += 2;
+                /* -------------------------------------------- */
+                in_index += coord * *in_weight_it;
+                index %= *out_weight_it;
+                ++out_weight_it;
+                ++in_weight_it;
             }
-            return true;
+            auto coord = index;
+            /* ============================================ */
+            coord -= *padding_it;
+            if (coord < 0 || coord >= *in_shape_it) {
+                out[out_index] = padding_value;
+                return;
+            }
+            /* -------------------------------------------- */
+            in_index += coord;
+
+            /* ++++++++++++++++++++++++++++++++++++++++++++ */
+            out[out_index] = in[in_index];
         }
 
         template <typename T>
         static inline void pad_gpu_compute_run(const Tensor &x, const std::vector<std::array<int, 2>> &padding, float padding_value, Tensor &out) {
-            ShapeIterator out_it(out.sizes());
-            auto &x_shape = x.sizes();
-            std::vector<int> x_coord;
+            int *gpu_padding = nullptr;
+            auto gpu_memory = MakeGPUHypeShape(out.device(), {x.sizes(), out.sizes()},
+                                               {{(void *) (padding.data()), sizeof(int) * int(padding.size()) * 2}},
+                                               {(void **) (&gpu_padding)});
+            auto &gpu_in_shape = gpu_memory.second[0];
+            auto &gpu_out_shape = gpu_memory.second[1];
+            auto in_data = x.data<T>();
             auto out_data = out.data<T>();
-            auto x_data = x.data<T>();
-
-            HypeShape hype_x_shape(x_shape);
-
-            auto value = T(padding_value);
-
-            int count = out.count();
-            for (int i = 0; i < count; ++i) {
-                bool not_overflow = transpose_pad(out_it.coordinate(), padding, x_shape, x_coord);
-                if (not_overflow) {
-                    out_data[i] = x_data[hype_x_shape.to_index(x_coord)];
-                } else {
-                    out_data[i] = value;
-                }
-                ++out_it;
-            }
+            auto count = out.count();
+            pad_gpu_kernel<T> << < CUDA_BLOCK(count, CUDA_THREAD_NUM), CUDA_THREAD_NUM >> > (count, gpu_padding, T(padding_value), in_data, out_data, gpu_in_shape, gpu_out_shape);
         }
 
         void PadOnGPU::pad(const Tensor &x, const std::vector<std::array<int, 2>> &padding, float padding_value, Tensor &out) {
@@ -61,14 +76,6 @@ namespace ts {
             switch(dtype) {
 #define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
         case DTYPE: { pad_gpu_compute_run<TYPE>(x, padding, padding_value, out); break; }
-                DECLARE_COMPUTE_RUN(INT8, int8_t);
-                DECLARE_COMPUTE_RUN(UINT8, uint8_t);
-                DECLARE_COMPUTE_RUN(INT16, int16_t);
-                DECLARE_COMPUTE_RUN(UINT16, uint16_t);
-                DECLARE_COMPUTE_RUN(INT32, int32_t);
-                DECLARE_COMPUTE_RUN(UINT32, uint32_t);
-                DECLARE_COMPUTE_RUN(INT64, int64_t);
-                DECLARE_COMPUTE_RUN(UINT64, uint64_t);
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
@@ -81,6 +88,6 @@ namespace ts {
     }
 }
 
-//using namespace ts;
-//using namespace gpu;
-//TS_REGISTER_OPERATOR(PadOnGPU, CPU, name::layer::pad())
+using namespace ts;
+using namespace gpu;
+TS_REGISTER_OPERATOR(PadOnGPU, GPU, name::layer::pad())
