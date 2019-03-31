@@ -149,6 +149,28 @@ namespace ts {
         avg = local_sum / count;
     }
 
+    static inline std::ostream &plot_tensor(std::ostream &log, const Tensor &x) {
+        int width = x.dims() == 0 ? 1 : x.sizes().back();
+        for (int i = 0; i < width; ++i) {
+            log << "--";
+        }
+        log << std::endl;
+        auto float_x = tensor::cast(FLOAT32, x);
+        int count = x.count();
+        auto x_data= float_x.data<float>();
+        int line_count = 0;
+        for (int i = 0; i < count; ++i) {
+            if (line_count >= width) {
+                log << std::endl;
+                line_count = 0;
+            }
+            log << x_data[i] << " ";
+            ++line_count;
+
+        }
+        return log;
+    }
+
     class TestCase {
     public:
         std::string op;
@@ -417,6 +439,9 @@ namespace ts {
                         if (succeed != Status::FAILED) succeed = Status::WARNING;
                     } else {
                         m_log << "[FAILED] Diff output " << i << ": max = " << max << ", " << "avg = " << avg << std::endl;
+                        // TODO: log value
+//                        plot_tensor(m_log, x) << std::endl;
+//                        plot_tensor(m_log, y) << std::endl;
                         succeed = Status::FAILED;
                     }
                 } else {
