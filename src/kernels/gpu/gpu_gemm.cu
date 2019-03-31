@@ -87,6 +87,8 @@ namespace ts {
                 } else {
                     gpu_gemm_broadcast_compute_run<T>(C, out);
                 }
+            } else {
+                beta = 0;
             }
 #ifdef TS_USE_CUBLAS
             auto &context = ctx::ref<DeviceContext>();
