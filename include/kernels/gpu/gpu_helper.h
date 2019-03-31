@@ -25,6 +25,15 @@ namespace ts {
                 const MemoryDevice &device,
                 const std::vector<CpuBlock> &cpu,
                 const std::vector<void **> &gpu);
+
+        struct GpuHypeShape {
+            int32_t dims = 0;
+            int32_t *shape = nullptr;   // each shape size, [dim_i]_{i=0}^{dims}
+            int32_t *weights = nullptr; // each weight, [weight_i]_{i=0}^{dims}, and weight_i = \sum_{j=i}^{dims} dim_i
+        };
+
+        std::pair<SyncMemory, GpuHypeShape> MakeGPUHypeShape(const MemoryDevice &device, const std::vector<int> &shape);
+        std::pair<SyncMemory, std::vector<GpuHypeShape>> MakeGPUHypeShape(const MemoryDevice &device, const std::vector<std::vector<int>> &shape);
     }
 }
 

@@ -2,7 +2,11 @@
 // Created by kier on 19-3-30.
 //
 
+#include <kernels/gpu/gpu_helper.h>
+#include <runtime/runtime.h>
+
 #include "kernels/gpu/gpu_helper.h"
+#include "core/tensor_iterator.h"
 
 namespace ts {
     namespace gpu {
@@ -44,6 +48,39 @@ namespace ts {
             memcpy(gpu_data, device, shift, cpu_data, MemoryDevice(CPU), shift);
 
             return std::move(gpu_memory);
+        }
+
+        std::pair<SyncMemory, GpuHypeShape> MakeGPUHypeShape(const MemoryDevice &device, const std::vector<int> &shape) {
+            HypeShape hype_shape(shape);
+            GpuHypeShape gpu_shape;
+            gpu_shape.dims = int(shape.size());
+            auto gpu_memory = convert_block_to_gpu(RuntimeContext::FlowMemory(), device,
+                                                   {{(void*)(hype_shape.shape().data()), 4 * int(hype_shape.shape().size())},
+                                                    {(void*)(hype_shape.weight().data()), 4 * int(hype_shape.weight().size())},},
+                                                   {(void**)(&gpu_shape.shape), (void**)(&gpu_shape.weights)});
+            return std::make_pair(std::move(gpu_memory), gpu_shape);
+        }
+
+        std::pair<SyncMemory, std::vector<GpuHypeShape>> MakeGPUHypeShape(const MemoryDevice &device, const std::vector<std::vector<int>> &shape) {
+            std::vector<HypeShape> hype_shape_array;
+            for (auto &item : shape) {
+                hype_shape_array.emplace_back(item);
+            }
+            std::vector<GpuHypeShape> gpu_shape_array(shape.size());
+            std::vector<CpuBlock> cpu;
+            std::vector<void **> gpu;
+            for (size_t i = 0; i < shape.size(); ++i) {
+                auto &hype_shape = hype_shape_array[i];
+                auto &gpu_shape = gpu_shape_array[i];
+                gpu_shape.dims = int(hype_shape.shape().size());
+                cpu.push_back({(void*)(hype_shape.shape().data()), 4 * int(hype_shape.shape().size())});
+                cpu.push_back({(void*)(hype_shape.weight().data()), 4 * int(hype_shape.weight().size())});
+                gpu.push_back((void**)(&gpu_shape.shape));
+                gpu.push_back((void**)(&gpu_shape.weights));
+            }
+            auto gpu_memory = convert_block_to_gpu(RuntimeContext::FlowMemory(), device, cpu, gpu);
+
+            return std::make_pair(std::move(gpu_memory), gpu_shape_array);
         }
     }
 }
