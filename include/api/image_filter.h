@@ -39,6 +39,8 @@ TENSOR_STACK_C_API ts_bool ts_ImageFilter_div_std(ts_ImageFilter *filter, const 
 
 TENSOR_STACK_C_API ts_bool ts_ImageFilter_resize(ts_ImageFilter *filter, int width, int height);
 
+TENSOR_STACK_C_API ts_bool ts_ImageFilter_resize_scalar(ts_ImageFilter *filter, int width);
+
 TENSOR_STACK_C_API ts_bool ts_ImageFilter_center_crop(ts_ImageFilter *filter, int width, int height);
 
 TENSOR_STACK_C_API ts_bool ts_ImageFilter_channel_swap(ts_ImageFilter *filter, const int *shuffle, int32_t len);
