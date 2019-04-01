@@ -156,4 +156,4 @@ namespace ts {
 
 using namespace ts;
 using namespace gpu;
-TS_REGISTER_OPERATOR(Transpose, GPU, name::layer::transpose())
+//TS_REGISTER_OPERATOR(Transpose, GPU, name::layer::transpose())
