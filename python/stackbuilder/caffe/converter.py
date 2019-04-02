@@ -45,6 +45,7 @@ def convert(prototxt, caffemodel, output_file):
     # function format(layer, params, input_nodes, output_names)
     layer_converters = {
         # add layer converter here
+        "ReLU": convert_relu_layer,
     }
 
     blob2nodes = {}
@@ -111,6 +112,9 @@ def convert(prototxt, caffemodel, output_file):
 
         ts_nodes = ts_converter(layer=layer, params=params, input_nodes=input_nodes, output_names=output_names)
 
+        if not isinstance(ts_nodes, list) and not isinstance(ts_nodes, tuple):
+            ts_nodes = (ts_nodes, )
+
         assert len(ts_nodes) == len(layer.top)
 
         for i in range(len(layer.top)):
@@ -119,4 +123,18 @@ def convert(prototxt, caffemodel, output_file):
 
     print blob2count
 
-    pass
+
+def convert_relu_layer(layer, params, input_nodes, output_names):
+    # type: (caffe.LayerParameter, List[ts.Node], List[caffe.BlobProto], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} ]=-".format(layer.name, output_names))
+
+    assert len(input_nodes) == 1
+    assert len(params) == 0
+    assert len(output_names) == 1
+
+    x = input_nodes[0]
+    node_name = output_names[0]
+
+    node = ts.zoo.relu(node_name, x=x)
+
+    return node,
