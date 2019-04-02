@@ -13,6 +13,13 @@ from ..onnx import converter as onnx_converter
 
 
 def convert(input_module, output_file, input):
+    """
+    convert troch model to tsm
+    :param input_module: torch.nn.Module or param can be parsed to troch.load(param)
+    :param output_file: str of path to file
+    :param input: tuple of input shape
+    :return: None
+    """
     torch_model = None
     if isinstance(input_module, str):
         torch_model = torch.load(input_module)

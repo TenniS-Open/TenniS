@@ -55,7 +55,7 @@ def convert(input_file, output_file,
     # type:(Union[str, tuple], str, list, bool, bool) -> None
     """
     :param input_file: can be tuple[Net, Header](return value of laodnet), str, or IOStream
-    :param output_file: can be str, or IOStream
+    :param output_file: str of path to file
     :param output_blobs: str of list of str
     :param has_header: bool value, tell if there is header in model
     :param export_all: if need export all symbol in model

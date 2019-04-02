@@ -7,6 +7,14 @@ import tensorstack as ts
 
 
 def convert(input_model, output_file, input_num=None, inputs=None):
+    """
+    convert vvvv model to tsm
+    :param input_model: str or IOStream, contain exact vvvv model
+    :param output_file: str of path to file
+    :param input_num: input number
+    :param inputs: input nodes
+    :return: None
+    """
     input_model = net.compatible_string(input_model)
 
     module = None
