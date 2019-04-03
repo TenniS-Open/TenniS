@@ -32,17 +32,17 @@ def convert(prototxt, caffemodel, output_file, include=None, exclude=None):
 
     layer2params = {}
     # load params
-    for param_layer in params.layers:   # for V1LayerParameter
+    for param_layer in parser.include(params.layers, caffe.TEST):   # for V1LayerParameter
         layer_params = param_layer.blobs
         # print "{}: {}".format(param_layer.name, len(layer_params))
         layer2params[param_layer.name] = layer_params
-    for param_layer in params.layer:
+    for param_layer in parser.include(params.layer, caffe.TEST):
         layer_params = param_layer.blobs
         # print "{}: {}".format(param_layer.name, len(layer_params))
         layer2params[param_layer.name] = layer_params
 
     # load net structure
-    layers = net.layer
+    layers = parser.include(net.layer, caffe.TEST)
 
     if len(layers) == 0:
         raise Exception("Only support LayerParameter, not V0 or V1")
