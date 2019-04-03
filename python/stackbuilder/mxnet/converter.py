@@ -32,9 +32,12 @@ def convert(model_prefix, epoch, input_shape, output_file):
         assert len(inputs) == 0
         name = node["name"]
         if name in input_shape:
+            print("--# -=[ Placeholder: {}, {} ]=-".format(name, input_shape[name]))
             return ts.menu.param(name, input_shape[name])
         param = graph.param(name)
         if param is not None:
+            param = param.asnumpy()
+            print("--# -=[ Load data: {}, {} ]=-".format(name, param.shape))
             return ts.menu.data(name, param)
         raise Exception("Can not load param: {}".format(name))
 
@@ -50,7 +53,7 @@ def convert(model_prefix, epoch, input_shape, output_file):
         if ts_nodes[i] is not None:
             return
         node = graph.nodes[i]
-        name = node["name"]
+        # name = node["name"]
         op = node["op"]
         if op not in converter_map:
             raise Exception("Not supported Layer: {}".format(op))
