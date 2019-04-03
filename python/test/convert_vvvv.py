@@ -11,7 +11,7 @@ import tensorstack as ts
 
 
 def test():
-    with open("/Users/seetadev/Documents/Files/models/model/VIPLPointDetector5.0.pts5.dat", "rb") as stream:
+    with open("net.dat", "rb") as stream:
         header = param.read_param(stream, param.Int, param.Int, param.Int, param.Int, param.Float, param.Float, param.Float)
         print header
         input_channels = header[0]
