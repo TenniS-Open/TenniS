@@ -10,7 +10,15 @@ from . import parser
 import tensorstack as ts
 
 
-def convert(prototxt, caffemodel, output_file):
+def convert(prototxt, caffemodel, output_file, include=None, exclude=None):
+    """
+    :param prototxt: path to prototxt file
+    :param caffemodel: path to caffemodel file
+    :param output_file: path of output file
+    :param include: list of string(phase), means using in net
+    :param exclude: list of string(phase), means not using in net
+    :return: None
+    """
     net = caffe.NetParameter()
     with open(prototxt, "rb") as file_prototxt:
         from google.protobuf import text_format
@@ -24,12 +32,20 @@ def convert(prototxt, caffemodel, output_file):
 
     layer2params = {}
     # load params
+    for param_layer in params.layers:   # for V1LayerParameter
+        layer_params = param_layer.blobs
+        # print "{}: {}".format(param_layer.name, len(layer_params))
+        layer2params[param_layer.name] = layer_params
     for param_layer in params.layer:
         layer_params = param_layer.blobs
+        # print "{}: {}".format(param_layer.name, len(layer_params))
         layer2params[param_layer.name] = layer_params
 
     # load net structure
     layers = net.layer
+
+    if len(layers) == 0:
+        raise Exception("Only support LayerParameter, not V0 or V1")
 
     deploy_input_name = []
     deploy_input_shape = []
