@@ -62,6 +62,7 @@ def convert(model_prefix, epoch, input_shape, output_file):
         inputs = [ input[0] for input in node["inputs"] ]
         for input in inputs:
             assert input != i
+            # TODO: checking loop
             convert_at(input)
         inputs = [ ts_nodes[input] for input in inputs ]
         ts_nodes[i] = converter(node, inputs)
