@@ -28,7 +28,9 @@ try:
     from . import mxnet
 except Exception, e:
     pass
-# TODO: the follow framework is comming
-# from . import tf
+try:
+    from . import tf
+except Exception, e:
+    pass
 
 __version__ = "0.0.9"

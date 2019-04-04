@@ -11,6 +11,7 @@ from . import parser
 
 import tensorstack as ts
 
+
 def convert(model_prefix, epoch, input_shape, output_file):
     """
     :param model_prefix: string of model prefix
@@ -19,7 +20,7 @@ def convert(model_prefix, epoch, input_shape, output_file):
     :param output_file: path to output file
     :return:
     """
-    symbol_json = '%s-symbol.json' %(model_prefix)
+    symbol_json = '%s-symbol.json' % (model_prefix, )
     symbol = None
     with open(symbol_json) as f:
         symbol = json.load(f)
