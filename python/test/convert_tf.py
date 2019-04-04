@@ -22,9 +22,6 @@ def test():
             inputs = sess.graph.get_tensor_by_name("inputs_image:0")
             outputs = sess.graph.get_tensor_by_name("outputs:0")
 
-            print inputs
-            print outputs
-
             convert(graph,
                     inputs=inputs,
                     outputs=outputs,

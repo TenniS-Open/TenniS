@@ -6,6 +6,8 @@ author: kier
 
 import tensorstack as ts
 
+import tensorflow as tf
+
 
 def convert(graph, inputs, outputs, output_file):
     if inputs is None:
@@ -45,6 +47,7 @@ def convert(graph, inputs, outputs, output_file):
 
         map_tf_node_ts_node[tf_node] = converter(tf_node, input_ts_nodes)
 
+
     for output in outputs:
         output_ts_nodes.append(convert_node(output))
 
@@ -62,12 +65,14 @@ def convert(graph, inputs, outputs, output_file):
 
 
 def convert_identity(tf_node, inputs):
+    # type: (tf.Tensor, List[ts.Node]) -> ts.Node
     print("--# -=[ Converting {} layer: {} ]=-".format(tf_node.op.name, tf_node.op.type))
     assert len(inputs) == 1
     return inputs[0]
 
 
 def convert_concat_v2(tf_node, inputs):
+    # type: (tf.Tensor, List[ts.Node]) -> ts.Node
     print("--# -=[ Converting {} layer: {} ]=-".format(tf_node.op.name, tf_node.op.type))
     assert len(inputs) > 0
     N = tf_node.op.get_attr('N')
