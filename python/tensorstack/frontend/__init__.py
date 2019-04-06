@@ -7,3 +7,4 @@
 from . import mxnet
 from . import onnx
 from . import vvvv
+from . import tf

@@ -16,9 +16,16 @@ class Name(object):
     class Layer(object):
         conv2d_padding = "_tf_conv2d_padding"
         pooling2d_padding = "_tf_pooling2d_padding"
+        strided_slice = "strided_slice"
+        pack = "pack"   # diff from _pack in ts
 
     SAME = "SAME"
     VALID = "VALID"
+
+    begin = "begin"
+    end = "end"
+    stride = "stride"
+    axis = "axis"
 
     padding_method = "padding_method"
 
@@ -138,3 +145,53 @@ def conv2d(name, x, w,
 
     return zoo.conv2d(name=name, x=x, w=x, format=format, padding=dynamic_padding, padding_value=padding_value,
                       stride=stride, dilation=dilation)
+
+
+def strided_slice(name, x, begin, end, stride=None):
+    """
+    return x in [begin, end) with stride
+    :param name:
+    :param x:
+    :param begin:
+    :param end:
+    :param stride:
+    :return:
+    """
+    assert isinstance(x, Node)
+
+    if stride is None:
+        stride = [1, ] * len(begin)
+
+    begin = zoo.to_const(begin, "begin")
+    end = zoo.to_const(end, "end")
+    stride = zoo.to_const(stride, "stride")
+
+    # operator
+    node = menu.op(name=name, op_name=Name.Layer.strided_slice, inputs=[x, ])
+    node.set(Name.begin, begin, numpy.int32)
+    node.set(Name.end, end, numpy.int32)
+    node.set(Name.stride, stride, numpy.int32)
+
+    return node
+
+
+def pack(name, tensors, axis=0):
+    """
+    tf.concat(axis, [tf.expand_dims(t, axis) for t in tensors])
+    IS
+    tf.pack(tensors, axis=axis)
+    :param name:
+    :param x:
+    :param axis:
+    :return:
+    """
+
+    if tensors is not tuple and tensors is not list:
+        tensors = [tensors, ]
+
+    axis = zoo.to_const(axis, "axis")
+
+    node = menu.op(name=name, op_name=Name.Layer.pack, inputs=tensors)
+    node.set(Name.axis, axis, numpy.int32)
+
+    return node
