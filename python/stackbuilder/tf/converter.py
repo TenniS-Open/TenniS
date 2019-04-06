@@ -7,6 +7,7 @@ author: kier
 import tensorstack as ts
 
 import tensorflow as tf
+import numpy
 
 
 def convert(graph, inputs, outputs, output_file):
@@ -24,6 +25,21 @@ def convert(graph, inputs, outputs, output_file):
         # add layer converter here
         "Identity": convert_identity,
         "ConcatV2": convert_concat_v2,
+        "StridedSlice": convert_not_implemented,
+        "Reshape": convert_reshape,
+        "Pack": convert_not_implemented,
+        "Pad": convert_not_implemented,
+        "GatherV2": convert_not_implemented,
+        "Sub": convert_not_implemented,
+        "Add": convert_not_implemented,
+        "Mul": convert_not_implemented,
+        "BiasAdd": convert_not_implemented,
+        "Conv2D": convert_not_implemented,
+        "Relu": convert_not_implemented,
+        "AvgPool": convert_not_implemented,
+        "RealDiv": convert_not_implemented,
+        "Placeholder": convert_placeholder,
+        "Const": convert_const,
     }
 
     map_tf_node_ts_node = {}
@@ -47,7 +63,6 @@ def convert(graph, inputs, outputs, output_file):
 
         map_tf_node_ts_node[tf_node] = converter(tf_node, input_ts_nodes)
 
-
     for output in outputs:
         output_ts_nodes.append(convert_node(output))
 
@@ -66,23 +81,67 @@ def convert(graph, inputs, outputs, output_file):
 
 def convert_identity(tf_node, inputs):
     # type: (tf.Tensor, List[ts.Node]) -> ts.Node
-    print("--# -=[ Converting {} layer: {} ]=-".format(tf_node.op.name, tf_node.op.type))
+    print("--# -=[ Converting {} layer: {} ]=-".format(tf_node.op.type, tf_node.op.name))
     assert len(inputs) == 1
     return inputs[0]
 
 
 def convert_concat_v2(tf_node, inputs):
     # type: (tf.Tensor, List[ts.Node]) -> ts.Node
-    print("--# -=[ Converting {} layer: {} ]=-".format(tf_node.op.name, tf_node.op.type))
-    assert len(inputs) > 0
+    print("--# -=[ Converting {} layer: {} ]=-".format(tf_node.op.type, tf_node.op.name))
+    assert len(inputs) > 1
     N = tf_node.op.get_attr('N')
 
     if N != len(inputs) - 1:
         raise NotImplementedError("Concat N={} with {} inputs".format(N, len(inputs) - 1))
 
     axis = tf_node.op.inputs[N].eval()
+    axis = numpy.asarray(axis, dtype=numpy.int32)
 
     if axis < 0 or axis >= 4:
         raise NotImplementedError("Concat axis: {}".format(axis))
 
     return ts.zoo.concat(tf_node.op.name, inputs[:-1], dim=axis)
+
+
+def convert_strided_slice(tf_node, inputs):
+    # type: (tf.Tensor, List[ts.Node]) -> ts.Node
+    print("--# -=[ Converting {} layer: {} ]=-".format(tf_node.op.type, tf_node.op.name))
+
+    raise NotImplementedError(tf_node.op.type)
+
+
+def convert_reshape(tf_node, inputs):
+    # type: (tf.Tensor, List[ts.Node]) -> ts.Node
+    print("--# -=[ Converting {} layer: {} ]=-".format(tf_node.op.type, tf_node.op.name))
+    assert len(inputs) == 2
+
+    shape = tf_node.op.inputs[1].eval()
+    shape = numpy.asarray(shape, dtype=numpy.int32)
+
+    return ts.zoo.reshape(tf_node.op.name, inputs[0], shape=shape)
+
+
+def convert_not_implemented(tf_node, inputs):
+    # type: (tf.Tensor, List[ts.Node]) -> ts.Node
+    print("--# -=[ Converting {} layer: {} ]=-".format(tf_node.op.type, tf_node.op.name))
+
+    raise NotImplementedError(tf_node.op.type)
+
+
+def convert_placeholder(tf_node, inputs):
+    # type: (tf.Tensor, List[ts.Node]) -> ts.Node
+    print("--# -=[ Converting {} layer: {} ]=-".format(tf_node.op.type, tf_node.op.name))
+
+    assert len(inputs) == 0
+
+    return ts.menu.param(name=tf_node.op.name)
+
+
+def convert_const(tf_node, inputs):
+    # type: (tf.Tensor, List[ts.Node]) -> ts.Node
+    print("--# -=[ Converting {} layer: {} ]=-".format(tf_node.op.type, tf_node.op.name))
+
+    assert len(inputs) == 0
+
+    return ts.menu.data(name=tf_node.op.name, value=tf_node.eval())
