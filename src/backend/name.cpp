@@ -109,5 +109,8 @@ namespace ts {
 
         string padding_method = "padding_method";
         string SAME = "SAME";
+
+        string begin = "begin";
+        string end = "end";
     }
 }
