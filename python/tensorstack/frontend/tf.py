@@ -166,6 +166,9 @@ def strided_slice(name, x, begin, end, stride=None):
     end = zoo.to_const(end, "end")
     stride = zoo.to_const(stride, "stride")
 
+    assert len(begin) == len(end)
+    assert len(begin) == len(stride)
+
     # operator
     node = menu.op(name=name, op_name=Name.Layer.strided_slice, inputs=[x, ])
     node.set(Name.begin, begin, numpy.int32)
