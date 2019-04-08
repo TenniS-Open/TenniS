@@ -58,6 +58,9 @@ namespace ts {
             const string &tf_conv2d_padding() TS_NOEXCEPT { static string str = "_tf_conv2d_padding"; return str; }
             const string &nhwc_scale_resize2d() TS_NOEXCEPT { static string str = "_nhwc_scale_resize2d"; return str; }
 
+            const string &strided_slice() TS_NOEXCEPT { static string str = "strided_slice"; return str; }
+            const string &stack() TS_NOEXCEPT { static string str = "stack"; return str; }
+
             const string &copy() TS_NOEXCEPT {
                 static string str = "_copy";
                 return str;

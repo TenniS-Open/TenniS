@@ -36,9 +36,9 @@ def list_raw_case():
     yield([data, begin, end, stride])
     :return:
     """
-    data = [[[1, 1, 1], [2, 2, 2]],
-            [[3, 3, 3], [4, 4, 4]],
-            [[5, 5, 5], [6, 6, 6]]]
+    data = [[[1, 2, 3], [4, 5, 6]],
+            [[7, 8, 9], [10, 11, 12]],
+            [[13, 14, 15], [16, 17, 18]]]
     yield data, [0, 0, 0], [1, 1, 1], None
     yield data, [0, 0, 0], [-1, -1, -1], None
     yield data, [0, 0, 0], [-1, -1, -1], [2, 2, 2]
@@ -61,6 +61,9 @@ def list_case():
             slice_data = ts.menu.data(name="data", value=data)
             slice = ts.frontend.tf.strided_slice(
                 name="stride_slice", x=slice_data, begin=begin, end=end, stride=strides)
+
+            data = numpy.asarray(data, dtype=numpy.float32)
+            y = numpy.asarray(y, dtype=numpy.float32)
 
             yield slice, [data, ], [y, ]
 

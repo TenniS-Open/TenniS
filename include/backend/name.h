@@ -67,6 +67,9 @@ namespace ts {
             TS_DEBUG_API const string &tf_conv2d_padding() TS_NOEXCEPT;
             // 2019-03-18
             TS_DEBUG_API const string &nhwc_scale_resize2d() TS_NOEXCEPT;
+            // 2019-04-08
+            TS_DEBUG_API const string &strided_slice() TS_NOEXCEPT;
+            TS_DEBUG_API const string &stack() TS_NOEXCEPT;
         }
 
         namespace typo {
