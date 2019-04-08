@@ -54,13 +54,13 @@ namespace ts {
 
         inline Tensor from(const char *value) { return from(std::string(value)); }
 
-        template <typename T>
+        template<typename T>
         Tensor from(const T value) { return tensor_builder<T>::build(value); }
 
-        template <typename T>
+        template<typename T>
         Tensor from(const std::initializer_list<T> &value) { return tensor_builder<T>::build(value); }
 
-        template <typename T>
+        template<typename T>
         Tensor from(const std::vector<T> &value) { return tensor_builder<T>::build(value); }
 
         TS_DEBUG_API int to_int(const Tensor &value);
@@ -74,6 +74,18 @@ namespace ts {
         TS_DEBUG_API std::string to_string(const Tensor &value);
 
         TS_DEBUG_API bool to_bool(const Tensor &value);
+
+        namespace array {
+            TS_DEBUG_API std::vector<int32_t> to_int(const Tensor &value);
+
+            TS_DEBUG_API std::vector<uint32_t> to_uint(const Tensor &value);
+
+            TS_DEBUG_API std::vector<float> to_float(const Tensor &value);
+
+            TS_DEBUG_API std::vector<double> to_double(const Tensor &value);
+
+            TS_DEBUG_API std::vector<bool> to_bool(const Tensor &value);
+        }
 
         TS_DEBUG_API Tensor cast(DTYPE dtype, const Tensor &value);
 

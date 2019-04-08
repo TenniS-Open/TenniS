@@ -116,7 +116,8 @@ namespace ts {
         TS_DEBUG_API extern string padding_method;
         TS_DEBUG_API extern string SAME;
 
-
+        TS_DEBUG_API extern string begin;
+        TS_DEBUG_API extern string end;
     }
 
 }
