@@ -17,7 +17,7 @@ class Name(object):
         conv2d_padding = "_tf_conv2d_padding"
         pooling2d_padding = "_tf_pooling2d_padding"
         strided_slice = "strided_slice"
-        pack = "pack"   # diff from _pack in ts
+        stack = "stack" # use for pack operator
 
     SAME = "SAME"
     VALID = "VALID"
@@ -178,7 +178,7 @@ def strided_slice(name, x, begin, end, stride=None):
     return node
 
 
-def pack(name, tensors, axis=0):
+def stack(name, tensors, axis=0):
     """
     tf.concat(axis, [tf.expand_dims(t, axis) for t in tensors])
     IS
@@ -194,7 +194,7 @@ def pack(name, tensors, axis=0):
 
     axis = zoo.to_const(axis, "axis")
 
-    node = menu.op(name=name, op_name=Name.Layer.pack, inputs=tensors)
+    node = menu.op(name=name, op_name=Name.Layer.stack, inputs=tensors)
     node.set(Name.axis, axis, numpy.int32)
 
     return node
