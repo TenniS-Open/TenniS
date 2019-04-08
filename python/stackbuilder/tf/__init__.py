@@ -8,3 +8,5 @@ from . import version_checking
 
 from . import converter
 from . import parser
+
+from . import test
