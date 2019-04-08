@@ -42,10 +42,17 @@ def convert(model_prefix, epoch, input_shape, output_file):
             return ts.menu.data(name, param)
         raise Exception("Can not load param: {}".format(name))
 
+    def convert_not_implemented(node, inputs):
+        # type: (object, List[ts.Node]) -> ts.Node
+        print("--# -=[ Converting {} layer: {} ]=-".format(node["op"], node["name"]))
+
+        raise NotImplementedError(node["op"])
+
     # function format(node, inputs)
     converter_map = {
         "null": convert_null,
         # add layer converter here
+        "BatchNorm": convert_not_implemented,
     }
 
     ts_nodes = [None] * len(graph.nodes)
