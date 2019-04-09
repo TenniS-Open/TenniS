@@ -70,19 +70,29 @@ namespace ts {
 
             if (m_shift.empty()) {
                 for (int i = 0; i < dims; ++i) {
-                    auto x_padding_top = (shape_data[i] - x_size[i]) / 2;
-                    auto x_padding_bottom = shape_data[i] - x_size[i] - x_padding_top;
+                    if (shape_data[i] <= 0) {
+                        padding[i][0] = 0;
+                        padding[i][1] = 0;
+                    } else {
+                        auto x_padding_top = (shape_data[i] - x_size[i]) / 2;
+                        auto x_padding_bottom = shape_data[i] - x_size[i] - x_padding_top;
 
-                    padding[i][0] = x_padding_top;
-                    padding[i][1] = x_padding_bottom;
+                        padding[i][0] = x_padding_top;
+                        padding[i][1] = x_padding_bottom;
+                    }
                 }
             } else {
                 for (int i = 0; i < dims; ++i) {
-                    auto x_padding_top = -m_shift[i];
-                    auto x_padding_bottom = m_shift[i] + shape_data[i] - x_size[i];
+                    if (shape_data[i] <= 0) {
+                        padding[i][0] = -m_shift[i];
+                        padding[i][1] = m_shift[i];
+                    } else {
+                        auto x_padding_top = -m_shift[i];
+                        auto x_padding_bottom = m_shift[i] + shape_data[i] - x_size[i];
 
-                    padding[i][0] = x_padding_top;
-                    padding[i][1] = x_padding_bottom;
+                        padding[i][0] = x_padding_top;
+                        padding[i][1] = x_padding_bottom;
+                    }
                 }
             }
 
