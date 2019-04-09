@@ -121,7 +121,7 @@ class Bound(object):
                 if not isinstance(set_dict(local_kwargs, arg, kwargs[key]), Placeholder):
                     raise TypeError('duplicate key')
 
-        self.__func(*local_args, **local_kwargs)
+        return self.__func(*local_args, **local_kwargs)
 
     def __str__(self):
         first = True
