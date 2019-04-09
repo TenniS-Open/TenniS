@@ -14,6 +14,8 @@ from .tensor import from_any
 from .tensor import to_int
 from .tensor import to_str
 
+import numpy
+
 
 class Node(object):
     Parameter = "<param>"
@@ -30,6 +32,7 @@ class Node(object):
         self.__op = "" if op is None else op
         self.__name = "" if name is None else name
         self.__output_count = 1 if output_count is None else output_count
+        self.__output_count = numpy.asarray(self.__output_count, numpy.int32)
         self.__shape = shape
         self.__params = {
             self.RetentionParam.name: self.__name,
@@ -37,6 +40,7 @@ class Node(object):
             self.RetentionParam.output_count: self.__output_count,
         }
         if self.__shape is not None:
+            self.__shape = numpy.asarray(self.__shape, numpy.int32)
             self.__params[self.RetentionParam.shape] = self.__shape
         self.__inputs = []
         self.__outputs = []

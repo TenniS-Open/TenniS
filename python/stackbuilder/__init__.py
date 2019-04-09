@@ -4,12 +4,33 @@
 :author Kier
 """
 
-# from . import holiday
-# from . import onnx
-# from . import torch
-# from . import vvvv
-# TODO: the follow framework is comming
-# from . import tf
-# from . import mxnet
+try:
+    from . import holiday
+except Exception, e:
+    pass
+try:
+    from . import onnx
+except Exception, e:
+    pass
+try:
+    from . import torch
+except Exception, e:
+    pass
+try:
+    from . import vvvv
+except Exception, e:
+    pass
+try:
+    from . import caffe
+except Exception, e:
+    pass
+try:
+    from . import mxnet
+except Exception, e:
+    pass
+try:
+    from . import tf
+except Exception, e:
+    pass
 
 __version__ = "0.0.9"
