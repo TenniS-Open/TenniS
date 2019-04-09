@@ -55,6 +55,7 @@ class Name(object):
         reshape_v2 = "_reshape_v2"
         global_pooling2d = "global_pooling2d"
         limit = "_limit"
+        crop_nd = "crop_nd"
 
     dim = "dim"
     shuffle = "shuffle"
@@ -75,6 +76,7 @@ class Name(object):
     device = "device"
     smooth = "smooth"
     dtype = "dtype"
+    shift = "shfit"
 
 
 class Default(object):
@@ -544,6 +546,19 @@ def limit(name, x, shape):
     shape = to_const(shape, "shape")
     node = menu.op(name=name, op_name=Name.Layer.limit, inputs=[x, ])
     node.set(Name.shape, shape, numpy.int32)
+
+    return node
+
+
+def crop_nd(name, x, size, shift=None):
+    assert isinstance(x, Node)
+
+    size = to_node(size, "size", device.CPU)
+
+    node = menu.op(name=name, op_name=Name.Layer.crop_nd, inputs=[x, size])
+    if shift is not None:
+        shift = to_const(shift, "shift")
+        node.set(Name.shift, shift, numpy.int32)
 
     return node
 
