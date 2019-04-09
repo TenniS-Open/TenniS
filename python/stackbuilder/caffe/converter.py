@@ -9,11 +9,33 @@ from . import parser
 
 import tensorstack as ts
 
+from tensorstack import orz
 
-def convert(prototxt, caffemodel, output_file, include=None, exclude=None):
+from collections import OrderedDict
+import numpy
+
+
+def blob2numpy(blob):
+    # type: (caffe.BlobProto) -> numpy.ndarray
+    data = numpy.asarray(blob.data, dtype=numpy.float32)
+    if len(data) == 0:
+        return data
+    shape = [-1, ]
+    if blob.HasField("shape"):
+        shape = tuple(blob.shape.dim)
+    else:
+        shape = (blob.num, blob.channels, blob.height, blob.width)
+    return data.reshape(shape)
+
+
+def convert(prototxt, caffemodel, output_file,
+            input_layer_names=None, output_blob_names=None,
+            include=None, exclude=None):
     """
     :param prototxt: path to prototxt file
     :param caffemodel: path to caffemodel file
+    :param input_layer_names: list of input layers
+    :param output_blob_names: list of output blobs
     :param output_file: path of output file
     :param include: list of string(phase), means using in net
     :param exclude: list of string(phase), means not using in net
@@ -47,6 +69,9 @@ def convert(prototxt, caffemodel, output_file, include=None, exclude=None):
     if len(layers) == 0:
         raise Exception("Only support LayerParameter, not V0 or V1")
 
+    input_name_node_map = OrderedDict()
+    # output_name_node_map = OrderedDict()
+
     deploy_input_name = []
     deploy_input_shape = []
 
@@ -58,10 +83,18 @@ def convert(prototxt, caffemodel, output_file, include=None, exclude=None):
             deploy_input_name.append(input_name)
             deploy_input_shape.append(input_shape)
 
-    # function format(layer, params, input_nodes, output_names)
+    def may_input_layer(converter):
+        return orz.bind(converter,
+                        orz.Placeholder(0), orz.Placeholder(1),
+                        orz.Placeholder(2), orz.Placeholder(3),
+                        input_name_node_map)
+
+    # function format(layer, params, input_nodes, output_names, input_name_node_map=None)
     layer_converters = {
         # add layer converter here
         "ReLU": convert_relu_layer,
+        "ImageData": may_input_layer(convert_image_data_layer),
+        "Convolution": convert_convolution_layer,
     }
 
     blob2nodes = {}
@@ -94,9 +127,12 @@ def convert(prototxt, caffemodel, output_file, include=None, exclude=None):
         else:
             blob2count[top] -= 1
             node_name = "{}_hide_{}".format(top, blob2count[top])
-        node = ts.menu.param("_origin_" + node_name, shape)
-        node = ts.zoo.to_float(node_name, node)
+        input_node = ts.menu.param("_origin_" + node_name, shape)
+        node = ts.zoo.to_float(node_name, input_node)
         blob2nodes[top] = node
+
+        # collect inputs
+        input_layer_names[node_name] = input_node
 
     # for each layer
     for layer in layers:
@@ -126,7 +162,7 @@ def convert(prototxt, caffemodel, output_file, include=None, exclude=None):
         if layer.name in layer2params:
             params = layer2params[layer.name]
 
-        ts_nodes = ts_converter(layer=layer, params=params, input_nodes=input_nodes, output_names=output_names)
+        ts_nodes = ts_converter(layer, params, input_nodes, output_names)
 
         if not isinstance(ts_nodes, list) and not isinstance(ts_nodes, tuple):
             ts_nodes = (ts_nodes, )
@@ -152,5 +188,211 @@ def convert_relu_layer(layer, params, input_nodes, output_names):
     node_name = output_names[0]
 
     node = ts.zoo.relu(node_name, x=x)
+
+    return node,
+
+
+def apply_transform(transform_param, node, suffix, log=True):
+    # type: (caffe.TransformationParameter, ts.Node, str, bool) -> ts.Node
+    if transform_param.HasField("crop_size"):
+        crop_size = transform_param.crop_size
+        print("--##    crop_size: {}".format(crop_size))
+        node = ts.zoo.crop_nd("_crop_" + suffix, node, size=[-1, -1, crop_size, crop_size])
+
+    mean_value = transform_param.mean_value
+    if len(mean_value) > 0:
+        print("--##    mean_value: {}".format(mean_value))
+        rhs = numpy.asarray(mean_value, numpy.float32)
+        rhs = numpy.reshape(rhs, newshape=[1, len(mean_value), 1, 1])
+        node = ts.zoo.sub("_sub_mean_" + suffix, node, rhs)
+
+    if transform_param.HasField("scale"):
+        scale = transform_param.scale
+        print("--##    scale: {}".format(scale))
+        node = ts.zoo.mul("_scale_" + suffix, node, float(scale))
+
+    return node
+
+
+def convert_image_data_layer(layer, params, input_nodes, output_names, input_name_node_map):
+    # type: (caffe.LayerParameter, List[ts.Node], List[caffe.BlobProto], List[str], Map[str, ts.Node]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} ]=-".format(layer.name, output_names))
+
+    assert len(input_nodes) == 0
+    assert len(output_names) == 2
+
+    node_name = output_names[0]
+    input_node = ts.menu.param("_origin_" + node_name)
+    node = input_node
+
+    layer_param = layer.image_data_param
+    new_width = 0
+    new_height = 0
+    if layer_param.HasField("new_width"):
+        print("--##    new_width: {}".format(new_width))
+        new_width = layer_param.new_width
+    if layer_param.HasField("new_height"):
+        print("--##    new_height: {}".format(new_height))
+        new_height = layer_param.new_height
+
+    if new_width > 0 and new_height > 0:
+        node = ts.zoo.resize2d("_resize2d_" + node_name, node, [-1, new_height, new_width, -1])
+
+    node = ts.zoo.transpose("_nchw_" + node_name, node, pemute=[0, 3, 1, 2])
+    node = ts.zoo.to_float("_float_" + node_name, node)
+
+    # transform param
+    if layer.HasField("transform_param"):
+        node = apply_transform(layer.transform_param, node, node_name)
+
+    node.name = node_name
+
+    label_name = output_names[1]
+    label = ts.menu.data(label_name, 1, ts.device.CPU)
+
+    # set input node
+    input_name_node_map[layer.name] = input_node
+
+    return node, label
+
+
+def message_getattr(message, attr, default):
+    if message.HasField(attr):
+        return getattr(message, attr)
+    else:
+        return default
+
+
+def convert_convolution_layer(layer, params, input_nodes, output_names):
+    # type: (caffe.LayerParameter, List[ts.Node], List[caffe.BlobProto], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} ]=-".format(layer.name, output_names))
+
+    assert len(input_nodes) == 1
+    assert len(params) > 0
+    assert len(output_names) == 1
+
+    conv2d_name = "_conv2d_" + output_names[0]
+    bias_name = "_bias_" + output_names[0]
+    node_name = output_names[0]
+
+    layer_param = layer.convolution_param
+
+    bias_term = True
+    if layer_param.HasField("bias_term"):
+        bias_term = layer_param.bias_term
+
+    bias_blob = None    # [output_channels, ]
+    if bias_term:
+        assert len(params) > 1
+        bias_blob = blob2numpy(params[1])
+        print("--##    Bias shape: {}".format(bias_blob.shape))
+
+    # is [output_channels, input_channels / group, input_height, input_width]
+    weights_blob = blob2numpy(params[0])
+    print("--##    Weights shape: {}".format(weights_blob.shape))
+
+    force_nd_im2col = False
+    if layer_param.HasField("force_nd_im2col"):
+        force_nd_im2col = layer_param.force_nd_im2col
+    if force_nd_im2col:
+        raise NotImplementedError("force_nd_im2col = {}".format(force_nd_im2col))
+
+    padding = [message_getattr(layer_param, "pad_h", 0),
+               message_getattr(layer_param, "pad_w", 0)]
+
+    if len(layer_param.pad) > 0:
+        if len(layer_param.pad) == 1:
+            padding = [layer_param.pad[0], layer_param.pad[0]]
+        else:
+            assert len(layer_param.pad) == 2
+            padding = list(layer_param.pad)
+
+    stride = [message_getattr(layer_param, "stride_h", 0),
+              message_getattr(layer_param, "stride_w", 0)]
+
+    if len(layer_param.stride) > 0:
+        if len(layer_param.stride) == 1:
+            stride = [layer_param.stride[0], layer_param.stride[0]]
+        else:
+            assert len(layer_param.stride) == 2
+            stride = list(layer_param.stride)
+
+    dilation = [1, 1]
+
+    if len(layer_param.dilation) > 0:
+        if len(layer_param.dilation) == 1:
+            dilation = [layer_param.dilation[0], layer_param.dilation[0]]
+        else:
+            assert len(layer_param.dilation) == 2
+            dilation = list(layer_param.dilation)
+
+    print("--##    dilation: {}".format(dilation))
+    print("--##    pad: {}".format(padding))
+    print("--##    stride: {}".format(stride))
+
+    num_output = None
+    if layer_param.HasField("num_output"):
+        num_output = layer_param.num_output
+
+    kernel_size = [message_getattr(layer_param, "kernel_h", 0),
+                   message_getattr(layer_param, "kernel_w", 0)]
+
+    if len(layer_param.kernel_size) > 0:
+        if len(layer_param.kernel_size) == 1:
+            kernel_size = [layer_param.kernel_size[0], layer_param.kernel_size[0]]
+        else:
+            assert len(layer_param.kernel_size) == 2
+            kernel_size = list(layer_param.kernel_size)
+
+    print("--##    kernel_size: {}".format(kernel_size))
+
+    assert kernel_size[0] == weights_blob.shape[2] and kernel_size[1] == weights_blob.shape[3]
+
+    group = 1
+    if layer_param.HasField("group"):
+        group = layer_param.group
+        print("--##    group: {}".format(group))
+
+    input_channels = weights_blob.shape[1]
+
+    assert weights_blob.shape[0] * group == num_output
+
+    axis = 1
+    if layer_param.HasField("axis"):
+        axis = layer_param.axis
+
+    assert axis == 1
+
+    if group != 1 and weights_blob.shape[1] != 1:
+        raise NotImplementedError("group = {} with weights.shape[1] = {}".format(group, weights_blob.shape[1]))
+
+    is_conv2d = group == 1
+    is_depthwise_conv2d = weights_blob.shape[1] == 1
+
+    node = None
+
+    if is_conv2d:
+        node = ts.zoo.conv2d(conv2d_name, x=input_nodes[0], w=weights_blob, format=ts.zoo.Name.NCHW,
+                             padding=[[0, 0], [0, 0], [padding[0], padding[0]], [padding[1], padding[1]]],
+                             padding_value=0,
+                             stride=[1, 1, stride[0], stride[1]],
+                             dilation=[1, 1, dilation[0], dilation[1]])
+    elif is_depthwise_conv2d:
+        weights_shape = weights_blob.shape
+        depthwise_weights_shape = (weights_shape[1], weights_shape[0], weights_shape[2], weights_shape[3])
+        weights_blob = weights_blob.reshape(shape=depthwise_weights_shape)
+        node = ts.zoo.depthwise_conv2d(conv2d_name, x=input_nodes[0], w=weights_blob, format=ts.zoo.Name.NCHW,
+                                       padding=[[0, 0], [0, 0], [padding[0], padding[0]], [padding[1], padding[1]]],
+                                       padding_value=0,
+                                       stride=[0, 0, stride[0], stride[1]],
+                                       dilation=[1, 1, dilation[0], dilation[1]])
+
+    if node is None:
+        raise NotImplementedError(layer)
+
+    if bias_blob is not None:
+        node = ts.zoo.add_bias(bias_name, x=node, b=bias_blob, format=ts.zoo.Name.NCHW)
+
+    node.name = node_name
 
     return node,
