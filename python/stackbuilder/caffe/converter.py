@@ -97,6 +97,8 @@ def convert(prototxt, caffemodel, output_file,
         "Convolution": convert_convolution_layer,
         "BatchNorm": convert_batch_norm,
         "Scale": convert_scale,
+        "Pooling": convert_pooling,
+        "InnerProduct": convert_inner_product,
     }
 
     blob2nodes = {}
@@ -175,12 +177,66 @@ def convert(prototxt, caffemodel, output_file,
             # update blob2nodes
             blob2nodes[layer.top[i]] = ts_nodes[i]
 
-    print blob2count
+    inputs = None
+    if input_layer_names is not None:
+        inputs = []
+        for input_layer_name in input_layer_names:
+            if input_layer_name not in input_name_node_map:
+                raise Exception("There is no input named: {}".format(input_layer_name))
+            inputs.append(input_name_node_map[input_layer_name])
+
+    if output_blob_names is None:
+        output_blob_names = []
+        # count bottom
+        bottom_set = set()
+        for layer in layers:
+            if len(layer.bottom) == 1 and len(layer.top) == 1 and layer.top[0] == layer.bottom[0]:
+                continue
+            for bottom in layer.bottom:
+                bottom_set.add(bottom)
+            if layer.type[-4:] == "Data":   # discard data label
+                for top in layer.top[1:]:
+                    bottom_set.add(top)
+        top_set = set(blob2count.keys())
+        output_blob_names = list(top_set - bottom_set)
+
+    outputs = []
+    for output_blob_name in output_blob_names:
+        if output_blob_name not in blob2nodes:
+            raise Exception("There is no blob named: {}".format(output_blob_name))
+        outputs.append(blob2nodes[output_blob_name])
+
+    module = ts.Module()
+
+    # load module
+    module.load(outputs)
+
+    # sort inputs
+    assert len(module.inputs) == 1
+
+    with open(output_file, "wb") as fo:
+        ts.Module.Save(stream=fo, module=module)
+
+    print("============ Summary ============")
+    # print("Input file: {}".format(input_file))
+    print("Output file: {}".format(output_file))
+    index = 0
+    print("Input node: ")
+    for node in module.inputs:
+        assert isinstance(node, ts.Node)
+        print("{}: {}, shape={}".format(index, node.name, node.shape))
+        index += 1
+    index = 0
+    print("Output node: ")
+    for node in module.outputs:
+        assert isinstance(node, ts.Node)
+        print("{}: {}".format(index, node.name))
+        index += 1
 
 
 def convert_relu_layer(layer, params, input_nodes, output_names):
     # type: (caffe.LayerParameter, List[ts.Node], List[caffe.BlobProto], List[str]) -> List[ts.Node]
-    print("--# -=[ Converting {} layer: {} ]=-".format(layer.name, output_names))
+    print("--# -=[ Converting {} layer({}): {} ]=-".format(layer.type, layer.name, output_names))
 
     assert len(input_nodes) == 1
     assert len(params) == 0
@@ -218,7 +274,7 @@ def apply_transform(transform_param, node, suffix, log=True):
 
 def convert_image_data_layer(layer, params, input_nodes, output_names, input_name_node_map):
     # type: (caffe.LayerParameter, List[ts.Node], List[caffe.BlobProto], List[str], Map[str, ts.Node]) -> List[ts.Node]
-    print("--# -=[ Converting {} layer: {} ]=-".format(layer.name, output_names))
+    print("--# -=[ Converting {} layer({}): {} ]=-".format(layer.type, layer.name, output_names))
 
     assert len(input_nodes) == 0
     assert len(output_names) == 2
@@ -267,7 +323,7 @@ def message_getattr(message, attr, default):
 
 def convert_convolution_layer(layer, params, input_nodes, output_names):
     # type: (caffe.LayerParameter, List[ts.Node], List[caffe.BlobProto], List[str]) -> List[ts.Node]
-    print("--# -=[ Converting {} layer: {} ]=-".format(layer.name, output_names))
+    print("--# -=[ Converting {} layer({}): {} ]=-".format(layer.type, layer.name, output_names))
 
     assert len(input_nodes) == 1
     assert len(params) > 0
@@ -309,8 +365,8 @@ def convert_convolution_layer(layer, params, input_nodes, output_names):
             assert len(layer_param.pad) == 2
             padding = list(layer_param.pad)
 
-    stride = [message_getattr(layer_param, "stride_h", 0),
-              message_getattr(layer_param, "stride_w", 0)]
+    stride = [message_getattr(layer_param, "stride_h", 1),
+              message_getattr(layer_param, "stride_w", 1)]
 
     if len(layer_param.stride) > 0:
         if len(layer_param.stride) == 1:
@@ -402,7 +458,7 @@ def convert_convolution_layer(layer, params, input_nodes, output_names):
 
 def convert_batch_norm(layer, params, input_nodes, output_names):
     # type: (caffe.LayerParameter, List[ts.Node], List[caffe.BlobProto], List[str]) -> List[ts.Node]
-    print("--# -=[ Converting {} layer: {} ]=-".format(layer.name, output_names))
+    print("--# -=[ Converting {} layer({}): {} ]=-".format(layer.type, layer.name, output_names))
 
     assert len(input_nodes) == 1
     assert len(params) == 3
@@ -442,7 +498,7 @@ def convert_batch_norm(layer, params, input_nodes, output_names):
 
 def convert_scale(layer, params, input_nodes, output_names):
     # type: (caffe.LayerParameter, List[ts.Node], List[caffe.BlobProto], List[str]) -> List[ts.Node]
-    print("--# -=[ Converting {} layer: {} ]=-".format(layer.name, output_names))
+    print("--# -=[ Converting {} layer({}): {} ]=-".format(layer.type, layer.name, output_names))
 
     assert len(input_nodes) == 1 or len(input_nodes) == 2
     assert len(params) == 1 or len(params) == 2
@@ -495,5 +551,140 @@ def convert_scale(layer, params, input_nodes, output_names):
 
     if node is None:
         raise NotImplementedError(layer)
+
+    return node,
+
+
+def convert_pooling(layer, params, input_nodes, output_names):
+    # type: (caffe.LayerParameter, List[ts.Node], List[caffe.BlobProto], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer({}): {} ]=-".format(layer.type, layer.name, output_names))
+
+    assert len(input_nodes) == 1
+    assert len(output_names) == 1
+
+    x = input_nodes[0]
+    node_name = output_names[0]
+
+    layer_param = layer.pooling_param
+
+    pool = layer_param.pool
+
+    caffe_pool_type_to_ts_pool_type = {
+        layer_param.MAX: ts.zoo.Type.pooling_type.max,
+        layer_param.AVE: ts.zoo.Type.pooling_type.avg,
+        layer_param.STOCHASTIC: None,
+    }
+
+    caffe_pool_type_to_string = {
+        layer_param.MAX: "MAX",
+        layer_param.AVE: "AVE",
+        layer_param.STOCHASTIC: "STOCHASTIC",
+    }
+
+    print("--##    Type : {}".format(caffe_pool_type_to_string[pool]))
+
+    pooling_type = caffe_pool_type_to_ts_pool_type[pool]
+    if pooling_type is None:
+        raise NotImplementedError("Pooling type(code): {}({})".format(caffe_pool_type_to_string[pool], pool))
+
+    global_pooling = False
+    if layer_param.HasField("global_pooling"):
+        global_pooling = layer_param.global_pooling
+        print("--##    Global pooling: {}".format(global_pooling))
+
+    if global_pooling:
+        node = ts.zoo.global_pooling2d(node_name, x=x, type=pooling_type, format=ts.zoo.Name.NCHW)
+        return node,
+
+    padding = [message_getattr(layer_param, "pad_h", 0),
+               message_getattr(layer_param, "pad_w", 0)]
+
+    if layer_param.HasField("pad"):
+        padding = [layer_param.pad, layer_param.pad]
+
+    stride = [message_getattr(layer_param, "stride_h", 1),
+              message_getattr(layer_param, "stride_w", 1)]
+
+    if layer_param.HasField("stride"):
+        stride = [layer_param.stride, layer_param.stride]
+
+    kernel_size = [message_getattr(layer_param, "kernel_h", None),
+                   message_getattr(layer_param, "kernel_w", None)]
+
+    if layer_param.HasField("kernel_size"):
+        kernel_size = [layer_param.kernel_size, layer_param.kernel_size]
+
+    print("--##    pad: {}".format(padding))
+    print("--##    stride: {}".format(stride))
+    print("--##    kernel_size: {}".format(kernel_size))
+
+    node = ts.zoo.pooling2d(node_name, x=x,
+                            ksize=[1, 1, kernel_size[0], kernel_size[1]],
+                            stride=[1, 1, stride[0], stride[1]],
+                            type=pooling_type,
+                            format=ts.zoo.Name.NCHW,
+                            padding=[[0, 0], [0, 0], [padding[0], padding[0]], [padding[1], padding[1]]])
+
+    return node,
+
+
+def convert_inner_product(layer, params, input_nodes, output_names):
+    # type: (caffe.LayerParameter, List[ts.Node], List[caffe.BlobProto], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer({}): {} ]=-".format(layer.type, layer.name, output_names))
+
+    assert len(input_nodes) == 1
+    assert len(params) == 1 or len(params) == 2
+    assert len(output_names) == 1
+
+    x = input_nodes[0]
+    node_name = output_names[0]
+
+    layer_param = layer.inner_product_param
+
+    num_output = None
+    if layer_param.HasField("num_output"):
+        num_output = layer_param.num_output
+
+    axis = 1
+    if layer_param.HasField("axis"):
+        axis = layer_param.axis
+
+    assert axis == 1
+
+    transpose = False
+    if layer_param.HasField("transpose"):
+        transpose = layer_param.transpose
+    print("--##    Transpose: {}".format(transpose))
+
+    bias_term = True
+    if layer_param.HasField("bias_term"):
+        bias_term = layer_param.bias_term
+
+    weights_blob = blob2numpy(params[0])
+    print("--##    Weights shape: {}".format(weights_blob.shape))
+
+    bias_blob = None
+    if bias_term:
+        assert len(params) == 2
+        bias_blob = blob2numpy(params[1])
+        print("--##    Bias shape: {}".format(bias_blob.shape))
+
+    assert num_output == weights_blob.shape[0]
+    num_input = weights_blob.shape[1]
+
+    if transpose:
+        weights_blob = numpy.reshape(weights_blob, newshape=[num_input, num_output])
+    else:
+        weights_blob = weights_blob.transpose()
+
+    node = ts.zoo.flatten("_flatten_" + node_name, x=x)
+    node = ts.zoo.inner_prod("_ip_" + node_name, node, weights_blob)
+
+    if bias_blob is not None:
+        node = ts.zoo.add_bias("_add_bias_" + node_name, x=node, b=bias_blob, format=ts.zoo.Name.NCHW)
+
+    node = ts.zoo.reshape(name=node_name, x=node, shape=[-1, num_output, 1, 1])
+
+    node.name = node_name
 
     return node,
