@@ -95,6 +95,8 @@ def convert(prototxt, caffemodel, output_file,
         "ReLU": convert_relu_layer,
         "ImageData": may_input_layer(convert_image_data_layer),
         "Convolution": convert_convolution_layer,
+        "BatchNorm": convert_batch_norm,
+        "Scale": convert_scale,
     }
 
     blob2nodes = {}
@@ -394,5 +396,104 @@ def convert_convolution_layer(layer, params, input_nodes, output_names):
         node = ts.zoo.add_bias(bias_name, x=node, b=bias_blob, format=ts.zoo.Name.NCHW)
 
     node.name = node_name
+
+    return node,
+
+
+def convert_batch_norm(layer, params, input_nodes, output_names):
+    # type: (caffe.LayerParameter, List[ts.Node], List[caffe.BlobProto], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} ]=-".format(layer.name, output_names))
+
+    assert len(input_nodes) == 1
+    assert len(params) == 3
+    assert len(output_names) == 1
+
+    x = input_nodes[0]
+    node_name = output_names[0]
+
+    layer_param = layer.batch_norm_param
+
+    mean = params[0]
+    variance = params[1]
+
+    mean = blob2numpy(mean)
+    variance = blob2numpy(variance)
+
+    scale_factor = blob2numpy(params[2])[0]
+
+    scale = 0 if scale_factor == 0 else 1.0 / scale_factor
+
+    mean *= scale
+    variance *= scale
+
+    mean = numpy.asarray(mean, numpy.float32)
+    variance = numpy.asarray(variance, numpy.float32)
+
+    print("--##    mean shape: {}".format(mean.shape))
+    print("--##    variance shape: {}".format(variance.shape))
+    print("--##    scale_factor: {}".format(scale_factor))
+
+    epsilon = message_getattr(layer_param, "eps", 1e-5)
+
+    node = ts.zoo.batch_norm(node_name, x=x, mean=mean, variance=variance, dim=1, epsilon=epsilon)
+
+    return node,
+
+
+def convert_scale(layer, params, input_nodes, output_names):
+    # type: (caffe.LayerParameter, List[ts.Node], List[caffe.BlobProto], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} ]=-".format(layer.name, output_names))
+
+    assert len(input_nodes) == 1 or len(input_nodes) == 2
+    assert len(params) == 1 or len(params) == 2
+    assert len(output_names) == 1
+
+    x = input_nodes[0]
+    node_name = output_names[0]
+
+    layer_param = layer.scale_param
+
+    scale = None
+    if len(input_nodes) == 2:
+        scale = input_nodes[1]
+    else:
+        scale = blob2numpy(params[0])
+        print("--##    scale shape: {}".format(scale.shape))
+    assert scale is not None
+
+    bias_term = message_getattr(layer_param, "bias_term", False)
+
+    bias = None
+    if bias_term:
+        assert len(params) == 2
+        bias = blob2numpy(params[1])
+        print("--##    bias shape: {}".format(bias.shape))
+
+    axis = message_getattr(layer_param, "axis", 1)
+    num_axes = message_getattr(layer_param, "num_axes", 1)
+
+    print("--##    axis: {}".format(axis))
+    print("--##    num_axes: {}".format(num_axes))
+
+    node = None
+    if axis == 1 and num_axes == 1:
+        if bias is None:
+            if not isinstance(scale, numpy.ndarray):
+                raise NotImplementedError(layer)
+            assert len(scale.shape) == 1
+            scale = numpy.reshape(scale, newshape=[1, scale.shape[0], 1, 1])
+            node = ts.zoo.mul(node_name, x, scale)
+        else:
+            node = ts.zoo.batch_scale(node_name, x, scale, bias, dim=1)
+    else:
+        print("WARNING: reach not fully supported setting.")
+        if bias is None:
+            node = ts.zoo.mul(node_name, x, scale)
+        else:
+            scale_node = ts.zoo.mul("_scale_" + node_name, x, scale)
+            node = ts.zoo.add(node_name, scale_node, bias)
+
+    if node is None:
+        raise NotImplementedError(layer)
 
     return node,
