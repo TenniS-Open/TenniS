@@ -514,8 +514,16 @@ def pooling2d(name, x, ksize, stride, type=Type.pooling_type.max, format=Name.NC
 
 
 def copy(name, x):
-    assert isinstance(x, Node)
-    node = menu.op(name=name, op_name=Name.Layer.copy, inputs=[x, ])
+    assert isinstance(x, Node) or isinstance(x, (tuple, list))
+    node = None
+    if isinstance(x, Node):
+        node = menu.op(name=name, op_name=Name.Layer.copy, inputs=[x, ])
+    elif isinstance(x, (tuple, list)):
+        for input in x:
+            assert isinstance(input, Node)
+        node = menu.op(name=name, op_name=Name.Layer.copy, inputs=x, output_count=len(x))
+    else:
+        raise NotImplementedError("type(x) = {}".format(type(x)))
     return node
 
 
