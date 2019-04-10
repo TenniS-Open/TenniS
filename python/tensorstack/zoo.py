@@ -7,6 +7,7 @@
 from .node import Node
 from . import menu as menu
 from . import device as device
+from . import tensor
 
 import numpy
 
@@ -126,9 +127,11 @@ def to_const(value, name=None):
     return value
 
 
-def to_node(value, name=None, device=None):
+def to_node(value, name=None, device=None, dtype=None):
     if isinstance(value, Node):
         return value
+    if dtype is not None:
+        value = tensor.from_any(value, dtype=dtype)
     return menu.data(name=name, value=value, device=device)
 
 
@@ -159,7 +162,7 @@ def transpose(name, x, pemute=None):
 def reshape_v2(name, x, shape):
     assert isinstance(x, Node)
 
-    shape = to_node(shape, "shape", device=device.CPU)
+    shape = to_node(shape, "shape", dtype=numpy.int32, device=device.CPU)
 
     node = menu.op(name=name, op_name=Name.Layer.reshape_v2, inputs=[x, shape])
 
@@ -249,7 +252,7 @@ def pad(name, x, padding, padding_value=None):
 
     if padding_value is None:
         padding_value = Default.padding_value()
-    padding = to_node(padding, name="_const_" + name + "_padding", device=device.CPU)
+    padding = to_node(padding, name="_const_" + name + "_padding", dtype=numpy.int32, device=device.CPU)
 
     node = menu.op(name=name, op_name=Name.Layer.pad, inputs=[x, padding])
     node.set(Name.padding_value, padding_value)
@@ -454,7 +457,7 @@ def to_float(name, x):
 def resize2d(name, x, size, type=Type.resize2d_type.linear):
     assert isinstance(x, Node)
 
-    size = to_node(size, name="_const_" + name + "_size", device=device.CPU)
+    size = to_node(size, name="_const_" + name + "_size", dtype=numpy.int32, device=device.CPU)
 
     node = menu.op(name=name, op_name=Name.Layer.resize2d, inputs=[x, size])
     node.set(Name.type, type, numpy.int32)
@@ -470,9 +473,9 @@ def pooling2d_v2(name, x, ksize, stride, type=Type.pooling_type.max, format=Name
     if padding is None:
         padding = Default.padding()
 
-    padding = to_node(padding, name="_const_" + name + "_padding", device=device.CPU)
-    ksize = to_node(ksize, name="_const_" + name + "_ksize", device=device.CPU)
-    stride = to_node(stride, name="_const_" + name + "_stride", device=device.CPU)
+    padding = to_node(padding, name="_const_" + name + "_padding", dtype=numpy.int32, device=device.CPU)
+    ksize = to_node(ksize, name="_const_" + name + "_ksize", dtype=numpy.int32, device=device.CPU)
+    stride = to_node(stride, name="_const_" + name + "_stride", dtype=numpy.int32, device=device.CPU)
 
     node = menu.op(name=name, op_name=Name.Layer.pooling2d_v2, inputs=[x, padding, ksize, stride])
     node.set(Name.format, format)
@@ -556,7 +559,7 @@ def limit(name, x, shape):
 def crop_nd(name, x, size, shift=None):
     assert isinstance(x, Node)
 
-    size = to_node(size, "size", device.CPU)
+    size = to_node(size, "size", dtype=numpy.int32, device=device.CPU)
 
     node = menu.op(name=name, op_name=Name.Layer.crop_nd, inputs=[x, size])
     if shift is not None:
