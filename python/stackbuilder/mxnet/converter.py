@@ -13,13 +13,16 @@ import tensorstack as ts
 import numpy
 
 
-def convert(model_prefix, epoch, output_file, input_shapes=None, input_nodes=None):
+def convert(model_prefix, epoch, output_file,
+            input_shapes=None, input_nodes=None,
+            output_node_names=None):
     """
     :param model_prefix: string of model prefix
     :param epoch: int
     :param output_file: path to output file
     :param input_shapes: dict of string to shape, like {"data", [1, 3, 248, 248]}.
     :param input_nodes: dict of string to ts.Node, like {"data", ts.Node()}.
+    :param output_node_names: list of string to get node.
     :return:
     """
     symbol_json = '%s-symbol.json' % (model_prefix, )
@@ -47,6 +50,14 @@ def convert(model_prefix, epoch, output_file, input_shapes=None, input_nodes=Non
         if isinstance(input_node, ts.Node):
             continue
         input_nodes[name] = ts.menu.param(name, input_node)
+
+    output_node_name2index = {}
+    output_node_name_set = set()
+    if output_node_names is None:
+        # if no output_node_names, then make output checking always failed
+        output_node_name2index["^_^"] = -1
+    else:
+        output_node_name_set = set(output_node_names)
 
     def convert_null(node, inputs):
         assert len(inputs) == 0
@@ -86,6 +97,10 @@ def convert(model_prefix, epoch, output_file, input_shapes=None, input_nodes=Non
     ts_nodes = [None] * len(graph.nodes)
 
     def convert_at(i):
+        """
+        :param i: node index
+        :return: true if early return
+        """
         if ts_nodes[i] is not None:
             return
         node = graph.nodes[i]
@@ -105,11 +120,22 @@ def convert(model_prefix, epoch, output_file, input_shapes=None, input_nodes=Non
             assert len(local_nodes) == 1
             local_nodes = local_nodes[0]
         ts_nodes[i] = local_nodes
+        # check if output
+        if node['name'] in output_node_name_set:
+            output_node_name2index[node['name']] = i
+        return len(output_node_name2index) == len(output_node_name_set)
 
     for i in range(len(graph.nodes)):
-        convert_at(i)
+        if convert_at(i):
+            break
 
-    outputs = [ts_nodes[head] for head in graph.heads]
+    heads = []
+    if output_node_names is not None:
+        heads = [output_node_name2index[name] for name in output_node_names]
+    else:
+        heads = graph.heads
+
+    outputs = [ts_nodes[head] for head in heads]
 
     module = ts.Module()
 

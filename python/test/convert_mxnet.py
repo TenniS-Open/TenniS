@@ -14,7 +14,9 @@ def test():
             "mxnet-resnet50.tsm",
             input_nodes={
                 "data": ts.menu.param("data", [1, 3, 248, 248]),
-            })
+            },
+            output_node_names=['fc1_act', ]
+            )
 
 
 if __name__ == '__main__':
