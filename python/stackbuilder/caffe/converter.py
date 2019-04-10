@@ -267,7 +267,8 @@ def apply_transform(transform_param, node, suffix, log=True):
     if transform_param.HasField("scale"):
         scale = transform_param.scale
         print("--##    scale: {}".format(scale))
-        node = ts.zoo.mul("_scale_" + suffix, node, float(scale))
+        scale = numpy.asarray(scale, numpy.float32)
+        node = ts.zoo.mul("_scale_" + suffix, node, scale)
 
     return node
 
