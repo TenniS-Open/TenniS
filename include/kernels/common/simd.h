@@ -43,6 +43,17 @@ namespace ts {
         return a[0] + a[1] + a[2] + a[3];
     }
 
+    template<typename T>
+    inline T sum(const simd<T, 4> &value,int index) {
+        T a[4];
+        value.store(a);
+        T sum = 0;
+        for (int i = 0; i < index && i < 4; i++){
+            sum += a[i];
+        }
+        return sum;
+    }
+
     template<typename T, int M>
     inline const simd<T, M> &operator+=(simd<T, M> &lhs, const simd<T, M> &rhs) {
         return lhs = lhs + rhs;
