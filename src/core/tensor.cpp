@@ -122,7 +122,7 @@ namespace ts {
     }
 
     bool Tensor::empty() const {
-        return this->count() == 0;
+        return dtype() == VOID && dims() == 0;
     }
 
     Tensor Tensor::reshape(const Shape &shape) const {
