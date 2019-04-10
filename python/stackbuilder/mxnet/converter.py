@@ -23,7 +23,7 @@ def convert(model_prefix, epoch, output_file,
     :param input_shapes: dict of string to shape, like {"data", [1, 3, 248, 248]}.
     :param input_nodes: dict of string to ts.Node, like {"data", ts.Node()}.
     :param output_node_names: list of string to get node.
-    :return:
+    :return: ts.Module
     """
     symbol_json = '%s-symbol.json' % (model_prefix, )
     symbol = None
@@ -166,7 +166,7 @@ def convert(model_prefix, epoch, output_file,
         print("{}: {}".format(index, node.name))
         index += 1
 
-    pass
+    return module
 
 
 def convert_batch_norm(node, inputs):

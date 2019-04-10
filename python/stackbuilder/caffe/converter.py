@@ -39,7 +39,7 @@ def convert(prototxt, caffemodel, output_file,
     :param output_file: path of output file
     :param include: list of string(phase), means using in net
     :param exclude: list of string(phase), means not using in net
-    :return: None
+    :return: ts.Module
     """
     net = caffe.NetParameter()
     with open(prototxt, "rb") as file_prototxt:
@@ -232,6 +232,8 @@ def convert(prototxt, caffemodel, output_file,
         assert isinstance(node, ts.Node)
         print("{}: {}".format(index, node.name))
         index += 1
+
+    return module
 
 
 def convert_relu_layer(layer, params, input_nodes, output_names):

@@ -18,7 +18,7 @@ def convert(input_module, output_file, input):
     :param input_module: torch.nn.Module or param can be parsed to troch.load(param)
     :param output_file: str of path to file
     :param input: tuple of input shape
-    :return: None
+    :return: ts.Module
     """
     torch_model = None
     if isinstance(input_module, str):
@@ -35,4 +35,4 @@ def convert(input_module, output_file, input):
 
     convert_onnx(torch_model, temp_onnx_file, input)
 
-    onnx_converter.convert(temp_onnx_file, output_file)
+    return onnx_converter.convert(temp_onnx_file, output_file)
