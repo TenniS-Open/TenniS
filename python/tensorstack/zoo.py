@@ -48,7 +48,7 @@ class Name(object):
         to_float = "to_float"
         pooling2d = "pooling2d"
         pooling2d_v2 = "pooling2d_v2"
-        resize2d = "resize2d"
+        resize2d = "_resize2d"
         copy = "_copy"
         prewhiten = "prewhiten"
         cast = "_cast"
