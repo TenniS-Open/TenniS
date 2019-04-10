@@ -189,7 +189,7 @@ def stack(name, tensors, axis=0):
     :return:
     """
 
-    if tensors is not tuple and tensors is not list:
+    if not isinstance(tensors, (tuple, list)):
         tensors = [tensors, ]
 
     axis = zoo.to_const(axis, "axis")

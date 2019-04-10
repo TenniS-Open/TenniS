@@ -116,7 +116,7 @@ def convert(model_prefix, epoch, output_file,
             convert_at(input)
         inputs = [ ts_nodes[input] for input in inputs ]
         local_nodes = converter(node, inputs)
-        if local_nodes is tuple or local_nodes is list:
+        if isinstance(local_nodes, (tuple, list)):
             assert len(local_nodes) == 1
             local_nodes = local_nodes[0]
         ts_nodes[i] = local_nodes
