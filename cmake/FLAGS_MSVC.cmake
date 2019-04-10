@@ -5,6 +5,18 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W3")
 
 message(STATUS "Platform: ${PLATFORM}")
 
+
+SET(CUDA_PROPAGATE_HOST_FLAGS OFF)
+set(CUDA_ARCH  	-gencode arch=compute_30,code=sm_30
+                -gencode arch=compute_35,code=sm_35
+	            -gencode arch=compute_50,code=sm_50
+                -gencode arch=compute_60,code=sm_60)
+set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} ${CUDA_ARCH} -std=c++11")
+set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} ${CUDA_ARCH} -std=c++11")
+if (${CONFIGURATION} STREQUAL "Debug")
+    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -O0 -g ")
+endif()
+
 if ("${PLATFORM}" STREQUAL "x86")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
