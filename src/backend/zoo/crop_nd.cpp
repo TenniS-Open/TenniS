@@ -64,9 +64,9 @@ namespace ts {
 
             auto dims = x.dims();
 
-            TS_AUTO_CHECK(m_shift.size() == dims && shape_count == dims);
+            TS_AUTO_CHECK((m_shift.empty() || m_shift.size() == dims) && shape_count == dims);
 
-            std::vector<std::array<int32_t, 2>> padding;
+            std::vector<std::array<int32_t, 2>> padding(dims);
 
             if (m_shift.empty()) {
                 for (int i = 0; i < dims; ++i) {
