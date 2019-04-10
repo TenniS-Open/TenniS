@@ -117,6 +117,7 @@ class Type(object):
 
 
 def to_const(value, name=None):
+    # type: (Any, str) -> numpy.ndarray
     if isinstance(value, Node):
         if value.op == Node.Const:
             value = value.get(Name.value)
@@ -144,13 +145,13 @@ def dimsuffle(name, x, dim, shuffle):
     return node
 
 
-def transpose(name, x, pemute):
+def transpose(name, x, pemute=None):
     assert isinstance(x, Node)
 
-    pemute = to_const(pemute, "pemute")
-
     node = menu.op(name=name, op_name=Name.Layer.transpose, inputs=[x, ])
-    node.set(Name.permute, pemute, numpy.int32)
+    if pemute is not None:
+        pemute = to_const(pemute, "pemute")
+        node.set(Name.permute, pemute, numpy.int32)
 
     return node
 
@@ -290,21 +291,23 @@ def depthwise_conv2d(name, x, w,
     return node
 
 
-def add_bias(name, x, b, format=Name.NCHW):
+def add_bias(name, x, b, dim=1, format=None):
     assert isinstance(x, Node)
-    assert format == Name.NCHW or format == Name.NHWC
+    assert format is None or format == Name.NCHW or format == Name.NHWC
 
     b = to_node(b, name="_const_" + name + "_bias")
 
     node = menu.op(name=name, op_name=Name.Layer.add_bias, inputs=[x, b])
 
-    dim = 1
-    if format == Name.NCHW:
-        dim = 1
-    else:
-        dim = 3
+    # dim = 1
+    if format is not None:
+        if format == Name.NCHW:
+            dim = 1
+        else:
+            dim = 3
 
-    node.set(Name.format, format)
+    if format is not None:
+        node.set(Name.format, format)
     node.set(Name.dim, dim, numpy.int32)
 
     return node
