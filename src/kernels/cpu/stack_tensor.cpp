@@ -16,11 +16,22 @@ namespace ts {
         }
 
         int StackTensor::run(Stack &stack) {
+            TS_AUTO_CHECK(stack.size() > 0);
+
+            int output_dims = int(stack[0].dims() + 1);
+            int fixed_axis = m_axis >= 0 ? m_axis : output_dims + m_axis;
+
+            if (fixed_axis < 0 || fixed_axis >= output_dims) {
+                TS_LOG_ERROR << "Stack axis must in [-"
+                             << output_dims << ", "
+                             << output_dims << ")" << eject;
+            }
+
             int nargs = stack.size();
             for (int i = 0; i < nargs; ++i) {
                 auto &x = stack[i];
                 auto shape = x.sizes();
-                shape.insert(shape.begin() + m_axis, 1);
+                shape.insert(shape.begin() + fixed_axis, 1);
                 stack.push(x.reshape(shape));
             }
             return RunOperator(m_op_concat, stack, nargs);
