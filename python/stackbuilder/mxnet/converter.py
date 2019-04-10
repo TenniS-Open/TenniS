@@ -13,12 +13,13 @@ import tensorstack as ts
 import numpy
 
 
-def convert(model_prefix, epoch, input_shape, output_file):
+def convert(model_prefix, epoch, output_file, input_shapes=None, input_nodes=None):
     """
     :param model_prefix: string of model prefix
     :param epoch: int
-    :param input_shape: dict of string to shape, like {"data", [1, 3, 248, 248]}.
     :param output_file: path to output file
+    :param input_shapes: dict of string to shape, like {"data", [1, 3, 248, 248]}.
+    :param input_nodes: dict of string to ts.Node, like {"data", ts.Node()}.
     :return:
     """
     symbol_json = '%s-symbol.json' % (model_prefix, )
@@ -30,12 +31,32 @@ def convert(model_prefix, epoch, input_shape, output_file):
 
     graph = parser.Graph(symbol, arg_params, aux_params)
 
+    if input_nodes is None:
+        input_nodes = {}
+    if input_shapes is None:
+        input_shapes = {}
+    for name, input_shape in input_shapes.iteritems():
+        if isinstance(input_shape, ts.Node):
+            input_nodes[name] = input_shape
+        else:
+            input_nodes[name] = ts.menu.param(name, input_shape)
+
+    # make sure all input are nodes
+    for name in input_nodes.iterkeys():
+        input_node = input_nodes[name]
+        if isinstance(input_node, ts.Node):
+            continue
+        input_nodes[name] = ts.menu.param(name, input_node)
+
     def convert_null(node, inputs):
         assert len(inputs) == 0
         name = node["name"]
-        if name in input_shape:
-            print("--# -=[ Placeholder: {}, {} ]=-".format(name, input_shape[name]))
-            return ts.menu.param(name, input_shape[name])
+        if name in input_nodes:
+            input_shape = []
+            if name in input_shapes:
+                input_shape = input_shapes[name]
+            print("--# -=[ Placeholder: {}, {} ]=-".format(name, input_shape))
+            return input_nodes[name]
         param = graph.param(name)
         if param is not None:
             param = param.asnumpy()
