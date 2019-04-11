@@ -1,9 +1,14 @@
 #!/usr/bin/env python
 # coding: UTF-8
 
+import sys
+import os
+
+sys.path.append(
+    os.path.join(os.path.abspath(os.path.dirname(__file__)), ".."))
+
 from tensorstack import orz
 import json
-import sys
 
 
 if __name__ == '__main__':
