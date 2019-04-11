@@ -3,5 +3,5 @@
 
 try:
     from .aes import AESCrypto
-except Exception, e:
+except Exception as e:
     print("import AESCrypto failed: {}".format(e))
