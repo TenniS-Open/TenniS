@@ -22,6 +22,7 @@ namespace ts {
     std::string Bubble::RetentionParam::op = "#op";
     std::string Bubble::RetentionParam::output_count = "#output_count";
     std::string Bubble::RetentionParam::shape = "#shape";
+    std::string Bubble::RetentionParam::dtype = "#dtype";
 
     bool Bubble::IsEndPoint(const std::string &op) {
         return EndPoints.find(op) != EndPoints.end();
@@ -220,5 +221,14 @@ namespace ts {
             }
         }
         return read_size;
+    }
+
+    const Shape Bubble::shape() const {
+        return m_shape;
+    }
+
+    DTYPE Bubble::dtype() const {
+        if (!has(RetentionParam::dtype)) return VOID;
+        return DTYPE(tensor::to_int(get(RetentionParam::dtype)));
     }
 }

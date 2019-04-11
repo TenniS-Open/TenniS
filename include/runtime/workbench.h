@@ -144,6 +144,9 @@ namespace ts {
         // map tensor, means <tensor's index in stack, tensor>
         std::vector<Tensor> m_inputs;
         std::vector<Tensor> m_outputs;
+        // input and output dtype type
+        std::vector<DTYPE> m_input_dtypes;
+        std::vector<DTYPE> m_output_dtypes;
 
         std::vector<ImageFilter::shared> m_input_filters;
 
@@ -157,6 +160,11 @@ namespace ts {
         Profiler m_profiler;
 
         std::shared_ptr<std::mutex> m_mutex;
+
+    private:
+        Operator::shared m_cast_op; ///< for input cast
+
+        void cast_tensor(DTYPE dtype);
     };
 }
 
