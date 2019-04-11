@@ -14,6 +14,8 @@ from .tensor import from_any
 from .tensor import to_int
 from .tensor import to_str
 
+from .dtype import VOID
+
 import numpy
 
 
@@ -27,6 +29,7 @@ class Node(object):
         op = "#op"
         output_count = "#output_count"
         shape = "#shape"
+        dtype = "#dtype"
 
     def __init__(self, op=None, name=None, output_count=1, shape=None):
         self.__op = "" if op is None else op
@@ -69,6 +72,12 @@ class Node(object):
     @property
     def params(self):
         return self.__params
+
+    @property
+    def dtype(self):
+        if self.RetentionParam.dtype in self.__params:
+            return int(self.__params[self.RetentionParam.dtype])
+        return VOID
 
     def has(self, param):
         return param in self.__params
