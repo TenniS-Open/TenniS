@@ -167,7 +167,7 @@ namespace ts {
             if (op == nullptr) continue;
             instruction = op->clone();
         }
-        
+
         // copy dtype
         dolly->m_input_dtypes = m_input_dtypes;
         dolly->m_output_dtypes = m_output_dtypes;
@@ -435,7 +435,7 @@ namespace ts {
 
     void Workbench::set_operator_param(const std::string &node_name, const std::string &param, const Tensor &value) {
         for (auto &inst : m_program) {
-            OperatorInstruction* operator_inst = dynamic_cast<OperatorInstruction*>(inst.get());
+            auto* operator_inst = dynamic_cast<OperatorInstruction*>(inst.get());
             if (operator_inst == nullptr) continue;
             auto node = operator_inst->op();
             if (node->name() != node_name) continue;
