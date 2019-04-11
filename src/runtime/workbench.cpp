@@ -19,6 +19,10 @@
 #include "utils/need.h"
 
 #include "kernels/common/math.h"
+#include "core/tensor_builder.h"
+#include "backend/name.h"
+#include "backend/base/base_cast_v2.h"
+#include "runtime/operator.h"
 
 namespace ts {
     Workbench::Workbench(const ComputingDevice &device, std::shared_ptr<std::mutex> mutex) {
@@ -87,6 +91,15 @@ namespace ts {
         this->m_stack->clear();
         this->m_outputs.resize(this->m_outputs.size(), Tensor());
 
+        // bind thread pool to any operator can using thread speed up
+        ctx::bind<ThreadPool> bind_thread_pool(this->runtime().thread_pool());
+
+        // bind device context
+        ctx::bind<DeviceContext> bind_device_context(m_device_context);
+
+        // bind runtime context
+        ctx::bind<RuntimeContext> bind_runtime_context(m_runtime_context);
+
         // set input
         for (int i = 0; static_cast<size_t >(i) < this->m_inputs.size(); ++i) {
             auto &arg = this->m_inputs[i];
@@ -97,16 +110,10 @@ namespace ts {
                 // TODO: do filter
                 this->m_stack->push(filter_images(filter, arg));
             }
+            auto dtype = m_input_dtypes[i];
+            if (dtype == VOID) continue;
+            cast_tensor(dtype);
         }
-
-        // bind thread pool to any operator can using thread speed up
-        ctx::bind<ThreadPool> bind_thread_pool(this->runtime().thread_pool());
-
-        // bind device context
-        ctx::bind<DeviceContext> bind_device_context(m_device_context);
-
-        // bind runtime context
-        ctx::bind<RuntimeContext> bind_runtime_context(m_runtime_context);
 
         auto _bind_profiler = bind_profiler(m_do_profile, m_profiler);
 
@@ -160,6 +167,10 @@ namespace ts {
             if (op == nullptr) continue;
             instruction = op->clone();
         }
+        
+        // copy dtype
+        dolly->m_input_dtypes = m_input_dtypes;
+        dolly->m_output_dtypes = m_output_dtypes;
 
         return std::move(dolly);
     }
@@ -240,6 +251,22 @@ namespace ts {
         slot_i = 0;
         for (auto &output : module_outputs) {
             bench->m_map_output_slots.insert(std::make_pair(output.bubble().name(), slot_i++));
+        }
+
+        bench->m_input_dtypes.resize(module_inputs.size(), VOID);
+        bench->m_output_dtypes.resize(module_outputs.size(), VOID);
+
+        for (size_t i = 0; i < module_inputs.size(); ++i) {
+            auto &input = module_inputs[i];
+            if (!input->has(Bubble::RetentionParam::dtype)) continue;
+            bench->m_input_dtypes[i] =
+                    DTYPE(tensor::to_int(input->get(Bubble::RetentionParam::dtype)));
+        }
+        for (size_t i = 0; i < module_outputs.size(); ++i) {
+            auto &output = module_outputs[i];
+            if (!output->has(Bubble::RetentionParam::dtype)) continue;
+            bench->m_output_dtypes[i] =
+                    DTYPE(tensor::to_int(output->get(Bubble::RetentionParam::dtype)));
         }
 
         return bench;
@@ -415,5 +442,21 @@ namespace ts {
             node->set(param, value);
             node->init();
         }
+    }
+
+    void Workbench::cast_tensor(DTYPE dtype) {
+        if (m_cast_op == nullptr) {
+            m_cast_op = OperatorCreator::Create(
+                    m_device_context.computing_device.type(),
+                    name::layer::cast(), false);
+        }
+        auto *cast_op = dynamic_cast<base::CastV2*>(m_cast_op.get());
+        if (cast_op != nullptr) {
+            cast_op->set_dtype(dtype);
+        } else {
+            m_cast_op->set(name::dtype, tensor::from<int32_t>(dtype));
+            m_cast_op->init();
+        }
+        TS_AUTO_CHECK(1 == RunOperator(m_cast_op, *m_stack, 1));
     }
 }
