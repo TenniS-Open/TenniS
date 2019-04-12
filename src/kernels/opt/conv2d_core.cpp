@@ -1265,11 +1265,11 @@ namespace ts {
                 Tensor x_pad_tensor(MemoryDevice(CPU), x.dtype(), x_pad_shape);
                 //auto x_pad_tensor = stack.make(x.dtype(), x_pad_shape, MemoryDevice(CPU));
                 reinterpret_cast<cpu::Pad*>(pad_operator.get())->pad(x, pad_vec, padding_value, x_pad_tensor);
-                Shape kernel_trans_shape = { weight_shape[0],weight_shape[1],4,4 };
-                Tensor kernel_trans(FLOAT32, kernel_trans_shape);
-                Conv2dAlgorithm<T>::conv3x3_winograd23_transform_kernel_1(w, kernel_trans);
-                return Conv2dAlgorithm<T>::conv3x3_winograd23(x_pad_tensor,kernel_trans,out);
-                //return conv_f(x_pad_tensor, w, out);
+                //Shape kernel_trans_shape = { weight_shape[0],weight_shape[1],4,4 };
+                //Tensor kernel_trans(FLOAT32, kernel_trans_shape);
+                //Conv2dAlgorithm<T>::conv3x3_winograd23_transform_kernel_1(w, kernel_trans);
+                //return Conv2dAlgorithm<T>::conv3x3_winograd23(x_pad_tensor,kernel_trans,out);
+                return conv_f(x_pad_tensor, w, out);
 
 /*                ts::Shape pad_shape = { 4,2 };
                 auto input_pad_param = tensor::build(INT32, pad_shape, { 0, 0, 0, 0, padding.top, padding.bottom, padding.left, padding.right });
@@ -1283,11 +1283,11 @@ namespace ts {
                 stack.pop();
                 return conv_f(x_pad_tensor, w, out);*/         
             }
-            Shape kernel_trans_shape = { weight_shape[0],weight_shape[1],4,4 };
-            Tensor kernel_trans(FLOAT32, kernel_trans_shape);
-            Conv2dAlgorithm<T>::conv3x3_winograd23_transform_kernel_1(w, kernel_trans);
-            return Conv2dAlgorithm<T>::conv3x3_winograd23(x, kernel_trans, out);
-            //return conv_f(x, w, out);
+            //Shape kernel_trans_shape = { weight_shape[0],weight_shape[1],4,4 };
+            //Tensor kernel_trans(FLOAT32, kernel_trans_shape);
+            //Conv2dAlgorithm<T>::conv3x3_winograd23_transform_kernel_1(w, kernel_trans);
+            //return Conv2dAlgorithm<T>::conv3x3_winograd23(x, kernel_trans, out);
+            return conv_f(x, w, out);
         }
 
         void Conv2DCore::conv2d(const Tensor &x, const Padding2D &padding, float padding_value, const Tensor &w,
