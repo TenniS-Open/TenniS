@@ -106,6 +106,10 @@ namespace ts {
         return _simd_f32x4_min(lhs.value, rhs.value);
     }
 
+    inline void transposex4x4(simd<float, 4> &q0, simd<float, 4> &q1, simd<float, 4> &q2, simd<float, 4> &q3) {
+        return _simd_f32x4_transpose4x4(q0.value, q1.value, q2.value, q3.value);
+    }
+
 }
 
 #endif //TENSORSTACK_KERNELS_COMMON_SIMD_H
