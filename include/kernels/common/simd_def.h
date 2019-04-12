@@ -9,6 +9,8 @@
 #include <arm_neon.h>
 
 using _simd_f32x4 = float32x4_t;
+using _simd_f32x4_x2 = float32x4x2_t
+using _simd_f32x2 = float32x2_t;
 using _simd_f32 = float;
 
 inline _simd_f32x4 _simd_f32x4_load(const _simd_f32 *p){
@@ -47,6 +49,33 @@ inline _simd_f32x4 _simd_f32x4_max(_simd_f32x4 lhs, _simd_f32x4 rhs) {
 
 inline _simd_f32x4 _simd_f32x4_min(_simd_f32x4 lhs, _simd_f32x4 rhs) {
     return vminq_f32(lhs, rhs);
+}
+
+inline void _simd_f32x4_transpose4x4(_simd_f32x4& q0, _simd_f32x4& q1, _simd_f32x4& q2, _simd_f32x4& q3) {
+
+    _simd_f32x4_x2 q01 = vtrnq_f32(*q0, *q1);
+    _simd_f32x4_x2 q23 = vtrnq_f32(*q2, *q3);
+
+    _simd_f32x4 qq0 = q01.val[0];
+    _simd_f32x2 d00 = vget_low_f32(qq0);
+    _simd_f32x2 d01 = vget_high_f32(qq0);
+
+    _simd_f32x4 qq1 = q01.val[1];
+    _simd_f32x2 d10 = vget_low_f32(qq1);
+    _simd_f32x2 d11 = vget_high_f32(qq1);
+
+    _simd_f32x4 qq2 = q23.val[0];
+    _simd_f32x2 d20 = vget_low_f32(qq2);
+    _simd_f32x2 d21 = vget_high_f32(qq2);
+
+    _simd_f32x4 qq3 = q23.val[1];
+    _simd_f32x2 d30 = vget_low_f32(qq3);
+    _simd_f32x2 d31 = vget_high_f32(qq3);
+
+    *q0 = vcombine_f32(d00, d20);
+    *q1 = vcombine_f32(d10, d30);
+    *q2 = vcombine_f32(d01, d21);
+    *q3 = vcombine_f32(d11, d31);
 }
 
 #elif TS_USE_SSE
@@ -89,6 +118,10 @@ inline _simd_f32x4 _simd_f32x4_max(_simd_f32x4 lhs, _simd_f32x4 rhs) {
 
 inline _simd_f32x4 _simd_f32x4_min(_simd_f32x4 lhs, _simd_f32x4 rhs) {
     return _mm_min_ps(lhs, rhs);
+}
+
+inline void _simd_f32x4_transpose4x4(_simd_f32x4& q0, _simd_f32x4& q1, _simd_f32x4& q2, _simd_f32x4& q3) {
+    _MM_TRANSPOSE4_PS(q0, q1, q2, q3);
 }
 
 #else

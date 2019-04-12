@@ -708,6 +708,7 @@ namespace ts {
 
         }
 
+#ifdef TS_USE_SSE
         template<>
         void Conv2dAlgorithm<float>::conv3x3_winograd23(const Tensor &x, const Tensor &k_tm, Tensor &out) {
 
@@ -791,8 +792,8 @@ namespace ts {
                             float32x4 w3 = d3 - d1;
 
                             // w to wT
-                            _MM_TRANSPOSE4_PS(w0.value,w1.value,w2.value,w3.value);
-
+                            //_MM_TRANSPOSE4_PS(w0.value,w1.value,w2.value,w3.value);
+                            transposex4x4(w0, w1, w2, w3);
                             // d = BT * wT
                             d0 = w0 - w2;
                             d1 = w1 + w2;
@@ -1085,7 +1086,8 @@ namespace ts {
                             float32x4 w2_tmp(0.f), w3_tmp(0.f);
 
                             // transpose w to w_t
-                            _MM_TRANSPOSE4_PS(w0.value,w1.value,w2_tmp.value,w3_tmp.value);
+                            //_MM_TRANSPOSE4_PS(w0.value,w1.value,w2_tmp.value,w3_tmp.value);
+                            transposex4x4(w0, w1, w2_tmp, w3_tmp);
 
                             // Y = A_T * w_t
                             float32x4 o0_tmp = w0 + w1 + w2_tmp;
@@ -1109,6 +1111,7 @@ namespace ts {
             inner_cut<float>(output_bordered, out, 0, output_h - out_shape[2], 0, output_w - out_shape[3]);
 
         }
+#endif
 
         template<typename T>
         void Conv2dAlgorithm<T>::conv3x3_winograd63_transform_kernel_2(const Tensor& kernel, Tensor &kernel_tm) {
@@ -1600,8 +1603,453 @@ namespace ts {
             inner_cut<T>(output_bordered, out, 0, output_h - out_shape[2], 0, output_w - out_shape[3]);
 
         }
-    }
 
+#ifdef TS_USE_SSE
+        template<>
+        void Conv2dAlgorithm<float>::conv3x3_winograd63(const Tensor &x, const Tensor &k_tm, Tensor &out) {
+
+            auto input_shape = x.sizes();
+            auto k_tm_shape = k_tm.sizes();
+            auto out_shape = out.sizes();
+
+            int input_h = input_shape[2];
+            int input_w = input_shape[3];
+            int input_channel = input_shape[1];
+            int num = input_shape[0];
+
+            int output_h = out_shape[2];
+            int output_w = out_shape[3];
+            int output_channel = out_shape[1];
+
+            //pad
+            output_w = (output_w + 5) / 6 * 6;
+            output_h = (output_h + 5) / 6 * 6;
+
+            int input_padded_w = output_w + 2;  //output_w = (input_w - 3)/1 - 1;
+            int input_padded_h = output_h + 2;  //output_h = (input_h - 3)/1 - 1;
+
+            Shape input_bordered_s = { num, input_channel, input_padded_h, input_padded_w };
+            Tensor input_bordered(MemoryDevice(CPU), x.dtype(), input_bordered_s);
+            int bordered_c_offset = input_padded_h * input_padded_w;
+            int bordered_num_offset = input_channel * bordered_c_offset;
+
+            inner_pad<float>(x, input_bordered, 0, input_padded_h - input_h, 0, input_padded_w - input_w, 0);
+
+            //transform input data
+
+            //const float BT[8][8] = {
+            //    {1.0f,  0.0f, -5.25f,  0.00f,  5.25f,  0.00f, -1.0f, 0.0f},
+            //
+            //    {0.0f,  1.0f,  1.00f, -4.25f, -4.25f,  1.00f,  1.0f, 0.0f},
+            //    {0.0f, -1.0f,  1.00f,  4.25f, -4.25f, -1.00f,  1.0f, 0.0f},
+            //
+            //    {0.0f,  0.5f,  0.25f, -2.50f, -1.25f,  2.00f,  1.0f, 0.0f},
+            //    {0.0f, -0.5f,  0.25f,  2.50f, -1.25f, -2.00f,  1.0f, 0.0f},
+            //
+            //    {0.0f,  2.0f,  4.00f, -2.50f, -5.00f,  0.50f,  1.0f, 0.0f},
+            //    {0.0f, -2.0f,  4.00f,  2.50f, -5.00f, -0.50f,  1.0f, 0.0f},
+            //
+            //    {0.0f, -1.0f,  0.00f,  5.25f,  0.00f, -5.25f,  0.0f, 1.0f}
+            //};
+
+            int w_tm = output_w / 6 * 8;
+            int h_tm = output_h / 6 * 8;
+            int col_blocks = w_tm / 8;
+            int row_blocks = h_tm / 8;
+            int num_blocks = col_blocks * row_blocks;
+            Shape input_tm_s = { num, input_channel, num_blocks, 64 };
+            Tensor input_tm(MemoryDevice(CPU), x.dtype(), input_tm_s);
+            int tm_c_offset = 64 * num_blocks;
+            int tm_num_offset = input_channel * tm_c_offset;
+
+            const float* src_ptr = input_bordered.data<float>();
+            float* dst_ptr = input_tm.data<float>();
+            for (int n = 0; n < num; n++)
+            {
+#pragma omp parallel for num_threads(omp_get_max_threads())
+                for (int c = 0; c < input_channel; c++)
+                {
+                    const float* src_at = src_ptr + n * bordered_num_offset + c * bordered_c_offset;
+                    float* dst_at = dst_ptr + n * tm_num_offset + c * tm_c_offset;
+
+                    float tmp[8][8];//save (d*B)T
+                    for (int i = 0; i < col_blocks; i++)
+                    {
+                        for (int j = 0; j < row_blocks; j++)
+                        {
+                            const float* r0 = src_at + i * input_padded_w * 6 + j * 6;
+
+                            for (int m = 0; m < 8; m++)
+                            {
+                                tmp[0][m] = r0[0] - r0[6] + (r0[4] - r0[2]) * 5.25f;
+                                tmp[7][m] = r0[7] - r0[1] + (r0[3] - r0[5]) * 5.25f;
+
+                                float tmp12_a = (r0[2] + r0[6] - r0[4] * 4.25f);
+                                float tmp12_b = (r0[1] + r0[5] - r0[3] * 4.25f);
+
+                                tmp[1][m] = tmp12_a + tmp12_b;
+                                tmp[2][m] = tmp12_a - tmp12_b;
+
+                                float tmp34_a = (r0[6] + r0[2] * 0.25f - r0[4] * 1.25f);
+                                float tmp34_b = (r0[1] * 0.5f - r0[3] * 2.5f + r0[5] * 2.f);
+
+                                tmp[3][m] = tmp34_a + tmp34_b;
+                                tmp[4][m] = tmp34_a - tmp34_b;
+
+                                float tmp56_a = (r0[6] + (r0[2] - r0[4] * 1.25f) * 4.f);
+                                float tmp56_b = (r0[1] * 2.f - r0[3] * 2.5f + r0[5] * 0.5f);
+
+                                tmp[5][m] = tmp56_a + tmp56_b;
+                                tmp[6][m] = tmp56_a - tmp56_b;
+
+                                r0 += input_padded_w;
+                            }
+
+                            float* d0 = dst_at + (i * col_blocks + j) * 64;
+
+                            float* d1 = d0 + 1;
+                            float* d2 = d1 + 1;
+                            float* d3 = d2 + 1;
+                            float* d4 = d3 + 1;
+                            float* d5 = d4 + 1;
+                            float* d6 = d5 + 1;
+                            float* d7 = d6 + 1;
+
+                            //(d*B)T * B == (BT*d*B)T == VT
+                            for (int m = 0; m < 8; m++)
+                            {
+                                const float* tmp0 = tmp[m];
+
+                                d0[0] = tmp0[0] - tmp0[6] + (tmp0[4] - tmp0[2]) * 5.25f;
+                                d7[0] = tmp0[7] - tmp0[1] + (tmp0[3] - tmp0[5]) * 5.25f;
+
+                                float tmp12_a = (tmp0[2] + tmp0[6] - tmp0[4] * 4.25f);
+                                float tmp12_b = (tmp0[1] - tmp0[3] * 4.25f + tmp0[5]);
+
+                                d1[0] = tmp12_a + tmp12_b;
+                                d2[0] = tmp12_a - tmp12_b;
+
+                                float tmp34_a = (tmp0[6] + tmp0[2] * 0.25f - tmp0[4] * 1.25f);
+                                float tmp34_b = (tmp0[1] * 0.5f - tmp0[3] * 2.5f + tmp0[5] * 2.f);
+
+                                d3[0] = tmp34_a + tmp34_b;
+                                d4[0] = tmp34_a - tmp34_b;
+
+                                float tmp56_a = (tmp0[6] + (tmp0[2] - tmp0[4] * 1.25f) * 4.f);
+                                float tmp56_b = (tmp0[1] * 2.f - tmp0[3] * 2.5f + tmp0[5] * 0.5f);
+
+                                d5[0] = tmp56_a + tmp56_b;
+                                d6[0] = tmp56_a - tmp56_b;
+
+                                d0 += 8;
+                                d1 += 8;
+                                d2 += 8;
+                                d3 += 8;
+                                d4 += 8;
+                                d5 += 8;
+                                d6 += 8;
+                                d7 += 8;
+
+                            }
+                        }
+                    }
+                }
+
+            }
+
+            //begin dot
+            Shape out_tm_s = { num, output_channel, num_blocks, 64 };
+            Tensor output_tm(MemoryDevice(CPU), x.dtype(), out_tm_s);
+            int outtm_c_offset = num_blocks * 64;
+            int outtm_n_offset = output_channel * outtm_c_offset;
+
+            int ktm_c_offset = k_tm_shape[2] * k_tm_shape[3];
+            int ktm_n_offset = k_tm_shape[1] * ktm_c_offset;
+
+            int outch = output_channel >> 2;
+            int remain_outch = outch << 2;
+
+            float* out_tm_ptr = output_tm.data<float>();
+            float* input_tm_ptr = dst_ptr;
+
+            for (int n = 0; n < num; n++)
+            {
+#pragma omp parallel for num_threads(omp_get_max_threads())
+                for (int cc = 0; cc < outch; cc++)
+                {
+                    int c = cc * 4;
+
+                    float* out_tm_0 = out_tm_ptr + n * outtm_n_offset + c * outtm_c_offset;
+                    float* out_tm_1 = out_tm_0 + outtm_c_offset;
+                    float* out_tm_2 = out_tm_1 + outtm_c_offset;
+                    float* out_tm_3 = out_tm_2 + outtm_c_offset;
+
+                    const float* kernel_tm_ptr = k_tm.data<float>();
+
+                    const float* kernel_tm_0 = kernel_tm_ptr + c * ktm_n_offset;
+                    const float* kernel_tm_1 = kernel_tm_0 + ktm_n_offset;
+                    const float* kernel_tm_2 = kernel_tm_1 + ktm_n_offset;
+                    const float* kernel_tm_3 = kernel_tm_2 + ktm_n_offset;
+
+                    for (int i = 0; i < num_blocks; i++)
+                    {
+                        float* out_0 = out_tm_0 + i * 64;
+                        float* out_1 = out_tm_1 + i * 64;
+                        float* out_2 = out_tm_2 + i * 64;
+                        float* out_3 = out_tm_3 + i * 64;
+
+                        float sum_0[64] = { float(0) };
+                        float sum_1[64] = { float(0) };
+                        float sum_2[64] = { float(0) };
+                        float sum_3[64] = { float(0) };
+
+                        int inputch = input_channel >> 2;
+                        int remain_inputch = inputch << 2;
+                        for (int qq = 0; qq < inputch; qq++)
+                        {
+                            int q = qq * 4;
+                            const float* input_tm_at = input_tm_ptr + n * tm_num_offset + q * tm_c_offset;
+                            const float* r0 = input_tm_at + i * 64;
+                            const float* r1 = r0 + tm_c_offset;
+                            const float* r2 = r1 + tm_c_offset;
+                            const float* r3 = r2 + tm_c_offset;
+
+                            const float* k0 = kernel_tm_0 + q * ktm_c_offset;
+                            const float* k1 = kernel_tm_1 + q * ktm_c_offset;
+                            const float* k2 = kernel_tm_2 + q * ktm_c_offset;
+                            const float* k3 = kernel_tm_3 + q * ktm_c_offset;
+
+                            for (int k = 0; k < 64; k++)
+                            {
+                                sum_0[k] += r0[k] * k0[k];
+                                k0 += 64;
+                                sum_0[k] += r1[k] * k0[k];
+                                k0 += 64;
+                                sum_0[k] += r2[k] * k0[k];
+                                k0 += 64;
+                                sum_0[k] += r3[k] * k0[k];
+                                k0 -= 192;
+
+                                sum_1[k] += r0[k] * k1[k];
+                                k1 += 64;
+                                sum_1[k] += r1[k] * k1[k];
+                                k1 += 64;
+                                sum_1[k] += r2[k] * k1[k];
+                                k1 += 64;
+                                sum_1[k] += r3[k] * k1[k];
+                                k1 -= 192;
+
+                                sum_2[k] += r0[k] * k2[k];
+                                k2 += 64;
+                                sum_2[k] += r1[k] * k2[k];
+                                k2 += 64;
+                                sum_2[k] += r2[k] * k2[k];
+                                k2 += 64;
+                                sum_2[k] += r3[k] * k2[k];
+                                k2 -= 192;
+
+                                sum_3[k] += r0[k] * k3[k];
+                                k3 += 64;
+                                sum_3[k] += r1[k] * k3[k];
+                                k3 += 64;
+                                sum_3[k] += r2[k] * k3[k];
+                                k3 += 64;
+                                sum_3[k] += r3[k] * k3[k];
+                                k3 -= 192;
+                            }
+                        }
+                        for (int q = remain_inputch; q < input_channel; q++)
+                        {
+                            const float* input_tm_at = input_tm_ptr + n * tm_num_offset + q * tm_c_offset;
+                            const float* r0 = input_tm_at + i * 64;
+
+                            const float* k0 = kernel_tm_0 + q * ktm_c_offset;
+                            const float* k1 = kernel_tm_1 + q * ktm_c_offset;
+                            const float* k2 = kernel_tm_2 + q * ktm_c_offset;
+                            const float* k3 = kernel_tm_3 + q * ktm_c_offset;
+
+                            for (int k = 0; k < 64; k++)
+                            {
+                                sum_0[k] += r0[k] * k0[k];
+                                sum_1[k] += r0[k] * k1[k];
+                                sum_2[k] += r0[k] * k2[k];
+                                sum_3[k] += r0[k] * k3[k];
+                            }
+                        }
+
+                        for (int k = 0; k < 64; k++)
+                        {
+                            out_0[k] = sum_0[k];
+                            out_1[k] = sum_1[k];
+                            out_2[k] = sum_2[k];
+                            out_3[k] = sum_3[k];
+                        }
+
+                    }
+                }
+
+#pragma omp parallel for num_threads(omp_get_max_threads())
+                for (int c = remain_outch; c < output_channel; c++)
+                {
+                    float* out_tm_0 = out_tm_ptr + n * outtm_n_offset + c * outtm_c_offset;
+
+                    const float* kernel_tm_ptr = k_tm.data<float>();
+                    const float* kernel_tm_0 = kernel_tm_ptr + c * ktm_n_offset;
+
+                    for (int i = 0; i < num_blocks; i++)
+                    {
+                        float* out_0 = out_tm_0 + i * 64;
+                        float sum_0[64] = { float(0) };
+
+                        int q = 0;
+                        for (; q + 3 < input_channel; q += 4)
+                        {
+                            const float* input_tm_at = input_tm_ptr + n * tm_num_offset + q * tm_c_offset;
+                            const float* r0 = input_tm_at + i * 64;
+                            const float* r1 = r0 + tm_c_offset;
+                            const float* r2 = r1 + tm_c_offset;
+                            const float* r3 = r2 + tm_c_offset;
+
+                            const float* k0 = kernel_tm_0 + q * ktm_c_offset;
+                            const float* k1 = k0 + ktm_c_offset;
+                            const float* k2 = k1 + ktm_c_offset;
+                            const float* k3 = k2 + ktm_c_offset;
+
+                            for (int k = 0; k < 64; k++)
+                            {
+                                sum_0[k] += r0[k] * k0[k];
+                                sum_0[k] += r0[k] * k1[k];
+                                sum_0[k] += r0[k] * k2[k];
+                                sum_0[k] += r0[k] * k3[k];
+                            }
+                        }
+
+                        for (; q < input_channel; q++)
+                        {
+                            const float* input_tm_at = input_tm_ptr + n * tm_num_offset + q * tm_c_offset;
+                            const float* r0 = input_tm_at + i * 64;
+
+                            const float* k0 = kernel_tm_0 + q * ktm_c_offset;
+
+                            for (int k = 0; k < 64; k++)
+                            {
+                                sum_0[k] += r0[k] * k0[k];
+                            }
+                        }
+
+                        for (int k = 0; k < 64; k++)
+                        {
+                            out_0[k] = sum_0[k];
+                        }
+
+                    }
+                }
+            }
+
+            //begin transform output
+            Shape output_bordered_s = { num, output_channel, output_h, output_w };
+            Tensor output_bordered(MemoryDevice(CPU), out.dtype(), output_bordered_s);
+            int outbo_c_offset = output_h * output_w;
+            int outbo_n_offset = output_channel * outbo_c_offset;
+
+            float* out_ptr = output_bordered.data<float>();
+
+            //const float AT[6][8] = {
+            //    {1.0f,  1.0f,   1.0f,   1.0f,   1.0f,  32.0f, 32.0f, 0.0f},
+            //    {0.0f,  1.0f,  -1.0f,   2.0f,  -2.0f,  16.0f,-16.0f, 0.0f},
+            //    {0.0f,  1.0f,   1.0f,   4.0f,   4.0f,   8.0f,  8.0f, 0.0f},
+            //    {0.0f,  1.0f,  -1.0f,   8.0f,  -8.0f,   4.0f, -4.0f, 0.0f},
+            //    {0.0f,  1.0f,   1.0f,  16.0f,  16.0f,   2.0f,  2.0f, 0.0f},
+            //    {0.0f,  1.0f,  -1.0f,  32.0f, -32.0f,   1.0f, -1.0f, 1.0f}
+            //};
+
+            // 0 = r0 + (r1 + r2) + (r3 + r4)     + (r5 + r6) * 32
+            // 1 =      (r1 - r2) + (r3 - r4) * 2 + (r5 - r6) * 16
+            // 2 =      (r1 + r2) + (r3 + r4) * 4 + (r5 + r6) * 8
+            // 3 =      (r1 - r2) + (r3 - r4) * 8 + (r5 - r6) * 4
+            // 4 =      (r1 + r2) + (r3 + r4) * 16+ (r5 + r6) * 2
+            // 5 = r7 + (r1 - r2) + (r3 - r4) * 32+ (r5 - r6)
+
+            //reuse (r1 + r2) (r1 - r2) (r3 + r4) (r3 - r4) (r5 + r6) (r5 - r6)
+
+            for (int n = 0; n < num; n++)
+            {
+#pragma omp parallel for num_threads(omp_get_max_threads())
+                for (int c = 0; c < output_channel; c++)
+                {
+                    float* output_tm_at = out_tm_ptr + n * outtm_n_offset + c * outtm_c_offset;
+                    float* out_at = out_ptr + n * outbo_n_offset + c * outbo_c_offset;
+
+                    float tmp[6][8]; //(WT*A)T == AT*W
+                    for (int i = 0; i < col_blocks; i++)
+                    {
+                        for (int j = 0; j < row_blocks; j++)
+                        {
+                            const float* w0 = output_tm_at + (i * col_blocks + j) * 64;
+
+                            for (int m = 0; m < 8; m++)
+                            {
+                                float tmp1add2 = w0[1] + w0[2];
+                                float tmp1sub2 = w0[1] - w0[2];
+                                float tmp3add4 = w0[3] + w0[4];
+                                float tmp3sub4 = w0[3] - w0[4];
+                                float tmp5add6 = w0[5] + w0[6];
+                                float tmp5sub6 = w0[5] - w0[6];
+
+                                tmp[0][m] = w0[0] + tmp1add2 + tmp3add4 + tmp5add6 * 32;
+                                tmp[1][m] = tmp1sub2 + tmp3sub4 * 2 + tmp5sub6 * 16;
+                                tmp[2][m] = tmp1add2 + tmp3add4 * 4 + tmp5add6 * 8;
+                                tmp[3][m] = tmp1sub2 + tmp3sub4 * 8 + tmp5sub6 * 4;
+                                tmp[4][m] = tmp1add2 + tmp3add4 * 16 + tmp5add6 * 2;
+                                tmp[5][m] = tmp1sub2 + tmp3sub4 * 32 + tmp5sub6 + w0[7];
+
+                                //tmp[0][m] = w0[0] + (w0[1] + w0[2]) + (w0[3] + w0[4]) + (w0[5] + w0[6]) * 32;
+                                //tmp[1][m] = (w0[1] - w0[2]) + (w0[3] - w0[4]) * 2 + (w0[5] - w0[6]) * 16;
+                                //tmp[2][m] = (w0[1] + w0[2]) + (w0[3] + w0[4]) * 4 + (w0[5] + w0[6]) * 8;
+                                //tmp[3][m] = (w0[1] - w0[2]) + (w0[3] - w0[4]) * 8 + (w0[5] - w0[6]) * 4;
+                                //tmp[4][m] = (w0[1] + w0[2]) + (w0[3] + w0[4]) * 16 + (w0[5] + w0[6]) * 2;
+                                //tmp[5][m] = (w0[1] - w0[2]) + (w0[3] - w0[4]) * 32 + (w0[5] - w0[6]) + w0[7];
+
+                                w0 += 8;
+                            }
+
+                            float* d0 = out_at + i * output_w * 6 + j * 6;
+                            float* d1 = d0 + 1;
+                            float* d2 = d1 + 1;
+                            float* d3 = d2 + 1;
+                            float* d4 = d3 + 1;
+                            float* d5 = d4 + 1;
+
+                            for (int m = 0; m < 6; m++)
+                            {
+                                const float* tmp0 = tmp[m];
+
+                                d0[0] = tmp0[0] + (tmp0[1] + tmp0[2]) + (tmp0[3] + tmp0[4]) + (tmp0[5] + tmp0[6]) * 32;
+                                d1[0] = (tmp0[1] - tmp0[2]) + (tmp0[3] - tmp0[4]) * 2 + (tmp0[5] - tmp0[6]) * 16;
+                                d2[0] = (tmp0[1] + tmp0[2]) + (tmp0[3] + tmp0[4]) * 4 + (tmp0[5] + tmp0[6]) * 8;
+                                d3[0] = (tmp0[1] - tmp0[2]) + (tmp0[3] - tmp0[4]) * 8 + (tmp0[5] - tmp0[6]) * 4;
+                                d4[0] = (tmp0[1] + tmp0[2]) + (tmp0[3] + tmp0[4]) * 16 + (tmp0[5] + tmp0[6]) * 2;
+                                d5[0] = (tmp0[1] - tmp0[2]) + (tmp0[3] - tmp0[4]) * 32 + (tmp0[5] - tmp0[6]) + tmp0[7];
+
+                                d0 += output_w;
+                                d1 += output_w;
+                                d2 += output_w;
+                                d3 += output_w;
+                                d4 += output_w;
+                                d5 += output_w;
+
+                            }
+
+                        }
+                    }
+                }
+            }
+
+            inner_cut<float>(output_bordered, out, 0, output_h - out_shape[2], 0, output_w - out_shape[3]);
+
+        }
+#endif
+    }
 }
 
 template class ts::opt::Conv2dAlgorithm<ts::dtype<ts::FLOAT32>::declare>;
