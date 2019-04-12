@@ -5,6 +5,10 @@
 #include <omp.h>
 #endif
 
+#ifdef TS_USE_SSE
+#include "kernels/common/simd.h"
+#endif
+
 namespace ts {
     namespace opt {
 
@@ -362,6 +366,7 @@ namespace ts {
                     const T* src_at = src_ptr + n * bordered_num_offset + c * bordered_c_offset;
                     T* dst_at = dst_ptr + n * tm_num_offset + c * tm_c_offset;
 
+                    #pragma omp parallel for num_threads(omp_get_max_threads())
                     for (int i = 0; i < col_blocks; i++)
                     {
                         const T* r0 = src_at + i * input_padded_w * 2;
@@ -466,6 +471,7 @@ namespace ts {
                     const T* kernel_tm_2 = kernel_tm_1 + ktm_n_offset;
                     const T* kernel_tm_3 = kernel_tm_2 + ktm_n_offset;
 
+                    #pragma omp parallel for num_threads(omp_get_max_threads())
                     for (int i = 0; i < num_blocks; i++)
                     {
                         T* out_0 = out_tm_0 + i * 16;
@@ -572,6 +578,7 @@ namespace ts {
                     const T* kernel_tm_ptr = k_tm.data<T>();
                     const T* kernel_tm_0 = kernel_tm_ptr + c * ktm_n_offset;
 
+                    #pragma omp parallel for num_threads(omp_get_max_threads())
                     for (int i = 0; i < num_blocks; i++)
                     {
                         T* out_0 = out_tm_0 + i * 16;
@@ -643,6 +650,7 @@ namespace ts {
                     T* output_tm_at = out_tm_ptr + n * outtm_n_offset + c * outtm_c_offset;
                     T* out_at = out_ptr + n * outbo_n_offset + c * outbo_c_offset;
 
+                    #pragma omp parallel for num_threads(omp_get_max_threads())
                     for (int i = 0; i < col_blocks; i++)
                     {
                         T* out_0 = out_at + i * output_w * 2;
@@ -697,6 +705,408 @@ namespace ts {
             }
 
             inner_cut<T>(output_bordered, out, 0, output_h - out_shape[2], 0, output_w - out_shape[3]);
+
+        }
+
+        template<>
+        void Conv2dAlgorithm<float>::conv3x3_winograd23(const Tensor &x, const Tensor &k_tm, Tensor &out) {
+
+            auto input_shape = x.sizes();
+            auto k_tm_shape = k_tm.sizes();
+            auto out_shape = out.sizes();
+
+            int input_h = input_shape[2];
+            int input_w = input_shape[3];
+            int input_channel = input_shape[1];
+            int num = input_shape[0];
+
+            int output_h = out_shape[2];
+            int output_w = out_shape[3];
+            int output_channel = out_shape[1];
+
+            //pad
+            output_w = (output_w + 1) / 2 * 2;
+            output_h = (output_h + 1) / 2 * 2;
+
+            int input_padded_w = output_w + 2;  //output_w = (input_w - 3)/1 - 1;
+            int input_padded_h = output_h + 2;  //output_h = (input_h - 3)/1 - 1;
+
+            Shape input_bordered_s = { num, input_channel, input_padded_h, input_padded_w };
+            Tensor input_bordered(MemoryDevice(CPU), x.dtype(), input_bordered_s);
+            int bordered_c_offset = input_padded_h * input_padded_w;
+            int bordered_num_offset = input_channel * bordered_c_offset;
+
+            inner_pad<float>(x, input_bordered, 0, input_padded_h - input_h, 0, input_padded_w - input_w, 0);
+
+            //transform input data
+
+            // const float BT[4][4] = {
+            //     {1.0f,  0.0f, -1.0f,  0.0f},
+            //     {0.0f,  1.0f,  1.00f, 0.0f},
+            //     {0.0f, -1.0f,  1.00f, 0.0f},
+            //     {0.0f, -1.0f,  0.00f, 1.0f}
+            // };   
+
+            int w_tm = output_w / 2 * 4;
+            int h_tm = output_h / 2 * 4;
+            int col_blocks = w_tm / 4;
+            int row_blocks = h_tm / 4;
+            int num_blocks = col_blocks * row_blocks;
+            Shape input_tm_s = { num, input_channel, num_blocks, 16 };
+            Tensor input_tm(MemoryDevice(CPU), x.dtype(), input_tm_s);
+            int tm_c_offset = 16 * num_blocks;
+            int tm_num_offset = input_channel * tm_c_offset;
+
+            const float* src_ptr = input_bordered.data<float>();
+            float* dst_ptr = input_tm.data<float>();
+            for (int n = 0; n < num; n++)
+            {
+                #pragma omp parallel for num_threads(omp_get_max_threads())
+                for (int c = 0; c < input_channel; c++)
+                {
+                    const float* src_at = src_ptr + n * bordered_num_offset + c * bordered_c_offset;
+                    float* dst_at = dst_ptr + n * tm_num_offset + c * tm_c_offset;
+
+                    for (int i = 0; i < col_blocks; i++)
+                    {
+                        const float* r0 = src_at + i * input_padded_w * 2;
+                        const float* r1 = r0 + input_padded_w;
+                        const float* r2 = r1 + input_padded_w;
+                        const float* r3 = r2 + input_padded_w;
+
+                        for (int j = 0; j < row_blocks; j++)
+                        {
+                            float32x4 dst0(dst_at);
+                            float32x4 dst1(dst_at + 4);
+                            float32x4 dst2(dst_at + 8);
+                            float32x4 dst3(dst_at + 12);
+
+                            float32x4 d0(r0), d1(r1), d2(r2), d3(r3);
+
+                            // BT * d * B == (BT * (BT*d)T)T
+                            // w = BT * d
+                            float32x4 w0 = d0 - d2;
+                            float32x4 w1 = d1 + d2;
+                            float32x4 w2 = d2 - d1;
+                            float32x4 w3 = d3 - d1;
+
+                            // w to wT
+                            _MM_TRANSPOSE4_PS(w0.value,w1.value,w2.value,w3.value);
+
+                            // d = BT * wT
+                            d0 = w0 - w2;
+                            d1 = w1 + w2;
+                            d2 = w2 - w1;
+                            d3 = w3 - w1;
+
+                            d0.store(dst_at);
+                            d1.store(dst_at + 4);
+                            d2.store(dst_at + 8);
+                            d3.store(dst_at + 12);
+
+                            r0 += 2;
+                            r1 += 2;
+                            r2 += 2;
+                            r3 += 2;
+
+                            dst_at += 16;
+
+                        }
+                    }
+                }
+
+            }
+
+            //begin dot
+            Shape out_tm_s = { num, output_channel, num_blocks, 16 };
+            Tensor output_tm(MemoryDevice(CPU), x.dtype(), out_tm_s);
+            int outtm_c_offset = num_blocks * 16;
+            int outtm_n_offset = output_channel * outtm_c_offset;
+
+            int ktm_c_offset = k_tm_shape[2] * k_tm_shape[3];
+            int ktm_n_offset = k_tm_shape[1] * ktm_c_offset;
+
+            int outch = output_channel >> 2;
+            int remain_outch = outch << 2;
+
+            float* out_tm_ptr = output_tm.data<float>();
+            float* input_tm_ptr = dst_ptr;
+
+            for (int n = 0; n < num; n++)
+            {
+                #pragma omp parallel for num_threads(omp_get_max_threads())
+                for (int cc = 0; cc < outch; cc++)
+                {
+                    int c = cc * 4;
+
+                    float* out_tm_0 = out_tm_ptr + n * outtm_n_offset + c * outtm_c_offset;
+                    float* out_tm_1 = out_tm_0 + outtm_c_offset;
+                    float* out_tm_2 = out_tm_1 + outtm_c_offset;
+                    float* out_tm_3 = out_tm_2 + outtm_c_offset;
+
+                    const float* kernel_tm_ptr = k_tm.data<float>();
+
+                    const float* kernel_tm_0 = kernel_tm_ptr + c * ktm_n_offset;
+                    const float* kernel_tm_1 = kernel_tm_0 + ktm_n_offset;
+                    const float* kernel_tm_2 = kernel_tm_1 + ktm_n_offset;
+                    const float* kernel_tm_3 = kernel_tm_2 + ktm_n_offset;
+
+                    for (int i = 0; i < num_blocks; i++)
+                    {
+                        float* out_0 = out_tm_0 + i * 16;
+                        float* out_1 = out_tm_1 + i * 16;
+                        float* out_2 = out_tm_2 + i * 16;
+                        float* out_3 = out_tm_3 + i * 16;
+
+                        float32x4 sum00(0.f), sum01(0.f), sum02(0.f), sum03(0.f);
+                        float32x4 sum10(0.f), sum11(0.f), sum12(0.f), sum13(0.f);
+                        float32x4 sum20(0.f), sum21(0.f), sum22(0.f), sum23(0.f);
+                        float32x4 sum30(0.f), sum31(0.f), sum32(0.f), sum33(0.f);
+
+                        int inputch = input_channel >> 2;
+                        int remain_inputch = inputch << 2;
+                        for (int qq = 0; qq < inputch; qq++)
+                        {
+                            int q = qq * 4;
+                            const float* input_tm_at = input_tm_ptr + n * tm_num_offset + q * tm_c_offset;
+                            const float* r0 = input_tm_at + i * 16;
+                            const float* r1 = r0 + tm_c_offset;
+                            const float* r2 = r1 + tm_c_offset;
+                            const float* r3 = r2 + tm_c_offset;
+                            float32x4 r00(r0), r01(r0+4), r02(r0+8), r03(r0+12);
+                            float32x4 r10(r1), r11(r1+4), r12(r1+8), r13(r1+12);
+                            float32x4 r20(r2), r21(r2+4), r22(r2+8), r23(r2+12);
+                            float32x4 r30(r3), r31(r3+4), r32(r3+8), r33(r3+12);
+
+                            const float* k0 = kernel_tm_0 + q * ktm_c_offset;
+                            const float* k1 = kernel_tm_1 + q * ktm_c_offset;
+                            const float* k2 = kernel_tm_2 + q * ktm_c_offset;
+                            const float* k3 = kernel_tm_3 + q * ktm_c_offset;
+                            float32x4 k000(k0), k001(k0 + 4), k002(k0 + 8), k003(k0 + 12);
+                            float32x4 k010(k0+16), k011(k0 + 20), k012(k0 + 24), k013(k0 + 28);
+                            float32x4 k020(k0+32), k021(k0 + 36), k022(k0 + 40), k023(k0 + 44);
+                            float32x4 k030(k0+48), k031(k0 + 52), k032(k0 + 56), k033(k0 + 60);
+
+                            float32x4 k100(k1), k101(k1 + 4), k102(k1 + 8), k103(k1 + 12);
+                            float32x4 k110(k1 + 16), k111(k1 + 20), k112(k1 + 24), k113(k1 + 28);
+                            float32x4 k120(k1 + 32), k121(k1 + 36), k122(k1 + 40), k123(k1 + 44);
+                            float32x4 k130(k1 + 48), k131(k1 + 52), k132(k1 + 56), k133(k1 + 60);
+
+                            float32x4 k200(k2), k201(k2 + 4), k202(k2 + 8), k203(k2 + 12);
+                            float32x4 k210(k2 + 16), k211(k2 + 20), k212(k2 + 24), k213(k2 + 28);
+                            float32x4 k220(k2 + 32), k221(k2 + 36), k222(k2 + 40), k223(k2 + 44);
+                            float32x4 k230(k2 + 48), k231(k2 + 52), k232(k2 + 56), k233(k2 + 60);
+
+                            float32x4 k300(k3), k301(k3 + 4), k302(k3 + 8), k303(k3 + 12);
+                            float32x4 k310(k3 + 16), k311(k3 + 20), k312(k3 + 24), k313(k3 + 28);
+                            float32x4 k320(k3 + 32), k321(k3 + 36), k322(k3 + 40), k323(k3 + 44);
+                            float32x4 k330(k3 + 48), k331(k3 + 52), k332(k3 + 56), k333(k3 + 60);
+
+                            sum00 += r00 * k000; sum00 += r10 * k010; sum00 += r20 * k020; sum00 += r30 * k030;
+                            sum01 += r01 * k001; sum01 += r11 * k011; sum01 += r21 * k021; sum01 += r31 * k031;
+                            sum02 += r02 * k002; sum02 += r12 * k012; sum02 += r22 * k022; sum02 += r32 * k032;
+                            sum03 += r03 * k003; sum03 += r13 * k013; sum03 += r23 * k023; sum03 += r33 * k033;
+
+                            sum10 += r00 * k100; sum10 += r10 * k110; sum10 += r20 * k120; sum10 += r30 * k130;
+                            sum11 += r01 * k101; sum11 += r11 * k111; sum11 += r21 * k121; sum11 += r31 * k131;
+                            sum12 += r02 * k102; sum12 += r12 * k112; sum12 += r22 * k122; sum12 += r32 * k132;
+                            sum13 += r03 * k103; sum13 += r13 * k113; sum13 += r23 * k123; sum13 += r33 * k133;
+                            
+                            sum20 += r00 * k200; sum20 += r10 * k210; sum20 += r20 * k220; sum20 += r30 * k230;
+                            sum21 += r01 * k201; sum21 += r11 * k211; sum21 += r21 * k221; sum21 += r31 * k231;
+                            sum22 += r02 * k202; sum22 += r12 * k212; sum22 += r22 * k222; sum22 += r32 * k232;
+                            sum23 += r03 * k203; sum23 += r13 * k213; sum23 += r23 * k223; sum23 += r33 * k233;
+
+                            sum30 += r00 * k300; sum30 += r10 * k310; sum30 += r20 * k320; sum30 += r30 * k330;
+                            sum31 += r01 * k301; sum31 += r11 * k311; sum31 += r21 * k321; sum31 += r31 * k331;
+                            sum32 += r02 * k302; sum32 += r12 * k312; sum32 += r22 * k322; sum32 += r32 * k332;
+                            sum33 += r03 * k303; sum33 += r13 * k313; sum33 += r23 * k323; sum33 += r33 * k333;
+                            
+                        }
+
+                        for (int q = remain_inputch; q < input_channel; q++)
+                        {
+                            const float* input_tm_at = input_tm_ptr + n * tm_num_offset + q * tm_c_offset;
+                            const float* r0 = input_tm_at + i * 16;
+                            float32x4 r00(r0), r01(r0 + 4), r02(r0 + 8), r03(r0 + 12);
+
+                            const float* k0 = kernel_tm_0 + q * ktm_c_offset;
+                            const float* k1 = kernel_tm_1 + q * ktm_c_offset;
+                            const float* k2 = kernel_tm_2 + q * ktm_c_offset;
+                            const float* k3 = kernel_tm_3 + q * ktm_c_offset;
+
+                            float32x4 k000(k0), k001(k0 + 4), k002(k0 + 8), k003(k0 + 12);
+
+                            float32x4 k100(k1), k101(k1 + 4), k102(k1 + 8), k103(k1 + 12);
+
+                            float32x4 k200(k2), k201(k2 + 4), k202(k2 + 8), k203(k2 + 12);
+
+                            float32x4 k300(k3), k301(k3 + 4), k302(k3 + 8), k303(k3 + 12);
+
+                            sum00 += r00 * k000;
+                            sum01 += r01 * k001;
+                            sum02 += r02 * k002;
+                            sum03 += r03 * k003;
+
+                            sum10 += r00 * k100;
+                            sum11 += r01 * k101;
+                            sum12 += r02 * k102;
+                            sum13 += r03 * k103;
+
+                            sum20 += r00 * k200;
+                            sum21 += r01 * k201;
+                            sum22 += r02 * k202;
+                            sum23 += r03 * k203;
+
+                            sum30 += r00 * k300;
+                            sum31 += r01 * k301;
+                            sum32 += r02 * k302;
+                            sum33 += r03 * k303;
+
+                        }
+
+                        sum00.store(out_0); sum01.store(out_0 + 4); sum02.store(out_0 + 8); sum03.store(out_0 + 12);
+                        sum10.store(out_1); sum11.store(out_1 + 4); sum12.store(out_1 + 8); sum13.store(out_1 + 12);
+                        sum20.store(out_2); sum21.store(out_2 + 4); sum22.store(out_2 + 8); sum23.store(out_2 + 12);
+                        sum30.store(out_3); sum31.store(out_3 + 4); sum32.store(out_3 + 8); sum33.store(out_3 + 12);
+
+                    }
+                }
+
+                #pragma omp parallel for num_threads(omp_get_max_threads())
+                for (int c = remain_outch; c < output_channel; c++)
+                {
+                    float* out_tm_0 = out_tm_ptr + n * outtm_n_offset + c * outtm_c_offset;
+
+                    const float* kernel_tm_ptr = k_tm.data<float>();
+                    const float* kernel_tm_0 = kernel_tm_ptr + c * ktm_n_offset;
+
+                    for (int i = 0; i < num_blocks; i++)
+                    {
+                        float* out_0 = out_tm_0 + i * 16;
+                        //float sum_0[16] = { float(0) };
+
+                        float32x4 sum00(0.f), sum01(0.f), sum02(0.f), sum03(0.f);
+
+                        int q = 0;
+                        for (; q + 3 < input_channel; q += 4)
+                        {
+                            const float* input_tm_at = input_tm_ptr + n * tm_num_offset + q * tm_c_offset;
+                            const float* r0 = input_tm_at + i * 16;
+                            const float* r1 = r0 + tm_c_offset;
+                            const float* r2 = r1 + tm_c_offset;
+                            const float* r3 = r2 + tm_c_offset;
+
+                            float32x4 r00(r0), r01(r0 + 4), r02(r0 + 8), r03(r0 + 12);
+                            float32x4 r10(r1), r11(r1 + 4), r12(r1 + 8), r13(r1 + 12);
+                            float32x4 r20(r2), r21(r2 + 4), r22(r2 + 8), r23(r2 + 12);
+                            float32x4 r30(r3), r31(r3 + 4), r32(r3 + 8), r33(r3 + 12);
+
+                            const float* k0 = kernel_tm_0 + q * ktm_c_offset;
+                            const float* k1 = k0 + ktm_c_offset;
+                            const float* k2 = k1 + ktm_c_offset;
+                            const float* k3 = k2 + ktm_c_offset;
+
+                            float32x4 k000(k0), k001(k0 + 4), k002(k0 + 8), k003(k0 + 12);
+                            float32x4 k010(k1), k011(k1 + 4), k012(k1 + 8), k013(k1 + 12);
+                            float32x4 k020(k2), k021(k2 + 4), k022(k2 + 8), k023(k2 + 12);
+                            float32x4 k030(k3), k031(k3 + 4), k032(k3 + 8), k033(k3 + 12);
+
+                            sum00 += r00 * k000; sum00 += r10 * k010; sum00 += r20 * k020; sum00 += r30 * k030;
+                            sum01 += r01 * k001; sum01 += r11 * k011; sum01 += r21 * k021; sum01 += r31 * k031;
+                            sum02 += r02 * k002; sum02 += r12 * k012; sum02 += r22 * k022; sum02 += r32 * k032;
+                            sum03 += r03 * k003; sum03 += r13 * k013; sum03 += r23 * k023; sum03 += r33 * k033;
+
+                            //for (int k = 0; k < 16; k++)
+                            //{
+                            //    sum_0[k] += r0[k] * k0[k];
+                            //    sum_0[k] += r1[k] * k1[k];
+                            //    sum_0[k] += r2[k] * k2[k];
+                            //    sum_0[k] += r3[k] * k3[k];
+                            //}
+                        }
+
+                        for (; q < input_channel; q++)
+                        {
+                            const float* input_tm_at = input_tm_ptr + n * tm_num_offset + q * tm_c_offset;
+                            const float* r0 = input_tm_at + i * 16;
+                            float32x4 r00(r0), r01(r0 + 4), r02(r0 + 8), r03(r0 + 12);
+
+                            const float* k0 = kernel_tm_0 + q * ktm_c_offset;
+                            float32x4 k000(k0), k001(k0 + 4), k002(k0 + 8), k003(k0 + 12);
+
+                            sum00 += r00 * k000;
+                            sum01 += r01 * k001;
+                            sum02 += r02 * k002;
+                            sum03 += r03 * k003;
+                        }
+
+                        sum00.store(out_0); sum01.store(out_0 + 4); sum02.store(out_0 + 8); sum03.store(out_0 + 12);
+
+                    }
+                }
+            }
+
+            //begin transform output
+            Shape output_bordered_s = { num, output_channel, output_h, output_w };
+            Tensor output_bordered(MemoryDevice(CPU), out.dtype(), output_bordered_s);
+            int outbo_c_offset = output_h * output_w;
+            int outbo_n_offset = output_channel * outbo_c_offset;
+
+            float* out_ptr = output_bordered.data<float>();
+
+            // const float AT[2][4] = {
+            //     {1.0f,  1.0f,  1.0f,  0.0f},
+            //     {0.0f,  1.0f, -1.0f,  1.0f}
+            // }; 
+
+            for (int n = 0; n < num; n++)
+            {
+                #pragma omp parallel for num_threads(omp_get_max_threads())
+                for (int c = 0; c < output_channel; c++)
+                {
+                    float* output_tm_at = out_tm_ptr + n * outtm_n_offset + c * outtm_c_offset;
+                    float* out_at = out_ptr + n * outbo_n_offset + c * outbo_c_offset;
+
+                    for (int i = 0; i < col_blocks; i++)
+                    {
+                        float* out_0 = out_at + i * output_w * 2;
+                        float* out_1 = out_0 + output_w;
+
+                        for (int j = 0; j < row_blocks; j++)
+                        {
+                            float* out_tile = output_tm_at + (i * col_blocks + j) * 16;
+
+                            float32x4 s0(out_tile), s1(out_tile + 4), s2(out_tile + 8), s3(out_tile + 12);
+
+                            // w = A_T * W
+                            float32x4 w0 = s0 + s1 + s2;
+                            float32x4 w1 = s1 - s2 + s3;
+                            float32x4 w2_tmp(0.f), w3_tmp(0.f);
+
+                            // transpose w to w_t
+                            _MM_TRANSPOSE4_PS(w0.value,w1.value,w2_tmp.value,w3_tmp.value);
+
+                            // Y = A_T * w_t
+                            float32x4 o0_tmp = w0 + w1 + w2_tmp;
+                            float32x4 o1_tmp = w1 - w2_tmp + w3_tmp;
+                            float out_0_tmp[4], out_1_tmp[4];
+                            o0_tmp.store(out_0_tmp);
+                            o1_tmp.store(out_1_tmp);
+
+                            out_0[0] = out_0_tmp[0];
+                            out_0[1] = out_0_tmp[1];
+                            out_1[0] = out_1_tmp[0];
+                            out_1[1] = out_1_tmp[1];
+
+                            out_0 += 2;
+                            out_1 += 2;
+                        }
+                    }
+                }
+            }
+
+            inner_cut<float>(output_bordered, out, 0, output_h - out_shape[2], 0, output_w - out_shape[3]);
 
         }
 
