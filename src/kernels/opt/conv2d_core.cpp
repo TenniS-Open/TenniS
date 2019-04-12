@@ -1098,6 +1098,111 @@ namespace ts {
         }
 
         template<typename T>
+        static void opt_conv2d_nchw_compute_run(const Tensor &x, const Padding2D &padding, float padding_value,
+            const Tensor &w, const Stride2D &stride, const Dilation2D &dilation,
+            Tensor &out, Stack &stack) {
+            auto weight_shape = w.sizes();
+            auto output_shape = out.sizes();
+            auto x_shape = x.sizes();
+            int kernel_dims = weight_shape[1] * weight_shape[2] * weight_shape[3];
+            int conv_out_spatial_dim = output_shape[2] * output_shape[3];
+            int output_number_offset = output_shape[1] * conv_out_spatial_dim;
+            int input_number_offset = x_shape[1] * x_shape[2] * x_shape[3];
+            int col_buffer_size = x_shape[1] * weight_shape[2] * weight_shape[3] * output_shape[2] * output_shape[3];
+
+            auto number = x_shape[0];
+            auto input_channels = x_shape[1];
+            Size2D ksize(weight_shape[2], weight_shape[3]);
+            Size2D input(x_shape[2], x_shape[3]);
+
+            const T *pinput = x.data<T>();
+            const T *pweight = w.data<T>();
+            T *poutput = out.data<T>();
+
+            Tensor col_tensor;
+            T *col_buffer = nullptr;
+
+            bool is_1x1_conv = stride.height == 1 && stride.width == 1 &&
+                ksize.height == 1 && ksize.width == 1 &&
+                padding.top == 0 && padding.bottom == 0 &&
+                padding.left == 0 && padding.right == 0;
+
+            //            if (is_1x1_conv) {
+            //                for (int i = 0; i < number; i++) {
+            //                    col_buffer = const_cast<T *>(pinput);
+            //#ifdef TS_USE_CBLAS
+            //                    cblas::math<T>::gemm(ts::blas::NoTrans, ts::blas::NoTrans, weight_shape[0], conv_out_spatial_dim,
+            //                        kernel_dims, 1.0, pweight, col_buffer, 0, poutput);
+            //#else
+            //                    cpu::math<T>::gemm(ts::blas::NoTrans, ts::blas::NoTrans, weight_shape[0], conv_out_spatial_dim,
+            //                        kernel_dims, 1.0, pweight, col_buffer, 0, poutput);
+            //#endif
+            //                    pinput += input_number_offset;
+            //                    poutput += output_number_offset;
+            //                }
+            //            }
+            //            else {
+            //                if (padding.bottom != 0 || padding.top != 0 || padding.left != 0 || padding.right != 0) {
+            //                    //auto &context = ctx::ref<DeviceContext>();
+            //                    //auto pad_operator = OperatorCreator::Create(context.computing_device.type(), name::layer::pad(), false);
+            //                    auto& pad_operator = OperatorCreator::Query(CPU, name::layer::pad())();
+            //                    TS_CHECK_NQ(pad_operator, nullptr) << "Can not find operator: " << name::layer::pad();
+            //               
+            //                    std::array<int, 2> pad_n = { 0,0 };
+            //                    std::array<int, 2> pad_c = { 0,0 };
+            //                    std::array<int, 2> pad_h = { padding.top ,padding.bottom};
+            //                    std::array<int, 2> pad_w = { padding.left, padding.right};
+            //                    std::vector<std::array<int, 2>> pad_vec = { pad_n,pad_c, pad_h,pad_w };
+            //                    ts::Shape x_pad_shape = { x_shape[0],x_shape[1],x_shape[2] + padding.top + padding.bottom,x_shape[3] + padding.left + padding.right };
+            //                    Tensor x_pad_tensor(MemoryDevice(CPU), x.dtype(), x_pad_shape);
+            //                    //auto x_pad_tensor = stack.make(x.dtype(), x_pad_shape, MemoryDevice(CPU));
+            //                    //reinterpret_cast<cpu::Pad*>(pad_operator.get())->pad(x, pad_vec, padding_value, x_pad_tensor);
+            //
+            //                    opt_conv2d_slide_window<T>(x_pad_tensor,w,stride,dilation,out);
+            //
+            //                }
+            //                else {
+            //                    opt_conv2d_slide_window<T>(x, w, stride, dilation, out);
+            //                }
+            //            }
+
+            // 1x1 conv do not need im2col
+            if (!is_1x1_conv) {
+                Shape col_shape;
+                col_shape.resize(1);
+                col_shape[0] = col_buffer_size;
+                col_tensor = stack.make(out.dtype(), col_shape, MemoryDevice(CPU));
+                col_buffer = col_tensor.data<T>();
+            }
+
+            for (int i = 0; i < number; i++) {
+                if (is_1x1_conv) {
+                    //std::memcpy(col_buffer,pinput,sizeof(T)*col_buffer_size);
+                    col_buffer = const_cast<T *>(pinput);
+                }
+                else {
+                    ::memset(col_buffer, 0, col_buffer_size * sizeof(T));
+                    im2col_cpu(pinput, input_channels, input.height, input.width,
+                        ksize.height, ksize.width,
+                        padding.top, padding.bottom,
+                        padding.left, padding.right,
+                        stride.height, stride.width,
+                        dilation.height, dilation.width,
+                        col_buffer, T(padding_value));
+                }
+#ifdef TS_USE_CBLAS
+                cblas::math<T>::gemm(ts::blas::NoTrans, ts::blas::NoTrans, weight_shape[0], conv_out_spatial_dim,
+                    kernel_dims, 1.0, pweight, col_buffer, 0, poutput);
+#else
+                cpu::math<T>::gemm(ts::blas::NoTrans, ts::blas::NoTrans, weight_shape[0], conv_out_spatial_dim,
+                    kernel_dims, 1.0, pweight, col_buffer, 0, poutput);
+#endif
+                pinput += input_number_offset;
+                poutput += output_number_offset;
+            }
+        }
+
+        template<typename T>
         static void opt_conv2d_forward(const Tensor &x, const Padding2D &padding, float padding_value,
             const Tensor &w, const Stride2D &stride, const Dilation2D &dilation,
             Tensor &out, Stack &stack) {
@@ -1160,11 +1265,11 @@ namespace ts {
                 Tensor x_pad_tensor(MemoryDevice(CPU), x.dtype(), x_pad_shape);
                 //auto x_pad_tensor = stack.make(x.dtype(), x_pad_shape, MemoryDevice(CPU));
                 reinterpret_cast<cpu::Pad*>(pad_operator.get())->pad(x, pad_vec, padding_value, x_pad_tensor);
-                //Shape kernel_trans_shape = { weight_shape[0],weight_shape[1],8,8 };
-                //Tensor kernel_trans(FLOAT32, kernel_trans_shape);
-                //Conv2dAlgorithm<T>::conv3x3_winograd63_transform_kernel_1(w, kernel_trans);
-                //return Conv2dAlgorithm<T>::conv3x3_winograd63(x_pad_tensor,kernel_trans,out);
-                return conv_f(x_pad_tensor, w, out);
+                Shape kernel_trans_shape = { weight_shape[0],weight_shape[1],4,4 };
+                Tensor kernel_trans(FLOAT32, kernel_trans_shape);
+                Conv2dAlgorithm<T>::conv3x3_winograd23_transform_kernel_1(w, kernel_trans);
+                return Conv2dAlgorithm<T>::conv3x3_winograd23(x_pad_tensor,kernel_trans,out);
+                //return conv_f(x_pad_tensor, w, out);
 
 /*                ts::Shape pad_shape = { 4,2 };
                 auto input_pad_param = tensor::build(INT32, pad_shape, { 0, 0, 0, 0, padding.top, padding.bottom, padding.left, padding.right });
@@ -1178,115 +1283,11 @@ namespace ts {
                 stack.pop();
                 return conv_f(x_pad_tensor, w, out);*/         
             }
-            //Shape kernel_trans_shape = { weight_shape[0],weight_shape[1],8,8 };
-            //Tensor kernel_trans(FLOAT32, kernel_trans_shape);
-            //Conv2dAlgorithm<T>::conv3x3_winograd63_transform_kernel_1(w, kernel_trans);
-            //return Conv2dAlgorithm<T>::conv3x3_winograd63(x, kernel_trans, out);
-            return conv_f(x, w, out);
-        }
-
-        template<typename T>
-        static void opt_conv2d_nchw_compute_run(const Tensor &x, const Padding2D &padding, float padding_value,
-                                           const Tensor &w, const Stride2D &stride, const Dilation2D &dilation,
-                                           Tensor &out, Stack &stack) {
-            auto weight_shape = w.sizes();
-            auto output_shape = out.sizes();
-            auto x_shape = x.sizes();
-            int kernel_dims = weight_shape[1] * weight_shape[2] * weight_shape[3];
-            int conv_out_spatial_dim = output_shape[2] * output_shape[3];
-            int output_number_offset = output_shape[1] * conv_out_spatial_dim;
-            int input_number_offset = x_shape[1] * x_shape[2] * x_shape[3];
-            int col_buffer_size = x_shape[1] * weight_shape[2] * weight_shape[3] * output_shape[2] * output_shape[3];
-
-            auto number = x_shape[0];
-            auto input_channels = x_shape[1];
-            Size2D ksize(weight_shape[2], weight_shape[3]);
-            Size2D input(x_shape[2], x_shape[3]);
-
-            const T *pinput = x.data<T>();
-            const T *pweight = w.data<T>();
-            T *poutput = out.data<T>();
-
-            Tensor col_tensor;
-            T *col_buffer = nullptr;
-
-            bool is_1x1_conv = stride.height == 1 && stride.width == 1 &&
-                               ksize.height == 1 && ksize.width == 1 &&
-                               padding.top == 0 && padding.bottom == 0 &&
-                               padding.left == 0 && padding.right == 0;
-
-//            if (is_1x1_conv) {
-//                for (int i = 0; i < number; i++) {
-//                    col_buffer = const_cast<T *>(pinput);
-//#ifdef TS_USE_CBLAS
-//                    cblas::math<T>::gemm(ts::blas::NoTrans, ts::blas::NoTrans, weight_shape[0], conv_out_spatial_dim,
-//                        kernel_dims, 1.0, pweight, col_buffer, 0, poutput);
-//#else
-//                    cpu::math<T>::gemm(ts::blas::NoTrans, ts::blas::NoTrans, weight_shape[0], conv_out_spatial_dim,
-//                        kernel_dims, 1.0, pweight, col_buffer, 0, poutput);
-//#endif
-//                    pinput += input_number_offset;
-//                    poutput += output_number_offset;
-//                }
-//            }
-//            else {
-//                if (padding.bottom != 0 || padding.top != 0 || padding.left != 0 || padding.right != 0) {
-//                    //auto &context = ctx::ref<DeviceContext>();
-//                    //auto pad_operator = OperatorCreator::Create(context.computing_device.type(), name::layer::pad(), false);
-//                    auto& pad_operator = OperatorCreator::Query(CPU, name::layer::pad())();
-//                    TS_CHECK_NQ(pad_operator, nullptr) << "Can not find operator: " << name::layer::pad();
-//               
-//                    std::array<int, 2> pad_n = { 0,0 };
-//                    std::array<int, 2> pad_c = { 0,0 };
-//                    std::array<int, 2> pad_h = { padding.top ,padding.bottom};
-//                    std::array<int, 2> pad_w = { padding.left, padding.right};
-//                    std::vector<std::array<int, 2>> pad_vec = { pad_n,pad_c, pad_h,pad_w };
-//                    ts::Shape x_pad_shape = { x_shape[0],x_shape[1],x_shape[2] + padding.top + padding.bottom,x_shape[3] + padding.left + padding.right };
-//                    Tensor x_pad_tensor(MemoryDevice(CPU), x.dtype(), x_pad_shape);
-//                    //auto x_pad_tensor = stack.make(x.dtype(), x_pad_shape, MemoryDevice(CPU));
-//                    //reinterpret_cast<cpu::Pad*>(pad_operator.get())->pad(x, pad_vec, padding_value, x_pad_tensor);
-//
-//                    opt_conv2d_slide_window<T>(x_pad_tensor,w,stride,dilation,out);
-//
-//                }
-//                else {
-//                    opt_conv2d_slide_window<T>(x, w, stride, dilation, out);
-//                }
-//            }
-
-            // 1x1 conv do not need im2col
-            if (!is_1x1_conv) {
-                Shape col_shape;
-                col_shape.resize(1);
-                col_shape[0] = col_buffer_size;
-                col_tensor = stack.make(out.dtype(), col_shape, MemoryDevice(CPU));
-                col_buffer = col_tensor.data<T>();
-            }
-
-            for (int i = 0; i < number; i++) {
-                if (is_1x1_conv) {
-                    //std::memcpy(col_buffer,pinput,sizeof(T)*col_buffer_size);
-                    col_buffer = const_cast<T *>(pinput);
-                } else {
-                    ::memset(col_buffer, 0, col_buffer_size * sizeof(T));
-                    im2col_cpu(pinput, input_channels, input.height, input.width,
-                               ksize.height, ksize.width,
-                               padding.top, padding.bottom,
-                               padding.left, padding.right,
-                               stride.height, stride.width,
-                               dilation.height, dilation.width,
-                               col_buffer, T(padding_value));
-                }
-#ifdef TS_USE_CBLAS
-                cblas::math<T>::gemm(ts::blas::NoTrans, ts::blas::NoTrans, weight_shape[0], conv_out_spatial_dim,
-                                     kernel_dims, 1.0, pweight, col_buffer, 0, poutput);
-#else
-                cpu::math<T>::gemm(ts::blas::NoTrans,ts::blas::NoTrans, weight_shape[0], conv_out_spatial_dim,
-                               kernel_dims, 1.0, pweight, col_buffer, 0, poutput);
-#endif
-                pinput += input_number_offset;
-                poutput += output_number_offset;
-            }
+            Shape kernel_trans_shape = { weight_shape[0],weight_shape[1],4,4 };
+            Tensor kernel_trans(FLOAT32, kernel_trans_shape);
+            Conv2dAlgorithm<T>::conv3x3_winograd23_transform_kernel_1(w, kernel_trans);
+            return Conv2dAlgorithm<T>::conv3x3_winograd23(x, kernel_trans, out);
+            //return conv_f(x, w, out);
         }
 
         void Conv2DCore::conv2d(const Tensor &x, const Padding2D &padding, float padding_value, const Tensor &w,
