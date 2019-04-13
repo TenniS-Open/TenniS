@@ -21,7 +21,7 @@ namespace ts {
             NEAREST = 2,
         };
 
-        TS_DEBUG_API Bubble resize(ResizeType type = ResizeType::LINEAR);
+        TS_DEBUG_API Bubble resize2d(ResizeType type = ResizeType::LINEAR);
     }
 }
 

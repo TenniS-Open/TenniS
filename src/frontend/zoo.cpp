@@ -16,8 +16,8 @@ namespace ts {
             return node;
         }
 
-        Node resize(const std::string &name, const Node &x, const Node &size, desc::ResizeType type) {
-            Node node = bubble::bubble(desc::resize(type), name);
+        Node resize2d(const std::string &name, const Node &x, const Node &size, desc::ResizeType type) {
+            Node node = bubble::bubble(desc::resize2d(type), name);
             Node::Link(node, {x, size});
             return node;
         }

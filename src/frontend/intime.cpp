@@ -37,12 +37,12 @@ namespace ts {
             return run(*bench, bubble, inputs);
         }
 
-        Tensor resize(const Tensor &x, const Tensor &size, desc::ResizeType type) {
-            return run(desc::resize(type), {x, size});
+        Tensor resize2d(const Tensor &x, const Tensor &size, desc::ResizeType type) {
+            return run(desc::resize2d(type), {x, size});
         }
 
-        Tensor resize(const Tensor &x, const std::vector<int32_t> &size, desc::ResizeType type) {
-            return resize(x, tensor::from(size), type);
+        Tensor resize2d(const Tensor &x, const std::vector<int32_t> &size, desc::ResizeType type) {
+            return resize2d(x, tensor::from(size), type);
         }
     }
 }

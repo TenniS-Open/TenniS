@@ -9,7 +9,7 @@
 
 namespace ts {
     namespace desc {
-        Bubble resize(ResizeType type) {
+        Bubble resize2d(ResizeType type) {
             Bubble bubble(name::layer::resize2d(), name::layer::resize2d());
             bubble.set(name::type, tensor::from(int32_t(type)));
             return std::move(bubble);
