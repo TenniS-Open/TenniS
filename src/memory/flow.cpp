@@ -37,6 +37,7 @@ namespace ts {
         m_impl->m_managed_allocator = [vat](int, size_t new_size, void *mem, size_t mem_size) -> void * {
             void *new_mem = nullptr;
             if (new_size == 0) {
+                // TS_LOG_DEBUG << "free(" << mem << ")";
                 vat->free(mem);
                 return nullptr;
             } else if (mem != nullptr) {
@@ -46,8 +47,10 @@ namespace ts {
                     vat->free(mem);
                     new_mem = vat->malloc(new_size);
                 }
+                // TS_LOG_DEBUG << "realloc(" << mem << ") -> " << new_mem;
             } else {
                 new_mem = vat->malloc(new_size);
+                // TS_LOG_DEBUG << "malloc() -> " << new_mem;
             }
             return new_mem;
         };

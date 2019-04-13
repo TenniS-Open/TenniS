@@ -14,9 +14,13 @@ namespace ts {
 
     class Vat {
     public:
+        using self = Vat;
+
         Vat();
 
         Vat(const Pot::allocator &ator);
+
+        ~Vat();
 
         void *malloc(size_t _size);
 

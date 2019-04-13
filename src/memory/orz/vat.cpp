@@ -5,14 +5,21 @@
 #include "utils/except.h"
 #include "vat.h"
 #include <algorithm>
+#include <utils/log.h>
 
 namespace ts {
 
-    Vat::Vat() {
+    Vat::Vat()
+        : self(nullptr) {
     }
 
     Vat::Vat(const Pot::allocator &ator)
         : m_allocator(ator) {
+        // TS_LOG_DEBUG << "new Vat() -> " << this;
+    }
+
+    Vat::~Vat() {
+        // TS_LOG_DEBUG << "delete Vat(" << this << ")";
     }
 
     static int binary_find(const std::vector<Pot> &heap, size_t size, int left, int right) {
