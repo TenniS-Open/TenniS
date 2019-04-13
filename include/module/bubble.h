@@ -100,6 +100,16 @@ namespace ts {
 
         DTYPE dtype() const;
 
+        void op(const std::string &_op);
+
+        void name(const std::string &_name);
+
+        void output_count(int _output_count);
+
+        void shape(const Shape &shape);
+
+        void dtype(DTYPE _dtype);
+
     private:
         void update_retention_params();
 

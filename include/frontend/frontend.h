@@ -11,12 +11,11 @@
 
 #include <module/graph.h>
 
-namespace ts {
-    namespace menu {
-        using namespace bubble;
-    }
+#include "frontend/compressor.h"
 
-    namespace zoo {
+namespace ts {
+    namespace symbol {
+        using namespace bubble;
         struct DimPadding {
             DimPadding() = default;
             DimPadding(int32_t first, int32_t second)

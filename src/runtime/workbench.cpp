@@ -24,6 +24,8 @@
 #include "backend/base/base_cast_v2.h"
 #include "runtime/operator.h"
 
+#include "utils/ctxmgr_lite_support.h"
+
 namespace ts {
     Workbench::Workbench(const ComputingDevice &device, std::shared_ptr<std::mutex> mutex) {
         this->m_device_context.initialize(device);
@@ -57,8 +59,8 @@ namespace ts {
         this->m_map_input_slots.clear();
         this->m_map_output_slots.clear();
         this->m_inputs.clear();
-        this->m_input_filters.clear();
         this->m_outputs.clear();
+        this->m_input_filters.clear();
         this->m_device_context.finalize();
     }
 
@@ -135,15 +137,17 @@ namespace ts {
         for (int i = 0; static_cast<size_t >(i) < this->m_stack->size(); ++i) {
             auto &arg = *this->m_stack->index(i);
             this->m_outputs[i] = arg.clone(m_dynamic_memory, arg.device());
+            // TODO: re-think about how to remove clone
+            // this->m_outputs[i] = arg;   // to hard careful to use if do not clone
         }
     }
 
     Workbench::shared Workbench::clone() const {
         std::unique_lock<std::mutex> _lock_clone(*this->m_mutex);
 
-        Workbench::shared dolly = std::make_shared<Workbench>(
+        Workbench::shared dolly(new Workbench(
                 this->m_device_context.computing_device,
-                this->m_mutex);
+                this->m_mutex));
         dolly->m_pointer = this->m_pointer;
         dolly->m_program = this->m_program;
         dolly->m_inputs.resize(this->m_inputs.size());
@@ -459,4 +463,60 @@ namespace ts {
         }
         TS_AUTO_CHECK(1 == RunOperator(m_cast_op, *m_stack, 1));
     }
+
+    Operator::shared Workbench::online_create(const Bubble &bubble, bool strict) {
+        return offline_create(bubble, strict);
+    }
+
+    int Workbench::online_run(Operator::shared op, const std::vector<Tensor> &input) {
+        m_stack->clear();
+        for (auto &tensor : input) {
+            m_stack->push(tensor);
+        }
+        return online_run(op, stack().size());
+    }
+
+    int Workbench::online_run(Operator::shared op, int argc) {
+        // bind thread pool to any operator can using thread speed up
+        ctx::bind<ThreadPool> bind_thread_pool(this->runtime().thread_pool());
+
+        // bind device context
+        ctx::bind<DeviceContext> bind_device_context(m_device_context);
+
+        // bind runtime context
+        ctx::bind<RuntimeContext> bind_runtime_context(m_runtime_context);
+
+        return RunOperator(op, *m_stack, argc);
+    }
+
+    void Workbench::online_run(Instruction::shared inst) {
+        // bind thread pool to any operator can using thread speed up
+        ctx::bind<ThreadPool> bind_thread_pool(this->runtime().thread_pool());
+
+        // bind device context
+        ctx::bind<DeviceContext> bind_device_context(m_device_context);
+
+        // bind runtime context
+        ctx::bind<RuntimeContext> bind_runtime_context(m_runtime_context);
+
+        inst->run(*this);
+    }
+
+    void Workbench::online_run(Instruction::shared inst, const std::vector<Tensor> &input) {
+        m_stack->clear();
+        for (auto &tensor : input) {
+            m_stack->push(tensor);
+        }
+        online_run(inst);
+    }
+
+    int Workbench::online_run(const Bubble &bubble, int argc, bool strict) {
+        return online_run(online_create(bubble, strict), argc);
+    }
+
+    int Workbench::online_run(const Bubble &bubble, const std::vector<Tensor> &input, bool strict) {
+        return online_run(online_create(bubble, strict), input);
+    }
 }
+
+TS_LITE_CONTEXT(ts::Workbench)
