@@ -136,9 +136,8 @@ namespace ts {
         // TODO: change output memory device type
         for (int i = 0; static_cast<size_t >(i) < this->m_stack->size(); ++i) {
             auto &arg = *this->m_stack->index(i);
-            this->m_outputs[i] = arg.clone(m_dynamic_memory, arg.device());
-            // TODO: re-think about how to remove clone
-            // this->m_outputs[i] = arg;   // to hard careful to use if do not clone
+            // this->m_outputs[i] = arg.clone(m_dynamic_memory, arg.device());
+            this->m_outputs[i] = arg;   // do not clone by default
         }
     }
 

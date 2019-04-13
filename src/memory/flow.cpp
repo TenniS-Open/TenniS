@@ -33,20 +33,21 @@ namespace ts {
 
         m_impl->m_device = device;
         m_impl->m_vat = std::make_shared<Vat>(pot_allocator);
-        m_impl->m_managed_allocator = [this](int, size_t new_size, void *mem, size_t mem_size) -> void * {
+        auto &vat = m_impl->m_vat;
+        m_impl->m_managed_allocator = [vat](int, size_t new_size, void *mem, size_t mem_size) -> void * {
             void *new_mem = nullptr;
             if (new_size == 0) {
-                m_impl->m_vat->free(mem);
+                vat->free(mem);
                 return nullptr;
             } else if (mem != nullptr) {
                 if (mem_size > 0) {
                     TS_LOG_ERROR << "Reach the un-given code" << eject;
                 } else {
-                    m_impl->m_vat->free(mem);
-                    new_mem = m_impl->m_vat->malloc(new_size);
+                    vat->free(mem);
+                    new_mem = vat->malloc(new_size);
                 }
             } else {
-                new_mem = m_impl->m_vat->malloc(new_size);
+                new_mem = vat->malloc(new_size);
             }
             return new_mem;
         };
