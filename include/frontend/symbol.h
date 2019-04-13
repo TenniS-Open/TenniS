@@ -2,11 +2,11 @@
 // Created by kier on 2019/3/27.
 //
 
-#ifndef TENSORSTACK_FRONTEND_ZOO_H
-#define TENSORSTACK_FRONTEND_ZOO_H
+#ifndef TENSORSTACK_FRONTEND_SYMBOL_H
+#define TENSORSTACK_FRONTEND_SYMBOL_H
 
 #include <module/graph.h>
-#include <frontend/compressor.h>
+#include <frontend/desc.h>
 
 namespace ts {
     namespace symbol {
@@ -18,4 +18,4 @@ namespace ts {
 }
 
 
-#endif //TENSORSTACK_FRONTEND_ZOO_H
+#endif //TENSORSTACK_FRONTEND_SYMBOL_H

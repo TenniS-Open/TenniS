@@ -2,7 +2,7 @@
 // Created by kier on 2019/3/27.
 //
 
-#include "frontend/zoo.h"
+#include "frontend/symbol.h"
 
 #include "module/menu.h"
 #include "backend/name.h"

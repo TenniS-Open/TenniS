@@ -7,7 +7,7 @@
 
 #include "core/tensor.h"
 #include "module/bubble.h"
-#include "compressor.h"
+#include "desc.h"
 
 #include <string>
 #include <vector>
