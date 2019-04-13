@@ -169,8 +169,8 @@ def sta2json(sta_filename, json_filename=None, **kwargs):
     Convert filename.sta to filename.json.
     :param sta_filename: input sta filename
     :param json_filename: output json filename or path
-    :param binary_mode: 0(default): means write @base64@...
-                        1: means @file@path
+    :param binary_mode: 0: means write @base64@...
+                        1(default): means @file@path
                         2: means write @binary@size
                         3: means str for binary memory
     :return:
