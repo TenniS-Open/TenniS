@@ -57,6 +57,18 @@ namespace ts {
             result->set(Bubble::RetentionParam::dtype, tensor::from<int32_t>(dtype));
             return result;
         }
+
+        Node bubble(const Bubble &bubble) {
+            auto &g = ctx::ref<Graph>();
+            return g.make(bubble);
+        }
+
+        Node bubble(const Bubble &bubble, const std::string &name) {
+            auto &g = ctx::ref<Graph>();
+            auto result = g.make(bubble);
+            result->name(name);
+            return result;
+        }
     }
 
     size_t serialize_graph(StreamWriter &stream, const Graph &graph) {
