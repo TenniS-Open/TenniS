@@ -7,11 +7,11 @@
 
 #include "module/menu.h"
 
-#include "zoo.h"
+#include "symbol.h"
 
 #include <module/graph.h>
 
-#include "frontend/compressor.h"
+#include "frontend/desc.h"
 
 namespace ts {
     namespace symbol {

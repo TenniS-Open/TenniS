@@ -2,7 +2,7 @@
 // Created by kier on 2019-04-13.
 //
 
-#include "frontend/compressor.h"
+#include "frontend/desc.h"
 
 #include "backend/name.h"
 #include "core/tensor_builder.h"

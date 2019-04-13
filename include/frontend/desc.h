@@ -2,8 +2,8 @@
 // Created by kier on 2019-04-13.
 //
 
-#ifndef TENSORSTACK_FRONTEND_COMPRESSOR_H
-#define TENSORSTACK_FRONTEND_COMPRESSOR_H
+#ifndef TENSORSTACK_FRONTEND_DESC_H
+#define TENSORSTACK_FRONTEND_DESC_H
 
 /**
  * compressor firstly convert params to bubble,
@@ -25,4 +25,4 @@ namespace ts {
     }
 }
 
-#endif //TENSORSTACK_FRONTEND_COMPRESSOR_H
+#endif //TENSORSTACK_FRONTEND_DESC_H
