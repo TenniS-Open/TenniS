@@ -12,7 +12,8 @@ namespace ts {
     namespace symbol {
         TS_DEBUG_API Node pad(const std::string &name, const Node &x, const Node &padding, float padding_value = 0);
 
-        TS_DEBUG_API Node resize(const std::string &name, const Node &x, const Node &size, desc::ResizeType type = desc::ResizeType::LINEAR);
+        TS_DEBUG_API Node resize2d(const std::string &name, const Node &x, const Node &size,
+                                   desc::ResizeType type = desc::ResizeType::LINEAR);
     }
 }
 

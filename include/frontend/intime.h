@@ -28,9 +28,10 @@ namespace ts {
          */
         TS_DEBUG_API Tensor run(const Bubble &bubble, const std::vector<Tensor> &inputs);
 
-        TS_DEBUG_API Tensor resize(const Tensor &x, const Tensor &size, desc::ResizeType type = desc::ResizeType::LINEAR);
+        TS_DEBUG_API Tensor resize2d(const Tensor &x, const Tensor &size,
+                                     desc::ResizeType type = desc::ResizeType::LINEAR);
 
-        TS_DEBUG_API Tensor resize(const Tensor &x, const std::vector<int32_t> &size, desc::ResizeType type = desc::ResizeType::LINEAR);
+        TS_DEBUG_API Tensor resize2d(const Tensor &x, const std::vector<int32_t> &size, desc::ResizeType type = desc::ResizeType::LINEAR);
     }
 }
 
