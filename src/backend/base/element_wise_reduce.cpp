@@ -112,7 +112,11 @@ namespace ts {
         auto lhs = *stack.index(0);
         auto rhs = *stack.index(1);
 
-        TS_AUTO_CHECK(lhs.dtype() == rhs.dtype());
+        if (lhs.dtype() != rhs.dtype()) {
+            TS_LOG_ERROR << "Can not reduce mismatch type: "
+                << type_str(lhs.dtype()) << " vs. "
+                << type_str(rhs.dtype()) << eject;
+        }
 
         auto lhs_shape = lhs.sizes();
         auto rhs_shape = rhs.sizes();

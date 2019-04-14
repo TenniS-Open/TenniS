@@ -27,6 +27,7 @@ namespace ts {
             static std::string op;
             static std::string output_count;
             static std::string shape;
+            static std::string dtype;
         };
 
         explicit Bubble() = default;
@@ -95,6 +96,20 @@ namespace ts {
 
         size_t externalize(StreamReader &stream) final;
 
+        const Shape shape() const;
+
+        DTYPE dtype() const;
+
+        void op(const std::string &_op);
+
+        void name(const std::string &_name);
+
+        void output_count(int _output_count);
+
+        void shape(const Shape &shape);
+
+        void dtype(DTYPE _dtype);
+
     private:
         void update_retention_params();
 
@@ -117,6 +132,9 @@ namespace ts {
          */
         param_dict m_params;
 
+        /**
+         * datum shape
+         */
         Shape m_shape;
 
         /**

@@ -27,6 +27,22 @@ namespace ts {
         TS_DEBUG_API Node param(const std::string &name, const Shape &shape);
 
         /**
+         * get Parameter node
+         * @param name Node name
+         * @return new Node belonging to context-Graph
+         * @note Must call `ts::ctx::bind<Graph>` to bind context firstly
+         */
+        TS_DEBUG_API Node param(const std::string &name, DTYPE dtype);
+
+        /**
+         * get Parameter node
+         * @param name Node name
+         * @return new Node belonging to context-Graph
+         * @note Must call `ts::ctx::bind<Graph>` to bind context firstly
+         */
+        TS_DEBUG_API Node param(const std::string &name, DTYPE dtype, const Shape &shape);
+
+        /**
          * get Operator node
          * @param name Node name
          * @param op_name Operator name
@@ -54,6 +70,10 @@ namespace ts {
          * @note Must call `ts::ctx::bind<Graph>` to bind context firstly
          */
         TS_DEBUG_API Node data(const std::string &name, const Tensor &value, const DeviceType &device);
+
+        TS_DEBUG_API Node bubble(const Bubble &bubble);
+
+        TS_DEBUG_API Node bubble(const Bubble &bubble, const std::string &name);
     }
 
     /**

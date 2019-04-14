@@ -6,14 +6,17 @@ sys.path.append(
     os.path.join(os.path.abspath(os.path.dirname(__file__)), ".."))
 
 from stackbuilder.mxnet.converter import convert
+import tensorstack as ts
 
 
 def test():
-    convert("mxnet/model-finetune_nosoftmax", 1100000,
-            {
-                "data": [1, 3, 248, 248],
+    convert("mxnet/resnet50/model-finetune_nosoftmax", 1100000,
+            "mxnet-resnet50.tsm",
+            input_nodes={
+                "data": ts.menu.param("data", [1, 3, 248, 248]),
             },
-            "mxnet.tsm")
+            output_node_names=['fc1_act', ]
+            )
 
 
 if __name__ == '__main__':

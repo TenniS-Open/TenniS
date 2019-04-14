@@ -59,7 +59,7 @@ def convert(input_file, output_file,
     :param output_blobs: str of list of str
     :param has_header: bool value, tell if there is header in model
     :param export_all: if need export all symbol in model
-    :return: None
+    :return: ts.Module
     """
     header = None
     net = None
@@ -176,6 +176,8 @@ def convert(input_file, output_file,
         assert isinstance(node, ts.Node)
         print("{}: {}".format(index, node.name))
         index += 1
+
+    return module
 
 
 def convert_memorydata_layer(layer, input_nodes, output_names):

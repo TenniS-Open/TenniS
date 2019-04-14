@@ -13,7 +13,7 @@ def convert(input_model, output_file, input_num=None, inputs=None):
     :param output_file: str of path to file
     :param input_num: input number
     :param inputs: input nodes
-    :return: None
+    :return: ts.Module
     """
     input_model = net.compatible_string(input_model)
 
@@ -45,3 +45,5 @@ def convert(input_model, output_file, input_num=None, inputs=None):
         assert isinstance(node, ts.Node)
         print("{}: {}".format(index, node.name))
         index += 1
+
+    return module

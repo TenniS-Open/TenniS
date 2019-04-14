@@ -19,7 +19,7 @@ namespace ts {
 
             m_axis = tensor::to_int(this->get(name::axis));
 
-            TS_AUTO_CHECK(m_axis >= 0);
+            // TS_AUTO_CHECK(m_axis >= 0);
         }
 
         int StackTensor::infer(Stack &stack, std::vector<Tensor::Prototype> &output) {
@@ -34,9 +34,16 @@ namespace ts {
             }
 
             auto shape = x.sizes();
-            TS_AUTO_CHECK(m_axis <= shape.size());
+            int output_dims = int(shape.size() + 1);
+            int fixed_axis = m_axis >= 0 ? m_axis : output_dims + m_axis;
 
-            shape.insert(shape.begin() + m_axis, stack.size());
+            if (fixed_axis < 0 || fixed_axis >= output_dims) {
+                TS_LOG_ERROR << "Stack axis must in [-"
+                             << output_dims << ", "
+                             << output_dims << ")" << eject;
+            }
+
+            shape.insert(shape.begin() + fixed_axis, stack.size());
 
             output.resize(1);
             output[0] = Tensor::Prototype(x.dtype(), shape);
@@ -59,7 +66,16 @@ namespace ts {
 
             Tensor out = *stack.push(output_protos[0], memory_device);
 
-            stack_tensor(x, m_axis, out);
+            int output_dims = int(x[0].dims() + 1);
+            int fixed_axis = m_axis >= 0 ? m_axis : output_dims + m_axis;
+
+            if (fixed_axis < 0 || fixed_axis >= output_dims) {
+                TS_LOG_ERROR << "Stack axis must in [-"
+                             << output_dims << ", "
+                             << output_dims << ")" << eject;
+            }
+
+            stack_tensor(x, fixed_axis, out);
 
             return 1;
         }

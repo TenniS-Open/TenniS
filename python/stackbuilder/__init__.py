@@ -6,31 +6,31 @@
 
 try:
     from . import holiday
-except Exception, e:
+except Exception as e:
     pass
 try:
     from . import onnx
-except Exception, e:
+except Exception as e:
     pass
 try:
     from . import torch
-except Exception, e:
+except Exception as e:
     pass
 try:
     from . import vvvv
-except Exception, e:
+except Exception as e:
     pass
 try:
     from . import caffe
-except Exception, e:
+except Exception as e:
     pass
 try:
     from . import mxnet
-except Exception, e:
+except Exception as e:
     pass
 try:
     from . import tf
-except Exception, e:
+except Exception as e:
     pass
 
 __version__ = "0.0.9"

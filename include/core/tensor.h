@@ -20,7 +20,7 @@
 #include "tensor_iterator.h"
 
 namespace ts {
-    using Shape = std::vector<int>;
+    using Shape = std::vector<int32_t>;
 
     inline std::string to_string(const Shape &shape) {
         std::ostringstream oss;

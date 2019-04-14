@@ -46,6 +46,40 @@ def list_raw_case():
     yield data, [0, 0], [3, 2], [2, 1]
 
 
+def list_raw_pack_case():
+    """
+    yield(data, axis)
+    :return:
+    """
+    data = [[1, 4], [2, 5], [3, 6]]
+    yield data, 0
+    yield data, 1
+    yield data, -1
+    yield data, -2
+
+
+def list_pack_case():
+    """
+    yield bubble, inputs, outputs
+    :return:
+    """
+    import tensorflow as tf
+
+    with tf.Session() as sess:
+        for data, axis in list_raw_pack_case():
+            x = tf.stack(data, axis=axis)
+            y = sess.run(x)
+
+            bubble_inputs = [numpy.asarray(item, dtype=numpy.float32) for item in data]
+            bubble_outputs = [numpy.asarray(y, dtype=numpy.float32), ]
+
+            ts_inputs = [ts.menu.data(name="", value=item) for item in data]
+
+            ts_node = ts.frontend.tf.stack("stack", tensors=ts_inputs, axis=axis)
+
+            yield ts_node, bubble_inputs, bubble_outputs
+
+
 def list_case():
     """
     yield bubble, inputs, outputs
@@ -68,7 +102,7 @@ def list_case():
             yield slice, [data, ], [y, ]
 
 
-def generate(path):
+def generate_strided_slice(path):
     """
     generate test case
     :param path: path to write case
@@ -83,5 +117,21 @@ def generate(path):
         iter += 1
 
 
+def generate_stack(path):
+    """
+    generate test case
+    :param path: path to write case
+    :return:
+    """
+    iter = 1
+    for bubble, inputs, outputs in list_pack_case():
+        case_path = os.path.join(path, str(iter))
+
+        write_case(case_path, bubble, inputs, outputs)
+
+        iter += 1
+
+
 if __name__ == '__main__':
-    generate("strided_slice")
+    generate_strided_slice("strided_slice")
+    generate_stack("stack")

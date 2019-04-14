@@ -5,6 +5,8 @@
 """
 
 from .node import Node
+from .dtype import from_numpy
+import numpy
 
 
 class Name(object):
@@ -17,9 +19,14 @@ class Name(object):
     device = "device"
 
 
-def param(name, shape=None):
-    # type: (str) -> Node
-    return Node(op=Node.Parameter, name=name, shape=shape)
+def param(name, shape=None, dtype=None):
+    # type: (str, list[int], object) -> Node
+    node = Node(op=Node.Parameter, name=name, shape=shape)
+    if dtype is not None:
+        if not isinstance(dtype, int):
+            dtype = from_numpy(dtype)
+        node.set(Node.RetentionParam.dtype, dtype, numpy.int32)
+    return node
 
 
 def op(name, op_name, inputs, output_count=1):
