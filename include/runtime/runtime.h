@@ -10,9 +10,11 @@
 
 #include "core/sync/sync_controller.h"
 
+#include "utils/ctxmgr_lite.h"
+
 namespace ts {
 
-    class TS_DEBUG_API RuntimeContext {
+    class TS_DEBUG_API RuntimeContext : public SetupContext<RuntimeContext> {
     public:
         using self = RuntimeContext;
 

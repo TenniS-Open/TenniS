@@ -21,8 +21,10 @@
 #include "image_filter.h"
 #include "board/profiler.h"
 
+#include "utils/ctxmgr_lite.h"
+
 namespace ts {
-    class TS_DEBUG_API Workbench {
+    class TS_DEBUG_API Workbench : public SetupContext<Workbench> {
     public:
         using self = Workbench;    ///< self class
         using shared = std::shared_ptr<self>;  ///< smart pointer

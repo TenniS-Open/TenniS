@@ -53,7 +53,7 @@ namespace ts {
         std::function<void(void)> m_later;
     };
 
-    class TS_DEBUG_API Profiler {
+    class TS_DEBUG_API Profiler : public SetupContext<Profiler> {
     public:
         void clean() {
             this->m_serial.clear();
