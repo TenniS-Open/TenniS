@@ -56,6 +56,10 @@ namespace ts {
         };
     }
 
+    VatMemoryController::~VatMemoryController() {
+        m_impl->m_vat->deprecated();
+    }
+
     Memory VatMemoryController::alloc(size_t size) {
         return Memory(std::make_shared<HardMemory>(m_impl->m_device, m_impl->m_managed_allocator, size));
     }
