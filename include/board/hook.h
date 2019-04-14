@@ -14,7 +14,7 @@ namespace ts {
     class Stack;
     class Operator;
 
-    class TS_DEBUG_API Hook {
+    class TS_DEBUG_API Hook : SetupContext<Hook> {
     public:
         using self = Hook;
         struct StructAfterRun {

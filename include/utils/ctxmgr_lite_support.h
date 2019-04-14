@@ -7,7 +7,40 @@
 
 #include "ctxmgr_lite.h"
 
+#if defined(_MSC_VER) && _MSC_VER < 1900 // lower then VS2015
+#    define TS_LITE_THREAD_LOCAL __declspec(thread)
+#else
+#    define TS_LITE_THREAD_LOCAL thread_local
+#endif
+
 namespace ts {
+
+    template<typename T>
+    class TS_DEBUG_API __lite_context {
+    public:
+        using self = __lite_context;
+        using context = void *;
+
+        explicit __lite_context(context ctx);
+
+        ~__lite_context();
+
+        static void set(context ctx);
+
+        static context get();
+
+        static context try_get();
+
+        __lite_context(const self &) = delete;
+
+        self &operator=(const self &) = delete;
+
+        context ctx() const;
+
+    private:
+        context m_pre_ctx = nullptr;
+        context m_now_ctx = nullptr;
+    };
 
     // move from header to source
     template<typename T>
@@ -88,10 +121,28 @@ namespace ts {
     typename __lite_context<T>::context __lite_context<T>::ctx() const {
         return m_now_ctx;
     }
+
+    namespace ctx {
+        namespace lite {
+            template <typename T>
+            void of<T>::set(T *ctx) {
+                __lite_context<T>::set(ctx);
+            }
+            template <typename T>
+            T *of<T>::get() {
+                return reinterpret_cast<T *>(__lite_context<T>::try_get());
+            }
+            template <typename T>
+            T &of<T>::ref() {
+                return *reinterpret_cast<T *>(__lite_context<T>::get());
+            }
+        }
+    }
 }
 
 #define TS_LITE_CONTEXT(T) \
     template class ts::__thread_local_lite_context<T>; \
-    template class ts::__lite_context<T>;
+    template class ts::__lite_context<T>; \
+    template class ts::ctx::lite::of<T>;
 
 #endif  // TENSORSTACK_UTILS_CTXMGR_LITE_SUPPORT_H

@@ -9,9 +9,11 @@
 #include <global/hard_converter.h>
 #include <global/device_admin.h>
 
+#include "utils/ctxmgr_lite.h"
+
 namespace ts {
     class DeviceHandle;
-    class TS_DEBUG_API DeviceContext {
+    class TS_DEBUG_API DeviceContext : public SetupContext<DeviceContext> {
     public:
         using self = DeviceContext;
         using shared = std::shared_ptr<self>;
