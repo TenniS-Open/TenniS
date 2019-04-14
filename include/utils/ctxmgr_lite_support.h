@@ -16,7 +16,7 @@
 namespace ts {
 
     template<typename T>
-    class TS_DEBUG_API __lite_context {
+    class __lite_context {
     public:
         using self = __lite_context;
         using context = void *;
