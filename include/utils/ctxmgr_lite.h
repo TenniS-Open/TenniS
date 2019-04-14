@@ -91,6 +91,16 @@ namespace ts {
                 __lite_context<T> m_ctx;
             };
 
+            template <typename T>
+            inline void set(T *ctx) {
+                __lite_context<T>::set(ctx);
+            }
+
+            template <typename T>
+            inline void set(T &ctx_ref) {
+                __lite_context<T>::set(&ctx_ref);
+            }
+
             template<typename T>
             inline T *get() {
                 return reinterpret_cast<T *>(__lite_context<T>::try_get());
