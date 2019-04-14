@@ -204,6 +204,12 @@ namespace ts {
 
         size_t serialize(StreamWriter &stream) const final;
 
+        /**
+         *
+         * @param stream
+         * @return
+         * @context: MemoryController, to give where new memory alloc
+         */
         size_t externalize(StreamReader &stream) final;
 
         HypeShape hype_shape() const { return HypeShape(this->sizes()); }
