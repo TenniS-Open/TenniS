@@ -86,6 +86,8 @@ namespace ts {
 
         const DeviceContext &device() const { return m_device_context; }
 
+        DeviceContext &device() { return m_device_context; }
+
         const RuntimeContext &runtime() const { return m_runtime_context; }
 
         RuntimeContext &runtime() { return m_runtime_context; }

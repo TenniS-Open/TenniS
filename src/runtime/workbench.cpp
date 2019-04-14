@@ -27,6 +27,28 @@
 #include "utils/ctxmgr_lite_support.h"
 
 namespace ts {
+    class BindWorkbenchRuntime {
+    public:
+        using self = BindWorkbenchRuntime;
+
+        explicit BindWorkbenchRuntime(Workbench &bench)
+            : bind_thread_pool(bench.runtime().thread_pool())
+            , bind_device_context(bench.device())
+            , bind_runtime_context(bench.runtime()) {
+            bench.device().active();
+        }
+
+    private:
+        // bind thread pool to any operator can using thread speed up
+        ctx::bind<ThreadPool> bind_thread_pool;
+
+        // bind device context
+        ctx::bind<DeviceContext> bind_device_context;
+
+        // bind runtime context
+        ctx::bind<RuntimeContext> bind_runtime_context;
+    };
+
     Workbench::Workbench(const ComputingDevice &device, std::shared_ptr<std::mutex> mutex) {
         this->m_device_context.initialize(device);
         auto &memory_device = this->m_device_context.memory_device;
@@ -96,15 +118,7 @@ namespace ts {
         this->m_stack->clear();
         this->m_outputs.resize(this->m_outputs.size(), Tensor());
 
-        // bind thread pool to any operator can using thread speed up
-        ctx::bind<ThreadPool> bind_thread_pool(this->runtime().thread_pool());
-
-        // bind device context
-        ctx::bind<DeviceContext> bind_device_context(m_device_context);
-        m_device_context.active();      // change context to computing device
-
-        // bind runtime context
-        ctx::bind<RuntimeContext> bind_runtime_context(m_runtime_context);
+        BindWorkbenchRuntime _bind_runtime(*this);
 
         // set input
         for (int i = 0; static_cast<size_t >(i) < this->m_inputs.size(); ++i) {
@@ -396,14 +410,7 @@ namespace ts {
     void Workbench::offline_run(Operator::shared op, const std::vector<Tensor> &input, std::vector<Tensor> &output) {
         Stack stack(m_device_context.memory_device, m_dynamic_memory);
 
-        // bind thread pool to any operator can using thread speed up
-        ctx::bind<ThreadPool> bind_thread_pool(this->runtime().thread_pool());
-
-        // bind device context
-        ctx::bind<DeviceContext> bind_device_context(m_device_context);
-
-        // bind runtime context
-        ctx::bind<RuntimeContext> bind_runtime_context(m_runtime_context);
+        BindWorkbenchRuntime _bind_runtime(*this);
 
         for (auto &tensor : input) {
             stack.push(tensor);
@@ -424,14 +431,7 @@ namespace ts {
                                   std::vector<Tensor::Prototype> &output) {
         Stack stack(m_device_context.memory_device, m_dynamic_memory);
 
-        // bind thread pool to any operator can using thread speed up
-        ctx::bind<ThreadPool> bind_thread_pool(this->runtime().thread_pool());
-
-        // bind device context
-        ctx::bind<DeviceContext> bind_device_context(m_device_context);
-
-        // bind runtime context
-        ctx::bind<RuntimeContext> bind_runtime_context(m_runtime_context);
+        BindWorkbenchRuntime _bind_runtime(*this);
 
         for (auto &tensor : input) {
             stack.push(tensor);
@@ -480,27 +480,13 @@ namespace ts {
     }
 
     int Workbench::online_run(Operator::shared op, int argc) {
-        // bind thread pool to any operator can using thread speed up
-        ctx::bind<ThreadPool> bind_thread_pool(this->runtime().thread_pool());
-
-        // bind device context
-        ctx::bind<DeviceContext> bind_device_context(m_device_context);
-
-        // bind runtime context
-        ctx::bind<RuntimeContext> bind_runtime_context(m_runtime_context);
+        BindWorkbenchRuntime _bind_runtime(*this);
 
         return RunOperator(op, *m_stack, argc);
     }
 
     void Workbench::online_run(Instruction::shared inst) {
-        // bind thread pool to any operator can using thread speed up
-        ctx::bind<ThreadPool> bind_thread_pool(this->runtime().thread_pool());
-
-        // bind device context
-        ctx::bind<DeviceContext> bind_device_context(m_device_context);
-
-        // bind runtime context
-        ctx::bind<RuntimeContext> bind_runtime_context(m_runtime_context);
+        BindWorkbenchRuntime _bind_runtime(*this);
 
         inst->run(*this);
     }
