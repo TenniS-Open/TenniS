@@ -70,6 +70,8 @@ namespace ts {
             // 2019-04-08
             TS_DEBUG_API const string &strided_slice() TS_NOEXCEPT;
             TS_DEBUG_API const string &stack() TS_NOEXCEPT;
+
+            TS_DEBUG_API const string &crop_nd() TS_NOEXCEPT;
         }
 
         namespace typo {
@@ -121,6 +123,8 @@ namespace ts {
 
         TS_DEBUG_API extern string begin;
         TS_DEBUG_API extern string end;
+
+        TS_DEBUG_API extern string shift;
     }
 
 }

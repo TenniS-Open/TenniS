@@ -34,6 +34,8 @@ namespace ts {
          */
         explicit VatMemoryController(const MemoryDevice &device);
 
+        ~VatMemoryController() override;
+
         Memory alloc(size_t size) override;
 
     private:

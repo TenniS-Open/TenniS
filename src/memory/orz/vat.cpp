@@ -5,14 +5,21 @@
 #include "utils/except.h"
 #include "vat.h"
 #include <algorithm>
+#include <utils/log.h>
 
 namespace ts {
 
-    Vat::Vat() {
+    Vat::Vat()
+        : self(nullptr) {
     }
 
     Vat::Vat(const Pot::allocator &ator)
         : m_allocator(ator) {
+        // TS_LOG_DEBUG << "new Vat() -> " << this;
+    }
+
+    Vat::~Vat() {
+        // TS_LOG_DEBUG << "delete Vat(" << this << ")";
     }
 
     static int binary_find(const std::vector<Pot> &heap, size_t size, int left, int right) {
@@ -59,13 +66,14 @@ namespace ts {
             throw Exception("Can not free this ptr");
         }
 
-        auto &pot = it->second;
+        if (!m_deprecated) {
+            auto &pot = it->second;
+            auto i = binary_find(m_heap, pot.capacity());
+            auto ind = m_heap.begin() + i;
+            m_heap.insert(ind, pot);
+        }
 
-        auto i = binary_find(m_heap, pot.capacity());
-        auto ind = m_heap.begin() + i;
-        m_heap.insert(ind, pot);
-
-        m_dict.erase(key);
+        m_dict.erase(it);
     }
 
     void Vat::reset() {
@@ -96,5 +104,15 @@ namespace ts {
     {
         this->swap(that);
         return *this;
+    }
+
+    void Vat::clean() {
+        this->m_heap.clear();
+        this->m_heap.shrink_to_fit();
+    }
+
+    void Vat::deprecated() {
+        this->clean();
+        m_deprecated = true;
     }
 }

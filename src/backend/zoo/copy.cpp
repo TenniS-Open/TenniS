@@ -14,20 +14,24 @@ namespace ts {
 
         void Copy::init() {
             supper::init();
+
+            m_output_count = output_count();
         }
 
         int Copy::infer(Stack &stack, std::vector<Tensor::Prototype> &output) {
-            TS_AUTO_CHECK(stack.size() == 1);
-            output.resize(1, stack.index(0)->proto());
-            return 1;
+            // TS_AUTO_CHECK(stack.size() == 1);
+            TS_AUTO_CHECK(stack.size() == m_output_count);
+            output.resize(stack.size());
+            for (int i = 0; i < stack.size(); ++i) {
+                output[i] = stack[i].proto();
+            }
+            return stack.size();
         }
 
         int Copy::run(Stack &stack) {
-            TS_AUTO_CHECK(stack.size() == 1);
-
-            stack.push(-1);
-
-            return 1;
+            // TS_AUTO_CHECK(stack.size() == 1);
+            TS_AUTO_CHECK(stack.size() == m_output_count);
+            return stack.size();
         }
     }
 }

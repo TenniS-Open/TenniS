@@ -24,8 +24,8 @@ namespace ts {
 
             virtual void cast(const Tensor &x, DTYPE dtype, Tensor &out);
 
-        protected:
             void set_dtype(DTYPE dtype);
+            DTYPE get_dtype() const;
 
         private:
             DTYPE m_dtype;

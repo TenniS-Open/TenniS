@@ -61,6 +61,8 @@ namespace ts {
             const string &strided_slice() TS_NOEXCEPT { static string str = "strided_slice"; return str; }
             const string &stack() TS_NOEXCEPT { static string str = "stack"; return str; }
 
+            const string &crop_nd() TS_NOEXCEPT { static string str = "crop_nd"; return str; }
+
             const string &copy() TS_NOEXCEPT {
                 static string str = "_copy";
                 return str;
@@ -115,5 +117,7 @@ namespace ts {
 
         string begin = "begin";
         string end = "end";
+
+        string shift = "shift";
     }
 }

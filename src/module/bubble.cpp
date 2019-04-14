@@ -22,6 +22,7 @@ namespace ts {
     std::string Bubble::RetentionParam::op = "#op";
     std::string Bubble::RetentionParam::output_count = "#output_count";
     std::string Bubble::RetentionParam::shape = "#shape";
+    std::string Bubble::RetentionParam::dtype = "#dtype";
 
     bool Bubble::IsEndPoint(const std::string &op) {
         return EndPoints.find(op) != EndPoints.end();
@@ -220,5 +221,38 @@ namespace ts {
             }
         }
         return read_size;
+    }
+
+    const Shape Bubble::shape() const {
+        return m_shape;
+    }
+
+    DTYPE Bubble::dtype() const {
+        if (!has(RetentionParam::dtype)) return VOID;
+        return DTYPE(tensor::to_int(get(RetentionParam::dtype)));
+    }
+
+    void Bubble::op(const std::string &_op) {
+        m_op = _op;
+        m_params[RetentionParam::op] = tensor::from(m_op);
+    }
+
+    void Bubble::name(const std::string &_name) {
+        m_name = _name;
+        m_params[RetentionParam::name] = tensor::from(m_name);
+    }
+
+    void Bubble::output_count(int _output_count) {
+        m_output_count = _output_count;
+        m_params[RetentionParam::output_count] = tensor::from<int32_t>(m_output_count);
+    }
+
+    void Bubble::shape(const Shape &shape) {
+        m_shape = shape;
+        m_params[RetentionParam::shape] = tensor::from(m_shape);
+    }
+
+    void Bubble::dtype(DTYPE _dtype) {
+        m_params[RetentionParam::dtype] = tensor::from<int32_t>(_dtype);
     }
 }

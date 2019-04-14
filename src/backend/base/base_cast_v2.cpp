@@ -18,6 +18,10 @@ namespace ts {
             m_dtype = dtype;
         }
 
+        DTYPE CastV2::get_dtype() const {
+            return m_dtype;
+        }
+
         void CastV2::init() {
             m_dtype = DTYPE(tensor::to_int(get(name::dtype)));
         }
