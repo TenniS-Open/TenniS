@@ -66,13 +66,14 @@ namespace ts {
             throw Exception("Can not free this ptr");
         }
 
-        auto &pot = it->second;
+        if (!m_deprecated) {
+            auto &pot = it->second;
+            auto i = binary_find(m_heap, pot.capacity());
+            auto ind = m_heap.begin() + i;
+            m_heap.insert(ind, pot);
+        }
 
-        auto i = binary_find(m_heap, pot.capacity());
-        auto ind = m_heap.begin() + i;
-        m_heap.insert(ind, pot);
-
-        m_dict.erase(key);
+        m_dict.erase(it);
     }
 
     void Vat::reset() {
@@ -103,5 +104,15 @@ namespace ts {
     {
         this->swap(that);
         return *this;
+    }
+
+    void Vat::clean() {
+        this->m_heap.clear();
+        this->m_heap.shrink_to_fit();
+    }
+
+    void Vat::deprecated() {
+        this->clean();
+        m_deprecated = true;
     }
 }
