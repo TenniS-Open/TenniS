@@ -147,6 +147,42 @@ namespace ts {
 
         }
 
+        template<typename T>
+        static __global__ void Resize2d_ResizeNearest_kernel(const T* src_im, int src_width, int src_height,
+                                                                 int channels, T *dst_im, int dst_width, int dst_height, int size ) {
+            int index = blockDim.x * blockIdx.x + threadIdx.x;
+            if (index >= size) {
+                return;
+            }
+
+            int ntmp = index;
+
+            int nstep = channels * dst_width;
+            int n_y_d = ntmp / nstep;
+            ntmp = ntmp % nstep;
+
+            int n_x_d = ntmp / channels;
+            int c = ntmp % channels;
+
+            double lfx_scl = double(src_width) / dst_width;
+            double lfy_scl = double(src_height) / dst_height;
+            double bias_x = lfx_scl / 2 - 0.5;
+            double bias_y = lfy_scl / 2 - 0.5;
+
+            double lf_x_s = lfx_scl * n_x_d + bias_x;
+            double lf_y_s = lfy_scl * n_y_d + bias_y;
+
+            auto n_x_s = int(lf_x_s + 0.5);
+            auto n_y_s = int(lf_y_s + 0.5);
+
+            n_x_s = n_x_s >= 0 ? n_x_s : 0;
+            n_x_s = n_x_s < src_width - 1 ? n_x_s : src_width - 1;
+            n_y_s = n_y_s >= 0 ? n_y_s : 0;
+            n_y_s = n_y_s < src_height - 1 ? n_y_s : src_height - 1;
+
+            dst_im[index] = (T) src_im[(n_y_s * src_width + n_x_s) * channels + c];
+        }
+
 
         template<typename T>
         static inline void resize_linear(const Tensor *x, Tensor *y, int x_height, int x_width,
@@ -176,6 +212,20 @@ namespace ts {
                                       (psrc, x_width, x_height, channels, pdst, y_width, y_height, ncount);
         }
 
+
+        template<typename T>
+        static inline void resize_nearest(const Tensor *x, Tensor *y, int x_height, int x_width,
+                                        int y_height, int y_width, unsigned int x_offset, unsigned int y_offset,
+                                        int channels) {
+
+            const T *psrc = x->data<T>() + x_offset;
+            T *pdst = y->data<T>() + y_offset;
+
+            int ncount = y_height * y_width * channels;
+            Resize2d_ResizeNearest_kernel<T> << < CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM >> >
+                                                                                       (psrc, x_width, x_height, channels, pdst, y_width, y_height, ncount);
+        }
+
         template<typename T>
         static inline void batch_resize_linear(int number, const Tensor *x, Tensor *y, int x_height, int x_width,
                                                int y_height, int y_width,
@@ -199,6 +249,17 @@ namespace ts {
         }
 
         template<typename T>
+        static inline void batch_resize_nearest(int number, const Tensor *x, Tensor *y, int x_height, int x_width,
+                                              int y_height, int y_width,
+                                              unsigned int x_batch_step, unsigned int y_batch_step,
+                                              int channels) {
+            for (int k = 0; k < number; k++) {
+                resize_nearest<T>(x, y, x_height, x_width, y_height, y_width,
+                                  k * x_batch_step, k * y_batch_step, channels);
+            }
+        }
+
+        template<typename T>
         static void batch_resize(int number, const Tensor *x, Tensor *y, int x_height, int x_width,
                                  int y_height, int y_width,
                                  unsigned int x_batch_step, unsigned int y_batch_step,
@@ -208,11 +269,17 @@ namespace ts {
                                        x_height, x_width,
                                        y_height, y_width,
                                        x_batch_step, y_batch_step, channels);
-            } else {
+
+            }else if (type == Resize2DType::CUBIC) {
                 batch_resize_cubic<T>(number, x, y,
                                       x_height, x_width,
                                       y_height, y_width,
                                       x_batch_step, y_batch_step, channels);
+            } else {
+                batch_resize_nearest<T>(number, x, y,
+                                        x_height, x_width,
+                                        y_height, y_width,
+                                        x_batch_step, y_batch_step, channels);
 
             }
         }

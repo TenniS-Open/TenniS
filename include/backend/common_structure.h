@@ -85,6 +85,7 @@ namespace ts {
     enum class Resize2DType : int {
         LINEAR = 0,
         CUBIC = 1,
+        NEAREST = 2,
     };
 }
 
