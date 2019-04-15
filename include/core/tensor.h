@@ -35,6 +35,8 @@ namespace ts {
 
     using TensorMemory = SyncMemory;
 
+    class TS_DEBUG_API TensorPrototype;
+
     class TS_DEBUG_API Tensor : public Serializable {
     public:
         class Prototype {
@@ -71,18 +73,20 @@ namespace ts {
                 return prod;
             }
 
-        private:
+        protected:
             DTYPE m_dtype = VOID;
             std::vector<int> m_sizes = {};  ///< ?in reversed mode?
             // std::string m_layout; ///< NCHW or NHWC
 
         public:
             Prototype(const self &other) = default;
+
             Prototype &operator=(const self &other) = default;
 
             Prototype(self &&other) {
                 *this = std::move(other);
             }
+
             Prototype &operator=(self &&other) TS_NOEXCEPT {
 #define MOVE_MEMBER(member) this->member = std::move(other.member)
                 MOVE_MEMBER(m_dtype);
@@ -112,7 +116,8 @@ namespace ts {
 
         Tensor(SyncMemoryController::shared controller, const Prototype &proto);   // allocate memory from controller
 
-        Tensor(SyncMemoryController::shared controller, const Prototype &proto, const MemoryDevice &device);   // allocate memory from controller
+        Tensor(SyncMemoryController::shared controller, const Prototype &proto,
+               const MemoryDevice &device);   // allocate memory from controller
 
         Tensor(const MemoryDevice &device, const Prototype &proto);
 
@@ -202,6 +207,8 @@ namespace ts {
 
         bool packed() const;
 
+        void refield(size_t size);
+
         size_t serialize(StreamWriter &stream) const final;
 
         /**
@@ -251,16 +258,27 @@ namespace ts {
         Tensor flatten(int dim = 0) const;
 
         bool has_empty_shape() const;
+
         bool has_shape(int arg0) const;
+
         bool has_shape(int arg0, int arg1) const;
+
         bool has_shape(int arg0, int arg1, int arg2) const;
+
         bool has_shape(int arg0, int arg1, int arg2, int arg3) const;
+
         bool has_shape(int arg0, int arg1, int arg2, int arg3, int arg4) const;
+
         bool has_shape(int arg0, int arg1, int arg2, int arg3, int arg4, int arg5) const;
+
         bool has_shape(int arg0, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6) const;
+
         bool has_shape(int arg0, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7) const;
+
         bool has_shape(int arg0, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8) const;
-        bool has_shape(int arg0, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8, int arg9) const;
+
+        bool has_shape(int arg0, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8,
+                       int arg9) const;
 
     private:
         Smart<TensorMemory> m_memory;
@@ -268,6 +286,69 @@ namespace ts {
 
         // add field supporting structure data
         std::vector<self> m_fields;
+    };
+
+    class TS_DEBUG_API TensorPrototype : public Tensor::Prototype {
+    public:
+        using self = TensorPrototype;
+        using supper = Tensor::Prototype;
+
+        TensorPrototype(const Tensor &tensor);
+
+        TensorPrototype() : supper() {}
+
+        TensorPrototype(const Shape &sizes) : supper(sizes) {}
+
+        TensorPrototype(Shape &&sizes) : supper(std::move(sizes)) {}
+
+        TensorPrototype(DTYPE dtype, const Shape &sizes) : supper(dtype, sizes) {}
+
+        TensorPrototype(DTYPE dtype, Shape &&sizes) : supper(dtype, std::move(sizes)) {}
+
+        explicit TensorPrototype(DTYPE dtype) : supper(dtype) {}
+
+        TensorPrototype(const supper &other) : supper(other) {}
+
+        TensorPrototype(supper &&other) : supper(std::move(other)) {}
+
+        TensorPrototype &operator=(const supper &other) { supper::operator=(other); return *this; };
+
+        TensorPrototype &operator=(supper &&other) { supper::operator=(std::move(other)); return *this; };
+
+        self field(size_t offset) const;
+
+        void field(size_t offset, const supper &value);
+
+        void pack(const std::vector<supper> &fields);
+
+        std::vector<supper> unpack() const;
+
+        size_t fields_count() const;
+
+        bool packed() const;
+
+        void refield(size_t size);
+
+    private:
+        std::vector<supper> m_fields;
+
+    public:
+        TensorPrototype(const self &other) = default;
+
+        TensorPrototype &operator=(const self &other) = default;
+
+        TensorPrototype(self &&other) {
+            *this = std::move(other);
+        }
+
+        TensorPrototype &operator=(self &&other) TS_NOEXCEPT {
+#define MOVE_MEMBER(member) this->member = std::move(other.member)
+            MOVE_MEMBER(m_dtype);
+            MOVE_MEMBER(m_sizes);
+            MOVE_MEMBER(m_fields);
+#undef MOVE_MEMBER
+            return *this;
+        }
     };
 }
 
