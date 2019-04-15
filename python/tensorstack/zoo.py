@@ -108,6 +108,7 @@ class Type(object):
     class resize2d_type(object):
         linear = 0
         cubic = 1
+        nearest = 2
 
     class padding_type(object):
         black = 0
