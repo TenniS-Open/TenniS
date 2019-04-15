@@ -57,6 +57,7 @@ class Name(object):
         global_pooling2d = "global_pooling2d"
         limit = "_limit"
         crop_nd = "crop_nd"
+        chunk = "chunk"
 
     dim = "dim"
     shuffle = "shuffle"
@@ -78,6 +79,7 @@ class Name(object):
     smooth = "smooth"
     dtype = "dtype"
     shift = "shfit"
+    chunks = "chunks"
 
 
 class Default(object):
@@ -577,6 +579,16 @@ def crop_nd(name, x, size, shift=None):
     return node
 
 
+def chunk(name, x, chunks, dim=0):
+    assert isinstance(x, Node)
 
+    chunks = to_const(chunks, "chunks")
+    dim = to_const(dim, "dim")
 
+    node = menu.op(name=name, op_name=Name.Layer.chunk, inputs=[x,])
+    node.set(Name.chunks, chunks, numpy.int32)
+    node.set(Name.dim, dim, numpy.int32)
 
+    outputs = [menu.field(name=name + ":" + str(i), input=node, offset=i) for i in range(int(chunks))]
+
+    return outputs

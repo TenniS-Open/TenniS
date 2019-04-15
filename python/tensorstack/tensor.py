@@ -208,6 +208,26 @@ def read_tensor(stream):
     return read_unpacked_tensor(stream=stream)
 
 
+def write(path_or_stream, tensor):
+    # type: (Union[file, str], Union[numpy.ndarray, int, float, str, bytes, list, tuple, StringTensor]) -> None
+    path_or_stream = compatible_string(path_or_stream)
+    if isinstance(path_or_stream, str):
+        with open(path_or_stream, "wb") as stream:
+            write_tensor(stream, tensor)
+    else:
+        write_tensor(path_or_stream, tensor)
+
+
+def read(path_or_stream):
+    # type: (Union[file, str]) -> Union[numpy.ndarray, StringTensor]
+    path_or_stream = compatible_string(path_or_stream)
+    if isinstance(path_or_stream, str):
+        with open(path_or_stream, "rb") as stream:
+            return read_tensor(stream)
+    else:
+        return read_tensor(path_or_stream)
+
+
 if __name__ == '__main__':
     a = [
         [1, 2, 3],
