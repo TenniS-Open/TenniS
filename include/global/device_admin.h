@@ -20,6 +20,7 @@ namespace ts {
         enum Action {
             INITIALIZATION,  ///< initialize a handle on given device
             FINALIZATION,    ///< finalize a handle on given device
+            ACTIVATION,      ///< call in using device
         };
 
         /**

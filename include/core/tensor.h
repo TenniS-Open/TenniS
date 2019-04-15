@@ -20,7 +20,7 @@
 #include "tensor_iterator.h"
 
 namespace ts {
-    using Shape = std::vector<int>;
+    using Shape = std::vector<int32_t>;
 
     inline std::string to_string(const Shape &shape) {
         std::ostringstream oss;
@@ -204,6 +204,12 @@ namespace ts {
 
         size_t serialize(StreamWriter &stream) const final;
 
+        /**
+         *
+         * @param stream
+         * @return
+         * @context: MemoryController, to give where new memory alloc
+         */
         size_t externalize(StreamReader &stream) final;
 
         HypeShape hype_shape() const { return HypeShape(this->sizes()); }

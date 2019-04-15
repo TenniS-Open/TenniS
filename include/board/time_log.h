@@ -29,11 +29,14 @@ namespace ts {
 
         explicit TimeLog(ts::LogLevel level, float *time) : self(level, "", time) {}
 
+        void denominator(float d) { m_denominator = d; }
+        float denominator() const { return m_denominator; }
+
         ~TimeLog() {
             m_end = system_clock::now();
             m_duration = std::chrono::duration_cast<microseconds>(m_end - m_start);
 
-            float time = m_duration.count() / 1000.0f;
+            float time = m_duration.count() / 1000.0f / m_denominator;
             if (m_time) *m_time = time;
 
             std::ostringstream oss;
@@ -50,6 +53,7 @@ namespace ts {
         time_point m_start;
         time_point m_end;
         float *m_time = nullptr;
+        float m_denominator = 1.0f;
     };
 }
 

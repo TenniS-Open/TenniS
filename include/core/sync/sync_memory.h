@@ -173,6 +173,7 @@ namespace ts {
          * @return weak memory
          */
         Memory sync(const MemoryDevice &device) const {
+            if (device.id() < 0) return m_sync_memory->value().weak();  // add portal memory support
             return m_sync_memory->sync(device).weak();
         }
 

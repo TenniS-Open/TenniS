@@ -24,6 +24,7 @@ option(TS_USE_OPENCV "[Optional] Use OpenCV" OFF)
 
 option(TS_USE_CUDA "[Optional] Use CUDA" OFF)
 option(TS_USE_CBLAS "[Optional] Use CBLAS" OFF)
+option(TS_USE_CUBLAS "[Optional] Use CUBLAS" OFF)
 
 option(TS_USE_PROFILER "[Optional] Use Profiler" ON)
 if (TS_USE_PROFILER)
@@ -115,6 +116,17 @@ if (TS_USE_CUDA)
     find_package(CUDA REQUIRED)
     message(STATUS "[Optional] Use CUDA: [ON]")
 
+    set(CUDA_PROPAGATE_HOST_FLAGS OFF)
+    set(CUDA_ARCH   -gencode arch=compute_30,code=sm_30
+                    -gencode arch=compute_35,code=sm_35
+                    -gencode arch=compute_50,code=sm_50
+                    -gencode arch=compute_60,code=sm_60)
+    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} ${CUDA_ARCH} -std=c++11")
+    if ("${CONFIGURATION}" STREQUAL "Debug")
+        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -O0 -g ")
+    endif()
+    set(TS_USE_CUBLAS ON)
+
     list(APPEND TENSORSTACK_ACHIVES gpu)
     add_definitions(-DTS_USE_CUDA)
 else()
@@ -130,6 +142,14 @@ elseif (UNIX)
     list(APPEND third_libraries pthread)
 else ()
 endif ()
+
+if(TS_USE_CUBLAS)
+	message(STATUS "[Optional] Use CUBLAS: [ON]")
+	add_definitions(-DTS_USE_CUBLAS)
+    list(APPEND third_libraries ${CUDA_CUBLAS_LIBRARIES})
+else()
+	message(STATUS "[Optional] Use CUBLAS: [OFF]")
+endif()
 
 if (TS_USE_CBLAS)
     message(STATUS "[Optional] Use CBLAS: [ON]")
@@ -250,6 +270,7 @@ foreach (path ${TEST_FILES})
     target_link_libraries(test_${file} ${third_libraries})
     # set_target_properties(test_${file} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${LOCAL_OUTPUT_DIR}/lib)
 endforeach ()
+
 
 foreach (path ${TOOL_FILES})
     string(REGEX MATCH "[^/]*.[(c)|(cc)|(cpp)]$" file_ext ${path})
