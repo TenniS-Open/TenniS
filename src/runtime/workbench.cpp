@@ -24,7 +24,31 @@
 #include "backend/base/base_cast_v2.h"
 #include "runtime/operator.h"
 
+#include "utils/ctxmgr_lite_support.h"
+
 namespace ts {
+    class BindWorkbenchRuntime {
+    public:
+        using self = BindWorkbenchRuntime;
+
+        explicit BindWorkbenchRuntime(Workbench &bench)
+            : bind_thread_pool(bench.runtime().thread_pool())
+            , bind_device_context(bench.device())
+            , bind_runtime_context(bench.runtime()) {
+            bench.device().active();
+        }
+
+    private:
+        // bind thread pool to any operator can using thread speed up
+        ctx::bind<ThreadPool> bind_thread_pool;
+
+        // bind device context
+        ctx::bind<DeviceContext> bind_device_context;
+
+        // bind runtime context
+        ctx::bind<RuntimeContext> bind_runtime_context;
+    };
+
     Workbench::Workbench(const ComputingDevice &device, std::shared_ptr<std::mutex> mutex) {
         this->m_device_context.initialize(device);
         auto &memory_device = this->m_device_context.memory_device;
@@ -36,6 +60,9 @@ namespace ts {
         this->m_stack = std::make_shared<Stack>(memory_device, this->m_flow_memory);
         this->m_data_sagment = std::make_shared<Stack>(memory_device, this->m_static_memory);
         this->m_mutex = std::move(mutex);
+        // bind flow and dynamic memory, so you can use it to alloc memory in any where
+        this->m_runtime_context.bind_flow(this->m_flow_memory);
+        this->m_runtime_context.bind_dynamic(this->m_dynamic_memory);
     }
 
     Workbench::Workbench(const ComputingDevice &device, std::shared_ptr<std::mutex> mutex, int computing_thread_number)
@@ -57,8 +84,8 @@ namespace ts {
         this->m_map_input_slots.clear();
         this->m_map_output_slots.clear();
         this->m_inputs.clear();
-        this->m_input_filters.clear();
         this->m_outputs.clear();
+        this->m_input_filters.clear();
         this->m_device_context.finalize();
     }
 
@@ -91,14 +118,7 @@ namespace ts {
         this->m_stack->clear();
         this->m_outputs.resize(this->m_outputs.size(), Tensor());
 
-        // bind thread pool to any operator can using thread speed up
-        ctx::bind<ThreadPool> bind_thread_pool(this->runtime().thread_pool());
-
-        // bind device context
-        ctx::bind<DeviceContext> bind_device_context(m_device_context);
-
-        // bind runtime context
-        ctx::bind<RuntimeContext> bind_runtime_context(m_runtime_context);
+        BindWorkbenchRuntime _bind_runtime(*this);
 
         // set input
         for (int i = 0; static_cast<size_t >(i) < this->m_inputs.size(); ++i) {
@@ -134,16 +154,17 @@ namespace ts {
         // TODO: change output memory device type
         for (int i = 0; static_cast<size_t >(i) < this->m_stack->size(); ++i) {
             auto &arg = *this->m_stack->index(i);
-            this->m_outputs[i] = arg.clone(m_dynamic_memory, arg.device());
+            // this->m_outputs[i] = arg.clone(m_dynamic_memory, arg.device());
+            this->m_outputs[i] = arg;   // do not clone by default
         }
     }
 
     Workbench::shared Workbench::clone() const {
         std::unique_lock<std::mutex> _lock_clone(*this->m_mutex);
 
-        Workbench::shared dolly = std::make_shared<Workbench>(
+        Workbench::shared dolly(new Workbench(
                 this->m_device_context.computing_device,
-                this->m_mutex);
+                this->m_mutex));
         dolly->m_pointer = this->m_pointer;
         dolly->m_program = this->m_program;
         dolly->m_inputs.resize(this->m_inputs.size());
@@ -389,14 +410,7 @@ namespace ts {
     void Workbench::offline_run(Operator::shared op, const std::vector<Tensor> &input, std::vector<Tensor> &output) {
         Stack stack(m_device_context.memory_device, m_dynamic_memory);
 
-        // bind thread pool to any operator can using thread speed up
-        ctx::bind<ThreadPool> bind_thread_pool(this->runtime().thread_pool());
-
-        // bind device context
-        ctx::bind<DeviceContext> bind_device_context(m_device_context);
-
-        // bind runtime context
-        ctx::bind<RuntimeContext> bind_runtime_context(m_runtime_context);
+        BindWorkbenchRuntime _bind_runtime(*this);
 
         for (auto &tensor : input) {
             stack.push(tensor);
@@ -417,14 +431,7 @@ namespace ts {
                                   std::vector<Tensor::Prototype> &output) {
         Stack stack(m_device_context.memory_device, m_dynamic_memory);
 
-        // bind thread pool to any operator can using thread speed up
-        ctx::bind<ThreadPool> bind_thread_pool(this->runtime().thread_pool());
-
-        // bind device context
-        ctx::bind<DeviceContext> bind_device_context(m_device_context);
-
-        // bind runtime context
-        ctx::bind<RuntimeContext> bind_runtime_context(m_runtime_context);
+        BindWorkbenchRuntime _bind_runtime(*this);
 
         for (auto &tensor : input) {
             stack.push(tensor);
@@ -459,4 +466,46 @@ namespace ts {
         }
         TS_AUTO_CHECK(1 == RunOperator(m_cast_op, *m_stack, 1));
     }
+
+    Operator::shared Workbench::online_create(const Bubble &bubble, bool strict) {
+        return offline_create(bubble, strict);
+    }
+
+    int Workbench::online_run(Operator::shared op, const std::vector<Tensor> &input) {
+        m_stack->clear();
+        for (auto &tensor : input) {
+            m_stack->push(tensor);
+        }
+        return online_run(op, stack().size());
+    }
+
+    int Workbench::online_run(Operator::shared op, int argc) {
+        BindWorkbenchRuntime _bind_runtime(*this);
+
+        return RunOperator(op, *m_stack, argc);
+    }
+
+    void Workbench::online_run(Instruction::shared inst) {
+        BindWorkbenchRuntime _bind_runtime(*this);
+
+        inst->run(*this);
+    }
+
+    void Workbench::online_run(Instruction::shared inst, const std::vector<Tensor> &input) {
+        m_stack->clear();
+        for (auto &tensor : input) {
+            m_stack->push(tensor);
+        }
+        online_run(inst);
+    }
+
+    int Workbench::online_run(const Bubble &bubble, int argc, bool strict) {
+        return online_run(online_create(bubble, strict), argc);
+    }
+
+    int Workbench::online_run(const Bubble &bubble, const std::vector<Tensor> &input, bool strict) {
+        return online_run(online_create(bubble, strict), input);
+    }
 }
+
+TS_LITE_CONTEXT(ts::Workbench)

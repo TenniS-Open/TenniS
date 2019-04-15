@@ -47,6 +47,9 @@ def convert(graph, inputs, outputs, output_file):
         "Conv2D": convert_not_implemented,
         "Relu": convert_not_implemented,
         "Sum": convert_not_implemented,
+        "Cast": convert_not_implemented,
+        "Softmax": convert_not_implemented,
+        "Shape": convert_not_implemented,
 
         "GatherV2": convert_not_implemented,
         "ResizeNearestNeighbor": convert_not_implemented,
@@ -55,13 +58,10 @@ def convert(graph, inputs, outputs, output_file):
         "Square": convert_not_implemented,
         "Range": convert_not_implemented,
         "Exp": convert_not_implemented,
-        "Cast": convert_not_implemented,
-        "Softmax": convert_not_implemented,
         "Slice": convert_not_implemented,
         "TopKV2": convert_not_implemented,
         "Max": convert_not_implemented,
         "NonMaxSuppressionV3": convert_not_implemented,
-        "Shape": convert_not_implemented,
         "ExpandDims": convert_not_implemented,
         "ArgMax": convert_not_implemented,
     }

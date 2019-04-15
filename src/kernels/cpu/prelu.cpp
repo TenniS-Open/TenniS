@@ -12,7 +12,7 @@ namespace ts {
 	namespace cpu {
 
 		template <typename T>
-		void cpu_prelu_compute_run(const Tensor &x, const Tensor &slope, int dim, Tensor &out) {
+		static void cpu_prelu_compute_run(const Tensor &x, const Tensor &slope, int dim, Tensor &out) {
 			auto output_shape = out.sizes();
 			const T *input_data = x.data<T>();
 			T *output_data = out.data<T>();

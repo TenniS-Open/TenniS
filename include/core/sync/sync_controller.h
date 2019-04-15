@@ -38,6 +38,8 @@ namespace ts {
          * @return allocated memory
          */
         virtual SyncMemory alloc(const MemoryDevice &device, size_t size) = 0;
+
+        virtual SyncMemoryController::shared clone() const = 0;
     };
 
     class TS_DEBUG_API SyncDeviceMemoryController : public SyncMemoryController {
@@ -49,7 +51,7 @@ namespace ts {
 
         SyncDeviceMemoryController(const MemoryDevice &device) : m_device(device) {}
 
-        SyncMemory alloc(size_t size) final {
+        SyncMemory alloc(size_t size) override {
             return this->alloc(m_device, size);
         }
 
@@ -87,10 +89,18 @@ namespace ts {
             m_sync_controllers.clear(device);
         }
 
+        SyncMemory alloc(size_t size) override {
+            return this->alloc(m_device, size);
+        }
+
         SyncMemory alloc(const MemoryDevice &device, size_t size) override {
             auto controller = m_sync_controllers.sync(device);
             auto memory = controller->alloc(size);
             return SyncMemory(memory, m_memory_need_lock, this->sync_handler());
+        }
+
+        SyncMemoryController::shared clone() const override {
+            return shared(new self(m_device, m_memory_need_lock));
         }
 
         SyncMemory::Block::sync_handler sync_handler() {

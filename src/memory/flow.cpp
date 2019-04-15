@@ -33,23 +33,31 @@ namespace ts {
 
         m_impl->m_device = device;
         m_impl->m_vat = std::make_shared<Vat>(pot_allocator);
-        m_impl->m_managed_allocator = [this](int, size_t new_size, void *mem, size_t mem_size) -> void * {
+        auto &vat = m_impl->m_vat;
+        m_impl->m_managed_allocator = [vat](int, size_t new_size, void *mem, size_t mem_size) -> void * {
             void *new_mem = nullptr;
             if (new_size == 0) {
-                m_impl->m_vat->free(mem);
+                // TS_LOG_DEBUG << "free(" << mem << ")";
+                vat->free(mem);
                 return nullptr;
             } else if (mem != nullptr) {
                 if (mem_size > 0) {
                     TS_LOG_ERROR << "Reach the un-given code" << eject;
                 } else {
-                    m_impl->m_vat->free(mem);
-                    new_mem = m_impl->m_vat->malloc(new_size);
+                    vat->free(mem);
+                    new_mem = vat->malloc(new_size);
                 }
+                // TS_LOG_DEBUG << "realloc(" << mem << ") -> " << new_mem;
             } else {
-                new_mem = m_impl->m_vat->malloc(new_size);
+                new_mem = vat->malloc(new_size);
+                // TS_LOG_DEBUG << "malloc() -> " << new_mem;
             }
             return new_mem;
         };
+    }
+
+    VatMemoryController::~VatMemoryController() {
+        m_impl->m_vat->deprecated();
     }
 
     Memory VatMemoryController::alloc(size_t size) {

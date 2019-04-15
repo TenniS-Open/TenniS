@@ -212,6 +212,14 @@ namespace ts {
         return *m_impl->m_graph;
     }
 
+    Workbench &ImageFilter::workbench() {
+        return *m_impl->m_workbench;
+    }
+
+    const Workbench &ImageFilter::workbench() const {
+        return *m_impl->m_workbench;
+    }
+
     void ImageFilter::center_crop(int side) {
         center_crop(side, side);
     }

@@ -70,6 +70,10 @@ namespace ts {
          * @note Must call `ts::ctx::bind<Graph>` to bind context firstly
          */
         TS_DEBUG_API Node data(const std::string &name, const Tensor &value, const DeviceType &device);
+
+        TS_DEBUG_API Node bubble(const Bubble &bubble);
+
+        TS_DEBUG_API Node bubble(const Bubble &bubble, const std::string &name);
     }
 
     /**

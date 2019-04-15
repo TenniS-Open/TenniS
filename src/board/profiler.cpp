@@ -8,6 +8,7 @@
 #include <iomanip>
 #include <memory>
 #include <cstdio>
+#include <sstream>
 
 #include "utils/ctxmgr_lite_support.h"
 

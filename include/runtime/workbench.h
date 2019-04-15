@@ -21,8 +21,10 @@
 #include "image_filter.h"
 #include "board/profiler.h"
 
+#include "utils/ctxmgr_lite.h"
+
 namespace ts {
-    class TS_DEBUG_API Workbench {
+    class TS_DEBUG_API Workbench : public SetupContext<Workbench> {
     public:
         using self = Workbench;    ///< self class
         using shared = std::shared_ptr<self>;  ///< smart pointer
@@ -33,10 +35,6 @@ namespace ts {
         explicit Workbench(const ComputingDevice &device);
 
         explicit Workbench(const ComputingDevice &device, int computing_thread_number);
-
-        explicit Workbench(const ComputingDevice &device, std::shared_ptr<std::mutex> mutex);
-
-        explicit Workbench(const ComputingDevice &device, std::shared_ptr<std::mutex> mutex, int computing_thread_number);
 
         ~Workbench();
 
@@ -90,6 +88,8 @@ namespace ts {
 
         const DeviceContext &device() const { return m_device_context; }
 
+        DeviceContext &device() { return m_device_context; }
+
         const RuntimeContext &runtime() const { return m_runtime_context; }
 
         RuntimeContext &runtime() { return m_runtime_context; }
@@ -129,7 +129,61 @@ namespace ts {
          */
         void offline_infer(Operator::shared op, const std::vector<Tensor> &input, std::vector<Tensor::Prototype> &output);
 
+        /**
+         *
+         * @param [in] bubble parameter
+         * @param [in] device operator device
+         * @param [in] strict if it in strict mode
+         * @return operator
+         */
+        Operator::shared online_create(const Bubble &bubble, bool strict = false);
+
+        /**
+         * it wont change stack before op
+         * @param op
+         */
+        int online_run(Operator::shared op, int argc);
+
+        /**
+         * This API will clear stack before run op, then push input to stack
+         * @param op
+         * @param input
+         */
+        int online_run(Operator::shared op, const std::vector<Tensor> &input);
+
+        /**
+         * it wont change stack before inst
+         * @param inst
+         */
+        void online_run(Instruction::shared inst);
+
+        /**
+         * This API will clear stack before run op, then push input to stack
+         * @param inst
+         * @param input
+         */
+        void online_run(Instruction::shared inst, const std::vector<Tensor> &input);
+
         void set_operator_param(const std::string &node_name, const std::string &param, const Tensor &value);
+
+        /**
+         * it wont change stack before op
+         * @param op
+         */
+        int online_run(const Bubble &bubble, int argc, bool strict = false);
+
+        /**
+         * This API will clear stack before run op, then push input to stack
+         * @param op
+         * @param input
+         */
+        int online_run(const Bubble &bubble, const std::vector<Tensor> &input, bool strict = false);
+
+    private:
+        explicit Workbench(const ComputingDevice &device, std::shared_ptr<std::mutex> mutex);
+
+        explicit Workbench(const ComputingDevice &device, std::shared_ptr<std::mutex> mutex, int computing_thread_number);
+
     private:
         size_t m_pointer = 0;   // pointer to running function
         std::vector<Instruction::shared> m_program; // running function, program area
