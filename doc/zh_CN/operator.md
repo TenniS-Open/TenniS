@@ -615,6 +615,7 @@ to tensor A * B);
 - `block_shape` `Int[2]` `[block_height, block_width]`
 
 说明：
+这里的操作为HCHW算符。
 见：[BathToSpace](https://www.w3cschool.cn/tensorflow_python/tensorflow_python-bnyg2ckl.html)
 
 
@@ -625,6 +626,7 @@ to tensor A * B);
 - `block_shape` `Int[2]` `[block_height, block_width]`
 
 说明：
+这里的操作为HCHW算符。
 见：[BathToSpace](https://www.w3cschool.cn/tensorflow_python/tensorflow_python-emqk2kf4.html)
 
 
@@ -665,6 +667,22 @@ Note: 这是对应某一个实现的版本。
 
 说明：  
 `pos.number == x.number`，根据pos表示的位置信息，在对应位置crop出`[x_patch_h, x_patch_w]`大小。
+
+### affine_sample2d(x..device, size..host, affine..host) -> y..device
+
+描述：根据affine，在x上采样出大小为size的图像
+输入：`x`: `Tensor`
+输入：`size`: `Int[2]` 表示2d的采样大小
+输入：`affine`: `Float[3, 3]` 仿射变换矩阵
+
+参数：
+- `type`: `Enum[linear=0, cubic=1, nearest=2] Default linear`
+- `axis`: `Int Default -2`
+
+说明：
+y的坐标为`[x, y]`映射到原图为`affine * [x, y, 1]'`，然后根据type进行采样。
+这里坐标全部为列向量。
+`axis` 和 `axis+1` 表示了图像的二维采样。
 
 ### _nhwc_resize2d(x..device) = delete
 
