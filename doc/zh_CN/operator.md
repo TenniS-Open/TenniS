@@ -677,12 +677,56 @@ Note: 这是对应某一个实现的版本。
 
 参数：
 - `type`: `Enum[linear=0, cubic=1, nearest=2] Default linear`
-- `axis`: `Int Default -2`
+- `dim`: `Int Default -2`
 
 说明：
 y的坐标为`[x, y]`映射到原图为`affine * [x, y, 1]'`，然后根据type进行采样。
 这里坐标全部为列向量。
-`axis` 和 `axis+1` 表示了图像的二维采样。
+`dim` 和 `dim+1` 表示了图像的二维采样。
+
+### chunk(x..device) -> y..device
+
+描述：concat的逆操作
+输入：
+输出: Packed Tensor
+
+参数：
+- `chunks`: `Int`  要拆分的个数
+- `dim`: `Int` 要拆分的坐标
+
+### dcn_v2_forward(x..device, w..device, b..device, offset..device, mask..device) -> y..device
+描述：对输入的 Tensor 进行 二维卷积操作，输出卷积后的数据
+输入：`x` `Tensor4D` 输入数据
+输入：`offset` `Tensor4D`
+输入：`mask` `Tensor4D`
+输入：`w` `Tensor4D` 和卷积同样参数
+输入：`b` `Tensor4D` 和卷积同样参数
+输出：`y` `Tensor4D`
+
+参数：
+- `format` `String` 为 `NCHW` 或者 `NHWC`，这里只支持NCHW
+- `padding` `Int[4, 2]` `batch` 和 `channels` 的默认为 `[0, 0]`
+在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+- `stride` `Int[4]` `batch` 和 `channels` 的默认为 `1`
+在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+- `dilation` `Int[4]` `batch` 和 `channels` 的默认为 `1`
+在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+- `deformable_group`
+
+说明：
+参考代码：
+[DCNv2](https://github.com/CharlesShang/DCNv2)
+
+`type` 在当前版本中，固定为 `NCHW`。
+输出大小计算除法时，向下取整，最小为`1`。默认`0` `padding`。
+输出大小的计算公式为：
+```
+Waitting for sure
+```
+
 
 ### _nhwc_resize2d(x..device) = delete
 
