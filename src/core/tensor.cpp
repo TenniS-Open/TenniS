@@ -203,11 +203,19 @@ namespace ts {
     }
 
     size_t Tensor::fields_count() const {
-        return m_fields.empty() ? 1 : 1 + m_fields.size();
+        return 1 + m_fields.size();
     }
 
     bool Tensor::packed() const {
         return !m_fields.empty();
+    }
+
+    void Tensor::refield(size_t size) {
+        if (size == 0) {
+            *this = self();
+        } else {
+            m_fields.resize(size - 1);
+        }
     }
 
     static size_t serialize_prototype_memory(StreamWriter &stream,
@@ -440,4 +448,74 @@ namespace ts {
 
 #undef FAIL_ARG
 #undef FAIL_SIZE
+
+    TensorPrototype::self TensorPrototype::field(size_t offset) const {
+        if (offset == 0) {
+            return self(dtype(), sizes());
+        }
+        if (offset - 1 >= m_fields.size()) {
+            TS_LOG_ERROR << "Tensor offset output range error. Access index " << offset << " in range("
+                         << fields_count() << ")" << eject;
+        }
+        return m_fields.at(offset - 1);
+    }
+
+    void TensorPrototype::field(size_t offset, const TensorPrototype::supper &value) {
+        if (offset == 0) {
+            supper::operator=(value);
+            return;
+        }
+        if (offset - 1 >= m_fields.size()) {
+            TS_LOG_ERROR << "Tensor offset output range error. Access index " << offset << " in range("
+                         << fields_count() << ")" << eject;
+        }
+        m_fields.at(offset - 1) = value;
+    }
+
+
+    void TensorPrototype::refield(size_t size) {
+        if (size == 0) {
+            *this = self();
+        } else {
+            m_fields.resize(size - 1);
+        }
+    }
+
+    void TensorPrototype::pack(const std::vector<TensorPrototype::supper> &fields) {
+        if (fields.empty()) {
+            *this = self();
+            return;
+        }
+        supper::operator=(fields[0]);
+        if (fields.size() > 1) {
+            this->m_fields = std::vector<supper>(fields.begin() + 1, fields.end());
+        } else {
+            this->m_fields.clear();
+        }
+    }
+
+    std::vector<TensorPrototype::supper> TensorPrototype::unpack() const {
+        std::vector<supper> fields(1);
+        fields[0] = *this;
+        if (!this->m_fields.empty()) {
+            fields.insert(fields.end(), this->m_fields.begin(), this->m_fields.end());
+        }
+        return std::move(fields);
+    }
+
+    size_t TensorPrototype::fields_count() const {
+        return 1 + m_fields.size();
+    }
+
+    bool TensorPrototype::packed() const {
+        return !m_fields.empty();
+    }
+
+    TensorPrototype::TensorPrototype(const Tensor &tensor) {
+        auto count = tensor.fields_count();
+        m_fields.resize(count - 1);
+        for (decltype(count) i = 0; i < count; ++i) {
+            field(i, tensor.field(i).proto());
+        }
+    }
 }
