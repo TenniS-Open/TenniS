@@ -50,18 +50,6 @@ namespace ts {
         update_retention_params();
     }
 
-    Bubble::Bubble(const std::string &op, int output_count)
-            : m_op(op), m_output_count(output_count) {
-        TS_AUTO_CHECK(output_count >= 1);
-        update_retention_params();
-    }
-
-    Bubble::Bubble(const std::string &op, const std::string &name, int output_count)
-            : m_op(op), m_name(name), m_output_count(output_count) {
-        TS_AUTO_CHECK(output_count >= 1);
-        update_retention_params();
-    }
-
     Bubble::Bubble(const std::string &op, const Shape &shape)
             : m_op(op), m_shape(shape) {
         update_retention_params();
@@ -69,18 +57,6 @@ namespace ts {
 
     Bubble::Bubble(const std::string &op, const std::string &name, const Shape &shape)
             : m_op(op), m_name(name), m_shape(shape) {
-        update_retention_params();
-    }
-
-    Bubble::Bubble(const std::string &op, int output_count, const Shape &shape)
-            : m_op(op), m_output_count(output_count), m_shape(shape) {
-        TS_AUTO_CHECK(output_count >= 1);
-        update_retention_params();
-    }
-
-    Bubble::Bubble(const std::string &op, const std::string &name, int output_count, const Shape &shape)
-            : m_op(op), m_name(name), m_output_count(output_count), m_shape(shape) {
-        TS_AUTO_CHECK(output_count >= 1);
         update_retention_params();
     }
 
@@ -151,7 +127,7 @@ namespace ts {
         TS_AUTO_CHECK(retention_param_sign == '#');
         set(RetentionParam::op, tensor::from(m_op));
         set(RetentionParam::name, tensor::from(m_name));
-        set(RetentionParam::output_count, tensor::from(m_output_count));
+        // set(RetentionParam::output_count, tensor::from(m_output_count)); // not saving output count
         if (!m_shape.empty()) {
             set(RetentionParam::shape, tensor::from(m_shape));
         }
@@ -209,7 +185,16 @@ namespace ts {
         }
         m_op = tensor::to_string(m_params[RetentionParam::op]);
         m_name = tensor::to_string(m_params[RetentionParam::name]);
-        m_output_count = tensor::to_int(m_params[RetentionParam::output_count]);
+
+        {
+            auto it = m_params.find(RetentionParam::dtype);
+            if (it != m_params.end()) {
+                auto m_output_count = tensor::to_int(it->second);
+                if (m_output_count != 1) {
+                    TS_LOG_ERROR << "All operators' output count must be 1." << eject;
+                }
+            }
+        }
         {
             auto it = m_params.find(RetentionParam::shape);
             if (it != m_params.end()) {
@@ -240,11 +225,6 @@ namespace ts {
     void Bubble::name(const std::string &_name) {
         m_name = _name;
         m_params[RetentionParam::name] = tensor::from(m_name);
-    }
-
-    void Bubble::output_count(int _output_count) {
-        m_output_count = _output_count;
-        m_params[RetentionParam::output_count] = tensor::from<int32_t>(m_output_count);
     }
 
     void Bubble::shape(const Shape &shape) {

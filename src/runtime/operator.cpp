@@ -217,7 +217,15 @@ namespace ts {
 
     int Operator::output_count() const {
         auto &param = Bubble::RetentionParam::output_count;
-        return has(param) ? tensor::to_int(get(param)) : 0;
+        return has(param) ? tensor::to_int(get(param)) : 1;
+    }
+
+    TensorPrototype Operator::infer(Stack &stack) {
+        TensorPrototype proto;
+        std::vector<Tensor::Prototype> fields;
+        infer(stack, fields);
+        proto.pack(fields);
+        return std::move(proto);
     }
 
     int RunOperator(Operator::shared op, Stack &stack, int nargs) {

@@ -44,18 +44,27 @@ namespace ts {
          * @param stack running stack
          * @return output param
          * @note bind DeviceContext before
+         * @note meaning changed, return tensor's fileds count
          */
         virtual int run(Stack &stack) = 0;
 
         // infer output size by input size, only for size allocate
         /**
          *
+         * @deprecated
          * @param stack running stack
          * @param output output tensor's proto
          * @return keep value
          * @note bind ThreadPool, DeviceContext, RuntimeContext before
          */
         virtual int infer(Stack &stack, std::vector<Tensor::Prototype> &output) = 0;
+
+        /**
+         * all operator must return an tensor or packed tensor
+         * @param stack
+         * @return tensor prototypes
+         */
+        virtual TensorPrototype infer(Stack &stack);
 
         bool has(const std::string &param) const;
 
@@ -95,6 +104,10 @@ namespace ts {
 
         std::string name() const;
 
+        /**
+         * @deprecated
+         * @return 1
+         */
         int output_count() const;
 
     private:

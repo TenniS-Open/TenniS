@@ -48,31 +48,14 @@ namespace ts {
                 const std::string &name);
 
         explicit Bubble(
-                const std::string &op,
-                int output_count);
-
-        explicit Bubble(
-                const std::string &op,
-                const std::string &name,
-                int output_count);
-
-        explicit Bubble(
                 const std::string &op, const Shape &shape);
 
         explicit Bubble(
                 const std::string &op,
                 const std::string &name, const Shape &shape);
 
-        explicit Bubble(
-                const std::string &op,
-                int output_count, const Shape &shape);
-
-        explicit Bubble(
-                const std::string &op,
-                const std::string &name,
-                int output_count, const Shape &shape);
-
-        size_t output_count() const { return m_output_count; }
+        // output
+        size_t output_count() const { return 1; }
 
         const std::string &op() const { return m_op; }
 
@@ -104,8 +87,6 @@ namespace ts {
 
         void name(const std::string &_name);
 
-        void output_count(int _output_count);
-
         void shape(const Shape &shape);
 
         void dtype(DTYPE _dtype);
@@ -121,11 +102,6 @@ namespace ts {
          * Bubble name
          */
         std::string m_name;
-        /**
-         * Saving output size
-         */
-        int m_output_count = 1;
-        /// TODO: Since output count must greater than 1, try supporting 0 output
 
         /**
          * Parameters
