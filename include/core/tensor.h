@@ -293,7 +293,7 @@ namespace ts {
         using self = TensorPrototype;
         using supper = Tensor::Prototype;
 
-        TensorPrototype(const Tensor &tensor);
+        explicit TensorPrototype(const Tensor &tensor);
 
         TensorPrototype() : supper() {}
 
@@ -315,7 +315,7 @@ namespace ts {
 
         TensorPrototype &operator=(supper &&other) { supper::operator=(std::move(other)); return *this; };
 
-        self field(size_t offset) const;
+        supper field(size_t offset) const;
 
         void field(size_t offset, const supper &value);
 
@@ -350,6 +350,10 @@ namespace ts {
             return *this;
         }
     };
+
+    TS_DEBUG_API std::ostream &operator<<(std::ostream &out, const Tensor::Prototype &proto);
+
+    TS_DEBUG_API std::ostream &operator<<(std::ostream &out, const TensorPrototype &proto);
 }
 
 
