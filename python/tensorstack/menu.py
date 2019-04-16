@@ -31,7 +31,9 @@ def param(name, shape=None, dtype=None):
 
 def op(name, op_name, inputs, output_count=1):
     # type: (str, str, list[Node], int) -> Node
-    node = Node(op=op_name, name=name, output_count=output_count)
+    if output_count != 1:
+        raise Exception("output_count must be 1.")
+    node = Node(op=op_name, name=name)
     Node.Link(node, inputs=inputs)
     return node
 
