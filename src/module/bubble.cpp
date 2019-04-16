@@ -35,7 +35,7 @@ namespace ts {
     Bubble::self &Bubble::operator=(self &&other) TS_NOEXCEPT {
         this->m_op = std::move(other.m_op);
         this->m_name = std::move(other.m_name);
-        this->m_output_count = other.m_output_count;
+        // this->m_output_count = other.m_output_count;
         this->m_params = std::move(other.m_params);
         return *this;
     }

@@ -44,18 +44,18 @@ namespace ts {
          * @param stack running stack
          * @return output param
          * @note bind DeviceContext before
-         * @note meaning changed, return tensor's fileds count
+         * @note must return 1
          */
         virtual int run(Stack &stack) = 0;
 
         // infer output size by input size, only for size allocate
         /**
          *
-         * @deprecated
          * @param stack running stack
          * @param output output tensor's proto
          * @return keep value
          * @note bind ThreadPool, DeviceContext, RuntimeContext before
+         * @note operator's output count must be 1, this function get each field proto
          */
         virtual int infer(Stack &stack, std::vector<Tensor::Prototype> &output) = 0;
 
@@ -64,7 +64,7 @@ namespace ts {
          * @param stack
          * @return tensor prototypes
          */
-        virtual TensorPrototype infer(Stack &stack);
+        TensorPrototype infer(Stack &stack);
 
         bool has(const std::string &param) const;
 

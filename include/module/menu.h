@@ -50,7 +50,7 @@ namespace ts {
          * @return new Node belonging to context-Graph
          * @note Must call `ts::ctx::bind<Graph>` to bind context firstly
          */
-        TS_DEBUG_API Node op(const std::string &name, const std::string &op_name, const std::vector<Node> &inputs, int output_count = 1);
+        TS_DEBUG_API Node op(const std::string &name, const std::string &op_name, const std::vector<Node> &inputs);
 
         /**
          * get Data node
