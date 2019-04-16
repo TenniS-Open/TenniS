@@ -216,8 +216,7 @@ namespace ts {
     }
 
     int Operator::output_count() const {
-        auto &param = Bubble::RetentionParam::output_count;
-        return has(param) ? tensor::to_int(get(param)) : 1;
+        return 1;
     }
 
     TensorPrototype Operator::infer(Stack &stack) {

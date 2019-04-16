@@ -53,6 +53,17 @@ namespace ts {
         TS_DEBUG_API Node op(const std::string &name, const std::string &op_name, const std::vector<Node> &inputs);
 
         /**
+         * get Operator node
+         * @param name Node name
+         * @param op_name Operator name
+         * @param inputs Input nodes
+         * @param output_count Output count, must be 1.
+         * @return new Node belonging to context-Graph
+         * @note Must call `ts::ctx::bind<Graph>` to bind context firstly
+         */
+        TS_DEBUG_API Node op(const std::string &name, const std::string &op_name, const std::vector<Node> &inputs, int output_count);
+
+        /**
          * get Data node
          * @param name Node name
          * @param value the data value

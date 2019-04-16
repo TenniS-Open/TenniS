@@ -23,6 +23,11 @@ namespace ts {
             return result;
         }
 
+        Node op(const std::string &name, const std::string &op_name, const std::vector<Node> &inputs, int output_count) {
+            TS_AUTO_CHECK(output_count == 1);
+            return op(name, op_name, inputs);
+        }
+
         Node data(const std::string &name, const Tensor &value) {
             auto &g = ctx::ref<Graph>();
             Node result = g.make(Bubble::Const, name);
