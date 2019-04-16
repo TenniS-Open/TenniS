@@ -25,9 +25,10 @@ namespace ts {
         public:
             static std::string name;
             static std::string op;
-            static std::string output_count;
             static std::string shape;
             static std::string dtype;
+
+            static const std::vector<std::string> &All();
         };
 
         explicit Bubble() = default;
@@ -53,6 +54,20 @@ namespace ts {
         explicit Bubble(
                 const std::string &op,
                 const std::string &name, const Shape &shape);
+
+        explicit Bubble(
+                const std::string &op, int output_count);
+
+        explicit Bubble(
+                const std::string &op,
+                const std::string &name, int output_count);
+
+        explicit Bubble(
+                const std::string &op, int output_count, const Shape &shape);
+
+        explicit Bubble(
+                const std::string &op,
+                const std::string &name, int output_count, const Shape &shape);
 
         // output
         size_t output_count() const { return 1; }

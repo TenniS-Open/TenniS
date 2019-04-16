@@ -28,7 +28,11 @@ namespace ts {
 
             m_op_pooling2d->set(Bubble::RetentionParam::op, tensor::from(name::layer::pooling2d_v2()));
             m_op_pooling2d->set(Bubble::RetentionParam::name, tensor::from("_core" + name()));
-            m_op_pooling2d->set(Bubble::RetentionParam::output_count, get(Bubble::RetentionParam::output_count));
+            for (auto &param : Bubble::RetentionParam::All()) {
+                if (!m_op_pooling2d->has(param) && this->has(param)) {
+                    m_op_pooling2d->set(param, get(param));
+                }
+            }
 
             m_op_pooling2d->set(name::format, get(name::format));
             m_op_pooling2d->set(name::type, get(name::type));

@@ -20,9 +20,13 @@ namespace ts {
 
     std::string Bubble::RetentionParam::name = "#name";
     std::string Bubble::RetentionParam::op = "#op";
-    std::string Bubble::RetentionParam::output_count = "#output_count";
     std::string Bubble::RetentionParam::shape = "#shape";
     std::string Bubble::RetentionParam::dtype = "#dtype";
+
+    const std::vector<std::string> &Bubble::RetentionParam::All() {
+        static std::vector<std::string> all = {name, op, shape, dtype};
+        return all;
+    }
 
     bool Bubble::IsEndPoint(const std::string &op) {
         return EndPoints.find(op) != EndPoints.end();
@@ -234,5 +238,25 @@ namespace ts {
 
     void Bubble::dtype(DTYPE _dtype) {
         m_params[RetentionParam::dtype] = tensor::from<int32_t>(_dtype);
+    }
+
+    Bubble::Bubble(const std::string &op, int output_count)
+            : self(op) {
+        TS_AUTO_CHECK(output_count == 1);
+    }
+
+    Bubble::Bubble(const std::string &op, const std::string &name, int output_count)
+            : self(op, name) {
+        TS_AUTO_CHECK(output_count == 1);
+    }
+
+    Bubble::Bubble(const std::string &op, int output_count, const Shape &shape)
+            : self(op, shape) {
+        TS_AUTO_CHECK(output_count == 1);
+    }
+
+    Bubble::Bubble(const std::string &op, const std::string &name, int output_count, const Shape &shape)
+            : self(op, name, shape) {
+        TS_AUTO_CHECK(output_count == 1);
     }
 }
