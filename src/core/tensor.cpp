@@ -449,7 +449,7 @@ namespace ts {
 #undef FAIL_ARG
 #undef FAIL_SIZE
 
-    TensorPrototype::self TensorPrototype::field(size_t offset) const {
+    TensorPrototype::supper TensorPrototype::field(size_t offset) const {
         if (offset == 0) {
             return self(dtype(), sizes());
         }
@@ -517,5 +517,23 @@ namespace ts {
         for (decltype(count) i = 0; i < count; ++i) {
             field(i, tensor.field(i).proto());
         }
+    }
+
+    std::ostream &operator<<(std::ostream &out, const Tensor::Prototype &proto) {
+        std::ostringstream oss;
+        oss << type_str(proto.dtype()) << ":" << to_string(proto.sizes());
+        return out << oss.str();
+    }
+
+    std::ostream &operator<<(std::ostream &out, const TensorPrototype &proto) {
+        std::ostringstream oss;
+        auto count = proto.fields_count();
+        oss << "{";
+        for (decltype(count) i = 0; i < count; ++i) {
+            if (i) oss << ", ";
+            oss << proto.field(i);
+        }
+        oss << "}";
+        return out << oss.str();
     }
 }
