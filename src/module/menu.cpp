@@ -16,9 +16,9 @@ namespace ts {
             return g.make(Bubble::Parameter, name);
         }
 
-        Node op(const std::string &name, const std::string &op_name, const std::vector<Node> &inputs, int output_count) {
+        Node op(const std::string &name, const std::string &op_name, const std::vector<Node> &inputs) {
             auto &g = ctx::ref<Graph>();
-            Node result = g.make(op_name, name, output_count);
+            Node result = g.make(op_name, name);
             Node::Link(result, inputs);
             return result;
         }
@@ -40,7 +40,7 @@ namespace ts {
 
         Node param(const std::string &name, const Shape &shape) {
             auto &g = ctx::ref<Graph>();
-            auto result = g.make(Bubble::Parameter, name, 1, shape);
+            auto result = g.make(Bubble::Parameter, name, shape);
             return result;
         }
 
@@ -53,7 +53,7 @@ namespace ts {
 
         Node param(const std::string &name, DTYPE dtype, const Shape &shape) {
             auto &g = ctx::ref<Graph>();
-            auto result = g.make(Bubble::Parameter, name, 1, shape);
+            auto result = g.make(Bubble::Parameter, name, shape);
             result->set(Bubble::RetentionParam::dtype, tensor::from<int32_t>(dtype));
             return result;
         }
