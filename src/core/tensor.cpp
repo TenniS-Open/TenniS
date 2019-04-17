@@ -575,4 +575,25 @@ namespace ts {
         oss << "}";
         return out << oss.str();
     }
+
+    bool ts::operator==(const Tensor::Prototype &lhs, const Tensor::Prototype &rhs) {
+        return lhs.dtype() == rhs.dtype() && lhs.sizes() == rhs.sizes();
+    }
+
+    bool ts::operator==(const TensorPrototype &lhs, const TensorPrototype &rhs) {
+        if (lhs.fields_count() != rhs.fields_count()) return false;
+        auto count = lhs.fields_count();
+        for (decltype(count) i = 0; i < count; ++i) {
+            if (lhs.field(i) != rhs.field(i)) return false;
+        }
+        return true;
+    }
+
+    bool ts::operator==(const Tensor::Prototype &lhs, const TensorPrototype &rhs) {
+        return rhs.fields_count() == 1 && lhs.dtype() == rhs.dtype() && lhs.sizes() == rhs.sizes();
+    }
+
+    bool ts::operator==(const TensorPrototype &lhs, const Tensor::Prototype &rhs) {
+        return lhs.fields_count() == 1 && lhs.dtype() == rhs.dtype() && lhs.sizes() == rhs.sizes();
+    }
 }
