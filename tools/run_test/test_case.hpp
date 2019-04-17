@@ -80,56 +80,38 @@ namespace ts {
         for (size_t i = 0; i < input.size(); ++i) {
             auto &tensor = input[i];
             if (i) oss << ", ";
-            oss << type_str(tensor.dtype()) << ":" << to_string(tensor.sizes());
+            if (tensor.fields_count() == 1)
+                oss << tensor.proto();
+            else
+                oss << TensorPrototype(tensor);
         }
         oss << "} -> {";
         for (size_t i = 0; i < output.size(); ++i) {
             auto &tensor = output[i];
             if (i) oss << ", ";
-            oss << type_str(tensor.dtype()) << ":" << to_string(tensor.sizes());
+            if (tensor.fields_count() == 1)
+                oss << tensor.proto();
+            else
+                oss << TensorPrototype(tensor);
         }
         oss << "}";
         return oss.str();
     }
 
-    static inline std::string plot_line(const std::vector<Tensor> &input, const std::vector<Tensor::Prototype> &output) {
+    static inline std::string plot_line(const std::vector<Tensor> &input, const TensorPrototype &output) {
         std::ostringstream oss;
         oss << "{";
         for (size_t i = 0; i < input.size(); ++i) {
             auto &tensor = input[i];
             if (i) oss << ", ";
-            oss << type_str(tensor.dtype()) << ":" << to_string(tensor.sizes());
+            if (tensor.fields_count() == 1)
+                oss << tensor.proto();
+            else
+                oss << TensorPrototype(tensor);
         }
-        oss << "} -> {";
-        for (size_t i = 0; i < output.size(); ++i) {
-            auto &tensor = output[i];
-            if (i) oss << ", ";
-            oss << type_str(tensor.dtype()) << ":" << to_string(tensor.sizes());
-        }
-        oss << "}";
+        oss << "} -> ";
+        oss << output;
         return oss.str();
-    }
-
-    static inline bool check_output(const std::vector<Tensor> &input, const std::vector<Tensor> &output) {
-        if (input.size() != output.size()) return false;
-        for (size_t i = 0; i < input.size(); ++i) {
-            auto &a = input[i];
-            auto &b = output[i];
-            if (a.dtype() != b.dtype()) return false;
-            if (!a.has_shape(b.sizes())) return false;
-        }
-        return true;
-    }
-
-    static inline bool check_output(const std::vector<Tensor> &input, const std::vector<Tensor::Prototype> &output) {
-        if (input.size() != output.size()) return false;
-        for (size_t i = 0; i < input.size(); ++i) {
-            auto &a = input[i];
-            auto &b = output[i];
-            if (a.dtype() != b.dtype()) return false;
-            if (!a.has_shape(b.sizes())) return false;
-        }
-        return true;
     }
 
     static inline void diff(const Tensor &x, const Tensor &y, float &max, float &avg) {
@@ -353,6 +335,8 @@ namespace ts {
                 }
             }
 
+            TS_AUTO_ASSERT(tc.output_count == 1);
+
             *this = std::move(tc);
 
             // format succeed
@@ -394,6 +378,8 @@ namespace ts {
             } else {
             }
 
+            TS_AUTO_ASSERT(output_count == 1);
+
             std::vector<Tensor> input_vector(input_count);
             std::vector<Tensor> output_vector(output_count);
 
@@ -408,18 +394,20 @@ namespace ts {
             std::vector<Tensor::Prototype> output_protos;
             bench.offline_infer(built_op, input_vector, output_protos);
 
-            m_log << "Wanted: " << plot_line(input_vector, output_vector) << std::endl;
+            m_log << "Wanted: " << plot_line(input_vector, TensorPrototype(output_vector[0])) << std::endl;
 
-            if (!check_output(output_vector, output_protos)) {
-                m_log << "Infer:  " << plot_line(input_vector, output_protos) << std::endl;
+            if (TensorPrototype(output_vector[0]) != TensorPrototype(output_protos)) {
+                m_log << "Infer:  " << plot_line(input_vector, TensorPrototype(output_protos)) << std::endl;
                 return Status::FAILED;
             }
 
             std::vector<Tensor> run_output;
             bench.offline_run(built_op, input_vector, run_output);
 
-            if (!check_output(output_vector, run_output)) {
-                m_log << "Run:    " << plot_line(input_vector, run_output) << std::endl;
+            TS_AUTO_ASSERT(run_output.size() == 1);
+
+            if (TensorPrototype(output_vector[0]) != TensorPrototype(run_output[0])) {
+                m_log << "Run:    " << plot_line(input_vector, TensorPrototype(run_output[0])) << std::endl;
                 return Status::FAILED;
             }
 
@@ -429,9 +417,10 @@ namespace ts {
             // check diff
             Status succeed = Status::OK;
             float max, avg;
-            for (int i = 0; i < output_count; ++i) {
-                auto &x = output_vector[i];
-                auto &y = run_output[i];
+            auto fields_count = output_vector[0].fields_count();
+            for (int i = 0; i < fields_count; ++i) {
+                auto x = output_vector[0].field(i);
+                auto y = run_output[0].field(i);
                 diff(x, y, max, avg);
                 if (max > MAX_MAX || avg > MAX_AVG)  {
                     if (max < MAX_MAX * 10 && avg < MAX_AVG * 10) {
