@@ -9,123 +9,79 @@
 
 #include "device_launch_parameters.h"
 #include <cuda_runtime.h>
-
+#include <kernels/gpu/gpu_helper.h>
 
 
 namespace ts {
     namespace gpu {
-
-        template<typename T>
-        static __global__ void Transpose_transpose_run_kernel(T* out, int size, const T* input,  
-                                               int *inputshape, int *inputweight,
-                                               int *outshape, int *outweight,
-                                               int *permute, int shapelen) {
+        template <typename T>
+        static __global__ void gpu_transpose_kernel(int count, int *permute, const T*in, int *in_dim_weights, T *out, GpuHypeShape out_shape) {
             int index = blockDim.x * blockIdx.x + threadIdx.x;
-            if (index >= size)
-                return;
+            if (index >= count) return;
 
-            int *buffer1 = new int[shapelen];
-            int *buffer2 = new int[shapelen];
-            int i = 0;
-            int k= 0;
-            int *  ptmp;
-            int *  ptr;
+            int out_index = index;
+            int in_index = 0;
 
-            ptr = buffer1;
-            ptmp = inputweight + 1;
-            int ntmp = index;
-            for(i= shapelen - 1; i; --i) {
-                *ptr = ntmp / *ptmp;
-                ntmp %= *ptmp;
-                ++ptmp;
-                ++ptr;
+            auto out_weight_it = out_shape.weights + 1;
+            /* ============================================ */
+            int running_dim = 0;
+            /* -------------------------------------------- */
+
+            for (int times = out_shape.dims - 1; times; --times) {
+                auto coord = index / *out_weight_it;
+                /* ============================================ */
+                auto dim = permute[running_dim];
+                in_index += coord * in_dim_weights[dim];
+                ++running_dim;
+                /* -------------------------------------------- */
+                index %= *out_weight_it;
+                ++out_weight_it;
             }
+            auto coord = index;
+            /* ============================================ */
+            auto dim = permute[running_dim];
+            in_index += coord * in_dim_weights[dim];
+            /* -------------------------------------------- */
 
-            *ptr = ntmp;
-
-            for(i=0; i<shapelen; ++i) {
-                buffer2[i] = buffer1[permute[i]];
-            } 
-
-            int outindex = 0;
-            for(i=0; i<shapelen; ++i) {
-                buffer1[i] = buffer2[i] % outshape[i];
-            }
-
-            for(k=0, i=1; i < shapelen; ++k,++i) {
-                outindex += buffer1[k] * outweight[i];
-            }
-            outindex += buffer1[k];
-
-            out[outindex] = input[index]; 
-
-            delete [] buffer1;
-            delete [] buffer2;
+            /* ++++++++++++++++++++++++++++++++++++++++++++ */
+            out[out_index] = in[in_index];
         }
 
-
-
-        template<typename T>
-        static void Transpose_transpose_run(
-                const Tensor &x, Tensor &out, int len,
-                const std::vector<int> &permute,
-                const Shape &input_shape, const Shape &output_shape) {
-            const T* psrc = x.data<T>();
-            T* pdst = out.data<T>();
-            HypeShape hype_input_shape(input_shape);
-            HypeShape hype_output_shape(output_shape);
-
-            int *input_shape_dev = nullptr;
-            int *input_weight = nullptr;
-            int *permute_shape_dev = nullptr;
-            int *output_shape_dev = nullptr;
-            int *output_weight = nullptr;
-
-            Shape tmpshape;
-            tmpshape.resize(1);
-            tmpshape[0] = input_shape.size();
-            Tensor input_weight_tensor(out.device(), INT32, tmpshape);
-            input_weight = input_weight_tensor.data<int32_t>();
-
-            tmpshape[0] = input_shape.size();
-            Tensor input_tensor(out.device(), INT32, tmpshape);
-            input_shape_dev = input_tensor.data<int32_t>();
-
-            tmpshape[0] = permute.size();
-            Tensor permute_tensor(out.device(), INT32, tmpshape);
-            permute_shape_dev = permute_tensor.data<int32_t>();
-
-            tmpshape[0] = output_shape.size();
-            Tensor out_tensor(out.device(), INT32, tmpshape);
-            output_shape_dev = out_tensor.data<int32_t>();
-
-            tmpshape[0] = output_shape.size();
-            Tensor out_weight_tensor(out.device(), INT32, tmpshape);
-            output_weight = out_weight_tensor.data<int32_t>();
-
-
-            memcpy((void*)input_shape_dev, out.device(), input_shape.size() * sizeof(int32_t),
-                   (void*)input_shape.data(), MemoryDevice(CPU), input_shape.size() * sizeof(int32_t));
-            memcpy((void*)input_weight, out.device(), input_shape.size() * sizeof(int32_t),
-                   (void*)hype_input_shape.weight().data(), MemoryDevice(CPU), input_shape.size() * sizeof(int32_t));
-
-            memcpy((void*)output_shape_dev, out.device(), output_shape.size() * sizeof(int32_t),
-                   (void*)output_shape.data(), MemoryDevice(CPU), output_shape.size() * sizeof(int32_t));
-
-            memcpy((void*)output_weight, out.device(), output_shape.size() * sizeof(int32_t),
-                   (void*)hype_output_shape.weight().data(), MemoryDevice(CPU), input_shape.size() * sizeof(int32_t));
-
-            memcpy((void*)permute_shape_dev, out.device(), permute.size() * sizeof(int32_t),
-                   (void*)permute.data(), MemoryDevice(CPU), permute.size() * sizeof(int32_t));
-
-            Transpose_transpose_run_kernel<T> <<< CUDA_BLOCK(len, CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> (pdst, len,
-                        psrc, input_shape_dev, input_weight, output_shape_dev, output_weight, permute_shape_dev, input_shape.size());
-
+        static inline std::vector<int> get_dim_weights(const std::vector<int> &shape) {
+            if (shape.empty()) return std::vector<int>();
+            std::vector<int> result(shape.size());
+            result.back() = 1;
+            auto out_it = result.rbegin() + 1;
+            auto in_it = shape.rbegin();
+            while (out_it != result.rend()) {
+                *out_it = *in_it * *(out_it - 1);
+                ++out_it;
+                ++in_it;
+            }
+            return std::move(result);
         }
 
         template<typename T>
         static inline void gpu_transpose_compute_run(const Tensor &x, const std::vector<int> &permute, Tensor &out) {
-            Transpose_transpose_run<T>(x, out, x.count(), permute, x.sizes(), out.sizes());
+            int *gpu_permute = nullptr;
+            int *gpu_in_dim_weights = nullptr;
+
+            T *out_data = out.data<T>();
+            const T*in_data = x.data<T>();
+            int count = out.count();
+
+            std::vector<int> cpu_in_dim_weights = get_dim_weights(x.sizes());
+
+            auto gpu_memory = MakeGPUHypeShape(out.device(), {out.sizes(), },
+            {
+                {(void*)(permute.data()), sizeof(int) * int(permute.size())},
+                {(void*)(cpu_in_dim_weights.data()), sizeof(int) * int(cpu_in_dim_weights.size())},
+            }, {
+                (void **)(&gpu_permute),
+                (void **)(&gpu_in_dim_weights),
+            });
+            auto &gpu_out_shape = gpu_memory.second[0];
+            gpu_transpose_kernel<T> << < CUDA_BLOCK(count, CUDA_THREAD_NUM), CUDA_THREAD_NUM >> > (count, gpu_permute, in_data, gpu_in_dim_weights, out_data, gpu_out_shape);
         }
 
         void Transpose::transpose(const Tensor &x, const std::vector<int> &permute, Tensor &out) {

@@ -35,8 +35,17 @@ namespace ts {
 
             TS_AUTO_CHECK(m_dim < x.dims());
 
-            TS_AUTO_CHECK(scale.has_shape({x.size(m_dim)}));
-            TS_AUTO_CHECK(bias.has_shape({x.size(m_dim)}));
+            if(!scale.has_shape(x.size(m_dim))) {
+                TS_LOG_ERROR << "Miss matched: x:" << to_string(x.sizes()) <<
+                             ", dim=" << m_dim <<
+                             ", scale:" << to_string(scale.sizes()) << eject;
+            }
+
+            if(!bias.has_shape(x.size(m_dim))) {
+                TS_LOG_ERROR << "Miss matched: x:" << to_string(x.sizes()) <<
+                             ", dim=" << m_dim <<
+                             ", bias:" << to_string(bias.sizes()) << eject;
+            }
 
             TS_AUTO_CHECK(x.dtype() == scale.dtype());
             TS_AUTO_CHECK(x.dtype() == bias.dtype());

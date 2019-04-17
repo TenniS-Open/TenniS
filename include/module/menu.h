@@ -27,6 +27,22 @@ namespace ts {
         TS_DEBUG_API Node param(const std::string &name, const Shape &shape);
 
         /**
+         * get Parameter node
+         * @param name Node name
+         * @return new Node belonging to context-Graph
+         * @note Must call `ts::ctx::bind<Graph>` to bind context firstly
+         */
+        TS_DEBUG_API Node param(const std::string &name, DTYPE dtype);
+
+        /**
+         * get Parameter node
+         * @param name Node name
+         * @return new Node belonging to context-Graph
+         * @note Must call `ts::ctx::bind<Graph>` to bind context firstly
+         */
+        TS_DEBUG_API Node param(const std::string &name, DTYPE dtype, const Shape &shape);
+
+        /**
          * get Operator node
          * @param name Node name
          * @param op_name Operator name
@@ -34,7 +50,18 @@ namespace ts {
          * @return new Node belonging to context-Graph
          * @note Must call `ts::ctx::bind<Graph>` to bind context firstly
          */
-        TS_DEBUG_API Node op(const std::string &name, const std::string &op_name, const std::vector<Node> &inputs, int output_count = 1);
+        TS_DEBUG_API Node op(const std::string &name, const std::string &op_name, const std::vector<Node> &inputs);
+
+        /**
+         * get Operator node
+         * @param name Node name
+         * @param op_name Operator name
+         * @param inputs Input nodes
+         * @param output_count Output count, must be 1.
+         * @return new Node belonging to context-Graph
+         * @note Must call `ts::ctx::bind<Graph>` to bind context firstly
+         */
+        TS_DEBUG_API Node op(const std::string &name, const std::string &op_name, const std::vector<Node> &inputs, int output_count);
 
         /**
          * get Data node
@@ -54,6 +81,10 @@ namespace ts {
          * @note Must call `ts::ctx::bind<Graph>` to bind context firstly
          */
         TS_DEBUG_API Node data(const std::string &name, const Tensor &value, const DeviceType &device);
+
+        TS_DEBUG_API Node bubble(const Bubble &bubble);
+
+        TS_DEBUG_API Node bubble(const Bubble &bubble, const std::string &name);
     }
 
     /**

@@ -58,6 +58,11 @@ namespace ts {
             const string &tf_conv2d_padding() TS_NOEXCEPT { static string str = "_tf_conv2d_padding"; return str; }
             const string &nhwc_scale_resize2d() TS_NOEXCEPT { static string str = "_nhwc_scale_resize2d"; return str; }
 
+            const string &strided_slice() TS_NOEXCEPT { static string str = "strided_slice"; return str; }
+            const string &stack() TS_NOEXCEPT { static string str = "stack"; return str; }
+
+            const string &crop_nd() TS_NOEXCEPT { static string str = "crop_nd"; return str; }
+
             const string &copy() TS_NOEXCEPT {
                 static string str = "_copy";
                 return str;
@@ -109,5 +114,10 @@ namespace ts {
 
         string padding_method = "padding_method";
         string SAME = "SAME";
+
+        string begin = "begin";
+        string end = "end";
+
+        string shift = "shift";
     }
 }

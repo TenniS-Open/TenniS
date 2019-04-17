@@ -54,6 +54,8 @@ namespace ts {
             // broadcast C to output
             if (!near_zero(beta)) {
                 cpu_gemm_broadcast_compute_run<T>(C, out);
+            } else {
+                beta = 0;
             }
 
 #ifdef TS_USE_CBLAS

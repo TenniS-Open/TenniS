@@ -46,6 +46,20 @@ namespace ts {
                 return Shape(shape, shape + shape_len);
             }
 
+            int size(int i) const {
+                if (i < 0 || i >= ts_Tensor_shape_size(m_impl.get())) throw Exception("index out of range");
+                return ts_Tensor_shape(m_impl.get())[i];
+            }
+
+            int size(size_t i) const {
+                if (i >= size_t(ts_Tensor_shape_size(m_impl.get()))) throw Exception("index out of range");
+                return ts_Tensor_shape(m_impl.get())[i];
+            }
+
+            int dims() const {
+                return ts_Tensor_shape_size(m_impl.get());
+            }
+
             DTYPE dtype() const {
                 return DTYPE(ts_Tensor_dtype(m_impl.get()));
             }
@@ -66,6 +80,26 @@ namespace ts {
             template<typename T>
             T *data() {
                 return reinterpret_cast<T *>(data());
+            }
+
+            template<typename T>
+            const T &data(int i) const {
+                return reinterpret_cast<const T *>(data())[i];
+            }
+
+            template<typename T>
+            T &data(int i) {
+                return reinterpret_cast<T *>(data())[i];
+            }
+
+            template<typename T>
+            const T &data(size_t i) const {
+                return reinterpret_cast<const T *>(data())[i];
+            }
+
+            template<typename T>
+            T &data(size_t i) {
+                return reinterpret_cast<T *>(data())[i];
             }
 
             self clone() const {

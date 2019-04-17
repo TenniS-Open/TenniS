@@ -10,6 +10,7 @@
 #include "device_launch_parameters.h"
 #include <cuda_runtime.h>
 #include <math_functions.h>
+#include <runtime/runtime.h>
 
 
 namespace ts {
@@ -53,7 +54,7 @@ namespace ts {
             T *pdst = out.data<T>();
 
             Shape vec_shape = variance.sizes();
-            Tensor vec_tensor(MemoryDevice(variance.device()), variance.dtype(), vec_shape);
+            Tensor vec_tensor(RuntimeContext::FlowMemory(), variance.dtype(), vec_shape, MemoryDevice(variance.device()));
             T* vec_data = vec_tensor.data<T>();
 
             int vec_len = vec_tensor.count();

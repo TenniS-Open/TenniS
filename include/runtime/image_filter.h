@@ -8,9 +8,10 @@
 #include <vector>
 #include "core/tensor.h"
 #include "utils/implement.h"
-#include "module/graph.h"
 
 namespace ts {
+    class Graph;
+    class Workbench;
     class TS_DEBUG_API ImageFilter {
     public:
         using self = ImageFilter;
@@ -71,6 +72,9 @@ namespace ts {
         shared clone() const;
 
         const Graph &graph() const;
+
+        Workbench &workbench();
+        const Workbench &workbench() const;
 
     private:
         class Implement;

@@ -334,4 +334,22 @@ namespace ts {
             }
         }
     }
+
+    Module::shared Module::Load(Graph g) {
+        auto module = std::make_shared<Module>();
+        module->load(g);
+        return std::move(module);
+    }
+
+    Module::shared Module::Load(Graph g, const std::vector<Node> &outputs) {
+        auto module = std::make_shared<Module>();
+        module->load(g, outputs);
+        return std::move(module);
+    }
+
+    Module::shared Module::Load(Graph g, const std::vector<std::string> &outputs) {
+        auto module = std::make_shared<Module>();
+        module->load(g, outputs);
+        return std::move(module);
+    }
 }

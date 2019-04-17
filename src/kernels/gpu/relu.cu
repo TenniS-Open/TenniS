@@ -26,7 +26,7 @@ namespace ts {
             const T *input_data = x.data<T>();
             T *output_data = out.data<T>();
             int count = out.count();
-            int bytes_num = count * sizeof(T);
+            // int bytes_num = count * sizeof(T);
 
             dim3 blockSize(CUDA_THREAD_NUM);
             dim3 gridSize(CUDA_BLOCK(count, blockSize.x));

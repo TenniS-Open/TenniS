@@ -68,6 +68,7 @@ set(TENSORSTACK_MODULES
         core
         encryption
         engine
+        frontend
         global
         memory
         module
@@ -114,6 +115,17 @@ endif ()
 if (TS_USE_CUDA)
     find_package(CUDA REQUIRED)
     message(STATUS "[Optional] Use CUDA: [ON]")
+
+    set(CUDA_PROPAGATE_HOST_FLAGS OFF)
+    set(CUDA_ARCH   -gencode arch=compute_30,code=sm_30
+                    -gencode arch=compute_35,code=sm_35
+                    -gencode arch=compute_50,code=sm_50
+                    -gencode arch=compute_60,code=sm_60)
+    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} ${CUDA_ARCH} -std=c++11")
+    if ("${CONFIGURATION}" STREQUAL "Debug")
+        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -O0 -g ")
+    endif()
+    set(TS_USE_CUBLAS ON)
 
     list(APPEND TENSORSTACK_ACHIVES gpu)
     add_definitions(-DTS_USE_CUDA)
