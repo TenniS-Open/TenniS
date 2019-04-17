@@ -11,8 +11,37 @@
 #include "utils/assert.h"
 
 #include <numeric>
+#include <mutex>
 
 namespace ts {
+    static Smart<SyncMemory> empty_memory() {
+        static std::once_flag _empty_memory_flag;
+        static SyncMemory *_empty_memory = nullptr;
+        static struct _free_empty_memory {
+        public:
+            ~_free_empty_memory() {
+                delete _empty_memory;
+            }
+        } _free_empty_memory;
+        std::call_once(_empty_memory_flag, [&](){
+            Tensor::Prototype proto(VOID, {});
+            _empty_memory = new SyncMemory(proto.count(), true);
+        });
+        return Smart<SyncMemory>(_empty_memory, MANUALLY);
+    }
+
+    static Smart<SyncMemory> empty_memory(const MemoryDevice &device) {
+        return TensorMemory(empty_memory()->sync(device), false);
+    }
+
+    static bool is_empty(const Tensor::Prototype &proto) {
+        return proto.dtype() == VOID && proto.dims() == 0;
+    }
+
+//    static bool is_empty(DTYPE dtype, const Shape &shape) {
+//        return dtype == VOID && shape.size() == 0;
+//    }
+
     Tensor::Tensor(MemoryController::shared controller, DTYPE dtype, const Shape &_shape)
             : Tensor(controller, Prototype(dtype, _shape)) {}
 
@@ -29,23 +58,33 @@ namespace ts {
             : Tensor(Prototype(dtype, _shape)) {}
 
     Tensor::Tensor(MemoryController::shared controller, const Tensor::Prototype &proto)
-            : m_memory(controller->alloc(static_cast<size_t>(proto.count() * proto.type_bytes())))
+            : m_memory(is_empty(proto)
+                       ? empty_memory()
+                       : Smart<TensorMemory>(controller->alloc(static_cast<size_t>(proto.count() * proto.type_bytes()))))
             , m_proto(proto) {}
 
     Tensor::Tensor(SyncMemoryController::shared controller, const Tensor::Prototype &proto)
-            : m_memory(controller->alloc(static_cast<size_t>(proto.count() * proto.type_bytes())))
+            : m_memory(is_empty(proto)
+                       ? empty_memory()
+                       : controller->alloc(static_cast<size_t>(proto.count() * proto.type_bytes())))
             , m_proto(proto) {}
 
     Tensor::Tensor(SyncMemoryController::shared controller, const Tensor::Prototype &proto, const MemoryDevice &device)
-            : m_memory(controller->alloc(device, static_cast<size_t>(proto.count() * proto.type_bytes())))
+            : m_memory(is_empty(proto)
+                       ? empty_memory(device)
+                       : controller->alloc(device, static_cast<size_t>(proto.count() * proto.type_bytes())))
             , m_proto(proto) {}
 
     Tensor::Tensor(const MemoryDevice &device, const Tensor::Prototype &proto)
-            : m_memory(make_smart<TensorMemory>(device, static_cast<size_t>(proto.count() * proto.type_bytes())))
+            : m_memory(is_empty(proto)
+                       ? empty_memory(device)
+                       : make_smart<TensorMemory>(device, static_cast<size_t>(proto.count() * proto.type_bytes())))
             , m_proto(proto) {}
 
     Tensor::Tensor(const Tensor::Prototype &proto)
-            : m_memory(static_cast<size_t>(proto.count() * proto.type_bytes()))
+            : m_memory(is_empty(proto)
+                       ? empty_memory()
+                       : Smart<TensorMemory>(static_cast<size_t>(proto.count() * proto.type_bytes())))
             , m_proto(proto) {}
 
     Tensor::Tensor(const Memory &memory, const Tensor::Prototype &proto)
