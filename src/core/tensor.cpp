@@ -558,6 +558,11 @@ namespace ts {
         }
     }
 
+    TensorPrototype::TensorPrototype(const std::vector<Tensor::Prototype> &fields)
+        : supper() {
+        this->pack(fields);
+    }
+
     std::ostream &operator<<(std::ostream &out, const Tensor::Prototype &proto) {
         std::ostringstream oss;
         oss << type_str(proto.dtype()) << ":" << to_string(proto.sizes());
@@ -576,11 +581,11 @@ namespace ts {
         return out << oss.str();
     }
 
-    bool ts::operator==(const Tensor::Prototype &lhs, const Tensor::Prototype &rhs) {
+    bool operator==(const Tensor::Prototype &lhs, const Tensor::Prototype &rhs) {
         return lhs.dtype() == rhs.dtype() && lhs.sizes() == rhs.sizes();
     }
 
-    bool ts::operator==(const TensorPrototype &lhs, const TensorPrototype &rhs) {
+    bool operator==(const TensorPrototype &lhs, const TensorPrototype &rhs) {
         if (lhs.fields_count() != rhs.fields_count()) return false;
         auto count = lhs.fields_count();
         for (decltype(count) i = 0; i < count; ++i) {
@@ -589,11 +594,11 @@ namespace ts {
         return true;
     }
 
-    bool ts::operator==(const Tensor::Prototype &lhs, const TensorPrototype &rhs) {
+    bool operator==(const Tensor::Prototype &lhs, const TensorPrototype &rhs) {
         return rhs.fields_count() == 1 && lhs.dtype() == rhs.dtype() && lhs.sizes() == rhs.sizes();
     }
 
-    bool ts::operator==(const TensorPrototype &lhs, const Tensor::Prototype &rhs) {
+    bool operator==(const TensorPrototype &lhs, const Tensor::Prototype &rhs) {
         return lhs.fields_count() == 1 && lhs.dtype() == rhs.dtype() && lhs.sizes() == rhs.sizes();
     }
 }

@@ -307,6 +307,8 @@ namespace ts {
 
         explicit TensorPrototype(DTYPE dtype) : supper(dtype) {}
 
+        TensorPrototype(const std::vector<Tensor::Prototype> &fields);
+
         TensorPrototype(const supper &other) : supper(other) {}
 
         TensorPrototype(supper &&other) : supper(std::move(other)) {}
