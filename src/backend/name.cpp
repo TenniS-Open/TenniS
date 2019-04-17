@@ -62,6 +62,7 @@ namespace ts {
             const string &stack() TS_NOEXCEPT { static string str = "stack"; return str; }
 
             const string &crop_nd() TS_NOEXCEPT { static string str = "crop_nd"; return str; }
+            const string &dcn_v2_forward() TS_NOEXCEPT { static string str = "dcn_v2_forward"; return str; }
 
             const string &copy() TS_NOEXCEPT {
                 static string str = "_copy";
@@ -119,5 +120,6 @@ namespace ts {
         string end = "end";
 
         string shift = "shift";
+        string deformable_groups = "deformable_groups";
     }
 }

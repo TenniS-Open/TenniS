@@ -72,6 +72,8 @@ namespace ts {
             TS_DEBUG_API const string &stack() TS_NOEXCEPT;
 
             TS_DEBUG_API const string &crop_nd() TS_NOEXCEPT;
+
+            TS_DEBUG_API const string &dcn_v2_forward() TS_NOEXCEPT;
         }
 
         namespace typo {
@@ -125,6 +127,7 @@ namespace ts {
         TS_DEBUG_API extern string end;
 
         TS_DEBUG_API extern string shift;
+        TS_DEBUG_API extern string deformable_groups;
     }
 
 }
