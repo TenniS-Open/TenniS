@@ -1,6 +1,6 @@
-#include "kernels/gpu/cublas_device.h"
+#include "kernels/gpu/cuda_context.h"
 
-#include <kernels/gpu/cublas_device.h>
+#include <kernels/gpu/cuda_context.h>
 
 #include "global/memory_device.h"
 #include "utils/static.h"
@@ -19,13 +19,13 @@ namespace ts {
         {
         case ts::DeviceAdmin::INITIALIZATION:
         {
-            auto cublas_device_handle = new CublasDevice(device_id);
+            auto cublas_device_handle = new CUDAContextHandle(device_id);
             *handle = reinterpret_cast<DeviceHandle*>(cublas_device_handle);
             break;
         }
         case ts::DeviceAdmin::FINALIZATION:
         {
-            delete reinterpret_cast<CublasDevice*>(*handle);
+            delete reinterpret_cast<CUDAContextHandle*>(*handle);
             *handle = nullptr;
             break;
         }
