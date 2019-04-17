@@ -19,8 +19,36 @@
 #include "utils/need.h"
 
 #include "kernels/common/math.h"
+#include "core/tensor_builder.h"
+#include "backend/name.h"
+#include "backend/base/base_cast_v2.h"
+#include "runtime/operator.h"
+
+#include "utils/ctxmgr_lite_support.h"
 
 namespace ts {
+    class BindWorkbenchRuntime {
+    public:
+        using self = BindWorkbenchRuntime;
+
+        explicit BindWorkbenchRuntime(Workbench &bench)
+            : bind_thread_pool(bench.runtime().thread_pool())
+            , bind_device_context(bench.device())
+            , bind_runtime_context(bench.runtime()) {
+            bench.device().active();
+        }
+
+    private:
+        // bind thread pool to any operator can using thread speed up
+        ctx::bind<ThreadPool> bind_thread_pool;
+
+        // bind device context
+        ctx::bind<DeviceContext> bind_device_context;
+
+        // bind runtime context
+        ctx::bind<RuntimeContext> bind_runtime_context;
+    };
+
     Workbench::Workbench(const ComputingDevice &device, std::shared_ptr<std::mutex> mutex) {
         this->m_device_context.initialize(device);
         auto &memory_device = this->m_device_context.memory_device;
@@ -32,6 +60,9 @@ namespace ts {
         this->m_stack = std::make_shared<Stack>(memory_device, this->m_flow_memory);
         this->m_data_sagment = std::make_shared<Stack>(memory_device, this->m_static_memory);
         this->m_mutex = std::move(mutex);
+        // bind flow and dynamic memory, so you can use it to alloc memory in any where
+        this->m_runtime_context.bind_flow(this->m_flow_memory);
+        this->m_runtime_context.bind_dynamic(this->m_dynamic_memory);
     }
 
     Workbench::Workbench(const ComputingDevice &device, std::shared_ptr<std::mutex> mutex, int computing_thread_number)
@@ -53,8 +84,8 @@ namespace ts {
         this->m_map_input_slots.clear();
         this->m_map_output_slots.clear();
         this->m_inputs.clear();
-        this->m_input_filters.clear();
         this->m_outputs.clear();
+        this->m_input_filters.clear();
         this->m_device_context.finalize();
     }
 
@@ -87,6 +118,8 @@ namespace ts {
         this->m_stack->clear();
         this->m_outputs.resize(this->m_outputs.size(), Tensor());
 
+        BindWorkbenchRuntime _bind_runtime(*this);
+
         // set input
         for (int i = 0; static_cast<size_t >(i) < this->m_inputs.size(); ++i) {
             auto &arg = this->m_inputs[i];
@@ -97,16 +130,10 @@ namespace ts {
                 // TODO: do filter
                 this->m_stack->push(filter_images(filter, arg));
             }
+            auto dtype = m_input_dtypes[i];
+            if (dtype == VOID) continue;
+            cast_tensor(dtype);
         }
-
-        // bind thread pool to any operator can using thread speed up
-        ctx::bind<ThreadPool> bind_thread_pool(this->runtime().thread_pool());
-
-        // bind device context
-        ctx::bind<DeviceContext> bind_device_context(m_device_context);
-
-        // bind runtime context
-        ctx::bind<RuntimeContext> bind_runtime_context(m_runtime_context);
 
         auto _bind_profiler = bind_profiler(m_do_profile, m_profiler);
 
@@ -127,16 +154,17 @@ namespace ts {
         // TODO: change output memory device type
         for (int i = 0; static_cast<size_t >(i) < this->m_stack->size(); ++i) {
             auto &arg = *this->m_stack->index(i);
-            this->m_outputs[i] = arg.clone(m_dynamic_memory, arg.device());
+            // this->m_outputs[i] = arg.clone(m_dynamic_memory, arg.device());
+            this->m_outputs[i] = arg;   // do not clone by default
         }
     }
 
     Workbench::shared Workbench::clone() const {
         std::unique_lock<std::mutex> _lock_clone(*this->m_mutex);
 
-        Workbench::shared dolly = std::make_shared<Workbench>(
+        Workbench::shared dolly(new Workbench(
                 this->m_device_context.computing_device,
-                this->m_mutex);
+                this->m_mutex));
         dolly->m_pointer = this->m_pointer;
         dolly->m_program = this->m_program;
         dolly->m_inputs.resize(this->m_inputs.size());
@@ -160,6 +188,10 @@ namespace ts {
             if (op == nullptr) continue;
             instruction = op->clone();
         }
+
+        // copy dtype
+        dolly->m_input_dtypes = m_input_dtypes;
+        dolly->m_output_dtypes = m_output_dtypes;
 
         return std::move(dolly);
     }
@@ -218,10 +250,12 @@ namespace ts {
             }
 
             // filter value
-            if (value->dtype() == FLOAT32) {
-                filter_values(value->data<float>(), size_t(value->count()));
-            } else if (value->dtype() == FLOAT64) {
-                filter_values(value->data<double>(), size_t(value->count()));
+            if (value->device().type() == CPU) {
+                if (value->dtype() == FLOAT32) {
+                    filter_values(value->data<float>(), size_t(value->count()));
+                } else if (value->dtype() == FLOAT64) {
+                    filter_values(value->data<double>(), size_t(value->count()));
+                }
             }
         }
 
@@ -238,6 +272,22 @@ namespace ts {
         slot_i = 0;
         for (auto &output : module_outputs) {
             bench->m_map_output_slots.insert(std::make_pair(output.bubble().name(), slot_i++));
+        }
+
+        bench->m_input_dtypes.resize(module_inputs.size(), VOID);
+        bench->m_output_dtypes.resize(module_outputs.size(), VOID);
+
+        for (size_t i = 0; i < module_inputs.size(); ++i) {
+            auto &input = module_inputs[i];
+            if (!input->has(Bubble::RetentionParam::dtype)) continue;
+            bench->m_input_dtypes[i] =
+                    DTYPE(tensor::to_int(input->get(Bubble::RetentionParam::dtype)));
+        }
+        for (size_t i = 0; i < module_outputs.size(); ++i) {
+            auto &output = module_outputs[i];
+            if (!output->has(Bubble::RetentionParam::dtype)) continue;
+            bench->m_output_dtypes[i] =
+                    DTYPE(tensor::to_int(output->get(Bubble::RetentionParam::dtype)));
         }
 
         return bench;
@@ -360,14 +410,7 @@ namespace ts {
     void Workbench::offline_run(Operator::shared op, const std::vector<Tensor> &input, std::vector<Tensor> &output) {
         Stack stack(m_device_context.memory_device, m_dynamic_memory);
 
-        // bind thread pool to any operator can using thread speed up
-        ctx::bind<ThreadPool> bind_thread_pool(this->runtime().thread_pool());
-
-        // bind device context
-        ctx::bind<DeviceContext> bind_device_context(m_device_context);
-
-        // bind runtime context
-        ctx::bind<RuntimeContext> bind_runtime_context(m_runtime_context);
+        BindWorkbenchRuntime _bind_runtime(*this);
 
         for (auto &tensor : input) {
             stack.push(tensor);
@@ -388,14 +431,7 @@ namespace ts {
                                   std::vector<Tensor::Prototype> &output) {
         Stack stack(m_device_context.memory_device, m_dynamic_memory);
 
-        // bind thread pool to any operator can using thread speed up
-        ctx::bind<ThreadPool> bind_thread_pool(this->runtime().thread_pool());
-
-        // bind device context
-        ctx::bind<DeviceContext> bind_device_context(m_device_context);
-
-        // bind runtime context
-        ctx::bind<RuntimeContext> bind_runtime_context(m_runtime_context);
+        BindWorkbenchRuntime _bind_runtime(*this);
 
         for (auto &tensor : input) {
             stack.push(tensor);
@@ -406,7 +442,7 @@ namespace ts {
 
     void Workbench::set_operator_param(const std::string &node_name, const std::string &param, const Tensor &value) {
         for (auto &inst : m_program) {
-            OperatorInstruction* operator_inst = dynamic_cast<OperatorInstruction*>(inst.get());
+            auto* operator_inst = dynamic_cast<OperatorInstruction*>(inst.get());
             if (operator_inst == nullptr) continue;
             auto node = operator_inst->op();
             if (node->name() != node_name) continue;
@@ -414,4 +450,62 @@ namespace ts {
             node->init();
         }
     }
+
+    void Workbench::cast_tensor(DTYPE dtype) {
+        if (m_cast_op == nullptr) {
+            m_cast_op = OperatorCreator::Create(
+                    m_device_context.computing_device.type(),
+                    name::layer::cast(), false);
+        }
+        auto *cast_op = dynamic_cast<base::CastV2*>(m_cast_op.get());
+        if (cast_op != nullptr) {
+            cast_op->set_dtype(dtype);
+        } else {
+            m_cast_op->set(name::dtype, tensor::from<int32_t>(dtype));
+            m_cast_op->init();
+        }
+        TS_AUTO_CHECK(1 == RunOperator(m_cast_op, *m_stack, 1));
+    }
+
+    Operator::shared Workbench::online_create(const Bubble &bubble, bool strict) {
+        return offline_create(bubble, strict);
+    }
+
+    int Workbench::online_run(Operator::shared op, const std::vector<Tensor> &input) {
+        m_stack->clear();
+        for (auto &tensor : input) {
+            m_stack->push(tensor);
+        }
+        return online_run(op, stack().size());
+    }
+
+    int Workbench::online_run(Operator::shared op, int argc) {
+        BindWorkbenchRuntime _bind_runtime(*this);
+
+        return RunOperator(op, *m_stack, argc);
+    }
+
+    void Workbench::online_run(Instruction::shared inst) {
+        BindWorkbenchRuntime _bind_runtime(*this);
+
+        inst->run(*this);
+    }
+
+    void Workbench::online_run(Instruction::shared inst, const std::vector<Tensor> &input) {
+        m_stack->clear();
+        for (auto &tensor : input) {
+            m_stack->push(tensor);
+        }
+        online_run(inst);
+    }
+
+    int Workbench::online_run(const Bubble &bubble, int argc, bool strict) {
+        return online_run(online_create(bubble, strict), argc);
+    }
+
+    int Workbench::online_run(const Bubble &bubble, const std::vector<Tensor> &input, bool strict) {
+        return online_run(online_create(bubble, strict), input);
+    }
 }
+
+TS_LITE_CONTEXT(ts::Workbench)

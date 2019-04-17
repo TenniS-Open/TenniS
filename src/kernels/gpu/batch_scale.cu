@@ -16,12 +16,12 @@ namespace ts {
     namespace gpu {
 
         template<typename T>
-        static __global__ void gpu_batch_scale_compute_kernel(T* data, int size, int step, int slice,
+        static __global__ void gpu_batch_scale_compute_kernel(T*out, const T* data, int size, int step, int slice,
                                         const T* scale, const T* bias ) {
             int index = blockDim.x * blockIdx.x + threadIdx.x;
             if (index < size) {
                 int dim = index % ( step * slice ) / (step);
-                data[index] = data[index] * scale[dim] + bias[dim];
+                out[index] = data[index] * scale[dim] + bias[dim];
             }
         }
 
@@ -47,11 +47,11 @@ namespace ts {
             const T *pbias = bias.data<T>();
             T *pdst = out.data<T>();
 
-            memcpy((void*)pdst, out.device(), out.count() * sizeof(T),
-                   (void*)psrc, x.device(), out.count() * sizeof(T));
+//            memcpy((void*)pdst, out.device(), out.count() * sizeof(T),
+//                   (void*)psrc, x.device(), out.count() * sizeof(T));
 
             gpu_batch_scale_compute_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> 
-                                              (pdst, out.count(), backdims, shape[dim], pscale, pbias);
+                                              (pdst, psrc, out.count(), backdims, shape[dim], pscale, pbias);
 
         }
 

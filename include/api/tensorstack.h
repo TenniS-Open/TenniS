@@ -5,6 +5,7 @@
 #ifndef TENSORSTACK_API_TENSORSTACK_H
 #define TENSORSTACK_API_TENSORSTACK_H
 
+#include "setup.h"
 #include "common.h"
 #include "device.h"
 #include "tensor.h"

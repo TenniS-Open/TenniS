@@ -76,6 +76,12 @@ class Name(object):
 
 
 def convert(input_file, output_file):
+    """
+    convert onnx
+    :param input_file: onnx.ModelProto or param can parse into onnx.load(param)
+    :param output_file: str of path to file
+    :return: ts.Module
+    """
     onnx_model = None
     if isinstance(input_file, onnx.ModelProto):
         onnx_model = input_file
@@ -239,6 +245,8 @@ def convert(input_file, output_file):
         assert isinstance(node, ts.Node)
         print("{}: {}".format(index, node.name))
         index += 1
+
+    return module
 
 
 def topy(attr):

@@ -134,7 +134,7 @@ namespace ts {
                 Shape tmpshape;
                 tmpshape.resize(1);
                 tmpshape[0] = col_buffer_size;
-                col_tensor = Tensor(out.device(), out.dtype(), tmpshape);
+                col_tensor = stack.make(out.dtype(), tmpshape, x.device());
                 col_buffer = col_tensor.data<T>();
  
             }

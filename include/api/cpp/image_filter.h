@@ -65,8 +65,16 @@ namespace ts {
                 TS_API_AUTO_CHECK(ts_ImageFilter_resize(m_impl.get(), width, height));
             }
 
+            void resize(int width) {
+                TS_API_AUTO_CHECK(ts_ImageFilter_resize_scalar(m_impl.get(), width));
+            }
+
             void center_crop(int width, int height) {
                 TS_API_AUTO_CHECK(ts_ImageFilter_center_crop(m_impl.get(), width, height));
+            }
+
+            void center_crop(int width) {
+                TS_API_AUTO_CHECK(ts_ImageFilter_center_crop(m_impl.get(), width, width));
             }
 
             void channel_swap(const std::vector<int> &shuffle) {

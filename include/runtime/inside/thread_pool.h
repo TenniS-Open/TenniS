@@ -15,6 +15,7 @@
 #include <memory>
 
 #include <utils/api.h>
+#include "utils/ctxmgr_lite.h"
 
 namespace ts {
     class TS_DEBUG_API Thread {
@@ -64,7 +65,7 @@ namespace ts {
     /**
  * @brief The ThreadPool class the thread pool
  */
-    class TS_DEBUG_API ThreadPool {
+    class TS_DEBUG_API ThreadPool : public SetupContext<ThreadPool> {
     public:
         using self = ThreadPool;
         using shared = std::shared_ptr<self>;

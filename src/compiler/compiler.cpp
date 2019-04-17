@@ -82,8 +82,8 @@ namespace ts {
         auto op_inst = std::make_shared<OperatorInstruction>(op, int(node.inputs().size()), int(bubble.output_count()), description);
         op_inst->bind_creator(creator);
         instructions.emplace_back(std::move(op_inst));
-        if (bubble.output_count() > 1) {
-            instructions.emplace_back(instruction::Tensor::pack(size_t(bubble.output_count())));
+        if (bubble.output_count() != 1) {
+            TS_LOG_ERROR << "All operators' output count must be 1." << eject;
         }
         return std::move(instructions);
     }

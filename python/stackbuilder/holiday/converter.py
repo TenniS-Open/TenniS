@@ -13,6 +13,7 @@ import tensorstack as ts
 
 import numpy
 
+import copy
 
 class HolidayNode(object):
     def __init__(self, layer, blob_names):
@@ -52,9 +53,17 @@ def convert(input_file, output_file,
             has_header=False,
             export_all=False):
     # type:(Union[str, tuple], str, list, bool, bool) -> None
+    """
+    :param input_file: can be tuple[Net, Header](return value of laodnet), str, or IOStream
+    :param output_file: str of path to file
+    :param output_blobs: str of list of str
+    :param has_header: bool value, tell if there is header in model
+    :param export_all: if need export all symbol in model
+    :return: ts.Module
+    """
     header = None
     net = None
-    if isinstance(input_file, tuple) and len(input_file) == 2:
+    if isinstance(input_file, (tuple, list)) and len(input_file) == 2:
         header, net = input_file[0], input_file[1]
     else:
         header, net = load_net(input_file, has_header)
@@ -148,6 +157,7 @@ def convert(input_file, output_file,
     # sort inputs
     assert len(module.inputs) == 1
 
+
     with open(output_file, "wb") as fo:
         ts.Module.Save(stream=fo, module=module)
 
@@ -166,6 +176,8 @@ def convert(input_file, output_file,
         assert isinstance(node, ts.Node)
         print("{}: {}".format(index, node.name))
         index += 1
+
+    return module
 
 
 def convert_memorydata_layer(layer, input_nodes, output_names):
@@ -197,7 +209,11 @@ def convert_memorydata_layer(layer, input_nodes, output_names):
 
     input = ts.zoo.to_float("_float_input", x=input)
 
-    input = ts.zoo.limit("_limit_input", input, shape=input_shape)
+    limit_shape = copy.copy(input_shape)
+    limit_shape[0] = -1
+    limit_shape[3] = -1
+
+    input = ts.zoo.limit("_limit_input", input, shape=limit_shape)
 
     scale = 1
     if param.HasField("scale"):

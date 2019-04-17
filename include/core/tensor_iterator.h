@@ -114,7 +114,7 @@ namespace ts {
     class TS_DEBUG_API HypeShape {
     public:
         using self = HypeShape;
-        using T = int;
+        using T = int32_t;
 
         explicit HypeShape(const std::vector<int> &shape)
                 : m_shape(shape) {
@@ -280,7 +280,7 @@ namespace ts {
         explicit operator std::vector<int>() const { return m_shape; }
 
     private:
-        std::vector<int> m_shape;
+        std::vector<int32_t> m_shape;
         std::vector<T> m_weights;
 
     public:
