@@ -56,21 +56,17 @@ inline void _simd_f32x4_transpose4x4(_simd_f32x4& q0, _simd_f32x4& q1, _simd_f32
     _simd_f32x4_x2 q01 = vtrnq_f32(q0, q1);
     _simd_f32x4_x2 q23 = vtrnq_f32(q2, q3);
 
-    _simd_f32x4 qq0 = q01.val[0];
-    _simd_f32x2 d00 = vget_low_f32(qq0);
-    _simd_f32x2 d01 = vget_high_f32(qq0);
+    _simd_f32x2 d00 = vget_low_f32(q01.val[0]);
+    _simd_f32x2 d01 = vget_high_f32(q01.val[0]);
 
-    _simd_f32x4 qq1 = q01.val[1];
-    _simd_f32x2 d10 = vget_low_f32(qq1);
-    _simd_f32x2 d11 = vget_high_f32(qq1);
+    _simd_f32x2 d10 = vget_low_f32(q01.val[1]);
+    _simd_f32x2 d11 = vget_high_f32(q01.val[1]);
 
-    _simd_f32x4 qq2 = q23.val[0];
-    _simd_f32x2 d20 = vget_low_f32(qq2);
-    _simd_f32x2 d21 = vget_high_f32(qq2);
+    _simd_f32x2 d20 = vget_low_f32(q23.val[0]);
+    _simd_f32x2 d21 = vget_high_f32(q23.val[0]);
 
-    _simd_f32x4 qq3 = q23.val[1];
-    _simd_f32x2 d30 = vget_low_f32(qq3);
-    _simd_f32x2 d31 = vget_high_f32(qq3);
+    _simd_f32x2 d30 = vget_low_f32(q23.val[1]);
+    _simd_f32x2 d31 = vget_high_f32(q23.val[1]);
 
     q0 = vcombine_f32(d00, d20);
     q1 = vcombine_f32(d10, d30);
@@ -82,6 +78,7 @@ inline void _simd_f32x4_transpose4x4(_simd_f32x4& q0, _simd_f32x4& q1, _simd_f32
 #include <immintrin.h>
 
 using _simd_f32x4 = __m128;
+using _simd_f32x4x2 = __m256;
 using _simd_f32 = float;
 
 inline _simd_f32x4 _simd_f32x4_load(const _simd_f32 *p) {
@@ -122,6 +119,40 @@ inline _simd_f32x4 _simd_f32x4_min(_simd_f32x4 lhs, _simd_f32x4 rhs) {
 
 inline void _simd_f32x4_transpose4x4(_simd_f32x4& q0, _simd_f32x4& q1, _simd_f32x4& q2, _simd_f32x4& q3) {
     _MM_TRANSPOSE4_PS(q0, q1, q2, q3);
+}
+
+inline _simd_f32x4 _simd_f32x4_fmadd(const _simd_f32x4& q0, const _simd_f32x4& q1, const _simd_f32x4& q2) {
+    return _mm_fmadd_ps(q0, q1, q2);
+}
+
+
+inline _simd_f32x4x2 _simd_f32x4x2_load(const _simd_f32 *p) {
+    return _mm256_loadu_ps(p);
+}
+
+inline _simd_f32x4x2 _simd_f32x4x2_set(_simd_f32 a, _simd_f32 b, _simd_f32 c, _simd_f32 d,
+                                     _simd_f32 e, _simd_f32 f, _simd_f32 g, _simd_f32 h) {
+    return _mm256_set_ps(h, g, f, e, d, c, b, a);
+}
+
+inline void _simd_f32x4x2_store(_simd_f32 *p, _simd_f32x4x2 m) {
+    _mm256_storeu_ps(p, m);
+}
+
+inline _simd_f32x4x2 _simd_f32x4x2_add(_simd_f32x4x2 lhs, _simd_f32x4x2 rhs) {
+    return _mm256_add_ps(lhs, rhs);
+}
+
+inline _simd_f32x4x2 _simd_f32x4x2_sub(_simd_f32x4x2 lhs, _simd_f32x4x2 rhs) {
+    return _mm256_sub_ps(lhs, rhs);
+}
+
+inline _simd_f32x4x2 _simd_f32x4x2_mul(_simd_f32x4x2 lhs, _simd_f32x4x2 rhs) {
+    return _mm256_mul_ps(lhs, rhs);
+}
+
+inline _simd_f32x4x2 _simd_f32x4x2_div(_simd_f32x4x2 lhs, _simd_f32x4x2 rhs) {
+    return _mm256_div_ps(lhs, rhs);
 }
 
 #else
