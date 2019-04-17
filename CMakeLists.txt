@@ -234,7 +234,7 @@ foreach (achive ${TENSORSTACK_ACHIVES})
     LIST(APPEND SRC_INCLUDE_FILES ${SRC_INCLUDE_ARCHIVE_${achive}_FILES})
 endforeach ()
 
-ts_add_library(${PROJECT_NAME}_LIB ${TARGET} ${INCLUDE_FILES} ${INCLUDE_SRC_FILES} ${SRC_FILES})
+ts_add_library(${PROJECT_NAME}_LIB ${TARGET} ${INCLUDE_FILES} ${SRC_INCLUDE_FILES} ${SRC_FILES})
 
 target_link_libraries(${PROJECT_NAME}_LIB ${third_libraries})
 
