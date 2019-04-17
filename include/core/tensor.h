@@ -354,6 +354,22 @@ namespace ts {
     TS_DEBUG_API std::ostream &operator<<(std::ostream &out, const Tensor::Prototype &proto);
 
     TS_DEBUG_API std::ostream &operator<<(std::ostream &out, const TensorPrototype &proto);
+
+    TS_DEBUG_API bool operator==(const Tensor::Prototype &lhs, const Tensor::Prototype &rhs);
+
+    TS_DEBUG_API bool operator==(const TensorPrototype &lhs, const TensorPrototype &rhs);
+
+    TS_DEBUG_API bool operator==(const Tensor::Prototype &lhs, const TensorPrototype &rhs);
+
+    TS_DEBUG_API bool operator==(const TensorPrototype &lhs, const Tensor::Prototype &rhs);
+
+    inline bool operator!=(const Tensor::Prototype &lhs, const Tensor::Prototype &rhs) { return !(lhs == rhs); }
+
+    inline bool operator!=(const TensorPrototype &lhs, const TensorPrototype &rhs) { return !(lhs == rhs); }
+
+    inline bool operator!=(const Tensor::Prototype &lhs, const TensorPrototype &rhs) { return !(lhs == rhs); }
+
+    inline bool operator!=(const TensorPrototype &lhs, const Tensor::Prototype &rhs) { return !(lhs == rhs); }
 }
 
 
