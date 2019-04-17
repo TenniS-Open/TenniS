@@ -104,15 +104,18 @@ namespace ts {
 
             auto x_tensor = stack[0];
             auto w_tensor = stack[1];
-            auto offset_tensor = stack[2];
-            auto mask_tensor = stack[3];
+            auto b_tensor = stack[2];
+            auto offset_tensor = stack[3];
+            auto mask_tensor = stack[4];
 
             TS_AUTO_CHECK(x_tensor.dims() == 4);
             TS_AUTO_CHECK(w_tensor.dims() == 4);
+            TS_AUTO_CHECK(b_tensor.dims() == 1);
             TS_AUTO_CHECK(offset_tensor.dims() == 4);
             TS_AUTO_CHECK(mask_tensor.dims() == 4);
 
             TS_AUTO_CHECK(x_tensor.dtype() == w_tensor.dtype());
+            TS_AUTO_CHECK(x_tensor.dtype() == b_tensor.dtype());
             TS_AUTO_CHECK(x_tensor.dtype() == offset_tensor.dtype());
             TS_AUTO_CHECK(x_tensor.dtype() == mask_tensor.dtype());
 
