@@ -72,6 +72,13 @@ namespace ts {
             TS_DEBUG_API const string &stack() TS_NOEXCEPT;
 
             TS_DEBUG_API const string &crop_nd() TS_NOEXCEPT;
+
+            TS_DEBUG_API const string &transpose_conv2d() TS_NOEXCEPT;
+
+            TS_DEBUG_API const string &batchtospace4d() TS_NOEXCEPT;
+            TS_DEBUG_API const string &spacetobatch4d() TS_NOEXCEPT;
+
+            TS_DEBUG_API const string &affine_sample2d() TS_NOEXCEPT;
         }
 
         namespace typo {
@@ -125,6 +132,10 @@ namespace ts {
         TS_DEBUG_API extern string end;
 
         TS_DEBUG_API extern string shift;
+
+        TS_DEBUG_API extern string crop;
+        TS_DEBUG_API extern string block_shape;
+
     }
 
 }

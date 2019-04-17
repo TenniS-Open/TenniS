@@ -63,6 +63,11 @@ namespace ts {
 
             const string &crop_nd() TS_NOEXCEPT { static string str = "crop_nd"; return str; }
 
+            const string &transpose_conv2d() TS_NOEXCEPT { static string str = "transpose_conv2d"; return str; }
+            const string &batchtospace4d() TS_NOEXCEPT { static string str = "BatchToSpace4D"; return str; }
+            const string &spacetobatch4d() TS_NOEXCEPT { static string str = "SpaceToBatch4D"; return str; }
+
+            const string &affine_sample2d() TS_NOEXCEPT { static string str = "affine_sample2d"; return str; }
             const string &copy() TS_NOEXCEPT {
                 static string str = "_copy";
                 return str;
@@ -119,5 +124,8 @@ namespace ts {
         string end = "end";
 
         string shift = "shift";
+        string crop = "crop";
+        string block_shape = "block_shape";
+
     }
 }
