@@ -97,7 +97,7 @@ def convert_conv2d(m, x, scope=None):
 
     if bias is not None:
         assert len(bias.shape) == 1
-        ts.zoo.add_bias(name=bias_name, x=x, b=bias, dim=1)
+        x = ts.zoo.add_bias(name=bias_name, x=x, b=bias, dim=1)
 
     x.name = scope
 
