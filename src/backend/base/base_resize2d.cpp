@@ -25,16 +25,13 @@ namespace ts {
             int width;
         };
 
-        int find_resized_height_dim(const int *size_data, int n) {
+        int find_resized_height_dim(const int *shape_data, const int *size_data, int n) {
             auto resized_height_dim = -1;
             for (int i = 0; i < n; ++i) {
-                if (size_data[i] == 0) {
-                    return -1;
-                }
-                if (size_data[i] > 0) {
-                    resized_height_dim = i;
-                    break;
-                }
+                if (size_data[i] == 0) return -1;
+                if (shape_data[i] == size_data[i] || size_data[i] < 0) continue;
+                resized_height_dim = i;
+                break;
             }
             if (resized_height_dim < 0 ||
                 resized_height_dim >= n - 1 ||
@@ -42,9 +39,9 @@ namespace ts {
                 return -1;
             }
             for (int i = resized_height_dim + 2; i < n; ++i) {
-                if (size_data[i] >= 0) {
-                    return -1;
-                }
+                if (size_data[i] == 0) return -1;
+                if (shape_data[i] == size_data[i] || size_data[i] < 0) continue;
+                return -1;
             }
             return resized_height_dim;
         }
@@ -58,10 +55,13 @@ namespace ts {
             TS_AUTO_CHECK(size.dims() == 1 && x.dims() == size.size(0));
             TS_AUTO_CHECK(size.size(0) >= 2);
 
+            auto &shape = x.sizes();
+            auto shape_data = shape.data();
+
             auto n = size.size(0);
             auto size_data = size.data<int32_t>();
 
-            auto resized_height_dim = find_resized_height_dim(size_data, n);
+            auto resized_height_dim = find_resized_height_dim(shape_data, size_data, n);
             if (resized_height_dim < 0) {
                 TS_LOG_ERROR << "Can not resize " << to_string(x.sizes())
                              << " to " << to_string(Shape(size_data, size_data + n)) << eject;
