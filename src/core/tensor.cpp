@@ -228,6 +228,10 @@ namespace ts {
         return m_fields.at(offset - 1);
     }
 
+    Tensor Tensor::field(int offset) const {
+        return field(size_t(offset >= 0 ? offset : int(fields_count()) + offset));
+    }
+
     void Tensor::field(size_t offset, const Tensor::self &value) {
         if (offset == 0) {
             this->m_memory = value.m_memory;
@@ -239,6 +243,10 @@ namespace ts {
                          << fields_count() << ")" << eject;
         }
         m_fields.at(offset - 1) = value;
+    }
+
+    void Tensor::field(int offset, const Tensor::self &value) {
+        field(size_t(offset >= 0 ? offset : int(fields_count()) + offset), value);
     }
 
     size_t Tensor::fields_count() const {
@@ -561,6 +569,14 @@ namespace ts {
     TensorPrototype::TensorPrototype(const std::vector<Tensor::Prototype> &fields)
         : supper() {
         this->pack(fields);
+    }
+
+    TensorPrototype::supper TensorPrototype::field(int offset) const {
+        return field(size_t(offset >= 0 ? offset : int(fields_count()) + offset));
+    }
+
+    void TensorPrototype::field(int offset, const TensorPrototype::supper &value) {
+        return field(size_t(offset >= 0 ? offset : int(fields_count()) + offset), value);
     }
 
     std::ostream &operator<<(std::ostream &out, const Tensor::Prototype &proto) {

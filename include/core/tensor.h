@@ -197,7 +197,11 @@ namespace ts {
 
         Tensor field(size_t offset) const;
 
+        Tensor field(int offset) const;
+
         void field(size_t offset, const self &value);
+
+        void field(int offset, const self &value);
 
         void pack(const std::vector<self> &fields);
 
@@ -319,7 +323,11 @@ namespace ts {
 
         supper field(size_t offset) const;
 
+        supper field(int offset) const;
+
         void field(size_t offset, const supper &value);
+
+        void field(int offset, const supper &value);
 
         void pack(const std::vector<supper> &fields);
 
