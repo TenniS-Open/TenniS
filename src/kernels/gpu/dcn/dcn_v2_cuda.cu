@@ -95,7 +95,10 @@ namespace ts {
         Tensor output;
         if (buffer_output != nullptr) {
             output = *buffer_output;
-            TS_AUTO_CHECK(output.device() == input.device() && output.proto() == Tensor::Prototype(input.dtype(), {batch, channels_out, height_out, width_out}));
+            TS_AUTO_CHECK(output.device() == input.device() && output.proto() == Tensor::Prototype(input.dtype(),
+                                                                                                   {batch, channels_out,
+                                                                                                    height_out,
+                                                                                                    width_out}));
         } else {
             output = dcn::empty(input.dtype(), {batch, channels_out, height_out, width_out}, input.device());
         }

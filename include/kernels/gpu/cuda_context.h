@@ -4,7 +4,6 @@
 #include "global/device_admin.h"
 #include "core/device.h"
 #include "utils/log.h"
-#include "cublas_v2.h"
 
 #include <cublas_v2.h>
 #include <cuda_runtime.h>

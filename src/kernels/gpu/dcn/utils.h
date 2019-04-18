@@ -13,6 +13,8 @@
 #include "core/device_context.h"
 #include "kernels/gpu/cuda_context.h"
 
+// #define __HIP_PLATFORM_HCC__
+
 namespace ts {
     namespace dcn {
         inline Tensor empty(const Tensor::Prototype &proto, const MemoryDevice &device) {
@@ -27,11 +29,23 @@ namespace ts {
             return std::move(tensor);
         }
 
+        inline Tensor zeros(const Tensor::Prototype &proto, const MemoryDevice &device) {
+            Tensor tensor = empty(proto, device);
+            Tensor one = tensor::build(proto.dtype(), 0);
+            memset(tensor.data(), tensor.device(), tensor.count() * tensor.proto().type_bytes(),
+                   one.data(), one.device(), one.count() * one.proto().type_bytes());
+            return std::move(tensor);
+        }
+
         inline Tensor empty(DTYPE dtype, const Shape &shape, const MemoryDevice &device) {
             return empty(Tensor::Prototype(dtype, shape), device);
         }
 
         inline Tensor ones(DTYPE dtype, const Shape &shape, const MemoryDevice &device) {
+            return ones(Tensor::Prototype(dtype, shape), device);
+        }
+
+        inline Tensor zeros(DTYPE dtype, const Shape &shape, const MemoryDevice &device) {
             return ones(Tensor::Prototype(dtype, shape), device);
         }
 
@@ -79,14 +93,16 @@ namespace ts {
             }
         }
 
-
-        static void CudaBlas_SgemmBatched(char transa, char transb, int64_t m, int64_t n, int64_t k,
-                                   float alpha, const float *a[], int64_t lda, const float *b[], int64_t ldb,
-                                   float beta, float *c[], int64_t ldc, int64_t batchCount) {
-            if ((m >= INT_MAX) || (n >= INT_MAX) || (k >= INT_MAX) ||
-                (lda >= INT_MAX) || (ldb >= INT_MAX) || (ldc >= INT_MAX) || (batchCount >= INT_MAX)) {
-                TS_LOG_ERROR << "Cublas_SgemmBatched only supports m, n, k, lda, ldb, ldc, batchCount"
-                        "with the bound [val] <= " << INT_MAX << eject;
+        static void CudaBlas_SgemmStridedBatched(char transa, char transb, int64_t m, int64_t n, int64_t k,
+                                                 float alpha, const float *a, int64_t lda, int64_t strideA,
+                                                 const float *b,
+                                                 int64_t ldb, int64_t strideB,
+                                                 float beta, float *c, int64_t ldc, int64_t strideC,
+                                                 int64_t batchCount) {
+            if ((m >= INT_MAX) || (n >= INT_MAX) || (k >= INT_MAX) || (lda >= INT_MAX) ||
+                (ldb >= INT_MAX) || (ldc >= INT_MAX) || (batchCount >= INT_MAX)) {
+                TS_LOG_ERROR << "Cublas_SgemmStridedBatched only supports m, n, k, lda, ldb, ldc, batchCount"
+                                "with the bound [val] <= " << INT_MAX << eject;
             }
 
             adjustLdLevel3(transa, transb, m, n, k, &lda, &ldb, &ldc);
@@ -94,17 +110,56 @@ namespace ts {
             cublasOperation_t opb = convertTransToCublasOperation(transb);
 
             auto &context = ctx::ref<DeviceContext>();
-            auto* handle = reinterpret_cast<CUDAContextHandle*>(context.handle);
+            auto *handle = reinterpret_cast<CUDAContextHandle *>(context.handle);
 
+            // cublasHandle_t handle = THCState_getCurrentBlasHandle(state);
+            // cublasSetStream(handle, THCState_getCurrentStream(state));
+            if (CUBLAS_STATUS_SUCCESS != cublasSgemmStridedBatched(handle->cublas_handle(),
+                                                                   opa, opb, (int) m, (int) n, (int) k,
+                                                                   &alpha, a, (int) lda, strideA, b, (int) ldb, strideB,
+                                                                   &beta, c, (int) ldc, strideC,
+                                                                   (int) batchCount)) {
+                TS_LOG_ERROR << "Run cublasSgemmStridedBatched failed." << eject;
+            }
+        }
+
+        static void CudaBlas_SgemmBatched(char transa, char transb, int64_t m, int64_t n, int64_t k,
+                                          float alpha, const float *a[], int64_t lda, const float *b[], int64_t ldb,
+                                          float beta, float *c[], int64_t ldc, int64_t batchCount) {
+            if ((m >= INT_MAX) || (n >= INT_MAX) || (k >= INT_MAX) ||
+                (lda >= INT_MAX) || (ldb >= INT_MAX) || (ldc >= INT_MAX) || (batchCount >= INT_MAX)) {
+                TS_LOG_ERROR << "Cublas_SgemmBatched only supports m, n, k, lda, ldb, ldc, batchCount"
+                                "with the bound [val] <= " << INT_MAX << eject;
+            }
+
+#ifdef __HIP_PLATFORM_HCC__
+
+            const int64_t stridea = (transa == 'N' || transa == 'n') ? lda * k : lda * n;
+            const int64_t strideb = (transb == 'N' || transb == 'n') ? ldb * n : ldb * k;
+            const int64_t stridec = ldc * n;
+
+            CudaBlas_SgemmStridedBatched(transa, transb, m, n, k,
+                                         alpha, *a, lda, stridea, *b, ldb, strideb, beta, *c, ldc,
+                                         stridec, batchCount);
+
+#else
+
+            adjustLdLevel3(transa, transb, m, n, k, &lda, &ldb, &ldc);
+            cublasOperation_t opa = convertTransToCublasOperation(transa);
+            cublasOperation_t opb = convertTransToCublasOperation(transb);
+
+            auto &context = ctx::ref<DeviceContext>();
+            auto *handle = reinterpret_cast<CUDAContextHandle *>(context.handle);
 
             // cublasHandle_t handle = THCState_getCurrentBlasHandle(state);
             // cublasSetStream(handle, THCState_getCurrentStream(state));
             if (CUBLAS_STATUS_SUCCESS != cublasSgemmBatched(handle->cublas_handle(),
-                                             opa, opb, (int) m, (int) n, (int) k,
-                                             &alpha, a, (int) lda, b, (int) ldb, &beta, c, (int) ldc,
-                                             (int) batchCount)) {
-                TS_LOG_ERROR << eject;
+                                                            opa, opb, (int) m, (int) n, (int) k,
+                                                            &alpha, a, (int) lda, b, (int) ldb, &beta, c, (int) ldc,
+                                                            (int) batchCount)) {
+                TS_LOG_ERROR << "Run cublasSgemmBatched failed." << eject;
             }
+#endif
         }
     }
 }
