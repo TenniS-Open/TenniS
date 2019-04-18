@@ -50,7 +50,7 @@ def data(name, value, device=None):
 def field(name, input, offset):
     # type: (str, Node, int) -> Node
     node = Node(op=Name.Layer.field, name=name)
-    node.set(Name.offset, offset)
+    node.set(Name.offset, offset, numpy.int32)
     Node.Link(node=node, inputs=[input])
     return node
 

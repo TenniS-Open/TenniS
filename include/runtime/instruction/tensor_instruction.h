@@ -15,7 +15,7 @@ namespace ts {
             static Instruction::shared pack(size_t size);
 
             // [-1, +1, e]
-            static Instruction::shared field(size_t index);
+            static Instruction::shared field(int index);
         };
     }
 }
