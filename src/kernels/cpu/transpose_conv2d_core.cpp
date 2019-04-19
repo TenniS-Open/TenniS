@@ -10,7 +10,7 @@
 #include <kernels/cpu/math_cpu.h>
 #include <kernels/cpu/im2col.h>
 
-
+#include <fstream>
 //#include "kernels/common/simd.h"
 #ifdef TS_USE_CBLAS
 #include <kernels/cblas/math_cblas.h>
@@ -55,18 +55,8 @@ static void cpu_transpose_conv2d_nchw_compute_run(const Tensor &x, const Padding
             col_shape[0] = col_buffer_size;
             col_tensor = stack.make(out.dtype(), col_shape, MemoryDevice(CPU));
             col_buffer = col_tensor.data<T>();
-          
-            //std::cout << "input:" << std::endl; 
-            for(int m=0; m <x.count(); m++) {
-                std::cout << pinput[m] << ",";
-            }
-
-            //std::cout << "input:--end" << std::endl; 
-            //std::cout << "kernel_dims:" << kernel_dims << std::endl;
-
-            //std::cout << "conv_out_spatial_dim:" << conv_out_spatial_dim << std::endl;
-            //std::cout << "weight_shape[0]:" << weight_shape[0] << std::endl;
-            //std::cout << "col_buffer_size:" << col_buffer_size << std::endl;
+         
+ 
             for (int i = 0; i < number; i++) {
 #ifdef TS_USE_CBLAS
                 cblas::math<T>::gemm(ts::blas::Trans, ts::blas::NoTrans, kernel_dims, conv_out_spatial_dim,
@@ -77,13 +67,6 @@ static void cpu_transpose_conv2d_nchw_compute_run(const Tensor &x, const Padding
 #endif
  
                
-                std::cout << "------------------------" << std::endl;
-                for(int m=0; m<kernel_dims * conv_out_spatial_dim; m++) {
-                     if(m % 4 == 0) std::cout << std::endl;
-                     std::cout << col_buffer[m] << ",";
-                }
-
-                std::cout << std::endl;
                 if (is_1x1_conv) {
                     std::memcpy(poutput, col_buffer, sizeof(T)*col_buffer_size);
                 } else {
