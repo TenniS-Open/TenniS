@@ -33,6 +33,12 @@ namespace ts {
         {
             break;
         }
+        case ts::DeviceAdmin::SYNCHRONIZE:
+        {
+            auto cuda_context = reinterpret_cast<CUDAContextHandle*>(*handle)
+            cudaStreamSynchronize(cuda_context->stream());
+            break;
+        }
         default:
             break;
         }

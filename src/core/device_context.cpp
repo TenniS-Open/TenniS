@@ -38,8 +38,26 @@ namespace ts {
         }
     }
 
+    void DeviceContext::synchronize() {
+        if (m_device_admin != nullptr && this->handle != nullptr) {
+            m_device_admin(&this->handle, computing_device.id(), DeviceAdmin::SYNCHRONIZE);
+        }
+    }
+
     DeviceContext::DeviceContext(ComputingDevice computing_device) {
         this->initialize(computing_device);
+    }
+
+    DeviceContext::self *DeviceContext::Switch(DeviceContext::self *context) {
+        auto pre_context = ctx::of<DeviceContext>::get();
+        if (pre_context != nullptr && pre_context != context) {
+            pre_context->synchronize();
+        }
+        if (context != nullptr) {
+            context->active();
+        }
+        ctx::of<self>::set(context);
+        return pre_context;
     }
 }
 

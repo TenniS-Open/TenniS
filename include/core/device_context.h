@@ -31,6 +31,15 @@ namespace ts {
         void finalize();
 
         void active();
+        void synchronize();
+
+        /**
+         *
+         * @param context new-context
+         * @return return pre-device context
+         * if new-context is not pre-context than synchronize the pre-context
+         */
+        static self* Switch(self *context);
 
         /**
          * pointing to device operating self-defined structure
