@@ -127,6 +127,42 @@ namespace ts {
             return dolly;
         }
 
+//        shared prism(const _KEY &key) const {
+//            auto _write = this->lock_write();
+//            std::shared_ptr<self> dolly(new self);
+//            if (key == m_default_key) {
+//                dolly->m_default_key = m_default_key;
+//                dolly->m_default_value = m_default_value;
+//                dolly->m_sync_values = m_sync_values;
+//            } else {
+//                auto copy_sync_values = m_sync_values;
+//                auto it = copy_sync_values.find(m_default_key);
+//                if (it != copy_sync_values.end()) {
+//                    it->second = m_default_key;
+//                } else {
+//                    this->copy_sync_values.insert(std::make_pair(m_default_key, m_default_key));
+//                }
+//                auto copy_default_key = key;
+//                _VALUE copy_default_value;
+//
+//                auto copy_it = m_sync_values.find(copy_default_key);
+//                if (copy_it != m_sync_values.end()) {
+//                    copy_default_value = copy_it->second;
+//                } else {
+//                    copy_default_value = this->sync_insert(copy_default_key);
+//                }
+//                dolly->m_default_key = copy_default_key;
+//                dolly->m_default_value = copy_default_value;
+//                dolly->m_sync_values = copy_sync_values;
+//            }
+//
+//            dolly->m_mutex = nullptr;
+//            dolly->m_hanlder = m_hanlder;
+//            dolly->m_locked = m_locked;
+//
+//            return std::move(dolly);
+//        }
+
     private:
         SyncBlock() = default;
 
