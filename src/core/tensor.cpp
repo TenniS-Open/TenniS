@@ -391,6 +391,23 @@ namespace ts {
         return weak_tensor;
     }
 
+    Tensor Tensor::strong() const {
+        Tensor strong_tensor;
+        strong_tensor.m_memory = m_memory.strong();
+        strong_tensor.m_proto = m_proto;
+
+        if (!m_fields.empty()) {
+            std::vector<self> strong_fields(m_fields.size());
+            for (size_t i = 0; i < m_fields.size(); ++i) {
+                strong_fields[i] = m_fields.at(i).strong();
+            }
+
+            strong_tensor.m_fields = std::vector<self>(std::move(strong_fields));
+        }
+
+        return strong_tensor;
+    }
+
     bool Tensor::has_shape(const Shape &shape) const {
         auto &this_shape = this->sizes();
         if (this_shape.size() != shape.size()) return false;

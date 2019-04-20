@@ -99,7 +99,7 @@ ts_Tensor *ts_Tensor_clone(ts_Tensor *tensor) {
 ts_bool ts_Tensor_sync_cpu(ts_Tensor *tensor) {
     TRY_HEAD
     if (!tensor) throw Exception("NullPointerException: @param: 1");
-    (*tensor)->sync(MemoryDevice(CPU));
+    **tensor = (*tensor)->view(MemoryDevice(CPU)).strong();
     RETURN_OR_CATCH(true, false)
 }
 

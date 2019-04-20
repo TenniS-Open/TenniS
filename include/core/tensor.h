@@ -253,6 +253,12 @@ namespace ts {
          */
         Tensor weak() const;
 
+        /**
+         * strong tensor can used in outside
+         * @return strong tensor
+         */
+        Tensor strong() const;
+
         bool has_shape(const Shape &shape) const;
 
         bool has_shape(const std::initializer_list<int> &shape) const {
