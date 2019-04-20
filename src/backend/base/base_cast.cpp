@@ -46,14 +46,14 @@ namespace ts {
 
         void Cast::cast(const Tensor &x, DTYPE dtype, Tensor &out) {
             if (x.dtype() == dtype) {
-                auto src = x.sync();
-                auto dst = out.sync();
+                auto src = x.weak_memory();
+                auto dst = out.weak_memory();
                 memcpy(dst, src);
                 return;
             }
             auto temp = tensor::cast(dtype, x);
-            auto src = temp.sync();
-            auto dst = out.sync();
+            auto src = temp.weak_memory();
+            auto dst = out.weak_memory();
             memcpy(dst, src);
         }
     }
