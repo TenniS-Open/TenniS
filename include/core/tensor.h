@@ -225,25 +225,14 @@ namespace ts {
 
         HypeShape hype_shape() const { return HypeShape(this->sizes()); }
 
-        TensorMemory::shared locked() { return m_memory->locked(); }
-
         /**
-         * @return weak memory
+         * got weak memory, this Memory will lose after Tensor deleted
+         * @return
          */
-        Memory sync() { return m_memory->sync(); }
+        Memory weak_memory() const;
 
         /**
-         * @return weak memory
-         */
-        Memory sync() const { return m_memory->sync(); }
-
-        /**
-         * @return weak memory
-         */
-        Memory sync(const MemoryDevice &device) { return m_memory->sync(device); }
-
-        /**
-         * @return weak tensor, can not used in long time
+         * @return strong tensor
          */
         Tensor view(const MemoryDevice &device) const;
 
