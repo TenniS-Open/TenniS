@@ -82,7 +82,7 @@ namespace ts {
 
     template<typename T>
     typename __thread_local_lite_context<T>::context const __thread_local_lite_context<T>::get() {
-        if (m_ctx == nullptr) throw NoLiteContextException(typeid(*(T*)(m_ctx)).name());
+        if (m_ctx == nullptr) throw NoLiteContextException(typeid(T).name());
         return m_ctx;
     }
 
