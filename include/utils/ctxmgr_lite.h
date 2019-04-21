@@ -99,6 +99,7 @@ namespace ts {
         }
     };
 
+    TS_DEBUG_API std::string classname(const std::string &name);
 }
 
 #endif //TENSORSTACK_UTILS_CTXMGR_LITE_H
