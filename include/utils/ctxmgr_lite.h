@@ -17,6 +17,10 @@ namespace ts {
 
         explicit NoLiteContextException(const std::thread::id &id);
 
+        NoLiteContextException(const std::string &name);
+
+        explicit NoLiteContextException(const std::string &name, const std::thread::id &id);
+
     private:
         std::thread::id m_thread_id;
     };

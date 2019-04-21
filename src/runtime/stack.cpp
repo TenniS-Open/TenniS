@@ -3,6 +3,7 @@
 //
 
 #include "runtime/stack.h"
+#include "core/device_context.h"
 
 namespace ts {
 
@@ -116,5 +117,33 @@ namespace ts {
             TS_AUTO_CHECK(this->m_converter != nullptr);
         }
         return this->m_converter;
+    }
+
+    Tensor Stack::make(Tensor::InFlow in_flow, const Tensor::Prototype &proto) {
+        switch (in_flow) {
+            case Tensor::InFlow::HOST: {
+                return make(proto, MemoryDevice(CPU, 0));
+                break;
+            }
+            case Tensor::InFlow::DEVICE: {
+                auto device = ctx::of<DeviceContext>::ref().memory_device;
+                return make(proto, device);
+                break;
+            }
+        }
+    }
+
+    Tensor Stack::make(Tensor::InFlow in_flow, const TensorPrototype &proto) {
+        switch (in_flow) {
+            case Tensor::InFlow::HOST: {
+                return make(proto, MemoryDevice(CPU, 0));
+                break;
+            }
+            case Tensor::InFlow::DEVICE: {
+                auto device = ctx::of<DeviceContext>::ref().memory_device;
+                return make(proto, device);
+                break;
+            }
+        }
     }
 }

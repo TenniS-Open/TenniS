@@ -13,6 +13,9 @@
 #include <numeric>
 #include <mutex>
 
+#include <core/device_context.h>
+#include <runtime/runtime.h>
+
 namespace ts {
     static Smart<SyncMemory> empty_memory() {
         static std::once_flag _empty_memory_flag;
@@ -521,6 +524,64 @@ namespace ts {
 
     Memory Tensor::weak_memory() const {
         return m_memory->weak_memory();
+    }
+
+    Tensor::Tensor(Tensor::InFlow in_flow, const Tensor::Prototype &proto, const MemoryDevice &device) {
+        switch (in_flow) {
+            case InFlow::HOST: {
+                auto flow = ctx::of<RuntimeContext>::ref().flow();
+                if (flow) {
+                    *this = Tensor(flow, proto);
+                } else {
+                    throw Exception(std::string("Not flow binding in context: <") + typeid(RuntimeContext).name() + ">");
+                }
+                break;
+            }
+            case InFlow::DEVICE: {
+                auto flow = ctx::of<RuntimeContext>::ref().flow();
+                if (flow) {
+                    *this = Tensor(flow, proto, device);
+                } else {
+                    throw Exception(std::string("Not flow binding in context: <") + typeid(RuntimeContext).name() + ">");
+                }
+                break;
+            }
+        }
+    }
+
+    Tensor::Tensor(Tensor::InFlow in_flow, const Tensor::Prototype &proto) {
+        switch (in_flow) {
+            case InFlow::HOST: {
+                auto flow = ctx::of<RuntimeContext>::ref().flow();
+                if (flow) {
+                    *this = Tensor(flow, proto);
+                } else {
+                    throw Exception(std::string("Not flow binding in context: <") + typeid(RuntimeContext).name() + ">");
+                }
+                break;
+            }
+            case InFlow::DEVICE: {
+                auto flow = ctx::of<RuntimeContext>::ref().flow();
+                auto device = ctx::of<DeviceContext>::ref().memory_device;
+                if (flow) {
+                    *this = Tensor(flow, proto, device);
+                } else {
+                    throw Exception(std::string("Not flow binding in context: <") + typeid(RuntimeContext).name() + ">");
+                }
+                break;
+            }
+        }
+    }
+
+    Tensor Tensor::view(Tensor::InFlow in_flow) const {
+        switch (in_flow) {
+            case InFlow::HOST: {
+                return view(MemoryDevice(CPU, 0));
+            }
+            case InFlow::DEVICE: {
+                return view(ctx::of<DeviceContext>::ref().memory_device);
+            }
+        }
     }
 
 #undef FAIL_ARG

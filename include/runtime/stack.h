@@ -97,6 +97,28 @@ namespace ts {
         Tensor make(const TensorPrototype &proto, const MemoryDevice &device);
 
         /**
+         *
+         * @param in_flow
+         * @param proto
+         * @return new Tensor
+         * Notice: moptional have context:DeviceContext
+         * DeviceContext must given with in_flow=InFlow::DEVICE,
+         * if in_flow=InFlow::HOST, use CPU:0 memory device.
+         */
+        Tensor make(Tensor::InFlow in_flow, const Tensor::Prototype &proto);
+
+        /**
+         *
+         * @param in_flow
+         * @param proto
+         * @return new Tensor
+         * Notice: moptional have context:DeviceContext
+         * DeviceContext must given with in_flow=InFlow::DEVICE,
+         * if in_flow=InFlow::HOST, use CPU:0 memory device.
+         */
+        Tensor make(Tensor::InFlow in_flow, const TensorPrototype &proto);
+
+        /**
          * Push tensor with dtype and shape
          * @param dtype new tensor's dtype
          * @param shape new tensor's shape
