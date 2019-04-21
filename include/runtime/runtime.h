@@ -20,6 +20,8 @@ namespace ts {
 
         RuntimeContext();
 
+        explicit RuntimeContext(const MemoryDevice &device);
+
         RuntimeContext(const self &) = delete;
         self &operator=(const self &) = delete;
 
@@ -34,9 +36,9 @@ namespace ts {
 
         ThreadPool &thread_pool();
 
-        void bind_flow(SyncMemoryController::shared flow);
+         void bind_flow(SyncMemoryController::shared flow);
 
-        void bind_dynamic(SyncMemoryController::shared dynamic);
+         void bind_dynamic(SyncMemoryController::shared dynamic);
 
         SyncMemoryController::shared flow() const;
 

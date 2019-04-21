@@ -9,11 +9,16 @@
 #include "utils/ctxmgr_lite_support.h"
 
 #include <algorithm>
+#include <memory/flow.h>
 
 namespace ts {
     RuntimeContext::RuntimeContext():
-        m_computing_thread_number(1) {
+            m_computing_thread_number(1) {
         this->m_thread_pool = std::make_shared<ThreadPool>(0);
+    }
+    RuntimeContext::RuntimeContext(const MemoryDevice &device): self() {
+        this->m_flow = HypeSyncMemoryController<FlowMemoryController>::Make(device, false);
+        this->m_dynamic = DynamicSyncMemoryController::Make(device, false);
     }
 
     void RuntimeContext::set_computing_thread_number(int computing_thread_number) {

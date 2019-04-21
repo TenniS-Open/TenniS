@@ -99,6 +99,11 @@ namespace ts {
         using self = Tensor;    ///< self class
         using shared = std::shared_ptr<self>;  ///< smart pointer
 
+        enum class InFlow : int32_t {
+            HOST = 0,
+            DEVICE = 1,
+        };
+
         Tensor(MemoryController::shared controller, DTYPE dtype,
                const Shape &_shape);   // allocate memory from controller
 
@@ -130,6 +135,29 @@ namespace ts {
         Tensor(const Smart<TensorMemory> &memory, const Prototype &proto);
 
         Tensor();
+
+        /**
+         *
+         * @param in_flow HOST or DEVICE given in DeviceContext
+         * @param proto
+         * Notice: must have context:RuntimeContext, optional have context:DeviceContext
+         * RuntimeContext give flow memory controller
+         * DeviceContext must given with in_flow=InFlow::DEVICE,
+         * if in_flow=InFlow::HOST, use CPU:0 memory device.
+         */
+        Tensor(InFlow in_flow, const Prototype &proto);
+
+        /**
+         *
+         * @param in_flow HOST or DEVICE given in DeviceContext
+         * @param proto
+         * @param device if in_flow=InFlow::HOST, the device will discard, or device means using this device
+         * Notice: must have context:RuntimeContext, optional have context:DeviceContext
+         * RuntimeContext give flow memory controller
+         * DeviceContext must given with in_flow=InFlow::DEVICE,
+         * if in_flow=InFlow::HOST, use CPU:0 memory device.
+         */
+        Tensor(InFlow in_flow, const Prototype &proto, const MemoryDevice &device);
 
         Tensor(const self &) = default;
 
@@ -235,6 +263,15 @@ namespace ts {
          * @return strong tensor
          */
         Tensor view(const MemoryDevice &device) const;
+
+        /**
+         *
+         * @param in_flow
+         * @return strong view tensor
+         * context::DeviceContext must given with in_flow=InFlow::DEVICE,
+         * if in_flow=InFlow::HOST, use CPU:0 memory device.
+         */
+        Tensor view(InFlow in_flow) const;
 
         /**
          * weak tensor can not used in long time
