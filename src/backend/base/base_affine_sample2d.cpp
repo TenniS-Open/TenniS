@@ -54,7 +54,7 @@ namespace ts {
             std::cout << dim << std::endl;
             TS_AUTO_CHECK((dim >= 0) && (dim + 1  < input_shape.size()));
 
-            auto &size_tensor = stack[1];
+            auto size_tensor = tensor::cast(INT32, stack[1]);
 
             TS_AUTO_CHECK(size_tensor.count() == 2);
            
@@ -94,7 +94,7 @@ namespace ts {
             
             // auto & size_tensor = stack[1];
 
-            auto & affine_tensor = stack[2];
+            auto affine_tensor = tensor::cast(INT32, stack[2]);
 
             Shape affine_shape = affine_tensor.sizes();
             
