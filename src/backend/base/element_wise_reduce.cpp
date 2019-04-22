@@ -138,11 +138,11 @@ namespace ts {
         } else if (is_scalar(rhs_shape)) {
             reduce_with_scalar(lhs, rhs, out);
         } else if (is_scalar(lhs_shape)) {
-            reduce_with_scalar(rhs, lhs, out);
+            reduce_with_scalar_cross(lhs, rhs, out);
         } else if (is_bias(lhs_shape, rhs_shape, dim)) {
             reduce_with_bias(lhs, rhs, out, dim);
         } else if (is_bias(rhs_shape, lhs_shape, dim)) {
-            reduce_with_bias(rhs, lhs, out, dim);
+            reduce_with_bias_cross(lhs, rhs, out, dim);
         } else {
             reduce_with_broadcast(lhs, rhs, out);
         }
@@ -159,5 +159,14 @@ namespace ts {
             }
         }
         return false;
+    }
+
+    void ElementWiseReduce::reduce_with_bias_cross(const Tensor &lhs, const Tensor &rhs, Tensor &out, int dim) {
+        (void)(dim);
+        this->reduce_with_broadcast(lhs, rhs, out);
+    }
+
+    void ElementWiseReduce::reduce_with_scalar_cross(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
+        this->reduce_with_broadcast(lhs, rhs, out);
     }
 }
