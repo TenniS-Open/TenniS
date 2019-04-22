@@ -19,7 +19,7 @@ namespace ts {
             Shape x_shape = x.sizes();
             Shape out_shape = out.sizes();
 
-            int input_number = x_shape[0];
+            // int input_number = x_shape[0];
             int input_channels = x_shape[1];
             int input_height = x_shape[2];
             int input_width = x_shape[3];
@@ -32,13 +32,13 @@ namespace ts {
             int input_number_step = input_channels * input_height * input_width;
             int input_channels_step = input_height * input_width;
             int input_height_step = input_width;
-            int input_width_step = 1;
+            // int input_width_step = 1;
 
-            int output_size = output_number * output_channels * output_height * output_width;
+            // int output_size = output_number * output_channels * output_height * output_width;
             int output_number_step = output_channels * output_height * output_width;
             int output_channels_step = output_height * output_width;
             int output_height_step = output_width;
-            int output_width_step = 1;
+            // int output_width_step = 1;
 
             const T * pinput = x.data<T>();
             T * poutput = out.data<T>();

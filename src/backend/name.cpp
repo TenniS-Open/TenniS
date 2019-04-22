@@ -67,8 +67,8 @@ namespace ts {
             const string &chunk() TS_NOEXCEPT { static string str = "chunk"; return str; }
 
             const string &transpose_conv2d() TS_NOEXCEPT { static string str = "transpose_conv2d"; return str; }
-            const string &batchtospace4d() TS_NOEXCEPT { static string str = "BatchToSpace4D"; return str; }
-            const string &spacetobatch4d() TS_NOEXCEPT { static string str = "SpaceToBatch4D"; return str; }
+            const string &batchtospace4d() TS_NOEXCEPT { static string str = "batchtospace4d"; return str; }
+            const string &spacetobatch4d() TS_NOEXCEPT { static string str = "spacetobatch4d"; return str; }
 
             const string &affine_sample2d() TS_NOEXCEPT { static string str = "affine_sample2d"; return str; }
             const string &copy() TS_NOEXCEPT {

@@ -92,7 +92,7 @@ namespace ts {
             auto out = *stack.push(output[0], memory_device);
             
             
-            auto & size_tensor = stack[1];
+            // auto & size_tensor = stack[1];
 
             auto & affine_tensor = stack[2];
 
@@ -100,7 +100,7 @@ namespace ts {
             
             TS_AUTO_CHECK((affine_shape.size() == 2) && (affine_shape[0] == 3) && (affine_shape[1] == 3));
 
-            int * pdata = size_tensor.data<int32_t>(); 
+            // int * pdata = size_tensor.data<int32_t>();
             float * paffine = affine_tensor.data<float>(); 
             
             affine_sample_run((const Tensor &)x, paffine[0], paffine[1], paffine[2], paffine[3], paffine[4], paffine[5], paffine[6], paffine[7], paffine[8],
