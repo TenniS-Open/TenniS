@@ -81,8 +81,8 @@ namespace ts {
             // broadcast C to output
             if (!near_zero(beta)) {
                 if (C.has_shape(out.sizes())) {
-                    auto dst = out.sync();
-                    auto src = C.sync();
+                    auto dst = out.weak_memory();
+                    auto src = C.weak_memory();
                     memcpy(dst, src);
                 } else {
                     gpu_gemm_broadcast_compute_run<T>(C, out);

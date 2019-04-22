@@ -582,6 +582,7 @@ namespace ts {
                 return view(ctx::of<DeviceContext>::ref().memory_device);
             }
         }
+        return *this;
     }
 
 #undef FAIL_ARG
