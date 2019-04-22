@@ -608,7 +608,7 @@ to tensor A * B);
 按照 `LRN` 的传统公式和做法
 
 
-### BatchToSpace4D(x..device) -> y.device
+### batch_to_space4d(x..device) -> y.device
 
 参数：
 - `crop` `Int[2, 2]` `[[crop_top, crop_bottom], [crop_left, crop_right]] `
@@ -619,7 +619,7 @@ to tensor A * B);
 见：[BathToSpace](https://www.w3cschool.cn/tensorflow_python/tensorflow_python-bnyg2ckl.html)
 
 
-### SpaceToBatch4D(x..device) -> y.device
+### space_to_batch4d(x..device) -> y.device
 
 参数：
 - `padding` `Int[2, 2]` `[[padding_top, padding_bottom], [padding_left, padding_right]] `
