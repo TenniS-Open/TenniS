@@ -23,6 +23,14 @@ namespace ts {
         }
 
         template<typename T>
+        static __global__ void reduce_operator_scalar_cross_kernel(T* data, int size, const T *scalar) {
+            int index = blockDim.x * blockIdx.x + threadIdx.x;
+            if (index < size) {
+                data[index] = scalar[0] - data[index];
+            }
+        }
+
+        template<typename T>
         static __global__ void reduce_operator_same_shape_kernel(T* data, const T*bias, int size) {
             int index = blockDim.x * blockIdx.x + threadIdx.x;
             if (index < size) {
@@ -37,6 +45,16 @@ namespace ts {
             if (index < size) {
                 int dim = index % ( step * slice ) / (step);
                 data[index] -= bias[dim];
+            }
+        }
+
+        template<typename T>
+        static __global__ void reduce_operator_bias_cross_kernel(T* data, int size, int step, int slice,
+                                                                 const T* bias, int biaslen ) {
+            int index = blockDim.x * blockIdx.x + threadIdx.x;
+            if (index < size) {
+                int dim = index % ( step * slice ) / (step);
+                data[index] = bias[dim] - data[index];
             }
         }
 
@@ -168,6 +186,18 @@ namespace ts {
             reduce_operator_scalar_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> (pout, out.count(), prhs);
         }
 
+        template<typename T>
+        static inline void sub_gpu_compute_run_scalar_cross(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
+            auto plhs = lhs.data<T>();
+            auto prhs = rhs.data<T>();
+            auto pout = out.data<T>();
+
+            memcpy((void*)pout, out.device(), out.count() * sizeof(T),
+                   (void*)prhs, rhs.device(), out.count() * sizeof(T));
+
+            reduce_operator_scalar_cross_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> (pout, out.count(), plhs);
+        }
+
 
         template<typename T>
         static inline void sub_gpu_compute_run_same_shape(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
@@ -198,6 +228,24 @@ namespace ts {
                    (void*)plhs, lhs.device(), out.count() * sizeof(T));
 
             reduce_operator_bias_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> (pout, out.count(), count, channels, prhs, rhs.count());
+
+        }
+
+        template<typename T>
+        static inline void sub_gpu_compute_run_bias_cross(const Tensor &lhs, const Tensor &rhs, Tensor &out, int dim) {
+            auto plhs = lhs.data<T>();
+            auto prhs = rhs.data<T>();
+            auto pout = out.data<T>();
+
+            auto &out_shape = out.sizes();
+            auto number = std::accumulate(out_shape.begin(), out_shape.begin() + dim, 1, std::multiplies<int>());
+            auto count = std::accumulate(out_shape.begin() + dim + 1, out_shape.end(), 1, std::multiplies<int>());
+            auto channels = out_shape[dim];
+
+            memcpy((void*)pout, out.device(), out.count() * sizeof(T),
+                   (void*)prhs, rhs.device(), out.count() * sizeof(T));
+
+            reduce_operator_bias_cross_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> (pout, out.count(), count, channels, plhs, lhs.count());
 
         }
 
@@ -280,6 +328,54 @@ namespace ts {
             switch(dtype) {
 #define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
         case DTYPE: { sub_gpu_compute_run_same_shape<TYPE>(lhs, rhs, out); break; }
+                DECLARE_COMPUTE_RUN(INT8, int8_t);
+                DECLARE_COMPUTE_RUN(UINT8, uint8_t);
+                DECLARE_COMPUTE_RUN(INT16, int16_t);
+                DECLARE_COMPUTE_RUN(UINT16, uint16_t);
+                DECLARE_COMPUTE_RUN(INT32, int32_t);
+                DECLARE_COMPUTE_RUN(UINT32, uint32_t);
+                DECLARE_COMPUTE_RUN(INT64, int64_t);
+                DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+                DECLARE_COMPUTE_RUN(FLOAT32, float);
+                DECLARE_COMPUTE_RUN(FLOAT64, double);
+#undef DECLARE_COMPUTE_RUN
+                default: {
+                    TS_LOG_ERROR << "sub not support this data type: " << dtype << eject;
+                    break;
+                }
+            }
+        }
+
+        void Sub::reduce_with_scalar_cross(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
+            // Notice: the all tensor' memory device are CPU, as given in running_memory_device
+            DTYPE dtype = out.dtype();
+            switch(dtype) {
+#define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
+        case DTYPE: { sub_gpu_compute_run_scalar_cross<TYPE>(lhs, rhs, out); break; }
+                DECLARE_COMPUTE_RUN(INT8, int8_t);
+                DECLARE_COMPUTE_RUN(UINT8, uint8_t);
+                DECLARE_COMPUTE_RUN(INT16, int16_t);
+                DECLARE_COMPUTE_RUN(UINT16, uint16_t);
+                DECLARE_COMPUTE_RUN(INT32, int32_t);
+                DECLARE_COMPUTE_RUN(UINT32, uint32_t);
+                DECLARE_COMPUTE_RUN(INT64, int64_t);
+                DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+                DECLARE_COMPUTE_RUN(FLOAT32, float);
+                DECLARE_COMPUTE_RUN(FLOAT64, double);
+#undef DECLARE_COMPUTE_RUN
+                default: {
+                    TS_LOG_ERROR << "sub not support this data type: " << dtype << eject;
+                    break;
+                }
+            }
+        }
+
+        void Sub::reduce_with_bias_cross(const Tensor &lhs, const Tensor &rhs, Tensor &out, int dim) {
+            // Notice: the all tensor' memory device are CPU, as given in running_memory_device
+            DTYPE dtype = out.dtype();
+            switch(dtype) {
+#define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
+        case DTYPE: { sub_gpu_compute_run_bias_cross<TYPE>(lhs, rhs, out, dim); break; }
                 DECLARE_COMPUTE_RUN(INT8, int8_t);
                 DECLARE_COMPUTE_RUN(UINT8, uint8_t);
                 DECLARE_COMPUTE_RUN(INT16, int16_t);

@@ -60,6 +60,24 @@ namespace ts {
 
         /**
          *
+         * @param lhs is bias on dim
+         * @param rhs not specific
+         * @param out
+         * @note all tensor's dtype is same, and all tensors' memory device are give in constructor
+         */
+        virtual void reduce_with_bias_cross(const Tensor &lhs, const Tensor &rhs, Tensor &out, int dim);
+
+        /**
+         *
+         * @param lhs is scalar
+         * @param rhs not specific
+         * @param out
+         * @note all tensor's dtype is same, and all tensors' memory device are give in constructor
+         */
+        virtual void reduce_with_scalar_cross(const Tensor &lhs, const Tensor &rhs, Tensor &out);
+
+        /**
+         *
          * @param [in/out] lhs_shape lhs' shape
          * @param [in/out] rhs_shape rhs' shape
          * @param [out] out_shape output shape
