@@ -2,6 +2,13 @@ import torch
 
 
 def convert(input_module, output_file, input, verbose=False):
+    """
+    :param input_module:
+    :param output_file:
+    :param input: tuple of input shape
+    :param verbose:
+    :return:
+    """
     torch_model = None
     if isinstance(input_module, str):
         torch_model = torch.load(input_module)

@@ -106,6 +106,7 @@ def convert_conv2d(m, x, scope=None):
 
 def convert_sequential(m, x, scope=None):
     # type: (torch.nn.modules.container.Sequential, ts.Node, str) -> ts.Node
+    assert isinstance(m, torch.nn.modules.container.Sequential)
     if scope is None:
         scope = ''
     for name, child in m.named_children():
@@ -140,7 +141,7 @@ def convert_module(m, x=None, scope=None):
             break
 
     if converter is None:
-        raise NotImplementedError("Can not find any converter for {}".format(cls))
+        raise NotImplementedError("No converter for {}, call stackbuilder.torch.module.register_module_converter first.".format(cls))
 
     if x is None:
         x = ts.menu.param("_input")

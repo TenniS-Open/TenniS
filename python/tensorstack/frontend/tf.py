@@ -33,6 +33,10 @@ class Name(object):
 def pooling2d_padding(name, x, padding, ksize, stride, format=zoo.Name.NCHW, padding_method=Name.SAME):
     assert isinstance(x, Node)
 
+    padding = zoo.adjust_padding(padding, format=format)
+    ksize = zoo.adjust_ksize(ksize, format=format)
+    stride = zoo.adjust_stride(stride, format=format)
+
     if padding_method not in {Name.SAME, Name.VALID}:
         raise NotImplementedError("padding_method = {}".format(padding_method))
 
@@ -60,6 +64,10 @@ def pooling2d(name, x, ksize, stride, type=zoo.Type.pooling_type.max, format=zoo
               padding_type=zoo.Type.padding_type.black,
               padding_method=Name.SAME):
     assert isinstance(x, Node)
+
+    padding = zoo.adjust_padding(padding, format=format)
+    ksize = zoo.adjust_ksize(ksize, format=format)
+    stride = zoo.adjust_stride(stride, format=format)
 
     if padding is None:
         padding = zoo.Default.padding()
