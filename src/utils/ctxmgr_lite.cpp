@@ -38,13 +38,13 @@ namespace ts {
 
 #if TS_PLATFORM_CC_GCC
 #include <cxxabi.h>
-    static std::string classname_gcc(const std::string &name) {
+    static ::std::string classname_gcc(const ::std::string &name) {
         size_t size = 0;
         int status = 0;
         char *demangled = abi::__cxa_demangle(name.c_str(), nullptr, &size, &status);
         if (demangled != nullptr) {
-            std::string parsed = demangled;
-            std::free(demangled);
+            ::std::string parsed = demangled;
+            ::std::free(demangled);
             return parsed;
         } else {
             return name;
@@ -52,7 +52,7 @@ namespace ts {
     }
 #endif
 
-    std::string classname(const std::string &name) {
+    ::std::string classname(const ::std::string &name) {
 #if TS_PLATFORM_CC_MSVC
         return name;
 #elif TS_PLATFORM_CC_MINGW
