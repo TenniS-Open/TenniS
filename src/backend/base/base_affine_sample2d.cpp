@@ -33,8 +33,6 @@ namespace ts {
             m_type = Affine_Sample2DType(tensor::to_int(type_tensor));
             m_dim = tensor::to_int(dim_tensor);
 
-            std::cout << "dim:" << m_dim << std::endl;
-            std::cout << "type:" << (int)m_type << std::endl;
             TS_AUTO_CHECK((m_type >= Affine_Sample2DType::LINEAR) && (m_type <= Affine_Sample2DType::NEAREST));
 
         }
@@ -94,7 +92,7 @@ namespace ts {
             
             // auto & size_tensor = stack[1];
 
-            auto affine_tensor = tensor::cast(INT32, stack[2]);
+            auto affine_tensor = tensor::cast(FLOAT32, stack[2]);
 
             Shape affine_shape = affine_tensor.sizes();
             
