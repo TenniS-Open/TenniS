@@ -37,41 +37,18 @@ namespace ts {
     }
 
 #if TS_PLATFORM_CC_GCC
-    static bool is_number(char ch) {
-        return ch >= '0' && ch <= '9';
-    }
-
-    static std::string parse_part(const char *str, const char **ret) {
-        char *end = nullptr;
-        auto num = std::strtol(str, &end, 10);
-        if (str == end) return "";
-        std::string parsed(end, end + num);
-        *ret = end + num;
-        return std::move(parsed);
-    }
-
-    static std::string parse_top(const char *str) {
-        if (*str == '\0') return "";
-        if (is_number(*str)) return parse_part(str, &str);
-        if (*str != 'N') return "";
-        ++str;
-        std::string parsed;
-        while (true) {
-            if (*str == 'E') break;
-            auto part = parse_part(str, &str);
-            if (part.empty()) return "";
-            if (!parsed.empty()) {
-                parsed += "::";
-            }
-            parsed += part;
-        }
-        return parsed;
-    }
-
+#include <cxxabi.h>
     static std::string classname_gcc(const std::string &name) {
-        auto parsed = parse_top(name.c_str());
-        if (parsed.empty()) return name;
-        return parsed;
+        size_t size = 0;
+        int status = 0;
+        char *demangled = abi::__cxa_demangle(name.c_str(), nullptr, &size, &status);
+        if (demangled != nullptr) {
+            std::string parsed = demangled;
+            std::free(demangled);
+            return parsed;
+        } else {
+            return name;
+        }
     }
 #endif
 
