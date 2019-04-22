@@ -19,7 +19,7 @@ namespace ts {
             field(name::stride, REQUIRED);
             field(name::dilation, OPTIONAL);
             field(name::typo::dialations, OPTIONAL);
-            field(name::output_shape, OPTIONAL);
+            /*field(name::output_shape, OPTIONAL);*/
         }
 
         static std::string to_string(const std::valarray<int> &arr) {
@@ -105,11 +105,14 @@ namespace ts {
                     m_dilation4[1] != 1) {
                     TS_LOG_ERROR << this->op() << " do not support dialations: " << to_string(m_dilation4) << eject;
                 }
+ 
+                /*
                 if (m_output_shape[0] > 0 ||
                     m_output_shape[1] > 0) {
                     TS_LOG_ERROR << this->op() << " do not support output_shape: " << to_string(m_output_shape)
                                  << eject;
                 }
+                */
             } else if (m_format == FORMAT_NHWC) {
                 if (m_padding4x2[0] != 0 ||
                     m_padding4x2[1] != 0 ||
@@ -125,11 +128,14 @@ namespace ts {
                     m_dilation4[3] != 1) {
                     TS_LOG_ERROR << this->op() << " do not support dialations: " << to_string(m_dilation4) << eject;
                 }
+
+                /*
                 if (m_output_shape[0] > 0 ||
                     m_output_shape[3] > 0) {
                     TS_LOG_ERROR << this->op() << " do not support output_shape: " << to_string(m_output_shape)
                                  << eject;
                 }
+                */
             }
         }
 
@@ -146,6 +152,7 @@ namespace ts {
 
             TS_AUTO_CHECK(w_tensor.size(0) == x_tensor.size(1));
 
+            /*
             if (m_output_shape.size() == 4) {
                 Tensor::Prototype out_proto;
 
@@ -165,6 +172,7 @@ namespace ts {
                 output[0] = out_proto;
                 return 1;
             }
+            */
 
             Size2D x;
             Size2D ksize;
