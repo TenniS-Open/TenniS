@@ -87,6 +87,12 @@ namespace ts {
         CUBIC = 1,
         NEAREST = 2,
     };
+
+    enum class Affine_Sample2DType : int {
+        LINEAR = 0,
+        CUBIC = 1,
+        NEAREST = 2,
+    };
 }
 
 #endif //TENSORSTACK_BACKEND_COMMON_STRUCTURE_H
