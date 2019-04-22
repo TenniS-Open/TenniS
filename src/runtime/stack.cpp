@@ -131,6 +131,7 @@ namespace ts {
                 break;
             }
         }
+        return make(proto);
     }
 
     Tensor Stack::make(Tensor::InFlow in_flow, const TensorPrototype &proto) {
@@ -145,5 +146,6 @@ namespace ts {
                 break;
             }
         }
+        return make(proto);
     }
 }
