@@ -44,5 +44,21 @@ namespace ts {
         Tensor resize2d(const Tensor &x, const std::vector<int32_t> &size, desc::ResizeType type) {
             return resize2d(x, tensor::from(size), type);
         }
+
+        Tensor add(const Tensor &lhs, const Tensor &rhs) {
+            return run(desc::add(), {lhs, rhs});
+        }
+
+        Tensor sub(const Tensor &lhs, const Tensor &rhs) {
+            return run(desc::sub(), {lhs, rhs});
+        }
+
+        Tensor mul(const Tensor &lhs, const Tensor &rhs) {
+            return run(desc::mul(), {lhs, rhs});
+        }
+
+        Tensor div(const Tensor &lhs, const Tensor &rhs) {
+            return run(desc::div(), {lhs, rhs});
+        }
     }
 }
