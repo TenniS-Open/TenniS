@@ -32,7 +32,6 @@ namespace ts {
                                      desc::ResizeType type = desc::ResizeType::LINEAR);
 
         TS_DEBUG_API Tensor resize2d(const Tensor &x, const std::vector<int32_t> &size, desc::ResizeType type = desc::ResizeType::LINEAR);
-        void run_const_nodes(const std::vector<Node> &nodes, std::vector<Node> &output_nodes);
 
     }
 }
