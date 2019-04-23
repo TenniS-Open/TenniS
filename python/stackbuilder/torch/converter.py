@@ -7,16 +7,57 @@ import numpy
 
 import tensorstack as ts
 
-# from .onnx import convert as convert_onnx
-# from ..onnx import converter as onnx_converter
+from .onnx import convert as convert_onnx
+from ..onnx import converter as onnx_converter
+import tempfile
 
 
-def convert(input_module, input, output_file):
+def convert_by_onnx(input_module, output_file, input, temp_onnx=None):
     """
     convert troch model to tsm
     :param input_module: torch.nn.Module or param can be parsed to troch.load(param)
-    :param input: list of tuple or ts.Node
     :param output_file: str of path to file
+    :param input: list of tuple or ts.Node
+    :return: ts.Module
+    """
+    torch_model = None
+    if isinstance(input_module, str):
+        torch_model = torch.load(input_module)
+    elif isinstance(input_module, torch.nn.Module):
+        torch_model = input_module
+    if torch_model is None:
+        raise NotImplementedError("Not supported model: {}".format(type(input_module)))
+    for param in torch_model.parameters():
+        param.requires_grad = False
+
+    for i in range(len(input)):
+        node = input[i]
+        if isinstance(node, (tuple, list)):
+            for i in node:
+                if not isinstance(i, (int, long)):
+                    raise RuntimeError("input must be a list of tuple[int]")
+        else:
+            raise RuntimeError("input must be a list of tuple[int]")
+
+    assert isinstance(torch_model, torch.nn.Module)
+
+    torch_model.eval()
+
+    temp_onnx_file = temp_onnx
+    if temp_onnx_file is None:
+        temp_onnx_file = tempfile.mkdtemp()
+
+    convert_onnx(torch_model, temp_onnx_file, input=input)
+
+    return onnx_converter.convert(temp_onnx_file, output_file)
+
+
+def convert(input_module, output_file, input):
+    """
+    convert troch model to tsm
+    :param input_module: torch.nn.Module or param can be parsed to troch.load(param)
+    :param output_file: str of path to file
+    :param input: list of tuple or ts.Node
     :return: ts.Module
     """
     torch_model = None
@@ -45,12 +86,12 @@ def convert(input_module, input, output_file):
         else:
             raise RuntimeError("input must be a list of tuple of ts.Node")
 
-    assert isinstance(input_module, torch.nn.Module)
+    assert isinstance(torch_model, torch.nn.Module)
 
     module = None
     torch_model.eval()
     with torch.no_grad():
-        ts_graph_outputs = convert_module(input_module, input_nodes)
+        ts_graph_outputs = convert_module(torch_model, input_nodes)
 
         ts_module = ts.module.Module()
         ts_module.load(ts_graph_outputs)
