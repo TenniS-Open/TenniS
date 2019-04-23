@@ -302,6 +302,14 @@ namespace ts {
                 }
             }
         }
+
+        void Mul::reduce_with_bias_cross(const Tensor &lhs, const Tensor &rhs, Tensor &out, int dim) {
+            this->reduce_with_bias(rhs, lhs, out, dim);
+        }
+
+        void Mul::reduce_with_scalar_cross(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
+            this->reduce_with_scalar(rhs, lhs, out);
+        }
     }
 }
 
