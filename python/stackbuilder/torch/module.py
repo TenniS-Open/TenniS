@@ -106,6 +106,7 @@ def convert_conv2d(m, x, scope=None):
 
 def convert_sequential(m, x, scope=None):
     # type: (torch.nn.modules.container.Sequential, ts.Node, str) -> ts.Node
+    assert isinstance(m, torch.nn.modules.container.Sequential)
     if scope is None:
         scope = ''
     for name, child in m.named_children():
@@ -115,13 +116,46 @@ def convert_sequential(m, x, scope=None):
 
 def convert_resnet(m, x, scope=None):
     # type: (torchvision.models.resnet.ResNet, ts.Node, str) -> ts.Node
+    assert isinstance(m, torchvision.models.resnet.ResNet)
     return convert_sequential(m, x, scope=scope)
+
+
+def convert_batch_norm2d(m, x, scope=None):
+    # type: (orch.nn.modules.batchnorm.BatchNorm2d, ts.Node, str) -> ts.Node
+    if isinstance(x, (tuple, list)):
+        x = x[0]
+
+    if scope is None:
+        scope = ""
+
+    assert isinstance(x, ts.Node)
+    assert isinstance(m, torch.nn.modules.batchnorm.BatchNorm2d)
+
+    running_mean = numpy.asarray(m.running_mean.cpu(), dtype=numpy.float32)
+    running_var = numpy.asarray(m.running_var.cpu(), dtype=numpy.float32)
+    weight = numpy.asarray(m.weight.cpu(), dtype=numpy.float32)
+    bias = numpy.asarray(m.bias.cpu(), dtype=numpy.float32)
+    eps = float(m.eps)
+
+    assert len(running_mean.shape) == 1
+    assert len(running_var.shape) == 1
+    assert len(weight.shape) == 1
+    assert len(bias.shape) == 1
+    assert running_mean.shape[0] == running_var.shape[0]
+    assert running_mean.shape[0] == weight.shape[0]
+    assert running_mean.shape[0] == bias.shape[0]
+
+    return ts.zoo.fused_batch_norm(name=scope, x=x,
+                                   mean=running_mean, variance=running_var,
+                                   scale=weight, bias=bias,
+                                   dim=1, epsilon=eps)
 
 
 module2converter = {
     torchvision.models.resnet.ResNet: convert_resnet,
     torch.nn.modules.container.Sequential: convert_sequential,
     torch.nn.modules.conv.Conv2d: convert_conv2d,
+    torch.nn.modules.batchnorm.BatchNorm2d: convert_batch_norm2d,
 }
 
 
@@ -140,7 +174,7 @@ def convert_module(m, x=None, scope=None):
             break
 
     if converter is None:
-        raise NotImplementedError("Can not find any converter for {}".format(cls))
+        raise NotImplementedError("No converter for {}, call stackbuilder.torch.module.register_module_converter first.".format(cls))
 
     if x is None:
         x = ts.menu.param("_input")

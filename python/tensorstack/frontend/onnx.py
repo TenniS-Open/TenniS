@@ -37,6 +37,10 @@ class Name(object):
 def pooling2d_padding(name, x, padding, ksize, stride, auto_pad=Name.NOTSET):
     assert isinstance(x, Node)
 
+    padding = zoo.adjust_padding(padding, format=zoo.Name.NCHW)
+    ksize = zoo.adjust_ksize(ksize, format=zoo.Name.NCHW)
+    stride = zoo.adjust_stride(stride, format=zoo.Name.NCHW)
+
     if auto_pad not in {Name.NOTSET, Name.SAME_UPPER, Name.SAME_LOWER, Name.VALID}:
         raise NotImplementedError("auto_pad = {}".format(auto_pad))
 
@@ -60,6 +64,10 @@ def pooling2d(name, x, ksize, stride, type=zoo.Type.pooling_type.max, format=zoo
               padding_type=zoo.Type.padding_type.black,
               auto_pad=Name.NOTSET):
     assert isinstance(x, Node)
+
+    padding = zoo.adjust_padding(padding, format=format)
+    ksize = zoo.adjust_ksize(ksize, format=format)
+    stride = zoo.adjust_stride(stride, format=format)
 
     if format != zoo.Name.NCHW:
         raise NotImplementedError("ONNX format = {}".format(format))
