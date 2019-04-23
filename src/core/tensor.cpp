@@ -315,7 +315,7 @@ namespace ts {
         uint8_t dtype_buffer;
         read_size += binio::read<uint8_t >(stream, dtype_buffer);
         dtype = DTYPE(dtype_buffer);
-        TS_AUTO_CHECK(dtype >= VOID && dtype <= UNKNOWN128);
+        TS_AUTO_CHECK(dtype >= 0);
         // 1.2 read sizes
         uint32_t size_buffer;
         read_size += binio::read<uint32_t>(stream, size_buffer);

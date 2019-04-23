@@ -80,6 +80,7 @@ namespace ts {
         BLACK = 0,
         COPY = 1,
         LOOP = 2,
+        WHITE = 3,
     };
 
     enum class Resize2DType : int {

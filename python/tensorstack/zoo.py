@@ -114,6 +114,7 @@ class Type(object):
         black = 0
         copy = 1
         loop = 2
+        white = 3   # denominator force be ksize * ksize
 
     class pooling_type(object):
         max = 0
