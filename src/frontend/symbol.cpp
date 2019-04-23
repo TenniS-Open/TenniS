@@ -21,5 +21,29 @@ namespace ts {
             Node::Link(node, {x, size});
             return node;
         }
+
+        Node add(const std::string &name, const Node &lhs, const Node &rhs) {
+            Node node = bubble::bubble(desc::add(), name);
+            Node::Link(node, {lhs, rhs});
+            return node;
+        }
+
+        Node sub(const std::string &name, const Node &lhs, const Node &rhs) {
+            Node node = bubble::bubble(desc::sub(), name);
+            Node::Link(node, {lhs, rhs});
+            return node;
+        }
+
+        Node mul(const std::string &name, const Node &lhs, const Node &rhs) {
+            Node node = bubble::bubble(desc::mul(), name);
+            Node::Link(node, {lhs, rhs});
+            return node;
+        }
+
+        Node div(const std::string &name, const Node &lhs, const Node &rhs) {
+            Node node = bubble::bubble(desc::div(), name);
+            Node::Link(node, {lhs, rhs});
+            return node;
+        }
     }
 }
