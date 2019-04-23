@@ -65,6 +65,9 @@ class Name(object):
         mode = "mode"
         value = "value"
 
+        count_include_pad = "count_include_pad"
+        ceil_mode = "ceil_mode"
+
     NOTSET = "NOTSET"
     SAME_UPPER = "SAME_UPPER"
     SAME_LOWER = "SAME_LOWER"
@@ -432,6 +435,13 @@ def convert_pooling2d_layer(node, input_nodes, output_names):
     strides = attr_dict[Name.Attr.strides]
     print("--##    Strides: {}".format(strides))
 
+    count_include_pad = False
+    if Name.Attr.count_include_pad in attr_dict:
+        count_include_pad = attr_dict[Name.Attr.count_include_pad] != 0
+    ceil_mode = False
+    if Name.Attr.ceil_mode in attr_dict:
+        ceil_mode = attr_dict[Name.Attr.ceil_mode] != 0
+
     if auto_pad != Name.NOTSET:
         raise NotImplementedError("auto_pad = {}".format(auto_pad))
 
@@ -451,14 +461,19 @@ def convert_pooling2d_layer(node, input_nodes, output_names):
         raise NotImplementedError("pooling type = {}".format(op_type))
     pool_type = onnx_op_type_to_ts_pool_type[op_type]
 
-    ts_node = onnx_node.pooling2d(node_name, x=x,
-                               ksize=[1, 1, kernel_shape[0], kernel_shape[1]],
-                               stride=[1, 1, strides[0], strides[1]],
-                               type=pool_type,
-                               format=ts.zoo.Name.NCHW,
-                               padding=[[0, 0], [0, 0], [pads[0], pads[2]], [pads[1], pads[3]]],
-                               auto_pad=auto_pad)
+    ts_padding_type = ts.zoo.Type.padding_type.black
+    if count_include_pad:
+        ts_padding_type = ts.zoo.Type.padding_type.white
 
+    ts_node = onnx_node.pooling2d(node_name, x=x,
+                                  ksize=[1, 1, kernel_shape[0], kernel_shape[1]],
+                                  stride=[1, 1, strides[0], strides[1]],
+                                  type=pool_type,
+                                  format=ts.zoo.Name.NCHW,
+                                  padding=[[0, 0], [0, 0], [pads[0], pads[2]], [pads[1], pads[3]]],
+                                  padding_type=ts_padding_type,
+                                  auto_pad=auto_pad,
+                                  ceil_mode=ceil_mode)
     return ts_node,
 
 

@@ -222,12 +222,12 @@ def adjust4d(format, base, shape):
     h = format4h(format)
     if shape is None:
         return base
-    if isinstance(shape, int):
+    if isinstance(shape, (int, long)):
         base[h] = shape
         base[h + 1] = shape
     elif isinstance(shape, (tuple, list)):
         for i in shape:
-            if not isinstance(i, int):
+            if not isinstance(i, (int, long)):
                 raise RuntimeError("Must be int list")
         if len(shape) == 1:
             base[h] = shape[0]
@@ -247,7 +247,7 @@ def adjust4x2d(format, base, shape):
     h = format4h(format)
     if shape is None:
         return base
-    if isinstance(shape, int):
+    if isinstance(shape, (int, long)):
         base[h][0] = shape
         base[h][1] = shape
         base[h + 1][0] = shape
