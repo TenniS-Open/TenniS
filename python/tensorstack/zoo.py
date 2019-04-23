@@ -11,6 +11,9 @@ from . import tensor
 
 import numpy
 
+import sys
+if sys.version > '3':
+    long = int
 
 class Name(object):
     NCHW = "NCHW"
