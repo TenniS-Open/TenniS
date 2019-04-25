@@ -161,7 +161,7 @@ namespace ts {
 
             static Tensor build(const T *data, size_t count, const std::vector<int> &shape) {
                 auto shape_count = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int32_t>());
-                if (count != shape_count) throw Exception("Shape count mismatch.");
+                if (int32_t(count) != shape_count) throw Exception("Shape count mismatch.");
                 return Tensor(dtypeid<T>::id, shape, data);
             }
         };
