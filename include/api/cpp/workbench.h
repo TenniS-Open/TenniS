@@ -31,7 +31,7 @@ namespace ts {
 
             raw *get_raw() const { return m_impl.get(); }
 
-            Workbench() = delete;
+            Workbench() = default;
 
             static Workbench Load(const Module &module, const Device &device) {
                 return Load(module.get_raw(), device.get_raw());
