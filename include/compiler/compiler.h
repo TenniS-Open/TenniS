@@ -43,6 +43,8 @@ namespace ts {
 
         InstructionBlock compile(const std::vector<Node> &inputs, const std::vector<Node> &outputs);
         std::vector<Instruction::shared> convert_operator_instruction(const Node &node);
+
+        static void run_const_nodes(const std::vector<Node> &nodes, std::vector<Node> &output_nodes);
     private:
         ComputingDevice m_computing_device;
     };
