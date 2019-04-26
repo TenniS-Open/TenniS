@@ -147,6 +147,8 @@ namespace ts {
          */
         Tensor(InFlow in_flow, const Prototype &proto);
 
+        Tensor(InFlow in_flow, DTYPE dtype, const Shape &shape) : self(in_flow, Prototype(dtype, shape)) {}
+
         /**
          *
          * @param in_flow HOST or DEVICE given in DeviceContext
@@ -158,6 +160,8 @@ namespace ts {
          * if in_flow=InFlow::HOST, use CPU:0 memory device.
          */
         Tensor(InFlow in_flow, const Prototype &proto, const MemoryDevice &device);
+
+        Tensor(InFlow in_flow, DTYPE dtype, const Shape &shape, const MemoryDevice &device) : self(in_flow, Prototype(dtype, shape), device) {}
 
         Tensor(const self &) = default;
 
