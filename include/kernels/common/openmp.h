@@ -21,7 +21,7 @@ namespace ts {
         auto runtime = ctx::ptr<RuntimeContext>();
         if (runtime == nullptr) return max_threads;
         if (runtime->get_computing_thread_number() <= 0) return max_threads;
-        return std::min(runtime->get_computing_thread_number(), max_threads);
+        return runtime->get_computing_thread_number();
 #else
         return 1;
 #endif
