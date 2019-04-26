@@ -61,6 +61,7 @@ class Name(object):
         limit = "_limit"
         crop_nd = "crop_nd"
         chunk = "chunk"
+        squeeze = "squeeze"
 
     dim = "dim"
     shuffle = "shuffle"
@@ -83,6 +84,7 @@ class Name(object):
     dtype = "dtype"
     shift = "shfit"
     chunks = "chunks"
+    axes = "axes"
 
 
 class Default(object):
@@ -728,3 +730,15 @@ def chunk(name, x, chunks, dim=0):
     outputs = [menu.field(name=name + ":" + str(i), input=node, offset=i) for i in range(int(chunks))]
 
     return outputs
+
+
+def squeeze(name, x, axes=None):
+    assert isinstance(x, Node)
+
+    # operator
+    node = menu.op(name=name, op_name=Name.Layer.squeeze, inputs=[x, ])
+    if axes is not None:
+        axes = to_const(axes, "axes")
+        node.set(Name.axes, axes, numpy.int32)
+
+    return node

@@ -10,6 +10,14 @@ import tensorflow as tf
 import numpy
 
 
+def tensor_to_numpy(x):
+    # type: (tf.Tensor) -> numpy.ndarray
+    return numpy.asarray(x.eval())
+
+
+ts.tensor.register_dtype(tf.Tensor, to_numpy=tensor_to_numpy)
+
+
 def convert(graph, inputs, outputs, output_file):
     if inputs is None:
         raise Exception("param #2 inputs must be set.")
@@ -64,6 +72,12 @@ def convert(graph, inputs, outputs, output_file):
         "NonMaxSuppressionV3": convert_not_implemented,
         "ExpandDims": convert_not_implemented,
         "ArgMax": convert_not_implemented,
+
+        # 2019-04-27
+        "Squeeze": convert_squeeze,
+        "Mean": convert_mean,
+        "BatchToSpaceND": convert_not_implemented,
+        "SpaceToBatchND": convert_not_implemented,
     }
 
     # set_no_log_converter = set(map_converter.keys())
@@ -209,4 +223,24 @@ def convert_const(tf_node, inputs):
 
     assert len(inputs) == 0
 
-    return ts.menu.data(name=tf_node.op.name, value=tf_node.eval())
+    return ts.menu.data(name=tf_node.op.name, value=tf_node)
+
+
+def convert_squeeze(tf_node, inputs):
+    # type: (tf.Tensor, List[ts.Node]) -> ts.Node
+
+    assert len(inputs) == 1
+
+    node_name = tf_node.op.name
+
+    return ts.zoo.squeeze(node_name, x=inputs[0])
+
+
+def convert_mean(tf_node, inputs):
+    # type: (tf.Tensor, List[ts.Node]) -> ts.Node
+
+    assert len(inputs) == 2
+
+    node_name = tf_node.op.name
+
+    return ts.zoo.squeeze(node_name, x=inputs[0])
