@@ -124,6 +124,12 @@ namespace ts {
                 return std::accumulate(shape, shape + shape_len, 1, std::multiplies<int32_t>());
             }
 
+            Tensor reshape(const Shape &shape) const {
+                auto casted_raw = ts_Tensor_reshape(m_impl.get(), shape.data(), int32_t(shape.size()));
+                TS_API_AUTO_CHECK(casted_raw != nullptr);
+                return Tensor(casted_raw);
+            }
+
         private:
             Tensor(raw *ptr) : m_impl(pack(ptr)) {}
 
