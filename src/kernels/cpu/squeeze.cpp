@@ -43,6 +43,10 @@ namespace ts {
                                          << " with axes=" << to_string(m_axes) << eject;
                         }
                         auto it = shape.begin() + axis;
+                        if (*it != 1) {
+                            TS_LOG_ERROR << "Can not squeeze shape " << to_string(x.sizes())
+                                         << " with axes=" << to_string(m_axes) << eject;
+                        }
                         shape.erase(it);
                     }
                 }
