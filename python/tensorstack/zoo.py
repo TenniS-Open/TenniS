@@ -15,6 +15,17 @@ import sys
 if sys.version > '3':
     long = int
 
+
+from .frontend.onnx import gather
+from .frontend.onnx import unsqueeze
+from .frontend.onnx import gemm
+
+from .frontend.tf import strided_slice
+from .frontend.tf import stack
+
+from .frontend.torch import dcn_v2_forward
+
+
 class Name(object):
     NCHW = "NCHW"
     NHWC = "NHWC"
