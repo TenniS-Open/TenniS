@@ -412,7 +412,7 @@ y_i = exp(-x_i) / \sum{exp(-x_i)}
 smooth 为非0时：
 ```
 t_i = x_i - max(x)
-y_i = exp(-t_i) / \sum{exp(-t_i)}
+y_i = exp(t_i) / \sum{exp(t_i)}
 ```
 
 
