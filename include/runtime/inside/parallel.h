@@ -14,7 +14,7 @@
 
 #include <algorithm>
 
-#define TS_THREAD_BLOCK_SIZE 40960
+// #define TS_THREAD_BLOCK_SIZE 40960
 
 namespace ts {
     using Range = std::pair<int, int>;
@@ -22,7 +22,7 @@ namespace ts {
     inline ThreadPool *try_parallel(int task_number) {
         if (task_number <= 1) return nullptr;
         auto gun = ctx::ptr<ThreadPool>();
-        if (gun != nullptr && gun->size() > 1 && task_number / gun->size() >= TS_THREAD_BLOCK_SIZE) return gun;
+        if (gun != nullptr && gun->size() > 1) return gun;
         return nullptr;
     }
 

@@ -23,6 +23,10 @@
 #endif
 #endif
 
+#ifdef TS_USE_OPENMP
+#include <omp.h>
+#endif
+
 namespace ts {
     RuntimeContext::RuntimeContext() {
         set_computing_thread_number(4);
@@ -33,8 +37,22 @@ namespace ts {
     }
 
     void RuntimeContext::set_computing_thread_number(int computing_thread_number) {
-        this->m_computing_thread_number = computing_thread_number;
-        auto fixed_thread_number = std::max(computing_thread_number, 1);
+        int fixed_thread_number;
+        if (computing_thread_number < 0) {
+            auto max_thread_number =
+#ifdef TS_USE_OPENMP
+                    omp_get_num_procs();
+#else
+                    8;
+#endif
+            fixed_thread_number = max_thread_number;
+        } else if (computing_thread_number == 0) {
+            fixed_thread_number = 1;
+        } else {
+            fixed_thread_number = computing_thread_number;
+        }
+        this->m_computing_thread_number = fixed_thread_number;
+
         this->m_thread_pool = std::make_shared<ThreadPool>(fixed_thread_number);
 #ifdef TS_USE_CBLAS
         goto_set_num_threads(fixed_thread_number);
