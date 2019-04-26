@@ -93,9 +93,14 @@ namespace ts {
     }
 
     // TODO: inputs only support Parameter, try support other op
-    InstructionBlock Compiler::compile(const std::vector<Node> &inputs, const std::vector<Node> &outputs) {
+    InstructionBlock Compiler::compile(const std::vector<Node> &inputs, const std::vector<Node> &raw_outputs) {
         DeviceContext device_context(m_computing_device);
         ctx::bind<DeviceContext> _bind_device_context(device_context);
+
+        Graph temp_graph;
+        ctx::bind<Graph> _bind_graph(temp_graph);
+        std::vector<Node> outputs;
+        run_const_nodes(raw_outputs, outputs);
 
         InstructionBlock block;
         block.nargs = int(inputs.size());
@@ -405,6 +410,7 @@ namespace ts {
 
 
     void Compiler::run_const_nodes(const std::vector<Node> &nodes, std::vector<Node> &output_nodes) {
+        output_nodes.clear();
         for(int i=0; i<nodes.size();  i++) {
             Node tmpnode(nodes[i]);
             run_const_node(nodes[i], tmpnode);
