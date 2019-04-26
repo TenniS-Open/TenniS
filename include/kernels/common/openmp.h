@@ -10,17 +10,18 @@
 #include "runtime/runtime.h"
 #include <algorithm>
 
-#define TS_OPENMP_BLOCK_SIZE 10240
+// #define TS_OPENMP_BLOCK_SIZE 10240
 
 #endif
 
 namespace ts {
-    inline int openmp_threads(const int task_number) {
+    inline int openmp_threads(const int = 0) {
 #ifdef TS_USE_OPENMP
-        auto threads = std::min<int>(std::max<int>(task_number / TS_OPENMP_BLOCK_SIZE, 1), omp_get_num_procs());
+        auto max_threads = omp_get_num_procs();
         auto runtime = ctx::ptr<RuntimeContext>();
-        if (runtime == nullptr) return threads;
-        return std::min(runtime->get_computing_thread_number(), threads);
+        if (runtime == nullptr) return max_threads;
+        if (runtime->get_computing_thread_number() <= 0) return max_threads;
+        return std::min(runtime->get_computing_thread_number(), max_threads);
 #else
         return 1;
 #endif
