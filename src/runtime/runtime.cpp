@@ -11,10 +11,21 @@
 #include <algorithm>
 #include <memory/flow.h>
 
+#ifdef TS_USE_CBLAS
+#if TS_PLATFORM_OS_MAC || TS_PLATFORM_OS_IOS
+#include <Accelerate/Accelerate.h>
+#elif TS_PLATFORM_OS_LINUX
+#include <openblas/cblas.h>
+#elif TS_PLATFORM_OS_WINDOWS && TS_PLATFORM_CC_MINGW
+#include <OpenBLAS/cblas.h>
+#else
+#include <cblas.h>
+#endif
+#endif
+
 namespace ts {
-    RuntimeContext::RuntimeContext():
-            m_computing_thread_number(1) {
-        this->m_thread_pool = std::make_shared<ThreadPool>(0);
+    RuntimeContext::RuntimeContext() {
+        set_computing_thread_number(4);
     }
     RuntimeContext::RuntimeContext(const MemoryDevice &device): self() {
         this->m_flow = HypeSyncMemoryController<FlowMemoryController>::Make(device, false);
@@ -22,8 +33,13 @@ namespace ts {
     }
 
     void RuntimeContext::set_computing_thread_number(int computing_thread_number) {
-        this->m_computing_thread_number = std::max(computing_thread_number, 1);
-        this->m_thread_pool = std::make_shared<ThreadPool>(this->m_computing_thread_number);
+        this->m_computing_thread_number = computing_thread_number;
+        auto fixed_thread_number = std::max(computing_thread_number, 1);
+        this->m_thread_pool = std::make_shared<ThreadPool>(fixed_thread_number);
+#ifdef TS_USE_CBLAS
+        goto_set_num_threads(fixed_thread_number);
+        openblas_set_num_threads(fixed_thread_number);
+#endif
     }
 
     int RuntimeContext::get_computing_thread_number() const {
