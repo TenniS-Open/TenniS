@@ -16,10 +16,13 @@
 #include <Accelerate/Accelerate.h>
 #elif TS_PLATFORM_OS_LINUX
 #include <openblas/cblas.h>
+#define TS_USING_OPENBLAS
 #elif TS_PLATFORM_OS_WINDOWS && TS_PLATFORM_CC_MINGW
 #include <OpenBLAS/cblas.h>
+#define TS_USING_OPENBLAS
 #else
 #include <cblas.h>
+#define TS_USING_OPENBLAS
 #endif
 #endif
 
@@ -55,8 +58,10 @@ namespace ts {
 
         this->m_thread_pool = std::make_shared<ThreadPool>(fixed_thread_number);
 #ifdef TS_USE_CBLAS
+#ifdef TS_USING_OPENBLAS
         goto_set_num_threads(fixed_thread_number);
         openblas_set_num_threads(fixed_thread_number);
+#endif
 #endif
     }
 
