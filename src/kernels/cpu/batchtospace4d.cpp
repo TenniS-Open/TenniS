@@ -49,7 +49,8 @@ namespace ts {
                            for (int w = 0; w < output_width; ++w) {
                                 int in = ((h + crop_top) % block_height* block_width + (w + crop_left) % block_width) * output_number + n;
                                 int ic = c;
-                                int ih = (h + crop_top) / block_height;
+
+                                int ih = (h + crop_top ) / block_height;
                                 int iw = (w + crop_left) / block_width;
 
                                 int at_input_i = in * input_number_step

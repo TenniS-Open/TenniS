@@ -71,16 +71,18 @@ namespace ts {
             int input_number_step = input_channels * input_height * input_width;
             int input_channels_step = input_height * input_width;
             int input_height_step = input_width;
-            int input_width_step = 1;
+            //int input_width_step = 1;
 
             int output_size = output_number * output_channels * output_height * output_width;
             int output_number_step = output_channels * output_height * output_width;
             int output_channels_step = output_height * output_width;
             int output_height_step = output_width;
-            int output_width_step = 1;
+            //int output_width_step = 1;
 
             const T * pinput = x.data<T>();
             T * poutput = out.data<T>();
+            T n = T(0);
+            memset(poutput, out.device(), out.count() * sizeof(T), &n, MemoryDevice(CPU), sizeof(T));
 
             gSpaceToBatchND_kernel<T> << <CUDA_BLOCK(input_size, CUDA_THREAD_NUM), CUDA_THREAD_NUM >> >
                                (pinput, poutput,
