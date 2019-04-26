@@ -238,8 +238,13 @@ namespace ts {
         auto module_outputs = module->outputs();
         InstructionBlock block;
 
-        // never swallow any exception
-        block = compiler.compile(module_inputs, module_outputs);
+        {
+            // bind bench for intime action
+            ctx::bind<Workbench> _bind_workbench(*bench);
+
+            // never swallow any exception
+            block = compiler.compile(module_inputs, module_outputs);
+        }
 
         // link data sagment
         // TODO: link multi-data-sagment
