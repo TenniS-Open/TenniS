@@ -77,6 +77,12 @@ TENSOR_STACK_C_API ts_bool ts_Tensor_sync_cpu(ts_Tensor *tensor);
  */
 TENSOR_STACK_C_API ts_Tensor *ts_Tensor_cast(ts_Tensor *tensor, ts_DTYPE dtype);
 
+/**
+ * Return NULL if failed.
+ * Return new tensor.
+ */
+TENSOR_STACK_C_API ts_Tensor *ts_Tensor_reshape(ts_Tensor *tensor, const int32_t *shape, int32_t shape_len);
+
 #ifdef __cplusplus
 }
 #endif

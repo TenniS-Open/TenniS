@@ -110,3 +110,10 @@ ts_Tensor *ts_Tensor_cast(ts_Tensor *tensor, ts_DTYPE dtype) {
     RETURN_OR_CATCH(dolly.release(), nullptr)
 }
 
+ts_Tensor *ts_Tensor_reshape(ts_Tensor *tensor, const int32_t *shape, int32_t shape_len) {
+    TRY_HEAD
+        if (!tensor) throw Exception("NullPointerException: @param: 1");
+        std::unique_ptr<ts_Tensor> dolly(new ts_Tensor((*tensor)->reshape(Shape(shape, shape + shape_len))));
+    RETURN_OR_CATCH(dolly.release(), nullptr)
+}
+
