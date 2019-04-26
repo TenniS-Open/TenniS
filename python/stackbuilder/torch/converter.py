@@ -34,7 +34,7 @@ def convert_by_onnx(input_module, output_file, input, temp_onnx=None):
         node = input[i]
         if isinstance(node, (tuple, list)):
             for i in node:
-                if not isinstance(i, (int, long)):
+                if not isinstance(i, (int, )):
                     raise RuntimeError("input must be a list of tuple[int]")
         else:
             raise RuntimeError("input must be a list of tuple[int]")
@@ -45,7 +45,7 @@ def convert_by_onnx(input_module, output_file, input, temp_onnx=None):
 
     temp_onnx_file = temp_onnx
     if temp_onnx_file is None:
-        temp_onnx_file = tempfile.mkdtemp()
+        temp_onnx_file = tempfile.mktemp()
 
     convert_onnx(torch_model, temp_onnx_file, input=input)
 

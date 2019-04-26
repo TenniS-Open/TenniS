@@ -181,6 +181,9 @@ def convert(input_file, output_file):
         "Gemm": convert_gemm_layer,
         "GlobalAveragePool": convert_global_pooling2d_layer,
         "Sigmoid": convert_sigmoid_layer,
+        "Neg": convert_neg_layer,
+        "Transpose": convert_transpose_layer,
+        "Softmax": convert_softmax_layer,
     }
 
     print("==================== Converting ====================")
@@ -390,6 +393,27 @@ def convert_relu_layer(node, input_nodes, output_names):
     x = input_nodes[0]
 
     ts_node = ts.zoo.relu(node_name, x=x)
+
+    return ts_node,
+
+
+def convert_neg_layer(node, input_nodes, output_names):
+    # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} -> {} ]=-".format(node.op_type, [n.name for n in input_nodes], output_names))
+
+    attribute = node.attribute
+    attr_dict = {}
+    for attr in attribute:
+        attr_dict[str(attr.name)] = topy(attr)
+
+    assert len(input_nodes) == 1
+    assert len(output_names) == 1
+
+    node_name = output_names[0]
+
+    x = input_nodes[0]
+
+    ts_node = ts.zoo.sub(name=node_name, lhs=numpy.asarray(0, dtype=numpy.float32), rhs=x)
 
     return ts_node,
 
@@ -860,3 +884,48 @@ def convert_sigmoid_layer(node, input_nodes, output_names):
 
     return ts_node,
 
+
+def convert_transpose_layer(node, input_nodes, output_names):
+    # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} -> {} ]=-".format(node.op_type, [n.name for n in input_nodes], output_names))
+
+    attribute = node.attribute
+    attr_dict = {}
+    for attr in attribute:
+        attr_dict[str(attr.name)] = topy(attr)
+
+    assert len(input_nodes) == 1
+    assert len(output_names) == 1
+
+    node_name = output_names[0]
+
+    x = input_nodes[0]
+
+    ts_node = ts.zoo.transpose(name=node_name, x=x, pemute=attr_dict["perm"])
+
+    return ts_node,
+
+
+def convert_softmax_layer(node, input_nodes, output_names):
+    # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} -> {} ]=-".format(node.op_type, [n.name for n in input_nodes], output_names))
+
+    attribute = node.attribute
+    attr_dict = {}
+    for attr in attribute:
+        attr_dict[str(attr.name)] = topy(attr)
+
+    assert len(input_nodes) == 1
+    assert len(output_names) == 1
+
+    node_name = output_names[0]
+
+    x = input_nodes[0]
+
+    axis = 1
+    if Name.Attr.axis in attr_dict:
+        axis = int(attr_dict[Name.Attr.axis])
+
+    ts_node = ts.zoo.softmax(name=node_name, x=x, dim=axis)
+
+    return ts_node,

@@ -24,7 +24,7 @@ def convert(input_module, output_file, input, verbose=False):
         node = input[i]
         if isinstance(node, (tuple, list)):
             for i in node:
-                if not isinstance(i, (int, long)):
+                if not isinstance(i, (int, )):
                     raise RuntimeError("input must be a list of tuple[int]")
         else:
             raise RuntimeError("input must be a list of tuple[int]")
