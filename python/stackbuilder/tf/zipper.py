@@ -52,16 +52,14 @@ unsupported_set = {
 }
 
 
-def try_to_nchw(x, **kwargs):
-    # type: (ts.Node) -> Union[ts.Node, None]
+def try_to_nchw(x, ready=None):
+    # type: (ts.Node, dict) -> Union[ts.Node, None]
     """
     :param x:
     :param kwargs:  may have ready, dict for parsed nodes
     :return:
     """
-    if "ready" in kwargs:
-        ready = kwargs["ready"]
-    else:
+    if ready is None:
         ready = {}
 
     if x in ready:
@@ -78,16 +76,14 @@ def try_to_nchw(x, **kwargs):
         raise NotImplementedError("{} was not marked in supported or unsupported".format(op))
 
 
-def zipnode(x, **kwargs):
+def zipnode(x, ready=None):
     # type: (ts.Node) -> ts.Node
     """
     :param x:
     :param kwargs: may have ready, dict for parsed nodes
     :return:
     """
-    if "ready" in kwargs:
-        ready = kwargs["ready"]
-    else:
+    if ready is None:
         ready = {}
 
     try_nchw_inputs = []
@@ -109,6 +105,34 @@ def zipnode(x, **kwargs):
     elif x.op == Name.Layer.nchw2nhwc:
         x.op = ts.zoo.Name.Layer.transpose
         x.params[ts.zoo.Name.permute] = numpy.asarray([0, 2, 3, 1], dtype=numpy.int32)
+
+    return x
+
+
+def warp_node(x, ready=None):
+    # type: (ts.Node) -> ts.Node
+    """
+    :param x:
+    :param kwargs: may have ready, dict for parsed nodes
+    :return:
+    """
+    if ready is None:
+        ready = set()
+
+    if x in ready:
+        return x
+
+    for input in x.inputs:
+        warp_node(input, ready)
+
+    if x.op == Name.Layer.nhwc2nchw:
+        x.op = ts.zoo.Name.Layer.transpose
+        x.params[ts.zoo.Name.permute] = numpy.asarray([0, 3, 1, 2], dtype=numpy.int32)
+    elif x.op == Name.Layer.nchw2nhwc:
+        x.op = ts.zoo.Name.Layer.transpose
+        x.params[ts.zoo.Name.permute] = numpy.asarray([0, 2, 3, 1], dtype=numpy.int32)
+
+    ready.add(x)
 
     return x
 

@@ -8,6 +8,7 @@ from .. import Node
 from .. import zoo
 from .. import menu
 from .. import device
+from .. import tensor
 
 import numpy
 
@@ -19,6 +20,8 @@ class Name(object):
         strided_slice = "strided_slice"
         stack = "stack" # use for pack operator
         mean = "mean"
+        space_to_batch4d = "space_to_batch4d"
+        batch_to_space4d = "batch_to_space4d"
 
     SAME = "SAME"
     VALID = "VALID"
@@ -29,6 +32,9 @@ class Name(object):
     axis = "axis"
 
     padding_method = "padding_method"
+
+    block_shape = "block_shape"
+    crop = "crop"
 
 
 def pooling2d_padding(name, x, padding, ksize, stride, format=zoo.Name.NCHW, padding_method=Name.SAME):
@@ -216,3 +222,47 @@ def mean(name, x, w=None):
 
     w = zoo.to_node(w, name + "_w")
     return menu.op(name=name, op_name=Name.Layer.mean, inputs=[x, w])
+
+
+def space_to_batch4d(name, x, block_shape, padding):
+    assert (x, Node)
+
+    block_shape = zoo.to_const(block_shape, "block_shape")
+    padding = zoo.to_const(padding, "padding")
+
+    block_shape = tensor.from_any(block_shape, dtype=numpy.int32)
+    padding = tensor.from_any(padding, dtype=numpy.int32)
+
+    if block_shape.shape != (2,):
+        raise NotImplementedError("block_shape.shape must be [2], got {}".format(block_shape))
+
+    if padding.shape != (2, 2):
+        raise NotImplementedError("padding.shape must be [2, 2], got {}".format(padding))
+
+    node = menu.op(name=name, op_name=Name.Layer.space_to_batch4d, inputs=[x,])
+    node.set(Name.block_shape, block_shape, numpy.int32)
+    node.set(zoo.Name.padding, padding, numpy.int32)
+
+    return node
+
+
+def batch_to_space4d(name, x, block_shape, crop):
+    assert (x, Node)
+
+    block_shape = zoo.to_const(block_shape, "block_shape")
+    crop = zoo.to_const(crop, "crop")
+
+    block_shape = tensor.from_any(block_shape, dtype=numpy.int32)
+    crop = tensor.from_any(crop, dtype=numpy.int32)
+
+    if block_shape.shape != (2,):
+        raise NotImplementedError("block_shape.shape must be [2], got {}".format(block_shape))
+
+    if crop.shape != (2, 2):
+        raise NotImplementedError("crop.shape must be [2, 2], got {}".format(crop))
+
+    node = menu.op(name=name, op_name=Name.Layer.batch_to_space4d, inputs=[x,])
+    node.set(Name.block_shape, block_shape, numpy.int32)
+    node.set(Name.crop, crop, numpy.int32)
+
+    return node

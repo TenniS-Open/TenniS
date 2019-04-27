@@ -63,6 +63,7 @@ class Name(object):
         crop_nd = "crop_nd"
         chunk = "chunk"
         squeeze = "squeeze"
+        rsqrt = "rsqrt"
 
     dim = "dim"
     shuffle = "shuffle"
@@ -741,5 +742,14 @@ def squeeze(name, x, axes=None):
     if axes is not None:
         axes = to_const(axes, "axes")
         node.set(Name.axes, axes, numpy.int32)
+
+    return node
+
+
+def rsqrt(name, x):
+    assert isinstance(x, Node)
+
+    # operator
+    node = menu.op(name=name, op_name=Name.Layer.rsqrt, inputs=[x, ])
 
     return node

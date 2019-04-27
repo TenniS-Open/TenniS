@@ -727,9 +727,13 @@ y的坐标为`[x, y]`映射到原图为`affine * [x, y, 1]'`，然后根据type�
 Waitting for sure
 ```
 
-### mean(x..device [,w..device]) -> y
+### mean(x..device) -> y..device = delete
+参数：
+- `reduction_indices` `IntArray` 选择要进行平均数计算的维度。
+- `keep_dims` `Int` `Default=1`， 布尔值，表示是否保留维度
 说明：  
-返回平均数，或加权平均数
+返回`reduction_indices`维度内的平均数  
+绝大多数情况优先采用global_average_pooling.
 
 ### squeeze(x..device) -> y
 
