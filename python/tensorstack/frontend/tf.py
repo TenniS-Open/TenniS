@@ -18,6 +18,7 @@ class Name(object):
         pooling2d_padding = "_tf_pooling2d_padding"
         strided_slice = "strided_slice"
         stack = "stack" # use for pack operator
+        mean = "mean"
 
     SAME = "SAME"
     VALID = "VALID"
@@ -206,3 +207,12 @@ def stack(name, tensors, axis=0):
     node.set(Name.axis, axis, numpy.int32)
 
     return node
+
+
+def mean(name, x, w=None):
+    isinstance(x, Node)
+    if w is None:
+        return menu.op(name=name, op_name=Name.Layer.mean, inputs=[x, ])
+
+    w = zoo.to_node(w, name + "_w")
+    return menu.op(name=name, op_name=Name.Layer.mean, inputs=[x, w])
