@@ -104,6 +104,10 @@ def conv2d_padding(name, x, w,
                    dilation=None):
     assert isinstance(x, Node)
 
+    padding = zoo.adjust_padding(padding, format=format)
+    stride = zoo.adjust_stride(stride, format=format)
+    dilation = zoo.adjust_dilation(dilation, format=format)
+
     if padding_method not in {Name.SAME, Name.VALID}:
         raise NotImplementedError("padding_method = {}".format(padding_method))
 
@@ -117,6 +121,9 @@ def conv2d_padding(name, x, w,
     if dilation is None:
         dilation = zoo.Default.dilation()
     w = zoo.to_node(w, name="_const_" + name + "_weights")
+
+    padding = tensor.from_any(padding, numpy.int32)
+    assert padding.shape == (4, 2)
 
     node = menu.op(name=name, op_name=Name.Layer.conv2d_padding, inputs=[x, w])
     node.set(zoo.Name.padding, padding, numpy.int32)
@@ -136,6 +143,10 @@ def conv2d(name, x, w,
            stride=None,
            dilation=None):
     assert isinstance(x, Node)
+
+    padding = zoo.adjust_padding(padding, format=format)
+    stride = zoo.adjust_stride(stride, format=format)
+    dilation = zoo.adjust_dilation(dilation, format=format)
 
     if padding_method not in {Name.SAME, Name.VALID}:
         raise NotImplementedError("padding_method = {}".format(padding_method))
@@ -225,7 +236,7 @@ def mean(name, x, w=None):
 
 
 def space_to_batch4d(name, x, block_shape, padding):
-    assert (x, Node)
+    assert isinstance(x, Node)
 
     block_shape = zoo.to_const(block_shape, "block_shape")
     padding = zoo.to_const(padding, "padding")
@@ -247,7 +258,7 @@ def space_to_batch4d(name, x, block_shape, padding):
 
 
 def batch_to_space4d(name, x, block_shape, crop):
-    assert (x, Node)
+    assert isinstance(x, Node)
 
     block_shape = zoo.to_const(block_shape, "block_shape")
     crop = zoo.to_const(crop, "crop")

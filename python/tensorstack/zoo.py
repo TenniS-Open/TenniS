@@ -232,20 +232,20 @@ def adjust4d(format, base, shape):
     if isinstance(shape, (int, long)):
         base[h] = shape
         base[h + 1] = shape
-    elif isinstance(shape, (tuple, list)):
-        for i in shape:
-            if not isinstance(i, (int, long)):
-                raise RuntimeError("Must be int list")
-        if len(shape) == 1:
-            base[h] = shape[0]
-            base[h + 1] = shape[0]
-        elif len(shape) == 2:
-            base[h] = shape[0]
-            base[h + 1] = shape[1]
-        elif len(shape) == 4:
+    elif isinstance(shape, (tuple, list)) or isinstance(shape, numpy.ndarray):
+        numpy_shape = numpy.asarray(shape, dtype=numpy.int32)
+        if numpy_shape.shape == (1,):
+            base[h] = numpy_shape[0]
+            base[h + 1] = numpy_shape[0]
+        elif numpy_shape.shape == (2,):
+            base[h] = numpy_shape[0]
+            base[h + 1] = numpy_shape[1]
+        elif numpy_shape.shape == (4,):
             base = shape
         else:
             raise RuntimeError("{}".format(shape))
+    else:
+        return RuntimeError("type={}".format(type(shape)))
 
     return base
 
@@ -259,7 +259,7 @@ def adjust4x2d(format, base, shape):
         base[h][1] = shape
         base[h + 1][0] = shape
         base[h + 1][1] = shape
-    elif isinstance(shape, (tuple, list)):
+    elif isinstance(shape, (tuple, list)) or isinstance(shape, numpy.ndarray):
         numpy_shape = numpy.asarray(shape, dtype=numpy.int32)
         if numpy_shape.shape == (2,):
             base[h][0] = numpy_shape[0]
@@ -284,6 +284,8 @@ def adjust4x2d(format, base, shape):
             base = shape
         else:
             raise RuntimeError("{}".format(shape))
+    else:
+        return RuntimeError("type={}".format(type(shape)))
 
     return base
 
