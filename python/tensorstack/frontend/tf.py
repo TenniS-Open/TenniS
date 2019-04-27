@@ -169,7 +169,7 @@ def conv2d(name, x, w,
                                      x=x, w=w, format=format, padding=padding, padding_method=padding_method,
                                      stride=stride, dilation=dilation)
 
-    return zoo.conv2d(name=name, x=x, w=x, format=format, padding=dynamic_padding, padding_value=padding_value,
+    return zoo.conv2d(name=name, x=x, w=w, format=format, padding=dynamic_padding, padding_value=padding_value,
                       stride=stride, dilation=dilation)
 
 
