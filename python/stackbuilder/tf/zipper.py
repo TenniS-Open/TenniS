@@ -6,7 +6,7 @@ author: kier
 
 import tensorstack as ts
 import numpy
-
+import copy
 
 class Name(object):
     class Layer(object):
@@ -31,8 +31,19 @@ def map_nchw2nchw_to_nchw(x):
     return x.inputs[0]
 
 
+def map_copy_to_nchw(x):
+    # type: (ts.Node) -> ts.Node
+    chw_input = [nhwc2nchw(i) for i in x.inputs]
+    x = copy.copy(x)
+    ts.Node.Link(x, chw_input)
+    x.name = "nchw_" + x.name
+    return x
+
+
 supported_map = {
-    Name.Layer.nchw2nhwc: map_nchw2nchw_to_nchw
+    Name.Layer.nchw2nhwc: map_nchw2nchw_to_nchw,
+    "_copy": map_copy_to_nchw,
+    "add": map_copy_to_nchw,
 }
 
 unsupported_set = {
@@ -41,30 +52,55 @@ unsupported_set = {
 }
 
 
-def try_to_nchw(x):
+def try_to_nchw(x, **kwargs):
     # type: (ts.Node) -> Union[ts.Node, None]
+    """
+    :param x:
+    :param kwargs:  may have ready, dict for parsed nodes
+    :return:
+    """
+    if "ready" in kwargs:
+        ready = kwargs["ready"]
+    else:
+        ready = {}
+
+    if x in ready:
+        return ready[x]
+
     op = x.op
     if op in supported_map:
-        return supported_map[op](x)
+        ready_x = supported_map[op](x)
+        ready[x] = ready_x
+        return ready_x
     elif op in unsupported_set:
         return None
     else:
         raise NotImplementedError("{} was not marked in supported or unsupported".format(op))
 
 
-def zipnode(x):
+def zipnode(x, **kwargs):
     # type: (ts.Node) -> ts.Node
+    """
+    :param x:
+    :param kwargs: may have ready, dict for parsed nodes
+    :return:
+    """
+    if "ready" in kwargs:
+        ready = kwargs["ready"]
+    else:
+        ready = {}
+
     try_nchw_inputs = []
     for input in x.inputs:
         assert isinstance(input, ts.Node)
         if input.op == Name.Layer.nhwc2nchw:
-            tmp = try_to_nchw(input.inputs[0])
+            tmp = try_to_nchw(input.inputs[0], ready=ready)
             if tmp is not None:
                 input = tmp
         try_nchw_inputs.append(input)
     zipped_inputs = []
     for input in try_nchw_inputs:
-        zipped_inputs.append(zipnode(input))
+        zipped_inputs.append(zipnode(input, ready=ready))
     ts.Node.Link(x, zipped_inputs)
 
     if x.op == Name.Layer.nhwc2nchw:
@@ -77,15 +113,25 @@ def zipnode(x):
     return x
 
 
-def plot_graph(node):
+def plot_graph(node, plot=None):
+    if plot is None:
+        plot = set()
+
     if not isinstance(node, (tuple, list)):
         node = [node,]
+
     for x in node:
         assert isinstance(x, ts.Node)
-        plot_graph(x.inputs)
+        if x in plot:
+            continue
+        plot_graph(x.inputs, plot)
+
     for x in node:
         assert isinstance(x, ts.Node)
+        if x in plot:
+            continue
         print("{}: {} -> {}".format(x.op, [i.name for i in x.inputs], x.name))
+        plot.add(x)
 
 
 if __name__ == '__main__':
@@ -107,8 +153,35 @@ if __name__ == '__main__':
 
     output = zipnode(output)
 
-    print()
+    print("----------------------------------------")
 
     plot_graph(output)
 
+    print("----------------------------------------")
+
+    input = ts.menu.param("input")
+
+    x = ts.zoo.copy("input_bn", input)
+
+    x = inner_layer("input_conv", x)
+
+    left = inner_layer("left_conv", x)
+    left = ts.zoo.copy("left_bn", left)
+    right = x
+
+    y = ts.zoo.add("y", left, right)
+
+    y = inner_layer("act", y)
+
+    output = y
+
+    print("========================================")
+
+    plot_graph(output)
+
+    output = zipnode(output)
+
+    print("----------------------------------------")
+
+    plot_graph(output)
 
