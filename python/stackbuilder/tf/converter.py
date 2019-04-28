@@ -177,7 +177,6 @@ def convert(graph, inputs, outputs, output_file):
     return module
 
 
-
 def convert_identity(tf_node, inputs):
     # type: (tf.Tensor, List[ts.Node]) -> ts.Node
 
@@ -280,6 +279,7 @@ def convert_conv2d(tf_node, inputs):
             static_padding = x_padding.get("value")
             static_padding = ts.tensor.from_any(static_padding, numpy.int32)
             x = x.inputs[0]
+            assert static_padding.shape == (4, 2)
             print("--##    static_padding: {}".format(static_padding))
 
     w = conv2d_convert_weight(w)
@@ -299,9 +299,9 @@ def convert_conv2d(tf_node, inputs):
     if data_fromat == 'NHWC':
         x = zipper.nhwc2nchw(x, name=x.name + "_nchw")
         if static_padding is not None:
-            static_padding = numpy.take(static_padding, (0, 3, 1, 2))
-        strides = numpy.take(strides, (0, 3, 1, 2))
-        dilations = numpy.take(dilations, (0, 3, 1, 2))
+            static_padding = numpy.take(static_padding, (0, 3, 1, 2), axis=0)
+        strides = numpy.take(strides, (0, 3, 1, 2), axis=0)
+        dilations = numpy.take(dilations, (0, 3, 1, 2), axis=0)
 
     node = ts.frontend.tf.conv2d(name=node_name + "_nchw", x=x, w=w,
                                  format=ts.zoo.Name.NCHW,
@@ -423,7 +423,7 @@ def convert_add(tf_node, inputs):
     # type: (tf.Tensor, List[ts.Node]) -> ts.Node
 
     assert len(inputs) == 2
-    attr_dict = node_def_attr_dict(tf_node)
+    # attr_dict = node_def_attr_dict(tf_node)
     # print("--##    attr: {}".format(attr_dict))
     node_name = tf_node.op.name
 
@@ -445,7 +445,7 @@ def convert_rsqrt(tf_node, inputs):
     # type: (tf.Tensor, List[ts.Node]) -> ts.Node
 
     assert len(inputs) == 1
-    attr_dict = node_def_attr_dict(tf_node)
+    # attr_dict = node_def_attr_dict(tf_node)
     # print("--##    attr: {}".format(attr_dict))
     node_name = tf_node.op.name
 
@@ -458,7 +458,7 @@ def convert_mul(tf_node, inputs):
     # type: (tf.Tensor, List[ts.Node]) -> ts.Node
 
     assert len(inputs) == 2
-    attr_dict = node_def_attr_dict(tf_node)
+    # attr_dict = node_def_attr_dict(tf_node)
     # print("--##    attr: {}".format(attr_dict))
     node_name = tf_node.op.name
 
@@ -474,7 +474,7 @@ def convert_relu(tf_node, inputs):
     # type: (tf.Tensor, List[ts.Node]) -> ts.Node
 
     assert len(inputs) == 1
-    attr_dict = node_def_attr_dict(tf_node)
+    # attr_dict = node_def_attr_dict(tf_node)
     # print("--##    attr: {}".format(attr_dict))
     node_name = tf_node.op.name
 
@@ -502,6 +502,7 @@ def convert_max_pool(tf_node, inputs):
             static_padding = x_padding.get("value")
             static_padding = ts.tensor.from_any(static_padding, numpy.int32)
             x = x.inputs[0]
+            assert static_padding.shape == (4, 2)
             print("--##    static_padding: {}".format(static_padding))
 
     data_fromat = attr_dict['data_format']
@@ -518,9 +519,9 @@ def convert_max_pool(tf_node, inputs):
     if data_fromat == 'NHWC':
         x = zipper.nhwc2nchw(x, name=x.name + "_nchw")
         if static_padding is not None:
-            static_padding = numpy.take(static_padding, (0, 3, 1, 2))
-        strides = numpy.take(strides, (0, 3, 1, 2))
-        ksize = numpy.take(ksize, (0, 3, 1, 2))
+            static_padding = numpy.take(static_padding, (0, 3, 1, 2), axis=0)
+        strides = numpy.take(strides, (0, 3, 1, 2), axis=0)
+        ksize = numpy.take(ksize, (0, 3, 1, 2), axis=0)
 
     node = ts.frontend.tf.pooling2d(name=node_name + "_nchw", x=x,
                                     ksize=ksize,
@@ -542,7 +543,7 @@ def convert_space_to_batch_nd(tf_node, inputs):
     # type: (tf.Tensor, List[ts.Node]) -> ts.Node
 
     assert len(inputs) == 3
-    attr_dict = node_def_attr_dict(tf_node)
+    # attr_dict = node_def_attr_dict(tf_node)
     # print("--##    attr: {}".format(attr_dict))
     node_name = tf_node.op.name
 
@@ -560,7 +561,7 @@ def convert_space_to_batch_nd(tf_node, inputs):
 
     node = ts.frontend.tf.space_to_batch4d(name=node_name + "_nchw", x=x, block_shape=block_shape, padding=padding)
 
-    node = zipper.nchw2nhwc(x=x, name=node_name)
+    node = zipper.nchw2nhwc(x=node, name=node_name)
 
     return node
 
@@ -569,7 +570,7 @@ def convert_batch_to_space_nd(tf_node, inputs):
     # type: (tf.Tensor, List[ts.Node]) -> ts.Node
 
     assert len(inputs) == 3
-    attr_dict = node_def_attr_dict(tf_node)
+    # attr_dict = node_def_attr_dict(tf_node)
     # print("--##    attr: {}".format(attr_dict))
     node_name = tf_node.op.name
 
@@ -587,7 +588,7 @@ def convert_batch_to_space_nd(tf_node, inputs):
 
     node = ts.frontend.tf.batch_to_space4d(name=node_name + "_nchw", x=x, block_shape=block_shape, crop=crop)
 
-    node = zipper.nchw2nhwc(x=x, name=node_name)
+    node = zipper.nchw2nhwc(x=node, name=node_name)
 
     return node
 
