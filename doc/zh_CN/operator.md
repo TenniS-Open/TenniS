@@ -294,13 +294,13 @@ output_w = floor((width + pad_w -
 说明：
 `y = x * scale + bias`
 
-### fused_batch_norm(x, gamma, beta, mean, variance) -> y
-描述：等价于 `batch_scale(batch_norm(mean, variance), gamma, beta)`  
+### fused_batch_norm(x, mean, variance, scale, bias) -> y
+描述：等价于 `batch_scale(batch_norm(mean, variance), scale, bias)`  
 输入：`x`: `Tensor4D`  
 输入：`mean`: `Array` `$mean.size == $x.shape.size`  
 输入：`variance`: `Array` `$mean.size == $x.shape.size`  
-输入：`mean`: `Array` `$mean.size == $x.shape.size`  
-输入：`variance`: `Array` `$mean.size == $x.shape.size`  
+输入：`scale`: `Array` `$mean.size == $x.shape.size`  
+输入：`bias`: `Array` `$mean.size == $x.shape.size`  
 输出：`y`: `Tensor4D` `$y.shape == $x.shape`
 
 参数：  
