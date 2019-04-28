@@ -61,6 +61,11 @@ class Node(object):
     def op(self):
         return self.__op
 
+    @op.setter
+    def op(self, value):
+        self.__params[self.RetentionParam.op] = value
+        self.__op = value
+
     @property
     def output_count(self):
         return 1
