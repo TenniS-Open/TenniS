@@ -33,10 +33,27 @@ def map_nchw2nchw_to_nchw(x):
 
 def map_copy_to_nchw(x):
     # type: (ts.Node) -> ts.Node
-    chw_input = [nhwc2nchw(i) for i in x.inputs]
+    chw_input = [nhwc2nchw(i, name=i.name + "_nchw") for i in x.inputs]
     x = copy.copy(x)
     ts.Node.Link(x, chw_input)
-    x.name = "nchw_" + x.name
+    x.name = x.name + "_nchw"
+    return x
+
+
+def map_fused_batch_norm_to_nchw(x):
+    # type: (ts.Node) -> ts.Node
+    assert x.op == "fused_batch_norm"
+    chw_input = list(x.inputs)
+    chw_input[0] = nhwc2nchw(chw_input[0], name=chw_input[0].name + "_nchw")
+    x = copy.copy(x)
+    ts.Node.Link(x, chw_input)
+    x.name = x.name + "_nchw"
+
+    if x.get("dim") != 3:
+        return None
+
+    x.set("dim", 1);
+
     return x
 
 
@@ -44,31 +61,34 @@ supported_map = {
     Name.Layer.nchw2nhwc: map_nchw2nchw_to_nchw,
     "_copy": map_copy_to_nchw,
     "add": map_copy_to_nchw,
+    "relu": map_copy_to_nchw,
+    "fused_batch_norm": map_fused_batch_norm_to_nchw,
 }
 
 unsupported_set = {
     Name.Layer.nhwc2nchw,
-    ts.Node.Parameter
+    ts.Node.Parameter,
+    ts.Node.Const,
 }
 
 
-def try_to_nchw(x, ready=None):
+def try_to_nchw(x, ready_nchw=None):
     # type: (ts.Node, dict) -> Union[ts.Node, None]
     """
     :param x:
     :param kwargs:  may have ready, dict for parsed nodes
     :return:
     """
-    if ready is None:
-        ready = {}
+    if ready_nchw is None:
+        ready_nchw = {}
 
-    if x in ready:
-        return ready[x]
+    if x in ready_nchw:
+        return ready_nchw[x]
 
     op = x.op
     if op in supported_map:
         ready_x = supported_map[op](x)
-        ready[x] = ready_x
+        ready_nchw[x] = ready_x
         return ready_x
     elif op in unsupported_set:
         return None
@@ -76,27 +96,33 @@ def try_to_nchw(x, ready=None):
         raise NotImplementedError("{} was not marked in supported or unsupported".format(op))
 
 
-def zipnode(x, ready=None):
+def zipnode(x, ready_zipped=None, ready_nchw=None):
     # type: (ts.Node) -> ts.Node
     """
     :param x:
     :param kwargs: may have ready, dict for parsed nodes
     :return:
     """
-    if ready is None:
-        ready = {}
+    if ready_zipped is None:
+        ready_zipped = {}
+
+    if ready_nchw is None:
+        ready_nchw = {}
+
+    if x in ready_zipped:
+        return ready_zipped[x]
 
     try_nchw_inputs = []
     for input in x.inputs:
         assert isinstance(input, ts.Node)
         if input.op == Name.Layer.nhwc2nchw:
-            tmp = try_to_nchw(input.inputs[0], ready=ready)
+            tmp = try_to_nchw(input.inputs[0], ready_nchw=ready_nchw)
             if tmp is not None:
                 input = tmp
         try_nchw_inputs.append(input)
     zipped_inputs = []
     for input in try_nchw_inputs:
-        zipped_inputs.append(zipnode(input, ready=ready))
+        zipped_inputs.append(zipnode(input, ready_zipped=ready_zipped, ready_nchw=ready_nchw))
     ts.Node.Link(x, zipped_inputs)
 
     if x.op == Name.Layer.nhwc2nchw:
@@ -105,6 +131,8 @@ def zipnode(x, ready=None):
     elif x.op == Name.Layer.nchw2nhwc:
         x.op = ts.zoo.Name.Layer.transpose
         x.params[ts.zoo.Name.permute] = numpy.asarray([0, 2, 3, 1], dtype=numpy.int32)
+
+    ready_zipped[x] = x
 
     return x
 

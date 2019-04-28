@@ -136,11 +136,12 @@ def convert(graph, inputs, outputs, output_file):
     """
     Reduce nchw operators
     """
-    # ready = {}
-    # output_ts_nodes = [zipper.zipnode(output, ready=ready) for output in output_ts_nodes]
+    ready_zipped = {}
+    ready_nchw = {}
+    output_ts_nodes = [zipper.zipnode(output, ready_zipped=ready_zipped, ready_nchw=ready_nchw) for output in output_ts_nodes]
     #
-    # zipper.plot_graph(output_ts_nodes)
-    output_ts_nodes = [zipper.warp_node(output) for output in output_ts_nodes]
+    zipper.plot_graph(output_ts_nodes)
+    # output_ts_nodes = [zipper.warp_node(output) for output in output_ts_nodes]
 
     # saving
     inputs = input_ts_nodes
