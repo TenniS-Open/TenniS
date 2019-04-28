@@ -14,7 +14,7 @@ namespace ts {
 
         template<typename T>
         static void cpu_spacetobatch4d_compute_run(const Tensor &x, const int padding_top, const int padding_bottom,
-                    const int padding_left,const int padding_right, const int block_height, const int block_width, Tensor &out) { 
+                    const int padding_left,const int padding_right, const int block_height, const int block_width, Tensor &out) {
 
             Shape x_shape = x.sizes();
             Shape out_shape = out.sizes();
@@ -29,9 +29,9 @@ namespace ts {
             int output_height = out_shape[2];
             int output_width = out_shape[3];
 
-            int input_number_step = input_channels * input_height * input_width;
-            int input_channels_step = input_height * input_width;
-            int input_height_step = input_width;
+            // int input_number_step = input_channels * input_height * input_width;
+            // int input_channels_step = input_height * input_width;
+            // int input_height_step = input_width;
             // int input_width_step = 1;
 
             // int output_size = output_number * output_channels * output_height * output_width;
@@ -40,11 +40,12 @@ namespace ts {
             int output_height_step = output_width;
             // int output_width_step = 1;
 
-            const T * pinput = x.data<T>();
-            T * poutput = out.data<T>();
+            const T *pinput = x.data<T>();
+            T *poutput = out.data<T>();
 
             std::memset(poutput, 0, out.count() * sizeof(T));
 
+            int at_input_i = 0;
             for (int n = 0; n < input_number; ++n) {
                 for (int c = 0; c < input_channels; ++c) {
                     for (int h = 0; h < input_height; ++h) {
@@ -54,21 +55,17 @@ namespace ts {
                             int oh = (h + padding_top) / block_height;
                             int ow = (w + padding_left) / block_width;
 
-                            int at_input_i = n * input_number_step
-                                             + c * input_channels_step
-                                             + h * input_height_step
-                                             + w;
-
                             int at_output_i = on * output_number_step
                                               + oc * output_channels_step
                                               + oh * output_height_step
                                               + ow;
                             poutput[at_output_i] = pinput[at_input_i];
+
+                            ++at_input_i;
                         }
                     }
                 }
             }
-
         }
 
 
