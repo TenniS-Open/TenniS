@@ -16,5 +16,6 @@ from . import frontend
 from . import dtype
 
 from . import orz
+from . import optimizer
 
 __version__ = "0.0.9"

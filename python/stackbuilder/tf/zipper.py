@@ -112,6 +112,7 @@ def zipnode(x, ready_zipped=None, ready_nchw=None):
     if x in ready_zipped:
         return ready_zipped[x]
 
+    # First transform.
     try_nchw_inputs = []
     for input in x.inputs:
         assert isinstance(input, ts.Node)
@@ -120,6 +121,7 @@ def zipnode(x, ready_zipped=None, ready_nchw=None):
             if tmp is not None:
                 input = tmp
         try_nchw_inputs.append(input)
+    # Then traverse.
     zipped_inputs = []
     for input in try_nchw_inputs:
         zipped_inputs.append(zipnode(input, ready_zipped=ready_zipped, ready_nchw=ready_nchw))
