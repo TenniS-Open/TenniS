@@ -43,21 +43,21 @@ namespace ts {
             const T *pinput = x.data<T>();
             T *poutput = out.data<T>();
 
-            int at_output_i = 0;
+            int at_output_i = 0;    // n * output_number_step + c * output_channels_step;
             for (int n = 0; n < output_number; ++n) {
                 for (int c = 0; c < output_channels; ++c) {
+                    const int ic = c;
                     for (int h = 0; h < output_height; ++h) {
+                        const int ih = (h + crop_top) / block_height;
+                        const int pre_compute = (h + crop_top) % block_height * block_width;
                         for (int w = 0; w < output_width; ++w) {
-                            int in = ((h + crop_top) % block_height * block_width + (w + crop_left) % block_width) * output_number + n;
-                            int ic = c;
+                            const int in = (pre_compute + (w + crop_left) % block_width) * output_number + n;
+                            const int iw = (w + crop_left) / block_width;
 
-                            int ih = (h + crop_top) / block_height;
-                            int iw = (w + crop_left) / block_width;
-
-                            int at_input_i = in * input_number_step
-                                             + ic * input_channels_step
-                                             + ih * input_height_step
-                                             + iw;
+                            const int at_input_i = in * input_number_step
+                                                   + ic * input_channels_step
+                                                   + ih * input_height_step
+                                                   + iw;
 
                             poutput[at_output_i] = pinput[at_input_i];
 
