@@ -389,6 +389,8 @@ namespace ts {
         Tensor const_data = intime::run(node.bubble(), const_inputs);
         const_node = ts::bubble::data(node.bubble().name(), const_data);
         ready_const.insert(std::make_pair(node, const_node));
+        // walking on origin graph, no need to map new node
+        // ready_const.insert(std::make_pair(const_node, const_node));
 
         return true;
     }
@@ -403,7 +405,4 @@ namespace ts {
             const_nodes.emplace_back(node);
         }
     }
-
-
-
 }
