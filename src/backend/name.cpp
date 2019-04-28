@@ -58,6 +58,19 @@ namespace ts {
             const string &tf_conv2d_padding() TS_NOEXCEPT { static string str = "_tf_conv2d_padding"; return str; }
             const string &nhwc_scale_resize2d() TS_NOEXCEPT { static string str = "_nhwc_scale_resize2d"; return str; }
 
+            const string &strided_slice() TS_NOEXCEPT { static string str = "strided_slice"; return str; }
+            const string &stack() TS_NOEXCEPT { static string str = "stack"; return str; }
+
+            const string &crop_nd() TS_NOEXCEPT { static string str = "crop_nd"; return str; }
+            const string &dcn_v2_forward() TS_NOEXCEPT { static string str = "dcn_v2_forward"; return str; }
+
+            const string &chunk() TS_NOEXCEPT { static string str = "chunk"; return str; }
+
+            const string &transpose_conv2d() TS_NOEXCEPT { static string str = "transpose_conv2d"; return str; }
+            const string &batchtospace4d() TS_NOEXCEPT { static string str = "batch_to_space4d"; return str; }
+            const string &spacetobatch4d() TS_NOEXCEPT { static string str = "space_to_batch4d"; return str; }
+
+            const string &affine_sample2d() TS_NOEXCEPT { static string str = "affine_sample2d"; return str; }
             const string &copy() TS_NOEXCEPT {
                 static string str = "_copy";
                 return str;
@@ -112,6 +125,17 @@ namespace ts {
 
         string padding_method = "padding_method";
         string SAME = "SAME";
+
+        string begin = "begin";
+        string end = "end";
+
+        string shift = "shift";
+        
+        string chunks = "chunks";
+        string deformable_groups = "deformable_groups";
+        
+        string crop = "crop";
+        string block_shape = "block_shape";
 
         string winograd_model = "winograd_model";
         string winograd_f23 = "winograd_f23";

@@ -19,7 +19,7 @@ namespace ts {
 
             m_dim = tensor::to_int(this->get(name::dim));
 
-            TS_AUTO_CHECK(m_dim >= 0);
+            // TS_AUTO_CHECK(m_dim >= 0);
         }
 
         int Concat::infer(Stack &stack, std::vector<Tensor::Prototype> &output) {
@@ -39,15 +39,30 @@ namespace ts {
 
             for (int i = 1; i < input_num; i++)
             {
-                TS_CHECK(stack.index(i)->dtype() == dtype) << "Can not concat on different data type!" << ts::eject;
+                if (stack.index(i)->dtype() != dtype) {
+                    std::ostringstream oss;
+                    oss << "(";
+                    for (int j = 0; j < input_num; ++j) {
+                        if (j) oss << ", ";
+                        oss << type_str(stack.index(j)->dtype());
+                    }
+                    oss << ")";
+                    TS_LOG_ERROR << "Can not concat " << oss.str() << ts::eject;
+                }
             }
 
             Shape output_shape(stack.index(0)->sizes());
+            int output_dims = int(output_shape.size());
+            int fixed_dim = m_dim >= 0 ? m_dim : output_dims + m_dim;
 
-            TS_CHECK(m_dim < output_shape.size()) << "Concat dim should be less than input dim!" << ts::eject;
+            if (fixed_dim < 0 || fixed_dim >= output_dims) {
+                TS_LOG_ERROR << "Concat dim must in [-"
+                    << output_dims << ", "
+                    << output_dims << ")" << eject;
+            }
 
             auto num_dims = output_shape.size();
-            int concat_dim_output_num = output_shape[m_dim];
+            int concat_dim_output_num = output_shape[fixed_dim];
 
             for (size_t i = 1; i < input_num; i++)
             {
@@ -56,14 +71,14 @@ namespace ts {
 
                 for (int j = 0; j < shape.size(); j++)
                 {
-                    if (j == m_dim)
+                    if (j == fixed_dim)
                         continue;
                     TS_CHECK(shape[j] == output_shape[j]) << "All inputs must have the same shape, except at concat_axis!" << ts::eject;
                 }
-                concat_dim_output_num += shape[m_dim];
+                concat_dim_output_num += shape[fixed_dim];
             }
 
-            output_shape[m_dim] = concat_dim_output_num;
+            output_shape[fixed_dim] = concat_dim_output_num;
 
             output.resize(1);
             output[0] = Tensor::Prototype(dtype, output_shape);
@@ -86,7 +101,16 @@ namespace ts {
 
             Tensor out = *stack.push(output_protos[0], memory_device);
 
-            concat(x, m_dim, out);
+            int output_dims = int(x[0].dims());
+            int fixed_dim = m_dim >= 0 ? m_dim : output_dims + m_dim;
+
+            if (fixed_dim < 0 || fixed_dim >= output_dims) {
+                TS_LOG_ERROR << "Concat dim must in [-"
+                             << output_dims << ", "
+                             << output_dims << ")" << eject;
+            }
+
+            concat(x, fixed_dim, out);
 
             return 1;
         }

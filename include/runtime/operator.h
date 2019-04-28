@@ -44,6 +44,7 @@ namespace ts {
          * @param stack running stack
          * @return output param
          * @note bind DeviceContext before
+         * @note must return 1
          */
         virtual int run(Stack &stack) = 0;
 
@@ -54,8 +55,16 @@ namespace ts {
          * @param output output tensor's proto
          * @return keep value
          * @note bind ThreadPool, DeviceContext, RuntimeContext before
+         * @note operator's output count must be 1, this function get each field proto
          */
         virtual int infer(Stack &stack, std::vector<Tensor::Prototype> &output) = 0;
+
+        /**
+         * all operator must return an tensor or packed tensor
+         * @param stack
+         * @return tensor prototypes
+         */
+        TensorPrototype infer(Stack &stack);
 
         bool has(const std::string &param) const;
 
@@ -95,6 +104,10 @@ namespace ts {
 
         std::string name() const;
 
+        /**
+         * @deprecated
+         * @return 1
+         */
         int output_count() const;
 
     private:

@@ -30,7 +30,11 @@ namespace ts {
 
             m_op_conv2d->set(Bubble::RetentionParam::op, tensor::from(name::layer::depthwise_conv2d_v2()));
             m_op_conv2d->set(Bubble::RetentionParam::name, tensor::from("_core" + name()));
-            m_op_conv2d->set(Bubble::RetentionParam::output_count, get(Bubble::RetentionParam::output_count));
+            for (auto &param : Bubble::RetentionParam::All()) {
+                if (!m_op_conv2d->has(param) && this->has(param)) {
+                    m_op_conv2d->set(param, get(param));
+                }
+            }
 
             m_op_conv2d->set(name::format, get(name::format));
             m_op_conv2d->set(name::padding_value, get(name::padding_value));

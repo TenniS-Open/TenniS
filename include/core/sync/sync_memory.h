@@ -78,10 +78,6 @@ namespace ts {
         SyncMemory(HardMemory::shared &&hard)
                 : SyncMemory(Memory(std::move(hard))) {}
 
-        void set(const MemoryDevice &device, const Memory &memory) {
-            m_sync_memory->set(device, memory);
-        }
-
         /**
          * Moving constructed function
          * @param other other object
@@ -163,26 +159,20 @@ namespace ts {
         const MemoryDevice &device() const { return  m_sync_memory->key(); }
 
         /**
-         * @return weak memory
+         *
+         * @return got weak memory
          */
-        Memory sync() const {
+        Memory weak_memory() const {
             return m_sync_memory->value().weak();
         }
 
         /**
-         * @return weak memory
+         * got memory on device
+         * @param device
+         * @return
          */
-        Memory sync(const MemoryDevice &device) const {
-            return m_sync_memory->sync(device).weak();
-        }
-
-        void broadcast(const MemoryDevice &device) {
-            m_sync_memory->broadcast(device);
-        }
-
-        shared locked() {
-            std::shared_ptr<self> locked_self(new self(m_sync_memory->locked()));
-            return locked_self;
+        self view(const MemoryDevice &device) const {
+            return self(m_sync_memory->view(device));
         }
 
     private:
@@ -190,29 +180,6 @@ namespace ts {
 
         std::shared_ptr<Block> m_sync_memory;
     };
-
-    /**
-     * copy memory in device or cross devices
-     * @param dst the dst memory
-     * @param src the src memory
-     * @param size copy size
-     */
-    inline void memcpy(SyncMemory &dst, const SyncMemory &src, size_t size) {
-        auto locked_dst = dst.locked();
-        auto locked_value = locked_dst->sync();
-        memcpy(locked_value, src.sync(), size);
-    }
-
-    /**
-     * copy memory in device or cross devices, copy src size
-     * @param dst the dst memory
-     * @param src the src memory
-     */
-    inline void memcpy(SyncMemory &dst, const SyncMemory &src)  {
-        auto locked_dst = dst.locked();
-        auto locked_value = locked_dst->sync();
-        memcpy(locked_value, src.sync());
-    }
 }
 
 

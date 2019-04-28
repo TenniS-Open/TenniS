@@ -46,6 +46,20 @@ namespace ts {
                 return Shape(shape, shape + shape_len);
             }
 
+            int size(int i) const {
+                if (i < 0 || i >= ts_Tensor_shape_size(m_impl.get())) throw Exception("index out of range");
+                return ts_Tensor_shape(m_impl.get())[i];
+            }
+
+            int size(size_t i) const {
+                if (i >= size_t(ts_Tensor_shape_size(m_impl.get()))) throw Exception("index out of range");
+                return ts_Tensor_shape(m_impl.get())[i];
+            }
+
+            int dims() const {
+                return ts_Tensor_shape_size(m_impl.get());
+            }
+
             DTYPE dtype() const {
                 return DTYPE(ts_Tensor_dtype(m_impl.get()));
             }
@@ -68,6 +82,26 @@ namespace ts {
                 return reinterpret_cast<T *>(data());
             }
 
+            template<typename T>
+            const T &data(int i) const {
+                return reinterpret_cast<const T *>(data())[i];
+            }
+
+            template<typename T>
+            T &data(int i) {
+                return reinterpret_cast<T *>(data())[i];
+            }
+
+            template<typename T>
+            const T &data(size_t i) const {
+                return reinterpret_cast<const T *>(data())[i];
+            }
+
+            template<typename T>
+            T &data(size_t i) {
+                return reinterpret_cast<T *>(data())[i];
+            }
+
             self clone() const {
                 auto clone_raw = ts_Tensor_clone(m_impl.get());
                 TS_API_AUTO_CHECK(clone_raw != nullptr);
@@ -88,6 +122,12 @@ namespace ts {
                 auto shape = ts_Tensor_shape(m_impl.get());
                 auto shape_len = ts_Tensor_shape_size(m_impl.get());
                 return std::accumulate(shape, shape + shape_len, 1, std::multiplies<int32_t>());
+            }
+
+            Tensor reshape(const Shape &shape) const {
+                auto casted_raw = ts_Tensor_reshape(m_impl.get(), shape.data(), int32_t(shape.size()));
+                TS_API_AUTO_CHECK(casted_raw != nullptr);
+                return Tensor(casted_raw);
             }
 
         private:
@@ -127,7 +167,7 @@ namespace ts {
 
             static Tensor build(const T *data, size_t count, const std::vector<int> &shape) {
                 auto shape_count = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int32_t>());
-                if (count != shape_count) throw Exception("Shape count mismatch.");
+                if (int32_t(count) != shape_count) throw Exception("Shape count mismatch.");
                 return Tensor(dtypeid<T>::id, shape, data);
             }
         };

@@ -54,6 +54,12 @@ namespace ts {
 
         void set_param(const std::string &node_name, const std::string &param, const Tensor &value);
 
+        static shared Load(Graph g);
+
+        static shared Load(Graph g, const std::vector<Node> &outputs);
+
+        static shared Load(Graph g, const std::vector<std::string> &outputs);
+
     private:
         /**
          * @param g reference Graph

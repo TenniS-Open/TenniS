@@ -2,6 +2,8 @@
 // Created by kier on 2019/3/16.
 //
 
+#include <api/module.h>
+
 #include "declare_module.h"
 
 using namespace ts;
@@ -18,4 +20,30 @@ void ts_free_Module(const ts_Module *module) {
     TRY_HEAD
     delete module;
     TRY_TAIL
+}
+
+class CStreamReader : public ts::StreamReader {
+public:
+    CStreamReader(void *obj, ts_stream_read *reader)
+        : m_obj(obj), m_reader(reader) {}
+
+    size_t read(void *buf, size_t len) override {
+        auto ret = m_reader(m_obj, reinterpret_cast<char *>(buf), uint64_t(len));
+        return size_t(ret);
+    }
+
+private:
+    void *m_obj;
+    ts_stream_read *m_reader;
+};
+
+ts_Module *ts_Module_LoadFromStream(void *obj, ts_stream_read *reader, ts_SerializationFormat format) {
+    TRY_HEAD
+    if (!obj) throw Exception("NullPointerException: @param: 1");
+    if (!reader) throw Exception("NullPointerException: @param: 2");
+    CStreamReader stream_reader(obj, reader);
+    std::unique_ptr<ts_Module> module(new ts_Module(
+            Module::Load(stream_reader, Module::SerializationFormat(format))));
+    RETURN_OR_CATCH(module.release(), nullptr)
+    return nullptr;
 }

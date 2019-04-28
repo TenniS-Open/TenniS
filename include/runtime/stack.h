@@ -24,148 +24,328 @@ namespace ts {
         using self = Stack;    ///< self class
         using shared = std::shared_ptr<self>;  ///< smart pointer
 
-        explicit Stack(const MemoryDevice &device)
-                : Stack(device, DynamicSyncMemoryController::Make(device)) {}
+        /**
+         * build stack on device, using dynamic memory controller
+         * @param device memory device
+         * @note default need_lock is false
+         */
+        explicit Stack(const MemoryDevice &device);
 
-        explicit Stack(const MemoryDevice &device, bool need_lock)
-                : Stack(device, DynamicSyncMemoryController::Make(device, need_lock)) {}
+        /**
+         * build stack on device, using dynamic memory controller
+         * @param device memory device
+         * @param need_lock if need lock to control memory share with this stack
+         */
+        explicit Stack(const MemoryDevice &device, bool need_lock);
 
-        explicit Stack(const MemoryDevice &device, const SyncMemoryController::shared &controller)
-                : m_device(device), m_controller(controller) {}
+        /**
+         * build stack on device, using given memory controller
+         * @param device memory device
+         * @param controller given memory controller
+         */
+        explicit Stack(const MemoryDevice &device, const SyncMemoryController::shared &controller);
 
-        // return new Tensor, but not in stack
-        Tensor make(DTYPE dtype, const Shape &shape) {
-            return Tensor(m_controller, dtype, shape);
+        /**
+         * Build tensor with dtype and shape
+         * @param dtype new tensor's dtype
+         * @param shape new tensor's dtype
+         * @return new tensor
+         */
+        Tensor make(DTYPE dtype, const Shape &shape);
+
+        /**
+         * Build tensor with dtype and shape on device
+         * @param dtype new tensor's dtype
+         * @param shape new tensor's dtype
+         * @param device new tensor's device
+         * @return new tensor
+         */
+        Tensor make(DTYPE dtype, const Shape &shape, const MemoryDevice &device);
+
+        /**
+         * Build tensor with proto
+         * @param proto new tensor's proto
+         * @return new tensor
+         */
+        Tensor make(const Tensor::Prototype &proto) {
+            return this->make(proto.dtype(), proto.sizes());
         }
 
-        Tensor make(DTYPE dtype, const Shape &shape, const MemoryDevice &device) {
-            return Tensor(m_controller, dtype, shape, device);
+        /**
+         * Build tensor with proto
+         * @param proto new tensor's proto
+         * @param device new tensor's device
+         * @return new tensor
+         */
+        Tensor make(const Tensor::Prototype &proto, const MemoryDevice &device) {
+            return this->make(proto.dtype(), proto.sizes(), device);
         }
 
+        /**
+         * Build tensor with proto
+         * @param proto new tensor's proto
+         * @return new tensor
+         */
+        Tensor make(const TensorPrototype &proto);
+
+        /**
+         * Build tensor with proto
+         * @param proto new tensor's proto
+         * @param device new tensor's device
+         * @return new tensor
+         */
+        Tensor make(const TensorPrototype &proto, const MemoryDevice &device);
+
+        /**
+         *
+         * @param in_flow
+         * @param proto
+         * @return new Tensor
+         * Notice: moptional have context:DeviceContext
+         * DeviceContext must given with in_flow=InFlow::DEVICE,
+         * if in_flow=InFlow::HOST, use CPU:0 memory device.
+         */
+        Tensor make(Tensor::InFlow in_flow, const Tensor::Prototype &proto);
+
+        /**
+         *
+         * @param in_flow
+         * @param proto
+         * @return new Tensor
+         * Notice: moptional have context:DeviceContext
+         * DeviceContext must given with in_flow=InFlow::DEVICE,
+         * if in_flow=InFlow::HOST, use CPU:0 memory device.
+         */
+        Tensor make(Tensor::InFlow in_flow, const TensorPrototype &proto);
+
+        /**
+         * Push tensor with dtype and shape
+         * @param dtype new tensor's dtype
+         * @param shape new tensor's shape
+         * @return pointer to new tensor
+         */
         Tensor *push(DTYPE dtype, const Shape &shape) {
             return this->push(this->make(dtype, shape));
         }
 
+        /**
+         * Push tensor with dtype and shape on device
+         * @param dtype new tensor's dtype
+         * @param shape new tensor's shape
+         * @param shape new tensor's device
+         * @return pointer to new tensor
+         */
         Tensor *push(DTYPE dtype, const Shape &shape, const MemoryDevice &device) {
             return this->push(this->make(dtype, shape, device));
         }
 
+        /**
+         * Push tensor with proto
+         * @param proto new tensor's proto
+         * @return pointer to new tensor
+         */
         Tensor *push(const Tensor::Prototype &proto) {
             return this->push(proto.dtype(), proto.sizes());
         }
 
+        /**
+         * Push tensor with proto
+         * @param proto new tensor's proto
+         * @param device new tensor's device
+         * @return pointer to new tensor
+         */
         Tensor *push(const Tensor::Prototype &proto, const MemoryDevice &device) {
             return this->push(proto.dtype(), proto.sizes(), device);
         }
 
-        Tensor *push(const Tensor &tensor) {
-            // removed this check, supporting cross device computing
-            // TS_AUTO_CHECK(tensor.device() == this->m_device);
-            this->m_stack.push_back(tensor);
-            return &this->m_stack.back();
+        /**
+         * Push tensor with proto
+         * @param proto new tensor's proto
+         * @return pointer to new tensor
+         */
+        Tensor *push(const TensorPrototype &proto) {
+            return this->push(this->make(proto));
         }
 
-        Tensor *push(int i) {
-            return this->push(*this->index(i));
+        /**
+         * Push tensor with proto
+         * @param proto new tensor's proto
+         * @param device new tensor's device
+         * @return pointer to new tensor
+         */
+        Tensor *push(const TensorPrototype &proto, const MemoryDevice &device) {
+            return this->push(this->make(proto, device));
         }
+
+        /**
+         * Push given tensor to stack
+         * @param tensor given tensor
+         * @return pointer to given tensor
+         */
+        Tensor *push(const Tensor &tensor);
+
+        /**
+         * Push stack[i] to the top of stack
+         * @param i index of need push tensor
+         * @return pointer to index tensor
+         */
+        Tensor *push(int i) { return this->push(*this->index(i)); }
 
         /**
          * clone_push means push an clone of tensor
          * @param tensor param to clone
          * @return return cloned tensor
          */
-        Tensor *clone_push(const Tensor &tensor) {
-            return this->push(tensor.clone(this->m_controller));
-        }
+        Tensor *clone_push(const Tensor &tensor);
 
-        Tensor *clone_push(const Tensor &tensor, const MemoryDevice &device) {
-            return this->push(tensor.clone(this->m_controller, device));
-        }
+        /**
+         * clone_push means push an clone of tensor, on memory device
+         * @param tensor param to clone
+         * @param device memory device
+         * @return return cloned tensor
+         */
+        Tensor *clone_push(const Tensor &tensor, const MemoryDevice &device);
 
-        Tensor *clone(int i) {
-            auto tensor = *this->index(i);
-            return clone_push(tensor);
-        }
+        /**
+         * clone the stack[i] on the top
+         * @param i index of clone tensor
+         * @return pointer to new tensor
+         */
+        Tensor *clone(int i) { return this->clone_push(*this->index(i)); }
 
-        Tensor *clone(int i, const MemoryDevice &device) {
-            auto tensor = *this->index(i);
-            return clone_push(tensor, device);
-        }
+        /**
+         * clone the stack[i] on the top, on memory device
+         * @param i index of clone tensor
+         * @param device memory device
+         * @return pointer to new tensor
+         */
+        Tensor *clone(int i, const MemoryDevice &device) { return this->clone_push(*this->index(i), device); }
 
-        // if i >= 0, then i is bottom_up_index; else if i < 0, the i is top_down_index
-        Tensor *index(int i) { return &this->m_stack.at(relative2absolute(i)); }
+        /**
+         * get stack[i]
+         * @param i index to tensor, can be negative
+         * @return stack[i]
+         * @note if i >= 0, then i is bottom_up_index; else if i < 0, the i is top_down_index
+         */
+        Tensor *index(int i);
 
-        const Tensor *index(int i) const { return &this->m_stack.at(relative2absolute(i)); }
+        /**
+         * get stack[i]
+         * @param i index to tensor, can be negative
+         * @return stack[i]
+         * @note if i >= 0, then i is bottom_up_index; else if i < 0, the i is top_down_index
+         */
+        const Tensor *index(int i) const;
 
+        /**
+         * get stack[i]
+         * @param i index to tensor, can be negative
+         * @return stack[i]
+         * @note if i >= 0, then i is bottom_up_index; else if i < 0, the i is top_down_index
+         */
         Tensor &operator[](int i) { return *index(i); }
 
+        /**
+         * get stack[i]
+         * @param i index to tensor, can be negative
+         * @return stack[i]
+         * @note if i >= 0, then i is bottom_up_index; else if i < 0, the i is top_down_index
+         */
         const Tensor &operator[](int i) const { return *index(i); }
 
+        /**
+         * get stack[i]
+         * @param i index to tensor
+         * @return stack[i]
+         */
         Tensor &operator[](size_t i) { return *index(int(i)); }
 
+        /**
+         * get stack[i]
+         * @param i index to tensor
+         * @return stack[i]
+         */
         const Tensor &operator[](size_t i) const { return *index(int(i)); }
 
-        Tensor *top() { return &this->m_stack.back(); }
+        /**
+         * get stack[-1]
+         * @return stack[-1]
+         */
+        Tensor *top();
 
-        const Tensor *top() const { return &this->m_stack.back(); }
+        /**
+         * get stack[-1]
+         * @return stack[-1]
+         */
+        const Tensor *top() const;
 
-        void pop(size_t pop_size) {
-            auto it_end = this->m_stack.end();
-            auto it_beg = it_end - pop_size;
-            this->m_stack.erase(it_beg, it_end);
-        }
+        /**
+         * erase pop_size tensor top of stack
+         * @param pop_size pop size
+         */
+        void pop(size_t pop_size);
 
-        void pop() { this->m_stack.pop_back(); }
+        /**
+         * erase top of stack
+         */
+        void pop();
 
-        size_t size() const { return m_stack.size() - m_base; }
+        /**
+         * get size of stack, on the base
+         * @return
+         */
+        size_t size() const;
 
-        void erase(int i) {
-            auto it = this->m_stack.begin() + relative2absolute(i);
-            this->m_stack.erase(it);
-        }
+        /**
+         * erase stack[i]
+         * @param i index of tensor ready to remove
+         */
+        void erase(int i);
 
-        // remove [beg, end)
-        void erase(int beg, int end) {
-            auto beg_it = this->m_stack.begin() + relative2absolute(beg);
-            auto end_it = this->m_stack.begin() + relative2absolute(end);
-            // TS_AUTO_CHECK(end_it - beg_it >= 0);
-            this->m_stack.erase(beg_it, end_it);
-        }
+        /**
+         * remove [beg, end)
+         * @param beg begin of the remove range
+         * @param end end of the remove range
+         */
+        void erase(int beg, int end);
 
-        void clear() {this->erase(0, static_cast<int>(this->size()));}
+        /**
+         * clear all items above base
+         */
+        void clear() { this->erase(0, static_cast<int>(this->size())); }
 
-        size_t base() const { return m_base; }
+        /**
+         * get now running base, mean the bottom of stack
+         * @return running base
+         */
+        size_t base() const;
 
-        // return old base
-        size_t rebase(size_t new_base) {
-            std::swap(m_base, new_base);
-            return new_base;
-        }
+        /**
+         * change base
+         * @param new_base new base
+         * @return old base
+         */
+        size_t rebase(size_t new_base);
 
-        void push_base(int i) {
-            this->m_base_stack.push(this->rebase(relative2absolute(i)));
-        }
-        void pop_base() {
-            if (this->m_base_stack.empty()){
-                this->rebase(0);
-            } else {
-                this->rebase(this->m_base_stack.top());
-                this->m_base_stack.pop();
-            }
-        }
+        /**
+         * change base, then call the pop_base can resume older base
+         * @param i new base on stack[i]
+         */
+        void push_base(int i);
 
-        HardConverter::function converter() const {
-            if (this->m_converter == nullptr) {
-                this->m_converter = HardConverter::Query(m_device.type(), m_device.type());
-                TS_AUTO_CHECK(this->m_converter != nullptr);
-            }
-            return this->m_converter;
-        }
+        /**
+         * resume base before the last call of push_base
+         */
+        void pop_base();
+
+        /**
+         * get converter on stack's memory
+         * @return memory converter
+         */
+        HardConverter::function converter() const;
 
     private:
-        size_t relative2absolute(int i) const {
-            return i >= 0 ? m_base + i : m_stack.size() + i;
-        }
+        // size_t relative2absolute(int i) const;
 
         Device m_device;                          ///< running tensor device, compute on it
         SyncMemoryController::shared m_controller;    ///< tensor memory backend

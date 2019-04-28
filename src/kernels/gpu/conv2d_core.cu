@@ -8,7 +8,7 @@
 #include "device_launch_parameters.h"
 #include <cuda_runtime.h>
 
-#include "kernels/gpu/cublas_device.h"
+#include "kernels/gpu/cuda_context.h"
 #include "core/device_context.h"
 #include "utils/ctxmgr_lite.h"
 #include "kernels/gpu/math_cublas.h"
@@ -134,7 +134,7 @@ namespace ts {
                 Shape tmpshape;
                 tmpshape.resize(1);
                 tmpshape[0] = col_buffer_size;
-                col_tensor = Tensor(out.device(), out.dtype(), tmpshape);
+                col_tensor = stack.make(out.dtype(), tmpshape, x.device());
                 col_buffer = col_tensor.data<T>();
  
             }
@@ -156,8 +156,8 @@ namespace ts {
 
 #ifdef TS_USE_CUBLAS
                 auto &context = ctx::ref<DeviceContext>();
-                CublasDevice* handle = reinterpret_cast<CublasDevice*>(context.handle);
-                auto cublas_handle = handle->get();
+                CUDAContextHandle* handle = reinterpret_cast<CUDAContextHandle*>(context.handle);
+                auto cublas_handle = handle->cublas_handle();
 
                 cublas::math<T>::gemm(cublas_handle, cublas::NoTrans, cublas::NoTrans,
                     weight_shape[0], conv_out_spatial_dim, kernel_dims, 1, pweight, col_buffer, 0, poutput);

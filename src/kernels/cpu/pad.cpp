@@ -190,8 +190,6 @@ namespace ts {
     }
 }
 
-
-
-using namespace ts;
-using namespace cpu;
-TS_REGISTER_OPERATOR(Pad, CPU, name::layer::pad())
+//using namespace ts;
+//using namespace cpu;
+//TS_REGISTER_OPERATOR(Pad, CPU, name::layer::pad())

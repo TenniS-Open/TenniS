@@ -19,13 +19,15 @@ set(PLATFORM "auto" CACHE STRING "auto, x86 or x64")
 set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Debug or Release")
 set(CONFIGURATION ${CMAKE_BUILD_TYPE})
 
+option(TS_BUILD_TEST "[Optional] Build test" ON)
+option(TS_BUILD_TOOLS "[Optional] Build tools" ON)
+
 option(TS_USE_OPENMP "[Optional] Use OpenMP" ON)
 option(TS_USE_OPENCV "[Optional] Use OpenCV" OFF)
 
 option(TS_USE_CUDA "[Optional] Use CUDA" OFF)
 option(TS_USE_CBLAS "[Optional] Use CBLAS" OFF)
 option(TS_USE_CUBLAS "[Optional] Use CUBLAS" OFF)
-option(TS_USE_OPT "[Optional] Use OPT" OFF)
 
 option(TS_USE_PROFILER "[Optional] Use Profiler" ON)
 if (TS_USE_PROFILER)
@@ -69,6 +71,7 @@ set(TENSORSTACK_MODULES
         core
         encryption
         engine
+        frontend
         global
         memory
         module
@@ -116,6 +119,17 @@ if (TS_USE_CUDA)
     find_package(CUDA REQUIRED)
     message(STATUS "[Optional] Use CUDA: [ON]")
 
+    set(CUDA_PROPAGATE_HOST_FLAGS OFF)
+    set(CUDA_ARCH   -gencode arch=compute_30,code=sm_30
+                    -gencode arch=compute_35,code=sm_35
+                    -gencode arch=compute_50,code=sm_50
+                    -gencode arch=compute_60,code=sm_60)
+    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} ${CUDA_ARCH} -std=c++11")
+    if ("${CONFIGURATION}" STREQUAL "Debug")
+        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -O0 -g ")
+    endif()
+    set(TS_USE_CUBLAS ON)
+
     list(APPEND TENSORSTACK_ACHIVES gpu)
     add_definitions(-DTS_USE_CUDA)
 else()
@@ -132,11 +146,12 @@ elseif (UNIX)
 else ()
 endif ()
 
-list(APPEND third_libraries ${CUDA_CUBLAS_LIBRARIES})
 if(TS_USE_CUBLAS)
 	message(STATUS "[Optional] Use CUBLAS: [ON]")
 	add_definitions(-DTS_USE_CUBLAS)
-	
+    list(APPEND third_libraries ${CUDA_CUBLAS_LIBRARIES})
+else()
+	message(STATUS "[Optional] Use CUBLAS: [OFF]")
 endif()
 
 if (TS_USE_CBLAS)
@@ -148,8 +163,6 @@ if (TS_USE_CBLAS)
 
     if (WIN32)
         find_library(OpenBLAS REQUIRED)
-		include_directories("D:/openblas/0.2.4/include")
-		list(APPEND third_libraries "D:/openblas/0.2.4/lib/x64/libopenblas.lib")
         if (OpenBLAS_FOUND)
             set(CBLAS_FOUND ON)
             include_directories(${OpenBLAS_INCLUDE_DIR})
@@ -179,12 +192,6 @@ if (TS_USE_CBLAS)
     endif()
 else()
     message(STATUS "[Optional] Use CBLAS: [OFF]")
-endif()
-
-if(TS_USE_OPT)
-	message(STATUS "[Optional] Use OPT DEVICE: [ON]")
-    list(APPEND TENSORSTACK_ACHIVES opt)
-    add_definitions(-DTS_USE_OPT)
 endif()
 
 set(INCLUDE_FILES)
@@ -230,7 +237,7 @@ foreach (achive ${TENSORSTACK_ACHIVES})
     LIST(APPEND SRC_INCLUDE_FILES ${SRC_INCLUDE_ARCHIVE_${achive}_FILES})
 endforeach ()
 
-ts_add_library(${PROJECT_NAME}_LIB ${TARGET} ${INCLUDE_FILES} ${INCLUDE_SRC_FILES} ${SRC_FILES})
+ts_add_library(${PROJECT_NAME}_LIB ${TARGET} ${INCLUDE_FILES} ${SRC_INCLUDE_FILES} ${SRC_FILES})
 
 target_link_libraries(${PROJECT_NAME}_LIB ${third_libraries})
 
@@ -248,7 +255,7 @@ install(TARGETS ${PROJECT_NAME}_LIB
         )
 
 # TODO: update headers install script
-install(DIRECTORY ${SOLUTION_DIR}/include/
+install(DIRECTORY ${SOLUTION_DIR}/include/api
         DESTINATION ${ENV_HEADER_DIR}
         )
 
@@ -258,6 +265,7 @@ FILE(GLOB_RECURSE TOOL_FILES ${PROJECT_SOURCE_DIR}/tools/*.cpp)
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
+if (TS_BUILD_TEST)
 foreach (path ${TEST_FILES})
     string(REGEX MATCH "[^/]*.[(c)|(cc)|(cpp)]$" file_ext ${path})
     string(REGEX MATCH "^[^.]*" file ${file_ext})
@@ -266,16 +274,9 @@ foreach (path ${TEST_FILES})
     target_link_libraries(test_${file} ${third_libraries})
     # set_target_properties(test_${file} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${LOCAL_OUTPUT_DIR}/lib)
 endforeach ()
+endif(TS_BUILD_TEST)
 
-foreach (path ${TEST_CASE_FILES})
-    string(REGEX MATCH "[^/]*.[(c)|(cc)|(cpp)]$" file_ext ${path})
-    string(REGEX MATCH "^[^.]*" file ${file_ext})
-    add_executable(test_generate_${file} ${path})
-    target_link_libraries(test_generate_${file} ${PROJECT_NAME}_LIB)
-    target_link_libraries(test_generate_${file} ${third_libraries})
-    # set_target_properties(test_${file} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${LOCAL_OUTPUT_DIR}/lib)
-endforeach ()
-
+if (TS_BUILD_TOOLS)
 foreach (path ${TOOL_FILES})
     string(REGEX MATCH "[^/]*.[(c)|(cc)|(cpp)]$" file_ext ${path})
     string(REGEX MATCH "^[^.]*" file ${file_ext})
@@ -287,3 +288,4 @@ foreach (path ${TOOL_FILES})
             RUNTIME DESTINATION ${ENV_RUNTIME_DIR}
             )
 endforeach ()
+endif (TS_BUILD_TOOLS)

@@ -85,11 +85,19 @@ namespace ts {
         BLACK = 0,
         COPY = 1,
         LOOP = 2,
+        WHITE = 3,
     };
 
     enum class Resize2DType : int {
         LINEAR = 0,
         CUBIC = 1,
+        NEAREST = 2,
+    };
+
+    enum class Affine_Sample2DType : int {
+        LINEAR = 0,
+        CUBIC = 1,
+        NEAREST = 2,
     };
 }
 

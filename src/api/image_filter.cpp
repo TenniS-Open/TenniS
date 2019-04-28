@@ -74,6 +74,13 @@ ts_bool ts_ImageFilter_resize(ts_ImageFilter *filter, int width, int height) {
     RETURN_OR_CATCH(ts_true, ts_false)
 }
 
+ts_bool ts_ImageFilter_resize_scalar(ts_ImageFilter *filter, int width) {
+    TRY_HEAD
+        if (!filter) throw Exception("NullPointerException: @param: 1");
+        (*filter)->resize(width);
+    RETURN_OR_CATCH(ts_true, ts_false)
+}
+
 ts_bool ts_ImageFilter_center_crop(ts_ImageFilter *filter, int width, int height) {
     TRY_HEAD
     if (!filter) throw Exception("NullPointerException: @param: 1");
