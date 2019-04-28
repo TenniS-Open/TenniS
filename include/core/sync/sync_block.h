@@ -198,9 +198,10 @@ namespace ts {
 #define MOVE_MEMBER(member) this->member = std::move(other.member)
             MOVE_MEMBER(m_default_key);
             MOVE_MEMBER(m_default_value);
-            MOVE_MEMBER(m_sync_values);
+            MOVE_MEMBER(m_param);
+            //MOVE_MEMBER(m_sync_values);
             MOVE_MEMBER(m_mutex);
-            MOVE_MEMBER(m_hanlder);
+            //MOVE_MEMBER(m_hanlder);
             // MOVE_MEMBER(m_locked);
 #undef MOVE_MEMBER
             return *this;
