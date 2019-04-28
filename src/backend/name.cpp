@@ -71,6 +71,9 @@ namespace ts {
             const string &spacetobatch4d() TS_NOEXCEPT { static string str = "space_to_batch4d"; return str; }
 
             const string &affine_sample2d() TS_NOEXCEPT { static string str = "affine_sample2d"; return str; }
+
+            const string &squeeze() TS_NOEXCEPT { static string str = "squeeze"; return str; }
+
             const string &copy() TS_NOEXCEPT {
                 static string str = "_copy";
                 return str;

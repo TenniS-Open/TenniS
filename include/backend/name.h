@@ -84,6 +84,9 @@ namespace ts {
             TS_DEBUG_API const string &spacetobatch4d() TS_NOEXCEPT;
 
             TS_DEBUG_API const string &affine_sample2d() TS_NOEXCEPT;
+
+            // 2019-04-27
+            TS_DEBUG_API const string &squeeze() TS_NOEXCEPT;
         }
 
         namespace typo {

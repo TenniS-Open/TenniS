@@ -727,6 +727,22 @@ y的坐标为`[x, y]`映射到原图为`affine * [x, y, 1]'`，然后根据type�
 Waitting for sure
 ```
 
+### mean(x..device) -> y..device = delete
+参数：
+- `reduction_indices` `IntArray` 选择要进行平均数计算的维度。
+- `keep_dims` `Int` `Default=1`， 布尔值，表示是否保留维度
+说明：  
+返回`reduction_indices`维度内的平均数  
+绝大多数情况优先采用global_average_pooling.
+
+### squeeze(x..device) -> y
+
+参数：  
+- `axes` `IntArray` `OPTIONAL` 要去除的维度
+
+说明：  
+如果axes为空，则删除所有为1的维度。
+
 
 ### _nhwc_resize2d(x..device) = delete
 
