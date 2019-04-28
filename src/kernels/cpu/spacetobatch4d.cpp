@@ -43,6 +43,7 @@ namespace ts {
             const T * pinput = x.data<T>();
             T * poutput = out.data<T>();
 
+            std::memset(poutput, 0, out.count() * sizeof(T));
 
             for (int n = 0; n < input_number; ++n) {
                 for (int c = 0; c < input_channels; ++c) {
@@ -62,7 +63,6 @@ namespace ts {
                                               + oc * output_channels_step
                                               + oh * output_height_step
                                               + ow;
-
                             poutput[at_output_i] = pinput[at_input_i];
                         }
                     }

@@ -81,6 +81,8 @@ namespace ts {
 
             const T * pinput = x.data<T>();
             T * poutput = out.data<T>();
+            T n = T(0);
+            memset(poutput, out.device(), out.count() * sizeof(T), &n, MemoryDevice(CPU), sizeof(T));
 
             gSpaceToBatchND_kernel<T> << <CUDA_BLOCK(input_size, CUDA_THREAD_NUM), CUDA_THREAD_NUM >> >
                                (pinput, poutput,
