@@ -339,82 +339,68 @@ namespace ts {
         return block;
     }
 
-    static int run_const_node(const Node &node, Node &compute_node) {
-        std::vector<Node> inputs = node.inputs();
-        std::vector<Node> new_inputs;
-        int  input_num = inputs.size();
-        int const_inputs = 0;
-        for(int i=0; i<input_num; i++) {
-            auto &bubble = inputs[i].bubble();
-            if(bubble.op() == Bubble::Variable) {
-                TS_LOG_ERROR << "Not support " << Bubble::Variable << " in this version" << eject;
-            }else if(bubble.op() == Bubble::Const) {
-                new_inputs.push_back(inputs[i]);
-                const_inputs++;
-            }else if(bubble.op() == Bubble::Parameter) {
-                new_inputs.push_back(inputs[i]);
-            }else {
-                std::vector<Node> op_inputs = inputs[i].inputs();
-                int op_const_inputs = 0;
+    /**
+     *
+     * @param [in] node
+     * @param [out] const_node
+     * @return true if node if const node
+     */
+    static bool run_const_node(const Node &node, Node &const_node,
+            std::unordered_map<Node, Node> &ready_const,
+            std::unordered_set<Node> &ready_nonconst) {
+        // check ready nonconst
+        auto nonconst_it = ready_nonconst.find(node);
+        if (nonconst_it != ready_nonconst.end()) {
+            const_node = *nonconst_it;
+            return false;
+        }
+        // check ready const
+        auto const_it = ready_const.find(node);
+        if (const_it != ready_const.end()) {
+            const_node = const_it->second;
+            return true;
+        }
 
-                for(int k=0; k<op_inputs.size(); k++) {
-                     Node tmpnode = op_inputs[k];
-                     int n = run_const_node(op_inputs[k], tmpnode);
-                     if(n > 0) {
-                         op_inputs[k] = tmpnode;
-                         op_const_inputs++;
-                     }
-                }
+        // check endpoints
+        if(node->op() == Bubble::Variable) {
+            TS_LOG_ERROR << "Not support " << Bubble::Variable << " in this version" << eject;
+        } else if (node->op() == Bubble::Const) {
+            const_node = node;
+            ready_const.insert(std::make_pair(node, node));
+            return true;
+        } else if (node->op() == Bubble::Parameter) {
+            const_node = node;
+            ready_nonconst.insert(node);
+            return false;
+        }
 
-                if((op_const_inputs > 0) && (op_const_inputs == op_inputs.size())) {
-                    std::vector<Tensor> values;
-                    for(int k=0; k<op_const_inputs; k++) {
-                        auto &opbubble = op_inputs[k].bubble();
-                        TS_AUTO_CHECK(opbubble.op() == Bubble::Const);
-                        values.push_back(opbubble.get(name::value));
-                    }
-
-                    Tensor result = intime::run(bubble, values);
-                    auto data = ts::bubble::data(bubble.name(), result);
-                    const_inputs++;
-                    new_inputs.push_back(data);
-                }else
-                {
-                    new_inputs.push_back(inputs[i]);
-                }
+        // check if each input is const
+        std::vector<Tensor> const_inputs;
+        for (auto input : node.inputs()) {
+            if (!run_const_node(input, input, ready_const, ready_nonconst)) {
+                const_node = node;
+                ready_nonconst.insert(node);
+                return false;
             }
+            const_inputs.emplace_back(input->get(name::value));
         }
 
-        Node::Link(compute_node, new_inputs);
+        // set const node
+        Tensor const_data = intime::run(node.bubble(), const_inputs);
+        const_node = ts::bubble::data(node.bubble().name(), const_data);
+        ready_const.insert(std::make_pair(node, const_node));
 
-        if(compute_node.bubble().op() == Bubble::Const) {
-            return 1;
-        }
-
-        if((const_inputs > 0) && (const_inputs == input_num)) {
-            std::vector<Tensor> vecs;
-            for(int i=0; i<input_num; i++ ) {
-                auto &bubble = new_inputs[i].bubble();
-                TS_AUTO_CHECK(bubble.op() == Bubble::Const);
-                vecs.push_back(bubble.get(name::value));
-            }
-
-            Tensor result = intime::run(node.bubble(), vecs);
-            auto data = ts::bubble::data(node.bubble().name(), result);
-            compute_node = data;
-            return 1;
-        }
-
-        return 0;
+        return true;
     }
 
 
-    void Compiler::run_const_nodes(const std::vector<Node> &nodes, std::vector<Node> &output_nodes) {
-        output_nodes.clear();
-        for(int i=0; i<nodes.size();  i++) {
-            Node tmpnode(nodes[i]);
-            run_const_node(nodes[i], tmpnode);
-            output_nodes.push_back(tmpnode);
+    void Compiler::run_const_nodes(const std::vector<Node> &nodes, std::vector<Node> &const_nodes) {
+        const_nodes.clear();
+        std::unordered_map<Node, Node> ready_const;
+        std::unordered_set<Node> ready_nonconst;
+        for (auto node : nodes) {
+            run_const_node(node, node, ready_const, ready_nonconst);
+            const_nodes.emplace_back(node);
         }
     }
 
