@@ -7,7 +7,7 @@ author: kier
 import tensorflow as tf
 
 
-def loat_graph(path):
+def load_graph(path):
     graph = tf.Graph()
     with graph.as_default():
         od_graph_def = tf.GraphDef()
