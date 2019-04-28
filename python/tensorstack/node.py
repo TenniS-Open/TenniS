@@ -14,6 +14,10 @@ from .tensor import from_any
 from .tensor import to_int
 from .tensor import to_str
 
+from .dtype import VOID
+
+import numpy
+
 
 class Node(object):
     Parameter = "<param>"
@@ -25,18 +29,21 @@ class Node(object):
         op = "#op"
         output_count = "#output_count"
         shape = "#shape"
+        dtype = "#dtype"
 
-    def __init__(self, op=None, name=None, output_count=1, shape=None):
+    def __init__(self, op=None, name=None, shape=None):
         self.__op = "" if op is None else op
         self.__name = "" if name is None else name
-        self.__output_count = 1 if output_count is None else output_count
+        # self.__output_count = 1 if output_count is None else output_count
+        # self.__output_count = numpy.asarray(self.__output_count, numpy.int32)
         self.__shape = shape
         self.__params = {
             self.RetentionParam.name: self.__name,
             self.RetentionParam.op: self.__op,
-            self.RetentionParam.output_count: self.__output_count,
+            # self.RetentionParam.output_count: self.__output_count,
         }
         if self.__shape is not None:
+            self.__shape = numpy.asarray(self.__shape, numpy.int32)
             self.__params[self.RetentionParam.shape] = self.__shape
         self.__inputs = []
         self.__outputs = []
@@ -56,7 +63,7 @@ class Node(object):
 
     @property
     def output_count(self):
-        return self.__output_count
+        return 1
 
     @property
     def shape(self):
@@ -65,6 +72,12 @@ class Node(object):
     @property
     def params(self):
         return self.__params
+
+    @property
+    def dtype(self):
+        if self.RetentionParam.dtype in self.__params:
+            return int(self.__params[self.RetentionParam.dtype])
+        return VOID
 
     def has(self, param):
         return param in self.__params
@@ -166,9 +179,11 @@ def read_bubble(stream):
         v = read_tensor(stream=stream)
         params[k] = v
         size -= 1
+    output_count = None if Node.RetentionParam.output_count not in params else params[Node.RetentionParam.output_count]
+    if output_count != 1:
+        raise Exception("All operators' output count must be 1.")
     node = Node(op=to_str(params[Node.RetentionParam.op]),
                 name=to_str(params[Node.RetentionParam.name]),
-                output_count=to_int(params[Node.RetentionParam.output_count]),
                 shape=None if Node.RetentionParam.shape not in params else params[Node.RetentionParam.shape])
     for k in params.keys():
         node.set(k, params[k])
@@ -176,7 +191,7 @@ def read_bubble(stream):
 
 
 if __name__ == '__main__':
-    node = Node(op='sum', name='C', output_count=7)
+    node = Node(op='sum', name='C')
     node.set("str", "v:str")
     node.set("int", 16)
     node.set("float", 3.4)

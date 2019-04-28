@@ -18,6 +18,10 @@ namespace ts {
             m_dtype = dtype;
         }
 
+        DTYPE CastV2::get_dtype() const {
+            return m_dtype;
+        }
+
         void CastV2::init() {
             m_dtype = DTYPE(tensor::to_int(get(name::dtype)));
         }
@@ -51,14 +55,14 @@ namespace ts {
 
         void CastV2::cast(const Tensor &x, DTYPE dtype, Tensor &out) {
             if (x.dtype() == dtype) {
-                auto src = x.sync();
-                auto dst = out.sync();
+                auto src = x.weak_memory();
+                auto dst = out.weak_memory();
                 memcpy(dst, src);
                 return;
             }
             auto temp = tensor::cast(dtype, x);
-            auto src = temp.sync();
-            auto dst = out.sync();
+            auto src = temp.weak_memory();
+            auto dst = out.weak_memory();
             memcpy(dst, src);
         }
     }

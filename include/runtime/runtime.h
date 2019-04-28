@@ -8,13 +8,19 @@
 #include "utils/ctxmgr.h"
 #include "inside/thread_pool.h"
 
+#include "core/sync/sync_controller.h"
+
+#include "utils/ctxmgr_lite.h"
+
 namespace ts {
 
-    class TS_DEBUG_API RuntimeContext {
+    class TS_DEBUG_API RuntimeContext : public SetupContext<RuntimeContext> {
     public:
         using self = RuntimeContext;
 
         RuntimeContext();
+
+        explicit RuntimeContext(const MemoryDevice &device);
 
         RuntimeContext(const self &) = delete;
         self &operator=(const self &) = delete;
@@ -30,6 +36,18 @@ namespace ts {
 
         ThreadPool &thread_pool();
 
+         void bind_flow(SyncMemoryController::shared flow);
+
+         void bind_dynamic(SyncMemoryController::shared dynamic);
+
+        SyncMemoryController::shared flow() const;
+
+        SyncMemoryController::shared dynamic() const;
+
+        static SyncMemoryController::shared FlowMemory();
+
+        static SyncMemoryController::shared DynamicMemory();
+
     private:
         /**
          * Computing threads number. Used in OpenMP
@@ -37,8 +55,10 @@ namespace ts {
         int m_computing_thread_number = 1;
 
         ThreadPool::shared m_thread_pool;
-    };
 
+        SyncMemoryController::shared m_flow;
+        SyncMemoryController::shared m_dynamic;
+    };
 }
 
 

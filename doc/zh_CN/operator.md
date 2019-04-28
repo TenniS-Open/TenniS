@@ -123,6 +123,41 @@ output_w = floor((width + pad_w -
 			(dilation_w * (kernel_w - 1) + 1)) / stride_w + 1);
 ```
 
+### transpose_conv2d(x..device, w..device) -> y..device
+描述：对输入的 Tensor 进行 二维反卷积操作，输出反卷积后的数据
+输入：`x` `Tensor4D` 输入数据
+输入：`w` `Tensor4D` `shape` 为 `[output_channels, input_channels, kernel_height, kernel_width]`
+输出：`y` `Tensor4D`
+
+注意：
+以下所有参数为卷积参数，计算过程为逆过程
+
+参数：
+- `format` `String` 为 `NCHW` 或者 `NHWC`
+- `padding` `Int[4, 2]` `batch` 和 `channels` 的默认为 `[0, 0]`
+在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+- `padding_value` `Scalar Default(0)` `[Optional]` 表示 `padding` 时填充的参数
+- `stride` `Int[4]` `batch` 和 `channels` 的默认为 `1`
+在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+- `dilation` `Int[4]` `batch` 和 `channels` 的默认为 `1`
+在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+
+说明：
+`type` 在当前版本中，固定为 `NCHW`。
+输出大小计算除法时，向下取整，最小为`1`。默认`0` `padding`。
+输出大小的计算公式为：
+```
+pad_h = pad_h_top + pad_h_bottom
+pad_w = pad_w_left + pad_h_right
+output_h = floor((height + pad_h -
+			(dilation_h * (kernel_h - 1) + 1)) / stride_h + 1);
+output_w = floor((width + pad_w -
+			(dilation_w * (kernel_w - 1) + 1)) / stride_w + 1);
+```
+
 ### _shape(x..device) -> shape..host
 描述：对输入的 `Tensor` 返回对应的 `shape`。  
 
@@ -377,7 +412,7 @@ y_i = exp(-x_i) / \sum{exp(-x_i)}
 smooth 为非0时：
 ```
 t_i = x_i - max(x)
-y_i = exp(-t_i) / \sum{exp(-t_i)}
+y_i = exp(t_i) / \sum{exp(t_i)}
 ```
 
 
@@ -572,6 +607,29 @@ to tensor A * B);
 说明：  
 按照 `LRN` 的传统公式和做法
 
+
+### batch_to_space4d(x..device) -> y.device
+
+参数：
+- `crop` `Int[2, 2]` `[[crop_top, crop_bottom], [crop_left, crop_right]] `
+- `block_shape` `Int[2]` `[block_height, block_width]`
+
+说明：
+这里的操作为HCHW算符。
+见：[BathToSpace](https://www.w3cschool.cn/tensorflow_python/tensorflow_python-bnyg2ckl.html)
+
+
+### space_to_batch4d(x..device) -> y.device
+
+参数：
+- `padding` `Int[2, 2]` `[[padding_top, padding_bottom], [padding_left, padding_right]] `
+- `block_shape` `Int[2]` `[block_height, block_width]`
+
+说明：
+这里的操作为HCHW算符。
+见：[BathToSpace](https://www.w3cschool.cn/tensorflow_python/tensorflow_python-emqk2kf4.html)
+
+
 ### global_pooling2d(x)
 描述：进行全局下采样
 
@@ -609,6 +667,66 @@ Note: 这是对应某一个实现的版本。
 
 说明：  
 `pos.number == x.number`，根据pos表示的位置信息，在对应位置crop出`[x_patch_h, x_patch_w]`大小。
+
+### affine_sample2d(x..device, size..host, affine..host) -> y..device
+
+描述：根据affine，在x上采样出大小为size的图像
+输入：`x`: `Tensor`
+输入：`size`: `Int[2]` 表示2d的采样大小
+输入：`affine`: `Float[3, 3]` 仿射变换矩阵
+
+参数：
+- `type`: `Enum[linear=0, cubic=1, nearest=2] Default linear`
+- `dim`: `Int Default -2`
+
+说明：
+y的坐标为`[x, y]`映射到原图为`affine * [x, y, 1]'`，然后根据type进行采样。
+这里坐标全部为列向量。
+`dim` 和 `dim+1` 表示了图像的二维采样。
+
+### chunk(x..device) -> y..device
+
+描述：concat的逆操作
+输入：
+输出: Packed Tensor
+
+参数：
+- `chunks`: `Int`  要拆分的个数
+- `dim`: `Int` 要拆分的坐标
+
+### dcn_v2_forward(x..device, w..device, b..device, offset..device, mask..device) -> y..device
+描述：对输入的 Tensor 进行 二维卷积操作，输出卷积后的数据
+输入：`x` `Tensor4D` 输入数据
+输入：`offset` `Tensor4D`
+输入：`mask` `Tensor4D`
+输入：`w` `Tensor4D` 和卷积同样参数
+输入：`b` `Tensor4D` 和卷积同样参数
+输出：`y` `Tensor4D`
+
+参数：
+- `format` `String` 为 `NCHW` 或者 `NHWC`，这里只支持NCHW
+- `padding` `Int[4, 2]` `batch` 和 `channels` 的默认为 `[0, 0]`
+在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+- `stride` `Int[4]` `batch` 和 `channels` 的默认为 `1`
+在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+- `dilation` `Int[4]` `batch` 和 `channels` 的默认为 `1`
+在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+- `deformable_group`
+
+说明：
+参考代码：
+[DCNv2](https://github.com/CharlesShang/DCNv2)
+
+`type` 在当前版本中，固定为 `NCHW`。
+输出大小计算除法时，向下取整，最小为`1`。默认`0` `padding`。
+输出大小的计算公式为：
+```
+Waitting for sure
+```
+
 
 ### _nhwc_resize2d(x..device) = delete
 

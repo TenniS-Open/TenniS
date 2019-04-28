@@ -213,6 +213,43 @@ namespace ts {
             return cast(BOOLEAN, value).data<dtype<BOOLEAN>::declare>(0) != 0;
         }
 
+        namespace array {
+            std::vector<int32_t> to_int(const Tensor &value) {
+                auto count = value.count();
+                auto t = cast(INT32, value);
+                auto data = t.data<int32_t>();
+                return std::vector<int32_t>(data, data + count);
+            }
+
+            std::vector<uint32_t> to_uint(const Tensor &value) {
+                auto count = value.count();
+                auto t = cast(UINT32, value);
+                auto data = t.data<uint32_t>();
+                return std::vector<uint32_t>(data, data + count);
+            }
+
+            std::vector<float> to_float(const Tensor &value) {
+                auto count = value.count();
+                auto t = cast(FLOAT32, value);
+                auto data = t.data<float>();
+                return std::vector<float>(data, data + count);
+            }
+
+            std::vector<double> to_double(const Tensor &value) {
+                auto count = value.count();
+                auto t = cast(FLOAT64, value);
+                auto data = t.data<double>();
+                return std::vector<double>(data, data + count);
+            }
+
+            std::vector<bool> to_bool(const Tensor &value) {
+                auto count = value.count();
+                auto t = cast(BOOLEAN, value);
+                auto data = t.data<dtype<BOOLEAN>::declare>();
+                return std::vector<bool>(data, data + count);
+            }
+        }
+
         bool support(DTYPE dtype) {
             switch (dtype) {
                 default:

@@ -28,28 +28,28 @@ namespace ts {
 
             m_op_castv2->set(Bubble::RetentionParam::op, tensor::from(name::layer::conv2d_v2()));
             m_op_castv2->set(Bubble::RetentionParam::name, tensor::from("_core" + name()));
-            m_op_castv2->set(Bubble::RetentionParam::output_count, get(Bubble::RetentionParam::output_count));
+            for (auto &param : Bubble::RetentionParam::All()) {
+                if (!m_op_castv2->has(param) && this->has(param)) {
+                    m_op_castv2->set(param, get(param));
+                }
+            }
 
             int dtype = FLOAT32;
             m_op_castv2->set(name::dtype, tensor::from(dtype));
 
+            m_op_castv2->init();
         }
 
 
         int ToFloat::infer(Stack &stack, std::vector<Tensor::Prototype> &output) {
             TS_AUTO_CHECK(stack.size() == 1);
 
-            m_op_castv2->init();
-
-            stack.push(0);
-            return InferOperator(m_op_castv2, stack, 1, output);
+            return m_op_castv2->infer(stack, output);
         }
 
         int ToFloat::run(Stack &stack) {
             TS_AUTO_CHECK(stack.size() == 1);
 
-            m_op_castv2->init();
-            stack.push(0);
             return RunOperator(m_op_castv2, stack, 1);
         }
 

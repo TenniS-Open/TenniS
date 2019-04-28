@@ -8,6 +8,7 @@
 #include "../device.h"
 
 #include <string>
+#include <memory>
 
 namespace ts {
     namespace api {

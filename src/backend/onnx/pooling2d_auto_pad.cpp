@@ -88,6 +88,7 @@ namespace ts {
             dynamic_padding.right = static_padding.right
                                     - (input_size.width + static_padding.left + static_padding.right - ksize.width) % stride.width;
 
+
             return dynamic_padding;
         }
 

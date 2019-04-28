@@ -11,8 +11,42 @@
 #include "utils/assert.h"
 
 #include <numeric>
+#include <mutex>
+
+#include <core/device_context.h>
+#include <runtime/runtime.h>
 
 namespace ts {
+    static Smart<SyncMemory> empty_memory() {
+        static std::once_flag _empty_memory_flag;
+        static SyncMemory *_empty_memory = nullptr;
+        static struct _free_empty_memory {
+        public:
+            ~_free_empty_memory() {
+                delete _empty_memory;
+            }
+        } _free_empty_memory;
+        std::call_once(_empty_memory_flag, [&](){
+            Tensor::Prototype proto(VOID, {});
+            _empty_memory = new SyncMemory(proto.count(), true);
+        });
+        return Smart<SyncMemory>(_empty_memory, MANUALLY);
+    }
+
+    static Smart<SyncMemory> empty_memory(const MemoryDevice &device) {
+        auto on_cpu = empty_memory();
+        if (device == on_cpu->device()) return on_cpu;
+        return on_cpu->view(device);
+    }
+
+    static bool is_empty(const Tensor::Prototype &proto) {
+        return proto.dtype() == VOID && proto.dims() == 0;
+    }
+
+//    static bool is_empty(DTYPE dtype, const Shape &shape) {
+//        return dtype == VOID && shape.size() == 0;
+//    }
+
     Tensor::Tensor(MemoryController::shared controller, DTYPE dtype, const Shape &_shape)
             : Tensor(controller, Prototype(dtype, _shape)) {}
 
@@ -29,23 +63,33 @@ namespace ts {
             : Tensor(Prototype(dtype, _shape)) {}
 
     Tensor::Tensor(MemoryController::shared controller, const Tensor::Prototype &proto)
-            : m_memory(controller->alloc(static_cast<size_t>(proto.count() * proto.type_bytes())))
+            : m_memory(is_empty(proto)
+                       ? empty_memory()
+                       : Smart<TensorMemory>(controller->alloc(static_cast<size_t>(proto.count() * proto.type_bytes()))))
             , m_proto(proto) {}
 
     Tensor::Tensor(SyncMemoryController::shared controller, const Tensor::Prototype &proto)
-            : m_memory(controller->alloc(static_cast<size_t>(proto.count() * proto.type_bytes())))
+            : m_memory(is_empty(proto)
+                       ? empty_memory()
+                       : controller->alloc(static_cast<size_t>(proto.count() * proto.type_bytes())))
             , m_proto(proto) {}
 
     Tensor::Tensor(SyncMemoryController::shared controller, const Tensor::Prototype &proto, const MemoryDevice &device)
-            : m_memory(controller->alloc(device, static_cast<size_t>(proto.count() * proto.type_bytes())))
+            : m_memory(is_empty(proto)
+                       ? empty_memory(device)
+                       : controller->alloc(device, static_cast<size_t>(proto.count() * proto.type_bytes())))
             , m_proto(proto) {}
 
     Tensor::Tensor(const MemoryDevice &device, const Tensor::Prototype &proto)
-            : m_memory(make_smart<TensorMemory>(device, static_cast<size_t>(proto.count() * proto.type_bytes())))
+            : m_memory(is_empty(proto)
+                       ? empty_memory(device)
+                       : make_smart<TensorMemory>(device, static_cast<size_t>(proto.count() * proto.type_bytes())))
             , m_proto(proto) {}
 
     Tensor::Tensor(const Tensor::Prototype &proto)
-            : m_memory(static_cast<size_t>(proto.count() * proto.type_bytes()))
+            : m_memory(is_empty(proto)
+                       ? empty_memory()
+                       : Smart<TensorMemory>(static_cast<size_t>(proto.count() * proto.type_bytes())))
             , m_proto(proto) {}
 
     Tensor::Tensor(const Memory &memory, const Tensor::Prototype &proto)
@@ -69,7 +113,9 @@ namespace ts {
         auto fields = this->unpack();
         for (auto &value : fields) {
             Tensor dolly(std::move(controller), value.m_proto);
-            memcpy(*dolly.m_memory, *value.m_memory, size_t(value.m_proto.count() * value.m_proto.type_bytes()));
+            auto dst = dolly.m_memory->weak_memory();
+            auto src = value.m_memory->weak_memory();
+            memcpy(dst, src, size_t(value.m_proto.count() * value.m_proto.type_bytes()));
             value = dolly;
         }
         Tensor dolly;
@@ -81,7 +127,9 @@ namespace ts {
         auto fields = this->unpack();
         for (auto &value : fields) {
             Tensor dolly(std::move(controller), value.m_proto);
-            memcpy(*dolly.m_memory, *value.m_memory, size_t(value.m_proto.count() * value.m_proto.type_bytes()));
+            auto dst = dolly.m_memory->weak_memory();
+            auto src = value.m_memory->weak_memory();
+            memcpy(dst, src, size_t(value.m_proto.count() * value.m_proto.type_bytes()));
             value = dolly;
         }
         Tensor dolly;
@@ -93,7 +141,9 @@ namespace ts {
         auto fields = this->unpack();
         for (auto &value : fields) {
             Tensor dolly(std::move(controller), value.m_proto, device);
-            memcpy(*dolly.m_memory, *value.m_memory, size_t(value.m_proto.count() * value.m_proto.type_bytes()));
+            auto dst = dolly.m_memory->weak_memory();
+            auto src = value.m_memory->weak_memory();
+            memcpy(dst, src, size_t(value.m_proto.count() * value.m_proto.type_bytes()));
             value = dolly;
         }
         Tensor dolly;
@@ -122,7 +172,7 @@ namespace ts {
     }
 
     bool Tensor::empty() const {
-        return this->count() == 0;
+        return dtype() == VOID && dims() == 0;
     }
 
     Tensor Tensor::reshape(const Shape &shape) const {
@@ -189,6 +239,10 @@ namespace ts {
         return m_fields.at(offset - 1);
     }
 
+    Tensor Tensor::field(int offset) const {
+        return field(size_t(offset >= 0 ? offset : int(fields_count()) + offset));
+    }
+
     void Tensor::field(size_t offset, const Tensor::self &value) {
         if (offset == 0) {
             this->m_memory = value.m_memory;
@@ -202,12 +256,24 @@ namespace ts {
         m_fields.at(offset - 1) = value;
     }
 
+    void Tensor::field(int offset, const Tensor::self &value) {
+        field(size_t(offset >= 0 ? offset : int(fields_count()) + offset), value);
+    }
+
     size_t Tensor::fields_count() const {
-        return m_fields.empty() ? 1 : 1 + m_fields.size();
+        return 1 + m_fields.size();
     }
 
     bool Tensor::packed() const {
         return !m_fields.empty();
+    }
+
+    void Tensor::refield(size_t size) {
+        if (size == 0) {
+            *this = self();
+        } else {
+            m_fields.resize(size - 1);
+        }
     }
 
     static size_t serialize_prototype_memory(StreamWriter &stream,
@@ -249,7 +315,7 @@ namespace ts {
         uint8_t dtype_buffer;
         read_size += binio::read<uint8_t >(stream, dtype_buffer);
         dtype = DTYPE(dtype_buffer);
-        TS_AUTO_CHECK(dtype >= VOID && dtype <= UNKNOWN128);
+        TS_AUTO_CHECK(dtype >= 0);
         // 1.2 read sizes
         uint32_t size_buffer;
         read_size += binio::read<uint32_t>(stream, size_buffer);
@@ -271,7 +337,7 @@ namespace ts {
         size_t writen_size = 0;
         writen_size += binio::write<uint32_t>(stream, uint32_t(this->fields_count()));
         for (auto &tensor : this->unpack()) {
-            auto cpu_memory = tensor.m_memory->sync(MemoryDevice(CPU));
+            auto cpu_memory = tensor.m_memory->view(MemoryDevice(CPU)).weak_memory();
             writen_size += serialize_prototype_memory(stream, tensor.m_proto, cpu_memory);
         }
         return writen_size;
@@ -292,7 +358,7 @@ namespace ts {
     }
 
     Tensor::Tensor(Tensor::self &&other) TS_NOEXCEPT {
-        this->operator=(std::forward<self>(other));
+        this->operator=(std::move(other));
     }
 
     Tensor::self &Tensor::operator=(Tensor::self &&other) TS_NOEXCEPT {
@@ -304,7 +370,8 @@ namespace ts {
 
     Tensor Tensor::view(const MemoryDevice &device) const {
         Tensor view_tensor;
-        view_tensor.m_memory = TensorMemory(m_memory->sync(device), false);
+        // view_tensor.m_memory = TensorMemory(m_memory->sync(device), false);
+        view_tensor.m_memory = m_memory->view(device);
         view_tensor.m_proto = m_proto;
 
         if (!m_fields.empty()) {
@@ -334,6 +401,23 @@ namespace ts {
         }
 
         return weak_tensor;
+    }
+
+    Tensor Tensor::strong() const {
+        Tensor strong_tensor;
+        strong_tensor.m_memory = m_memory.strong();
+        strong_tensor.m_proto = m_proto;
+
+        if (!m_fields.empty()) {
+            std::vector<self> strong_fields(m_fields.size());
+            for (size_t i = 0; i < m_fields.size(); ++i) {
+                strong_fields[i] = m_fields.at(i).strong();
+            }
+
+            strong_tensor.m_fields = std::vector<self>(std::move(strong_fields));
+        }
+
+        return strong_tensor;
     }
 
     bool Tensor::has_shape(const Shape &shape) const {
@@ -438,6 +522,191 @@ namespace ts {
                  FAIL_ARG(5) || FAIL_ARG(6) || FAIL_ARG(7) || FAIL_ARG(8) || FAIL_ARG(9));
     }
 
+    Memory Tensor::weak_memory() const {
+        return m_memory->weak_memory();
+    }
+
+    Tensor::Tensor(Tensor::InFlow in_flow, const Tensor::Prototype &proto, const MemoryDevice &device) {
+        switch (in_flow) {
+            case InFlow::HOST: {
+                auto flow = ctx::of<RuntimeContext>::ref().flow();
+                if (flow) {
+                    *this = Tensor(flow, proto);
+                } else {
+                    throw Exception(std::string("Not flow binding in context: <") + typeid(RuntimeContext).name() + ">");
+                }
+                break;
+            }
+            case InFlow::DEVICE: {
+                auto flow = ctx::of<RuntimeContext>::ref().flow();
+                if (flow) {
+                    *this = Tensor(flow, proto, device);
+                } else {
+                    throw Exception(std::string("Not flow binding in context: <") + typeid(RuntimeContext).name() + ">");
+                }
+                break;
+            }
+        }
+    }
+
+    Tensor::Tensor(Tensor::InFlow in_flow, const Tensor::Prototype &proto) {
+        switch (in_flow) {
+            case InFlow::HOST: {
+                auto flow = ctx::of<RuntimeContext>::ref().flow();
+                if (flow) {
+                    *this = Tensor(flow, proto);
+                } else {
+                    throw Exception(std::string("Not flow binding in context: <") + typeid(RuntimeContext).name() + ">");
+                }
+                break;
+            }
+            case InFlow::DEVICE: {
+                auto flow = ctx::of<RuntimeContext>::ref().flow();
+                auto device = ctx::of<DeviceContext>::ref().memory_device;
+                if (flow) {
+                    *this = Tensor(flow, proto, device);
+                } else {
+                    throw Exception(std::string("Not flow binding in context: <") + typeid(RuntimeContext).name() + ">");
+                }
+                break;
+            }
+        }
+    }
+
+    Tensor Tensor::view(Tensor::InFlow in_flow) const {
+        switch (in_flow) {
+            case InFlow::HOST: {
+                return view(MemoryDevice(CPU, 0));
+            }
+            case InFlow::DEVICE: {
+                return view(ctx::of<DeviceContext>::ref().memory_device);
+            }
+        }
+        return *this;
+    }
+
 #undef FAIL_ARG
 #undef FAIL_SIZE
+
+    TensorPrototype::supper TensorPrototype::field(size_t offset) const {
+        if (offset == 0) {
+            return self(dtype(), sizes());
+        }
+        if (offset - 1 >= m_fields.size()) {
+            TS_LOG_ERROR << "Tensor offset output range error. Access index " << offset << " in range("
+                         << fields_count() << ")" << eject;
+        }
+        return m_fields.at(offset - 1);
+    }
+
+    void TensorPrototype::field(size_t offset, const TensorPrototype::supper &value) {
+        if (offset == 0) {
+            supper::operator=(value);
+            return;
+        }
+        if (offset - 1 >= m_fields.size()) {
+            TS_LOG_ERROR << "Tensor offset output range error. Access index " << offset << " in range("
+                         << fields_count() << ")" << eject;
+        }
+        m_fields.at(offset - 1) = value;
+    }
+
+
+    void TensorPrototype::refield(size_t size) {
+        if (size == 0) {
+            *this = self();
+        } else {
+            m_fields.resize(size - 1);
+        }
+    }
+
+    void TensorPrototype::pack(const std::vector<TensorPrototype::supper> &fields) {
+        if (fields.empty()) {
+            *this = self();
+            return;
+        }
+        supper::operator=(fields[0]);
+        if (fields.size() > 1) {
+            this->m_fields = std::vector<supper>(fields.begin() + 1, fields.end());
+        } else {
+            this->m_fields.clear();
+        }
+    }
+
+    std::vector<TensorPrototype::supper> TensorPrototype::unpack() const {
+        std::vector<supper> fields(1);
+        fields[0] = *this;
+        if (!this->m_fields.empty()) {
+            fields.insert(fields.end(), this->m_fields.begin(), this->m_fields.end());
+        }
+        return std::move(fields);
+    }
+
+    size_t TensorPrototype::fields_count() const {
+        return 1 + m_fields.size();
+    }
+
+    bool TensorPrototype::packed() const {
+        return !m_fields.empty();
+    }
+
+    TensorPrototype::TensorPrototype(const Tensor &tensor) {
+        auto count = tensor.fields_count();
+        m_fields.resize(count - 1);
+        for (decltype(count) i = 0; i < count; ++i) {
+            field(i, tensor.field(i).proto());
+        }
+    }
+
+    TensorPrototype::TensorPrototype(const std::vector<Tensor::Prototype> &fields)
+        : supper() {
+        this->pack(fields);
+    }
+
+    TensorPrototype::supper TensorPrototype::field(int offset) const {
+        return field(size_t(offset >= 0 ? offset : int(fields_count()) + offset));
+    }
+
+    void TensorPrototype::field(int offset, const TensorPrototype::supper &value) {
+        return field(size_t(offset >= 0 ? offset : int(fields_count()) + offset), value);
+    }
+
+    std::ostream &operator<<(std::ostream &out, const Tensor::Prototype &proto) {
+        std::ostringstream oss;
+        oss << type_str(proto.dtype()) << ":" << to_string(proto.sizes());
+        return out << oss.str();
+    }
+
+    std::ostream &operator<<(std::ostream &out, const TensorPrototype &proto) {
+        std::ostringstream oss;
+        auto count = proto.fields_count();
+        oss << "{";
+        for (decltype(count) i = 0; i < count; ++i) {
+            if (i) oss << ", ";
+            oss << proto.field(i);
+        }
+        oss << "}";
+        return out << oss.str();
+    }
+
+    bool operator==(const Tensor::Prototype &lhs, const Tensor::Prototype &rhs) {
+        return lhs.dtype() == rhs.dtype() && lhs.sizes() == rhs.sizes();
+    }
+
+    bool operator==(const TensorPrototype &lhs, const TensorPrototype &rhs) {
+        if (lhs.fields_count() != rhs.fields_count()) return false;
+        auto count = lhs.fields_count();
+        for (decltype(count) i = 0; i < count; ++i) {
+            if (lhs.field(i) != rhs.field(i)) return false;
+        }
+        return true;
+    }
+
+    bool operator==(const Tensor::Prototype &lhs, const TensorPrototype &rhs) {
+        return rhs.fields_count() == 1 && lhs.dtype() == rhs.dtype() && lhs.sizes() == rhs.sizes();
+    }
+
+    bool operator==(const TensorPrototype &lhs, const Tensor::Prototype &rhs) {
+        return lhs.fields_count() == 1 && lhs.dtype() == rhs.dtype() && lhs.sizes() == rhs.sizes();
+    }
 }

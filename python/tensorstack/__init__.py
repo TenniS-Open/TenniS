@@ -15,4 +15,6 @@ from . import zoo
 from . import frontend
 from . import dtype
 
+from . import orz
+
 __version__ = "0.0.9"

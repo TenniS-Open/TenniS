@@ -14,9 +14,13 @@ namespace ts {
 
     class Vat {
     public:
+        using self = Vat;
+
         Vat();
 
         Vat(const Pot::allocator &ator);
+
+        ~Vat();
 
         void *malloc(size_t _size);
 
@@ -41,6 +45,13 @@ namespace ts {
 
         void swap(Vat &that);
 
+        void clean();
+
+        /**
+         * Deprecated this vat, after this call, all memory will dealing as dynamic memory
+         */
+        void deprecated();
+
         Vat(Vat &&that);
 
         Vat &operator=(Vat &&that);
@@ -55,6 +66,8 @@ namespace ts {
         // std::vector<RopedPot> m_list;
         std::unordered_map<void *, Pot> m_dict;	///< save pair of pointer and index
         std::vector<Pot> m_heap;	///< save all free memory, small fisrt sort
+
+        bool m_deprecated = false;
     };
 
 }

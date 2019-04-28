@@ -37,6 +37,10 @@ class Name(object):
 def pooling2d_padding(name, x, padding, ksize, stride, auto_pad=Name.NOTSET):
     assert isinstance(x, Node)
 
+    padding = zoo.adjust_padding(padding, format=zoo.Name.NCHW)
+    ksize = zoo.adjust_ksize(ksize, format=zoo.Name.NCHW)
+    stride = zoo.adjust_stride(stride, format=zoo.Name.NCHW)
+
     if auto_pad not in {Name.NOTSET, Name.SAME_UPPER, Name.SAME_LOWER, Name.VALID}:
         raise NotImplementedError("auto_pad = {}".format(auto_pad))
 
@@ -44,8 +48,8 @@ def pooling2d_padding(name, x, padding, ksize, stride, auto_pad=Name.NOTSET):
     padding = zoo.to_const(padding, "padding")
 
     # input
-    ksize = zoo.to_node(ksize, name="_const_" + name + "_ksize", device=device.CPU)
-    stride = zoo.to_node(stride, name="_const_" + name + "_stride", device=device.CPU)
+    ksize = zoo.to_node(ksize, name="_const_" + name + "_ksize", dtype=numpy.int32, device=device.CPU)
+    stride = zoo.to_node(stride, name="_const_" + name + "_stride", dtype=numpy.int32, device=device.CPU)
 
     # operator
     node = menu.op(name=name, op_name=Name.Layer.pooling2d_padding, inputs=[x, ksize, stride])
@@ -58,8 +62,17 @@ def pooling2d_padding(name, x, padding, ksize, stride, auto_pad=Name.NOTSET):
 def pooling2d(name, x, ksize, stride, type=zoo.Type.pooling_type.max, format=zoo.Name.NCHW,
               padding=None,
               padding_type=zoo.Type.padding_type.black,
-              auto_pad=Name.NOTSET):
+              auto_pad=Name.NOTSET,
+              ceil_mode=False):
     assert isinstance(x, Node)
+
+    if ceil_mode:
+        return zoo.pooling2d(name=name, x=x, ksize=ksize, stride=stride, type=type,
+                             format=format, padding=padding, padding_type=padding_type)
+
+    padding = zoo.adjust_padding(padding, format=format)
+    ksize = zoo.adjust_ksize(ksize, format=format)
+    stride = zoo.adjust_stride(stride, format=format)
 
     if format != zoo.Name.NCHW:
         raise NotImplementedError("ONNX format = {}".format(format))
@@ -70,8 +83,8 @@ def pooling2d(name, x, ksize, stride, type=zoo.Type.pooling_type.max, format=zoo
     static_padding = zoo.to_const(padding, "padding")
 
     # input
-    ksize = zoo.to_node(ksize, name="_const_" + name + "_ksize", device=device.CPU)
-    stride = zoo.to_node(stride, name="_const_" + name + "_stride", device=device.CPU)
+    ksize = zoo.to_node(ksize, name="_const_" + name + "_ksize", dtype=numpy.int32, device=device.CPU)
+    stride = zoo.to_node(stride, name="_const_" + name + "_stride", dtype=numpy.int32, device=device.CPU)
 
     # operator
     dynamic_padding = pooling2d_padding(name="_op_" + name + "_onnx_padding",
@@ -84,7 +97,7 @@ def pooling2d(name, x, ksize, stride, type=zoo.Type.pooling_type.max, format=zoo
 def gather(name, x, indices, axis=0):
     assert isinstance(x, Node)
 
-    indices = zoo.to_node(indices, name="_const_" + name + "_indices", device=device.CPU)
+    indices = zoo.to_node(indices, name="_const_" + name + "_indices", dtype=numpy.int32, device=device.CPU)
     axis = zoo.to_const(axis, "axis")
 
     # operator

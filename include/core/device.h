@@ -55,6 +55,13 @@ namespace ts {
         Device(const DeviceType &type) : self(type, 0) {}
 
         /**
+         * Initialize device
+         * @param type Hardware device @see Device
+         * @note Default id is 0
+         */
+        Device(const char *type) : self(type, 0) {}
+
+        /**
          * Initialize device like CPU:0
          */
         Device() : self(CPU, 0) {}
@@ -175,6 +182,8 @@ namespace ts {
         MemoryDevice(const DeviceType &type, int id) : supper(type, id) {}
 
         MemoryDevice(const DeviceType &type) : supper(type) {}
+        
+        MemoryDevice(const char *type) : supper(type) {}
 
         MemoryDevice() : supper() {}
 
@@ -206,6 +215,8 @@ namespace ts {
         ComputingDevice(const DeviceType &type, int id) : supper(type, id) {}
 
         ComputingDevice(const DeviceType &type) : supper(type) {}
+
+        ComputingDevice(const char *type) : supper(type) {}
 
         ComputingDevice() : supper() {}
 

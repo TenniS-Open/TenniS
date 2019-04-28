@@ -25,8 +25,10 @@ namespace ts {
         public:
             static std::string name;
             static std::string op;
-            static std::string output_count;
             static std::string shape;
+            static std::string dtype;
+
+            static const std::vector<std::string> &All();
         };
 
         explicit Bubble() = default;
@@ -47,15 +49,6 @@ namespace ts {
                 const std::string &name);
 
         explicit Bubble(
-                const std::string &op,
-                int output_count);
-
-        explicit Bubble(
-                const std::string &op,
-                const std::string &name,
-                int output_count);
-
-        explicit Bubble(
                 const std::string &op, const Shape &shape);
 
         explicit Bubble(
@@ -63,15 +56,21 @@ namespace ts {
                 const std::string &name, const Shape &shape);
 
         explicit Bubble(
-                const std::string &op,
-                int output_count, const Shape &shape);
+                const std::string &op, int output_count);
 
         explicit Bubble(
                 const std::string &op,
-                const std::string &name,
-                int output_count, const Shape &shape);
+                const std::string &name, int output_count);
 
-        size_t output_count() const { return m_output_count; }
+        explicit Bubble(
+                const std::string &op, int output_count, const Shape &shape);
+
+        explicit Bubble(
+                const std::string &op,
+                const std::string &name, int output_count, const Shape &shape);
+
+        // output
+        size_t output_count() const { return 1; }
 
         const std::string &op() const { return m_op; }
 
@@ -95,6 +94,18 @@ namespace ts {
 
         size_t externalize(StreamReader &stream) final;
 
+        const Shape shape() const;
+
+        DTYPE dtype() const;
+
+        void op(const std::string &_op);
+
+        void name(const std::string &_name);
+
+        void shape(const Shape &shape);
+
+        void dtype(DTYPE _dtype);
+
     private:
         void update_retention_params();
 
@@ -106,17 +117,15 @@ namespace ts {
          * Bubble name
          */
         std::string m_name;
-        /**
-         * Saving output size
-         */
-        int m_output_count = 1;
-        /// TODO: Since output count must greater than 1, try supporting 0 output
 
         /**
          * Parameters
          */
         param_dict m_params;
 
+        /**
+         * datum shape
+         */
         Shape m_shape;
 
         /**
