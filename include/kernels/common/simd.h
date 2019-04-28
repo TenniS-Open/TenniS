@@ -154,6 +154,10 @@ namespace ts {
         return _simd_f32x4x2_div(lhs.value, rhs.value);
     }
 
+    inline simd<float, 8> fmadd(const simd<float, 8> &q0, const simd<float, 8> &q1, const simd<float, 8> &q2) {
+        return _simd_f32x4x2_fmadd(q0.value, q1.value, q2.value);
+    }
+
 }
 
 #endif //TENSORSTACK_KERNELS_COMMON_SIMD_H

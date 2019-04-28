@@ -71,6 +71,11 @@ namespace ts {
         FORMAT_NHWC = 1,
     };
 
+    enum WinogradConv2DModel {
+        F6X6_3X3 = 0,
+        F2X2_3X3 = 1,
+    };
+
     enum class Pooling2DType : int {
         MAX = 0,
         AVG = 1,
