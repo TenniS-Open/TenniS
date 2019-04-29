@@ -42,7 +42,7 @@ namespace ts {
             }
             return sum;
         }
-#ifdef TS_USE_SSE
+#ifdef TS_USE_SIMD
         template <>
         inline float inline_dot<float>(int N, const float *x, int incx, const float *y, int incy) {
             const auto incx1 = incx;

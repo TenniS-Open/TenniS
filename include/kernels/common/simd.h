@@ -5,7 +5,16 @@
 #ifndef TENSORSTACK_KERNELS_COMMON_SIMD_H
 #define TENSORSTACK_KERNELS_COMMON_SIMD_H
 
-#include "simd_def.h"
+//#include "simd_def.h"
+#ifdef TS_USE_AVX
+#include "simd_def/simd_avx_def.h"
+#elif  TS_USE_SSE
+#include "simd_def/simd_sse_def.h"
+#elif  TS_USE_NEON
+#include "simd_def/simd_neon_def.h"
+#else
+#include "simd_def/simd_base_def.h"
+#endif
 
 namespace ts {
     template<typename T, int M>
