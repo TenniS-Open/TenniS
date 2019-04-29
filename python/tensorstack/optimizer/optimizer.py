@@ -130,7 +130,7 @@ def __fused_conv_bn(name, conv2d, add_bias=None, fused_batch_norm=None, batch_no
     Node.Link(new_conv2d, new_conv2d_inputs)
     Node.Link(new_bias, new_bias_inputs)
 
-    new_conv2d.name = conv2d.name + "_optimized"
+    new_conv2d.name = conv2d.name + "_with_bn"
     new_bias.name = name
 
     return new_bias
