@@ -140,7 +140,7 @@ def convert(graph, inputs, outputs, output_file):
     ready_nchw = {}
     output_ts_nodes = [zipper.zipnode(output, ready_zipped=ready_zipped, ready_nchw=ready_nchw) for output in output_ts_nodes]
     #
-    zipper.plot_graph(output_ts_nodes)
+    # zipper.plot_graph(output_ts_nodes)
     # output_ts_nodes = [zipper.warp_node(output) for output in output_ts_nodes]
 
     # saving
@@ -686,10 +686,15 @@ def convert_squeeze(tf_node, inputs):
     # type: (tf.Tensor, List[ts.Node]) -> ts.Node
 
     assert len(inputs) == 1
-
+    attr_dict = node_def_attr_dict(tf_node)
+    print("--##    attr: {}".format(attr_dict))
     node_name = tf_node.op.name
 
-    return ts.zoo.squeeze(node_name, x=inputs[0])
+    squeeze_dims = []
+    if "squeeze_dims" in attr_dict:
+        squeeze_dims = attr_dict["squeeze_dims"]
+
+    return ts.zoo.squeeze(node_name, x=inputs[0], axes=squeeze_dims)
 
 
 def convert_mean(tf_node, inputs):

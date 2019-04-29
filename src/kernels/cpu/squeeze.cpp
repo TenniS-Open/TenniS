@@ -35,7 +35,8 @@ namespace ts {
                         }
                     }
                 } else {
-                    for (auto axis : m_axes) {
+                    for (auto axis_it = m_axes.rbegin(); axis_it != m_axes.rend(); ++axis_it) {
+                        auto axis = *axis_it;
                         auto max_axis = int(shape.size());
                         axis = axis >= 0 ? axis : (max_axis + axis);
                         if (axis < 0 || axis >= max_axis) {
