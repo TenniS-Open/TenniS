@@ -1,4 +1,4 @@
-#include "kernels/opt/conv_algorithm.h"
+#include "kernels/cpu/conv2d_algorithm.h"
 #include <algorithm>
 
 #include <module/graph.h>
@@ -113,9 +113,9 @@ void print_avg_time(const std::string &title, const int times, const Shape& inpu
     }
     Tensor kernel_trans(FLOAT32, kernel_trans_shape);
     if(f23_kernel_flag)
-        opt::Conv2dAlgorithm<float>::conv3x3_winograd23_transform_kernel_1(kernel, kernel_trans);
+        cpu::Conv2dAlgorithm<float>::conv3x3_winograd23_transform_kernel(kernel, kernel_trans);
     else
-        opt::Conv2dAlgorithm<float>::conv3x3_winograd63_transform_kernel_1(kernel, kernel_trans);
+        cpu::Conv2dAlgorithm<float>::conv3x3_winograd63_transform_kernel(kernel, kernel_trans);
 
     Tensor x(FLOAT32, input_shape);
     float* x_ptr = x.data<float>();
@@ -144,72 +144,69 @@ void print_avg_time(const std::string &title, const int times, const Shape& inpu
 
 int main()
 {
+
+    ts::RuntimeContext runtime;
+    runtime.set_computing_thread_number(1);
+
+    ts::ctx::bind<ts::RuntimeContext> _bind_runtime(runtime);
+
     //Shape kernel_shape = { 2,2,3,3 };
     //Tensor kernel = tensor::build(FLOAT32, kernel_shape, {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17 });
     int times = 1000;
 
-    Shape kernel_shape = { 2,64,3,3 };
-    Shape x_shape = { 1,64,21,21 };
-    print_avg_time("conv3x3_winograd23", times, x_shape, kernel_shape, opt::Conv2dAlgorithm<float>::conv3x3_winograd23,true);
-    print_avg_time("conv3x3_winograd63", times, x_shape, kernel_shape, opt::Conv2dAlgorithm<float>::conv3x3_winograd63,false);
-    test_speed("cpu", times, x_shape, kernel_shape, "input:{ 1,64,21,21 },kernel:{ 2,64,3,3 }");
-    test_speed("opt", times, x_shape, kernel_shape, "input:{ 1,64,21,21 },kernel:{ 2,64,3,3 }");
+    Shape kernel_shape = { 2,256,3,3 };
+    Shape x_shape = { 1,256,21,21 };
+    print_avg_time("conv3x3_winograd23", times, x_shape, kernel_shape, cpu::Conv2dAlgorithm<float>::conv3x3_winograd23,true);
+    print_avg_time("conv3x3_winograd63", times, x_shape, kernel_shape, cpu::Conv2dAlgorithm<float>::conv3x3_winograd63,false);
+    //test_speed("cpu", times, x_shape, kernel_shape, "input:{ 1,64,21,21 },kernel:{ 2,64,3,3 }");
 
-    kernel_shape = { 4,64,3,3 };
-    x_shape = { 1,64,21,21 };
-    print_avg_time("conv3x3_winograd23", times, x_shape, kernel_shape, opt::Conv2dAlgorithm<float>::conv3x3_winograd23,true);
-    print_avg_time("conv3x3_winograd63", times, x_shape, kernel_shape, opt::Conv2dAlgorithm<float>::conv3x3_winograd63,false);
-    test_speed("cpu", times, x_shape, kernel_shape, "input:{ 1,64,21,21 },kernel:{ 4,64,3,3 }");
-    test_speed("opt", times, x_shape, kernel_shape, "input:{ 1,64,21,21 },kernel:{ 4,64,3,3 }");
+    kernel_shape = { 4,256,3,3 };
+    x_shape = { 1,256,21,21 };
+    print_avg_time("conv3x3_winograd23", times, x_shape, kernel_shape, cpu::Conv2dAlgorithm<float>::conv3x3_winograd23,true);
+    print_avg_time("conv3x3_winograd63", times, x_shape, kernel_shape, cpu::Conv2dAlgorithm<float>::conv3x3_winograd63,false);
+    //test_speed("cpu", times, x_shape, kernel_shape, "input:{ 1,64,21,21 },kernel:{ 4,64,3,3 }");
 
-    kernel_shape = { 8,64,3,3 };
-    x_shape = { 1,64,21,21 };
-    print_avg_time("conv3x3_winograd23", times, x_shape, kernel_shape, opt::Conv2dAlgorithm<float>::conv3x3_winograd23,true);
-    print_avg_time("conv3x3_winograd63", times, x_shape, kernel_shape, opt::Conv2dAlgorithm<float>::conv3x3_winograd63,false);
-    test_speed("cpu", times, x_shape, kernel_shape, "input:{ 1,64,21,21 },kernel:{ 8,64,3,3 }");
-    test_speed("opt", times, x_shape, kernel_shape, "input:{ 1,64,21,21 },kernel:{ 8,64,3,3 }");
+    kernel_shape = { 8,256,3,3 };
+    x_shape = { 1,256,21,21 };
+    print_avg_time("conv3x3_winograd23", times, x_shape, kernel_shape, cpu::Conv2dAlgorithm<float>::conv3x3_winograd23,true);
+    print_avg_time("conv3x3_winograd63", times, x_shape, kernel_shape, cpu::Conv2dAlgorithm<float>::conv3x3_winograd63,false);
+    //test_speed("cpu", times, x_shape, kernel_shape, "input:{ 1,64,21,21 },kernel:{ 8,64,3,3 }");
 
-    kernel_shape = { 16,64,3,3 };
-    x_shape = { 1,64,21,21 };
-    print_avg_time("conv3x3_winograd23", times, x_shape, kernel_shape, opt::Conv2dAlgorithm<float>::conv3x3_winograd23,true);
-    print_avg_time("conv3x3_winograd63", times, x_shape, kernel_shape, opt::Conv2dAlgorithm<float>::conv3x3_winograd63,false);
-    test_speed("cpu", times, x_shape, kernel_shape, "input:{ 1,64,21,21 },kernel:{ 16,64,3,3 }");
-    test_speed("opt", times, x_shape, kernel_shape, "input:{ 1,64,21,21 },kernel:{ 16,64,3,3 }");
+    kernel_shape = { 16,256,3,3 };
+    x_shape = { 1,256,21,21 };
+    print_avg_time("conv3x3_winograd23", times, x_shape, kernel_shape, cpu::Conv2dAlgorithm<float>::conv3x3_winograd23,true);
+    print_avg_time("conv3x3_winograd63", times, x_shape, kernel_shape, cpu::Conv2dAlgorithm<float>::conv3x3_winograd63,false);
+    //test_speed("cpu", times, x_shape, kernel_shape, "input:{ 1,64,21,21 },kernel:{ 16,64,3,3 }");
 
-    kernel_shape = { 32,64,3,3 };
-    x_shape = { 1,64,21,21 };
-    print_avg_time("conv3x3_winograd23", times, x_shape, kernel_shape, opt::Conv2dAlgorithm<float>::conv3x3_winograd23,true);
-    print_avg_time("conv3x3_winograd63", times, x_shape, kernel_shape, opt::Conv2dAlgorithm<float>::conv3x3_winograd63,false);
-    test_speed("cpu", times, x_shape, kernel_shape, "input:{ 1,64,21,21 },kernel:{ 32,64,3,3 }");
-    test_speed("opt", times, x_shape, kernel_shape, "input:{ 1,64,21,21 },kernel:{ 32,64,3,3 }");
+    kernel_shape = { 32,256,3,3 };
+    x_shape = { 1,256,21,21 };
+    print_avg_time("conv3x3_winograd23", times, x_shape, kernel_shape, cpu::Conv2dAlgorithm<float>::conv3x3_winograd23,true);
+    print_avg_time("conv3x3_winograd63", times, x_shape, kernel_shape, cpu::Conv2dAlgorithm<float>::conv3x3_winograd63,false);
+    //test_speed("cpu", times, x_shape, kernel_shape, "input:{ 1,64,21,21 },kernel:{ 32,64,3,3 }");
 
-    kernel_shape = { 64,64,3,3 };
-    x_shape = { 1,64,21,21 };
-    print_avg_time("conv3x3_winograd23", times, x_shape, kernel_shape, opt::Conv2dAlgorithm<float>::conv3x3_winograd23,true);
-    print_avg_time("conv3x3_winograd63", times, x_shape, kernel_shape, opt::Conv2dAlgorithm<float>::conv3x3_winograd63,false);
-    test_speed("cpu", times, x_shape, kernel_shape, "input:{ 1,64,21,21 },kernel:{ 64,64,3,3 }");
-    test_speed("opt", times, x_shape, kernel_shape, "input:{ 1,64,21,21 },kernel:{ 64,64,3,3 }");
+    kernel_shape = { 64,256,3,3 };
+    x_shape = { 1,256,21,21 };
+    print_avg_time("conv3x3_winograd23", times, x_shape, kernel_shape, cpu::Conv2dAlgorithm<float>::conv3x3_winograd23,true);
+    print_avg_time("conv3x3_winograd63", times, x_shape, kernel_shape, cpu::Conv2dAlgorithm<float>::conv3x3_winograd63,false);
+    //test_speed("cpu", times, x_shape, kernel_shape, "input:{ 1,64,21,21 },kernel:{ 64,64,3,3 }");
 
-    kernel_shape = { 128,64,3,3 };
-    x_shape = { 1,64,21,21 };
-    print_avg_time("conv3x3_winograd23", times, x_shape, kernel_shape, opt::Conv2dAlgorithm<float>::conv3x3_winograd23,true);
-    print_avg_time("conv3x3_winograd63", times, x_shape, kernel_shape, opt::Conv2dAlgorithm<float>::conv3x3_winograd63,false);
-    test_speed("cpu", times, x_shape, kernel_shape, "input:{ 1,64,21,21 },kernel:{ 128,64,3,3 }");
-    test_speed("opt", times, x_shape, kernel_shape, "input:{ 1,64,21,21 },kernel:{ 128,64,3,3 }");
+    kernel_shape = { 128,256,3,3 };
+    x_shape = { 1,256,21,21 };
+    print_avg_time("conv3x3_winograd23", times, x_shape, kernel_shape, cpu::Conv2dAlgorithm<float>::conv3x3_winograd23,true);
+    print_avg_time("conv3x3_winograd63", times, x_shape, kernel_shape, cpu::Conv2dAlgorithm<float>::conv3x3_winograd63,false);
+    //test_speed("cpu", times, x_shape, kernel_shape, "input:{ 1,64,21,21 },kernel:{ 128,64,3,3 }");
 
-    kernel_shape = { 256,64,3,3 };
-    x_shape = { 1,64,21,21 };
-    print_avg_time("conv3x3_winograd23", times, x_shape, kernel_shape, opt::Conv2dAlgorithm<float>::conv3x3_winograd23,true);
-    print_avg_time("conv3x3_winograd63", times, x_shape, kernel_shape, opt::Conv2dAlgorithm<float>::conv3x3_winograd63,false);
-    test_speed("cpu", times, x_shape, kernel_shape, "input:{ 1,64,21,21 },kernel:{ 256,64,3,3 }");
-    test_speed("opt", times, x_shape, kernel_shape, "input:{ 1,64,21,21 },kernel:{ 256,64,3,3 }");
+    kernel_shape = { 256,256,3,3 };
+    x_shape = { 1,256,21,21 };
+    print_avg_time("conv3x3_winograd23", times, x_shape, kernel_shape, cpu::Conv2dAlgorithm<float>::conv3x3_winograd23,true);
+    print_avg_time("conv3x3_winograd63", times, x_shape, kernel_shape, cpu::Conv2dAlgorithm<float>::conv3x3_winograd63,false);
+    //test_speed("cpu", times, x_shape, kernel_shape, "input:{ 1,64,21,21 },kernel:{ 256,64,3,3 }");
 
-    kernel_shape = { 512,64,3,3 };
-    x_shape = { 1,64,21,21 };
-    print_avg_time("conv3x3_winograd23", times, x_shape, kernel_shape, opt::Conv2dAlgorithm<float>::conv3x3_winograd23,true);
-    print_avg_time("conv3x3_winograd63", times, x_shape, kernel_shape, opt::Conv2dAlgorithm<float>::conv3x3_winograd63,false);
-    test_speed("cpu", times, x_shape, kernel_shape, "input:{ 1,64,21,21 },kernel:{ 512,64,3,3 }");
-    test_speed("opt", times, x_shape, kernel_shape, "input:{ 1,64,21,21 },kernel:{ 512,64,3,3 }");
+    kernel_shape = { 512,256,3,3 };
+    x_shape = { 1,256,21,21 };
+    print_avg_time("conv3x3_winograd23", times, x_shape, kernel_shape, cpu::Conv2dAlgorithm<float>::conv3x3_winograd23,true);
+    print_avg_time("conv3x3_winograd63", times, x_shape, kernel_shape, cpu::Conv2dAlgorithm<float>::conv3x3_winograd63,false);
+    //test_speed("cpu", times, x_shape, kernel_shape, "input:{ 1,64,21,21 },kernel:{ 512,64,3,3 }");
 
     //test input size
     //Shape kernel_shape = { 64,64,3,3 };
