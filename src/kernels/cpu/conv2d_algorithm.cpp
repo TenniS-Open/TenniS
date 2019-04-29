@@ -4,9 +4,7 @@
 #include "kernels/common/openmp.h"
 #endif
 
-#ifdef TS_USE_SSE
 #include "kernels/common/simd.h"
-#endif
 
 namespace ts {
     namespace cpu {
@@ -876,7 +874,7 @@ namespace ts {
 
         }
 
-#ifdef TS_USE_SSE
+#ifdef TS_USE_SIMD
         template<>
         void Conv2dAlgorithm<float>::conv3x3_winograd23(const Tensor &x, const Tensor &k_tm, Tensor &out) {
 
@@ -2874,7 +2872,7 @@ namespace ts {
 
         }
 
-#ifdef TS_USE_SSE
+#ifdef TS_USE_SIMD
         template<>
         void Conv2dAlgorithm<float>::conv3x3_winograd63(const Tensor &x, const Tensor &k_tm, Tensor &out) {
 
@@ -3871,7 +3869,7 @@ namespace ts {
 
         }
 
-#ifdef TS_USE_SSE
+#ifdef TS_USE_SIMD
         template<>
         void Conv2dAlgorithm<float>::conv3x3_winograd63_threadpool(const Tensor &x, const Tensor &k_tm, Tensor &out) {
 
