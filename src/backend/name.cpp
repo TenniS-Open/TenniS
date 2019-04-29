@@ -88,6 +88,8 @@ namespace ts {
             const string &non_max_suppression_v3() TS_NOEXCEPT { static string str = "non_max_suppression_v3"; return str; }
             const string &topkv2() TS_NOEXCEPT { static string str = "topkv2"; return str; }
 
+            const string &prewhiten() TS_NOEXCEPT { static string str = "prewhiten"; return str; }
+
             const string &copy() TS_NOEXCEPT {
                 static string str = "_copy";
                 return str;
