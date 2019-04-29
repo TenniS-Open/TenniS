@@ -102,6 +102,8 @@ namespace ts {
             TS_DEBUG_API const string &argmax() TS_NOEXCEPT;
             TS_DEBUG_API const string &non_max_suppression_v3() TS_NOEXCEPT;
             TS_DEBUG_API const string &topkv2() TS_NOEXCEPT;
+
+            TS_DEBUG_API const string &prewhiten() TS_NOEXCEPT;
         }
 
         namespace typo {
