@@ -47,7 +47,7 @@ namespace ts {
                     T *loop_out = output_channel_data;
                     T sum = 0;
                     for (int i = 0; i < body_num; ++i) {
-                        T data = T(std::exp(-*loop_in));
+                        T data = T(std::exp(*loop_in));
                         sum += data;
                         *loop_out = data;
 
