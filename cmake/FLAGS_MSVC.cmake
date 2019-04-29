@@ -5,6 +5,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W3")
 
 if(TS_USE_AVX)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /arch:AVX")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX")
 endif()
 
 message(STATUS "Platform: ${PLATFORM}")
