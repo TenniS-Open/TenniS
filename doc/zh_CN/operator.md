@@ -407,7 +407,7 @@ output_w = floor((width + pad_w -
 说明：  
 smooth 为0时：
 ```
-y_i = exp(-x_i) / \sum{exp(-x_i)}
+y_i = exp(x_i) / \sum{exp(x_i)}
 ```
 smooth 为非0时：
 ```
