@@ -172,4 +172,4 @@ namespace ts {
 
 using namespace ts;
 using namespace gpu;
-TS_REGISTER_OPERATOR(PreWhiten, GPU, "prewhiten")
+TS_REGISTER_OPERATOR(PreWhiten, GPU, name::layer::prewhiten())

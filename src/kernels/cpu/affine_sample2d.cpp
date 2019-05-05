@@ -246,7 +246,7 @@ namespace ts {
             int y_width = out.size(dim + 1);
             int x_height = x.size(dim);
 
-            auto &input_shape = x.sizes();
+            // auto &input_shape = x.sizes();
            
             int x_width = x.size(dim + 1);
 

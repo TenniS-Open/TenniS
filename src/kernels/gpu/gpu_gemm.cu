@@ -6,7 +6,7 @@
 
 #include "device_launch_parameters.h"
 #include <cuda_runtime.h>
-#include "kernels/gpu/cublas_device.h"
+#include "kernels/gpu/cuda_context.h"
 #include "utils/ctxmgr_lite.h"
 #include "core/device_context.h"
 
@@ -81,8 +81,8 @@ namespace ts {
             // broadcast C to output
             if (!near_zero(beta)) {
                 if (C.has_shape(out.sizes())) {
-                    auto dst = out.sync();
-                    auto src = C.sync();
+                    auto dst = out.weak_memory();
+                    auto src = C.weak_memory();
                     memcpy(dst, src);
                 } else {
                     gpu_gemm_broadcast_compute_run<T>(C, out);
@@ -92,8 +92,8 @@ namespace ts {
             }
 #ifdef TS_USE_CUBLAS
             auto &context = ctx::ref<DeviceContext>();
-            CublasDevice *handle = reinterpret_cast<CublasDevice *>(context.handle);
-            auto cublas_handle = handle->get();
+            CUDAContextHandle *handle = reinterpret_cast<CUDAContextHandle *>(context.handle);
+            auto cublas_handle = handle->cublas_handle();
 
             auto cublas_transA = transA ? cublas::Trans : cublas::NoTrans;
             auto cublas_transB = transB ? cublas::Trans : cublas::NoTrans;

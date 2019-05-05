@@ -223,4 +223,11 @@ namespace ts {
     void ImageFilter::center_crop(int side) {
         center_crop(side, side);
     }
+
+    void ImageFilter::prewhiten() {
+        ctx::bind<Graph> _bind_graph(m_impl->m_graph.get());
+        auto x = m_impl->m_graph->nodes().back();
+        auto node = bubble::op(serial_name(), name::layer::prewhiten(), {x});
+        m_impl->m_compiled = false;
+    }
 }

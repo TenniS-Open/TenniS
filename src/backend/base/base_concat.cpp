@@ -39,7 +39,16 @@ namespace ts {
 
             for (int i = 1; i < input_num; i++)
             {
-                TS_CHECK(stack.index(i)->dtype() == dtype) << "Can not concat on different data type!" << ts::eject;
+                if (stack.index(i)->dtype() != dtype) {
+                    std::ostringstream oss;
+                    oss << "(";
+                    for (int j = 0; j < input_num; ++j) {
+                        if (j) oss << ", ";
+                        oss << type_str(stack.index(j)->dtype());
+                    }
+                    oss << ")";
+                    TS_LOG_ERROR << "Can not concat " << oss.str() << ts::eject;
+                }
             }
 
             Shape output_shape(stack.index(0)->sizes());

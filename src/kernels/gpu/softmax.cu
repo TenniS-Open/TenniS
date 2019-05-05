@@ -109,7 +109,7 @@ namespace ts {
             Shape scale_shape;
             scale_shape.resize(1);
             scale_shape[0] = scale_data_size;
-            Tensor scale_tensor(mem_device, out.dtype(), scale_shape);
+            Tensor scale_tensor(Tensor::InFlow::DEVICE, out.dtype(), scale_shape);
             T *scale_data = scale_tensor.data<T>();
 
             dim3 block_size(CUDA_THREAD_NUM);

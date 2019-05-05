@@ -36,6 +36,11 @@ namespace ts {
             , bind_device_context(bench.device())
             , bind_runtime_context(bench.runtime()) {
             bench.device().active();
+            m_pre_device_context = DeviceContext::Switch(&bench.device());
+        }
+
+        ~BindWorkbenchRuntime() {
+            DeviceContext::Switch(m_pre_device_context);
         }
 
     private:
@@ -47,6 +52,9 @@ namespace ts {
 
         // bind runtime context
         ctx::bind<RuntimeContext> bind_runtime_context;
+
+        // pre_device_context
+        DeviceContext *m_pre_device_context = nullptr;
     };
 
     Workbench::Workbench(const ComputingDevice &device, std::shared_ptr<std::mutex> mutex) {
@@ -230,8 +238,13 @@ namespace ts {
         auto module_outputs = module->outputs();
         InstructionBlock block;
 
-        // never swallow any exception
-        block = compiler.compile(module_inputs, module_outputs);
+        {
+            // bind bench for intime action
+            ctx::bind<Workbench> _bind_workbench(*bench);
+
+            // never swallow any exception
+            block = compiler.compile(module_inputs, module_outputs);
+        }
 
         // link data sagment
         // TODO: link multi-data-sagment
