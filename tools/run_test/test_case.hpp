@@ -37,6 +37,9 @@
 
 #include <Windows.h>
 #include <sys/stat.h>
+#ifdef min
+#undef min
+#endif
 
 #elif TS_PLATFORM_OS_LINUX || TS_PLATFORM_OS_MAC || TS_PLATFORM_OS_IOS
 
