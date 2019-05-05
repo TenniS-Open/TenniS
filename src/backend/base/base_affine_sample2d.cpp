@@ -33,8 +33,6 @@ namespace ts {
             m_type = Affine_Sample2DType(tensor::to_int(type_tensor));
             m_dim = tensor::to_int(dim_tensor);
 
-            std::cout << "dim:" << m_dim << std::endl;
-            std::cout << "type:" << (int)m_type << std::endl;
             TS_AUTO_CHECK((m_type >= Affine_Sample2DType::LINEAR) && (m_type <= Affine_Sample2DType::NEAREST));
 
         }
@@ -54,7 +52,7 @@ namespace ts {
             std::cout << dim << std::endl;
             TS_AUTO_CHECK((dim >= 0) && (dim + 1  < input_shape.size()));
 
-            auto &size_tensor = stack[1];
+            auto size_tensor = tensor::cast(INT32, stack[1]);
 
             TS_AUTO_CHECK(size_tensor.count() == 2);
            
@@ -92,15 +90,15 @@ namespace ts {
             auto out = *stack.push(output[0], memory_device);
             
             
-            auto & size_tensor = stack[1];
+            // auto & size_tensor = stack[1];
 
-            auto & affine_tensor = stack[2];
+            auto affine_tensor = tensor::cast(FLOAT32, stack[2]);
 
             Shape affine_shape = affine_tensor.sizes();
             
             TS_AUTO_CHECK((affine_shape.size() == 2) && (affine_shape[0] == 3) && (affine_shape[1] == 3));
 
-            int * pdata = size_tensor.data<int32_t>(); 
+            // int * pdata = size_tensor.data<int32_t>();
             float * paffine = affine_tensor.data<float>(); 
             
             affine_sample_run((const Tensor &)x, paffine[0], paffine[1], paffine[2], paffine[3], paffine[4], paffine[5], paffine[6], paffine[7], paffine[8],

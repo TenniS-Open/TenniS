@@ -19,6 +19,9 @@ set(PLATFORM "auto" CACHE STRING "auto, x86 or x64")
 set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Debug or Release")
 set(CONFIGURATION ${CMAKE_BUILD_TYPE})
 
+option(TS_BUILD_TEST "[Optional] Build test" ON)
+option(TS_BUILD_TOOLS "[Optional] Build tools" ON)
+
 option(TS_USE_OPENMP "[Optional] Use OpenMP" ON)
 option(TS_USE_OPENCV "[Optional] Use OpenCV" OFF)
 
@@ -234,7 +237,7 @@ foreach (achive ${TENSORSTACK_ACHIVES})
     LIST(APPEND SRC_INCLUDE_FILES ${SRC_INCLUDE_ARCHIVE_${achive}_FILES})
 endforeach ()
 
-ts_add_library(${PROJECT_NAME}_LIB ${TARGET} ${INCLUDE_FILES} ${INCLUDE_SRC_FILES} ${SRC_FILES})
+ts_add_library(${PROJECT_NAME}_LIB ${TARGET} ${INCLUDE_FILES} ${SRC_INCLUDE_FILES} ${SRC_FILES})
 
 target_link_libraries(${PROJECT_NAME}_LIB ${third_libraries})
 
@@ -252,7 +255,7 @@ install(TARGETS ${PROJECT_NAME}_LIB
         )
 
 # TODO: update headers install script
-install(DIRECTORY ${SOLUTION_DIR}/include/
+install(DIRECTORY ${SOLUTION_DIR}/include/api
         DESTINATION ${ENV_HEADER_DIR}
         )
 
@@ -262,6 +265,7 @@ FILE(GLOB_RECURSE TOOL_FILES ${PROJECT_SOURCE_DIR}/tools/*.cpp)
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
+if (TS_BUILD_TEST)
 foreach (path ${TEST_FILES})
     string(REGEX MATCH "[^/]*.[(c)|(cc)|(cpp)]$" file_ext ${path})
     string(REGEX MATCH "^[^.]*" file ${file_ext})
@@ -270,8 +274,9 @@ foreach (path ${TEST_FILES})
     target_link_libraries(test_${file} ${third_libraries})
     # set_target_properties(test_${file} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${LOCAL_OUTPUT_DIR}/lib)
 endforeach ()
+endif(TS_BUILD_TEST)
 
-
+if (TS_BUILD_TOOLS)
 foreach (path ${TOOL_FILES})
     string(REGEX MATCH "[^/]*.[(c)|(cc)|(cpp)]$" file_ext ${path})
     string(REGEX MATCH "^[^.]*" file ${file_ext})
@@ -283,3 +288,4 @@ foreach (path ${TOOL_FILES})
             RUNTIME DESTINATION ${ENV_RUNTIME_DIR}
             )
 endforeach ()
+endif (TS_BUILD_TOOLS)

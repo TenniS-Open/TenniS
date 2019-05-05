@@ -2,6 +2,13 @@ import torch
 
 
 def convert(input_module, output_file, input, verbose=False):
+    """
+    :param input_module:
+    :param output_file:
+    :param input: tuple of input shape
+    :param verbose:
+    :return:
+    """
     torch_model = None
     if isinstance(input_module, str):
         torch_model = torch.load(input_module)
@@ -13,11 +20,18 @@ def convert(input_module, output_file, input, verbose=False):
         param.requires_grad = False
     torch_model.eval()
 
-    # summary(torch_model, (3, 224, 224))
-    #
-    # ts_node = convert_module.convert_module(torch_model)
+    for i in range(len(input)):
+        node = input[i]
+        if isinstance(node, (tuple, list)):
+            for i in node:
+                if not isinstance(i, (int, )):
+                    raise RuntimeError("input must be a list of tuple[int]")
+        else:
+            raise RuntimeError("input must be a list of tuple[int]")
 
-    dummy_input = torch.autograd.Variable(torch.randn(input))
+    dummy_input = [torch.autograd.Variable(torch.randn(o)) for o in input]
+    assert len(dummy_input) == 1
+    dummy_input = dummy_input[0]
     torch.onnx.export(torch_model, dummy_input, output_file, verbose=verbose)
 
     print("============ Summary ============")

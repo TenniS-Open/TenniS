@@ -21,6 +21,10 @@ namespace ts {
 
             void reduce_with_scalar(const Tensor &lhs, const Tensor &rhs, Tensor &out) override;
 
+            void reduce_with_bias_cross(const Tensor &lhs, const Tensor &rhs, Tensor &out, int dim) override;
+
+            void reduce_with_scalar_cross(const Tensor &lhs, const Tensor &rhs, Tensor &out) override;
+
         };
     }
 }

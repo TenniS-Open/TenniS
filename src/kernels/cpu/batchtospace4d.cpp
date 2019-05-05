@@ -14,12 +14,12 @@ namespace ts {
 
         template<typename T>
         static void cpu_batchtospace4d_compute_run(const Tensor &x, const int crop_top, const int crop_bottom,
-                    const int crop_left,const int crop_right, const int block_height, const int block_width, Tensor &out) { 
+                    const int crop_left,const int crop_right, const int block_height, const int block_width, Tensor &out) {
 
             Shape x_shape = x.sizes();
             Shape out_shape = out.sizes();
 
-            int input_number = x_shape[0];
+            // int input_number = x_shape[0];
             int input_channels = x_shape[1];
             int input_height = x_shape[2];
             int input_width = x_shape[3];
@@ -32,40 +32,38 @@ namespace ts {
             int input_number_step = input_channels * input_height * input_width;
             int input_channels_step = input_height * input_width;
             int input_height_step = input_width;
-            int input_width_step = 1;
+            // int input_width_step = 1;
 
-            int output_size = output_number * output_channels * output_height * output_width;
-            int output_number_step = output_channels * output_height * output_width;
-            int output_channels_step = output_height * output_width;
-            int output_height_step = output_width;
-            int output_width_step = 1;
+            // int output_size = output_number * output_channels * output_height * output_width;
+            // int output_number_step = output_channels * output_height * output_width;
+            // int output_channels_step = output_height * output_width;
+            // int output_height_step = output_width;
+            // int output_width_step = 1;
 
-            const T * pinput = x.data<T>();
-            T * poutput = out.data<T>();
+            const T *pinput = x.data<T>();
+            T *poutput = out.data<T>();
 
+            int at_output_i = 0;    // n * output_number_step + c * output_channels_step;
             for (int n = 0; n < output_number; ++n) {
-                 for (int c = 0; c < output_channels; ++c) {
-                      for (int h = 0; h < output_height; ++h) {
-                           for (int w = 0; w < output_width; ++w) {
-                                int in = ((h + crop_top) % block_height* block_width + (w + crop_left) % block_width) * output_number + n;
-                                int ic = c;
+                for (int c = 0; c < output_channels; ++c) {
+                    const int ic = c;
+                    for (int h = 0; h < output_height; ++h) {
+                        const int ih = (h + crop_top) / block_height;
+                        const int pre_compute = (h + crop_top) % block_height * block_width;
+                        for (int w = 0; w < output_width; ++w) {
+                            const int in = (pre_compute + (w + crop_left) % block_width) * output_number + n;
+                            const int iw = (w + crop_left) / block_width;
 
-                                int ih = (h + crop_top ) / block_height;
-                                int iw = (w + crop_left) / block_width;
+                            const int at_input_i = in * input_number_step
+                                                   + ic * input_channels_step
+                                                   + ih * input_height_step
+                                                   + iw;
 
-                                int at_input_i = in * input_number_step
-                                                 + ic * input_channels_step
-                                                 + ih * input_height_step
-                                                 + iw;
+                            poutput[at_output_i] = pinput[at_input_i];
 
-                                int at_output_i = n * output_number_step
-                                                  + c * output_channels_step
-                                                  + h * output_height_step
-                                                  + w;
-
-                                poutput[at_output_i] = pinput[at_input_i];
-                           }
-                     }
+                            ++at_output_i;
+                        }
+                    }
                 }
             }
         }

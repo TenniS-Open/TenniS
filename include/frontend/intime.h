@@ -33,6 +33,13 @@ namespace ts {
 
         TS_DEBUG_API Tensor resize2d(const Tensor &x, const std::vector<int32_t> &size, desc::ResizeType type = desc::ResizeType::LINEAR);
 
+        TS_DEBUG_API Tensor add(const Tensor &lhs, const Tensor &rhs);
+
+        TS_DEBUG_API Tensor sub(const Tensor &lhs, const Tensor &rhs);
+
+        TS_DEBUG_API Tensor mul(const Tensor &lhs, const Tensor &rhs);
+
+        TS_DEBUG_API Tensor div(const Tensor &lhs, const Tensor &rhs);
     }
 }
 

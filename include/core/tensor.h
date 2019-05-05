@@ -99,6 +99,11 @@ namespace ts {
         using self = Tensor;    ///< self class
         using shared = std::shared_ptr<self>;  ///< smart pointer
 
+        enum class InFlow : int32_t {
+            HOST = 0,
+            DEVICE = 1,
+        };
+
         Tensor(MemoryController::shared controller, DTYPE dtype,
                const Shape &_shape);   // allocate memory from controller
 
@@ -130,6 +135,33 @@ namespace ts {
         Tensor(const Smart<TensorMemory> &memory, const Prototype &proto);
 
         Tensor();
+
+        /**
+         *
+         * @param in_flow HOST or DEVICE given in DeviceContext
+         * @param proto
+         * Notice: must have context:RuntimeContext, optional have context:DeviceContext
+         * RuntimeContext give flow memory controller
+         * DeviceContext must given with in_flow=InFlow::DEVICE,
+         * if in_flow=InFlow::HOST, use CPU:0 memory device.
+         */
+        Tensor(InFlow in_flow, const Prototype &proto);
+
+        Tensor(InFlow in_flow, DTYPE dtype, const Shape &shape) : self(in_flow, Prototype(dtype, shape)) {}
+
+        /**
+         *
+         * @param in_flow HOST or DEVICE given in DeviceContext
+         * @param proto
+         * @param device if in_flow=InFlow::HOST, the device will discard, or device means using this device
+         * Notice: must have context:RuntimeContext, optional have context:DeviceContext
+         * RuntimeContext give flow memory controller
+         * DeviceContext must given with in_flow=InFlow::DEVICE,
+         * if in_flow=InFlow::HOST, use CPU:0 memory device.
+         */
+        Tensor(InFlow in_flow, const Prototype &proto, const MemoryDevice &device);
+
+        Tensor(InFlow in_flow, DTYPE dtype, const Shape &shape, const MemoryDevice &device) : self(in_flow, Prototype(dtype, shape), device) {}
 
         Tensor(const self &) = default;
 
@@ -197,7 +229,11 @@ namespace ts {
 
         Tensor field(size_t offset) const;
 
+        Tensor field(int offset) const;
+
         void field(size_t offset, const self &value);
+
+        void field(int offset, const self &value);
 
         void pack(const std::vector<self> &fields);
 
@@ -221,33 +257,37 @@ namespace ts {
 
         HypeShape hype_shape() const { return HypeShape(this->sizes()); }
 
-        TensorMemory::shared locked() { return m_memory->locked(); }
-
         /**
-         * @return weak memory
+         * got weak memory, this Memory will lose after Tensor deleted
+         * @return
          */
-        Memory sync() { return m_memory->sync(); }
+        Memory weak_memory() const;
 
         /**
-         * @return weak memory
-         */
-        Memory sync() const { return m_memory->sync(); }
-
-        /**
-         * @return weak memory
-         */
-        Memory sync(const MemoryDevice &device) { return m_memory->sync(device); }
-
-        /**
-         * @return weak tensor, can not used in long time
+         * @return strong tensor
          */
         Tensor view(const MemoryDevice &device) const;
+
+        /**
+         *
+         * @param in_flow
+         * @return strong view tensor
+         * context::DeviceContext must given with in_flow=InFlow::DEVICE,
+         * if in_flow=InFlow::HOST, use CPU:0 memory device.
+         */
+        Tensor view(InFlow in_flow) const;
 
         /**
          * weak tensor can not used in long time
          * @return weak tensor
          */
         Tensor weak() const;
+
+        /**
+         * strong tensor can used in outside
+         * @return strong tensor
+         */
+        Tensor strong() const;
 
         bool has_shape(const Shape &shape) const;
 
@@ -307,6 +347,8 @@ namespace ts {
 
         explicit TensorPrototype(DTYPE dtype) : supper(dtype) {}
 
+        TensorPrototype(const std::vector<Tensor::Prototype> &fields);
+
         TensorPrototype(const supper &other) : supper(other) {}
 
         TensorPrototype(supper &&other) : supper(std::move(other)) {}
@@ -317,7 +359,11 @@ namespace ts {
 
         supper field(size_t offset) const;
 
+        supper field(int offset) const;
+
         void field(size_t offset, const supper &value);
+
+        void field(int offset, const supper &value);
 
         void pack(const std::vector<supper> &fields);
 
@@ -354,6 +400,22 @@ namespace ts {
     TS_DEBUG_API std::ostream &operator<<(std::ostream &out, const Tensor::Prototype &proto);
 
     TS_DEBUG_API std::ostream &operator<<(std::ostream &out, const TensorPrototype &proto);
+
+    TS_DEBUG_API bool operator==(const Tensor::Prototype &lhs, const Tensor::Prototype &rhs);
+
+    TS_DEBUG_API bool operator==(const TensorPrototype &lhs, const TensorPrototype &rhs);
+
+    TS_DEBUG_API bool operator==(const Tensor::Prototype &lhs, const TensorPrototype &rhs);
+
+    TS_DEBUG_API bool operator==(const TensorPrototype &lhs, const Tensor::Prototype &rhs);
+
+    inline bool operator!=(const Tensor::Prototype &lhs, const Tensor::Prototype &rhs) { return !(lhs == rhs); }
+
+    inline bool operator!=(const TensorPrototype &lhs, const TensorPrototype &rhs) { return !(lhs == rhs); }
+
+    inline bool operator!=(const Tensor::Prototype &lhs, const TensorPrototype &rhs) { return !(lhs == rhs); }
+
+    inline bool operator!=(const TensorPrototype &lhs, const Tensor::Prototype &rhs) { return !(lhs == rhs); }
 }
 
 

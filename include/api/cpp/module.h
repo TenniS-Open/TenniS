@@ -9,6 +9,7 @@
 
 #include "except.h"
 #include "device.h"
+#include "stream.h"
 
 #include <string>
 
@@ -44,10 +45,16 @@ namespace ts {
 
             raw *get_raw() const { return m_impl.get(); }
 
-            Module() = delete;
+            Module() = default;
 
             static Module Load(const std::string &path, SerializationFormat format = TS_BINARY) {
                 Module loaded(ts_Module_Load(path.c_str(), ts_SerializationFormat(format)));
+                TS_API_AUTO_CHECK(loaded.m_impl != nullptr);
+                return std::move(loaded);
+            }
+
+            static Module Load(StreamReader &stream, SerializationFormat format = TS_BINARY) {
+                Module loaded(ts_Module_LoadFromStream(&stream, StreamReader::C, ts_SerializationFormat(format)));
                 TS_API_AUTO_CHECK(loaded.m_impl != nullptr);
                 return std::move(loaded);
             }

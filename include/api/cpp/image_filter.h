@@ -85,6 +85,10 @@ namespace ts {
                 TS_API_AUTO_CHECK(ts_ImageFilter_to_chw(m_impl.get()));
             }
 
+            void prewhiten() {
+                TS_API_AUTO_CHECK(ts_ImageFilter_prewhiten(m_impl.get()));
+            }
+
         private:
             ImageFilter(raw *ptr) : m_impl(pack(ptr)) {}
 

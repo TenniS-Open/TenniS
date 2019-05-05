@@ -27,6 +27,10 @@ def dcn_v2_forward(name, x, w, b, offset, mask,
            dilation=None):
     assert isinstance(x, Node)
 
+    padding = zoo.adjust_padding(padding, format=format)
+    stride = zoo.adjust_stride(stride, format=format)
+    dilation = zoo.adjust_dilation(dilation, format=format)
+
     if padding is None:
         padding = zoo.Default.padding()
     if stride is None:
@@ -34,9 +38,9 @@ def dcn_v2_forward(name, x, w, b, offset, mask,
     if dilation is None:
         dilation = zoo.Default.dilation()
     w = zoo.to_node(w, name="_const_" + name + "_weights")
-    b = zoo.to_node(w, name="_const_" + name + "_bias")
-    offset = zoo.to_node(w, name="_const_" + name + "_offset")
-    mask = zoo.to_node(w, name="_const_" + name + "_mask")
+    b = zoo.to_node(b, name="_const_" + name + "_bias")
+    offset = zoo.to_node(offset, name="_const_" + name + "_offset")
+    mask = zoo.to_node(mask, name="_const_" + name + "_mask")
 
     node = None
 

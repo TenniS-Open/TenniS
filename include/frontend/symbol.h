@@ -14,6 +14,14 @@ namespace ts {
 
         TS_DEBUG_API Node resize2d(const std::string &name, const Node &x, const Node &size,
                                    desc::ResizeType type = desc::ResizeType::LINEAR);
+
+        TS_DEBUG_API Node add(const std::string &name, const Node &lhs, const Node &rhs);
+
+        TS_DEBUG_API Node sub(const std::string &name, const Node &lhs, const Node &rhs);
+
+        TS_DEBUG_API Node mul(const std::string &name, const Node &lhs, const Node &rhs);
+
+        TS_DEBUG_API Node div(const std::string &name, const Node &lhs, const Node &rhs);
     }
 }
 

@@ -28,7 +28,11 @@ namespace ts {
 
             m_op_castv2->set(Bubble::RetentionParam::op, tensor::from(name::layer::conv2d_v2()));
             m_op_castv2->set(Bubble::RetentionParam::name, tensor::from("_core" + name()));
-            //m_op_castv2->set(Bubble::RetentionParam::output_count, get(Bubble::RetentionParam::output_count));
+            for (auto &param : Bubble::RetentionParam::All()) {
+                if (!m_op_castv2->has(param) && this->has(param)) {
+                    m_op_castv2->set(param, get(param));
+                }
+            }
 
             int dtype = FLOAT32;
             m_op_castv2->set(name::dtype, tensor::from(dtype));

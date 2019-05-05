@@ -22,6 +22,14 @@ namespace ts {
         };
 
         TS_DEBUG_API Bubble resize2d(ResizeType type = ResizeType::LINEAR);
+
+        TS_DEBUG_API Bubble add();
+
+        TS_DEBUG_API Bubble sub();
+
+        TS_DEBUG_API Bubble mul();
+
+        TS_DEBUG_API Bubble div();
     }
 }
 

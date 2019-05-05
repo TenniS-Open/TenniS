@@ -11,7 +11,6 @@
 
 #include "utils/ctxmgr_lite.h"
 
-
 namespace ts {
     namespace intime {
         Tensor run(Workbench &bench, const Bubble &bubble, const std::vector<Tensor> &inputs) {
@@ -46,5 +45,20 @@ namespace ts {
             return resize2d(x, tensor::from(size), type);
         }
 
+        Tensor add(const Tensor &lhs, const Tensor &rhs) {
+            return run(desc::add(), {lhs, rhs});
+        }
+
+        Tensor sub(const Tensor &lhs, const Tensor &rhs) {
+            return run(desc::sub(), {lhs, rhs});
+        }
+
+        Tensor mul(const Tensor &lhs, const Tensor &rhs) {
+            return run(desc::mul(), {lhs, rhs});
+        }
+
+        Tensor div(const Tensor &lhs, const Tensor &rhs) {
+            return run(desc::div(), {lhs, rhs});
+        }
     }
 }

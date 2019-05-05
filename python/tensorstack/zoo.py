@@ -11,6 +11,10 @@ from . import tensor
 
 import numpy
 
+import sys
+if sys.version > '3':
+    long = int
+
 
 class Name(object):
     NCHW = "NCHW"
@@ -58,6 +62,8 @@ class Name(object):
         limit = "_limit"
         crop_nd = "crop_nd"
         chunk = "chunk"
+        squeeze = "squeeze"
+        rsqrt = "rsqrt"
 
     dim = "dim"
     shuffle = "shuffle"
@@ -80,6 +86,7 @@ class Name(object):
     dtype = "dtype"
     shift = "shfit"
     chunks = "chunks"
+    axes = "axes"
 
 
 class Default(object):
@@ -114,6 +121,7 @@ class Type(object):
         black = 0
         copy = 1
         loop = 2
+        white = 3   # denominator force be ksize * ksize
 
     class pooling_type(object):
         max = 0
@@ -208,6 +216,123 @@ def NHWC2NCHW(name, x):
 
     return transpose(name=name, x=x, pemute=[0, 3, 1, 2])
 
+def format4h(format):
+    if format == Name.NCHW:
+        return 2
+    elif format == Name.NHWC:
+        return 1
+    else:
+        raise RuntimeError("format: {}".format(format))
+
+
+def adjust4d(format, base, shape):
+    h = format4h(format)
+    if shape is None:
+        return base
+    if isinstance(shape, (int, long)):
+        base[h] = shape
+        base[h + 1] = shape
+    elif isinstance(shape, (tuple, list)) or isinstance(shape, numpy.ndarray):
+        numpy_shape = numpy.asarray(shape, dtype=numpy.int32)
+        if numpy_shape.shape == (1,):
+            base[h] = numpy_shape[0]
+            base[h + 1] = numpy_shape[0]
+        elif numpy_shape.shape == (2,):
+            base[h] = numpy_shape[0]
+            base[h + 1] = numpy_shape[1]
+        elif numpy_shape.shape == (4,):
+            base = shape
+        else:
+            raise RuntimeError("{}".format(shape))
+    else:
+        return RuntimeError("type={}".format(type(shape)))
+
+    return base
+
+
+def adjust4x2d(format, base, shape):
+    h = format4h(format)
+    if shape is None:
+        return base
+    if isinstance(shape, (int, long)):
+        base[h][0] = shape
+        base[h][1] = shape
+        base[h + 1][0] = shape
+        base[h + 1][1] = shape
+    elif isinstance(shape, (tuple, list)) or isinstance(shape, numpy.ndarray):
+        numpy_shape = numpy.asarray(shape, dtype=numpy.int32)
+        if numpy_shape.shape == (2,):
+            base[h][0] = numpy_shape[0]
+            base[h][1] = numpy_shape[0]
+            base[h + 1][0] = numpy_shape[1]
+            base[h + 1][1] = numpy_shape[1]
+        if numpy_shape.shape == (4,):
+            base[0][0] = numpy_shape[0]
+            base[0][1] = numpy_shape[0]
+            base[1][0] = numpy_shape[1]
+            base[1][1] = numpy_shape[1]
+            base[2][0] = numpy_shape[2]
+            base[2][1] = numpy_shape[2]
+            base[3][0] = numpy_shape[3]
+            base[3][1] = numpy_shape[3]
+        elif numpy_shape.shape == (2, 2):
+            base[h][0] = numpy_shape[0, 0]
+            base[h][1] = numpy_shape[0, 1]
+            base[h + 1][0] = numpy_shape[1, 0]
+            base[h + 1][1] = numpy_shape[1, 1]
+        elif numpy_shape.shape == (4, 2):
+            base = shape
+        else:
+            raise RuntimeError("{}".format(shape))
+    else:
+        return RuntimeError("type={}".format(type(shape)))
+
+    return base
+
+
+def adjust_padding(padding, format=Name.NCHW):
+    if padding is None:
+        return Default.padding()
+    if isinstance(padding, Node):
+        return padding
+    try:
+        return adjust4x2d(format, Default.padding(), padding)
+    except RuntimeError as e:
+        raise RuntimeError("Not support padding: {}".format(e))
+
+
+def adjust_stride(stride, format=Name.NCHW):
+    if stride is None:
+        return Default.stride()
+    if isinstance(stride, Node):
+        return stride
+    try:
+        return adjust4d(format, Default.stride(), stride)
+    except RuntimeError as e:
+        raise RuntimeError("Not support stride: {}".format(e))
+
+
+def adjust_dilation(dilation, format=Name.NCHW):
+    if dilation is None:
+        return Default.dilation()
+    if isinstance(dilation, Node):
+        return dilation
+    try:
+        return adjust4d(format, Default.dilation(), dilation)
+    except RuntimeError as e:
+        raise RuntimeError("Not support dilation: {}".format(e))
+
+
+def adjust_ksize(ksize, format=Name.NCHW):
+    if ksize is None:
+        return Default.ksize()
+    if isinstance(ksize, Node):
+        return ksize
+    try:
+        return adjust4d(format, Default.ksize(), ksize)
+    except RuntimeError as e:
+        raise RuntimeError("Not support ksize: {}".format(e))
+
 
 def conv2d(name, x, w,
            format=Name.NCHW,
@@ -216,6 +341,10 @@ def conv2d(name, x, w,
            stride=None,
            dilation=None):
     assert isinstance(x, Node)
+
+    padding = adjust_padding(padding, format=format)
+    stride = adjust_stride(stride, format=format)
+    dilation = adjust_dilation(dilation, format=format)
 
     if padding is None:
         padding = Default.padding()
@@ -270,6 +399,10 @@ def depthwise_conv2d(name, x, w,
                      stride=None,
                      dilation=None):
     assert isinstance(x, Node)
+
+    padding = adjust_padding(padding, format=format)
+    stride = adjust_stride(stride, format=format)
+    dilation = adjust_dilation(dilation, format=format)
 
     if padding is None:
         padding = Default.padding()
@@ -473,6 +606,10 @@ def pooling2d_v2(name, x, ksize, stride, type=Type.pooling_type.max, format=Name
               padding_type=Type.padding_type.black):
     assert isinstance(x, Node)
 
+    padding = adjust_padding(padding, format=format)
+    stride = adjust_stride(stride, format=format)
+    ksize = adjust_ksize(ksize, format=format)
+
     if padding is None:
         padding = Default.padding()
 
@@ -492,6 +629,10 @@ def pooling2d(name, x, ksize, stride, type=Type.pooling_type.max, format=Name.NC
               padding=None,
               padding_type=Type.padding_type.black):
     assert isinstance(x, Node)
+
+    padding = adjust_padding(padding, format=format)
+    stride = adjust_stride(stride, format=format)
+    ksize = adjust_ksize(ksize, format=format)
 
     if padding is None:
         padding = Default.padding()
@@ -593,3 +734,24 @@ def chunk(name, x, chunks, dim=0):
     outputs = [menu.field(name=name + ":" + str(i), input=node, offset=i) for i in range(int(chunks))]
 
     return outputs
+
+
+def squeeze(name, x, axes=None):
+    assert isinstance(x, Node)
+
+    # operator
+    node = menu.op(name=name, op_name=Name.Layer.squeeze, inputs=[x, ])
+    if axes is not None:
+        axes = to_const(axes, "axes")
+        node.set(Name.axes, axes, numpy.int32)
+
+    return node
+
+
+def rsqrt(name, x):
+    assert isinstance(x, Node)
+
+    # operator
+    node = menu.op(name=name, op_name=Name.Layer.rsqrt, inputs=[x, ])
+
+    return node

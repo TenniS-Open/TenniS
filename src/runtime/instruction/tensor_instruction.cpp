@@ -35,7 +35,7 @@ namespace ts {
             }, "pack(" + std::to_string(size) + ")");
         }
 
-        Instruction::shared Tensor::field(size_t index) {
+        Instruction::shared Tensor::field(int index) {
             return std::make_shared<LambdaInstruction>([=](Workbench &workbench) {
                 auto &stack = workbench.stack();
                 auto field = stack.top()->field(index);
@@ -55,7 +55,7 @@ namespace ts {
 
             TS_AUTO_CHECK(offset >= 0);
 
-            inst.push_back(Tensor::field(size_t(offset)));
+            inst.push_back(Tensor::field(offset));
 
             return inst;
         };

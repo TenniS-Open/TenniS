@@ -6,6 +6,7 @@
 #define TENSORSTACK_API_MODULE_H
 
 #include "common.h"
+#include "stream.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -25,6 +26,11 @@ enum ts_SerializationFormat {
  * Return NULL if failed.
  */
 TENSOR_STACK_C_API ts_Module *ts_Module_Load(const char *filename, ts_SerializationFormat format);
+
+/**
+ * Return NULL if failed.
+ */
+TENSOR_STACK_C_API ts_Module *ts_Module_LoadFromStream(void *obj, ts_stream_read *reader, ts_SerializationFormat format);
 
 /**
  * Happen nothing if failed.

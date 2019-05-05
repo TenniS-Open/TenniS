@@ -29,6 +29,10 @@ class Type(object):
 def pooling2d_padding(name, x, padding, ksize, stride, format=zoo.Name.NCHW, valid=False):
     assert isinstance(x, Node)
 
+    padding = zoo.adjust_padding(padding, format=format)
+    ksize = zoo.adjust_ksize(ksize, format=format)
+    stride = zoo.adjust_stride(stride, format=format)
+
     # param
     padding = zoo.to_const(padding, "padding")
 
@@ -50,6 +54,10 @@ def pooling2d(name, x, ksize, stride, type=zoo.Type.pooling_type.max, format=zoo
               padding_type=zoo.Type.padding_type.black,
               valid=False):
     assert isinstance(x, Node)
+
+    padding = zoo.adjust_padding(padding, format=format)
+    ksize = zoo.adjust_ksize(ksize, format=format)
+    stride = zoo.adjust_stride(stride, format=format)
 
     if padding is None:
         padding = zoo.Default.padding()

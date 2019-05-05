@@ -23,6 +23,16 @@ def test():
 
     print("After 2 t = {}".format(t))
 
+    a = ts.tensor.PackedTensor((1, "asdf", [2, 3]))
+
+    print("Before a = {}".format(repr(a)))
+
+    ts.tensor.write("packed.t", a)
+
+    a = ts.tensor.read("packed.t")
+
+    print("After a = {}".format(repr(a)))
+
 
 if __name__ == '__main__':
     test()

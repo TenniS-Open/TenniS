@@ -53,6 +53,66 @@ class StringTensor(object):
         return '"{}"'.format(self.__s)
 
 
+class PackedTensor(object):
+    def __init__(self, fields=None):
+        # type: (Union[numpy.ndarray]) -> None
+        self.__fields = []
+        self.pack(fields)
+
+    def __getitem__(self, item):
+        return self.__fields[item]
+
+    def __setitem__(self, key, value):
+        self.__fields[key] = value
+
+    def __len__(self):
+        return len(self.__fields)
+
+    def pack(self, fields):
+        if fields is None:
+            self.__fields = []
+            return
+
+        if not isinstance(fields, list):
+            pass
+        elif not isinstance(fields, tuple):
+            fields = list(fields)
+        else:
+            fields = [fields,]
+        self.__fields = fields
+
+    def unpack(self):
+        return self.__fields
+
+    def __iter__(self):
+        return self.__fields.__iter__()
+
+    @property
+    def dtype(self):
+        if len(self.__fields) == 0:
+            return 'void'
+        return self.__fields[0].dtype
+
+    @property
+    def shape(self):
+        if len(self.__fields) == 0:
+            return ()
+        return self.__fields[0].shape
+
+    def __str__(self):
+        return "{%s}" % (", ".join([str(field) for field in self.__fields]))
+
+    def __repr__(self):
+        return "{%s}" % (", ".join([repr(field) for field in self.__fields]))
+
+
+__map_dtype_to_numpy = {}
+
+
+def register_dtype(dtype, to_numpy):
+    __map_dtype_to_numpy[dtype] = to_numpy
+
+
 def from_any(val, dtype=None):
     # type: (Union[numpy.ndarray, str, StringTensor], Union[numpy.dtype, int]) -> Union[numpy.ndarray, StringTensor]
     if isinstance(dtype, int):
@@ -69,6 +129,10 @@ def from_any(val, dtype=None):
     # do not convert ndarray
     if dtype is None and isinstance(val, numpy.ndarray):
         return val
+
+    # convert dtype
+    elif type(val) in __map_dtype_to_numpy:
+        val = __map_dtype_to_numpy[type(val)](val)
 
     return numpy.asarray(val, dtype=dtype)
 
@@ -153,8 +217,10 @@ def write_unpacked_tensor(stream, tensor):
         tensor = from_any(tensor, dtype=numpy.float32)
     elif isinstance(tensor, numpy.ndarray):
         pass
+    elif type(tensor) in __map_dtype_to_numpy:
+        tensor = numpy.asarray(__map_dtype_to_numpy[type(tensor)](tensor))
     else:
-        raise Exception("Can not write type={} as tensor".format(type(tensor)))
+        raise Exception("Can not write type={} as tensor. Should call register_dtype firstly.".format(type(tensor)))
     # 1. write prototype
     proto = Prototype(dtype=tensor.dtype, shape=tensor.shape)
     # 2. write memory
@@ -190,7 +256,17 @@ def read_unpacked_tensor(stream):
 
 
 def write_tensor(stream, tensor):
-    # type: (file, Union[numpy.ndarray, int, float, str, bytes, list, tuple, StringTensor]) -> None
+    # type: (file, Union[numpy.ndarray, int, float, str, bytes, list, tuple, StringTensor, PackedTensor]) -> None
+    # a. write packed tensor
+    if isinstance(tensor, PackedTensor):
+        field_count = len(tensor)
+        stream.write(struct.pack("=i", field_count))
+
+        for field in tensor:
+            write_unpacked_tensor(stream=stream, tensor=field)
+
+        return
+
     # 0. write field_count
     field_count = 1
     stream.write(struct.pack("=i", field_count))
@@ -199,17 +275,22 @@ def write_tensor(stream, tensor):
 
 
 def read_tensor(stream):
-    # type: (file) -> Union[numpy.ndarray, StringTensor]
+    # type: (file) -> Union[numpy.ndarray, StringTensor, PackedTensor]
 
     # 0. read field count
     field_count = struct.unpack("=i", stream.read(4))[0]
-    assert field_count == 1
+    if field_count == 1:
+        return read_unpacked_tensor(stream=stream)
 
-    return read_unpacked_tensor(stream=stream)
+    fields = []
+    for i in range(field_count):
+        fields.append(read_unpacked_tensor(stream=stream))
+
+    return PackedTensor(fields)
 
 
 def write(path_or_stream, tensor):
-    # type: (Union[file, str], Union[numpy.ndarray, int, float, str, bytes, list, tuple, StringTensor]) -> None
+    # type: (Union[file, str], Union[numpy.ndarray, int, float, str, bytes, list, tuple, StringTensor, PackedTensor]) -> None
     path_or_stream = compatible_string(path_or_stream)
     if isinstance(path_or_stream, str):
         with open(path_or_stream, "wb") as stream:
@@ -219,7 +300,7 @@ def write(path_or_stream, tensor):
 
 
 def read(path_or_stream):
-    # type: (Union[file, str]) -> Union[numpy.ndarray, StringTensor]
+    # type: (Union[file, str]) -> Union[numpy.ndarray, StringTensor, PackedTensor]
     path_or_stream = compatible_string(path_or_stream)
     if isinstance(path_or_stream, str):
         with open(path_or_stream, "rb") as stream:

@@ -62,13 +62,17 @@ namespace ts {
             const string &stack() TS_NOEXCEPT { static string str = "stack"; return str; }
 
             const string &crop_nd() TS_NOEXCEPT { static string str = "crop_nd"; return str; }
+            const string &dcn_v2_forward() TS_NOEXCEPT { static string str = "dcn_v2_forward"; return str; }
+
+            const string &chunk() TS_NOEXCEPT { static string str = "chunk"; return str; }
 
             const string &transpose_conv2d() TS_NOEXCEPT { static string str = "transpose_conv2d"; return str; }
-            const string &batchtospace4d() TS_NOEXCEPT { static string str = "BatchToSpace4D"; return str; }
-            const string &spacetobatch4d() TS_NOEXCEPT { static string str = "SpaceToBatch4D"; return str; }
+            const string &batchtospace4d() TS_NOEXCEPT { static string str = "batch_to_space4d"; return str; }
+            const string &spacetobatch4d() TS_NOEXCEPT { static string str = "space_to_batch4d"; return str; }
 
             const string &affine_sample2d() TS_NOEXCEPT { static string str = "affine_sample2d"; return str; }
 
+            const string &squeeze() TS_NOEXCEPT { static string str = "squeeze"; return str; }
 
             const string &gatherv2() TS_NOEXCEPT { static string str = "gatherv2"; return str; }
             const string &resize_nearest_neighbor() TS_NOEXCEPT { static string str = "resize_nearest_neighbor"; return str; }
@@ -83,6 +87,9 @@ namespace ts {
             const string &argmax() TS_NOEXCEPT { static string str = "argmax"; return str; }
             const string &non_max_suppression_v3() TS_NOEXCEPT { static string str = "non_max_suppression_v3"; return str; }
             const string &topkv2() TS_NOEXCEPT { static string str = "topkv2"; return str; }
+
+            const string &prewhiten() TS_NOEXCEPT { static string str = "prewhiten"; return str; }
+
             const string &copy() TS_NOEXCEPT {
                 static string str = "_copy";
                 return str;
@@ -139,6 +146,10 @@ namespace ts {
         string end = "end";
 
         string shift = "shift";
+        
+        string chunks = "chunks";
+        string deformable_groups = "deformable_groups";
+        
         string crop = "crop";
         string block_shape = "block_shape";
 
