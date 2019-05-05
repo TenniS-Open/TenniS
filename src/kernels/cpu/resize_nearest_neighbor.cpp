@@ -43,7 +43,6 @@ namespace ts {
             }
 
             int type = (int)Resize2DType::NEAREST;
-            std::cout << "type:" << type << std::endl;
             m_op_resize2d->set(name::type, tensor::from(type));
         }
 
