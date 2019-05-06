@@ -294,13 +294,13 @@ output_w = floor((width + pad_w -
 说明：
 `y = x * scale + bias`
 
-### fused_batch_norm(x, gamma, beta, mean, variance) -> y
-描述：等价于 `batch_scale(batch_norm(mean, variance), gamma, beta)`  
+### fused_batch_norm(x, mean, variance, scale, bias) -> y
+描述：等价于 `batch_scale(batch_norm(mean, variance), scale, bias)`  
 输入：`x`: `Tensor4D`  
 输入：`mean`: `Array` `$mean.size == $x.shape.size`  
 输入：`variance`: `Array` `$mean.size == $x.shape.size`  
-输入：`mean`: `Array` `$mean.size == $x.shape.size`  
-输入：`variance`: `Array` `$mean.size == $x.shape.size`  
+输入：`scale`: `Array` `$mean.size == $x.shape.size`  
+输入：`bias`: `Array` `$mean.size == $x.shape.size`  
 输出：`y`: `Tensor4D` `$y.shape == $x.shape`
 
 参数：  
@@ -407,7 +407,7 @@ output_w = floor((width + pad_w -
 说明：  
 smooth 为0时：
 ```
-y_i = exp(-x_i) / \sum{exp(-x_i)}
+y_i = exp(x_i) / \sum{exp(x_i)}
 ```
 smooth 为非0时：
 ```
@@ -726,6 +726,22 @@ y的坐标为`[x, y]`映射到原图为`affine * [x, y, 1]'`，然后根据type�
 ```
 Waitting for sure
 ```
+
+### mean(x..device) -> y..device = delete
+参数：
+- `reduction_indices` `IntArray` 选择要进行平均数计算的维度。
+- `keep_dims` `Int` `Default=1`， 布尔值，表示是否保留维度
+说明：  
+返回`reduction_indices`维度内的平均数  
+绝大多数情况优先采用global_average_pooling.
+
+### squeeze(x..device) -> y
+
+参数：  
+- `axes` `IntArray` `OPTIONAL` 要去除的维度
+
+说明：  
+如果axes为空，则删除所有为1的维度。
 
 
 ### _nhwc_resize2d(x..device) = delete

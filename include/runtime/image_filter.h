@@ -49,6 +49,8 @@ namespace ts {
 
         void channel_swap(const std::vector<int> &shuffle);
 
+        void prewhiten();
+
         void to_chw();
 
         /**
