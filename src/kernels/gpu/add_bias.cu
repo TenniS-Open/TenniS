@@ -9,6 +9,10 @@
 #include <cuda_runtime.h>
 #include <cuda_fp16.h>
 
+#include "kernels/gpu/cuda_context.h"
+#include "core/device_context.h"
+#include "utils/ctxmgr_lite.h"
+
 /////////////////////////////////////////////////
 namespace ts {
     namespace gpu {
@@ -39,11 +43,15 @@ namespace ts {
         const T *pbias = b.data<T>();
         T *pdst = out.data<T>();
 
+        auto &context = ctx::ref<DeviceContext>();
+        CUDAContextHandle* handle = reinterpret_cast<CUDAContextHandle*>(context.handle);
+        auto cuda_stream = handle->stream();
+
 //        memcpy((void*)pdst, out.device(), x.count() * sizeof(T),
 //               (void*)psrc, x.device(), x.count() * sizeof(T));
 
 
-        add_bias_kernel<T> <<< CUDA_BLOCK(x.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> (psrc, pdst, x.count(), back_dims, shape[dim], pbias, b.count());
+        add_bias_kernel<T> <<< CUDA_BLOCK(x.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >>> (psrc, pdst, x.count(), back_dims, shape[dim], pbias, b.count());
 
         //cudaDeviceSynchronize();
     }
