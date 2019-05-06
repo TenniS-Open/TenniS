@@ -20,7 +20,8 @@ namespace ts {
     class ImageFilter::Implement {
     public:
         ComputingDevice m_computing_device;
-        Workbench::shared m_workbench;
+        // Workbench::shared m_workbench;
+        Program::shared m_program;
         Graph::shared m_graph;
         bool m_compiled = false;
     };
@@ -34,7 +35,7 @@ namespace ts {
     }
 
     void ImageFilter::clear() {
-        m_impl->m_workbench.reset();
+        m_impl->m_program.reset();
         m_impl->m_graph = std::make_shared<Graph>();
         ctx::bind<Graph> _bind_graph(m_impl->m_graph.get());
         bubble::param(serial_name(), {-1, -1, -1});    // add input param to graph
@@ -45,7 +46,7 @@ namespace ts {
         if (m_impl->m_graph->nodes().size() > 1) {
             Module::shared module = std::make_shared<Module>();
             module->load(*m_impl->m_graph);
-            m_impl->m_workbench = Workbench::Load(module, m_impl->m_computing_device);
+            m_impl->m_program = Program::Compile(module, m_impl->m_computing_device);
         }
         m_impl->m_compiled = true;
     }
@@ -82,16 +83,18 @@ namespace ts {
 
     Tensor ImageFilter::run(const Tensor &image) {
         if (!m_impl->m_compiled) this->compile();
-        if (!m_impl->m_workbench) return image;
+        if (!m_impl->m_program) return image;
 
         Tensor nhwc_image = image;
         ShapeTransformer transformer;
 
         nhwc_image = nhwc_image.reshape(transformer.before(nhwc_image.sizes()));
 
-        m_impl->m_workbench->input(0, nhwc_image);
-        m_impl->m_workbench->run();
-        auto output = m_impl->m_workbench->output(0);
+        Workbench &bench = ctx::of<Workbench>::ref();
+
+        auto outputs = bench.launch_offline(m_impl->m_program, {nhwc_image});
+
+        auto output = outputs[0];
 
         output = output.reshape(transformer.after(output.sizes()));
 
@@ -204,20 +207,12 @@ namespace ts {
     ImageFilter::ImageFilter(const ImageFilter::Implement &other) {
         m_impl->m_computing_device = other.m_computing_device;
         this->clear();
-        m_impl->m_workbench = other.m_workbench->clone();
+        m_impl->m_program = other.m_program->clone();
         m_impl->m_compiled = true;
     }
 
     const Graph &ImageFilter::graph() const {
         return *m_impl->m_graph;
-    }
-
-    Workbench &ImageFilter::workbench() {
-        return *m_impl->m_workbench;
-    }
-
-    const Workbench &ImageFilter::workbench() const {
-        return *m_impl->m_workbench;
     }
 
     void ImageFilter::center_crop(int side) {
@@ -229,5 +224,9 @@ namespace ts {
         auto x = m_impl->m_graph->nodes().back();
         auto node = bubble::op(serial_name(), name::layer::prewhiten(), {x});
         m_impl->m_compiled = false;
+    }
+
+    Program::shared ImageFilter::program() const {
+        return m_impl->m_program;
     }
 }
