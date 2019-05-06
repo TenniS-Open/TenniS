@@ -13,6 +13,8 @@
 #include "core/device_context.h"
 #include "kernels/gpu/cuda_context.h"
 
+#include <algorithm>
+
 // #define __HIP_PLATFORM_HCC__
 
 namespace ts {
