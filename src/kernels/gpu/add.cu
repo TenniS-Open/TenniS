@@ -55,49 +55,45 @@ namespace ts {
             if (index >= size) 
                 return;
 
-            int *buffer1 = new int[shapelen];
-            int *buffer2 = new int[shapelen];
             int i = 0;
-            int k= 0;
             int *  ptmp;
-            int *  ptr;
 
-            ptr = buffer1; 
             ptmp = outweight + 1;
             int ntmp = index;
-            for(i= shapelen - 1; i; --i) {
-                *ptr = ntmp / *ptmp;
-                ntmp %= *ptmp;
-                ++ptmp;
-                ++ptr; 
-            }
-
-            *ptr = ntmp;
-
-            int lhsindex = 0;
-            for(i=0; i<shapelen; ++i) {
-                buffer2[i] = buffer1[i] % lhsshape[i];    
-            } 
-                 
-            for(k=0, i=1; i < shapelen; ++k,++i) {
-                lhsindex += buffer2[k] * lhsweight[i]; 
-            }
-            lhsindex += buffer2[k];
 
             int rhsindex = 0;
-            for(i=0; i<shapelen; ++i) {
-                buffer2[i] = buffer1[i] % rhsshape[i];    
-            } 
-                 
-            for(k=0, i=1; i < shapelen; ++k,++i) {
-                rhsindex += buffer2[k] * rhsweight[i]; 
+            int lhsindex = 0;
+            int nbuff1,nbuff2;
+            nbuff1 = nbuff2 = 0;
+            for(int m = 0, i= shapelen - 1; i >= 0; --i, m++) {
+                if(i > 0) {
+                    nbuff1 = ntmp / *ptmp;
+                    ntmp %= *ptmp;
+                }else {
+                    nbuff1 = ntmp;
+                }
+
+                nbuff2 = nbuff1 % lhsshape[m];
+                if(m < shapelen - 1) {
+                    lhsindex += nbuff2 * lhsweight[m+1];
+                }else {
+                    lhsindex += nbuff2;
+                }
+
+                nbuff2 = nbuff1 % rhsshape[m];
+
+                if(m < shapelen - 1) {
+                    rhsindex += nbuff2 * rhsweight[m+1];
+                }else {
+                    rhsindex += nbuff2;
+                }
+
+                ++ptmp;
             }
-            rhsindex += buffer2[k];
-                
+
             out[index] = lhs[lhsindex] + rhs[rhsindex];
 
-            delete [] buffer1;
-            delete [] buffer2;
+
         }
 
 
