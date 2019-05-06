@@ -106,6 +106,13 @@ class PackedTensor(object):
         return "{%s}" % (", ".join([repr(field) for field in self.__fields]))
 
 
+__map_dtype_to_numpy = {}
+
+
+def register_dtype(dtype, to_numpy):
+    __map_dtype_to_numpy[dtype] = to_numpy
+
+
 def from_any(val, dtype=None):
     # type: (Union[numpy.ndarray, str, StringTensor], Union[numpy.dtype, int]) -> Union[numpy.ndarray, StringTensor]
     if isinstance(dtype, int):
@@ -122,6 +129,10 @@ def from_any(val, dtype=None):
     # do not convert ndarray
     if dtype is None and isinstance(val, numpy.ndarray):
         return val
+
+    # convert dtype
+    elif type(val) in __map_dtype_to_numpy:
+        val = __map_dtype_to_numpy[type(val)](val)
 
     return numpy.asarray(val, dtype=dtype)
 
@@ -206,8 +217,10 @@ def write_unpacked_tensor(stream, tensor):
         tensor = from_any(tensor, dtype=numpy.float32)
     elif isinstance(tensor, numpy.ndarray):
         pass
+    elif type(tensor) in __map_dtype_to_numpy:
+        tensor = numpy.asarray(__map_dtype_to_numpy[type(tensor)](tensor))
     else:
-        raise Exception("Can not write type={} as tensor".format(type(tensor)))
+        raise Exception("Can not write type={} as tensor. Should call register_dtype firstly.".format(type(tensor)))
     # 1. write prototype
     proto = Prototype(dtype=tensor.dtype, shape=tensor.shape)
     # 2. write memory

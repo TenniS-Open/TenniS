@@ -71,6 +71,25 @@ namespace ts {
             const string &spacetobatch4d() TS_NOEXCEPT { static string str = "space_to_batch4d"; return str; }
 
             const string &affine_sample2d() TS_NOEXCEPT { static string str = "affine_sample2d"; return str; }
+
+            const string &squeeze() TS_NOEXCEPT { static string str = "squeeze"; return str; }
+
+            const string &gatherv2() TS_NOEXCEPT { static string str = "gatherv2"; return str; }
+            const string &resize_nearest_neighbor() TS_NOEXCEPT { static string str = "resize_nearest_neighbor"; return str; }
+            const string &rsqrt() TS_NOEXCEPT { static string str = "rsqrt"; return str; }
+            const string &maximum() TS_NOEXCEPT { static string str = "maximum"; return str; }
+            const string &max() TS_NOEXCEPT { static string str = "max"; return str; }
+            const string &square() TS_NOEXCEPT { static string str = "square"; return str; }
+
+            const string &range() TS_NOEXCEPT { static string str = "range"; return str; }
+            const string &exp() TS_NOEXCEPT { static string str = "exp"; return str; }
+            const string &slice() TS_NOEXCEPT { static string str = "slice"; return str; }
+            const string &argmax() TS_NOEXCEPT { static string str = "argmax"; return str; }
+            const string &non_max_suppression_v3() TS_NOEXCEPT { static string str = "non_max_suppression_v3"; return str; }
+            const string &topkv2() TS_NOEXCEPT { static string str = "topkv2"; return str; }
+
+            const string &prewhiten() TS_NOEXCEPT { static string str = "prewhiten"; return str; }
+
             const string &copy() TS_NOEXCEPT {
                 static string str = "_copy";
                 return str;
@@ -137,8 +156,18 @@ namespace ts {
         string crop = "crop";
         string block_shape = "block_shape";
 
+        string sorted = "sorted";
+        string number = "number";
+        string mode = "mode";
+        string iou_threshold = "iou_threshold";
+        string score_threshold = "score_threshold";
+
+        string max_output_size = "max_output_size";
+        string align_corners = "align_corners";
+
         string winograd_model = "winograd_model";
         string winograd_f23 = "winograd_f23";
         string winograd_f63 = "winograd_f63";
+
     }
 }

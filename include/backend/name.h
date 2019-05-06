@@ -85,6 +85,26 @@ namespace ts {
 
             TS_DEBUG_API const string &affine_sample2d() TS_NOEXCEPT;
 
+            // 2019-04-27
+            TS_DEBUG_API const string &squeeze() TS_NOEXCEPT;
+
+            TS_DEBUG_API const string &gatherv2() TS_NOEXCEPT;
+
+            TS_DEBUG_API const string &resize_nearest_neighbor() TS_NOEXCEPT;
+            TS_DEBUG_API const string &rsqrt() TS_NOEXCEPT;
+            TS_DEBUG_API const string &maximum() TS_NOEXCEPT;
+            TS_DEBUG_API const string &max() TS_NOEXCEPT;
+            TS_DEBUG_API const string &square() TS_NOEXCEPT;
+            TS_DEBUG_API const string &range() TS_NOEXCEPT;
+
+            TS_DEBUG_API const string &exp() TS_NOEXCEPT;
+            TS_DEBUG_API const string &slice() TS_NOEXCEPT;
+            TS_DEBUG_API const string &argmax() TS_NOEXCEPT;
+            TS_DEBUG_API const string &non_max_suppression_v3() TS_NOEXCEPT;
+            TS_DEBUG_API const string &topkv2() TS_NOEXCEPT;
+
+            TS_DEBUG_API const string &prewhiten() TS_NOEXCEPT;
+
             TS_DEBUG_API const string &winograd_transform_kernel() TS_NOEXCEPT;
             TS_DEBUG_API const string &conv2d_winograd() TS_NOEXCEPT;
         }
@@ -146,6 +166,15 @@ namespace ts {
 
         TS_DEBUG_API extern string crop;
         TS_DEBUG_API extern string block_shape;
+
+        TS_DEBUG_API extern string sorted;
+        TS_DEBUG_API extern string number;
+        TS_DEBUG_API extern string mode;
+        TS_DEBUG_API extern string iou_threshold;
+        TS_DEBUG_API extern string score_threshold;
+ 
+        TS_DEBUG_API extern string max_output_size;
+        TS_DEBUG_API extern string align_corners;
 
         TS_DEBUG_API extern string winograd_model;
         TS_DEBUG_API extern string winograd_f23;

@@ -73,4 +73,4 @@ namespace ts {
 
 using namespace ts;
 using namespace cpu;
-TS_REGISTER_OPERATOR(PreWhiten, CPU, name::prewhiten)
+TS_REGISTER_OPERATOR(PreWhiten, CPU, name::layer::prewhiten())

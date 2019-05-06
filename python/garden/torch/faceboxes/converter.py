@@ -276,12 +276,12 @@ def convert_module(m, x=None):
         return sb.torch.module.convert_module(m, x)
 
 
-def convert(input_module, input, output_file):
+def convert(input_module, output_file, input):
     """
     convert troch model to tsm
     :param input_module: torch.nn.Module or param can be parsed to troch.load(param)
-    :param input: list of tuple or ts.Node
     :param output_file: str of path to file
+    :param input: list of tuple or ts.Node
     :return: ts.Module
     """
 

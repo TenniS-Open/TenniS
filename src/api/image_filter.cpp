@@ -2,6 +2,8 @@
 // Created by kier on 2019/3/16.
 //
 
+#include <api/image_filter.h>
+
 #include "declare_image_filter.h"
 
 using namespace ts;
@@ -100,5 +102,12 @@ ts_bool ts_ImageFilter_to_chw(ts_ImageFilter *filter) {
     TRY_HEAD
     if (!filter) throw Exception("NullPointerException: @param: 1");
     (*filter)->to_chw();
+    RETURN_OR_CATCH(ts_true, ts_false)
+}
+
+ts_bool ts_ImageFilter_prewhiten(ts_ImageFilter *filter) {
+    TRY_HEAD
+        if (!filter) throw Exception("NullPointerException: @param: 1");
+        (*filter)->prewhiten();
     RETURN_OR_CATCH(ts_true, ts_false)
 }

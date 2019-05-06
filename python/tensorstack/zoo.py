@@ -15,6 +15,7 @@ import sys
 if sys.version > '3':
     long = int
 
+
 class Name(object):
     NCHW = "NCHW"
     NHWC = "NHWC"
@@ -61,6 +62,8 @@ class Name(object):
         limit = "_limit"
         crop_nd = "crop_nd"
         chunk = "chunk"
+        squeeze = "squeeze"
+        rsqrt = "rsqrt"
 
     dim = "dim"
     shuffle = "shuffle"
@@ -83,6 +86,7 @@ class Name(object):
     dtype = "dtype"
     shift = "shfit"
     chunks = "chunks"
+    axes = "axes"
 
 
 class Default(object):
@@ -228,20 +232,20 @@ def adjust4d(format, base, shape):
     if isinstance(shape, (int, long)):
         base[h] = shape
         base[h + 1] = shape
-    elif isinstance(shape, (tuple, list)):
-        for i in shape:
-            if not isinstance(i, (int, long)):
-                raise RuntimeError("Must be int list")
-        if len(shape) == 1:
-            base[h] = shape[0]
-            base[h + 1] = shape[0]
-        elif len(shape) == 2:
-            base[h] = shape[0]
-            base[h + 1] = shape[1]
-        elif len(shape) == 4:
+    elif isinstance(shape, (tuple, list)) or isinstance(shape, numpy.ndarray):
+        numpy_shape = numpy.asarray(shape, dtype=numpy.int32)
+        if numpy_shape.shape == (1,):
+            base[h] = numpy_shape[0]
+            base[h + 1] = numpy_shape[0]
+        elif numpy_shape.shape == (2,):
+            base[h] = numpy_shape[0]
+            base[h + 1] = numpy_shape[1]
+        elif numpy_shape.shape == (4,):
             base = shape
         else:
             raise RuntimeError("{}".format(shape))
+    else:
+        return RuntimeError("type={}".format(type(shape)))
 
     return base
 
@@ -255,7 +259,7 @@ def adjust4x2d(format, base, shape):
         base[h][1] = shape
         base[h + 1][0] = shape
         base[h + 1][1] = shape
-    elif isinstance(shape, (tuple, list)):
+    elif isinstance(shape, (tuple, list)) or isinstance(shape, numpy.ndarray):
         numpy_shape = numpy.asarray(shape, dtype=numpy.int32)
         if numpy_shape.shape == (2,):
             base[h][0] = numpy_shape[0]
@@ -280,6 +284,8 @@ def adjust4x2d(format, base, shape):
             base = shape
         else:
             raise RuntimeError("{}".format(shape))
+    else:
+        return RuntimeError("type={}".format(type(shape)))
 
     return base
 
@@ -728,3 +734,24 @@ def chunk(name, x, chunks, dim=0):
     outputs = [menu.field(name=name + ":" + str(i), input=node, offset=i) for i in range(int(chunks))]
 
     return outputs
+
+
+def squeeze(name, x, axes=None):
+    assert isinstance(x, Node)
+
+    # operator
+    node = menu.op(name=name, op_name=Name.Layer.squeeze, inputs=[x, ])
+    if axes is not None:
+        axes = to_const(axes, "axes")
+        node.set(Name.axes, axes, numpy.int32)
+
+    return node
+
+
+def rsqrt(name, x):
+    assert isinstance(x, Node)
+
+    # operator
+    node = menu.op(name=name, op_name=Name.Layer.rsqrt, inputs=[x, ])
+
+    return node

@@ -30,6 +30,8 @@ if sys.version > '3':
 else:
     from Queue import Queue
 
+from .optimizer import optimizer
+
 
 class Module(object):
     def __init__(self):
@@ -41,6 +43,8 @@ class Module(object):
         # type: (Union[list[Node], Node]) -> None
         if isinstance(nodes, Node):
             nodes = [nodes, ]
+        # optimize nodes
+        nodes = optimizer.optimize(nodes, fused_conv_bn=True)
         # walking on nodes
         inputs = []
         walker = Queue()
