@@ -18,7 +18,7 @@ namespace ts {
         }
 
         static Tensor::Prototype infer_gather(const Tensor &x, const Tensor &indices) {
-            auto dims = int(x.dims());
+            // auto dims = int(x.dims());
 
             TS_AUTO_CHECK(x.dims() >= 1);
             TS_AUTO_CHECK(indices.dims() >= 1);
