@@ -7,6 +7,8 @@
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
 
+#include "kernels/gpu/gpu_helper.h"
+
 namespace ts {
     namespace gpu {
 
@@ -154,8 +156,10 @@ namespace ts {
             
             dim3 block_size(512);
             dim3 grid_size((count + block_size.x - 1) / block_size.x);
+
+            auto cuda_stream = get_cuda_stream_on_context();
             
-            max_pooling_kernel<T> << <grid_size, block_size>> >
+            max_pooling_kernel<T> << <grid_size, block_size, 0, cuda_stream>> >
                 (input_data, output_data,count, out_channal, output_h, output_w, input_channal, 
                 input_h, input_w, ksize.height, ksize.width, stride.height, stride.width, m_padding.top, m_padding.left);
             return true;
@@ -179,7 +183,9 @@ namespace ts {
             dim3 block_size(512);
             dim3 grid_size((count + block_size.x - 1) / block_size.x);
 
-            average_pooling_kernel<T> << <grid_size, block_size >> >
+            auto cuda_stream = get_cuda_stream_on_context();
+
+            average_pooling_kernel<T> << <grid_size, block_size, 0, cuda_stream >> >
                 (input_data, output_data, count, out_channal, output_h, output_w, input_channal,
                 input_h, input_w, ksize.height, ksize.width, stride.height, stride.width, m_padding.top, m_padding.left);
             return true;
@@ -203,7 +209,9 @@ namespace ts {
             dim3 block_size(512);
             dim3 grid_size((count + block_size.x - 1) / block_size.x);
 
-            average_pooling_white_kernel<T> << <grid_size, block_size >> >
+            auto cuda_stream = get_cuda_stream_on_context();
+
+            average_pooling_white_kernel<T> << <grid_size, block_size, 0, cuda_stream >> >
                                                      (input_data, output_data, count, out_channal, output_h, output_w, input_channal,
                                                              input_h, input_w, ksize.height, ksize.width, stride.height, stride.width, m_padding.top, m_padding.left);
             return true;

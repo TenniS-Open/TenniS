@@ -8,6 +8,7 @@
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
 
+#include "kernels/gpu/gpu_helper.h"
 
 namespace ts {
     namespace gpu {
@@ -114,24 +115,26 @@ namespace ts {
 
             dim3 block_size(CUDA_THREAD_NUM);
 
+            auto cuda_stream = get_cuda_stream_on_context();
+
             if (m_smooth)
             {
                 dim3 max_kernel_grid_size((pre_num * inner_num + block_size.x - 1) / block_size.x);
-                max_kernel<T> << <max_kernel_grid_size, block_size >> > (input_data, scale_data, axis, pre_num, inner_num);
+                max_kernel<T> << <max_kernel_grid_size, block_size, 0, cuda_stream >> > (input_data, scale_data, axis, pre_num, inner_num);
 
                 dim3 substract_kernel_grid_size((count + block_size.x - 1) / block_size.x);
-                substract_kernel<T> << <substract_kernel_grid_size, block_size >> > (scale_data, output_data, count, axis, pre_num, inner_num);
+                substract_kernel<T> << <substract_kernel_grid_size, block_size, 0, cuda_stream >> > (scale_data, output_data, count, axis, pre_num, inner_num);
 
             }
 
             dim3 exp_kernel_grid_size((count + block_size.x - 1) / block_size.x);
-            exp_kernel<T> << <exp_kernel_grid_size, block_size >> > (output_data, output_data, count);
+            exp_kernel<T> << <exp_kernel_grid_size, block_size, 0, cuda_stream >> > (output_data, output_data, count);
 
             dim3 sum_kernel_grid_size((pre_num * inner_num + block_size.x - 1) / block_size.x);
-            sum_kernel<T> << <sum_kernel_grid_size, block_size >> > (output_data, scale_data, axis, pre_num, inner_num);
+            sum_kernel<T> << <sum_kernel_grid_size, block_size, 0, cuda_stream >> > (output_data, scale_data, axis, pre_num, inner_num);
 
             dim3 div_kernel_grid_size((count + block_size.x - 1) / block_size.x);
-            div_kernel<T> << <div_kernel_grid_size,block_size >> > (scale_data,output_data,count,axis,pre_num,inner_num);
+            div_kernel<T> << <div_kernel_grid_size,block_size, 0, cuda_stream >> > (scale_data,output_data,count,axis,pre_num,inner_num);
         }
 
         void Softmax::softmax(const Tensor &x, int dim, bool smooth, Tensor &out) {

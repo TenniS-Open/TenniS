@@ -9,7 +9,7 @@
 #include "device_launch_parameters.h"
 #include <cuda_runtime.h>
 
-
+#include "kernels/gpu/gpu_helper.h"
 
 namespace ts {
     namespace gpu {
@@ -185,7 +185,9 @@ namespace ts {
             T maxvalue = std::numeric_limits<T>::max();
             T minvalue = std::numeric_limits<T>::lowest();
 
-            reduce_operator_kernel<T> <<< CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> (pout, ncount,
+            auto cuda_stream = get_cuda_stream_on_context();
+
+            reduce_operator_kernel<T> <<< CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >>> (pout, ncount,
                         plhs, prhs, lhsshape, lhsweight, rhsshape, rhsweight, outweight, out.sizes().size(),maxvalue, minvalue);
 
         }
@@ -202,7 +204,9 @@ namespace ts {
             memcpy((void*)pout, out.device(), out.count() * sizeof(T),
                    (void*)plhs, lhs.device(), out.count() * sizeof(T));
 
-            reduce_operator_scalar_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> (pout, out.count(), prhs,maxvalue, minvalue);
+            auto cuda_stream = get_cuda_stream_on_context();
+
+            reduce_operator_scalar_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >>> (pout, out.count(), prhs,maxvalue, minvalue);
 
         }
 
@@ -217,7 +221,9 @@ namespace ts {
             memcpy((void*)pout, out.device(), out.count() * sizeof(T),
                    (void*)prhs, rhs.device(), out.count() * sizeof(T));
 
-            reduce_operator_scalar_cross_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> (pout, out.count(), plhs, maxvalue, minvalue);
+            auto cuda_stream = get_cuda_stream_on_context();
+
+            reduce_operator_scalar_cross_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >>> (pout, out.count(), plhs, maxvalue, minvalue);
         }
 
 
@@ -233,7 +239,9 @@ namespace ts {
             memcpy((void*)pout, out.device(), out.count() * sizeof(T),
                    (void*)plhs, lhs.device(), out.count() * sizeof(T));
 
-            reduce_operator_same_shape_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> (pout, prhs, out.count(),maxvalue,minvalue);
+            auto cuda_stream = get_cuda_stream_on_context();
+
+            reduce_operator_same_shape_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >>> (pout, prhs, out.count(),maxvalue,minvalue);
 
         }
 
@@ -253,9 +261,11 @@ namespace ts {
             memcpy((void*)pout, out.device(), out.count() * sizeof(T),
                    (void*)plhs, lhs.device(), out.count() * sizeof(T));
 
+            auto cuda_stream = get_cuda_stream_on_context();
+
             T maxvalue = std::numeric_limits<T>::max();
             T minvalue = std::numeric_limits<T>::lowest();
-            reduce_operator_bias_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> (pout, out.count(),
+            reduce_operator_bias_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >>> (pout, out.count(),
                  count, channels, prhs, rhs.count(), maxvalue, minvalue);
 
         }
@@ -274,9 +284,11 @@ namespace ts {
             memcpy((void*)pout, out.device(), out.count() * sizeof(T),
                    (void*)prhs, rhs.device(), out.count() * sizeof(T));
 
+            auto cuda_stream = get_cuda_stream_on_context();
+
             T maxvalue = std::numeric_limits<T>::max();
             T minvalue = std::numeric_limits<T>::lowest();
-            reduce_operator_bias_cross_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> (pout, out.count(), count, channels, plhs, lhs.count(), maxvalue, minvalue);
+            reduce_operator_bias_cross_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >>> (pout, out.count(), count, channels, plhs, lhs.count(), maxvalue, minvalue);
 
         }
 

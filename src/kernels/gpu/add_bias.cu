@@ -9,9 +9,7 @@
 #include <cuda_runtime.h>
 #include <cuda_fp16.h>
 
-#include "kernels/gpu/cuda_context.h"
-#include "core/device_context.h"
-#include "utils/ctxmgr_lite.h"
+#include "kernels/gpu/gpu_helper.h"
 
 /////////////////////////////////////////////////
 namespace ts {
@@ -43,9 +41,7 @@ namespace ts {
         const T *pbias = b.data<T>();
         T *pdst = out.data<T>();
 
-        auto &context = ctx::ref<DeviceContext>();
-        CUDAContextHandle* handle = reinterpret_cast<CUDAContextHandle*>(context.handle);
-        auto cuda_stream = handle->stream();
+        auto cuda_stream = get_cuda_stream_on_context();
 
 //        memcpy((void*)pdst, out.device(), x.count() * sizeof(T),
 //               (void*)psrc, x.device(), x.count() * sizeof(T));

@@ -5,6 +5,9 @@
 #include <backend/name.h>
 #include <core/device.h>
 #include <utils/assert.h>
+#include <cuda_runtime.h>
+
+#include "kernels/gpu/gpu_helper.h"
 
 #include "kernels/gpu/gpu_helper.h"
 
@@ -56,7 +59,10 @@ namespace ts {
             auto in_data = x.data<T>();
             auto out_data = out.data<T>();
             auto count = out.count();
-            gpu_dimshuffle_kernel<T> << < CUDA_BLOCK(count, CUDA_THREAD_NUM), CUDA_THREAD_NUM >> > (count, in_data, gpu_in_shape, out_data, gpu_out_shape, dim, gpu_shuffle);
+
+            auto cuda_stream = get_cuda_stream_on_context();
+
+            gpu_dimshuffle_kernel<T> << < CUDA_BLOCK(count, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >> > (count, in_data, gpu_in_shape, out_data, gpu_out_shape, dim, gpu_shuffle);
         }
 
         void Dimshuffle::dimshuffle(const Tensor &x, int dim, const std::vector<int> &shuffle, Tensor &out) {

@@ -7,6 +7,11 @@
 #include "backend/name.h"
 #include "kernels/gpu/gpu_helper.h"
 #include <numeric>
+#include <cuda_runtime.h>
+
+#include "kernels/gpu/cuda_context.h"
+#include "core/device_context.h"
+#include "utils/ctxmgr_lite.h"
 
 namespace ts {
     namespace gpu {
@@ -58,7 +63,12 @@ namespace ts {
             auto x_data = x.data<char>();
             auto out_data = out.data<char>();
             auto indices_data = indices.data<int32_t>();
-            gpu_gatherv2_kernel <<< CUDA_BLOCK(number, CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> (number, x_data, indices_data, out_data,axis, bytes, width_bytes,x_hype_shape);
+
+            auto &context = ctx::ref<DeviceContext>();
+            CUDAContextHandle* handle = reinterpret_cast<CUDAContextHandle*>(context.handle);
+            auto cuda_stream = handle->stream();
+
+            gpu_gatherv2_kernel <<< CUDA_BLOCK(number, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >>> (number, x_data, indices_data, out_data,axis, bytes, width_bytes,x_hype_shape);
 
         }
     }
