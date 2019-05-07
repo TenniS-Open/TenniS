@@ -162,7 +162,8 @@ namespace ts {
                     kernel_dims, conv_out_spatial_dim, weight_shape[0], 1, pweight, pinput, 0, col_buffer);
 
             #else
-                gpu_transpose_conv2d_run_kernel<T> <<< blocksize, threadsize>>>
+                auto cuda_stream = handle->stream();
+                gpu_transpose_conv2d_run_kernel<T> <<< blocksize, threadsize, 0, cuda_stream >>>
                       (pweight, pinput, col_buffer, M, N, K);
             #endif
  
@@ -172,7 +173,8 @@ namespace ts {
                           (void*)col_buffer, col_tensor.device(), col_buffer_size * sizeof(T));
 
                 } else {
-                    gpu_col2im_kernel<T> <<< CUDA_BLOCK(put_param, CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> (
+                    auto cuda_stream = handle->stream();
+                    gpu_col2im_kernel<T> <<< CUDA_BLOCK(put_param, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >>> (
                                             put_param, col_buffer, input.height, input.width,
                                             ksize.height, ksize.width, padding.top, padding.left,
                                             stride.height, stride.width, dilation.height, dilation.width,

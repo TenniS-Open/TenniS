@@ -11,8 +11,9 @@
 #include "device_launch_parameters.h"
 #include <cuda_runtime.h>
 
-#include "utils/ctxmgr_lite.h"
+#include "kernels/gpu/cuda_context.h"
 #include "core/device_context.h"
+#include "utils/ctxmgr_lite.h"
 
 namespace ts {
     namespace gpu {
@@ -215,15 +216,19 @@ namespace ts {
         bool math<T>::dot(const int N, const T *x, const T *y, T *z) {
             int grid_size = CUDA_BLOCK(N, CUDA_THREAD_NUM);
             auto &context = ctx::ref<DeviceContext>();
+            CUDAContextHandle* handle = reinterpret_cast<CUDAContextHandle*>(context.handle);
+            auto cuda_stream = handle->stream();
+
             int device_id = context.memory_device.id();
             T* tmp_z = (T*)gpu_allocator(device_id, grid_size *sizeof(T),nullptr,0);
-            dot_kernel<T> << < CUDA_BLOCK(N, CUDA_THREAD_NUM), CUDA_THREAD_NUM >> > (N,x,y,tmp_z);
+            dot_kernel<T> << < CUDA_BLOCK(N, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >> > (N,x,y,tmp_z);
             while (grid_size > CUDA_THREAD_NUM) {
                 int len = grid_size;
                 grid_size = CUDA_BLOCK(grid_size, CUDA_THREAD_NUM);
-                sum_kernel<T> << <grid_size, CUDA_THREAD_NUM >> > (len, tmp_z, tmp_z);
+                sum_kernel<T> << <grid_size, CUDA_THREAD_NUM, 0, cuda_stream >> > (len, tmp_z, tmp_z);
             }
-            sum_kernel<T> << <1, grid_size >> > (grid_size,tmp_z,z);
+
+            sum_kernel<T> << < 1, grid_size, 0, cuda_stream >> > (grid_size,tmp_z,z);
             return true;
         }
 
@@ -253,7 +258,12 @@ namespace ts {
             dim3 gridSize((N + blockSize.x - 1) / blockSize.x, (M + blockSize.y - 1) / blockSize.y, 1);
             bool transA_bool = TransA == cublas::NoTrans ? false : true;
             bool transB_bool = TransB == cublas::NoTrans ? false : true;
-            gemm_kernel<T> << <gridSize, blockSize >> > (transA_bool, transB_bool, M, N, K, alpha, A, lda, B, ldb, beta, C, ldc);
+
+            auto &context = ctx::ref<DeviceContext>();
+            CUDAContextHandle* handle = reinterpret_cast<CUDAContextHandle*>(context.handle);
+            auto cuda_stream = handle->stream();
+
+            gemm_kernel<T> << < gridSize, blockSize, 0, cuda_stream >> > (transA_bool, transB_bool, M, N, K, alpha, A, lda, B, ldb, beta, C, ldc);
 
             return true;
         }
@@ -289,36 +299,44 @@ namespace ts {
         template<typename T>
         bool math<T>::asum(int N, const T *x, T * out) {
             auto &context = ctx::ref<DeviceContext>();
+            CUDAContextHandle* handle = reinterpret_cast<CUDAContextHandle*>(context.handle);
+            auto cuda_stream = handle->stream();
+
             int device_id = context.memory_device.id();
             int grid_size = CUDA_BLOCK(N, CUDA_THREAD_NUM);
             int block_size = CUDA_THREAD_NUM;
             //unsigned int shared_size = block_size * sizeof(T);
             T* tmp_out = (T*)gpu_allocator(device_id, grid_size * sizeof(T), nullptr, 0);
-            abs_sum_kernel<T> << < grid_size, block_size >> > (N, const_cast<T*>(x), tmp_out);
+            abs_sum_kernel<T> << < grid_size, block_size, 0, cuda_stream >> > (N, const_cast<T*>(x), tmp_out);
             while (grid_size > CUDA_THREAD_NUM) {
                 int len = grid_size;
                 grid_size = CUDA_BLOCK(grid_size, CUDA_THREAD_NUM);
-                abs_sum_kernel<T> << < grid_size, block_size >> > (len, tmp_out, tmp_out);
+                abs_sum_kernel<T> << < grid_size, block_size, 0, cuda_stream >> > (len, tmp_out, tmp_out);
             }
-            abs_sum_kernel<T> << <1, grid_size >> > (grid_size, tmp_out, out);
+
+            abs_sum_kernel<T> << < 1, grid_size, 0, cuda_stream >> > (grid_size, tmp_out, out);
             return true;
         }
 
         template<typename T>
         bool math<T>::sum(int N, const T *x, T * out) {
             auto &context = ctx::ref<DeviceContext>();
+            CUDAContextHandle* handle = reinterpret_cast<CUDAContextHandle*>(context.handle);
+            auto cuda_stream = handle->stream();
+
             int device_id = context.memory_device.id();
             int grid_size = CUDA_BLOCK(N, CUDA_THREAD_NUM);
             int block_size = CUDA_THREAD_NUM;
             //unsigned int shared_size = block_size * sizeof(T);
             T* tmp_out = (T*)gpu_allocator(device_id, grid_size * sizeof(T), nullptr, 0);
-            sum_kernel<T> << < grid_size, block_size >> > (N, const_cast<T*>(x), tmp_out);
+            sum_kernel<T> << < grid_size, block_size, 0, cuda_stream >> > (N, const_cast<T*>(x), tmp_out);
             while (grid_size > CUDA_THREAD_NUM) {
                 int len = grid_size;
                 grid_size = CUDA_BLOCK(grid_size, CUDA_THREAD_NUM);
-                sum_kernel<T> << < grid_size, block_size >> > (len, tmp_out, tmp_out);
+                sum_kernel<T> << < grid_size, block_size, 0, cuda_stream >> > (len, tmp_out, tmp_out);
             }
-            sum_kernel<T> << <1, grid_size >> > (grid_size, tmp_out, out);
+
+            sum_kernel<T> << < 1, grid_size, 0, cuda_stream >> > (grid_size, tmp_out, out);
             return true;
         }
 

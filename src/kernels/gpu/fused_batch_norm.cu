@@ -11,6 +11,10 @@
 #include <cuda_runtime.h>
 #include <runtime/runtime.h>
 
+#include "kernels/gpu/cuda_context.h"
+#include "core/device_context.h"
+#include "utils/ctxmgr_lite.h"
+
 
 namespace ts {
     namespace gpu {
@@ -63,9 +67,14 @@ namespace ts {
             int vec_len = vec_tensor.count();
             dim3 block_size(CUDA_THREAD_NUM);
             dim3 grid_size(CUDA_BLOCK(vec_len, block_size.x));
-            inner_vec_kernel<T> << <grid_size,block_size >> > (vec_len,epsilon,pvariance, vec_data);
 
-            gpu_fused_batch_norm_compute_kernel<T> << < CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM >> > (psrc, pdst, out.count(), backdims, shape[dim], pmean, vec_data, pscale, pbias);
+            auto &context = ctx::ref<DeviceContext>();
+            CUDAContextHandle* handle = reinterpret_cast<CUDAContextHandle*>(context.handle);
+            auto cuda_stream = handle->stream();
+
+            inner_vec_kernel<T> << < grid_size, block_size, 0, cuda_stream >> > (vec_len,epsilon,pvariance, vec_data);
+
+            gpu_fused_batch_norm_compute_kernel<T> << < CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >> > (psrc, pdst, out.count(), backdims, shape[dim], pmean, vec_data, pscale, pbias);
 
         }
 

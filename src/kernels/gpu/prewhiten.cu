@@ -6,9 +6,10 @@
 
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
-#include "core/device_context.h"
-#include "utils/ctxmgr_lite.h"
+
 #include "kernels/gpu/math_gpu.h"
+
+#include "kernels/gpu/gpu_helper.h"
 
 namespace ts {
     namespace gpu {
@@ -119,10 +120,12 @@ namespace ts {
             count /= batch;
             auto batch_outout_data = output_data;
 
+            auto cuda_stream = get_cuda_stream_on_context();
+
             for (int n = 0; n < batch; ++n) {
                 at = batch_outout_data;
                 math<T>::sum(count, at,mean);
-                mean_kernel<T> << <1,1 >> > (count,mean);
+                mean_kernel<T> << < 1, 1, 0, cuda_stream >> > (count,mean);
 
                 at = batch_outout_data;
                 int grid_size = CUDA_BLOCK(count, CUDA_THREAD_NUM);
@@ -133,12 +136,13 @@ namespace ts {
                 Tensor dev_tensor = Tensor(mem_device, out.dtype(), dev_shape);
                 T* dev_buffer = dev_tensor.data<T>();
                 //T* tmp_dev_out = (T*)gpu_allocator(device_id, grid_size * sizeof(T), nullptr, 0);
-                dev_kernel<T> << < grid_size, block_size >> > (count, at, mean, dev_buffer);
+
+                dev_kernel<T> << < grid_size, block_size, 0, cuda_stream >> > (count, at, mean, dev_buffer);
                 math<T>::sum(grid_size, dev_buffer, std_dev);
-                std_dev_kernel<T> << <1,1 >> > (count, std_dev);
+                std_dev_kernel<T> << <1, 1, 0, cuda_stream >> > (count, std_dev);
 
                 at = batch_outout_data;
-                prewhiten_kernel<T> << <grid_size,block_size >> > (count,at,mean, std_dev);
+                prewhiten_kernel<T> << <grid_size, block_size, 0, cuda_stream >> > (count,at,mean, std_dev);
 
                 batch_outout_data += count;
             }
