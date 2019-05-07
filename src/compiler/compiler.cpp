@@ -26,6 +26,7 @@
 
 #include "module/menu.h"
 #include "frontend/intime.h"
+#include "compiler/zipper.h"
 
 
 
@@ -99,8 +100,12 @@ namespace ts {
 
         Graph temp_graph;
         ctx::bind<Graph> _bind_graph(temp_graph);
+
+        Zipper zipper(m_computing_device);
+        std::vector<Node> zip_ouputs = zipper.zip(raw_outputs);
+
         std::vector<Node> outputs;
-        run_const_nodes(raw_outputs, outputs);
+        run_const_nodes(zip_ouputs, outputs);
 
         InstructionBlock block;
         block.nargs = int(inputs.size());
