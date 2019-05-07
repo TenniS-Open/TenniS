@@ -21,6 +21,7 @@ namespace ts {
         enum class ResizeMethod : int32_t {
             BILINEAR = 0,
             BICUBIC = 1,
+            NEAREST = 2,
         };
 
         ImageFilter();
