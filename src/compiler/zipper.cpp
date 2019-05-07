@@ -5,6 +5,8 @@
 #include "compiler/zipper.h"
 #include "compiler/option/zipper_option.h"
 
+#include "module/menu.h"
+
 #include <unordered_set>
 
 namespace ts {
@@ -24,9 +26,31 @@ namespace ts {
             }
         }
 
+        /**
+         * zip this node
+         */
         Node zipped_node = node;
         for (auto &option : options) {
             if (option->zip(device, node, zipped_node)) break;
+        }
+
+        /**
+         * zip inputs
+         */
+        std::vector<Node> zipped_inputs;
+        bool zipped = false;
+        for (auto &input : zipped_node.inputs()) {
+            auto zipped_input = zip_node(input, ready_map, device, options);
+            if (zipped_input != input) zipped = true;
+            zipped_inputs.emplace_back(zipped_input);
+        }
+
+        /**
+         * link if there is new node
+         */
+        if (zipped) {
+            zipped_node = bubble::bubble(zipped_node.bubble());
+            Node::Link(zipped_node, zipped_inputs);
         }
 
         ready_map.insert(std::make_pair(node, zipped_node));
