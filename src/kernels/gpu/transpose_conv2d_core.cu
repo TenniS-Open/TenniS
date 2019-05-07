@@ -151,11 +151,11 @@ namespace ts {
             dim3 blocksize(CUDA_BLOCK(N, TRANS_BLOCK_DIM),CUDA_BLOCK(M, TRANS_BLOCK_DIM), 1);
             dim3 threadsize(TRANS_BLOCK_DIM, TRANS_BLOCK_DIM,1);
 
+            auto &context = ctx::ref<DeviceContext>();
+            auto* handle = reinterpret_cast<CUDAContextHandle*>(context.handle);
 
             for (int i = 0; i < number; i++) {
             #ifdef TS_USE_CUBLAS
-                auto &context = ctx::ref<DeviceContext>();
-                auto* handle = reinterpret_cast<CUDAContextHandle*>(context.handle);
                 auto cublas_handle = handle->cublas_handle();
 
                 cublas::math<T>::gemm(cublas_handle, cublas::Trans, cublas::NoTrans,
