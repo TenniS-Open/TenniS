@@ -8,6 +8,7 @@
 #include <vector>
 #include "core/tensor.h"
 #include "utils/implement.h"
+#include "program.h"
 
 namespace ts {
     class Graph;
@@ -76,8 +77,7 @@ namespace ts {
 
         const Graph &graph() const;
 
-        Workbench &workbench();
-        const Workbench &workbench() const;
+        Program::shared program() const;
 
     private:
         class Implement;
