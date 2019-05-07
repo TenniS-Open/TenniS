@@ -35,7 +35,7 @@ namespace ts {
 
         // explicit Operator(const std::string &name) : m_name(name) {}
         /**
-         * @note bind DeviceContext before.
+         * @note bind **DeviceContext** before.
          */
         virtual void init();
 
@@ -43,7 +43,7 @@ namespace ts {
         /**
          * @param stack running stack
          * @return output param
-         * @note bind DeviceContext before
+         * @note bind **DeviceContext** before
          * @note must return 1
          */
         virtual int run(Stack &stack) = 0;

@@ -116,17 +116,7 @@ namespace ts {
 
     Workbench::shared Workbench::Load(const Module::shared &module, const ComputingDevice &device) {
         auto bench = std::make_shared<Workbench>(device);
-
-        /**
-         * tell compiler, who is compiling
-         */
-        ctx::bind<Workbench> _bind_bench(*bench);
-
-        /**
-         * do compile, from module to program
-         */
-        bench->setup(Program::Compile(module, device));
-
+        bench->setup(bench->compile(module));
         return bench;
     }
 
@@ -272,14 +262,10 @@ namespace ts {
 
     void Workbench::set_operator_param(const std::string &node_name, const std::string &param, const Tensor &value) {
         if (m_desktop == nullptr) return;
-        for (auto &inst : m_desktop->instruction()) {
-            auto* operator_inst = dynamic_cast<OperatorInstruction*>(inst.get());
-            if (operator_inst == nullptr) continue;
-            auto node = operator_inst->op();
-            if (node->name() != node_name) continue;
-            node->set(param, value);
-            node->init();
-        }
+
+        BindWorkbenchRuntime _bind_runtime(*this);
+
+        m_desktop->set_operator_param(node_name, param, value);
     }
 
     void Workbench::cast_tensor(DTYPE dtype) {
@@ -472,6 +458,36 @@ namespace ts {
         }
 
         return std::move(outputs);
+    }
+
+    std::vector<Tensor> Workbench::launch_offline(Program::shared program, const std::map<std::string, Tensor> &args) {
+        auto nargs = int(args.size());
+        if (program->input_count() != nargs) {
+            TS_LOG_ERROR << "nargs must be " << program->input_count() << " vs. " << nargs << " got." << eject;
+        }
+
+        std::vector<Tensor> list_args(nargs);
+
+        for (auto &pair : args) {
+            auto &name = pair.first;
+            auto &value = pair.second;
+            auto slot = program->input_slot(name);
+            list_args[slot] = value;
+        }
+
+        return launch_offline(program, list_args);
+    }
+
+    Program::shared Workbench::compile(const Module::shared &module) {
+        /**
+         * tell compiler, who is compiling
+         */
+        ctx::bind<Workbench> _bind_bench(this);
+
+        /**
+         * do compile, from module to program
+         */
+        return Program::Compile(module, this->device().computing_device);
     }
 }
 

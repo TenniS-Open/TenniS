@@ -2,6 +2,8 @@
 // Created by kier on 2019-05-06.
 //
 
+#include <climits>
+
 #include "runtime/program.h"
 #include "compiler/compiler.h"
 #include "core/tensor_builder.h"

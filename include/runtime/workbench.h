@@ -215,6 +215,8 @@ namespace ts {
          */
         std::vector<Tensor> launch_offline(Program::shared program, const std::map<std::string, Tensor> &args);
 
+        Program::shared compile(const Module::shared &module);
+
     private:
         // size_t m_pointer = 0;   // pointer to running function
         // std::vector<Instruction::shared> m_program; // running function, program area
