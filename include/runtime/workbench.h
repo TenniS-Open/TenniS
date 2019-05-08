@@ -217,6 +217,16 @@ namespace ts {
 
         Program::shared compile(const Module::shared &module);
 
+        /**
+         * setup context DeviceContext
+         */
+        void setup_device();
+
+        /**
+         * setup context RuntimeContext
+         */
+        void setup_runtime();
+
     private:
         // size_t m_pointer = 0;   // pointer to running function
         // std::vector<Instruction::shared> m_program; // running function, program area
