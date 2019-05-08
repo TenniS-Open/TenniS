@@ -21,6 +21,22 @@ namespace ts {
 
         class Tensor {
         public:
+            class InFlow {
+            public:
+                using self = InFlow;
+
+                InFlow() : self(TS_HOST) {}
+
+                InFlow(ts_InFlow dtype) : raw(dtype) {}
+
+                operator ts_InFlow() const { return raw; }
+
+                ts_InFlow raw;
+            };
+
+            static const InFlow HOST;
+            static const InFlow DEVICE;
+
             using self = Tensor;
             using raw = ts_Tensor;
 
@@ -37,6 +53,11 @@ namespace ts {
 
             Tensor(DTYPE dtype, const Shape &shape, const void *data = nullptr)
                     : self(ts_new_Tensor(shape.data(), int32_t(shape.size()), ts_DTYPE(dtype), data)) {
+                TS_API_AUTO_CHECK(m_impl != nullptr);
+            }
+
+            Tensor(InFlow in_flow, DTYPE dtype, const Shape &shape, const void *data = nullptr)
+                    : self(ts_new_Tensor_in_flow(in_flow, shape.data(), int32_t(shape.size()), ts_DTYPE(dtype), data)) {
                 TS_API_AUTO_CHECK(m_impl != nullptr);
             }
 
@@ -112,6 +133,12 @@ namespace ts {
                 TS_API_AUTO_CHECK(ts_Tensor_sync_cpu(m_impl.get()));
             }
 
+            Tensor view(InFlow in_flow) const {
+                auto casted_raw = ts_Tensor_view_in_flow(m_impl.get(), in_flow);
+                TS_API_AUTO_CHECK(casted_raw != nullptr);
+                return Tensor(casted_raw);
+            }
+
             Tensor cast(DTYPE dtype) const {
                 auto casted_raw = ts_Tensor_cast(m_impl.get(), ts_DTYPE(dtype));
                 TS_API_AUTO_CHECK(casted_raw != nullptr);
@@ -130,6 +157,34 @@ namespace ts {
                 return Tensor(casted_raw);
             }
 
+            Tensor field(int index) const {
+                auto field_raw = ts_Tensor_field(m_impl.get(), index);
+                TS_API_AUTO_CHECK(field_raw != nullptr);
+                return Tensor(field_raw);
+            }
+
+            bool packed() const {
+                return bool(ts_Tensor_packed(m_impl.get()));
+            }
+
+            int fields_count() const {
+                return int(ts_Tensor_fields_count(m_impl.get()));
+            }
+
+            static Tensor Pack(const std::vector<Tensor> &fields) {
+                std::vector<ts_Tensor*> cfields;
+                for (auto &field : fields) {
+                    cfields.emplace_back(field.get_raw());
+                }
+                return Pack(cfields.data(), int32_t(cfields.size()));
+            }
+
+            static Tensor Pack(ts_Tensor **fields, int32_t count) {
+                auto packed_raw = ts_Tensor_pack(fields, count);
+                TS_API_AUTO_CHECK(packed_raw != nullptr);
+                return Tensor(packed_raw);
+            }
+
         private:
             Tensor(raw *ptr) : m_impl(pack(ptr)) {}
 
@@ -137,6 +192,9 @@ namespace ts {
 
             shared_raw m_impl;
         };
+
+        static const Tensor::InFlow HOST = TS_HOST;
+        static const Tensor::InFlow DEVICE = TS_DEVICE;
 
         template<typename T>
         class tensor_builder {

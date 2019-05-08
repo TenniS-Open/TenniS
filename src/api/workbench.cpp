@@ -133,3 +133,17 @@ ts_Program *ts_Workbench_compile(ts_Workbench *workbench, const ts_Module *modul
                 (*workbench)->compile(module->pointer)));
     RETURN_OR_CATCH(program.release(), nullptr)
 }
+
+ts_bool ts_Workbench_setup_device(ts_Workbench *workbench) {
+    TRY_HEAD
+        if (!workbench) throw Exception("NullPointerException: @param: 1");
+        (*workbench)->setup_device();
+    RETURN_OR_CATCH(ts_true, ts_false)
+}
+
+ts_bool ts_Workbench_setup_runtime(ts_Workbench *workbench) {
+    TRY_HEAD
+        if (!workbench) throw Exception("NullPointerException: @param: 1");
+        (*workbench)->setup_runtime();
+    RETURN_OR_CATCH(ts_true, ts_false)
+}
