@@ -112,7 +112,7 @@ namespace ts {
     Tensor Tensor::clone(MemoryController::shared controller) const {
         auto fields = this->unpack();
         for (auto &value : fields) {
-            Tensor dolly(std::move(controller), value.m_proto);
+            Tensor dolly(controller, value.m_proto);
             auto dst = dolly.m_memory->weak_memory();
             auto src = value.m_memory->weak_memory();
             memcpy(dst, src, size_t(value.m_proto.count() * value.m_proto.type_bytes()));
@@ -126,7 +126,7 @@ namespace ts {
     Tensor Tensor::clone(SyncMemoryController::shared controller) const {
         auto fields = this->unpack();
         for (auto &value : fields) {
-            Tensor dolly(std::move(controller), value.m_proto);
+            Tensor dolly(controller, value.m_proto);
             auto dst = dolly.m_memory->weak_memory();
             auto src = value.m_memory->weak_memory();
             memcpy(dst, src, size_t(value.m_proto.count() * value.m_proto.type_bytes()));
@@ -140,7 +140,7 @@ namespace ts {
     Tensor Tensor::clone(SyncMemoryController::shared controller, const MemoryDevice &device) const {
         auto fields = this->unpack();
         for (auto &value : fields) {
-            Tensor dolly(std::move(controller), value.m_proto, device);
+            Tensor dolly(controller, value.m_proto, device);
             auto dst = dolly.m_memory->weak_memory();
             auto src = value.m_memory->weak_memory();
             memcpy(dst, src, size_t(value.m_proto.count() * value.m_proto.type_bytes()));
