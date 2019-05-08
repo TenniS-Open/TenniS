@@ -133,6 +133,17 @@ namespace ts {
             return std::move(dolly);
         }
 
+        // broadcast default value to other key,
+        // be careful, this action may disable already exist view
+        void broadcast() {
+            auto _write = this->lock_write();
+            auto key = m_default_key;
+            auto value = *m_default_value;
+            m_param->m_sync_values.clear();
+            auto pair_it_flag = m_param->m_sync_values.insert(std::make_pair(key, value));
+            m_default_value = &(pair_it_flag.first->second);
+        }
+
     private:
         SyncBlock() = default;
 

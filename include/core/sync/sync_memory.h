@@ -175,6 +175,10 @@ namespace ts {
             return self(m_sync_memory->view(device));
         }
 
+        void broadcast() {
+            m_sync_memory->broadcast();
+        }
+
     private:
         SyncMemory(std::shared_ptr<Block> sync_memory) : m_sync_memory(std::move(sync_memory)) {}
 
