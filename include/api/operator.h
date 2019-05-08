@@ -42,7 +42,7 @@ typedef void ts_Operator_init(void *op, const ts_OperatorParams *dict);
  *
  * @param op return value of @see ts_new_Operator
  * @param argc argument count
- * @param argv argument values
+ * @param argv argument values, are borrowed refs
  * @return shape of ready values
  * infer return format int array tell the packed tensor shape
  * first element is fields_count, follow are each filed proto
@@ -55,7 +55,7 @@ typedef ts_Tensor *ts_Operator_infer(void *op, int32_t argc, ts_Tensor **argv);
  *
  * @param op return value of @see ts_new_Operator
  * @param argc argument count
- * @param argv argument values
+ * @param argv argument values, are borrowed refs
  * @return packed values
  * @note return ts_new_Tensor_in_flow value
  */
