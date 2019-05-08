@@ -43,11 +43,19 @@ namespace ts {
             using shared = std::shared_ptr<self>;
             using shared_raw = std::shared_ptr<raw>;
 
+            static self NewRef(raw *ptr) { return self(ptr); }
+
             Tensor(const self &) = default;
 
             Tensor &operator=(const self &) = default;
 
             raw *get_raw() const { return m_impl.get(); }
+
+            bool operator==(std::nullptr_t) const { return get_raw() == nullptr; }
+
+            bool operator!=(std::nullptr_t) const { return get_raw() != nullptr; }
+
+            Tensor(std::nullptr_t) {}
 
             Tensor() : self(TS_VOID, {}, nullptr) {}
 
@@ -185,12 +193,10 @@ namespace ts {
                 return Tensor(packed_raw);
             }
 
-            bool operator==(std::nullptr_t) {
-                return m_impl == nullptr;
-            }
-
-            bool operator!=(std::nullptr_t) {
-                return m_impl != nullptr;
+            static self BorrowedRef(raw *ptr) {
+                self borrowed(nullptr);
+                borrowed.m_impl = shared_raw(ptr, [](raw *) {});
+                return std::move(borrowed);
             }
 
         private:

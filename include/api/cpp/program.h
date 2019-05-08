@@ -15,7 +15,6 @@
 
 namespace ts {
     namespace api {
-        class Workbench;
         class Program {
         public:
             using self = Program;
@@ -24,11 +23,19 @@ namespace ts {
             using shared = std::shared_ptr<self>;
             using shared_raw = std::shared_ptr<raw>;
 
+            static self NewRef(raw *ptr) { return self(ptr); }
+
             Program(const self &) = default;
 
             Program &operator=(const self &) = default;
 
             raw *get_raw() const { return m_impl.get(); }
+
+            bool operator==(std::nullptr_t) const { return get_raw() == nullptr; }
+
+            bool operator!=(std::nullptr_t) const { return get_raw() != nullptr; }
+
+            Program(std::nullptr_t) {}
 
             Program() = default;
 
@@ -57,8 +64,6 @@ namespace ts {
             }
 
         private:
-            friend class Workbench;
-
             Program(raw *ptr) : m_impl(pack(ptr)) {}
 
             static shared_raw pack(raw *ptr) { return shared_raw(ptr, ts_free_Program); }
