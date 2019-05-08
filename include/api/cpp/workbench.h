@@ -26,13 +26,21 @@ namespace ts {
             using shared = std::shared_ptr<self>;
             using shared_raw = std::shared_ptr<raw>;
 
+            static self NewRef(raw *ptr) { return self(ptr); }
+
             Workbench(const self &) = default;
 
             Workbench &operator=(const self &) = default;
 
             raw *get_raw() const { return m_impl.get(); }
 
+            bool operator==(std::nullptr_t) const { return get_raw() == nullptr; }
+
+            bool operator!=(std::nullptr_t) const { return get_raw() != nullptr; }
+
             // Workbench() : self((ts_Device*)(nullptr)) {}
+
+            Workbench(std::nullptr_t) {}
 
             Workbench() = default;
 
@@ -152,9 +160,9 @@ namespace ts {
             }
 
             Program compile(const ts_Module *module) {
-                Program loaded(ts_Workbench_compile(m_impl.get(), module));
-                TS_API_AUTO_CHECK(loaded.m_impl != nullptr);
-                return std::move(loaded);
+                auto program = Program::NewRef(ts_Workbench_compile(m_impl.get(), module));
+                TS_API_AUTO_CHECK(program != nullptr);
+                return std::move(program);
             }
 
         private:
