@@ -74,20 +74,21 @@ namespace ts {
             const T *pdot = rhs.data<T>();
             T *pdst = out.data<T>();
 
-#ifdef TS_USE_CUBLAS
             auto &context = ctx::ref<DeviceContext>();
             CUDAContextHandle* handle = reinterpret_cast<CUDAContextHandle*>(context.handle);
+#ifdef TS_USE_CUBLAS
             auto cublas_handle = handle->cublas_handle();
-
+            
             cublas::math<T>::gemm(cublas_handle, cublas::NoTrans, cublas::NoTrans,
                 lhs_shape[0], rhs_shape[1], lhs_shape[1], 1, psrc, pdot, 0, pdst);
             /*cublas::math<T>::gemm(cublas_handle,cublas::RowMajor,cublas::NoTrans, cublas::NoTrans, 
                 lhs_shape[0], rhs_shape[1], lhs_shape[1], 1,psrc, lhs_shape[1], pdot, rhs_shape[1], 0,pdst, rhs_shape[1]);*/
             
 #else
+            auto cuda_stream = handle->stream();
             dim3 blocksize(CUDA_BLOCK(rhs_shape[1], TRANS_BLOCK_DIM), CUDA_BLOCK(lhs_shape[0], TRANS_BLOCK_DIM),1);
             dim3 threadsize(TRANS_BLOCK_DIM, TRANS_BLOCK_DIM,1);
-            gpu_inner_prod_compute_run_kernel<T> <<<blocksize, threadsize>>> (lhs_shape[0], lhs_shape[1], rhs_shape[1], psrc, pdot, pdst);
+            gpu_inner_prod_compute_run_kernel<T> <<< blocksize, threadsize, 0, cuda_stream >>> (lhs_shape[0], lhs_shape[1], rhs_shape[1], psrc, pdot, pdst);
 
 #endif
         }
