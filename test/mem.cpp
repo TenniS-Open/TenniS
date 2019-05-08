@@ -15,7 +15,7 @@ int main()
 {
     ts::setup();
 
-    ts::HardMemory mem({ts::CPU, 0});
+    ts::HardMemory mem(ts::MemoryDevice(ts::CPU, 0));
     try {
         mem.resize(10000000000000000000UL);
     } catch (const ts::Exception &e) {

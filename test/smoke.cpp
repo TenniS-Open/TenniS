@@ -222,7 +222,7 @@ int main()
     for (auto &node : m->outputs()) {
         std::cout << "==============================" << std::endl;
         std::cout << node.bubble().op() << ":" << node.bubble().name() << std::endl;
-        auto data = bench->output(node.bubble().name());
+        auto data = bench->output(node.bubble().name()).view(MemoryDevice(CPU));
         std::vector<int> vec = data.sizes();
 
         std::cout << vec.size() << ",count:" << data.count() << std::endl;
