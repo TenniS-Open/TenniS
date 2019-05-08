@@ -125,7 +125,7 @@ int main()
 
     std::shared_ptr<Module> m = std::make_shared<Module>();
     //m = Module::Load("../model/test.tsm");
-    m = Module::Load("/Users/seetadev/Documents/SDK/CLion/TensorStack/python/test/RN30.light.1out.scalar.tsm");
+    m = Module::Load("/home/kier/git/TensorStack/python/test/RN30.tsm");
     std::cout << "Input nodes:" << std::endl;
     for (auto &node : m->inputs()) {
         std::cout << node.bubble().op() << ":" << node.bubble().name() << std::endl;
