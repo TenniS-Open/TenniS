@@ -185,6 +185,14 @@ namespace ts {
                 return Tensor(packed_raw);
             }
 
+            bool operator==(std::nullptr_t) {
+                return m_impl == nullptr;
+            }
+
+            bool operator!=(std::nullptr_t) {
+                return m_impl != nullptr;
+            }
+
         private:
             Tensor(raw *ptr) : m_impl(pack(ptr)) {}
 
