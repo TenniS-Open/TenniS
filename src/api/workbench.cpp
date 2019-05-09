@@ -2,10 +2,13 @@
 // Created by kier on 2019/3/16.
 //
 
+#include <api/workbench.h>
+
 #include "declare_workbench.h"
 #include "declare_module.h"
 #include "declare_tensor.h"
 #include "declare_image_filter.h"
+#include "declare_program.h"
 
 using namespace ts;
 
@@ -94,4 +97,39 @@ ts_bool ts_Workbench_bind_filter_by_name(ts_Workbench *workbench, const char *na
         if (!filter) throw Exception("NullPointerException: @param: 3");
         (*workbench)->bind_filter(name, filter->pointer);
     RETURN_OR_CATCH(ts_true, ts_false)
+}
+
+ts_Workbench *ts_new_Workbench(const ts_Device *device) {
+    TRY_HEAD
+        //if (!device) throw Exception("NullPointerException: @param: 1");
+        std::unique_ptr<ts_Workbench> workbench(
+                device
+                ? new ts_Workbench(ComputingDevice(device->type, device->id))
+                : new ts_Workbench(ComputingDevice())
+        );
+    RETURN_OR_CATCH(workbench.release(), nullptr)
+}
+
+ts_bool ts_Workbench_setup_context(ts_Workbench *workbench) {
+    TRY_HEAD
+        if (!workbench) throw Exception("NullPointerException: @param: 1");
+        (*workbench)->setup_context();
+    RETURN_OR_CATCH(ts_true, ts_false)
+}
+
+ts_bool ts_Workbench_setup(ts_Workbench *workbench, const ts_Program *program) {
+    TRY_HEAD
+        if (!workbench) throw Exception("NullPointerException: @param: 1");
+        if (!program) throw Exception("NullPointerException: @param: 2");
+        (*workbench)->setup(program->pointer);
+    RETURN_OR_CATCH(ts_true, ts_false)
+}
+
+ts_Program *ts_Workbench_compile(ts_Workbench *workbench, const ts_Module *module) {
+    TRY_HEAD
+        if (!workbench) throw Exception("NullPointerException: @param: 1");
+        if (!module) throw Exception("NullPointerException: @param: 2");
+        std::unique_ptr<ts_Program> program(new ts_Program(
+                (*workbench)->compile(module->pointer)));
+    RETURN_OR_CATCH(program.release(), nullptr)
 }

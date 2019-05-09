@@ -16,17 +16,17 @@ int main() {
     auto a = controller->alloc(cpu0, 4);
 
     TS_LOG_INFO << "Write i=" << i;
-    a.sync(cpu0).data<int>()[0] = i;
+    a.view(cpu0).data<int>()[0] = i;
 
-    TS_LOG_INFO << "Got i=" << a.sync(cpu1).data<int>()[0];
+    TS_LOG_INFO << "Got i=" << a.view(cpu1).data<int>()[0];
 
     {
         TS_LOG_INFO << "Swap i=" << i;
-        auto locked = a.locked();
-        locked->sync(cpu1).data<int>()[0] = -i;
-        locked->broadcast(cpu1);
+        auto locked = a.view(cpu1);
+        locked.data<int>()[0] = -i;
+        locked.broadcast();
     }
 
-    TS_LOG_INFO << "Got i=" << a.sync(cpu0).data<int>()[0];
+    TS_LOG_INFO << "Got i=" << a.view(cpu0).data<int>()[0];
 }
 

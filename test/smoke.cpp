@@ -125,7 +125,7 @@ int main()
 
     std::shared_ptr<Module> m = std::make_shared<Module>();
     //m = Module::Load("../model/test.tsm");
-    m = Module::Load("/Users/seetadev/Documents/SDK/CLion/TensorStack/python/test/RN30.light.1out.scalar.tsm");
+    m = Module::Load("/home/kier/git/TensorStack/python/test/RN30.tsm");
     std::cout << "Input nodes:" << std::endl;
     for (auto &node : m->inputs()) {
         std::cout << node.bubble().op() << ":" << node.bubble().name() << std::endl;
@@ -222,7 +222,7 @@ int main()
     for (auto &node : m->outputs()) {
         std::cout << "==============================" << std::endl;
         std::cout << node.bubble().op() << ":" << node.bubble().name() << std::endl;
-        auto data = bench->output(node.bubble().name());
+        auto data = bench->output(node.bubble().name()).view(MemoryDevice(CPU));
         std::vector<int> vec = data.sizes();
 
         std::cout << vec.size() << ",count:" << data.count() << std::endl;
