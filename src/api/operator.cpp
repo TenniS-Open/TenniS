@@ -67,6 +67,7 @@ public:
         if (obj == nullptr) {
             TS_LOG_ERROR << "Call ts_new_Operator failed on " << device << " for " << op << eject;
         }
+        set_param_checking_mode(ParamCheckingMode::WEAK);
     }
 
     ~APIPluginOperator() final {
@@ -176,4 +177,12 @@ ts_Tensor *ts_OperatorParams_get(const ts_OperatorParams *dict, const char *para
         return value.release();
     }
     RETURN_OR_CATCH(nullptr, nullptr);
+}
+
+void ts_Operator_Throw(const char *message) {
+    if (message == nullptr) {
+        TS_LOG_ERROR << "TS API throw: Unknown exception." << eject;
+    } else {
+        TS_LOG_ERROR << "TS API throw: " << message << eject;
+    }
 }

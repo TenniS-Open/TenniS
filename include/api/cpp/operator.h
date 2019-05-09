@@ -43,11 +43,17 @@ namespace ts {
 
         class Operator {
         public:
+            virtual ~Operator() = default;
+
             virtual void init(const OperatorParams &params) = 0;
 
             virtual std::vector<std::pair<DTYPE, Shape>> infer(const std::vector<Tensor> &args) = 0;
 
             virtual std::vector<Tensor> run(const std::vector<Tensor> &args) = 0;
+
+            static void Throw(const std::string &message) {
+                ts_Operator_Throw(message.c_str());
+            }
 
             static void Init(void *op, const ts_OperatorParams *params) {
                 auto obj = reinterpret_cast<Operator *>(op);
@@ -57,6 +63,7 @@ namespace ts {
             static ts_Tensor *Infer(void *op, int32_t argc, ts_Tensor **argv) {
                 auto obj = reinterpret_cast<Operator *>(op);
                 auto proto = obj->infer(borrowed_tensors(argc, argv));
+                if (proto.empty()) return nullptr;
                 std::vector<int32_t> data;
                 data.emplace_back(int32_t(proto.size()));
                 for (auto &pair : proto) {
@@ -65,7 +72,6 @@ namespace ts {
                     for (auto dim : pair.second) {
                         data.emplace_back(dim);
                     }
-
                 }
                 auto count = int32_t(data.size());
                 auto packed_tensor = ts_new_Tensor(&count, 1, TS_INT32, data.data());
@@ -76,6 +82,7 @@ namespace ts {
             static ts_Tensor *Run(void *op, int32_t argc, ts_Tensor **argv) {
                 auto obj = reinterpret_cast<Operator *>(op);
                 auto fields = obj->run(borrowed_tensors(argc, argv));
+                if (fields.empty()) return nullptr;
                 std::vector<ts_Tensor *> cfields;
                 for (auto &field : fields) {
                     cfields.emplace_back(field.get_raw());
@@ -94,9 +101,9 @@ namespace ts {
          */
         template<typename T>
         inline void RegisterOperator(const std::string &device, const std::string &op) {
-            TS_API_AUTO_CHECK(ts_Operator_Register(device.c_str(), op.c_str(),
-                                                   NewAndFree<T>::New, NewAndFree<T>::Free,
-                                                   T::Init, T::Infer, T::Run))
+            ts_Operator_Register(device.c_str(), op.c_str(),
+                                 &NewAndFree<T>::New, &NewAndFree<T>::Free,
+                                 &T::Init, &T::Infer, &T::Run);
         }
     }
 }

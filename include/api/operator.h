@@ -71,6 +71,9 @@ TENSOR_STACK_C_API void ts_Operator_Register(
         ts_Operator_run *f_run);
 
 
+TENSOR_STACK_C_API void ts_Operator_Throw(const char *message);
+
+
 #ifdef __cplusplus
 }
 #endif

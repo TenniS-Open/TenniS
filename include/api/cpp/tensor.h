@@ -21,21 +21,10 @@ namespace ts {
 
         class Tensor {
         public:
-            class InFlow {
-            public:
-                using self = InFlow;
-
-                InFlow() : self(TS_HOST) {}
-
-                InFlow(ts_InFlow dtype) : raw(dtype) {}
-
-                operator ts_InFlow() const { return raw; }
-
-                ts_InFlow raw;
+            enum class InFlow : int32_t {
+                HOST = TS_HOST,
+                DEVICE = TS_DEVICE,
             };
-
-            static const InFlow HOST;
-            static const InFlow DEVICE;
 
             using self = Tensor;
             using raw = ts_Tensor;
@@ -65,6 +54,10 @@ namespace ts {
             }
 
             Tensor(InFlow in_flow, DTYPE dtype, const Shape &shape, const void *data = nullptr)
+                    : self(ts_InFlow(in_flow), dtype, shape,  data) {
+            }
+
+            Tensor(ts_InFlow in_flow, DTYPE dtype, const Shape &shape, const void *data = nullptr)
                     : self(ts_new_Tensor_in_flow(in_flow, shape.data(), int32_t(shape.size()), ts_DTYPE(dtype), data)) {
                 TS_API_AUTO_CHECK(m_impl != nullptr);
             }
@@ -142,10 +135,15 @@ namespace ts {
             }
 
             Tensor view(InFlow in_flow) const {
+                return view(ts_InFlow(in_flow));
+            }
+
+            Tensor view(ts_InFlow in_flow) const {
                 auto casted_raw = ts_Tensor_view_in_flow(m_impl.get(), in_flow);
                 TS_API_AUTO_CHECK(casted_raw != nullptr);
                 return Tensor(casted_raw);
             }
+
 
             Tensor cast(DTYPE dtype) const {
                 auto casted_raw = ts_Tensor_cast(m_impl.get(), ts_DTYPE(dtype));
@@ -173,6 +171,15 @@ namespace ts {
 
             bool packed() const {
                 return bool(ts_Tensor_packed(m_impl.get()));
+            }
+
+            std::vector<Tensor> unpack() const {
+                auto count = fields_count();
+                std::vector<Tensor> fields;
+                for (int i = 0; i < count; ++i) {
+                    fields.emplace_back(field(i));
+                }
+                return std::move(fields);
             }
 
             int fields_count() const {
@@ -206,9 +213,6 @@ namespace ts {
 
             shared_raw m_impl;
         };
-
-        static const Tensor::InFlow HOST = TS_HOST;
-        static const Tensor::InFlow DEVICE = TS_DEVICE;
 
         template<typename T>
         class tensor_builder {
