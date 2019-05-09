@@ -110,6 +110,13 @@ namespace ts {
          */
         int output_count() const;
 
+        enum class ParamCheckingMode : int32_t {
+            WEAK = 0,
+            STRICT = 1,
+        };
+
+        void set_param_checking_mode(ParamCheckingMode mode);
+
     private:
         bool is_in_fields(const std::string &name);
 
@@ -122,6 +129,8 @@ namespace ts {
         hash_map<std::string, Tensor> m_params;
         hash_set<std::string> m_optional_fields;
         hash_set<std::string> m_required_fields;
+
+        ParamCheckingMode m_param_checking_mode = ParamCheckingMode::STRICT;
     };
 
     /**
