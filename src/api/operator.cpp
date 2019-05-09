@@ -181,8 +181,16 @@ ts_Tensor *ts_OperatorParams_get(const ts_OperatorParams *dict, const char *para
 
 void ts_Operator_Throw(const char *message) {
     if (message == nullptr) {
-        TS_LOG_ERROR << "TS API throw: Unknown exception." << eject;
+        LogStream(LOG_ERROR) << "[TS API]: Unknown exception." << eject;
     } else {
-        TS_LOG_ERROR << "TS API throw: " << message << eject;
+        LogStream(LOG_ERROR) << "[TS API]: " << message << eject;
+    }
+}
+
+void ts_Operator_ThrowV2(const char *message, const char *filename, int32_t line_number) {
+    if (message == nullptr) {
+        LogStream(LOG_ERROR) << "[" << filename << ":" << line_number << "]: [TS API]: Unknown exception." << eject;
+    } else {
+        LogStream(LOG_ERROR) << "[" << filename << ":" << line_number << "]: [TS API]: " << message << eject;
     }
 }
