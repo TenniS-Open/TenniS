@@ -33,7 +33,7 @@ namespace ts {
                 if (shape_data[i] == size_data[i]) {
                     bool satisfied_tail = true;
                     for (int j = i + 2; j < n; ++j) {
-                        if (shape_data[i] == size_data[i] || size_data[i] < 0) {
+                        if (shape_data[j] == size_data[j] || size_data[j] < 0) {
                             continue;
                         } else {
                             satisfied_tail = false;

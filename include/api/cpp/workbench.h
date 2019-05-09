@@ -12,6 +12,7 @@
 #include "module.h"
 #include "tensor.h"
 #include "image_filter.h"
+#include "program.h"
 
 #include <string>
 
@@ -31,7 +32,16 @@ namespace ts {
 
             raw *get_raw() const { return m_impl.get(); }
 
+            // Workbench() : self((ts_Device*)(nullptr)) {}
+
             Workbench() = default;
+
+            explicit Workbench(const Device &device) : self(device.get_raw()) {}
+
+            explicit Workbench(const ts_Device *device)
+                : self(ts_new_Workbench(device)) {
+                TS_API_AUTO_CHECK(m_impl != nullptr);
+            }
 
             static Workbench Load(const Module &module, const Device &device) {
                 return Load(module.get_raw(), device.get_raw());
@@ -123,6 +133,28 @@ namespace ts {
 
             void bind_filter(const std::string &name, const ImageFilter &tensor) {
                 bind_filter(name, tensor.get_raw());
+            }
+
+            void setup_context() const {
+                TS_API_AUTO_CHECK(ts_Workbench_setup_context(m_impl.get()));
+            }
+
+            void setup(const ts_Program *program) {
+                TS_API_AUTO_CHECK(ts_Workbench_setup(m_impl.get(), program));
+            }
+
+            void setup(const Program &program) {
+                TS_API_AUTO_CHECK(ts_Workbench_setup(m_impl.get(), program.get_raw()));
+            }
+
+            Program compile(const Module &module) {
+                return compile(module.get_raw());
+            }
+
+            Program compile(const ts_Module *module) {
+                Program loaded(ts_Workbench_compile(m_impl.get(), module));
+                TS_API_AUTO_CHECK(loaded.m_impl != nullptr);
+                return std::move(loaded);
             }
 
         private:

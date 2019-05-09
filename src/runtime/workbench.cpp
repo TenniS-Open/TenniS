@@ -57,7 +57,7 @@ namespace ts {
         DeviceContext *m_pre_device_context = nullptr;
     };
 
-    Workbench::Workbench(const ComputingDevice &device, std::shared_ptr<std::mutex> mutex) {
+    Workbench::Workbench(const ComputingDevice &device) {
         this->m_device_context.initialize(device);
         auto &memory_device = this->m_device_context.memory_device;
 
@@ -66,52 +66,24 @@ namespace ts {
         this->m_flow_memory = HypeSyncMemoryController<FlowMemoryController>::Make(memory_device, false);
         this->m_dynamic_memory = DynamicSyncMemoryController::Make(memory_device, false);
         this->m_stack = std::make_shared<Stack>(memory_device, this->m_flow_memory);
-        this->m_data_sagment = std::make_shared<Stack>(memory_device, this->m_static_memory);
-        this->m_mutex = std::move(mutex);
         // bind flow and dynamic memory, so you can use it to alloc memory in any where
         this->m_runtime_context.bind_flow(this->m_flow_memory);
         this->m_runtime_context.bind_dynamic(this->m_dynamic_memory);
     }
 
-    Workbench::Workbench(const ComputingDevice &device, std::shared_ptr<std::mutex> mutex, int computing_thread_number)
-            : self(device, std::move(mutex)) {
+    Workbench::Workbench(const ComputingDevice &device, int computing_thread_number)
+            : self(device) {
         this->m_runtime_context.set_computing_thread_number(computing_thread_number);
     }
 
-    Workbench::Workbench(const ComputingDevice &device)
-            : self(device, std::make_shared<std::mutex>()) {
-    }
-
-    Workbench::Workbench(const ComputingDevice &device, int computing_thread_number)
-            : self(device, std::make_shared<std::mutex>(), computing_thread_number) {
-    }
-
     Workbench::~Workbench() {
-        this->m_program.clear();
+        this->m_desktop.reset();
         this->m_stack->clear();
-        this->m_map_input_slots.clear();
-        this->m_map_output_slots.clear();
         this->m_inputs.clear();
         this->m_outputs.clear();
-        this->m_input_filters.clear();
         this->m_device_context.finalize();
-    }
-
-    static Tensor filter_images(ImageFilter::shared filter, Tensor input) {
-        if (input.dims() < 2 || input.dims() > 4) {
-            TS_LOG_ERROR << "Can not filter input with shape: " << to_string(input.sizes()) << eject;
-        }
-        if (input.dims() == 2) {
-            input = input.reshape({1, input.size(0), input.size(1), 1});
-            auto output = filter->run(input);
-            return output;
-        }
-        if (input.dims() == 3) {
-            input = input.reshape({1, input.size(0), input.size(1), input.size(2)});
-            auto output = filter->run(input);
-            return output;
-        }
-        return filter->run(input);
+        std::stack<ProgramEnv> empty;
+        this->m_env.swap(empty);
     }
 
     static inline std::unique_ptr<ctx::bind<Profiler>> bind_profiler(bool _do, Profiler &profiler) {
@@ -120,195 +92,41 @@ namespace ts {
     }
 
     void Workbench::run() {
-        // clear pre output
-        this->m_pointer = 0;
-        this->m_stack->rebase(0);
-        this->m_stack->clear();
-        this->m_outputs.resize(this->m_outputs.size(), Tensor());
-
-        BindWorkbenchRuntime _bind_runtime(*this);
-
-        // set input
-        for (int i = 0; static_cast<size_t >(i) < this->m_inputs.size(); ++i) {
-            auto &arg = this->m_inputs[i];
-            auto &filter = this->m_input_filters[i];
-            if (filter == nullptr) {
-                this->m_stack->push(arg);
-            } else {
-                // TODO: do filter
-                this->m_stack->push(filter_images(filter, arg));
-            }
-            auto dtype = m_input_dtypes[i];
-            if (dtype == VOID) continue;
-            cast_tensor(dtype);
+        if (m_desktop == nullptr) {
+            TS_LOG_ERROR << "Can not run workbench with no program setup" << eject;
         }
 
-        auto _bind_profiler = bind_profiler(m_do_profile, m_profiler);
+        auto outputs = launch_offline(m_desktop, m_inputs);
 
-        // run
-        while (m_pointer < m_program.size()) {
-            auto &inst = m_program[m_pointer];
-            m_pointer++;
-            inst->run(*this);
-        }
-
-        // check output
-        if (this->m_stack->size() != this->m_outputs.size()) {
-            TS_LOG_ERROR << "Got unexpected output number want " << this->m_outputs.size() << " vs. "
-                         << this->m_stack->size() << " given." << eject;
-        }
-
-        // set output
-        // TODO: change output memory device type
-        for (int i = 0; static_cast<size_t >(i) < this->m_stack->size(); ++i) {
-            auto &arg = *this->m_stack->index(i);
-            // this->m_outputs[i] = arg.clone(m_dynamic_memory, arg.device());
-            this->m_outputs[i] = arg;   // do not clone by default
-        }
+        m_outputs = outputs;
     }
 
     Workbench::shared Workbench::clone() const {
-        std::unique_lock<std::mutex> _lock_clone(*this->m_mutex);
-
         Workbench::shared dolly(new Workbench(
-                this->m_device_context.computing_device,
-                this->m_mutex));
-        dolly->m_pointer = this->m_pointer;
-        dolly->m_program = this->m_program;
+                this->m_device_context.computing_device));
         dolly->m_inputs.resize(this->m_inputs.size());
         dolly->m_outputs.resize(this->m_outputs.size());
-        dolly->m_map_input_slots = this->m_map_input_slots;
-        dolly->m_map_output_slots = this->m_map_output_slots;
-        dolly->m_data_sagment = this->m_data_sagment;
         dolly->m_runtime_context = this->m_runtime_context.clone();
-        dolly->m_input_filters.resize(this->m_input_filters.size(), nullptr);
-
-        for (size_t i = 0; i < this->m_input_filters.size(); ++i) {
-            if (this->m_input_filters[i] == nullptr) continue;
-            dolly->m_input_filters[i] = this->m_input_filters[i]->clone();
+        if (this->m_desktop) {
+            dolly->m_desktop = this->m_desktop->clone();
         }
-
-        // bind device context
-        ctx::bind<DeviceContext> bind_device_context(const_cast<DeviceContext*>(&this->m_device_context));
-
-        for (auto &instruction : dolly->m_program) {
-            auto op = dynamic_cast<OperatorInstruction*>(instruction.get());
-            if (op == nullptr) continue;
-            instruction = op->clone();
-        }
-
-        // copy dtype
-        dolly->m_input_dtypes = m_input_dtypes;
-        dolly->m_output_dtypes = m_output_dtypes;
 
         return std::move(dolly);
     }
 
-    template <typename T>
-    inline void filter_values(T *value, size_t count) {
-        for (size_t i = 0; i < count; ++i) {
-            if (near(*value, T(0))) *value = T(0);
-            ++value;
-        }
-    }
-
-    template <>
-    inline void filter_values(float *value, size_t count) {
-        for (size_t i = 0; i < count; ++i) {
-            if (*value < FLT_EPSILON && -*value < FLT_EPSILON) *value = 0;
-            ++value;
-        }
-    }
-
-    template <>
-    inline void filter_values(double *value, size_t count) {
-        for (size_t i = 0; i < count; ++i) {
-            if (*value < DBL_EPSILON && -*value < DBL_EPSILON) *value = 0;
-            ++value;
-        }
-    }
-
     Workbench::shared Workbench::Load(const Module::shared &module, const ComputingDevice &device) {
         auto bench = std::make_shared<Workbench>(device);
-        // convert module to bench
-        // here running compilation codes
-        // TODO: support RNN
-        Compiler compiler(device);
-        auto module_inputs = module->inputs();
-        auto module_outputs = module->outputs();
-        InstructionBlock block;
-
-        {
-            // bind bench for intime action
-            ctx::bind<Workbench> _bind_workbench(*bench);
-
-            // never swallow any exception
-            block = compiler.compile(module_inputs, module_outputs);
-        }
-
-        // link data sagment
-        // TODO: link multi-data-sagment
-        auto data_sagment_base = int(bench->m_data_sagment->size());
-        for (auto &inst : block.instructions) {
-            auto data_sagment_inst = dynamic_cast<DataSagmentInstruction *>(inst.get());
-            if (data_sagment_inst == nullptr) continue;
-            inst = std::make_shared<DataSagmentInstruction>(data_sagment_inst->data_index() + data_sagment_base);
-        }
-        for (auto &data : block.data_sagment) {
-            Tensor *value = nullptr;
-            if (data.device.empty()) {
-                value = bench->m_data_sagment->clone_push(data.tensor);
-            } else {
-                value = bench->m_data_sagment->clone_push(data.tensor, data.device);
-            }
-
-            // filter value
-            if (value->device().type() == CPU) {
-                if (value->dtype() == FLOAT32) {
-                    filter_values(value->data<float>(), size_t(value->count()));
-                } else if (value->dtype() == FLOAT64) {
-                    filter_values(value->data<double>(), size_t(value->count()));
-                }
-            }
-        }
-
-        // binding instructions
-        bench->m_program = block.instructions;
-        // binding input and output shots
-        bench->m_inputs.resize(module_inputs.size());
-        bench->m_input_filters.resize(module_inputs.size());
-        bench->m_outputs.resize(module_outputs.size());
-        int slot_i = 0;
-        for (auto &input : module_inputs) {
-            bench->m_map_input_slots.insert(std::make_pair(input.bubble().name(), slot_i++));
-        }
-        slot_i = 0;
-        for (auto &output : module_outputs) {
-            bench->m_map_output_slots.insert(std::make_pair(output.bubble().name(), slot_i++));
-        }
-
-        bench->m_input_dtypes.resize(module_inputs.size(), VOID);
-        bench->m_output_dtypes.resize(module_outputs.size(), VOID);
-
-        for (size_t i = 0; i < module_inputs.size(); ++i) {
-            auto &input = module_inputs[i];
-            if (!input->has(Bubble::RetentionParam::dtype)) continue;
-            bench->m_input_dtypes[i] =
-                    DTYPE(tensor::to_int(input->get(Bubble::RetentionParam::dtype)));
-        }
-        for (size_t i = 0; i < module_outputs.size(); ++i) {
-            auto &output = module_outputs[i];
-            if (!output->has(Bubble::RetentionParam::dtype)) continue;
-            bench->m_output_dtypes[i] =
-                    DTYPE(tensor::to_int(output->get(Bubble::RetentionParam::dtype)));
-        }
-
+        bench->setup(bench->compile(module));
         return bench;
     }
 
-    void Workbench::jump_relative(int shift) { this->m_pointer += shift; }
+    void Workbench::jump_relative(int shift) {
+        this->m_env.top().pointer += shift;
+    }
 
-    void Workbench::jump_absolute(size_t pointer) { this->m_pointer = pointer; }
+    void Workbench::jump_absolute(size_t pointer) {
+        this->m_env.top().pointer = pointer;
+    }
 
     void Workbench::input(int slot, const Tensor &tensor) {
         if (slot < 0 || size_t(slot) >= m_inputs.size()) {
@@ -339,68 +157,49 @@ namespace ts {
         return m_inputs[slot];
     }
 
-    static std::string fuzzy_name(const Workbench::map<std::string, int> &map_name_slot, const std::string &name) {
-        if (map_name_slot.empty()) return "";
-        int min_edit_distance = INT_MAX;
-        std::string closest_name;
-        for (auto &name_slot_pair : map_name_slot) {
-            auto &target_name = name_slot_pair.first;
-            int dist = edit_distance(name, target_name);
-            if (dist < min_edit_distance) {
-                closest_name = target_name;
-                min_edit_distance = dist;
-            }
-        }
-        return closest_name;
-    }
-
     void Workbench::bind_filter(const std::string &name, ImageFilter::shared filter) {
-        auto slot_it = m_map_input_slots.find(name);
-        if (slot_it == m_map_input_slots.end()) {
-            TS_LOG_ERROR << "Can not identify the name \"" << name << "\", did you mean: "
-                         << fuzzy_name(m_map_input_slots, name) << eject;
+        if (m_desktop == nullptr) {
+            TS_LOG_ERROR << "Can not run workbench with no program setup" << eject;
         }
-        this->bind_filter(slot_it->second, std::move(filter));
+        this->bind_filter(m_desktop->input_slot(name), std::move(filter));
     }
 
     void Workbench::bind_filter(int slot, ImageFilter::shared filter) {
-        if (slot < 0 || size_t(slot) >= m_input_filters.size()) {
+        if (m_desktop == nullptr) {
+            TS_LOG_ERROR << "Can not run workbench with no program setup" << eject;
+        }
+        if (slot < 0 || slot >= m_desktop->input_count()) {
             TS_LOG_ERROR << "Input index out of range. with index=" << slot << eject;
         }
+        ctx::bind<Workbench> _bind_bench(this);
         filter->compile();
-        m_input_filters[slot] = std::move(filter);
+        m_desktop->bind_filter(slot, filter->program());
     }
 
     void Workbench::input(const std::string &name, const Tensor &tensor) {
-        auto slot_it = m_map_input_slots.find(name);
-        if (slot_it == m_map_input_slots.end()) {
-            TS_LOG_ERROR << "Can not identify the name \"" << name << "\", did you mean: "
-                         << fuzzy_name(m_map_input_slots, name) << eject;
+        if (m_desktop == nullptr) {
+            TS_LOG_ERROR << "Can not run workbench with no program setup" << eject;
         }
-        this->input(slot_it->second, tensor);
+        this->input(m_desktop->input_slot(name), tensor);
     }
 
     const Tensor &Workbench::output(const std::string &name) const {
-        auto slot_it = m_map_output_slots.find(name);
-        if (slot_it == m_map_output_slots.end()) {
-            TS_LOG_ERROR << "Can not identify the name \"" << name << "\", did you mean: "
-                         << fuzzy_name(m_map_output_slots, name) << eject;
+        if (m_desktop == nullptr) {
+            TS_LOG_ERROR << "Can not run workbench with no program setup" << eject;
         }
-        return this->output(slot_it->second);
+        return this->output(m_desktop->output_slot(name));
     }
 
     const Tensor &Workbench::input(const std::string &name) const {
-        auto slot_it = m_map_input_slots.find(name);
-        if (slot_it == m_map_input_slots.end()) {
-            TS_LOG_ERROR << "Can not identify the name \"" << name << "\", did you mean: "
-                         << fuzzy_name(m_map_input_slots, name) << eject;
+        if (m_desktop == nullptr) {
+            TS_LOG_ERROR << "Can not run workbench with no program setup" << eject;
         }
-        return this->input(slot_it->second);
+        return this->input(m_desktop->input_slot(name));
     }
 
     void Workbench::push_data_sagment(int data_index) {
         // TODO: deal with data_sagment, in case of thread sharing, waitting testing
-        this->m_stack->push(this->m_data_sagment->index(data_index)->weak());
+        this->m_stack->push(this->m_env.top().program->data_sagment(data_index));
     }
 
     Operator::shared Workbench::offline_create(const Bubble &bubble, bool strict) {
@@ -421,7 +220,11 @@ namespace ts {
     }
 
     void Workbench::offline_run(Operator::shared op, const std::vector<Tensor> &input, std::vector<Tensor> &output) {
-        Stack stack(m_device_context.memory_device, m_dynamic_memory);
+        // Stack stack(m_device_context.memory_device, m_dynamic_memory);
+        m_stack->push_base(m_stack->size()); // empty base
+        need pop_base(&Stack::pop_base, m_stack.get());
+        need clear_stack(&Stack::clear, m_stack.get());
+        auto &stack = *m_stack;
 
         BindWorkbenchRuntime _bind_runtime(*this);
 
@@ -442,7 +245,11 @@ namespace ts {
 
     void Workbench::offline_infer(Operator::shared op, const std::vector<Tensor> &input,
                                   std::vector<Tensor::Prototype> &output) {
-        Stack stack(m_device_context.memory_device, m_dynamic_memory);
+        // Stack stack(m_device_context.memory_device, m_dynamic_memory);
+        m_stack->push_base(m_stack->size()); // empty base
+        need pop_base(&Stack::pop_base, m_stack.get());
+        need clear_stack(&Stack::clear, m_stack.get());
+        auto &stack = *m_stack;
 
         BindWorkbenchRuntime _bind_runtime(*this);
 
@@ -454,14 +261,11 @@ namespace ts {
     }
 
     void Workbench::set_operator_param(const std::string &node_name, const std::string &param, const Tensor &value) {
-        for (auto &inst : m_program) {
-            auto* operator_inst = dynamic_cast<OperatorInstruction*>(inst.get());
-            if (operator_inst == nullptr) continue;
-            auto node = operator_inst->op();
-            if (node->name() != node_name) continue;
-            node->set(param, value);
-            node->init();
-        }
+        if (m_desktop == nullptr) return;
+
+        BindWorkbenchRuntime _bind_runtime(*this);
+
+        m_desktop->set_operator_param(node_name, param, value);
     }
 
     void Workbench::cast_tensor(DTYPE dtype) {
@@ -485,7 +289,8 @@ namespace ts {
     }
 
     int Workbench::online_run(Operator::shared op, const std::vector<Tensor> &input) {
-        m_stack->clear();
+        m_stack->push_base(m_stack->size()); // empty base
+        need pop_base(&Stack::pop_base, m_stack.get());
         for (auto &tensor : input) {
             m_stack->push(tensor);
         }
@@ -505,7 +310,8 @@ namespace ts {
     }
 
     void Workbench::online_run(Instruction::shared inst, const std::vector<Tensor> &input) {
-        m_stack->clear();
+        m_stack->push_base(m_stack->size()); // empty base
+        need pop_base(&Stack::pop_base, m_stack.get());
         for (auto &tensor : input) {
             m_stack->push(tensor);
         }
@@ -518,6 +324,170 @@ namespace ts {
 
     int Workbench::online_run(const Bubble &bubble, const std::vector<Tensor> &input, bool strict) {
         return online_run(online_create(bubble, strict), input);
+    }
+
+    static Tensor adjust_nhwc(const Tensor &tensor) {
+        if (tensor.dims() < 2 || tensor.dims() > 4) {
+            TS_LOG_ERROR << "Can not filter input with shape: " << to_string(tensor.sizes()) << eject;
+        }
+        if (tensor.dims() == 2) {
+            return tensor.reshape({1, tensor.size(0), tensor.size(1), 1});
+        }
+        if (tensor.dims() == 3) {
+            return tensor.reshape({1, tensor.size(0), tensor.size(1), tensor.size(2)});
+        }
+        return tensor;
+    }
+
+    int Workbench::launch_online(Program::shared program, int nargs) {
+        if (program == nullptr) {
+            TS_LOG_ERROR << "Can not launch null program." << eject;
+        }
+        if (program->input_count() != nargs) {
+            TS_LOG_ERROR << "nargs must be " << program->input_count() << " vs. " << nargs << " got." << eject;
+        }
+        if (m_stack->size() < nargs) {
+            TS_LOG_ERROR << "stack must have arguments at less " << nargs << " vs. " << m_stack->size() << " got." << eject;
+        }
+        if (program->device() != this->device().computing_device) {
+            TS_LOG_ERROR << "Running " << program->device() << " on " << this->device().computing_device;
+        }
+
+        m_env.push(ProgramEnv(program));
+        ts::need pop_env(&std::stack<ProgramEnv>::pop, &m_env);
+
+        /**
+         * bind profiler for running
+         */
+        auto _bind_profiler = bind_profiler(m_do_profile && ctx::get<Profiler>() != &m_profiler, m_profiler);
+
+        /**
+         * bind context
+         * TODO: had to find way to avoid loop binding
+         */
+        BindWorkbenchRuntime _bind_runtime(*this);
+
+        /**
+         * Save base, so now can do something
+         */
+        this->m_stack->push_base(-nargs);
+        ts::need pop_base(&Stack::pop_base, this->m_stack.get());
+
+        /**
+         * do filter and cast dtype
+         */
+        for (int i = 0; i < nargs; ++i) {
+            auto &arg = *this->m_stack->index(-nargs);
+
+            if (arg.device() == this->device().memory_device) {
+                this->m_stack->push(arg);
+            } else {
+                this->m_stack->clone_push(arg); // in case of sync memory out of flow memory
+            }
+
+            // top is the arg i
+
+            auto filter = this->m_env.top().program->input_filter(i);
+            if (filter != nullptr) {
+                // ajust to nhwc image format
+                this->m_stack->push(adjust_nhwc(arg));
+                this->m_stack->erase(-2);   // delete arg before
+                launch_online(filter, 1);
+            }
+            auto dtype = this->m_env.top().program->input_dtype(i);
+            if (dtype == VOID) continue;
+            cast_tensor(dtype);
+        }
+        /**
+         * build input for program
+         */
+        this->m_stack->erase(0, nargs);
+
+        /**
+         * Start run program
+         */
+        while (true) {
+            auto &running_program = this->m_env.top();
+            auto &pointer = running_program.pointer;
+            auto &length = running_program.length;
+            if (pointer >= length) break;
+            auto &inst = running_program.program->instruction(pointer);
+            pointer++;
+            inst->run(*this);
+        }
+
+        /**
+         * Check output
+         */
+        if (this->m_stack->size() != program->output_count()) {
+            TS_LOG_ERROR << "Got unexpected output number want " << program->output_count() << " vs. "
+                         << this->m_stack->size() << " given." << eject;
+        }
+
+        return this->m_stack->size();
+    }
+
+    void Workbench::setup(Program::shared program) {
+        this->m_desktop = program;
+        if (program == nullptr) {
+            this->m_inputs.clear();
+            this->m_outputs.clear();
+        } else {
+            this->m_inputs.resize(program->input_count());
+            this->m_outputs.resize(program->output_count());
+        }
+    }
+
+    std::vector<Tensor> Workbench::launch_offline(Program::shared program, const std::vector<Tensor> &args) {
+        /**
+         * save stack
+         */
+        this->m_stack->push_base(this->m_stack->size());
+        ts::need pop_base(&Stack::pop_base, this->m_stack.get());
+        ts::need clear_stack(&Stack::clear, this->m_stack.get());
+
+        for (auto &arg : args) {
+            this->m_stack->push(arg);
+        }
+
+        int return_count = launch_online(program, int(args.size()));
+
+        std::vector<Tensor> outputs;
+        for (int i = 0; i < return_count; ++i) {
+            outputs.emplace_back(*this->m_stack->index(i));
+        }
+
+        return std::move(outputs);
+    }
+
+    std::vector<Tensor> Workbench::launch_offline(Program::shared program, const std::map<std::string, Tensor> &args) {
+        auto nargs = int(args.size());
+        if (program->input_count() != nargs) {
+            TS_LOG_ERROR << "nargs must be " << program->input_count() << " vs. " << nargs << " got." << eject;
+        }
+
+        std::vector<Tensor> list_args(nargs);
+
+        for (auto &pair : args) {
+            auto &name = pair.first;
+            auto &value = pair.second;
+            auto slot = program->input_slot(name);
+            list_args[slot] = value;
+        }
+
+        return launch_offline(program, list_args);
+    }
+
+    Program::shared Workbench::compile(const Module::shared &module) {
+        /**
+         * tell compiler, who is compiling
+         */
+        ctx::bind<Workbench> _bind_bench(this);
+
+        /**
+         * do compile, from module to program
+         */
+        return Program::Compile(module, this->device().computing_device);
     }
 }
 

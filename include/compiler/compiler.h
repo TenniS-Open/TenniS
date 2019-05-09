@@ -48,7 +48,6 @@ namespace ts {
     private:
         ComputingDevice m_computing_device;
     };
-
 }
 
 

@@ -277,6 +277,8 @@ namespace ts {
     inline bool operator<=(const Node &lhs, const Node &rhs) { return lhs.ptr() <= rhs.ptr(); }
 
     inline bool operator>=(const Node &lhs, const Node &rhs) { return lhs.ptr() >= rhs.ptr(); }
+
+    TS_DEBUG_API std::ostream &plot_graph(std::ostream &stream, const std::vector<Node> &nodes);
 }
 
 namespace std {
