@@ -55,6 +55,10 @@ namespace ts {
                 ts_Operator_Throw(message.c_str());
             }
 
+            static void Throw(const std::string &message, const std::string &filename, int32_t line_number) {
+                ts_Operator_ThrowV2(message.c_str(), filename.c_str(), line_number);
+            }
+
             static void Init(void *op, const ts_OperatorParams *params) {
                 auto obj = reinterpret_cast<Operator *>(op);
                 obj->init(OperatorParams(params));
@@ -107,5 +111,8 @@ namespace ts {
         }
     }
 }
+
+#define TS_THROW(message) \
+    ts::api::Operator::Throw((message), __FILE__, __LINE__)
 
 #endif //TENSORSTACK_OPERATOR_H

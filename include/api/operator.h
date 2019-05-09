@@ -73,6 +73,10 @@ TENSOR_STACK_C_API void ts_Operator_Register(
 
 TENSOR_STACK_C_API void ts_Operator_Throw(const char *message);
 
+TENSOR_STACK_C_API void ts_Operator_ThrowV2(const char *message, const char *filename, int32_t line_number);
+
+#define TS_C_THROW(message) \
+    ts_Operator_ThrowV2((message), __FILE__, __LINE__)
 
 #ifdef __cplusplus
 }
