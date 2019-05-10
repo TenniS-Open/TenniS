@@ -11,7 +11,9 @@ namespace ts {
             using self = Conv2DWinograd;
             using supper = base::Conv2DWinograd;
 
-            void conv2d_winograd(const Tensor &x, WinogradConv2DModel winograd_model, const Padding2D &padding, float padding_value,
+            //void conv2d_winograd(const Tensor &x, WinogradConv2DModel winograd_model, const Padding2D &padding, float padding_value,
+            //    const Tensor &w, Conv2DFormat format, Tensor &out, Stack &stack);
+            void conv2d_winograd(const Tensor &x, WinogradConv2DModel winograd_model,
                 const Tensor &w, Conv2DFormat format, Tensor &out, Stack &stack);
         };
     }

@@ -8,40 +8,45 @@
 namespace ts {
     namespace cpu{
         template<typename T>
-        static void conv2d_winograd_forward(const Tensor &x, WinogradConv2DModel winograd_model, const Padding2D &padding, float padding_value,
+        static void conv2d_winograd_forward(const Tensor &x, WinogradConv2DModel winograd_model,
             const Tensor &w, Tensor &out, Stack &stack) {
             auto x_shape = x.sizes();
             auto weight_shape = w.sizes();
             Size2D ksize(weight_shape[2], weight_shape[3]);
 
-            if (padding.bottom != 0 || padding.top != 0 || padding.left != 0 || padding.right != 0) {
-                auto pad_operator = OperatorCreator::Query(CPU, name::layer::pad())();
-                TS_CHECK_NQ(pad_operator, nullptr) << "Can not find operator: " << name::layer::pad();
+            if (winograd_model == F6X6_3X3)
+                return Conv2dAlgorithm<T>::conv3x3_winograd63(x, w, out);
+            else
+                return Conv2dAlgorithm<T>::conv3x3_winograd23(x, w, out);
 
-                ts::Shape pad_shape = { 4,2 };
-                auto input_pad_param = tensor::build(INT32, pad_shape, { 0, 0, 0, 0, padding.top, padding.bottom, padding.left, padding.right });
-                pad_operator->set(name::padding_value, tensor_builder<float>::build(&padding_value, 1));
-                pad_operator->init();
-                stack.push(x);
-                stack.push(input_pad_param);
-                RunOperator(pad_operator, stack, 2);
-                auto x_pad_tensor = *(stack.top());
-                stack.pop();
+            //if (padding.bottom != 0 || padding.top != 0 || padding.left != 0 || padding.right != 0) {
+            //    auto pad_operator = OperatorCreator::Query(CPU, name::layer::pad())();
+            //    TS_CHECK_NQ(pad_operator, nullptr) << "Can not find operator: " << name::layer::pad();
 
-                if (winograd_model == F6X6_3X3)
-                    return Conv2dAlgorithm<T>::conv3x3_winograd63(x_pad_tensor, w, out);
-                else
-                    return Conv2dAlgorithm<T>::conv3x3_winograd23(x_pad_tensor, w, out);
-            }
-            else {
-                if (winograd_model == F6X6_3X3)
-                    return Conv2dAlgorithm<T>::conv3x3_winograd63(x, w, out);
-                else
-                    return Conv2dAlgorithm<T>::conv3x3_winograd23(x, w, out);
-            }
+            //    ts::Shape pad_shape = { 4,2 };
+            //    auto input_pad_param = tensor::build(INT32, pad_shape, { 0, 0, 0, 0, padding.top, padding.bottom, padding.left, padding.right });
+            //    pad_operator->set(name::padding_value, tensor_builder<float>::build(&padding_value, 1));
+            //    pad_operator->init();
+            //    stack.push(x);
+            //    stack.push(input_pad_param);
+            //    RunOperator(pad_operator, stack, 2);
+            //    auto x_pad_tensor = *(stack.top());
+            //    stack.pop();
+
+            //    if (winograd_model == F6X6_3X3)
+            //        return Conv2dAlgorithm<T>::conv3x3_winograd63(x_pad_tensor, w, out);
+            //    else
+            //        return Conv2dAlgorithm<T>::conv3x3_winograd23(x_pad_tensor, w, out);
+            //}
+            //else {
+            //    if (winograd_model == F6X6_3X3)
+            //        return Conv2dAlgorithm<T>::conv3x3_winograd63(x, w, out);
+            //    else
+            //        return Conv2dAlgorithm<T>::conv3x3_winograd23(x, w, out);
+            //}
         }
 
-        void Conv2DWinograd::conv2d_winograd(const Tensor &x, WinogradConv2DModel winograd_model, const Padding2D &padding, float padding_value,
+        void Conv2DWinograd::conv2d_winograd(const Tensor &x, WinogradConv2DModel winograd_model,
             const Tensor &w, Conv2DFormat format, Tensor &out, Stack &stack) {
             if (format != FORMAT_NCHW) {
                 TS_LOG_ERROR << "Conv2D_Winograd only support NCHW" << eject;
@@ -49,7 +54,7 @@ namespace ts {
             DTYPE dtype = out.dtype();
             switch (dtype) {
 #define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
-        case DTYPE: { conv2d_winograd_forward<TYPE>(x, winograd_model, padding, padding_value, w, out, stack); break; }
+        case DTYPE: { conv2d_winograd_forward<TYPE>(x, winograd_model, w, out, stack); break; }
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
