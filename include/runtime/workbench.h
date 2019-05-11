@@ -145,7 +145,7 @@ namespace ts {
         int online_run(Operator::shared op, int argc);
 
         /**
-         * This API will clear stack before run op, then push input to stack
+         * This API push input to stack, then run online
          * @param op
          * @param input
          */
@@ -158,7 +158,7 @@ namespace ts {
         void online_run(Instruction::shared inst);
 
         /**
-         * This API will clear stack before run op, then push input to stack
+         * This API push input to stack, then run online, the inst return size, is given by doc
          * @param inst
          * @param input
          */
