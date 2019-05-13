@@ -3,6 +3,15 @@
 import stackbuilder as sb
 import tensorstack as ts
 
+import os
+import sys
+sys.path.append(
+    os.path.join(os.path.abspath(os.path.dirname(__file__)), "."))
+
+import maskrcnn
+
+from stackbuilder.torch.module import convert_module as ts_convert_module
+
 from maskrcnn_benchmark.modeling.detector.generalized_rcnn import GeneralizedRCNN
 from maskrcnn_benchmark.modeling.backbone.resnet import ResNet
 from maskrcnn_benchmark.modeling.backbone.resnet import StemWithFixedBatchNorm
@@ -11,6 +20,10 @@ from maskrcnn_benchmark.layers.batch_norm import FrozenBatchNorm2d
 from maskrcnn_benchmark.modeling.backbone.resnet import BottleneckWithFixedBatchNorm
 from maskrcnn_benchmark.modeling.backbone.fpn import FPN
 from maskrcnn_benchmark.modeling.backbone.fpn import LastLevelMaxPool
+from maskrcnn_benchmark.modeling.rpn.rpn import RPNModule
+from maskrcnn_benchmark.modeling.rpn.rpn import RPNHead
+from maskrcnn_benchmark.modeling.rpn.anchor_generator import AnchorGenerator
+from maskrcnn_benchmark.modeling.rpn.inference import RPNPostProcessor
 
 try:
     from maskrcnn_benchmark.modeling.backbone.resnet import BottleneckWithFixedBatchNormDeformable
@@ -228,9 +241,6 @@ def convert_attr_module(self, attr, scope, *args):
 
 def interpolate(name, x, scale_factor):
     shape = ts.zoo.shape(name=name + "_shape", x=x)
-
-
-
     rhs = numpy.asarray([1, 1, scale_factor, scale_factor], dtype=numpy.int32)
     size = ts.zoo.mul(name=name + "_scale", lhs=shape, rhs=rhs)
     return ts.zoo.resize2d(name=name, x=x, size=size, type=ts.zoo.Type.resize2d_type.nearest)
@@ -285,6 +295,151 @@ def convert_last_level_max_pool(m, x, scope=None):
     return [x,]
 
 
+def convert_rpn(m, x, scope=None):
+    """
+    :param m:
+    :param x: Node, List[Node]
+    :param scope:
+    :return: Node
+    images, features
+    """
+    assert isinstance(x, (tuple, list))
+    assert len(x) == 2 or len(x) == 3
+
+    images = x[0]
+    features = x[1]
+
+    assert isinstance(features, (tuple, list))
+    for feat in features:
+        assert isinstance(feat, ts.Node)
+
+    assert isinstance(images, ts.Node)
+    assert isinstance(m, RPNModule)
+
+    objectness, rpn_box_regression = convert_rpn_head(m.head, features, scope=scope + "/head")
+
+    # packed_features = ts.menu.pack(name=scope + "/features", inputs=features)
+
+    anchors = convert_anchor_generator(m.anchor_generator, (images, features), scope=scope + "/anchor_generator")
+
+    boxes = convert_rpn_post_processor(m.box_selector_test, (anchors, objectness, rpn_box_regression), scope=scope + "/box_selector_test")
+
+    # not support RPN only
+    assert not m.cfg.MODEL.RPN_ONLY
+
+    return boxes
+
+
+def convert_rpn_head(m, x, scope=None):
+    """
+
+    :param m:
+    :param x: List[Node]
+    :param scope:
+    :return:
+    """
+    assert isinstance(x, (tuple, list))
+    for item in x:
+        assert isinstance(item, ts.Node)
+
+    assert isinstance(m, RPNHead)
+
+    logits = []
+    bbox_reg = []
+
+    index = 0
+
+    for feature in x:
+        t = ts_convert_module(m.conv, feature, scope=scope + "/relu/" + str(index))
+        logits.append(ts_convert_module(m.cls_logits, t, scope=scope + "/cls_logits/" + str(index)))
+        bbox_reg.append(ts_convert_module(m.bbox_pred, t, scope=scope + "/bbox_pred/" + str(index)))
+
+        index += 1
+
+    return logits, bbox_reg
+
+
+def convert_anchor_generator(m, x, scope=None):
+    """
+    :param m:
+    :param x: Node, list[Node]/Node
+    :param scope:
+    :return: Packed tensor anchor
+    """
+    assert isinstance(x, (tuple, list))
+    assert len(x) == 2
+
+    images = x[0]
+    features = x[1]
+
+    if isinstance(features, (tuple, list)):
+        for feat in features:
+            assert isinstance(feat, ts.Node)
+        features = ts.menu.pack(name=scope + "/features", inputs=features)
+    elif isinstance(features, ts.Node):
+        pass
+    else:
+        raise NotImplementedError("type(features) = {}".format(type(features)))
+
+    assert isinstance(images, ts.Node)
+    assert isinstance(m, AnchorGenerator)
+
+    strides = m.strides
+    cell_anchors = [numpy.asarray(base_anchors.cpu()) for base_anchors in m.cell_anchors]
+
+    anchors = maskrcnn.anchor_generator(
+        name=scope,
+        images=images, features=features,
+        strides=strides,
+        cell_anchors=cell_anchors
+    )
+
+    return anchors
+
+
+def convert_rpn_post_processor(m, x, scope=None):
+    """
+    :param m:
+    :param x: PackedNode, list[Node]/Node, list[Node]/Node
+    :param scope:
+    :return: Node
+    anchors, objectness, rpn_box_regression
+    """
+    assert isinstance(x, (tuple, list))
+    assert len(x) == 3
+
+    anchors = x[0]
+    objectness = x[1]
+    rpn_box_regression = x[2]
+
+    if isinstance(objectness, (tuple, list)):
+        for feat in objectness:
+            assert isinstance(feat, ts.Node)
+        objectness = ts.menu.pack(name=scope + "/objectness", inputs=objectness)
+    elif isinstance(objectness, ts.Node):
+        pass
+    else:
+        raise NotImplementedError("type(objectness) = {}".format(type(objectness)))
+
+    if isinstance(rpn_box_regression, (tuple, list)):
+        for feat in rpn_box_regression:
+            assert isinstance(feat, ts.Node)
+        rpn_box_regression = ts.menu.pack(name=scope + "/rpn_box_regression", inputs=rpn_box_regression)
+    elif isinstance(rpn_box_regression, ts.Node):
+        pass
+    else:
+        raise NotImplementedError("type(rpn_box_regression) = {}".format(type(rpn_box_regression)))
+
+    assert isinstance(anchors, ts.Node)
+    assert isinstance(m, RPNPostProcessor)
+
+    return maskrcnn.box_selector(name=scope,
+                                 anchors=anchors, objectness=objectness, rpn_box_regression=rpn_box_regression,
+                                 pre_nms_top_n=m.pre_nms_top_n,
+                                 weights=m.box_coder.weights,
+                                 bbox_xform_clip=m.box_coder.bbox_xform_clip)
+
+
 sb.torch.module.register_module_converter(GeneralizedRCNN, convert_grcnn)
 sb.torch.module.register_module_converter(ResNet, convert_resnet)
 sb.torch.module.register_module_converter(StemWithFixedBatchNorm, convert_stem)
@@ -296,6 +451,11 @@ sb.torch.module.register_module_converter(LastLevelMaxPool, convert_last_level_m
 
 sb.torch.module.register_module_converter(BottleneckWithFixedBatchNormDeformable, convert_bottleneck_deformable)
 sb.torch.module.register_module_converter(DCN, convert_dcn)
+
+sb.torch.module.register_module_converter(RPNModule, convert_rpn)
+sb.torch.module.register_module_converter(RPNHead, convert_rpn_head)
+sb.torch.module.register_module_converter(AnchorGenerator, convert_anchor_generator)
+sb.torch.module.register_module_converter(RPNPostProcessor, convert_rpn_post_processor)
 
 
 def convert_module(m, x=None):
