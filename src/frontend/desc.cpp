@@ -36,5 +36,9 @@ namespace ts {
             bubble.set(name::permute, tensor::build(INT32, permute));
             return std::move(bubble);
         }
+
+        Bubble sigmoid() {
+            return Bubble(name::layer::sigmoid(), name::layer::sigmoid());
+        }
     }
 }

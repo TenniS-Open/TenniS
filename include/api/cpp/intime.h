@@ -21,6 +21,15 @@ namespace ts {
                 return transpose(x.get_raw(), permute);
             }
 
+            inline Tensor sigmoid(const ts_Tensor *x) {
+                auto y = ts_intime_sigmoid(x);
+                TS_API_AUTO_CHECK(y != nullptr);
+                return Tensor::NewRef(y);
+            }
+
+            inline Tensor sigmoid(const Tensor &x) {
+                return sigmoid(x.get_raw());
+            }
         }
     }
 }

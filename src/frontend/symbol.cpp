@@ -51,5 +51,11 @@ namespace ts {
             Node::Link(node, {x});
             return node;
         }
+
+        Node sigmoid(const std::string &name, const Node &x) {
+            Node node = bubble::bubble(desc::sigmoid(), name);
+            Node::Link(node, {x});
+            return node;
+        }
     }
 }
