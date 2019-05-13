@@ -3,6 +3,8 @@
 //
 
 #include <core/tensor_builder.h>
+#include <api/intime.h>
+
 #include "frontend/intime.h"
 #include "runtime/operator.h"
 #include "global/operator_factory.h"
@@ -59,6 +61,10 @@ namespace ts {
 
         Tensor div(const Tensor &lhs, const Tensor &rhs) {
             return run(desc::div(), {lhs, rhs});
+        }
+
+        Tensor transpose(const Tensor &x, const std::vector<int32_t> &permute) {
+            return run(desc::transpose(permute), {x});
         }
     }
 }

@@ -66,5 +66,9 @@ namespace ts {
         Node div(const std::string &name, const NodeOrTensor &lhs, const NodeOrTensor &rhs) {
             return symbol::div(name, lhs, rhs);
         }
+
+        Node transpose(const std::string &name, const NodeOrTensor &x, const std::vector<int32_t> &permute) {
+            return symbol::transpose(name, x, permute);
+        }
     }
 }
