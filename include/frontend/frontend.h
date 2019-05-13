@@ -62,6 +62,8 @@ namespace ts {
         TS_DEBUG_API Node mul(const std::string &name, const NodeOrTensor &lhs, const NodeOrTensor &rhs);
 
         TS_DEBUG_API Node div(const std::string &name, const NodeOrTensor &lhs, const NodeOrTensor &rhs);
+
+        TS_DEBUG_API Node transpose(const std::string &name, const NodeOrTensor &x, const std::vector<int32_t> &permute);
     }
 }
 

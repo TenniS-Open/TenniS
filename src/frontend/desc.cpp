@@ -30,5 +30,11 @@ namespace ts {
         Bubble div() {
             return Bubble(name::layer::div(), name::layer::div());
         }
+
+        Bubble transpose(const std::vector<int32_t> &permute) {
+            Bubble bubble(name::layer::transpose(), name::layer::transpose());
+            bubble.set(name::permute, tensor::build(INT32, permute));
+            return std::move(bubble);
+        }
     }
 }

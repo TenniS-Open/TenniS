@@ -40,6 +40,8 @@ namespace ts {
         TS_DEBUG_API Tensor mul(const Tensor &lhs, const Tensor &rhs);
 
         TS_DEBUG_API Tensor div(const Tensor &lhs, const Tensor &rhs);
+
+        TS_DEBUG_API Tensor transpose(const Tensor &x, const std::vector<int32_t> &permute);
     }
 }
 

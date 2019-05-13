@@ -34,7 +34,8 @@ namespace ts {
         explicit BindWorkbenchRuntime(Workbench &bench)
             : bind_thread_pool(bench.runtime().thread_pool())
             , bind_device_context(bench.device())
-            , bind_runtime_context(bench.runtime()) {
+            , bind_runtime_context(bench.runtime())
+            , bind_work_bench(bench) {
             // bench.device().active();
             m_pre_device_context = DeviceContext::Switch(&bench.device());
         }
@@ -55,6 +56,9 @@ namespace ts {
 
         // pre_device_context
         DeviceContext *m_pre_device_context = nullptr;
+
+        // bind self
+        ctx::bind<Workbench> bind_work_bench;
     };
 
     Workbench::Workbench(const ComputingDevice &device) {

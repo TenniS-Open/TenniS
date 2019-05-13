@@ -45,5 +45,11 @@ namespace ts {
             Node::Link(node, {lhs, rhs});
             return node;
         }
+
+        Node transpose(const std::string &name, const Node &x, const std::vector<int32_t> &permute) {
+            Node node = bubble::bubble(desc::transpose(permute), name);
+            Node::Link(node, {x});
+            return node;
+        }
     }
 }
