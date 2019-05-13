@@ -293,8 +293,8 @@ namespace ts {
     }
 
     int Workbench::online_run(Operator::shared op, const std::vector<Tensor> &input) {
-        m_stack->push_base(m_stack->size()); // empty base
-        need pop_base(&Stack::pop_base, m_stack.get());
+        // m_stack->push_base(m_stack->size()); // empty base
+        // need pop_base(&Stack::pop_base, m_stack.get());
         for (auto &tensor : input) {
             m_stack->push(tensor);
         }
@@ -314,8 +314,8 @@ namespace ts {
     }
 
     void Workbench::online_run(Instruction::shared inst, const std::vector<Tensor> &input) {
-        m_stack->push_base(m_stack->size()); // empty base
-        need pop_base(&Stack::pop_base, m_stack.get());
+        // m_stack->push_base(m_stack->size()); // empty base
+        // need pop_base(&Stack::pop_base, m_stack.get());
         for (auto &tensor : input) {
             m_stack->push(tensor);
         }

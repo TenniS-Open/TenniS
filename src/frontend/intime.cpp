@@ -12,12 +12,16 @@
 #include "runtime/stack.h"
 
 #include "utils/ctxmgr_lite.h"
+#include "utils/need.h"
 
 namespace ts {
     namespace intime {
         Tensor run(Workbench &bench, const Bubble &bubble, const std::vector<Tensor> &inputs) {
-            bench.online_run(bubble, inputs);
+            int ret = bench.online_run(bubble, inputs);
             auto &stack = bench.stack();
+            stack.push_base(-ret);
+            need clear_stack(&Stack::clear, &stack);
+
             auto fields_count = stack.size();
             if (fields_count == 1) {
                 return stack[0];
