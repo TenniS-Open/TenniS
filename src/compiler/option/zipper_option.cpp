@@ -45,30 +45,39 @@ namespace ts {
             auto format_tensor = bubble.get(name::format);
             auto format = tensor::to_string(format_tensor);
             auto stride_tensor = tensor::cast(INT32, bubble.get(name::stride));
-            auto dilation_tensor = tensor::cast(INT32, bubble.get(name::dilation));
+
+            if (bubble.has(name::dilation)) {
+                auto dilation_tensor = tensor::cast(INT32, bubble.get(name::dilation));
+                std::valarray<int> dilation4;
+                dilation4.resize(4);
+                for (size_t i = 0; i < 4; ++i)
+                    dilation4[i] = dilation_tensor.data<int32_t>(i);
+                if (format == name::NCHW) {
+                    if (dilation4[2] != 1 || dilation4[3] != 1)
+                        return false;
+                }
+                else if (format == name::NHWC) {
+                    if (dilation4[1] != 1 || dilation4[2] != 1)
+                        return false;
+                }
+                else {
+                    TS_LOG_ERROR << "Conv2d do not support format: " << format << eject;
+                }
+            }
 
             std::valarray<int> stride4;
-            std::valarray<int> dilation4;
             stride4.resize(4);
             for (size_t i = 0; i < 4; ++i) 
                 stride4[i] = stride_tensor.data<int32_t>(i);
-            dilation4.resize(4);
-            for (size_t i = 0; i < 4; ++i) 
-                dilation4[i] = dilation_tensor.data<int32_t>(i);
-
 
             auto inputs = node.inputs();
             //Size2D ksize; KSize2D stride_size; Dilation2D dilation_size
             if (format == name::NCHW) {
                 if (stride4[2] != 1 || stride4[3] != 1)
                     return false;
-                if (dilation4[2] != 1 || dilation4[3] != 1)
-                    return false;
             }
             else if (format == name::NHWC) {
                 if (stride4[1] != 1 || stride4[2] != 1)
-                    return false;
-                if (dilation4[1] != 1 || dilation4[2] != 1)
                     return false;
             }
             else {
@@ -95,7 +104,7 @@ namespace ts {
                 std::string pad_param_name = node.bubble().name() + "_pad_param";
                 auto padding = bubble::data(pad_param_name, padding_param_tensor,CPU);
                 std::string pad_name = node.bubble().name() + "_pad";
-;                auto pad_node = bubble::op(pad_name, name::layer::pad(), { inputs[0],padding });
+                auto pad_node = bubble::op(pad_name, name::layer::pad(), { inputs[0],padding });
                 if (node.bubble().has(name::padding_value)) {
                     auto padding_value_tensor = node.bubble().get(name::padding_value);
                     pad_node.bubble().set(name::padding_value, padding_value_tensor);
