@@ -23,11 +23,19 @@ namespace ts {
             using shared = std::shared_ptr<self>;
             using shared_raw = std::shared_ptr<raw>;
 
+            static self NewRef(raw *ptr) { return self(ptr); }
+
             ImageFilter(const self &) = default;
 
             ImageFilter &operator=(const self &) = default;
 
             raw *get_raw() const { return m_impl.get(); }
+
+            bool operator==(std::nullptr_t) const { return get_raw() == nullptr; }
+
+            bool operator!=(std::nullptr_t) const { return get_raw() != nullptr; }
+
+            ImageFilter(std::nullptr_t) {}
 
             ImageFilter() : self(Device()) {}
 

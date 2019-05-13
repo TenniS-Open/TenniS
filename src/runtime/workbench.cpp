@@ -35,7 +35,7 @@ namespace ts {
             : bind_thread_pool(bench.runtime().thread_pool())
             , bind_device_context(bench.device())
             , bind_runtime_context(bench.runtime()) {
-            bench.device().active();
+            // bench.device().active();
             m_pre_device_context = DeviceContext::Switch(&bench.device());
         }
 
@@ -289,8 +289,8 @@ namespace ts {
     }
 
     int Workbench::online_run(Operator::shared op, const std::vector<Tensor> &input) {
-        m_stack->push_base(m_stack->size()); // empty base
-        need pop_base(&Stack::pop_base, m_stack.get());
+        // m_stack->push_base(m_stack->size()); // empty base
+        // need pop_base(&Stack::pop_base, m_stack.get());
         for (auto &tensor : input) {
             m_stack->push(tensor);
         }
@@ -310,8 +310,8 @@ namespace ts {
     }
 
     void Workbench::online_run(Instruction::shared inst, const std::vector<Tensor> &input) {
-        m_stack->push_base(m_stack->size()); // empty base
-        need pop_base(&Stack::pop_base, m_stack.get());
+        // m_stack->push_base(m_stack->size()); // empty base
+        // need pop_base(&Stack::pop_base, m_stack.get());
         for (auto &tensor : input) {
             m_stack->push(tensor);
         }
@@ -488,6 +488,14 @@ namespace ts {
          * do compile, from module to program
          */
         return Program::Compile(module, this->device().computing_device);
+    }
+
+    void Workbench::setup_runtime() {
+        this->runtime().setup_context();
+    }
+
+    void Workbench::setup_device() {
+        DeviceContext::Switch(&this->device());
     }
 }
 

@@ -90,7 +90,15 @@ TENSOR_STACK_C_API ts_bool ts_Workbench_setup_context(ts_Workbench *workbench);
  */
 TENSOR_STACK_C_API ts_Program *ts_Workbench_compile(ts_Workbench *workbench, const ts_Module *module);
 
+/**
+ * Return false if failed.
+ */
+TENSOR_STACK_C_API ts_bool ts_Workbench_setup_device(ts_Workbench *workbench);
 
+/**
+ * Return false if failed
+ */
+TENSOR_STACK_C_API ts_bool ts_Workbench_setup_runtime(ts_Workbench *workbench);
 
 
 #ifdef __cplusplus
