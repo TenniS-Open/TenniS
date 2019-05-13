@@ -22,7 +22,7 @@ namespace ts {
             need pop_base(&Stack::pop_base, &stack);
             need clear_stack(&Stack::clear, &stack);
 
-            int ret = bench.online_run(bubble, inputs);
+            bench.online_run(bubble, inputs);
 
             auto fields_count = stack.size();
             if (fields_count == 1) {
@@ -75,6 +75,18 @@ namespace ts {
 
         Tensor sigmoid(const Tensor &x) {
             return run(desc::sigmoid(), {x});
+        }
+
+        Tensor gather(const Tensor &x, const Tensor &indices, int32_t axis) {
+            return run(desc::gather(axis), {x, indices});
+        }
+
+        Tensor gather(const Tensor &x, const std::vector<int32_t> &indices, int32_t axis) {
+            return run(desc::gather(axis), {x, tensor::build(INT32, indices)});
+        }
+
+        Tensor concat(const std::vector<Tensor> &x, int32_t dim) {
+            return run(desc::concat(dim), x);
         }
     }
 }

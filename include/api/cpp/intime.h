@@ -11,24 +11,32 @@
 namespace ts {
     namespace api {
         namespace intime {
-            inline Tensor transpose(const ts_Tensor *x, const std::vector<int32_t> &permute) {
-                auto y = ts_intime_transpose(x, permute.data(), int32_t(permute.size()));
-                TS_API_AUTO_CHECK(y != nullptr);
-                return Tensor::NewRef(y);
-            }
-
             inline Tensor transpose(const Tensor &x, const std::vector<int32_t> &permute) {
-                return transpose(x.get_raw(), permute);
-            }
-
-            inline Tensor sigmoid(const ts_Tensor *x) {
-                auto y = ts_intime_sigmoid(x);
+                auto y = ts_intime_transpose(x.get_raw(), permute.data(), int32_t(permute.size()));
                 TS_API_AUTO_CHECK(y != nullptr);
                 return Tensor::NewRef(y);
             }
 
             inline Tensor sigmoid(const Tensor &x) {
-                return sigmoid(x.get_raw());
+                auto y = ts_intime_sigmoid(x.get_raw());
+                TS_API_AUTO_CHECK(y != nullptr);
+                return Tensor::NewRef(y);
+            }
+
+            inline Tensor gather(const Tensor &x, const Tensor &indices, int32_t axis) {
+                auto y = ts_intime_gather(x.get_raw(), indices.get_raw(), axis);
+                TS_API_AUTO_CHECK(y != nullptr);
+                return Tensor::NewRef(y);
+            }
+
+            inline Tensor concat(const std::vector<Tensor> &x, int32_t dim) {
+                std::vector<ts_Tensor*> inputs;
+                for (auto &input : x) {
+                    inputs.emplace_back(input.get_raw());
+                }
+                auto y = ts_intime_concat(inputs.data(), int32_t(x.size()), dim);
+                TS_API_AUTO_CHECK(y != nullptr);
+                return Tensor::NewRef(y);
             }
         }
     }

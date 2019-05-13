@@ -34,6 +34,10 @@ namespace ts {
         TS_DEBUG_API Bubble transpose(const std::vector<int32_t> &permute);
 
         TS_DEBUG_API Bubble sigmoid();
+
+        TS_DEBUG_API Bubble gather(int32_t axis);
+
+        TS_DEBUG_API Bubble concat(int32_t dim);
     }
 }
 

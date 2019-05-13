@@ -16,6 +16,10 @@ TENSOR_STACK_C_API ts_Tensor *ts_intime_transpose(const ts_Tensor *x, const int3
 
 TENSOR_STACK_C_API ts_Tensor *ts_intime_sigmoid(const ts_Tensor *x);
 
+TENSOR_STACK_C_API ts_Tensor *ts_intime_gather(const ts_Tensor *x, const ts_Tensor *indices, int32_t axis);
+
+TENSOR_STACK_C_API ts_Tensor *ts_intime_concat(const ts_Tensor *const *x, int32_t len, int32_t dim);
+
 #ifdef __cplusplus
 }
 #endif

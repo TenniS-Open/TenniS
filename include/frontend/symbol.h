@@ -26,6 +26,10 @@ namespace ts {
         TS_DEBUG_API Node transpose(const std::string &name, const Node &x, const std::vector<int32_t> &permute);
 
         TS_DEBUG_API Node sigmoid(const std::string &name, const Node &x);
+
+        TS_DEBUG_API Node gather(const std::string &name, const Node &x, const Node &indices, int32_t axis);
+
+        TS_DEBUG_API Node concat(const std::string &name, const std::vector<Node> &x, int32_t dim);
     }
 }
 

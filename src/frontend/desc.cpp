@@ -40,5 +40,17 @@ namespace ts {
         Bubble sigmoid() {
             return Bubble(name::layer::sigmoid(), name::layer::sigmoid());
         }
+
+        Bubble gather(int32_t axis) {
+            Bubble bubble(name::layer::gather(), name::layer::gather());
+            bubble.set(name::axis, tensor::from<int32_t>(axis));
+            return std::move(bubble);
+        }
+
+        Bubble concat(int32_t dim) {
+            Bubble bubble(name::layer::concat(), name::layer::concat());
+            bubble.set(name::dim, tensor::from<int32_t>(dim));
+            return std::move(bubble);
+        }
     }
 }

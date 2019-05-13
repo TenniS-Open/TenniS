@@ -57,5 +57,17 @@ namespace ts {
             Node::Link(node, {x});
             return node;
         }
+
+        Node gather(const std::string &name, const Node &x, const Node &indices, int32_t axis) {
+            Node node = bubble::bubble(desc::gather(axis), name);
+            Node::Link(node, {x, indices});
+            return node;
+        }
+
+        Node concat(const std::string &name, const std::vector<Node> &x, int32_t dim) {
+            Node node = bubble::bubble(desc::gather(dim), name);
+            Node::Link(node, x);
+            return node;
+        }
     }
 }
