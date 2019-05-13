@@ -531,7 +531,7 @@ namespace ts {
             case InFlow::HOST: {
                 auto flow = ctx::of<RuntimeContext>::ref().flow();
                 if (flow) {
-                    *this = Tensor(flow, proto);
+                    *this = Tensor(flow, proto, MemoryDevice(CPU));
                 } else {
                     throw Exception(std::string("Not flow binding in context: <") + typeid(RuntimeContext).name() + ">");
                 }
@@ -554,7 +554,7 @@ namespace ts {
             case InFlow::HOST: {
                 auto flow = ctx::of<RuntimeContext>::ref().flow();
                 if (flow) {
-                    *this = Tensor(flow, proto);
+                    *this = Tensor(flow, proto, MemoryDevice(CPU));
                 } else {
                     throw Exception(std::string("Not flow binding in context: <") + typeid(RuntimeContext).name() + ">");
                 }
