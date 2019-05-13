@@ -17,10 +17,12 @@
 namespace ts {
     namespace intime {
         Tensor run(Workbench &bench, const Bubble &bubble, const std::vector<Tensor> &inputs) {
-            int ret = bench.online_run(bubble, inputs);
             auto &stack = bench.stack();
-            stack.push_base(-ret);
+            stack.push_base(stack.size());
+            need pop_base(&Stack::pop_base, &stack);
             need clear_stack(&Stack::clear, &stack);
+
+            int ret = bench.online_run(bubble, inputs);
 
             auto fields_count = stack.size();
             if (fields_count == 1) {
