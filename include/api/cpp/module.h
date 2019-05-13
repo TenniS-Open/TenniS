@@ -39,11 +39,19 @@ namespace ts {
             using shared = std::shared_ptr<self>;
             using shared_raw = std::shared_ptr<raw>;
 
+            static self NewRef(raw *ptr) { return self(ptr); }
+
             Module(const self &) = default;
 
             Module &operator=(const self &) = default;
 
             raw *get_raw() const { return m_impl.get(); }
+
+            bool operator==(std::nullptr_t) const { return get_raw() == nullptr; }
+
+            bool operator!=(std::nullptr_t) const { return get_raw() != nullptr; }
+
+            Module(std::nullptr_t) {}
 
             Module() = default;
 

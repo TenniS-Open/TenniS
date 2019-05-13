@@ -145,7 +145,7 @@ namespace ts {
         int online_run(Operator::shared op, int argc);
 
         /**
-         * This API will clear stack before run op, then push input to stack
+         * This API push input to stack, then run online
          * @param op
          * @param input
          */
@@ -158,7 +158,7 @@ namespace ts {
         void online_run(Instruction::shared inst);
 
         /**
-         * This API will clear stack before run op, then push input to stack
+         * This API push input to stack, then run online, the inst return size, is given by doc
          * @param inst
          * @param input
          */
@@ -216,6 +216,16 @@ namespace ts {
         std::vector<Tensor> launch_offline(Program::shared program, const std::map<std::string, Tensor> &args);
 
         Program::shared compile(const Module::shared &module);
+
+        /**
+         * setup context DeviceContext
+         */
+        void setup_device();
+
+        /**
+         * setup context RuntimeContext
+         */
+        void setup_runtime();
 
     private:
         // size_t m_pointer = 0;   // pointer to running function
