@@ -96,14 +96,14 @@ namespace ts {
             Dilation2D dialations(1, 1);
             Padding2D padding(0, 0, 0, 0);
             //Padding2D padding;
-            //if (m_format == FORMAT_NCHW) {
-            //    x = Size2D(x_tensor.size(2), x_tensor.size(3));
-            //    padding = Padding2D(m_padding4x2[4], m_padding4x2[5], m_padding4x2[6], m_padding4x2[7]);
-            //}
-            //else if (m_format == FORMAT_NHWC) {
-            //    x = Size2D(x_tensor.size(1), x_tensor.size(2));
-            //    padding = Padding2D(m_padding4x2[2], m_padding4x2[3], m_padding4x2[4], m_padding4x2[5]);
-            //}
+            if (m_format == FORMAT_NCHW) {
+                x = Size2D(x_tensor.size(2), x_tensor.size(3));
+                //padding = Padding2D(m_padding4x2[4], m_padding4x2[5], m_padding4x2[6], m_padding4x2[7]);
+            }
+            else if (m_format == FORMAT_NHWC) {
+                x = Size2D(x_tensor.size(1), x_tensor.size(2));
+                //padding = Padding2D(m_padding4x2[2], m_padding4x2[3], m_padding4x2[4], m_padding4x2[5]);
+            }
 
             Size2D y = conv2d_forward(x, padding, ksize, stride, dialations);
 
