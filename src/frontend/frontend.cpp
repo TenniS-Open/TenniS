@@ -70,5 +70,9 @@ namespace ts {
         Node transpose(const std::string &name, const NodeOrTensor &x, const std::vector<int32_t> &permute) {
             return symbol::transpose(name, x, permute);
         }
+
+        Node sigmoid(const std::string &name, const NodeOrTensor &x) {
+            return symbol::sigmoid(name, x);
+        }
     }
 }

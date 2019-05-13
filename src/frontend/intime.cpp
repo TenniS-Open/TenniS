@@ -72,5 +72,9 @@ namespace ts {
         Tensor transpose(const Tensor &x, const std::vector<int32_t> &permute) {
             return run(desc::transpose(permute), {x});
         }
+
+        Tensor sigmoid(const Tensor &x) {
+            return run(desc::sigmoid(), {x});
+        }
     }
 }
