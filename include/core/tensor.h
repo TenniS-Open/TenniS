@@ -297,6 +297,21 @@ namespace ts {
 
         Tensor flatten(int dim = 0) const;
 
+        /**
+         * Got borrowed Tensor
+         * @param i
+         * @return [i, :]
+         */
+        Tensor slice(int i);
+
+        /**
+         * Got borrowed Tensor
+         * @param beg
+         * @param end
+         * @return [beg:end, :]
+         */
+        Tensor slice(int beg, int end);
+
         bool has_empty_shape() const;
 
         bool has_shape(int arg0) const;

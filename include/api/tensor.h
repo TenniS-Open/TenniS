@@ -124,6 +124,17 @@ TENSOR_STACK_C_API int32_t ts_Tensor_fields_count(ts_Tensor *tensor);
 TENSOR_STACK_C_API ts_Tensor *ts_Tensor_pack(ts_Tensor **fields, int32_t count);
 
 
+/**
+ * Return NULL if failed
+ */
+TENSOR_STACK_C_API ts_Tensor *ts_Tensor_slice(ts_Tensor *tensor, int32_t i);
+
+
+/**
+ * Return NULL if failed
+ */
+TENSOR_STACK_C_API ts_Tensor *ts_Tensor_slice_v2(ts_Tensor *tensor, int32_t beg, int32_t end);
+
 
 #ifdef __cplusplus
 }
