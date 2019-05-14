@@ -206,6 +206,18 @@ namespace ts {
                 return std::move(borrowed);
             }
 
+            Tensor slice(int32_t i) {
+                auto ret = ts_Tensor_slice(m_impl.get(), i);
+                TS_API_AUTO_CHECK(ret != nullptr);
+                return Tensor(ret);
+            }
+
+            Tensor slice(int32_t beg, int32_t end) {
+                auto ret = ts_Tensor_slice_v2(m_impl.get(), beg, end);
+                TS_API_AUTO_CHECK(ret != nullptr);
+                return Tensor(ret);
+            }
+
         private:
             Tensor(raw *ptr) : m_impl(pack(ptr)) {}
 
