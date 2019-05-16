@@ -350,7 +350,8 @@ def convert_rpn_head(m, x, scope=None):
     index = 0
 
     for feature in x:
-        t = ts_convert_module(m.conv, feature, scope=scope + "/relu/" + str(index))
+        t = ts_convert_module(m.conv, feature, scope=scope + "/conv/" + str(index))
+        t = ts.zoo.relu(scope + "/relu/" + str(index), t)
         logits.append(ts_convert_module(m.cls_logits, t, scope=scope + "/cls_logits/" + str(index)))
         bbox_reg.append(ts_convert_module(m.bbox_pred, t, scope=scope + "/bbox_pred/" + str(index)))
 
@@ -436,6 +437,10 @@ def convert_rpn_post_processor(m, x, scope=None):
     return maskrcnn.box_selector(name=scope,
                                  anchors=anchors, objectness=objectness, rpn_box_regression=rpn_box_regression,
                                  pre_nms_top_n=m.pre_nms_top_n,
+                                 min_size=m.min_size,
+                                 nms_thresh=m.nms_thresh,
+                                 post_nms_top_n=m.post_nms_top_n,
+                                 fpn_post_nms_top_n=m.fpn_post_nms_top_n,
                                  weights=m.box_coder.weights,
                                  bbox_xform_clip=m.box_coder.bbox_xform_clip)
 
