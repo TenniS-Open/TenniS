@@ -121,7 +121,7 @@ def convert_resnet(m, x, scope=None):
 
 
 def convert_batch_norm2d(m, x, scope=None):
-    # type: (orch.nn.modules.batchnorm.BatchNorm2d, ts.Node, str) -> ts.Node
+    # type: (torch.nn.modules.batchnorm.BatchNorm2d, ts.Node, str) -> ts.Node
     if isinstance(x, (tuple, list)):
         x = x[0]
 
@@ -151,11 +151,35 @@ def convert_batch_norm2d(m, x, scope=None):
                                    dim=1, epsilon=eps)
 
 
+def convert_linear(m, x, scope=None):
+    # type: (torch.nn.modules.linear.Linear, ts.Node, str) -> ts.Node
+    if isinstance(x, (tuple, list)):
+        x = x[0]
+
+    if scope is None:
+        scope = ""
+
+    assert isinstance(x, ts.Node)
+    assert isinstance(m, torch.nn.modules.linear.Linear)
+    
+    weight = numpy.asarray(m.weight.cpu(), dtype=numpy.float32)
+
+    node = ts.zoo.inner_prod(name=scope + "/inner_prod", lhs=x, rhs=weight, transpose=True)
+    if m.bias is not None:
+        bias = numpy.asarray(m.bias.cpu(), dtype=numpy.float32)
+        node = ts.zoo.add_bias(name=scope, x=node, b=bias, dim=1)
+
+    node.name = scope
+
+    return node
+
+    
 module2converter = {
     torchvision.models.resnet.ResNet: convert_resnet,
     torch.nn.modules.container.Sequential: convert_sequential,
     torch.nn.modules.conv.Conv2d: convert_conv2d,
     torch.nn.modules.batchnorm.BatchNorm2d: convert_batch_norm2d,
+    torch.nn.modules.linear.Linear: convert_linear,
 }
 
 
