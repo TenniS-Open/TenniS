@@ -135,6 +135,16 @@ TENSOR_STACK_C_API ts_Tensor *ts_Tensor_slice(ts_Tensor *tensor, int32_t i);
  */
 TENSOR_STACK_C_API ts_Tensor *ts_Tensor_slice_v2(ts_Tensor *tensor, int32_t beg, int32_t end);
 
+/**
+ * return false if failed
+ */
+TENSOR_STACK_C_API ts_bool ts_Tensor_save(const char *path, const ts_Tensor *tensor);
+
+/**
+ * return NULL if failed
+ */
+TENSOR_STACK_C_API ts_Tensor *ts_Tensor_load(const char *path);
+
 
 #ifdef __cplusplus
 }

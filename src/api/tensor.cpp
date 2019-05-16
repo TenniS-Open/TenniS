@@ -193,3 +193,20 @@ ts_Tensor *ts_Tensor_slice_v2(ts_Tensor *tensor, int32_t beg, int32_t end) {
     RETURN_OR_CATCH(dolly.release(), nullptr)
 }
 
+ts_bool ts_Tensor_save(const char *path, const ts_Tensor *tensor) {
+    TRY_HEAD
+        if (!path) throw Exception("NullPointerException: @param: 1");
+        if (!tensor) throw Exception("NullPointerException: @param: 2");
+        tensor::save(path, **tensor);
+    RETURN_OR_CATCH(true, false)
+}
+
+ts_Tensor *ts_Tensor_load(const char *path) {
+    TRY_HEAD
+        if (!path) throw Exception("NullPointerException: @param: 1");
+        std::unique_ptr<ts_Tensor> dolly(new ts_Tensor(
+                tensor::load(path)
+        ));
+    RETURN_OR_CATCH(dolly.release(), nullptr)
+}
+

@@ -362,6 +362,18 @@ namespace ts {
                 for (auto &size : shape) count *= size;
                 return cast(dtype, tensor_builder<T>::build(data, size_t(count), shape));
             }
+
+            inline Tensor load(const std::string &path) {
+                return Tensor::NewRef(ts_Tensor_load(path.c_str()));
+            }
+
+            inline void save(const std::string &path, const Tensor &tensor) {
+                ts_Tensor_save(path.c_str(), tensor.get_raw());
+            }
+
+            inline void save(const std::string &path, const ts_Tensor *tensor) {
+                ts_Tensor_save(path.c_str(), tensor);
+            }
         }
     }
 }
