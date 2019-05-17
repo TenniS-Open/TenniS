@@ -94,6 +94,9 @@ namespace ts {
                 static string str = "_copy";
                 return str;
             }
+
+            const string &winograd_transform_kernel() TS_NOEXCEPT { static string str = "winograd_transform_kernel"; return str; }
+            const string &conv2d_winograd() TS_NOEXCEPT { static string str = "conv2d_winograd"; return str; }
         }
 
         namespace typo {
@@ -161,5 +164,10 @@ namespace ts {
 
         string max_output_size = "max_output_size";
         string align_corners = "align_corners";
+
+        string winograd_model = "winograd_model";
+        string winograd_f23 = "winograd_f23";
+        string winograd_f63 = "winograd_f63";
+
     }
 }

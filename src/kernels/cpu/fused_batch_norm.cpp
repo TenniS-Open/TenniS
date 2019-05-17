@@ -7,7 +7,7 @@
 #include <core/device.h>
 #include <vector>
 
-#ifdef TS_USE_SSE
+#ifdef TS_USE_SIMD
 #include "kernels/common/simd.h"
 #endif
 
@@ -64,7 +64,7 @@ namespace ts {
             }
         }
 
-#ifdef TS_USE_SSE
+#ifdef TS_USE_SIMD
         template<>
         void cpu_batch_norm_compute_run<float>(const Tensor &x,
             const Tensor &mean, const Tensor &variance,

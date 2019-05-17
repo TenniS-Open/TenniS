@@ -12,7 +12,7 @@
 #include "core/device_context.h"
 #include "utils/ctxmgr_lite.h"
 #include "kernels/gpu/math_cublas.h"
-
+#include "kernels/gpu/gpu_helper.h"
 
 
 namespace ts {
@@ -142,9 +142,11 @@ namespace ts {
             dim3 blocksize(CUDA_BLOCK(conv_out_spatial_dim, TRANS_BLOCK_DIM),CUDA_BLOCK(weight_shape[0], TRANS_BLOCK_DIM), 1);
             dim3 threadsize(TRANS_BLOCK_DIM, TRANS_BLOCK_DIM,1);
 
+            auto cuda_stream = get_cuda_stream_on_context();
+
             for(int i=0; i<number; i++) { 
                 if(!is_1x1_conv) {
-                    gpu_im2col_kernel<T> <<< CUDA_BLOCK(put_param, CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> (
+                    gpu_im2col_kernel<T> <<< CUDA_BLOCK(put_param, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >>> (
                                             put_param, pinput, input.height, input.width, 
                                             ksize.height, ksize.width, padding.top, padding.left,
                                             stride.height, stride.width, dilation.height, dilation.width,
@@ -154,17 +156,17 @@ namespace ts {
                     col_buffer = const_cast<T *>(pinput);
                 }
 
-#ifdef TS_USE_CUBLAS
                 auto &context = ctx::ref<DeviceContext>();
                 CUDAContextHandle* handle = reinterpret_cast<CUDAContextHandle*>(context.handle);
+#ifdef TS_USE_CUBLAS
                 auto cublas_handle = handle->cublas_handle();
 
                 cublas::math<T>::gemm(cublas_handle, cublas::NoTrans, cublas::NoTrans,
                     weight_shape[0], conv_out_spatial_dim, kernel_dims, 1, pweight, col_buffer, 0, poutput);
 
 #else
-
-                gpu_conv2d_compute_run_kernel<T> <<<blocksize, threadsize>>>
+                auto cuda_stream = handle->stream();
+                gpu_conv2d_compute_run_kernel<T> <<<blocksize, threadsize, 0, cuda_stream >>>
                       (weight_shape[0], kernel_dims,conv_out_spatial_dim, pweight, col_buffer, poutput);
 #endif
 

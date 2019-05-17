@@ -8,6 +8,10 @@
 #include "kernels/gpu/gpu_helper.h"
 #include "core/tensor_iterator.h"
 
+#include "kernels/gpu/cuda_context.h"
+#include "core/device_context.h"
+#include "utils/ctxmgr_lite.h"
+
 namespace ts {
     namespace gpu {
         static inline std::shared_ptr<char> cpu_blocked(const std::vector<CpuBlock> &cpu) {
@@ -89,6 +93,15 @@ namespace ts {
             auto gpu_memory = convert_block_to_gpu(RuntimeContext::FlowMemory(), device, cpu, gpu);
 
             return std::make_pair(std::move(gpu_memory), gpu_shape_array);
+        }
+
+        cudaStream_t get_cuda_stream_on_context() {
+            auto &context = ctx::ref<DeviceContext>();
+            CUDAContextHandle* handle = reinterpret_cast<CUDAContextHandle*>(context.handle);
+            if(handle == nullptr)
+                TS_LOG_ERROR << "The CUDAContextHandle is null! " << eject;
+            auto cuda_stream = handle->stream();
+            return cuda_stream;
         }
     }
 }
