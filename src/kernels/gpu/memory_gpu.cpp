@@ -59,11 +59,14 @@ namespace ts {
     }
 
     void gpu2gpu_converter(int dst_id, void *dst, int src_id, const void *src, size_t size) {
-        auto &context = ctx::ref<DeviceContext>();
-        CUDAContextHandle* handle = reinterpret_cast<CUDAContextHandle*>(context.handle);
+        auto context = ctx::get<DeviceContext>();
+        if (context == NULL) {
+            TS_LOG_ERROR << "Memcpy need to bind DeviceContext" << eject;
+        }
+        CUDAContextHandle* handle = reinterpret_cast<CUDAContextHandle*>(context->handle);
         auto cuda_stream = handle->stream();
         cudaMemcpyAsync(dst, src, size, cudaMemcpyHostToDevice, cuda_stream);
-        context.synchronize();
+        context->synchronize();
         //cudaMemcpy(dst, src, size, cudaMemcpyDeviceToDevice);
     }
 
