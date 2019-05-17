@@ -88,15 +88,24 @@ namespace ts {
             if (op_name == name::layer::conv2d()) {
                 TS_AUTO_CHECK(inputs.size() == 2);
                 kernel_tensor = inputs[1].bubble().get(name::value);
-                auto kernel_shape = kernel_tensor.sizes();
-                if (format == name::NCHW) {
-                    if (kernel_shape[2] != 3 || kernel_shape[3] != 3)
-                        return false;
-                }
-                else {
-                    if (kernel_shape[1] != 3 || kernel_shape[2] != 3)
-                        return false;
-                }
+            }
+            else {
+                TS_AUTO_CHECK(inputs.size() == 3);
+                kernel_tensor = inputs[2].bubble().get(name::value);
+            }
+            auto kernel_shape = kernel_tensor.sizes();
+            if (format == name::NCHW) {
+                if (kernel_shape[2] != 3 || kernel_shape[3] != 3)
+                    return false;
+                //NOTE:When the number of channels is too large,winograd is slower than im2col+gemm
+                if (kernel_shape[0] * kernel_shape[1] > 256 * 512)
+                    return false;
+            }
+            else {
+                if (kernel_shape[1] != 3 || kernel_shape[2] != 3)
+                    return false;
+                if (kernel_shape[0] * kernel_shape[3] > 256 * 512)
+                    return false;
             }
 
             if (op_name == name::layer::conv2d()) {  
@@ -137,4 +146,6 @@ namespace ts {
 }
 
 TS_REGISTER_ZIPPER_OPTION(ts::EmptyZipperOption)
+#ifdef TS_USE_WINOGRAD
 TS_REGISTER_ZIPPER_OPTION(ts::Conv2dZipperOption)
+#endif
