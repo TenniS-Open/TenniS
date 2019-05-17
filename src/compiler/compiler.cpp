@@ -104,16 +104,16 @@ namespace ts {
         Zipper zipper(m_computing_device);
         std::vector<Node> zip_ouputs = zipper.zip(raw_outputs);
 
-        std::cout << "+++++++++++++++++ original graph ++++++++++++++++++++++" << std::endl;
-        plot_graph(std::cout, zip_ouputs);
+        // std::cout << "+++++++++++++++++ original graph ++++++++++++++++++++++" << std::endl;
+        // plot_graph(std::cout, zip_ouputs);
 
         std::vector<Node> outputs;
         run_const_nodes(zip_ouputs, outputs);
 
-        std::cout << "+++++++++++++++++ const graph ++++++++++++++++++++++" << std::endl;
-        plot_graph(std::cout, outputs);
+        // std::cout << "+++++++++++++++++ const graph ++++++++++++++++++++++" << std::endl;
+        // plot_graph(std::cout, outputs);
 
-        std::cout << "++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+        // std::cout << "++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
 
         InstructionBlock block;
         block.nargs = int(inputs.size());
