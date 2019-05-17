@@ -2727,9 +2727,9 @@ namespace ts {
                         {
                             const T* input_tm_at = input_tm_ptr + n * tm_num_offset + q * tm_c_offset;
                             const T* r0 = input_tm_at + i * 64;
-                            const T* r1 = r0 + tm_c_offset;
-                            const T* r2 = r1 + tm_c_offset;
-                            const T* r3 = r2 + tm_c_offset;
+                            // const T* r1 = r0 + tm_c_offset;
+                            // const T* r2 = r1 + tm_c_offset;
+                            // const T* r3 = r2 + tm_c_offset;
 
                             const T* k0 = kernel_tm_0 + q * ktm_c_offset;
                             const T* k1 = k0 + ktm_c_offset;
@@ -3724,9 +3724,9 @@ namespace ts {
                         {
                             const T* input_tm_at = input_tm_ptr + n * tm_num_offset + q * tm_c_offset;
                             const T* r0 = input_tm_at + i * 64;
-                            const T* r1 = r0 + tm_c_offset;
-                            const T* r2 = r1 + tm_c_offset;
-                            const T* r3 = r2 + tm_c_offset;
+                            // const T* r1 = r0 + tm_c_offset;
+                            // const T* r2 = r1 + tm_c_offset;
+                            // const T* r3 = r2 + tm_c_offset;
 
                             const T* k0 = kernel_tm_0 + q * ktm_c_offset;
                             const T* k1 = k0 + ktm_c_offset;
