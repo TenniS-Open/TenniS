@@ -37,6 +37,9 @@
 
 #include <Windows.h>
 #include <sys/stat.h>
+#ifdef min
+#undef min
+#endif
 
 #elif TS_PLATFORM_OS_LINUX || TS_PLATFORM_OS_MAC || TS_PLATFORM_OS_IOS
 
@@ -414,6 +417,7 @@ namespace ts {
             static const float MAX_MAX = 1e-4f;
             static const float MAX_AVG = 1e-5f;
 
+            ctx::bind<DeviceContext> _bind_device_context(bench.device());
             // check diff
             Status succeed = Status::OK;
             float max, avg;

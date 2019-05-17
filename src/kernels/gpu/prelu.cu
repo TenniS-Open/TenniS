@@ -7,6 +7,8 @@
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
 
+#include "kernels/gpu/gpu_helper.h"
+
 namespace ts {
     namespace gpu {
         template<typename T>
@@ -40,7 +42,10 @@ namespace ts {
 
             dim3 blockSize(CUDA_THREAD_NUM);
             dim3 gridSize(CUDA_BLOCK(count, blockSize.x));
-            prelu_kernel<T> << <gridSize, blockSize >> > (input_data, output_data, slope_data, dim_num, last_dims, count);
+
+            auto cuda_stream = get_cuda_stream_on_context();
+
+            prelu_kernel<T> << <gridSize, blockSize, 0, cuda_stream >> > (input_data, output_data, slope_data, dim_num, last_dims, count);
         }
 
         void PReLU::prelu(const Tensor &x, const Tensor &slope, int dim, Tensor &out) {

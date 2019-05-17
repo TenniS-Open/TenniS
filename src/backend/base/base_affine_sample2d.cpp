@@ -49,7 +49,7 @@ namespace ts {
                dim = input_shape.size() + dim;
             }
 
-            std::cout << dim << std::endl;
+            // std::cout << dim << std::endl;
             TS_AUTO_CHECK((dim >= 0) && (dim + 1  < input_shape.size()));
 
             auto size_tensor = tensor::cast(INT32, stack[1]);

@@ -81,7 +81,9 @@ namespace ts {
                 (void **)(&gpu_in_dim_weights),
             });
             auto &gpu_out_shape = gpu_memory.second[0];
-            gpu_transpose_kernel<T> << < CUDA_BLOCK(count, CUDA_THREAD_NUM), CUDA_THREAD_NUM >> > (count, gpu_permute, in_data, gpu_in_dim_weights, out_data, gpu_out_shape);
+
+            auto cuda_stream = get_cuda_stream_on_context();
+            gpu_transpose_kernel<T> << < CUDA_BLOCK(count, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >> > (count, gpu_permute, in_data, gpu_in_dim_weights, out_data, gpu_out_shape);
         }
 
         void Transpose::transpose(const Tensor &x, const std::vector<int> &permute, Tensor &out) {

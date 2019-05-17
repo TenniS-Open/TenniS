@@ -68,7 +68,10 @@ namespace ts {
             auto in_data = x.data<T>();
             auto out_data = out.data<T>();
             auto count = out.count();
-            pad_gpu_kernel<T> << < CUDA_BLOCK(count, CUDA_THREAD_NUM), CUDA_THREAD_NUM >> > (count, gpu_padding, T(padding_value), in_data, out_data, gpu_in_shape, gpu_out_shape);
+
+            auto cuda_stream = get_cuda_stream_on_context();
+
+            pad_gpu_kernel<T> << < CUDA_BLOCK(count, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >> > (count, gpu_padding, T(padding_value), in_data, out_data, gpu_in_shape, gpu_out_shape);
         }
 
         void PadOnGPU::pad(const Tensor &x, const std::vector<std::array<int, 2>> &padding, float padding_value, Tensor &out) {

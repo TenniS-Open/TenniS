@@ -64,7 +64,12 @@ namespace ts {
             auto &C_hype_shape = gpu_hype_shape.second[0];
             auto &out_hype_shape = gpu_hype_shape.second[1];
             auto count = out.count();
-            gpu_gemm_broadcast_kernel<T> << < CUDA_BLOCK(count, CUDA_THREAD_NUM), CUDA_THREAD_NUM >> > (count, C.data<T>(), out.data<T>(), C_hype_shape, out_hype_shape);
+
+            auto &context = ctx::ref<DeviceContext>();
+            CUDAContextHandle* handle = reinterpret_cast<CUDAContextHandle*>(context.handle);
+            auto cuda_stream = handle->stream();
+
+            gpu_gemm_broadcast_kernel<T> << < CUDA_BLOCK(count, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >> > (count, C.data<T>(), out.data<T>(), C_hype_shape, out_hype_shape);
         }
 
         template<typename T>

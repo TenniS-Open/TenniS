@@ -12,6 +12,8 @@
 #include "core/device_context.h"
 #include "kernels/gpu/cuda_context.h"
 
+#include "utils/ctxmgr_lite.h"
+
 namespace ts {
     __global__ void createBatchGemmBuffer(const float **input_b, float **output_b,
                                           const float **columns_b, const float **ones_b,
@@ -118,7 +120,9 @@ namespace ts {
         const int block = 128;
         const int grid = (batch + block - 1) / block;
 
-        createBatchGemmBuffer << < grid, block, 0 >> > (
+        auto cuda_stream = gpu::get_cuda_stream_on_context();
+
+        createBatchGemmBuffer << < grid, block, 0, cuda_stream >> > (
                 input_b, output_b,
                         columns_b, ones_b,
                         weight_b, bias_b,
