@@ -417,6 +417,7 @@ namespace ts {
             static const float MAX_MAX = 1e-4f;
             static const float MAX_AVG = 1e-5f;
 
+            ctx::bind<DeviceContext> _bind_device_context(bench.device());
             // check diff
             Status succeed = Status::OK;
             float max, avg;
