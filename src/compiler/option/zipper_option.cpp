@@ -122,7 +122,8 @@ namespace ts {
                 std::string transform_kernel_name = node.bubble().name() + "_transform_kernel";
                 auto transform_kernel_node = bubble::op(transform_kernel_name, name::layer::winograd_transform_kernel(), { inputs[1] });
 
-                std::string winograd_name = node.bubble().name() + "_conv2d_winograd";
+                //std::string winograd_name = node.bubble().name() + "_conv2d_winograd";
+                std::string winograd_name = node.bubble().name();
                 zipped_node = bubble::op(winograd_name, name::layer::conv2d_winograd(), { pad_node,transform_kernel_node });
             }
             else {
@@ -134,7 +135,8 @@ namespace ts {
                 std::string transform_kernel_name = node.bubble().name() + "_transform_kernel";
                 auto transform_kernel_node = bubble::op(transform_kernel_name, name::layer::winograd_transform_kernel(), { inputs[2] });
 
-                std::string winograd_name = node.bubble().name() + "_conv2d_winograd";
+                //std::string winograd_name = node.bubble().name() + "_conv2d_winograd";
+                std::string winograd_name = node.bubble().name();
                 zipped_node = bubble::op(winograd_name, name::layer::conv2d_winograd(), { pad_node,transform_kernel_node });
             }
 
