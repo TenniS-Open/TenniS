@@ -149,5 +149,6 @@ inline _simd_f32x4x2 _simd_f32x4x2_fmadd(_simd_f32x4x2 q0, _simd_f32x4x2 q1, _si
     //res.val[1] = vaddq_f32(mul_tmp_1, q2.val[1]);
     return res;
 }
+#endif
 
 #endif //TENSORSTACK_KERNELS_COMMON_SIMD_DEF_SIMD_NEON_DEF_H
