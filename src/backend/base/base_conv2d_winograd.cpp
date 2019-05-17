@@ -17,17 +17,6 @@ namespace ts {
             //field(name::padding_value, OPTIONAL, tensor::from(0.0f));
         }
 
-        static std::string to_string(const std::valarray<int> &arr) {
-            std::ostringstream out;
-            out << "[";
-            for (size_t i = 0; i < arr.size(); ++i) {
-                if (i) out << ", ";
-                out << arr[i];
-            }
-            out << "]";
-            return out.str();
-        }
-
         void Conv2DWinograd::init() {
             supper::init();
 
