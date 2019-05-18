@@ -92,5 +92,9 @@ namespace ts {
         Tensor softmax(const Tensor &x, int32_t dim, bool smooth) {
             return run(desc::softmax(dim, smooth), {x});
         }
+
+        Tensor pad(const Tensor &x, const Tensor &padding, float padding_value) {
+            return run(desc::pad(padding_value), {x, padding});
+        }
     }
 }
