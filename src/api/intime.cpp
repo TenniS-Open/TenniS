@@ -61,3 +61,13 @@ ts_Tensor *ts_intime_softmax(const ts_Tensor *x, int32_t dim, ts_bool smooth) {
         ));
     RETURN_OR_CATCH(dolly.release(), nullptr)
 }
+
+ts_Tensor *ts_intime_pad(const ts_Tensor *x, const ts_Tensor *padding, float padding_value) {
+    TRY_HEAD
+        if (!x) throw Exception("NullPointerException: @param: 1");
+        if (!padding) throw Exception("NullPointerException: @param: 2");
+        std::unique_ptr<ts_Tensor> dolly(new ts_Tensor(
+                intime::pad(**x, **padding, padding_value)
+        ));
+    RETURN_OR_CATCH(dolly.release(), nullptr)
+}

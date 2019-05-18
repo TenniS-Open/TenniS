@@ -59,5 +59,11 @@ namespace ts {
             bubble.set(name::smooth, tensor::from<bool>(smooth));
             return std::move(bubble);
         }
+
+        Bubble pad(float padding_value) {
+            Bubble bubble(name::layer::pad(), name::layer::pad());
+            bubble.set(name::padding_value, tensor::from<float>(padding_value));
+            return std::move(bubble);
+        }
     }
 }

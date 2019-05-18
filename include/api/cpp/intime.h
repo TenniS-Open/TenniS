@@ -11,6 +11,15 @@
 namespace ts {
     namespace api {
         namespace intime {
+            struct DimPadding {
+                DimPadding() = default;
+                DimPadding(int32_t first, int32_t second)
+                        : first(first), second(second) {}
+
+                int32_t first = 0;
+                int32_t second = 0;
+            };
+
             inline Tensor transpose(const Tensor &x, const std::vector<int32_t> &permute) {
                 auto y = ts_intime_transpose(x.get_raw(), permute.data(), int32_t(permute.size()));
                 TS_API_AUTO_CHECK(y != nullptr);
@@ -43,6 +52,17 @@ namespace ts {
                 auto y = ts_intime_softmax(x.get_raw(), dim, ts_bool(smooth));
                 TS_API_AUTO_CHECK(y != nullptr);
                 return Tensor::NewRef(y);
+            }
+
+            inline Tensor pad(const Tensor &x, const Tensor &padding, float padding_value) {
+                auto y = ts_intime_pad(x.get_raw(), padding.get_raw(), padding_value);
+                TS_API_AUTO_CHECK(y != nullptr);
+                return Tensor::NewRef(y);
+            }
+
+            inline Tensor pad(const Tensor &x, const std::vector<DimPadding> &padding, float padding_value) {
+                auto padding_tensor = tensor::build(INT32, {int(padding.size()), 2}, &padding[0].first);
+                return pad(x, padding_tensor, padding_value);
             }
         }
     }
