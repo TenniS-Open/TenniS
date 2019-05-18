@@ -7,11 +7,15 @@
 #include <cmath>
 #include <algorithm>
 #include <cstring>
+#include <sstream>
 
 #include "api/cpp/operator.h"
 #include "api/cpp/intime.h"
 
+#include "roi_align.hpp"
+
 using namespace ts;
+
 
 
 class AnchorGenerator : public api::Operator {
@@ -272,6 +276,7 @@ public:
 
     std::vector<std::pair<api::DTYPE, api::Shape>> infer(const std::vector<api::Tensor> &args) override {
         TS_THROW("Not implement");
+        return std::vector<std::pair<api::DTYPE, api::Shape>>();
     }
 
     static std::vector<std::vector<api::Tensor>> unpack_anchor(const std::vector<api::Tensor> &packed_anchors) {
@@ -493,9 +498,9 @@ public:
      * @param max_proposals
      * @return box, score
      */
-    std::vector<api::Tensor> nms(int size,
-                                 int width, int height,
-                                 api::Tensor boxes, const api::Tensor &scores, int min_size, float nms_thresh, int max_proposals) {
+    static std::vector<api::Tensor> nms(int size,
+                                        int width, int height,
+                                        api::Tensor boxes, const api::Tensor &scores, int min_size, float nms_thresh, int max_proposals) {
         std::vector<bool> flag(size, false);    // remove flag
         static const auto WIDTH = 4;
         static const auto TO_REMOVE = 1;
@@ -711,5 +716,573 @@ public:
         }
 
         return flatten(boxlists);
+    }
+};
+
+class ROIAlign {
+public:
+    using self = ROIAlign;
+    using shared = std::shared_ptr<self>;
+private:
+    std::vector<int32_t> output_size;
+    float spatial_scale;
+    int sampling_ratio;
+public:
+    ROIAlign(const std::vector<int32_t> &output_size, float spatial_scale, int sampling_ratio)
+            : output_size(output_size), spatial_scale(spatial_scale), sampling_ratio(sampling_ratio) {}
+
+    api::Tensor forward(const api::Tensor &x, const api::Tensor &rois) {
+        return api::ROIAlign_forward_cpu(x.view(api::Tensor::InFlow::HOST), rois.view(api::Tensor::InFlow::HOST),
+                                         spatial_scale, output_size[0], output_size[1], sampling_ratio);
+    }
+};
+
+class LevelMapper {
+public:
+    using self = LevelMapper;
+    using shared = std::shared_ptr<self>;
+
+    int k_min;
+    int k_max;
+    int s0;
+    int lvl0;
+    float eps;
+public:
+    LevelMapper(int k_min, int k_max, int canonical_scale=224, int canonical_level=4, float eps=1e-6)
+            : k_min(k_min), k_max(k_max), s0(canonical_scale), lvl0(canonical_level), eps(eps) {}
+
+    template <typename T>
+    static inline T clamp(T x, T min, T max) {
+        return std::max(min, std::min(max, x));
+    }
+
+    api::Tensor forward(const std::vector<api::Tensor> &boxes, int width = 3, int ind = 1) {
+        auto size = int(boxes.size());
+        std::vector<api::Tensor> bbox;
+        auto target_size = 0;
+        for (auto i = ind; i < size; i += width) {
+            bbox.emplace_back(boxes[i]);
+            target_size += boxes[i].size(0);
+        }
+
+        api::Tensor target(api::Tensor::InFlow::HOST, api::INT32, {target_size});
+        auto target_data = target.data<int32_t>();
+
+        static const auto TO_REMOVE = 1;
+
+        for (auto &box : bbox) {
+            auto box_size = box.size(0);
+            auto box_width = box.size(1);
+            auto box_data = box.data<float>();
+            for (int32_t n = 0; n < box_size; ++n) {
+                auto area = (box_data[2] - box_data[0] + TO_REMOVE) * (box_data[3] - box_data[1] + TO_REMOVE);
+                auto s = std::sqrt(area);
+                auto target_lvls = std::floor(this->lvl0 + std::log2(s / this->s0 + this->eps));
+                target_lvls = clamp<decltype(target_lvls)>(target_lvls, this->k_min, this->k_max);
+
+                *target_data = int32_t(target_lvls) - this->k_min;
+
+                box_data += box_width;
+                target_data += 1;
+            }
+        }
+
+        return target;
+    }
+
+};
+
+static inline std::string to_string(const std::vector<int32_t> &x) {
+    std::ostringstream oss;
+    oss << "[";
+    for (size_t i = 0; i < x.size(); ++i) {
+        if (i) oss << ", ";
+        oss << x[i];
+    }
+    oss << "]";
+    return oss.str();
+}
+
+/**
+Arguments:
+    x (list[Tensor]): feature maps for each level
+    boxes (list[BoxList]): boxes to be used to perform the pooling operation.
+Returns:
+    result (Tensor)
+Note:
+    BoxList pack with repeating [image'size, boxes[-1, 4], scores]
+ */
+class ROIPooler : public api::Operator {
+private:
+    std::vector<int32_t> output_size;
+    std::vector<float> scales;
+    int sampling_ratio;
+
+    std::vector<ROIAlign::shared> poolers;
+
+    LevelMapper::shared map_levels;
+public:
+    void init(const api::OperatorParams &params) override {
+        output_size = api::tensor::array::to_int(params.get("output_size"));
+        scales = api::tensor::array::to_float(params.get("scales"));
+        sampling_ratio = api::tensor::to_int(params.get("sampling_ratio"));
+
+        for (auto scale : scales) {
+            poolers.emplace_back(std::make_shared<ROIAlign>(output_size, scale, sampling_ratio));
+        }
+
+        if (output_size.size() != 2 or output_size[0] != output_size[1]) {
+            TS_THROW("ROIPooler: not supported output_size=" + to_string(output_size));
+        }
+
+        auto lvl_min = int(-std::log2(scales.front()));
+        auto lvl_max = int(-std::log2(scales.back()));
+
+
+        map_levels = std::make_shared<LevelMapper>(lvl_min, lvl_max);
+    }
+
+    std::vector<std::pair<api::DTYPE, api::Shape>> infer(const std::vector<api::Tensor> &args) override {
+        TS_THROW("Not implement");
+        return std::vector<std::pair<api::DTYPE, api::Shape>>();
+    }
+
+    static api::Tensor convert_to_roi_format(const std::vector<api::Tensor> &boxes, int width = 3, int ind = 1) {
+        auto size = int(boxes.size());
+        std::vector<api::Tensor> bbox;
+        for (auto i = ind; i < size; i += width) {
+            bbox.emplace_back(boxes[i]);
+        }
+        auto concat_boxes = bbox.size() == 1 ? bbox[0] : api::intime::concat(bbox, 0);
+        auto ids = api::Tensor(api::Tensor::InFlow::HOST, api::FLOAT32, {concat_boxes.size(0), 1});
+        auto ids_data = ids.data<float>();
+        auto iter_ids = 0;
+        for (auto i = ind; i < size; i += width) {
+            for (auto n = 0; n < boxes[i].size(0); ++n) {
+                *ids_data++ = iter_ids;
+            }
+            ++iter_ids;
+        }
+        return api::intime::concat({ids, concat_boxes}, 1);
+    }
+
+    std::vector<api::Tensor> run(const std::vector<api::Tensor> &args) override {
+        if (args.size() != 2) TS_THROW("ROIPooler: input number must be 2");
+
+        auto x = args[0].view(api::Tensor::InFlow::HOST).unpack();
+        auto boxes = args[1].view(api::Tensor::InFlow::HOST).unpack();
+
+        auto N = x[0].size(0);
+
+        if (N != 1) {
+            TS_THROW("ROIPooler: batch size must be 1");
+        }
+
+        auto num_levels = poolers.size();
+        auto rois = convert_to_roi_format(boxes);
+
+        if (num_levels == 1) {
+            return {this->poolers[0]->forward(x[0], rois)};
+        }
+
+        if (num_levels > x.size()) {
+            TS_THROW("ROIPooler: pooler count must smaller than (or equal to) features count.");
+        }
+
+        if ((map_levels->k_max - map_levels->k_min) >= num_levels) {
+            TS_THROW("ROIPooler: pooling level out of controll.");
+        }
+
+        auto levels = map_levels->forward(boxes);
+
+        auto num_rois = rois.size(0);
+        // auto num_channels = x[0].size(1);
+        // auto output_size = this->output_size[0];
+
+        // auto result = api::Tensor(api::Tensor::InFlow::HOST, x[0].dtype(), {num_rois, num_channels, output_size, output_size});
+        // std::memset(result.data(), 0, result.count() * api::type_bytes(result.dtype()));
+
+        std::vector<std::vector<int32_t>> idx_in_level_summary(num_levels);
+
+        auto levels_count = levels.size(0);
+        auto levels_data = levels.data<int32_t>();
+        for (int i = 0; i < levels_count; ++i) {
+            auto level = *levels_data++;
+            idx_in_level_summary[level].emplace_back(i);
+        }
+
+        api::Tensor idx_in_level_transpose(api::Tensor::InFlow::HOST, api::INT32, {num_rois});
+        auto idx_data = idx_in_level_transpose.data<int32_t>();
+        auto idx_shift = 0;
+        for (auto &idx_in_level : idx_in_level_summary) {
+            for (auto &idx : idx_in_level) {
+                idx_data[idx] = idx_shift++;
+            }
+        }
+
+        std::vector<api::Tensor> result(num_levels, nullptr);
+
+        for (size_t level = 0; level < num_levels; ++level) {
+            auto &per_level_feature = x[level];
+            auto &pooler = *this->poolers[level];
+
+            auto &idx_in_level = idx_in_level_summary[level];
+
+            auto rois_per_level = api::intime::gather(rois, api::tensor::build(api::INT32, idx_in_level), 0);
+            auto local_result = pooler.forward(per_level_feature, rois_per_level);
+
+            result[level] = local_result;
+        }
+
+        auto final_result = api::intime::concat(result, 0);
+        final_result = api::intime::gather(final_result, idx_in_level_transpose, 0);
+
+        return {final_result};
+    }
+};
+
+class BoxCoder {
+public:
+    using self = BoxCoder;
+    using shared = std::shared_ptr<self>;
+private:
+    std::vector<float> weights;
+    std::vector<float> inverse_weights;
+    float bbox_xform_clip;
+public:
+    BoxCoder(const std::vector<float> &weights, float bbox_xform_clip = std::log(1000.0f / 16))
+            : weights(weights), bbox_xform_clip(bbox_xform_clip) {
+        this->inverse_weights = this->weights;
+        for (auto &weight : this->inverse_weights) {
+            weight = 1.0f / weight;
+        }
+    }
+
+    api::Tensor decode(const api::Tensor &rel_codes, const api::Tensor &boxes) {
+        /*"""
+        From a set of original boxes and encoded relative box offsets,
+        get the decoded boxes.
+
+        Arguments:
+            rel_codes (Tensor): encoded boxes
+            boxes (Tensor): reference boxes.
+        """*/
+
+        api::Tensor pred_boxes(api::Tensor::InFlow::HOST, api::FLOAT32, rel_codes.sizes());
+        std::memset(pred_boxes.data(), 0, pred_boxes.count() * api::type_bytes(pred_boxes.dtype()));
+
+        auto rel_codes_width = rel_codes.size(1);
+        auto boxes_width = boxes.size(1);
+
+        auto N = rel_codes.size(0);
+        if (boxes.size(0) != N) {
+            TS_THROW("BBox decoding failed.");
+        }
+
+        if (rel_codes_width % 4 != 0) {
+            TS_THROW("BBox decoding failed with = " + std::to_string(rel_codes_width));
+        }
+
+        const auto TO_REMOVE = 1;
+
+        for (int i = 0; i < N; ++i) {
+            auto rel_codes_data = rel_codes.data<float>() + i * rel_codes_width;
+            auto boxes_data = boxes.data<float>() + i * boxes_width;
+            auto pred_boxes_data = pred_boxes.data<float>() + i * rel_codes_width;
+
+            auto width = boxes_data[2] - boxes_data[0] + TO_REMOVE;
+            auto height = boxes_data[3] - boxes_data[1] + TO_REMOVE;
+
+            auto ctr_x = boxes_data[0] + 0.5f * width;
+            auto ctr_y = boxes_data[1] + 0.5f * height;
+
+            for (int j = 0; j < rel_codes_width - 3; j += 4) {
+                auto dx = rel_codes_data[j + 0] * inverse_weights[0];
+                auto dy = rel_codes_data[j + 1] * inverse_weights[1];
+                auto dw = rel_codes_data[j + 2] * inverse_weights[2];
+                auto dh = rel_codes_data[j + 3] * inverse_weights[3];
+
+                if (dw > bbox_xform_clip) dw = bbox_xform_clip;
+                if (dh > bbox_xform_clip) dh = bbox_xform_clip;
+
+                auto pred_ctr_x = dx * width + ctr_x;
+                auto pred_ctr_y = dy * height + ctr_y;
+                auto pred_w = std::exp(dw) * width;
+                auto pred_h = std::exp(dh) * height;
+
+                // x1
+                pred_boxes_data[j + 0] = pred_ctr_x - 0.5f * pred_w;
+                // y1
+                pred_boxes_data[j + 1] = pred_ctr_y - 0.5f * pred_h;
+                // x2 (note: "- 1" is correct; don't be fooled by the asymmetry)
+                pred_boxes_data[j + 2] = pred_ctr_x + 0.5f * pred_w - 1;
+                // y2 (note: "- 1" is correct; don't be fooled by the asymmetry)
+                pred_boxes_data[j + 3] = pred_ctr_y + 0.5f * pred_h - 1;
+            }
+        }
+
+        return std::move(pred_boxes);
+    }
+};
+
+/**
+Arguments:
+    x (tuple[tensor, tensor]): x contains the class logits
+        and the box_regression from the model.
+    boxes (list[BoxList]): bounding boxes that are used as
+        reference, one for ech image
+
+Returns:
+    results (list[BoxList]): one BoxList for each image, containing
+        the extra fields labels and scores
+Note:
+    boxes packed as repeating [image'size, boxes[-1, 4], objectness]
+    results packed as repeating [image'size, boxes[-1, 4], scores, labels]
+ */
+class PostProcessor : public api::Operator {
+private:
+    std::vector<float> weights;
+    float bbox_xform_clip = std::log(1000.0f / 16);
+
+    float score_thresh = 0.7;
+    float nms_thresh = 0.7;
+    int32_t detections_per_img = -1;
+
+    BoxCoder::shared box_coder;
+public:
+    void init(const api::OperatorParams &params) override {
+        auto weights_tensor = api::tensor::cast(api::FLOAT32, params.get("weights"));
+        auto weights_data = weights_tensor.data<float>();
+        auto weights_count = weights_tensor.count();
+        this->weights = std::vector<float>(weights_data, weights_data + weights_count);
+        this->bbox_xform_clip = api::tensor::to_float(params.get("bbox_xform_clip"));
+
+        this->score_thresh = api::tensor::to_float(params.get("score_thresh"));
+        this->nms_thresh = api::tensor::to_float(params.get("nms"));
+        this->detections_per_img = api::tensor::to_float(params.get("detections_per_img"));
+
+        box_coder = std::make_shared<BoxCoder>(this->weights, this->bbox_xform_clip);
+    }
+
+    std::vector<std::pair<api::DTYPE, api::Shape>> infer(const std::vector<api::Tensor> &args) override {
+        TS_THROW("Not implement");
+        return std::vector<std::pair<api::DTYPE, api::Shape>>();
+    }
+
+    static std::vector<api::Tensor> prepare_boxlist(const api::Tensor &boxes, const api::Tensor &scores, const api::Tensor &image_shape) {
+        return {image_shape, boxes.reshape({-1, 4}), scores.reshape({-1})};
+    }
+
+    template <typename T>
+    static inline T clamp(T x, T min, T max) {
+        return std::max(min, std::min(max, x));
+    }
+
+    static void clip_to_image(std::vector<api::Tensor> &boxlist, int width = 3, int shape_ind = 0, int boxes_ind = 1) {
+        auto size = int(boxlist.size());
+
+        static const auto WIDTH = 4;
+        static const auto TO_REMOVE = 1;
+        for (;shape_ind < size && boxes_ind < size; shape_ind += width, boxes_ind += width) {
+            auto &shape = boxlist[shape_ind];
+            auto &boxs = boxlist[boxes_ind];
+            auto boxes_data = boxs.data<float>();
+
+            auto int_shape = shape;
+            if (int_shape.dtype() != api::INT32) {
+                int_shape = api::tensor::cast(api::INT32, int_shape);
+            }
+
+            int w = int_shape.data<int32_t>(0);
+            int h = int_shape.data<int32_t>(1);
+
+            auto N = boxs.size(0);
+            for (int i = 0; i < N; ++i) {
+                auto box = boxes_data + i * WIDTH;
+                // auto score = scores + i;
+                box[0] = clamp<float>(box[0], 0, w - TO_REMOVE);
+                box[1] = clamp<float>(box[1], 0, h - TO_REMOVE);
+                box[2] = clamp<float>(box[2], 0, w - TO_REMOVE);
+                box[3] = clamp<float>(box[3], 0, h - TO_REMOVE);
+            }
+        }
+    }
+
+
+    static float IoU(const float *w1, const float *w2) {
+        auto xOverlap = std::max<float>(0, std::min(w1[2] - 1, w2[2] - 1) - std::max(w1[0], w2[0]) + 1);
+        auto yOverlap = std::max<float>(0, std::min(w1[3] - 1, w2[3] - 1) - std::max(w1[1], w2[1]) + 1);
+        auto intersection = xOverlap * yOverlap;
+
+        auto w1_width = w1[2] - w1[0];
+        auto w1_height = w1[3] - w1[1];
+        auto w2_width = w2[2] - w2[0];
+        auto w2_height = w2[3] - w2[1];
+
+        auto unio = w1_width * w1_height + w2_width * w2_height - intersection;
+        return float(intersection) / unio;
+    }
+
+    /**
+     *
+     * @param size
+     * @param width
+     * @param height
+     * @param boxes
+     * @param scores
+     * @param min_size
+     * @param nms_thresh
+     * @param max_proposals
+     * @return box, score
+     */
+    static std::vector<api::Tensor> nms(const api::Tensor &boxes, const api::Tensor &scores, float nms_thresh) {
+        auto size = boxes.size(0);
+
+        std::vector<bool> flag(size, false);    // remove flag
+        static const auto WIDTH = 4;
+        // static const auto TO_REMOVE = 1;
+
+        auto boxes_data = boxes.data<float>();
+        // auto scores_data = scores.data<float>();
+
+        int count = 0;
+        for (int i = 0; i < size; i++) {
+            if (flag[i]) continue;
+            else ++count;
+            for (int j = i + 1; j < size; j++) {
+                if (flag[j]) continue;
+                if (IoU(&boxes_data[i * WIDTH], &boxes_data[j * WIDTH]) > nms_thresh) flag[j] = true;
+            }
+        }
+
+        std::vector<int32_t> kept_ind;
+        kept_ind.reserve(size / 2);
+
+        int kept_size = 0;
+
+        for (int i = 0; i < size; i++) {
+            if (flag[i]) continue;
+            kept_ind.push_back(i);
+
+            ++kept_size;
+        }
+
+        auto kept_ind_tensor = api::tensor::build(api::INT32, kept_ind);
+        auto kept_boxes = api::intime::gather(boxes, kept_ind_tensor, 0);
+        auto kept_scores = api::intime::gather(scores, kept_ind_tensor, 0);
+
+        return {kept_boxes, kept_scores};
+    }
+
+
+    std::vector<api::Tensor> filter_results(const std::vector<api::Tensor> &boxlist, int num_classes,
+                                            int width = 3, int shape_ind = 0, int boxes_ind = 1, int score_ind = 2) {
+
+        auto image_shape = boxlist[0];
+
+        auto boxes = boxlist[boxes_ind].reshape({-1, num_classes, 4});
+        auto scores = boxlist[score_ind].reshape({-1, num_classes});
+        auto scores_data = scores.data<float>();
+
+        auto N = scores.size(0);
+
+        std::vector<std::vector<int32_t>> num_class_index_summary(num_classes);
+        for (auto &list : num_class_index_summary) list.reserve(N / 4);
+
+        for (int i = 0; i < N; ++i) {
+            auto object_scores = &scores_data[i * num_classes];
+            auto outer_shift = i * num_classes;
+            for (int j = 1; j < num_classes; ++j) {
+                auto score = object_scores[j];
+                if (score <= this->score_thresh) continue;
+                auto inner_shift = j;
+                auto shift = outer_shift + inner_shift;
+                num_class_index_summary[j].emplace_back(shift);
+            }
+        }
+
+
+        auto flatten_boxes = boxes.reshape({-1, 4});
+        auto flatten_scores = scores.reshape({-1});
+
+        std::vector<api::Tensor> result;
+
+        for (int j = 1; j < num_classes; ++j) {
+            auto &index = num_class_index_summary[j];
+            if (num_class_index_summary[j].empty()) continue;
+            auto index_tensor = api::tensor::build(api::INT32, index);
+
+            auto this_class_boxes = api::intime::gather(flatten_boxes, index_tensor, 0);
+            auto this_class_scores = api::intime::gather(flatten_scores, index_tensor, 0);
+            this_class_boxes.sync_cpu();
+            this_class_scores.sync_cpu();
+
+            auto boxlist_for_class = nms(this_class_boxes, this_class_scores, nms_thresh);
+            auto num_labels = boxlist_for_class[1].size(0);
+
+            api::Tensor field_label(api::Tensor::InFlow::HOST, api::INT32, {num_labels});
+            auto label_data = field_label.data<int32_t>();
+            for (int l = 0; l < num_labels; ++l) label_data[l] = j;
+
+            result.push_back(image_shape);
+            result.insert(result.end(), boxlist_for_class.begin(), boxlist_for_class.end());
+            result.push_back(field_label);
+        }
+
+        result = BoxSelector::cat_boxlist(result, 4, 1);
+
+        return result;
+    }
+
+    std::vector<api::Tensor> run(const std::vector<api::Tensor> &args) override {
+        if (args.size() != 2) TS_THROW("PostProcessor: input number must be 2");
+
+        auto x = args[0].unpack();
+        auto boxes = args[1].unpack();
+
+        if (boxes.size() != 3) {
+            TS_THROW("PostProcessor: batch size must be 1");
+        }
+
+        auto &class_logits = x[0];
+        auto &box_regression = x[1];
+
+        auto class_prob = api::intime::softmax(class_logits, -1);
+
+        /**
+         * Following actions asumme that batch size is 1
+         * Doing:
+        image_shapes = [box.size for box in boxes]
+        boxes_per_image = [len(box) for box in boxes]
+        concat_boxes = torch.cat([a.bbox for a in boxes], dim=0)
+         */
+        auto image_shapes = boxes[0];
+        auto boxes_per_image = boxes[1].size(0);
+        auto concat_boxes = boxes[1];
+
+        auto proposals = box_coder->decode(
+                box_regression.reshape({boxes_per_image, -1}).view(api::Tensor::InFlow::HOST),
+                concat_boxes.view(api::Tensor::InFlow::HOST)
+        );
+
+        auto num_classes = class_prob.size(1);
+
+        // Only for batch 1
+        auto &prob = class_prob;
+        auto &boxes_per_img = proposals;
+        auto &image_shape = image_shapes;
+
+        // using cpu memory
+        prob.sync_cpu();
+        boxes_per_img.sync_cpu();
+        image_shape.sync_cpu();
+
+        auto boxlist = prepare_boxlist(boxes_per_img, prob, image_shape);
+
+        clip_to_image(boxlist);
+
+        boxlist = filter_results(boxlist, num_classes);
+
+        return boxlist;
     }
 };
