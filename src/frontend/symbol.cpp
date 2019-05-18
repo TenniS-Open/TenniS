@@ -69,5 +69,11 @@ namespace ts {
             Node::Link(node, x);
             return node;
         }
+
+        Node softmax(const std::string &name, const Node &x, int32_t dim, bool smooth) {
+            Node node = bubble::bubble(desc::softmax(dim, smooth), name);
+            Node::Link(node, {x});
+            return node;
+        }
     }
 }

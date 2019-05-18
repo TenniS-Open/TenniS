@@ -38,6 +38,8 @@ namespace ts {
         TS_DEBUG_API Bubble gather(int32_t axis);
 
         TS_DEBUG_API Bubble concat(int32_t dim);
+
+        TS_DEBUG_API Bubble softmax(int32_t dim, bool smooth = true);
     }
 }
 

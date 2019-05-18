@@ -38,6 +38,12 @@ namespace ts {
                 TS_API_AUTO_CHECK(y != nullptr);
                 return Tensor::NewRef(y);
             }
+
+            inline Tensor softmax(const Tensor &x, int32_t dim, bool smooth = true) {
+                auto y = ts_intime_softmax(x.get_raw(), dim, ts_bool(smooth));
+                TS_API_AUTO_CHECK(y != nullptr);
+                return Tensor::NewRef(y);
+            }
         }
     }
 }
