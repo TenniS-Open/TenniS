@@ -26,7 +26,6 @@ namespace ts {
     static const char *BLAS = "blas";
     static const char *CUDNN = "cudnn";
     static const char *CUBLAS = "cublas";
-    static const char *OPT = "opt";
 
     // This device and id may used in tensor view and sync, means do-not change the memory device
     static const char *PORTAL = "portal";   //
