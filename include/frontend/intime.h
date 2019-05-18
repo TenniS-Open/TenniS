@@ -50,6 +50,8 @@ namespace ts {
         TS_DEBUG_API Tensor gather(const Tensor &x, const std::vector<int32_t> &indices, int32_t axis);
 
         TS_DEBUG_API Tensor concat(const std::vector<Tensor> &x, int32_t dim);
+
+        TS_DEBUG_API Tensor softmax(const Tensor &x, int32_t dim, bool smooth = true);
     }
 }
 

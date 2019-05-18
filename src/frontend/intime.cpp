@@ -88,5 +88,9 @@ namespace ts {
         Tensor concat(const std::vector<Tensor> &x, int32_t dim) {
             return run(desc::concat(dim), x);
         }
+
+        Tensor softmax(const Tensor &x, int32_t dim, bool smooth) {
+            return run(desc::softmax(dim, smooth), {x});
+        }
     }
 }

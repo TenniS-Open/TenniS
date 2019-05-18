@@ -52,3 +52,12 @@ ts_Tensor *ts_intime_concat(const ts_Tensor *const *x, int32_t len, int32_t dim)
         ));
     RETURN_OR_CATCH(dolly.release(), nullptr)
 }
+
+ts_Tensor *ts_intime_softmax(const ts_Tensor *x, int32_t dim, ts_bool smooth) {
+    TRY_HEAD
+        if (!x) throw Exception("NullPointerException: @param: 1");
+        std::unique_ptr<ts_Tensor> dolly(new ts_Tensor(
+                intime::softmax(**x, dim, bool(smooth))
+        ));
+    RETURN_OR_CATCH(dolly.release(), nullptr)
+}

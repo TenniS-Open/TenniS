@@ -83,5 +83,9 @@ namespace ts {
             std::vector<Node> nodex(x.begin(), x.end());
             return symbol::concat(name, nodex, dim);
         }
+
+        Node softmax(const std::string &name, const NodeOrTensor &x, int32_t dim, bool smooth) {
+            return symbol::softmax(name, x, dim, smooth);
+        }
     }
 }

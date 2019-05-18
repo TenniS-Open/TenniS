@@ -20,6 +20,8 @@ TENSOR_STACK_C_API ts_Tensor *ts_intime_gather(const ts_Tensor *x, const ts_Tens
 
 TENSOR_STACK_C_API ts_Tensor *ts_intime_concat(const ts_Tensor *const *x, int32_t len, int32_t dim);
 
+TENSOR_STACK_C_API ts_Tensor *ts_intime_softmax(const ts_Tensor *x, int32_t dim, ts_bool smooth);
+
 #ifdef __cplusplus
 }
 #endif

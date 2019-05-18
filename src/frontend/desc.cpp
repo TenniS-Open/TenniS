@@ -52,5 +52,12 @@ namespace ts {
             bubble.set(name::dim, tensor::from<int32_t>(dim));
             return std::move(bubble);
         }
+
+        Bubble softmax(int32_t dim, bool smooth) {
+            Bubble bubble(name::layer::softmax(), name::layer::softmax());
+            bubble.set(name::dim, tensor::from<int32_t>(dim));
+            bubble.set(name::smooth, tensor::from<bool>(smooth));
+            return std::move(bubble);
+        }
     }
 }
