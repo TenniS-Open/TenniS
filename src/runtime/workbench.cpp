@@ -486,7 +486,7 @@ namespace ts {
         /**
          * tell compiler, who is compiling
          */
-        ctx::bind<Workbench> _bind_bench(this);
+        BindWorkbenchRuntime _bind_runtime(*this);
 
         /**
          * do compile, from module to program
