@@ -24,7 +24,7 @@ private:
     std::vector<api::Tensor> cell_anchors;
 
 public:
-    void init(const api::OperatorParams &params) override {
+    void init(const api::OperatorParams &params, ts_OperatorContext *) override {
         auto param_strides = params.get("strides");
         auto param_cell_anchors = params.get("cell_anchors");
         if (param_strides == nullptr || param_cell_anchors == nullptr) {
@@ -45,7 +45,7 @@ public:
 
     }
 
-    std::vector<std::pair<api::DTYPE, api::Shape>> infer(const std::vector<api::Tensor> &args) override {
+    std::vector<std::pair<api::DTYPE, api::Shape>> infer(const std::vector<api::Tensor> &args, ts_OperatorContext *) override {
         TS_THROW("Not implement");
         return std::vector<std::pair<api::DTYPE, api::Shape>>();
     }
@@ -162,7 +162,7 @@ public:
         return std::move(anchors);
     }
 
-    std::vector<api::Tensor> run(const std::vector<api::Tensor> &args) override {
+    std::vector<api::Tensor> run(const std::vector<api::Tensor> &args, ts_OperatorContext *) override {
         if (args.size() != 2) TS_THROW("AnchorGenerator: input number must be 2");
 
         auto images = args[0].view(api::Tensor::InFlow::HOST);
@@ -254,7 +254,7 @@ private:
 
     int fpn_post_nms_top_n;
 public:
-    void init(const api::OperatorParams &params) override {
+    void init(const api::OperatorParams &params, ts_OperatorContext *) override {
         this->pre_nms_top_n = api::tensor::to_int(params.get("pre_nms_top_n"));
         auto weights_tensor = api::tensor::cast(api::FLOAT32, params.get("weights"));
         auto weights_data = weights_tensor.data<float>();
@@ -274,7 +274,7 @@ public:
         this->fpn_post_nms_top_n = api::tensor::to_int(params.get("fpn_post_nms_top_n"));
     }
 
-    std::vector<std::pair<api::DTYPE, api::Shape>> infer(const std::vector<api::Tensor> &args) override {
+    std::vector<std::pair<api::DTYPE, api::Shape>> infer(const std::vector<api::Tensor> &args, ts_OperatorContext *) override {
         TS_THROW("Not implement");
         return std::vector<std::pair<api::DTYPE, api::Shape>>();
     }
@@ -678,7 +678,7 @@ public:
         return selected;
     }
 
-    std::vector<api::Tensor> run(const std::vector<api::Tensor> &args) override {
+    std::vector<api::Tensor> run(const std::vector<api::Tensor> &args, ts_OperatorContext *) override {
         if (args.size() != 3) TS_THROW("BoxSelector: input number must be 3");
         auto packed_anchors = args[0].view(api::Tensor::InFlow::HOST);
         auto packed_objectness = args[1].view(api::Tensor::InFlow::HOST);
@@ -822,7 +822,7 @@ private:
 
     LevelMapper::shared map_levels;
 public:
-    void init(const api::OperatorParams &params) override {
+    void init(const api::OperatorParams &params, ts_OperatorContext *) override {
         output_size = api::tensor::array::to_int(params.get("output_size"));
         scales = api::tensor::array::to_float(params.get("scales"));
         sampling_ratio = api::tensor::to_int(params.get("sampling_ratio"));
@@ -842,7 +842,7 @@ public:
         map_levels = std::make_shared<LevelMapper>(lvl_min, lvl_max);
     }
 
-    std::vector<std::pair<api::DTYPE, api::Shape>> infer(const std::vector<api::Tensor> &args) override {
+    std::vector<std::pair<api::DTYPE, api::Shape>> infer(const std::vector<api::Tensor> &args, ts_OperatorContext *) override {
         TS_THROW("Not implement");
         return std::vector<std::pair<api::DTYPE, api::Shape>>();
     }
@@ -866,7 +866,7 @@ public:
         return api::intime::concat({ids, concat_boxes}, 1);
     }
 
-    std::vector<api::Tensor> run(const std::vector<api::Tensor> &args) override {
+    std::vector<api::Tensor> run(const std::vector<api::Tensor> &args, ts_OperatorContext *) override {
         if (args.size() != 2) TS_THROW("ROIPooler: input number must be 2");
 
         auto x = args[0].view(api::Tensor::InFlow::HOST).unpack();
@@ -1050,7 +1050,7 @@ private:
 
     BoxCoder::shared box_coder;
 public:
-    void init(const api::OperatorParams &params) override {
+    void init(const api::OperatorParams &params, ts_OperatorContext *) override {
         auto weights_tensor = api::tensor::cast(api::FLOAT32, params.get("weights"));
         auto weights_data = weights_tensor.data<float>();
         auto weights_count = weights_tensor.count();
@@ -1064,7 +1064,7 @@ public:
         box_coder = std::make_shared<BoxCoder>(this->weights, this->bbox_xform_clip);
     }
 
-    std::vector<std::pair<api::DTYPE, api::Shape>> infer(const std::vector<api::Tensor> &args) override {
+    std::vector<std::pair<api::DTYPE, api::Shape>> infer(const std::vector<api::Tensor> &args, ts_OperatorContext *) override {
         TS_THROW("Not implement");
         return std::vector<std::pair<api::DTYPE, api::Shape>>();
     }
@@ -1234,7 +1234,7 @@ public:
         return result;
     }
 
-    std::vector<api::Tensor> run(const std::vector<api::Tensor> &args) override {
+    std::vector<api::Tensor> run(const std::vector<api::Tensor> &args, ts_OperatorContext *) override {
         if (args.size() != 2) TS_THROW("PostProcessor: input number must be 2");
 
         auto x = args[0].unpack();
