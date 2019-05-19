@@ -14,6 +14,9 @@ extern "C" {
 struct ts_OperatorParams;
 typedef struct ts_OperatorParams ts_OperatorParams;
 
+struct ts_OperatorContext;
+typedef struct ts_OperatorContext ts_OperatorContext;
+
 /**
  * Return new reference, NULL if param is not exist
  */
@@ -36,7 +39,7 @@ typedef void ts_free_Operator(const void *op);
  * @param op return value of @see ts_new_Operator
  * @param dict params dict
  */
-typedef void ts_Operator_init(void *op, const ts_OperatorParams *dict);
+typedef void ts_Operator_init(void *op, const ts_OperatorParams *dict, ts_OperatorContext *context);
 
 /**
  *
@@ -49,7 +52,7 @@ typedef void ts_Operator_init(void *op, const ts_OperatorParams *dict);
  * for example, [2, TS_FLOAT32, 2, 4, 3, TS_INT32, 3, 5, 6, 7] means:
  *              {float32:[4, 3], int32:[5, 6, 7]}
  */
-typedef ts_Tensor *ts_Operator_infer(void *op, int32_t argc, ts_Tensor **argv);
+typedef ts_Tensor *ts_Operator_infer(void *op, int32_t argc, ts_Tensor **argv, ts_OperatorContext *context);
 
 /**
  *
@@ -59,9 +62,18 @@ typedef ts_Tensor *ts_Operator_infer(void *op, int32_t argc, ts_Tensor **argv);
  * @return packed values
  * @note return ts_new_Tensor_in_flow value
  */
-typedef ts_Tensor *ts_Operator_run(void *op, int32_t argc, ts_Tensor **argv);
+typedef ts_Tensor *ts_Operator_run(void *op, int32_t argc, ts_Tensor **argv, ts_OperatorContext *context);
 
 
+/**
+ * @param device register device
+ * @param op register op
+ * @param f_new function to new Operator, will parsed as f_new(arg)
+ * @param f_free function to free parameter
+ * @param f_init function to init operator with given attributes
+ * @param f_infer function to infer data shape
+ * @param f_run function to run operator
+ */
 TENSOR_STACK_C_API void ts_Operator_Register(
         const char *device, const char *op,
         ts_new_Operator *f_new,

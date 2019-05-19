@@ -108,6 +108,9 @@ namespace ts {
     Workbench::shared Workbench::clone() const {
         Workbench::shared dolly(new Workbench(
                 this->m_device_context.computing_device));
+        
+        BindWorkbenchRuntime _bind_runtime(*dolly);
+        
         dolly->m_inputs.resize(this->m_inputs.size());
         dolly->m_outputs.resize(this->m_outputs.size());
         dolly->m_runtime_context = this->m_runtime_context.clone();
@@ -207,8 +210,7 @@ namespace ts {
     }
 
     Operator::shared Workbench::offline_create(const Bubble &bubble, bool strict) {
-        // bind device context
-        ctx::bind<DeviceContext> bind_device_context(m_device_context);
+        BindWorkbenchRuntime _bind_runtime(*this);
 
         auto built_op = OperatorCreator::Create(m_device_context.computing_device.type(), bubble.op(), strict);
 

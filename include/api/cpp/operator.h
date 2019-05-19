@@ -43,13 +43,15 @@ namespace ts {
 
         class Operator {
         public:
+            using self = Operator;
+
             virtual ~Operator() = default;
 
-            virtual void init(const OperatorParams &params) = 0;
+            virtual void init(const OperatorParams &params, ts_OperatorContext *context) = 0;
 
-            virtual std::vector<std::pair<DTYPE, Shape>> infer(const std::vector<Tensor> &args) = 0;
+            virtual std::vector<std::pair<DTYPE, Shape>> infer(const std::vector<Tensor> &args, ts_OperatorContext *context) = 0;
 
-            virtual std::vector<Tensor> run(const std::vector<Tensor> &args) = 0;
+            virtual std::vector<Tensor> run(const std::vector<Tensor> &args, ts_OperatorContext *context) = 0;
 
             static void Throw(const std::string &message) {
                 ts_Operator_Throw(message.c_str());
@@ -59,14 +61,14 @@ namespace ts {
                 ts_Operator_ThrowV2(message.c_str(), filename.c_str(), line_number);
             }
 
-            static void Init(void *op, const ts_OperatorParams *params) {
+            static void Init(void *op, const ts_OperatorParams *params, ts_OperatorContext *context) {
                 auto obj = reinterpret_cast<Operator *>(op);
-                obj->init(OperatorParams(params));
+                obj->init(OperatorParams(params), context);
             }
 
-            static ts_Tensor *Infer(void *op, int32_t argc, ts_Tensor **argv) {
+            static ts_Tensor *Infer(void *op, int32_t argc, ts_Tensor **argv, ts_OperatorContext *context) {
                 auto obj = reinterpret_cast<Operator *>(op);
-                auto proto = obj->infer(borrowed_tensors(argc, argv));
+                auto proto = obj->infer(borrowed_tensors(argc, argv), context);
                 if (proto.empty()) return nullptr;
                 std::vector<int32_t> data;
                 data.emplace_back(int32_t(proto.size()));
@@ -83,9 +85,9 @@ namespace ts {
                 return packed_tensor;
             }
 
-            static ts_Tensor *Run(void *op, int32_t argc, ts_Tensor **argv) {
+            static ts_Tensor *Run(void *op, int32_t argc, ts_Tensor **argv, ts_OperatorContext *context) {
                 auto obj = reinterpret_cast<Operator *>(op);
-                auto fields = obj->run(borrowed_tensors(argc, argv));
+                auto fields = obj->run(borrowed_tensors(argc, argv), context);
                 if (fields.empty()) return nullptr;
                 std::vector<ts_Tensor *> cfields;
                 for (auto &field : fields) {
