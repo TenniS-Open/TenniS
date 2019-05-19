@@ -165,6 +165,14 @@ namespace ts {
                 return std::move(program);
             }
 
+            void setup_device() const {
+                TS_API_AUTO_CHECK(ts_Workbench_setup_device(m_impl.get()));
+            }
+
+            void setup_runtime() const {
+                TS_API_AUTO_CHECK(ts_Workbench_setup_runtime(m_impl.get()));
+            }
+
         private:
             Workbench(raw *ptr) : m_impl(pack(ptr)) {}
 
