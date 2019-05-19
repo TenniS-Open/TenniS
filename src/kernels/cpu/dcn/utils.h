@@ -99,7 +99,7 @@ namespace ts {
                                     float alpha, const float *a[], int64_t lda, const float *b[], int64_t ldb,
                                     float beta, float *c[], int64_t ldc, int64_t batchCount) {
                 for (int i = 0; i < batchCount; ++i) {
-                    cblas::math<float>::gemm(blas::RowMajor, transa, transb, m, n, k, alpha, a[i], lda, b[i], ldb, beta,
+                    cblas::math<float>::gemm(blas::ColMajor, transa, transb, m, n, k, alpha, a[i], lda, b[i], ldb, beta,
                                              c[i], ldc);
                 }
             }

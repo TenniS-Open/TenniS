@@ -10,7 +10,7 @@
 using scalar_t = float;
 
 namespace ts {
-    void createBatchGemmBuffer(const float **input_b, float **output_b,
+    static void createBatchGemmBuffer(const float **input_b, float **output_b,
                                const float **columns_b, const float **ones_b,
                                const float **weight_b, const float **bias_b,
                                const float *input, float *output,
