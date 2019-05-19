@@ -15,6 +15,9 @@
 
 #include "runtime/stack.h"
 
+#include "core/device_context.h"
+#include "runtime/runtime.h"
+
 struct ts_OperatorParams {
 public:
     ts_OperatorParams(ts::Operator *op) : op(op) {}
@@ -47,6 +50,18 @@ public:
     }
 
     std::vector<ts_Tensor *> args;
+};
+
+
+struct ts_OperatorContext {
+public:
+    ts_OperatorContext() {
+        device = &ts::ctx::of<ts::DeviceContext>::ref();
+        runtime = &ts::ctx::of<ts::RuntimeContext>::ref();
+    }
+
+    ts::DeviceContext *device;
+    ts::RuntimeContext *runtime;
 };
 
 #endif //TENSORSTACK_DECLEARE_OPERATOR_H
