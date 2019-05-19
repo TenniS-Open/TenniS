@@ -11,7 +11,7 @@
 #define CPU_KERNEL_LOOP(i, n)                          \
   for (int i = 0; i < (n); ++i)
 
-float dmcn_im2col_bilinear(const float *bottom_data, const int data_width,
+static float dmcn_im2col_bilinear(const float *bottom_data, const int data_width,
                            const int height, const int width, float h, float w) {
     int h_low = floor(h);
     int w_low = floor(w);
@@ -41,7 +41,7 @@ float dmcn_im2col_bilinear(const float *bottom_data, const int data_width,
     return val;
 }
 
-float dmcn_get_gradient_weight(float argmax_h, float argmax_w,
+static float dmcn_get_gradient_weight(float argmax_h, float argmax_w,
                                const int h, const int w, const int height, const int width)
 {
     if (argmax_h <= -1 || argmax_h >= height || argmax_w <= -1 || argmax_w >= width)
@@ -67,7 +67,7 @@ float dmcn_get_gradient_weight(float argmax_h, float argmax_w,
     return weight;
 }
 
-float dmcn_get_coordinate_weight(float argmax_h, float argmax_w,
+static float dmcn_get_coordinate_weight(float argmax_h, float argmax_w,
                                  const int height, const int width, const float *im_data,
                                  const int data_width, const int bp_dir) {
     if (argmax_h <= -1 || argmax_h >= height || argmax_w <= -1 || argmax_w >= width) {
@@ -105,7 +105,7 @@ float dmcn_get_coordinate_weight(float argmax_h, float argmax_w,
     return weight;
 }
 
-void modulated_deformable_im2col_gpu_kernel(const int n,
+static void modulated_deformable_im2col_gpu_kernel(const int n,
                                             const float *data_im, const float *data_offset, const float *data_mask,
                                             const int height, const int width, const int kernel_h, const int kernel_w,
                                             const int pad_h, const int pad_w,
@@ -184,11 +184,11 @@ void modulated_deformable_im2col_gpu_kernel(const int n,
 }
 
 template <typename T>
-void atomicAdd(T *lhs, const T rhs) {
+static void atomicAdd(T *lhs, const T rhs) {
     *lhs += rhs;
 }
 
-void modulated_deformable_col2im_gpu_kernel(const int n,
+static void modulated_deformable_col2im_gpu_kernel(const int n,
                                             const float *data_col, const float *data_offset, const float *data_mask,
                                             const int channels, const int height, const int width,
                                             const int kernel_h, const int kernel_w,
@@ -247,7 +247,7 @@ void modulated_deformable_col2im_gpu_kernel(const int n,
     }
 }
 
-void modulated_deformable_col2im_coord_gpu_kernel(const int n,
+static void modulated_deformable_col2im_coord_gpu_kernel(const int n,
                                                   const float *data_col, const float *data_im,
                                                   const float *data_offset, const float *data_mask,
                                                   const int channels, const int height, const int width,
