@@ -178,7 +178,7 @@ namespace ts {
         if (slot < 0 || slot >= m_desktop->input_count()) {
             TS_LOG_ERROR << "Input index out of range. with index=" << slot << eject;
         }
-        ctx::bind<Workbench> _bind_bench(this);
+        BindWorkbenchRuntime _bind_runtime(*this);
         filter->compile();
         m_desktop->bind_filter(slot, filter->program());
     }
