@@ -5,6 +5,9 @@
 #ifndef TENSORSTACK_ROI_ALIGN_HPP
 #define TENSORSTACK_ROI_ALIGN_HPP
 
+#include <cmath>
+#include "api/cpp/tensorstack.h"
+
 namespace ts {
     namespace api {
 
