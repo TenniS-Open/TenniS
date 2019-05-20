@@ -5,6 +5,8 @@
 #ifndef TENSORSTACK_COMPILER_TRANSLATER_H
 #define TENSORSTACK_COMPILER_TRANSLATER_H
 
+#include "module/module.h"
+#include <core/device.h>
 
 namespace ts {
     /**
@@ -14,6 +16,13 @@ namespace ts {
     class Translator {
     public:
         using self = Translator;
+
+        explicit Translator(const ComputingDevice &device);
+
+        Module translate(const Module &module) const;
+
+    private:
+        ComputingDevice m_device;
     };
 }
 
