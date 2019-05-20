@@ -60,13 +60,10 @@ namespace ts {
         static void cpu_non_max_suppression_v3_compute_run(const Tensor &x, const Tensor &scores,
                              int max_output, float iou_threshold, float score_threshold,
                              const std::string & mode, Tensor &out) {
-            auto &x_shape = x.sizes();
+            auto *p_outdata = out.data<int32_t>();
+            const T *p_xdata  = x.data<T>();
 
-
-            int32_t * p_outdata = out.data<int32_t>();
-            const T* p_xdata  = x.data<T>();
-
-            const float * scores_data = scores.data<float>();
+            auto scores_data = scores.data<float>();
 
             int nmode = 1;  //xywh
             if(mode == "xyxy") {

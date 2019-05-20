@@ -34,7 +34,7 @@ namespace ts {
             T * pout = out_tensor.data<T>();
 
             T start = start_tensor.data<T>()[0];
-            T limit = limit_tensor.data<T>()[0];
+            // T limit = limit_tensor.data<T>()[0];
             T delta = delta_tensor.data<T>()[0];
 
             for(int i = 0; i<out_tensor.count(); i++) {

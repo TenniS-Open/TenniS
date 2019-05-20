@@ -51,10 +51,7 @@ namespace ts {
             if (index >= size)
                 return;
 
-            int i = 0;
-            int *  ptmp;
-
-            ptmp = outweight + 1;
+            int *ptmp = outweight + 1;
             int ntmp = index;
 
             int rhsindex = 0;
