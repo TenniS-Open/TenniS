@@ -67,9 +67,6 @@ namespace ts {
             int out_stride = out_shape[out_shape.size() - 1];
             int x_stride = x_shape[x_shape.size() - 1];
 
-            T tmp;
-            int index;
-
             for(int k=0; k< steps; k++) {
                 ::memcpy(p_outdata + k * out_stride, p_xdata + k * x_stride, out_stride * sizeof(T));
                 for(int i=0; i<out_stride; i++) {

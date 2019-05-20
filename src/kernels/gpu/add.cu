@@ -53,17 +53,14 @@ namespace ts {
             if (index >= size) 
                 return;
 
-            int i = 0;
-            int *  ptmp;
-
-            ptmp = outweight + 1;
+            int *ptmp = outweight + 1;
             int ntmp = index;
 
             int rhsindex = 0;
             int lhsindex = 0;
             int nbuff1,nbuff2;
             nbuff1 = nbuff2 = 0;
-            for(int m = 0, i= shapelen - 1; i >= 0; --i, m++) {
+            for(int m = 0, i = shapelen - 1; i >= 0; --i, m++) {
                 if(i > 0) {
                     nbuff1 = ntmp / *ptmp;
                     ntmp %= *ptmp;
