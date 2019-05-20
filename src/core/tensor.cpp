@@ -531,7 +531,7 @@ namespace ts {
             case InFlow::HOST: {
                 auto flow = ctx::of<RuntimeContext>::ref().flow();
                 if (flow) {
-                    *this = Tensor(flow, proto);
+                    *this = Tensor(flow, proto, MemoryDevice(CPU));
                 } else {
                     throw Exception(std::string("Not flow binding in context: <") + typeid(RuntimeContext).name() + ">");
                 }
@@ -554,7 +554,7 @@ namespace ts {
             case InFlow::HOST: {
                 auto flow = ctx::of<RuntimeContext>::ref().flow();
                 if (flow) {
-                    *this = Tensor(flow, proto);
+                    *this = Tensor(flow, proto, MemoryDevice(CPU));
                 } else {
                     throw Exception(std::string("Not flow binding in context: <") + typeid(RuntimeContext).name() + ">");
                 }
@@ -583,6 +583,28 @@ namespace ts {
             }
         }
         return *this;
+    }
+
+    Tensor Tensor::slice(int i) {
+        auto &sizes = this->sizes();
+        auto width = std::accumulate(sizes.begin() + 1, sizes.end(), 1, std::multiplies<int>());
+        width *= this->proto().type_bytes();
+        std::vector<int32_t> slice_shape(sizes.begin() + 1, sizes.end());
+        Memory slice_memory(this->device(), this->data<char>() + i * width, width);
+        return Tensor(slice_memory, Tensor::Prototype(this->dtype(), slice_shape));
+    }
+
+    Tensor Tensor::slice(int beg, int end) {
+        TS_AUTO_CHECK(beg < end);
+        auto &sizes = this->sizes();
+        auto width = std::accumulate(sizes.begin() + 1, sizes.end(), 1, std::multiplies<int>());
+        width *= this->proto().type_bytes();
+
+        auto batch = end - beg;
+        std::vector<int32_t> slice_shape = sizes;
+        slice_shape[0] = batch;
+        Memory slice_memory(this->device(), this->data<char>() + beg * width, batch * width);
+        return Tensor(slice_memory, Tensor::Prototype(this->dtype(), slice_shape));
     }
 
 #undef FAIL_ARG

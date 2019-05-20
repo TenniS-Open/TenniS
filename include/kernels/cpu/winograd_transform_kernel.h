@@ -11,7 +11,7 @@ namespace ts {
             using self = WinogradTransKernel;
             using supper = OperatorOnCPU<base::WinogradTransKernel>;
 
-            void transform_kernel(const Tensor &x, WinogradConv2DModel winograd_model, Tensor &out);
+            void transform_kernel(const Tensor &x, WinogradConv2DMode winograd_mode, Tensor &out);
         };
     }
 }

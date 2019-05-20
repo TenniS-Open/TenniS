@@ -9,6 +9,7 @@
 
 #include "except.h"
 #include "device.h"
+#include "tensor.h"
 
 #include <string>
 #include <vector>
@@ -95,6 +96,16 @@ namespace ts {
 
             void prewhiten() {
                 TS_API_AUTO_CHECK(ts_ImageFilter_prewhiten(m_impl.get()));
+            }
+
+            Tensor run(const Tensor &tensor) {
+                return run(tensor.get_raw());
+            }
+
+            Tensor run(const ts_Tensor *tensor) {
+                auto ret = ts_ImageFilter_run(m_impl.get(), tensor);
+                TS_API_AUTO_CHECK(ret != nullptr);
+                return Tensor::NewRef(ret);
             }
 
         private:

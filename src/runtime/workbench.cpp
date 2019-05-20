@@ -34,7 +34,8 @@ namespace ts {
         explicit BindWorkbenchRuntime(Workbench &bench)
             : bind_thread_pool(bench.runtime().thread_pool())
             , bind_device_context(bench.device())
-            , bind_runtime_context(bench.runtime()) {
+            , bind_runtime_context(bench.runtime())
+            , bind_work_bench(bench) {
             // bench.device().active();
             m_pre_device_context = DeviceContext::Switch(&bench.device());
         }
@@ -55,6 +56,9 @@ namespace ts {
 
         // pre_device_context
         DeviceContext *m_pre_device_context = nullptr;
+
+        // bind self
+        ctx::bind<Workbench> bind_work_bench;
     };
 
     Workbench::Workbench(const ComputingDevice &device) {
@@ -104,6 +108,9 @@ namespace ts {
     Workbench::shared Workbench::clone() const {
         Workbench::shared dolly(new Workbench(
                 this->m_device_context.computing_device));
+        
+        BindWorkbenchRuntime _bind_runtime(*dolly);
+        
         dolly->m_inputs.resize(this->m_inputs.size());
         dolly->m_outputs.resize(this->m_outputs.size());
         dolly->m_runtime_context = this->m_runtime_context.clone();
@@ -171,7 +178,7 @@ namespace ts {
         if (slot < 0 || slot >= m_desktop->input_count()) {
             TS_LOG_ERROR << "Input index out of range. with index=" << slot << eject;
         }
-        ctx::bind<Workbench> _bind_bench(this);
+        BindWorkbenchRuntime _bind_runtime(*this);
         filter->compile();
         m_desktop->bind_filter(slot, filter->program());
     }
@@ -203,8 +210,7 @@ namespace ts {
     }
 
     Operator::shared Workbench::offline_create(const Bubble &bubble, bool strict) {
-        // bind device context
-        ctx::bind<DeviceContext> bind_device_context(m_device_context);
+        BindWorkbenchRuntime _bind_runtime(*this);
 
         auto built_op = OperatorCreator::Create(m_device_context.computing_device.type(), bubble.op(), strict);
 
@@ -482,7 +488,7 @@ namespace ts {
         /**
          * tell compiler, who is compiling
          */
-        ctx::bind<Workbench> _bind_bench(this);
+        BindWorkbenchRuntime _bind_runtime(*this);
 
         /**
          * do compile, from module to program

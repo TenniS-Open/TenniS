@@ -92,7 +92,7 @@ namespace ts {
 
             TS_DEBUG_API const string &resize_nearest_neighbor() TS_NOEXCEPT;
             TS_DEBUG_API const string &rsqrt() TS_NOEXCEPT;
-            TS_DEBUG_API const string &maximum() TS_NOEXCEPT;
+            TS_DEBUG_API const string &maxinum() TS_NOEXCEPT;
             TS_DEBUG_API const string &max() TS_NOEXCEPT;
             TS_DEBUG_API const string &square() TS_NOEXCEPT;
             TS_DEBUG_API const string &range() TS_NOEXCEPT;
@@ -176,7 +176,9 @@ namespace ts {
         TS_DEBUG_API extern string max_output_size;
         TS_DEBUG_API extern string align_corners;
 
-        TS_DEBUG_API extern string winograd_model;
+        TS_DEBUG_API extern string keep_dims;
+
+        TS_DEBUG_API extern string winograd_mode;
         TS_DEBUG_API extern string winograd_f23;
         TS_DEBUG_API extern string winograd_f63;
     }

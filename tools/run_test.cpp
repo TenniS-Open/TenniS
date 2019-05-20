@@ -51,13 +51,14 @@ int main(int argc, const char *argv[]) {
                 continue;
             }
         } catch (const Exception &e) {
-            continue;
+            std::cerr << e.what() << std::endl;
         }
         // try infer
         TestCase::Status status = TestCase::Status::FAILED;
         try {
             status = tc.run(computing_device, 1);
         } catch (const Exception &e) {
+            std::cerr << e.what() << std::endl;
         }
         // show log
         switch (status) {
@@ -70,7 +71,7 @@ int main(int argc, const char *argv[]) {
             case TestCase::Status::SKIP: {
                 skip_count++;
                 std::cout << "[SKIP]: " << subdir << " on " << computing_device << std::endl;
-                // std::cout << tc.log();
+                std::cout << tc.log();
                 break;
             }
             case TestCase::Status::WARNING: {

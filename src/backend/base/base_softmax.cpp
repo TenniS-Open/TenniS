@@ -24,7 +24,7 @@ namespace ts {
             m_dim = tensor::to_int(this->get(name::dim));
             m_smooth = tensor::to_bool(get(name::smooth));
 
-            TS_AUTO_CHECK(m_dim >= 0);
+            // TS_AUTO_CHECK(m_dim >= 0);
         }
 
         bool Softmax::check_inputs(Stack &stack) const {
@@ -32,7 +32,14 @@ namespace ts {
 
             auto &x = stack[0];
 
-            TS_AUTO_CHECK(m_dim < x.dims());
+            int output_dims = int(x.dims());
+            int fixed_dim = m_dim >= 0 ? m_dim : output_dims + m_dim;
+
+            if (fixed_dim < 0 || fixed_dim >= output_dims) {
+                TS_LOG_ERROR << "Softmax dim must in [-"
+                             << output_dims << ", "
+                             << output_dims << ")" << eject;
+            }
 
             return true;
         }
@@ -55,7 +62,10 @@ namespace ts {
 
             auto out = *stack.push(x.proto(), memory_device);
 
-            softmax(x, m_dim, m_smooth, out);
+            int output_dims = int(x.dims());
+            int fixed_dim = m_dim >= 0 ? m_dim : output_dims + m_dim;
+
+            softmax(x, fixed_dim, m_smooth, out);
 
             return 1;
         }

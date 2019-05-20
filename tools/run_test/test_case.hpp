@@ -373,6 +373,7 @@ namespace ts {
             try {
                 built_op = bench.offline_create(bubble, true);
             } catch (const Exception &e) {
+                std::cerr << e.what() << std::endl;
             }
 
             if (built_op == nullptr) {

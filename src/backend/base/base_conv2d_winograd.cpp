@@ -11,21 +11,10 @@
 namespace ts {
     namespace base{
         Conv2DWinograd::Conv2DWinograd() {
-            field(name::winograd_model, OPTIONAL, tensor::from(name::winograd_f63));
+            field(name::winograd_mode, OPTIONAL, tensor::from(name::winograd_f63));
             field(name::format, REQUIRED);
             //field(name::padding, REQUIRED);
             //field(name::padding_value, OPTIONAL, tensor::from(0.0f));
-        }
-
-        static std::string to_string(const std::valarray<int> &arr) {
-            std::ostringstream out;
-            out << "[";
-            for (size_t i = 0; i < arr.size(); ++i) {
-                if (i) out << ", ";
-                out << arr[i];
-            }
-            out << "]";
-            return out.str();
         }
 
         void Conv2DWinograd::init() {
@@ -68,12 +57,12 @@ namespace ts {
             //    }
             //}
 
-            auto winograd_model = tensor::to_string(get(name::winograd_model));
+            auto winograd_model = tensor::to_string(get(name::winograd_mode));
             if (winograd_model == name::winograd_f63) {
-                m_winograd_model = F6X6_3X3;
+                m_winograd_mode = F6X6_3X3;
             }
             else if (winograd_model == name::winograd_f23) {
-                m_winograd_model = F2X2_3X3;
+                m_winograd_mode = F2X2_3X3;
             }
             else {
                 TS_LOG_ERROR << this->op() << " do not support winograd model: " << winograd_model << eject;
@@ -152,8 +141,8 @@ namespace ts {
 
                 TS_AUTO_CHECK(stack.size() == 0);
 
-                //conv2d_winograd(x_tensor, m_winograd_model, padding, m_padding_value, kernel_tensor, m_format, out, stack);
-                conv2d_winograd(x_tensor, m_winograd_model, kernel_tensor, m_format, out, stack);
+                //conv2d_winograd(x_tensor, m_winograd_mode, padding, m_padding_value, kernel_tensor, m_format, out, stack);
+                conv2d_winograd(x_tensor, m_winograd_mode, kernel_tensor, m_format, out, stack);
 
                 stack.clear();
             }
