@@ -178,7 +178,7 @@ namespace ts {
 
         TS_DEBUG_API extern string keep_dims;
 
-        TS_DEBUG_API extern string winograd_model;
+        TS_DEBUG_API extern string winograd_mode;
         TS_DEBUG_API extern string winograd_f23;
         TS_DEBUG_API extern string winograd_f63;
     }

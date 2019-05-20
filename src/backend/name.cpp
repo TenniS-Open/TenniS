@@ -167,7 +167,7 @@ namespace ts {
 
         string keep_dims = "keep_dims";
 
-        string winograd_model = "winograd_model";
+        string winograd_mode = "winograd_mode";
         string winograd_f23 = "winograd_f23";
         string winograd_f63 = "winograd_f63";
     }

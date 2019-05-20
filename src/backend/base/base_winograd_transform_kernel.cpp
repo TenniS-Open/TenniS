@@ -8,19 +8,19 @@
 namespace ts {
     namespace base {
         WinogradTransKernel::WinogradTransKernel() {
-            field(name::winograd_model,OPTIONAL,tensor::from(name::winograd_f63));
+            field(name::winograd_mode,OPTIONAL,tensor::from(name::winograd_f63));
         }
 
         void WinogradTransKernel::init() {
             supper::init();
 
-            auto winograd_model = tensor::to_string(get(name::winograd_model));
+            auto winograd_model = tensor::to_string(get(name::winograd_mode));
 
             if (winograd_model == name::winograd_f63) {
-                m_winograd_model = F6X6_3X3;
+                m_winograd_mode = F6X6_3X3;
             }
             else if (winograd_model == name::winograd_f23) {
-                m_winograd_model = F2X2_3X3;
+                m_winograd_mode = F2X2_3X3;
             }
             else {
                 TS_LOG_ERROR << this->op() << " do not support winograd model: " << winograd_model << eject;
@@ -37,11 +37,11 @@ namespace ts {
             TS_AUTO_CHECK(kernel_shape[2] == 3 && kernel_shape[3] == 3);
 
             Shape output_shape = kernel_shape;
-            if (m_winograd_model == F6X6_3X3) {
+            if (m_winograd_mode == F6X6_3X3) {
                 output_shape[2] = 8;
                 output_shape[3] = 8;
             }
-            else if (m_winograd_model == F2X2_3X3) {
+            else if (m_winograd_mode == F2X2_3X3) {
                 output_shape[2] = 4;
                 output_shape[3] = 4;
             }
@@ -62,7 +62,7 @@ namespace ts {
 
             auto out = *stack.push(output[0], memory_device);
 
-            transform_kernel(kernel_tensor, m_winograd_model, out);
+            transform_kernel(kernel_tensor, m_winograd_mode, out);
 
             return 1;
         }

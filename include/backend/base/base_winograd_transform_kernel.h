@@ -19,10 +19,10 @@ namespace ts {
 
             int infer(ts::Stack &stack, std::vector<ts::Tensor::Prototype> &output) override;
 
-            virtual void transform_kernel(const Tensor &x, WinogradConv2DModel winograd_model, Tensor &out) = 0;
+            virtual void transform_kernel(const Tensor &x, WinogradConv2DMode winograd_mode, Tensor &out) = 0;
 
         private:
-            WinogradConv2DModel m_winograd_model;
+            WinogradConv2DMode m_winograd_mode;
         };
     }
 }

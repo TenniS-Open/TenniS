@@ -8,7 +8,7 @@
 namespace ts {
     namespace cpu{
         template<typename T>
-        static void conv2d_winograd_forward(const Tensor &x, WinogradConv2DModel winograd_model,
+        static void conv2d_winograd_forward(const Tensor &x, WinogradConv2DMode winograd_model,
             const Tensor &w, Tensor &out, Stack &stack) {
             auto x_shape = x.sizes();
             auto weight_shape = w.sizes();
@@ -33,20 +33,20 @@ namespace ts {
             //    auto x_pad_tensor = *(stack.top());
             //    stack.pop();
 
-            //    if (winograd_model == F6X6_3X3)
+            //    if (winograd_mode == F6X6_3X3)
             //        return Conv2dAlgorithm<T>::conv3x3_winograd63(x_pad_tensor, w, out);
             //    else
             //        return Conv2dAlgorithm<T>::conv3x3_winograd23(x_pad_tensor, w, out);
             //}
             //else {
-            //    if (winograd_model == F6X6_3X3)
+            //    if (winograd_mode == F6X6_3X3)
             //        return Conv2dAlgorithm<T>::conv3x3_winograd63(x, w, out);
             //    else
             //        return Conv2dAlgorithm<T>::conv3x3_winograd23(x, w, out);
             //}
         }
 
-        void Conv2DWinograd::conv2d_winograd(const Tensor &x, WinogradConv2DModel winograd_model,
+        void Conv2DWinograd::conv2d_winograd(const Tensor &x, WinogradConv2DMode winograd_mode,
             const Tensor &w, Conv2DFormat format, Tensor &out, Stack &stack) {
             if (format != FORMAT_NCHW) {
                 TS_LOG_ERROR << "Conv2D_Winograd only support NCHW" << eject;
@@ -54,7 +54,7 @@ namespace ts {
             DTYPE dtype = out.dtype();
             switch (dtype) {
 #define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
-        case DTYPE: { conv2d_winograd_forward<TYPE>(x, winograd_model, w, out, stack); break; }
+        case DTYPE: { conv2d_winograd_forward<TYPE>(x, winograd_mode, w, out, stack); break; }
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN

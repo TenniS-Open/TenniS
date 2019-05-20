@@ -71,7 +71,7 @@ namespace ts {
         FORMAT_NHWC = 1,
     };
 
-    enum WinogradConv2DModel {
+    enum WinogradConv2DMode {
         F6X6_3X3 = 0,
         F2X2_3X3 = 1,
     };
