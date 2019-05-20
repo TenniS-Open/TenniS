@@ -54,13 +54,13 @@ namespace ts {
                 return Tensor::NewRef(y);
             }
 
-            inline Tensor pad(const Tensor &x, const Tensor &padding, float padding_value) {
+            inline Tensor pad(const Tensor &x, const Tensor &padding, float padding_value = 0) {
                 auto y = ts_intime_pad(x.get_raw(), padding.get_raw(), padding_value);
                 TS_API_AUTO_CHECK(y != nullptr);
                 return Tensor::NewRef(y);
             }
 
-            inline Tensor pad(const Tensor &x, const std::vector<DimPadding> &padding, float padding_value) {
+            inline Tensor pad(const Tensor &x, const std::vector<DimPadding> &padding, float padding_value = 0) {
                 auto padding_tensor = tensor::build(INT32, {int(padding.size()), 2}, &padding[0].first);
                 return pad(x, padding_tensor, padding_value);
             }
