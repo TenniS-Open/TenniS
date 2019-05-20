@@ -59,14 +59,15 @@ namespace ts {
     }
 
     void gpu2gpu_converter(int dst_id, void *dst, int src_id, const void *src, size_t size) {
+        cudaStream_t cuda_stream = cudaStreamPerThread;
         auto context = ctx::get<DeviceContext>();
-        if (context == NULL) {
-            TS_LOG_ERROR << "Memcpy need to bind DeviceContext" << eject;
+        if (context != nullptr) {
+            CUDAContextHandle* handle = reinterpret_cast<CUDAContextHandle*>(context->handle);
+            cuda_stream = handle->stream();
         }
-        CUDAContextHandle* handle = reinterpret_cast<CUDAContextHandle*>(context->handle);
-        auto cuda_stream = handle->stream();
         cudaMemcpyAsync(dst, src, size, cudaMemcpyHostToDevice, cuda_stream);
-        context->synchronize();
+
+        //cudaStreamSynchronize(cuda_stream);
         //cudaMemcpy(dst, src, size, cudaMemcpyDeviceToDevice);
     }
 
@@ -75,15 +76,17 @@ namespace ts {
         if (cuda_error != cudaSuccess) {
             TS_LOG_ERROR << "cudaSetDevice(" << dst_id << ") failed. error=" << cuda_error << eject;
         }
+
+        cudaStream_t cuda_stream = cudaStreamPerThread;
         auto context = ctx::get<DeviceContext>();
-        if (context == NULL) {
-            TS_LOG_ERROR << "Memcpy need to bind DeviceContext" << eject;
+        if (context != nullptr) {
+            CUDAContextHandle* handle = reinterpret_cast<CUDAContextHandle*>(context->handle);
+            cuda_stream = handle->stream();
         }
-        CUDAContextHandle* handle = reinterpret_cast<CUDAContextHandle*>(context->handle);
-        auto cuda_stream = handle->stream();
 
         cudaMemcpyAsync(dst, src, size, cudaMemcpyHostToDevice, cuda_stream);
-        context->synchronize();
+
+        cudaStreamSynchronize(cuda_stream);
         //cudaMemcpy(dst, src, size, cudaMemcpyHostToDevice);
     }
 
@@ -92,15 +95,17 @@ namespace ts {
         if (cuda_error != cudaSuccess) {
             TS_LOG_ERROR << "cudaSetDevice(" << src_id << ") failed. error=" << cuda_error << eject;
         }
+
+        cudaStream_t cuda_stream = cudaStreamPerThread;
         auto context = ctx::get<DeviceContext>();
-        if (context == NULL) {
-            TS_LOG_ERROR << "Memcpy need to bind DeviceContext" << eject;
+        if (context != nullptr) {
+            CUDAContextHandle* handle = reinterpret_cast<CUDAContextHandle*>(context->handle);
+            cuda_stream = handle->stream();
         }
-        CUDAContextHandle* handle = reinterpret_cast<CUDAContextHandle*>(context->handle);
-        auto cuda_stream = handle->stream();
 
         cudaMemcpyAsync(dst, src, size, cudaMemcpyDeviceToHost, cuda_stream);
-        context->synchronize();
+
+        cudaStreamSynchronize(cuda_stream);
         //cudaMemcpy(dst, src, size, cudaMemcpyDeviceToHost);
     }
 }
