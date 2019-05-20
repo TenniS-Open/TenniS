@@ -21,13 +21,13 @@ namespace ts{
 
             int run(ts::Stack &stack) override;
 
-            //virtual void conv2d_winograd(const Tensor &x, WinogradConv2DModel winograd_model, const Padding2D &padding, float padding_value,
+            //virtual void conv2d_winograd(const Tensor &x, WinogradConv2DMode winograd_mode, const Padding2D &padding, float padding_value,
             //    const Tensor &w, Conv2DFormat format, Tensor &out, Stack &stack) = 0;
-            virtual void conv2d_winograd(const Tensor &x, WinogradConv2DModel winograd_model,
+            virtual void conv2d_winograd(const Tensor &x, WinogradConv2DMode winograd_mode,
                 const Tensor &w, Conv2DFormat format, Tensor &out, Stack &stack) = 0;
 
         private:
-            WinogradConv2DModel m_winograd_model;
+            WinogradConv2DMode m_winograd_mode;
             Conv2DFormat m_format;
             //std::valarray<int> m_padding4x2;
             //float m_padding_value;

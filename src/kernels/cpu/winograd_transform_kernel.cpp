@@ -7,14 +7,14 @@
 
 namespace ts {
     namespace cpu {
-        void WinogradTransKernel::transform_kernel(const Tensor &x, WinogradConv2DModel winograd_model, Tensor &out) {
+        void WinogradTransKernel::transform_kernel(const Tensor &x, WinogradConv2DMode winograd_mode, Tensor &out) {
             DTYPE dtype = out.dtype();
             switch (dtype) {
 #define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
             case DTYPE: { \
-                if (winograd_model == F6X6_3X3) \
+                if (winograd_mode == F6X6_3X3) \
                     Conv2dAlgorithm<TYPE>::conv3x3_winograd63_transform_kernel_inplace(x, out); \
-                else if(winograd_model == F2X2_3X3) \
+                else if(winograd_mode == F2X2_3X3) \
                     Conv2dAlgorithm<TYPE>::conv3x3_winograd23_transform_kernel_inplace(x, out); \
                 break; }
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
