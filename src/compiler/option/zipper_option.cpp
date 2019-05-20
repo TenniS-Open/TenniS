@@ -113,7 +113,7 @@ namespace ts {
                 std::string pad_param_name = node.bubble().name() + "_pad_param";
                 auto padding = bubble::data(pad_param_name, padding_param_tensor,CPU);
                 std::string pad_name = node.bubble().name() + "_pad";
-                auto pad_node = bubble::op(pad_name, name::layer::pad(), { inputs[0],padding });
+                auto pad_node = bubble::op(pad_name, name::layer::pad(), { inputs[0], padding });
                 if (node.bubble().has(name::padding_value)) {
                     auto padding_value_tensor = node.bubble().get(name::padding_value);
                     pad_node.bubble().set(name::padding_value, padding_value_tensor);
@@ -129,8 +129,10 @@ namespace ts {
             else {
                 std::string pad_name = node.bubble().name() + "_pad";
                 auto pad_node = bubble::op(pad_name, name::layer::pad(), { inputs[0], inputs[1] });
-                auto padding_value_tensor = inputs[1].bubble().get(name::value);
-                pad_node.bubble().set(name::padding_value, padding_value_tensor);
+                if (node.bubble().has(name::padding_value)) {
+                    auto padding_value_tensor = node.bubble().get(name::padding_value);
+                    pad_node.bubble().set(name::padding_value, padding_value_tensor);
+                }
 
                 std::string transform_kernel_name = node.bubble().name() + "_transform_kernel";
                 auto transform_kernel_node = bubble::op(transform_kernel_name, name::layer::winograd_transform_kernel(), { inputs[2] });
