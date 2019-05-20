@@ -87,6 +87,7 @@ class Name(object):
     shift = "shfit"
     chunks = "chunks"
     axes = "axes"
+    transpose = "transpose"
 
 
 class Default(object):
@@ -525,11 +526,14 @@ def div(name, lhs, rhs):
     return node
 
 
-def inner_prod(name, lhs, rhs):
+def inner_prod(name, lhs, rhs, transpose=False):
     lhs = to_node(lhs, name="_const_" + name + "_lhs")
     rhs = to_node(rhs, name="_const_" + name + "_rhs")
 
     node = menu.op(name=name, op_name=Name.Layer.inner_prod, inputs=[lhs, rhs])
+
+    if transpose:
+        node.set(Name.transpose, transpose)
 
     return node
 

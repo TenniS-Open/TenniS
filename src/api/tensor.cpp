@@ -117,3 +117,96 @@ ts_Tensor *ts_Tensor_reshape(ts_Tensor *tensor, const int32_t *shape, int32_t sh
     RETURN_OR_CATCH(dolly.release(), nullptr)
 }
 
+ts_Tensor *ts_Tensor_view_in_flow(ts_Tensor *tensor, ts_InFlow in_flow) {
+    TRY_HEAD
+        if (!tensor) throw Exception("NullPointerException: @param: 1");
+        std::unique_ptr<ts_Tensor> dolly(new ts_Tensor((*tensor)->view(Tensor::InFlow(in_flow))));
+    RETURN_OR_CATCH(dolly.release(), nullptr)
+}
+
+ts_Tensor *
+ts_new_Tensor_in_flow(ts_InFlow in_flow, const int32_t *shape, int32_t shape_len, ts_DTYPE dtype, const void *data) {
+    TRY_HEAD
+        if (shape == nullptr) shape_len = 0;
+        std::unique_ptr<ts_Tensor> tensor(new ts_Tensor());
+
+        **tensor = Tensor(Tensor::InFlow(in_flow), DTYPE(dtype), Shape(shape, shape + shape_len));
+
+        if (data != nullptr) {
+            auto bytes = (*tensor)->proto().type_bytes() * (*tensor)->count();
+            memcpy((*tensor)->data(), (*tensor)->device(), bytes,
+                   data, MemoryDevice(CPU), bytes);
+        }
+
+    RETURN_OR_CATCH(tensor.release(), nullptr)
+}
+
+ts_Tensor *ts_Tensor_field(ts_Tensor *tensor, int32_t index) {
+    TRY_HEAD
+        if (!tensor) throw Exception("NullPointerException: @param: 1");
+        std::unique_ptr<ts_Tensor> dolly(new ts_Tensor((*tensor)->field(index)));
+    RETURN_OR_CATCH(dolly.release(), nullptr)
+}
+
+ts_bool ts_Tensor_packed(ts_Tensor *tensor) {
+    TRY_HEAD
+        if (!tensor) throw Exception("NullPointerException: @param: 1");
+        if (!(*tensor)->packed()) return ts_false;
+    RETURN_OR_CATCH(ts_true, ts_false)
+}
+
+int32_t ts_Tensor_fields_count(ts_Tensor *tensor) {
+    TRY_HEAD
+        if (!tensor) throw Exception("NullPointerException: @param: 1");
+        auto fields_count = int32_t((*tensor)->fields_count());
+    RETURN_OR_CATCH(fields_count, 0)
+}
+
+ts_Tensor *ts_Tensor_pack(ts_Tensor **fields, int32_t count) {
+    TRY_HEAD
+        if (!fields) throw Exception("NullPointerException: @param: 1");
+        std::vector<Tensor> ts_fields;
+        for (int i = 0; i < count; ++i) {
+            if (!fields[i]) throw Exception("NullPointerException: @param: fields[" + std::to_string(i) + "]");
+            ts_fields.emplace_back(**fields[i]);
+        }
+        std::unique_ptr<ts_Tensor> tensor(new ts_Tensor());
+        (*tensor)->pack(ts_fields);
+    RETURN_OR_CATCH(tensor.release(), nullptr)
+}
+
+ts_Tensor *ts_Tensor_slice(ts_Tensor *tensor, int32_t i) {
+    TRY_HEAD
+        if (!tensor) throw Exception("NullPointerException: @param: 1");
+        std::unique_ptr<ts_Tensor> dolly(new ts_Tensor(
+                (*tensor)->slice(i)
+        ));
+    RETURN_OR_CATCH(dolly.release(), nullptr)
+}
+
+ts_Tensor *ts_Tensor_slice_v2(ts_Tensor *tensor, int32_t beg, int32_t end) {
+    TRY_HEAD
+        if (!tensor) throw Exception("NullPointerException: @param: 1");
+        std::unique_ptr<ts_Tensor> dolly(new ts_Tensor(
+                (*tensor)->slice(beg, end)
+        ));
+    RETURN_OR_CATCH(dolly.release(), nullptr)
+}
+
+ts_bool ts_Tensor_save(const char *path, const ts_Tensor *tensor) {
+    TRY_HEAD
+        if (!path) throw Exception("NullPointerException: @param: 1");
+        if (!tensor) throw Exception("NullPointerException: @param: 2");
+        tensor::save(path, **tensor);
+    RETURN_OR_CATCH(true, false)
+}
+
+ts_Tensor *ts_Tensor_load(const char *path) {
+    TRY_HEAD
+        if (!path) throw Exception("NullPointerException: @param: 1");
+        std::unique_ptr<ts_Tensor> dolly(new ts_Tensor(
+                tensor::load(path)
+        ));
+    RETURN_OR_CATCH(dolly.release(), nullptr)
+}
+

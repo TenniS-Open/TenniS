@@ -5,7 +5,16 @@
 #ifndef TENSORSTACK_KERNELS_COMMON_SIMD_H
 #define TENSORSTACK_KERNELS_COMMON_SIMD_H
 
-#include "simd_def.h"
+//#include "simd_def.h"
+#ifdef TS_USE_AVX
+#include "simd_def/simd_avx_def.h"
+#elif  TS_USE_SSE
+#include "simd_def/simd_sse_def.h"
+#elif  TS_USE_NEON
+#include "simd_def/simd_neon_def.h"
+#else
+#include "simd_def/simd_base_def.h"
+#endif
 
 namespace ts {
     template<typename T, int M>
@@ -26,6 +35,7 @@ namespace ts {
     };
 
     using float32x4 = simd<float, 4>;
+    using float32x4x2 = simd<float, 8>;
 
     template<typename T, int M>
     inline T sum(const simd<T, M> &value) {
@@ -41,6 +51,17 @@ namespace ts {
         T a[4];
         value.store(a);
         return a[0] + a[1] + a[2] + a[3];
+    }
+
+    template<typename T>
+    inline T sum(const simd<T, 4> &value,int index) {
+        T a[4];
+        value.store(a);
+        T sum = 0;
+        for (int i = 0; i < index && i < 4; i++){
+            sum += a[i];
+        }
+        return sum;
     }
 
     template<typename T, int M>
@@ -93,6 +114,57 @@ namespace ts {
 
     inline simd<float, 4> min_float32x4(const simd<float, 4> &lhs, const simd<float, 4> &rhs) {
         return _simd_f32x4_min(lhs.value, rhs.value);
+    }
+
+    inline void transposex4x4(simd<float, 4> &q0, simd<float, 4> &q1, simd<float, 4> &q2, simd<float, 4> &q3) {
+        return _simd_f32x4_transpose4x4(q0.value, q1.value, q2.value, q3.value);
+    }
+
+    inline simd<float, 4> fmadd(const simd<float, 4> &q0, const simd<float, 4> &q1, const simd<float, 4> &q2) {
+        return _simd_f32x4_fmadd(q0.value, q1.value, q2.value);
+    }
+
+    template<>
+    class simd<float, 8> : public simd_base<float, 8> {
+    public:
+        using self = simd;
+        using type = _simd_f32x4x2;
+
+        type value;
+
+        simd() = default;
+
+        simd(type value) : value(value) {}
+
+        simd(base a) : simd(a, a, a, a, a, a, a, a) {}
+
+        simd(int a) : simd(base(a)) {}
+
+        simd(const base *p) : value(_simd_f32x4x2_load(p)) {}
+
+        simd(base a, base b, base c, base d, base e, base f, base g, base h) : value(_simd_f32x4x2_set(a, b, c, d, e, f, g, h)) {}
+
+        void store(base *p) const { _simd_f32x4x2_store(p, value); }
+    };
+
+    inline simd<float, 8> operator+(const simd<float, 8> &lhs, const simd<float, 8> &rhs) {
+        return _simd_f32x4x2_add(lhs.value, rhs.value);
+    }
+
+    inline simd<float, 8> operator-(const simd<float, 8> &lhs, const simd<float, 8> &rhs) {
+        return _simd_f32x4x2_sub(lhs.value, rhs.value);
+    }
+
+    inline simd<float, 8> operator*(const simd<float, 8> &lhs, const simd<float, 8> &rhs) {
+        return _simd_f32x4x2_mul(lhs.value, rhs.value);
+    }
+
+    inline simd<float, 8> operator/(const simd<float, 8> &lhs, const simd<float, 8> &rhs) {
+        return _simd_f32x4x2_div(lhs.value, rhs.value);
+    }
+
+    inline simd<float, 8> fmadd(const simd<float, 8> &q0, const simd<float, 8> &q1, const simd<float, 8> &q2) {
+        return _simd_f32x4x2_fmadd(q0.value, q1.value, q2.value);
     }
 
 }

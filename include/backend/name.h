@@ -104,6 +104,9 @@ namespace ts {
             TS_DEBUG_API const string &topkv2() TS_NOEXCEPT;
 
             TS_DEBUG_API const string &prewhiten() TS_NOEXCEPT;
+
+            TS_DEBUG_API const string &winograd_transform_kernel() TS_NOEXCEPT;
+            TS_DEBUG_API const string &conv2d_winograd() TS_NOEXCEPT;
         }
 
         namespace typo {
@@ -174,6 +177,10 @@ namespace ts {
         TS_DEBUG_API extern string align_corners;
 
         TS_DEBUG_API extern string keep_dims;
+
+        TS_DEBUG_API extern string winograd_model;
+        TS_DEBUG_API extern string winograd_f23;
+        TS_DEBUG_API extern string winograd_f63;
     }
 }
 

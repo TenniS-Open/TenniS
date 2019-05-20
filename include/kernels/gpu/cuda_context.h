@@ -27,7 +27,7 @@ namespace ts {
                 TS_LOG_ERROR << "The cudaStream_t initialize failed " << eject;
             }
             // TODO: use stream run kernel and cublas function
-            // cublasSetStream(m_cublas_handle, m_stream);
+            cublasSetStream(m_cublas_handle, m_stream);
         }
 
         ~CUDAContextHandle() {

@@ -9,6 +9,8 @@
 #include <core/sync/sync_memory.h>
 #include <core/sync/sync_controller.h>
 
+#include <cuda_runtime.h>
+
 namespace ts {
     namespace gpu {
         using CpuBlock = std::pair<void *, int>;
@@ -37,6 +39,12 @@ namespace ts {
         std::pair<SyncMemory, std::vector<GpuHypeShape>> MakeGPUHypeShape(const MemoryDevice &device, const std::vector<std::vector<int>> &shape,
                                                                           const std::vector<CpuBlock> &cpu,
                                                                           const std::vector<void **> &gpu);
+
+        /**
+        * get cuda stream on current context
+        * @return  cuda stream on current context
+        */
+        cudaStream_t get_cuda_stream_on_context();
     }
 }
 

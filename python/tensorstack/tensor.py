@@ -121,6 +121,9 @@ def from_any(val, dtype=None):
     if isinstance(val, StringTensor):
         return val
 
+    if isinstance(val, PackedTensor):
+        return PackedTensor([from_any(o, dtype=dtype) for o in val.unpack()])
+
     # compress str as StringTensor
     val = compatible_string(val)
     if isinstance(val, (str, bytes)):

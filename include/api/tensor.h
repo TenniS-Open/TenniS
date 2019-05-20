@@ -30,6 +30,12 @@ enum ts_DTYPE {
 };
 typedef enum ts_DTYPE ts_DTYPE;
 
+enum ts_InFlow {
+    TS_HOST     = 0,
+    TS_DEVICE   = 1,
+};
+typedef enum ts_InFlow ts_InFlow;
+
 // Tensor's API
 
 /**
@@ -82,6 +88,63 @@ TENSOR_STACK_C_API ts_Tensor *ts_Tensor_cast(ts_Tensor *tensor, ts_DTYPE dtype);
  * Return new tensor.
  */
 TENSOR_STACK_C_API ts_Tensor *ts_Tensor_reshape(ts_Tensor *tensor, const int32_t *shape, int32_t shape_len);
+
+/**
+ * Return NULL if failed.
+ */
+TENSOR_STACK_C_API ts_Tensor *ts_new_Tensor_in_flow(ts_InFlow in_flow, const int32_t *shape, int32_t shape_len, ts_DTYPE dtype, const void *data);
+
+/**
+ * Return NULL if failed.
+ */
+TENSOR_STACK_C_API ts_Tensor *ts_Tensor_view_in_flow(ts_Tensor *tensor, ts_InFlow in_flow);
+
+
+/**
+ * Return NULL if failed.
+ */
+TENSOR_STACK_C_API ts_Tensor *ts_Tensor_field(ts_Tensor *tensor, int32_t index);
+
+
+/**
+ * Return false if failed. False also mean no packed
+ */
+TENSOR_STACK_C_API ts_bool ts_Tensor_packed(ts_Tensor *tensor);
+
+
+/**
+ * Return 0 if failed.
+ */
+TENSOR_STACK_C_API int32_t ts_Tensor_fields_count(ts_Tensor *tensor);
+
+
+/**
+ * Return NULL if failed.
+ */
+TENSOR_STACK_C_API ts_Tensor *ts_Tensor_pack(ts_Tensor **fields, int32_t count);
+
+
+/**
+ * Return NULL if failed
+ */
+TENSOR_STACK_C_API ts_Tensor *ts_Tensor_slice(ts_Tensor *tensor, int32_t i);
+
+
+/**
+ * Return NULL if failed
+ */
+TENSOR_STACK_C_API ts_Tensor *ts_Tensor_slice_v2(ts_Tensor *tensor, int32_t beg, int32_t end);
+
+/**
+ * return false if failed
+ */
+TENSOR_STACK_C_API ts_bool ts_Tensor_save(const char *path, const ts_Tensor *tensor);
+
+/**
+ * return NULL if failed
+ */
+TENSOR_STACK_C_API ts_Tensor *ts_Tensor_load(const char *path);
+
 
 #ifdef __cplusplus
 }

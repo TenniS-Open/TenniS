@@ -26,6 +26,7 @@
 
 #include "module/menu.h"
 #include "frontend/intime.h"
+#include "compiler/zipper.h"
 
 
 
@@ -99,8 +100,20 @@ namespace ts {
 
         Graph temp_graph;
         ctx::bind<Graph> _bind_graph(temp_graph);
+
+        Zipper zipper(m_computing_device);
+        std::vector<Node> zip_ouputs = zipper.zip(raw_outputs);
+
+        // std::cout << "+++++++++++++++++ original graph ++++++++++++++++++++++" << std::endl;
+        // plot_graph(std::cout, zip_ouputs);
+
         std::vector<Node> outputs;
-        run_const_nodes(raw_outputs, outputs);
+        run_const_nodes(zip_ouputs, outputs);
+
+        // std::cout << "+++++++++++++++++ const graph ++++++++++++++++++++++" << std::endl;
+        // plot_graph(std::cout, outputs);
+
+        // std::cout << "++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
 
         InstructionBlock block;
         block.nargs = int(inputs.size());
@@ -347,11 +360,11 @@ namespace ts {
      */
     static bool run_const_node(const Node &node, Node &const_node,
             std::unordered_map<Node, Node> &ready_const,
-            std::unordered_set<Node> &ready_nonconst) {
+            std::unordered_map<Node, Node> &ready_nonconst) {
         // check ready nonconst
         auto nonconst_it = ready_nonconst.find(node);
         if (nonconst_it != ready_nonconst.end()) {
-            const_node = *nonconst_it;
+            const_node = nonconst_it->second;
             return false;
         }
         // check ready const
@@ -370,19 +383,35 @@ namespace ts {
             return true;
         } else if (node->op() == Bubble::Parameter) {
             const_node = node;
-            ready_nonconst.insert(node);
+            ready_nonconst.insert(std::make_pair(node, node));
             return false;
         }
 
-        // check if each input is const
+        // check if each input is const or new
         std::vector<Tensor> const_inputs;
-        for (auto input : node.inputs()) {
-            if (!run_const_node(input, input, ready_const, ready_nonconst)) {
-                const_node = node;
-                ready_nonconst.insert(node);
-                return false;
+        std::vector<Node> const_input_nodes;
+        bool input_are_const = true;
+        bool build_new_node = false;
+        for (const auto &input : node.inputs()) {
+            auto const_input = input;
+            if (!run_const_node(input, const_input, ready_const, ready_nonconst)) {
+                input_are_const = false;
+            } else {
+                const_inputs.emplace_back(const_input->get(name::value));
             }
-            const_inputs.emplace_back(input->get(name::value));
+            build_new_node = build_new_node || const_input != input;
+            const_input_nodes.emplace_back(const_input);
+        }
+
+        if (!input_are_const) {
+            if (!build_new_node) {
+                const_node = node;
+            } else {
+                const_node = ts::bubble::bubble(node.bubble());
+                Node::Link(const_node, const_input_nodes);
+            }
+            ready_nonconst.insert(std::make_pair(node, const_node));
+            return false;
         }
 
         // set const node
@@ -399,7 +428,7 @@ namespace ts {
     void Compiler::run_const_nodes(const std::vector<Node> &nodes, std::vector<Node> &const_nodes) {
         const_nodes.clear();
         std::unordered_map<Node, Node> ready_const;
-        std::unordered_set<Node> ready_nonconst;
+        std::unordered_map<Node, Node> ready_nonconst;
         for (auto node : nodes) {
             run_const_node(node, node, ready_const, ready_nonconst);
             const_nodes.emplace_back(node);

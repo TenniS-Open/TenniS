@@ -9,6 +9,7 @@
 #include "tensor.h"
 #include "module.h"
 #include "image_filter.h"
+#include "program.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -68,6 +69,36 @@ TENSOR_STACK_C_API ts_bool ts_Workbench_bind_filter(ts_Workbench *workbench, int
 
 TENSOR_STACK_C_API ts_bool ts_Workbench_bind_filter_by_name(ts_Workbench *workbench, const char *name, const ts_ImageFilter *filter);
 
+/**
+ * Return NULL if failed.
+ */
+TENSOR_STACK_C_API ts_Workbench *ts_new_Workbench(const ts_Device *device);
+
+/**
+ * Return false if failed.
+ */
+TENSOR_STACK_C_API ts_bool ts_Workbench_setup(ts_Workbench *workbench, const ts_Program *program);
+
+/**
+ * Return false if failed.
+ */
+TENSOR_STACK_C_API ts_bool ts_Workbench_setup_context(ts_Workbench *workbench);
+
+/**
+ * Return nullptr if failed.
+ * Note: remember call free on return value
+ */
+TENSOR_STACK_C_API ts_Program *ts_Workbench_compile(ts_Workbench *workbench, const ts_Module *module);
+
+/**
+ * Return false if failed.
+ */
+TENSOR_STACK_C_API ts_bool ts_Workbench_setup_device(ts_Workbench *workbench);
+
+/**
+ * Return false if failed
+ */
+TENSOR_STACK_C_API ts_bool ts_Workbench_setup_runtime(ts_Workbench *workbench);
 
 
 #ifdef __cplusplus

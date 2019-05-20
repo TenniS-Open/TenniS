@@ -144,7 +144,9 @@ namespace ts {
     };
 
     inline std::ostream &operator<<(std::ostream &out, const Bubble &op) {
-        return out << op.op() << ", " << op.name() << ", " << op.output_count();
+        std::ostringstream oss;
+        oss << "{op=\"" << op.op() << "\", name=\"" << op.name() << "\", out=" << op.output_count() << "}";
+        return out << oss.str();
     }
 }
 
