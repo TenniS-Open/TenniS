@@ -48,7 +48,7 @@ namespace ts {
             shape.resize(1);
             shape[0] = m_max_output_size;
             output.resize(1);
-            output[0] = Tensor::Prototype(x.dtype(), shape);
+            output[0] = Tensor::Prototype(INT32, shape);
 
             return 1;
         }
