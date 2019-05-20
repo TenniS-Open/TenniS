@@ -68,7 +68,10 @@ namespace ts {
             auto in_data = x.data<T>();
             auto out_data = out.data<T>();
             auto count = out.count();
-            pad_gpu_kernel<T> << < CUDA_BLOCK(count, CUDA_THREAD_NUM), CUDA_THREAD_NUM >> > (count, gpu_padding, T(padding_value), in_data, out_data, gpu_in_shape, gpu_out_shape);
+
+            auto cuda_stream = get_cuda_stream_on_context();
+
+            pad_gpu_kernel<T> << < CUDA_BLOCK(count, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >> > (count, gpu_padding, T(padding_value), in_data, out_data, gpu_in_shape, gpu_out_shape);
         }
 
         void PadOnGPU::pad(const Tensor &x, const std::vector<std::array<int, 2>> &padding, float padding_value, Tensor &out) {
@@ -76,11 +79,19 @@ namespace ts {
             switch(dtype) {
 #define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
         case DTYPE: { pad_gpu_compute_run<TYPE>(x, padding, padding_value, out); break; }
+                DECLARE_COMPUTE_RUN(INT8, int8_t);
+                DECLARE_COMPUTE_RUN(UINT8, uint8_t);
+                DECLARE_COMPUTE_RUN(INT16, int16_t);
+                DECLARE_COMPUTE_RUN(UINT16, uint16_t);
+                DECLARE_COMPUTE_RUN(INT32, int32_t);
+                DECLARE_COMPUTE_RUN(UINT32, uint32_t);
+                DECLARE_COMPUTE_RUN(INT64, int64_t);
+                DECLARE_COMPUTE_RUN(UINT64, uint64_t);
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
                 default: {
-                    TS_LOG_ERROR << "pad not support this data type: " << dtype << eject;
+                    TS_LOG_ERROR << "pad not support this data type: " << type_str(dtype) << eject;
                     break;
                 }
             }

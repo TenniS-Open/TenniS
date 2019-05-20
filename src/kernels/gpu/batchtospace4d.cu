@@ -6,6 +6,9 @@
 #include <utils/assert.h>
 #include <core/device.h>
 #include <vector>
+#include <cuda_runtime.h>
+
+#include "kernels/gpu/gpu_helper.h"
 
 //#include "kernels/common/simd.h"
 
@@ -80,7 +83,9 @@ namespace ts {
             const T * pinput = x.data<T>();
             T * poutput = out.data<T>();
 
-            gBatchToSpaceND_kernel<T> << <CUDA_BLOCK(output_size, CUDA_THREAD_NUM), CUDA_THREAD_NUM >> >
+            auto cuda_stream = get_cuda_stream_on_context();
+
+            gBatchToSpaceND_kernel<T> << <CUDA_BLOCK(output_size, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >> >
                                (pinput, poutput,
                                 input_number, input_channels, input_height, input_width,
                                 output_number, output_channels, output_height, output_width,

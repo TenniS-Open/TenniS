@@ -9,7 +9,7 @@
 #include "device_launch_parameters.h"
 #include <cuda_runtime.h>
 
-
+#include "kernels/gpu/gpu_helper.h"
 
 namespace ts {
     namespace gpu {
@@ -193,7 +193,10 @@ namespace ts {
             T *pdst = y->data<T>() + y_offset;
 
             int ncount = y_height * y_width * channels;
-            Resize2d_ResizeImageLinear_kernel<T> <<< CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> 
+
+            auto cuda_stream = get_cuda_stream_on_context();
+
+            Resize2d_ResizeImageLinear_kernel<T> <<< CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >>>
                                       (psrc, x_width, x_height, channels, pdst, y_width, y_height, ncount);
 
         }
@@ -208,7 +211,9 @@ namespace ts {
             T *pdst = y->data<T>() + y_offset;
 
             int ncount = y_height * y_width * channels;
-            Resize2d_ResizeImageCubic_kernel<T> <<< CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> 
+
+            auto cuda_stream = get_cuda_stream_on_context();
+            Resize2d_ResizeImageCubic_kernel<T> <<< CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >>> 
                                       (psrc, x_width, x_height, channels, pdst, y_width, y_height, ncount);
         }
 
@@ -222,7 +227,9 @@ namespace ts {
             T *pdst = y->data<T>() + y_offset;
 
             int ncount = y_height * y_width * channels;
-            Resize2d_ResizeNearest_kernel<T> << < CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM >> >
+
+            auto cuda_stream = get_cuda_stream_on_context();
+            Resize2d_ResizeNearest_kernel<T> << < CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >> >
                                                                                        (psrc, x_width, x_height, channels, pdst, y_width, y_height, ncount);
         }
 

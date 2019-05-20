@@ -5,6 +5,9 @@
 #include <backend/name.h>
 #include <core/device.h>
 #include <utils/assert.h>
+#include <cuda_runtime.h>
+
+#include "kernels/gpu/gpu_helper.h"
 
 #include "kernels/gpu/gpu_helper.h"
 
@@ -56,7 +59,10 @@ namespace ts {
             auto in_data = x.data<T>();
             auto out_data = out.data<T>();
             auto count = out.count();
-            gpu_dimshuffle_kernel<T> << < CUDA_BLOCK(count, CUDA_THREAD_NUM), CUDA_THREAD_NUM >> > (count, in_data, gpu_in_shape, out_data, gpu_out_shape, dim, gpu_shuffle);
+
+            auto cuda_stream = get_cuda_stream_on_context();
+
+            gpu_dimshuffle_kernel<T> << < CUDA_BLOCK(count, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >> > (count, in_data, gpu_in_shape, out_data, gpu_out_shape, dim, gpu_shuffle);
         }
 
         void Dimshuffle::dimshuffle(const Tensor &x, int dim, const std::vector<int> &shuffle, Tensor &out) {
@@ -64,11 +70,19 @@ namespace ts {
             switch(dtype) {
 #define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
         case DTYPE: { gpu_dimshuffle_comput_run<TYPE>(x, dim, shuffle, out); break; }
+                DECLARE_COMPUTE_RUN(INT8, int8_t);
+                DECLARE_COMPUTE_RUN(UINT8, uint8_t);
+                DECLARE_COMPUTE_RUN(INT16, int16_t);
+                DECLARE_COMPUTE_RUN(UINT16, uint16_t);
+                DECLARE_COMPUTE_RUN(INT32, int32_t);
+                DECLARE_COMPUTE_RUN(UINT32, uint32_t);
+                DECLARE_COMPUTE_RUN(INT64, int64_t);
+                DECLARE_COMPUTE_RUN(UINT64, uint64_t);
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
                 default: {
-                    TS_LOG_ERROR << this->op() << " not support this data type: " << dtype << eject;
+                    TS_LOG_ERROR << this->op() << " not support this data type: " << type_str(dtype) << eject;
                     break;
                 }
             }

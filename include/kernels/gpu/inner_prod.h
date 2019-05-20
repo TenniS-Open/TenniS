@@ -12,7 +12,7 @@ namespace ts {
             using self = InnerProd;
             using supper = OperatorOnGPU<base::InnerProd>;
 
-            void inner_prod(const Tensor &lhs, const Tensor &rhs, Tensor &out) override;
+            void inner_prod(const Tensor &lhs, const Tensor &rhs, bool transpose, Tensor &out) override;
         };
     }
 }

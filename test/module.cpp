@@ -33,10 +33,10 @@ public:
         TS_AUTO_CHECK(output[0].dtype() == ts::FLOAT32);
         stack.push(output[0], memory_device()); // Notice push tensor device, default is DeviceContext.memory_device
         auto sum = stack.index(-1);
-        auto sum_ptr = sum->sync(ts::MemoryDevice(ts::CPU)).data<float>();    // Get CPU data ptr
+        auto sum_ptr = sum->view(ts::MemoryDevice(ts::CPU)).data<float>();    // Get CPU data ptr
         std::memset(sum_ptr, 0, sum->count() * sizeof(float));
         for (int i = 0; i < input_num; ++i) {
-            auto input_ptr = stack.index(i)->sync(memory_device()).data<float>();   // Get CPU data ptr
+            auto input_ptr = stack.index(i)->view(memory_device()).data<float>();   // Get CPU data ptr
             for (int j = 0; j < sum->count(); ++j) {
                 sum_ptr[j] += input_ptr[j];
             }

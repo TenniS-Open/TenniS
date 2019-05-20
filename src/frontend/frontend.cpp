@@ -66,5 +66,26 @@ namespace ts {
         Node div(const std::string &name, const NodeOrTensor &lhs, const NodeOrTensor &rhs) {
             return symbol::div(name, lhs, rhs);
         }
+
+        Node transpose(const std::string &name, const NodeOrTensor &x, const std::vector<int32_t> &permute) {
+            return symbol::transpose(name, x, permute);
+        }
+
+        Node sigmoid(const std::string &name, const NodeOrTensor &x) {
+            return symbol::sigmoid(name, x);
+        }
+
+        Node gather(const std::string &name, const NodeOrTensor &x, const NodeOrTensor &indices, int32_t axis) {
+            return symbol::gather(name, x, indices, axis);
+        }
+
+        Node concat(const std::string &name, const std::vector<NodeOrTensor> &x, int32_t dim) {
+            std::vector<Node> nodex(x.begin(), x.end());
+            return symbol::concat(name, nodex, dim);
+        }
+
+        Node softmax(const std::string &name, const NodeOrTensor &x, int32_t dim, bool smooth) {
+            return symbol::softmax(name, x, dim, smooth);
+        }
     }
 }

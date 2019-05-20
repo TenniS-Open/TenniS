@@ -62,6 +62,16 @@ namespace ts {
         TS_DEBUG_API Node mul(const std::string &name, const NodeOrTensor &lhs, const NodeOrTensor &rhs);
 
         TS_DEBUG_API Node div(const std::string &name, const NodeOrTensor &lhs, const NodeOrTensor &rhs);
+
+        TS_DEBUG_API Node transpose(const std::string &name, const NodeOrTensor &x, const std::vector<int32_t> &permute);
+
+        TS_DEBUG_API Node sigmoid(const std::string &name, const NodeOrTensor &x);
+
+        TS_DEBUG_API Node gather(const std::string &name, const NodeOrTensor &x, const NodeOrTensor &indices, int32_t axis);
+
+        TS_DEBUG_API Node concat(const std::string &name, const std::vector<NodeOrTensor> &x, int32_t dim);
+
+        TS_DEBUG_API Node softmax(const std::string &name, const NodeOrTensor &x, int32_t dim, bool smooth = true);
     }
 }
 

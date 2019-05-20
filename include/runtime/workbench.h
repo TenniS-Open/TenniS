@@ -8,6 +8,8 @@
 #include <memory>
 #include <queue>
 #include <unordered_map>
+#include <stack>
+
 #include <core/device_context.h>
 
 #include "operator.h"
@@ -22,6 +24,8 @@
 #include "board/profiler.h"
 
 #include "utils/ctxmgr_lite.h"
+
+#include "program.h"
 
 namespace ts {
     class TS_DEBUG_API Workbench : public SetupContext<Workbench> {
@@ -100,10 +104,6 @@ namespace ts {
 
         const Profiler &profiler() const { return m_profiler; }
 
-        void lock() { m_mutex->lock(); }
-        
-        void unlock() { m_mutex->unlock(); }
-
         /**
          *
          * @param [in] bubble parameter
@@ -145,7 +145,7 @@ namespace ts {
         int online_run(Operator::shared op, int argc);
 
         /**
-         * This API will clear stack before run op, then push input to stack
+         * This API push input to stack, then run online
          * @param op
          * @param input
          */
@@ -158,7 +158,7 @@ namespace ts {
         void online_run(Instruction::shared inst);
 
         /**
-         * This API will clear stack before run op, then push input to stack
+         * This API push input to stack, then run online, the inst return size, is given by doc
          * @param inst
          * @param input
          */
@@ -179,30 +179,73 @@ namespace ts {
          */
         int online_run(const Bubble &bubble, const std::vector<Tensor> &input, bool strict = false);
 
-    private:
-        explicit Workbench(const ComputingDevice &device, std::shared_ptr<std::mutex> mutex);
+        /**
+         *
+         * @param program
+         * This function will reset all programs. make older run api working
+         */
+        void setup(Program::shared program);
 
-        explicit Workbench(const ComputingDevice &device, std::shared_ptr<std::mutex> mutex, int computing_thread_number);
+        /**
+         *
+         * @param program
+         * @param nargs
+         * @return output count in stack
+         * This function will keep ready stack, run with args on stack
+         */
+        int launch_online(Program::shared program, int nargs);
+
+        /**
+         *
+         * @param program
+         * @param args
+         * @return
+         * This function will keep ready stack, there will be nothing happen after launch,
+         * call launch_online inner
+         */
+        std::vector<Tensor> launch_offline(Program::shared program, const std::vector<Tensor> &args);
+
+        /**
+         *
+         * @param program
+         * @param args
+         * @return
+         * This function will keep ready stack, there will be nothing happen after launch
+         * call other launch_offline inner
+         */
+        std::vector<Tensor> launch_offline(Program::shared program, const std::map<std::string, Tensor> &args);
+
+        Program::shared compile(const Module::shared &module);
+
+        /**
+         * setup context DeviceContext
+         */
+        void setup_device();
+
+        /**
+         * setup context RuntimeContext
+         */
+        void setup_runtime();
 
     private:
-        size_t m_pointer = 0;   // pointer to running function
-        std::vector<Instruction::shared> m_program; // running function, program area
+        // size_t m_pointer = 0;   // pointer to running function
+        // std::vector<Instruction::shared> m_program; // running function, program area
         SyncMemoryController::shared m_static_memory;
         SyncMemoryController::shared m_flow_memory;
         SyncMemoryController::shared m_dynamic_memory;
         Stack::shared m_stack;  // save running memory, data area
-        Stack::shared m_data_sagment;   // save static area
+        // Stack::shared m_data_sagment;   // save static area
         // map slot, means <tensor'name, tensor's index in stack>
-        map<std::string, int> m_map_input_slots;
-        map<std::string, int> m_map_output_slots;
+        // map<std::string, int> m_map_input_slots;
+        // map<std::string, int> m_map_output_slots;
         // map tensor, means <tensor's index in stack, tensor>
         std::vector<Tensor> m_inputs;
         std::vector<Tensor> m_outputs;
         // input and output dtype type
-        std::vector<DTYPE> m_input_dtypes;
-        std::vector<DTYPE> m_output_dtypes;
+        // std::vector<DTYPE> m_input_dtypes;
+        // std::vector<DTYPE> m_output_dtypes;
 
-        std::vector<ImageFilter::shared> m_input_filters;
+        // std::vector<ImageFilter::shared> m_input_filters;
 
         // control device context
         DeviceContext m_device_context;
@@ -213,7 +256,11 @@ namespace ts {
         bool m_do_profile = false;
         Profiler m_profiler;
 
-        std::shared_ptr<std::mutex> m_mutex;
+        // std::shared_ptr<std::mutex> m_mutex;
+
+        std::stack<ProgramEnv> m_env;
+
+        Program::shared m_desktop;
 
     private:
         Operator::shared m_cast_op; ///< for input cast

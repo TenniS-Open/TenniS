@@ -12,5 +12,6 @@
 #include "module.h"
 #include "image_filter.h"
 #include "workbench.h"
+#include "intime.h"
 
 #endif //TENSORSTACK_API_CPP_TENSORSTACK_H

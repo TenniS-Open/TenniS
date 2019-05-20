@@ -25,7 +25,7 @@ namespace ts {
 
     void Operator::set(const std::string &param, const Tensor &value) {
         bool is_retention_param = !param.empty() && param[0] == retention_param_sign;
-        if (!is_retention_param && !is_in_fields(param)) {
+        if (!is_retention_param && !is_in_fields(param) && m_param_checking_mode == ParamCheckingMode::STRICT) {
             TS_LOG_ERROR << "Unidentified param \"" << param << "\", did you mean \"" << fuzzy_param_name(param) << "\""
                          << eject;
         }
@@ -116,6 +116,7 @@ namespace ts {
     }
 
     bool Operator::check_params() const {
+        if (m_param_checking_mode != ParamCheckingMode::STRICT) return true;
         for (auto &param : this->m_required_fields) {
             auto param_it = this->m_params.find(param);
             if (param_it == this->m_params.end() || param_it->second.empty()) {
@@ -225,6 +226,10 @@ namespace ts {
         infer(stack, fields);
         proto.pack(fields);
         return std::move(proto);
+    }
+
+    void Operator::set_param_checking_mode(Operator::ParamCheckingMode mode) {
+        this->m_param_checking_mode = mode;
     }
 
     int RunOperator(Operator::shared op, Stack &stack, int nargs) {

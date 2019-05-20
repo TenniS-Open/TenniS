@@ -30,6 +30,18 @@ namespace ts {
         TS_DEBUG_API Bubble mul();
 
         TS_DEBUG_API Bubble div();
+
+        TS_DEBUG_API Bubble transpose(const std::vector<int32_t> &permute);
+
+        TS_DEBUG_API Bubble sigmoid();
+
+        TS_DEBUG_API Bubble gather(int32_t axis);
+
+        TS_DEBUG_API Bubble concat(int32_t dim);
+
+        TS_DEBUG_API Bubble softmax(int32_t dim, bool smooth = true);
+
+        TS_DEBUG_API Bubble pad(float padding_value = 0);
     }
 }
 

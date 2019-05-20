@@ -45,5 +45,35 @@ namespace ts {
             Node::Link(node, {lhs, rhs});
             return node;
         }
+
+        Node transpose(const std::string &name, const Node &x, const std::vector<int32_t> &permute) {
+            Node node = bubble::bubble(desc::transpose(permute), name);
+            Node::Link(node, {x});
+            return node;
+        }
+
+        Node sigmoid(const std::string &name, const Node &x) {
+            Node node = bubble::bubble(desc::sigmoid(), name);
+            Node::Link(node, {x});
+            return node;
+        }
+
+        Node gather(const std::string &name, const Node &x, const Node &indices, int32_t axis) {
+            Node node = bubble::bubble(desc::gather(axis), name);
+            Node::Link(node, {x, indices});
+            return node;
+        }
+
+        Node concat(const std::string &name, const std::vector<Node> &x, int32_t dim) {
+            Node node = bubble::bubble(desc::gather(dim), name);
+            Node::Link(node, x);
+            return node;
+        }
+
+        Node softmax(const std::string &name, const Node &x, int32_t dim, bool smooth) {
+            Node node = bubble::bubble(desc::softmax(dim, smooth), name);
+            Node::Link(node, {x});
+            return node;
+        }
     }
 }

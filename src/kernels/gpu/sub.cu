@@ -9,7 +9,7 @@
 #include "device_launch_parameters.h"
 #include <cuda_runtime.h>
 
-
+#include "kernels/gpu/gpu_helper.h"
 
 namespace ts {
     namespace gpu {
@@ -163,9 +163,9 @@ namespace ts {
             memcpy((void*)outweight, out.device(), out_hype.weight().size() * sizeof(int32_t),
                    (void*)out_hype.weight().data(), MemoryDevice(CPU), out_hype.weight().size() * sizeof(int32_t));
             /////////////////////////////////////
+            auto cuda_stream = get_cuda_stream_on_context();
 
-
-            reduce_operator_kernel<T> <<< CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> (pout, ncount,
+            reduce_operator_kernel<T> <<< CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >>> (pout, ncount,
                         plhs, prhs, lhsshape, lhsweight, rhsshape, rhsweight, outweight, out.sizes().size());
 
         }
@@ -179,7 +179,9 @@ namespace ts {
             memcpy((void*)pout, out.device(), out.count() * sizeof(T),
                    (void*)plhs, lhs.device(), out.count() * sizeof(T));
 
-            reduce_operator_scalar_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> (pout, out.count(), prhs);
+            auto cuda_stream = get_cuda_stream_on_context();
+
+            reduce_operator_scalar_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >>> (pout, out.count(), prhs);
         }
 
         template<typename T>
@@ -191,7 +193,9 @@ namespace ts {
             memcpy((void*)pout, out.device(), out.count() * sizeof(T),
                    (void*)prhs, rhs.device(), out.count() * sizeof(T));
 
-            reduce_operator_scalar_cross_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> (pout, out.count(), plhs);
+            auto cuda_stream = get_cuda_stream_on_context();
+
+            reduce_operator_scalar_cross_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >>> (pout, out.count(), plhs);
         }
 
 
@@ -204,7 +208,9 @@ namespace ts {
             memcpy((void*)pout, out.device(), out.count() * sizeof(T),
                    (void*)plhs, lhs.device(), out.count() * sizeof(T));
 
-            reduce_operator_same_shape_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> (pout, prhs, out.count());
+            auto cuda_stream = get_cuda_stream_on_context();
+
+            reduce_operator_same_shape_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >>> (pout, prhs, out.count());
 
         }
 
@@ -223,7 +229,9 @@ namespace ts {
             memcpy((void*)pout, out.device(), out.count() * sizeof(T),
                    (void*)plhs, lhs.device(), out.count() * sizeof(T));
 
-            reduce_operator_bias_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> (pout, out.count(), count, channels, prhs, rhs.count());
+            auto cuda_stream = get_cuda_stream_on_context();
+
+            reduce_operator_bias_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >>> (pout, out.count(), count, channels, prhs, rhs.count());
 
         }
 
@@ -241,7 +249,9 @@ namespace ts {
             memcpy((void*)pout, out.device(), out.count() * sizeof(T),
                    (void*)prhs, rhs.device(), out.count() * sizeof(T));
 
-            reduce_operator_bias_cross_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM >>> (pout, out.count(), count, channels, plhs, lhs.count());
+            auto cuda_stream = get_cuda_stream_on_context();
+
+            reduce_operator_bias_cross_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >>> (pout, out.count(), count, channels, plhs, lhs.count());
 
         }
 

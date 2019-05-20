@@ -43,6 +43,38 @@ if (TS_USE_DEBUG_API)
     add_definitions(-DTS_USE_DEBUG_API)
 endif()
 
+option(TS_USE_SIMD "[Optional] Use SIMD" ON)
+option(TS_USE_AVX "[Optional] Use AVX" OFF)
+option(TS_USE_SSE "[Optional] Use SSE" OFF)
+option(TS_USE_NEON "[Optional] Use NEON" OFF)
+option(TS_USE_FAST_MATH "[Optional] Use fast math (-ffast-math)" OFF)
+if (TS_USE_SIMD)
+	message(STATUS "[Optional] Use SIMD: [ON]")
+	add_definitions(-DTS_USE_SIMD)
+    if (TS_USE_AVX)
+		message(STATUS "[Optional] Use AVX: [ON]")
+		add_definitions(-DTS_USE_AVX)
+        set(TS_USE_FMA ON)
+	elseif (TS_USE_SSE)
+		message(STATUS "[Optional] Use SSE: [ON]")
+		add_definitions(-DTS_USE_SSE)
+        set(TS_USE_FMA ON)
+	elseif (TS_USE_NEON)
+		message(STATUS "[Optional] Use NEON: [ON]")
+		add_definitions(-DTS_USE_NEON)
+	endif()
+    if (TS_USE_FMA)
+        message(STATUS "[Optional] Use FMA: [ON]")
+        add_definitions(-DTS_USE_FMA)
+    endif()
+endif()
+
+# set winograd support
+option(TS_USE_WINOGRAD "[Optional] Use SIMD" OFF)
+if (TS_USE_WINOGRAD)
+    add_definitions(-DTS_USE_WINOGRAD)
+endif()
+
 # set common compiler flags
 include(LOCAL_FLAGS)
 include(LOCAL_ENV)
@@ -80,7 +112,7 @@ set(TENSORSTACK_MODULES
         )
 set(TENSORSTACK_ACHIVES common cpu) # in kernels and ops
 
-add_definitions(-DTS_USE_SSE)
+#add_definitions(-DTS_USE_SSE)
 # 4 types of achive
 # blas
 # Eigen

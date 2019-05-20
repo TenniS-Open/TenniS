@@ -9,6 +9,7 @@
 
 #include "except.h"
 #include "device.h"
+#include "tensor.h"
 
 #include <string>
 #include <vector>
@@ -23,11 +24,19 @@ namespace ts {
             using shared = std::shared_ptr<self>;
             using shared_raw = std::shared_ptr<raw>;
 
+            static self NewRef(raw *ptr) { return self(ptr); }
+
             ImageFilter(const self &) = default;
 
             ImageFilter &operator=(const self &) = default;
 
             raw *get_raw() const { return m_impl.get(); }
+
+            bool operator==(std::nullptr_t) const { return get_raw() == nullptr; }
+
+            bool operator!=(std::nullptr_t) const { return get_raw() != nullptr; }
+
+            ImageFilter(std::nullptr_t) {}
 
             ImageFilter() : self(Device()) {}
 
@@ -87,6 +96,16 @@ namespace ts {
 
             void prewhiten() {
                 TS_API_AUTO_CHECK(ts_ImageFilter_prewhiten(m_impl.get()));
+            }
+
+            Tensor run(const Tensor &tensor) {
+                return run(tensor.get_raw());
+            }
+
+            Tensor run(const ts_Tensor *tensor) {
+                auto ret = ts_ImageFilter_run(m_impl.get(), tensor);
+                TS_API_AUTO_CHECK(ret != nullptr);
+                return Tensor::NewRef(ret);
             }
 
         private:

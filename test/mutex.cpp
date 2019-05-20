@@ -84,10 +84,12 @@ int main() {
         return value;
     }, true);
 
-    _block.set("CPU", 10);
+    auto block_view = _block.view("CPU");
+    block_view->sync("CPU") = 10;
+    block_view->broadcast();
 
     TS_LOG_INFO << "GPU data: " << _block.sync("GPU");
-    TS_LOG_INFO << "GPU data: " << _block.get("GPU");
+    TS_LOG_INFO << "GPU data: " << _block.sync("GPU");
 
     return 0;
 }
