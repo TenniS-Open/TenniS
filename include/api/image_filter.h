@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "device.h"
+#include "tensor.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -57,6 +58,8 @@ TENSOR_STACK_C_API ts_bool ts_ImageFilter_channel_swap(ts_ImageFilter *filter, c
 TENSOR_STACK_C_API ts_bool ts_ImageFilter_to_chw(ts_ImageFilter *filter);
 
 TENSOR_STACK_C_API ts_bool ts_ImageFilter_prewhiten(ts_ImageFilter *filter);
+
+TENSOR_STACK_C_API ts_Tensor *ts_ImageFilter_run(ts_ImageFilter *filter, const ts_Tensor *tensor);
 
 
 #ifdef __cplusplus

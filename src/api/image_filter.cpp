@@ -5,6 +5,7 @@
 #include <api/image_filter.h>
 
 #include "declare_image_filter.h"
+#include "declare_tensor.h"
 
 using namespace ts;
 
@@ -110,4 +111,14 @@ ts_bool ts_ImageFilter_prewhiten(ts_ImageFilter *filter) {
         if (!filter) throw Exception("NullPointerException: @param: 1");
         (*filter)->prewhiten();
     RETURN_OR_CATCH(ts_true, ts_false)
+}
+
+ts_Tensor *ts_ImageFilter_run(ts_ImageFilter *filter, const ts_Tensor *tensor) {
+    TRY_HEAD
+        if (!filter) throw Exception("NullPointerException: @param: 1");
+        if (!tensor) throw Exception("NullPointerException: @param: 2");
+        std::unique_ptr<ts_Tensor> dolly(new ts_Tensor(
+                (*filter)->run(**tensor)
+        ));
+    RETURN_OR_CATCH(dolly.release(), nullptr)
 }
