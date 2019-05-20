@@ -364,6 +364,8 @@ output_w = floor((width + pad_w -
 输入: `a`: `Matrix`  
 输出: `y`: `Matrix`  
 
+Attr: `transpose` `bool Default=false`, if do transpose on RHS before ip 
+
 ### relu(x) -> y
 描述： `y = x > 0 ? x : 0`  
 输入: `x`: `Tensor`  

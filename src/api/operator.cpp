@@ -2,51 +2,9 @@
 // Created by kier on 19-5-8.
 //
 
-#include <core/tensor_builder.h>
-#include "declaration.h"
-
-#include "api/operator.h"
-#include "global/operator_factory.h"
-
-#include "declare_tensor.h"
-
-#include "runtime/stack.h"
+#include "declare_operator.h"
 
 using namespace ts;
-
-struct ts_OperatorParams {
-public:
-    ts_OperatorParams(Operator *op) : op(op) {}
-
-    Operator *op;
-};
-
-class APIPluginStack {
-public:
-    APIPluginStack(Stack &stack) {
-        int argc = stack.size();
-        try {
-            for (int i = 0; i < argc; ++i) {
-                auto &tensor = stack[i];
-                args.emplace_back(new ts_Tensor(tensor));
-            }
-        } catch (const Exception &e) {
-            for (auto &arg : args) delete arg;
-            throw e;
-        } catch (const std::exception &e) {
-            for (auto &arg : args) delete arg;
-            throw e;
-        }
-    }
-
-    ~APIPluginStack() {
-        for (auto &arg : args) {
-            delete arg;
-        }
-    }
-
-    std::vector<ts_Tensor *> args;
-};
 
 class APIPluginOperator : public Operator {
 public:
@@ -76,12 +34,14 @@ public:
 
     void init() override {
         ts_OperatorParams params(this);
-        f_init(obj, &params);
+        ts_OperatorContext context;
+        f_init(obj, &params, &context);
     }
 
     std::shared_ptr<ts_Tensor> CallOperatorRun(Stack &stack) {
         APIPluginStack args(stack);
-        std::shared_ptr<ts_Tensor> out(f_run(obj, int32_t(args.args.size()), args.args.data()), ts_free_Tensor);
+        ts_OperatorContext context;
+        std::shared_ptr<ts_Tensor> out(f_run(obj, int32_t(args.args.size()), args.args.data(), &context), ts_free_Tensor);
         if (out == nullptr) {
             TS_LOG_ERROR << "Call ts_Operator_run failed (return null) on " << device << " for " << op << eject;
         }
@@ -90,7 +50,8 @@ public:
 
     std::shared_ptr<ts_Tensor> CallOperatorInfer(Stack &stack) {
         APIPluginStack args(stack);
-        std::shared_ptr<ts_Tensor> out(f_infer(obj, int32_t(args.args.size()), args.args.data()), ts_free_Tensor);
+        ts_OperatorContext context;
+        std::shared_ptr<ts_Tensor> out(f_infer(obj, int32_t(args.args.size()), args.args.data(), &context), ts_free_Tensor);
         if (out == nullptr) {
             TS_LOG_ERROR << "Call ts_Operator_infer failed (return null) on " << device << " for " << op << eject;
         }
@@ -152,7 +113,8 @@ private:
     ts_Operator_run *f_run = nullptr;
 };
 
-void ts_Operator_Register(const char *device, const char *op, ts_new_Operator *f_new, ts_free_Operator *f_free,
+void ts_Operator_Register(const char *device, const char *op,
+                          ts_new_Operator *f_new, ts_free_Operator *f_free,
                           ts_Operator_init *f_init, ts_Operator_infer *f_infer, ts_Operator_run *f_run) {
     TRY_HEAD
     if (f_new == nullptr || f_free == nullptr || f_init == nullptr || f_run == nullptr) {
@@ -165,7 +127,7 @@ void ts_Operator_Register(const char *device, const char *op, ts_new_Operator *f
                 f_new, f_free,
                 f_init, f_infer, f_run);
     };
-    OperatorCreator::Register(device, op, creator);
+    OperatorCreator::Register(cpp_device, cpp_op, creator);
     TRY_TAIL
 }
 

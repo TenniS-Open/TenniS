@@ -40,6 +40,20 @@ namespace ts {
         TS_DEBUG_API Tensor mul(const Tensor &lhs, const Tensor &rhs);
 
         TS_DEBUG_API Tensor div(const Tensor &lhs, const Tensor &rhs);
+
+        TS_DEBUG_API Tensor transpose(const Tensor &x, const std::vector<int32_t> &permute);
+
+        TS_DEBUG_API Tensor sigmoid(const Tensor &x);
+
+        TS_DEBUG_API Tensor gather(const Tensor &x, const Tensor &indices, int32_t axis);
+
+        TS_DEBUG_API Tensor gather(const Tensor &x, const std::vector<int32_t> &indices, int32_t axis);
+
+        TS_DEBUG_API Tensor concat(const std::vector<Tensor> &x, int32_t dim);
+
+        TS_DEBUG_API Tensor softmax(const Tensor &x, int32_t dim, bool smooth = true);
+
+        TS_DEBUG_API Tensor pad(const Tensor &x, const Tensor &padding, float padding_value = 0);
     }
 }
 

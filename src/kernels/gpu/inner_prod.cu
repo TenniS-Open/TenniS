@@ -12,6 +12,7 @@
 #include "core/device_context.h"
 #include "utils/ctxmgr_lite.h"
 #include "kernels/gpu/math_cublas.h"
+#include "kernels/gpu/math_gpu.h"
 
 
 namespace ts {
@@ -66,7 +67,7 @@ namespace ts {
 
 
         template<typename T>
-        static void gpu_inner_prod_compute_run(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
+        static void gpu_inner_prod_compute_run(const Tensor &lhs, const Tensor &rhs, bool transpose, Tensor &out) {
             const Shape &lhs_shape = lhs.sizes();
             const Shape &rhs_shape = rhs.sizes();
 
@@ -78,27 +79,35 @@ namespace ts {
             CUDAContextHandle* handle = reinterpret_cast<CUDAContextHandle*>(context.handle);
 #ifdef TS_USE_CUBLAS
             auto cublas_handle = handle->cublas_handle();
-            
-            cublas::math<T>::gemm(cublas_handle, cublas::NoTrans, cublas::NoTrans,
-                lhs_shape[0], rhs_shape[1], lhs_shape[1], 1, psrc, pdot, 0, pdst);
+
+            auto rhs_tranpose = transpose ? cublas::Trans : cublas::NoTrans;
+            auto N = transpose ? rhs_shape[0] : rhs_shape[1];
+
+            cublas::math<T>::gemm(cublas_handle, cublas::NoTrans, rhs_tranpose,
+                lhs_shape[0], N, lhs_shape[1], 1, psrc, pdot, 0, pdst);
             /*cublas::math<T>::gemm(cublas_handle,cublas::RowMajor,cublas::NoTrans, cublas::NoTrans, 
                 lhs_shape[0], rhs_shape[1], lhs_shape[1], 1,psrc, lhs_shape[1], pdot, rhs_shape[1], 0,pdst, rhs_shape[1]);*/
             
 #else
+            auto rhs_tranpose = transpose ? cublas::Trans : cublas::NoTrans;
+            gpu::math<T>::gemm(
+                    cublas::NoTrans, rhs_tranpose,
+                    lhs_shape[0], N, lhs_shape[1], 1, psrc, pdot, 0, pdst);
+            /*
             auto cuda_stream = handle->stream();
             dim3 blocksize(CUDA_BLOCK(rhs_shape[1], TRANS_BLOCK_DIM), CUDA_BLOCK(lhs_shape[0], TRANS_BLOCK_DIM),1);
             dim3 threadsize(TRANS_BLOCK_DIM, TRANS_BLOCK_DIM,1);
             gpu_inner_prod_compute_run_kernel<T> <<< blocksize, threadsize, 0, cuda_stream >>> (lhs_shape[0], lhs_shape[1], rhs_shape[1], psrc, pdot, pdst);
-
+             */
 #endif
         }
 
-        void InnerProd::inner_prod(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
+        void InnerProd::inner_prod(const Tensor &lhs, const Tensor &rhs, bool transpose, Tensor &out) {
             // Notice: the all tensor' memory device are CPU, as given in running_memory_device
             DTYPE dtype = out.dtype();
             switch (dtype) {
 #define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
-        case DTYPE: { gpu_inner_prod_compute_run<TYPE>(lhs, rhs, out); break; }
+        case DTYPE: { gpu_inner_prod_compute_run<TYPE>(lhs, rhs, transpose, out); break; }
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
