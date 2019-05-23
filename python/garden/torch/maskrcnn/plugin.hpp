@@ -1059,7 +1059,7 @@ public:
 
         this->score_thresh = api::tensor::to_float(params.get("score_thresh"));
         this->nms_thresh = api::tensor::to_float(params.get("nms"));
-        this->detections_per_img = api::tensor::to_float(params.get("detections_per_img"));
+        this->detections_per_img = api::tensor::to_int(params.get("detections_per_img"));
 
         box_coder = std::make_shared<BoxCoder>(this->weights, this->bbox_xform_clip);
     }
@@ -1260,6 +1260,13 @@ public:
             result.push_back(image_shape);
             result.insert(result.end(), boxlist_for_class.begin(), boxlist_for_class.end());
             result.push_back(field_label);
+        }
+
+        if (result.empty()) {
+            return {image_shape,
+                    api::tensor::build(api::FLOAT32, {0, 4}),
+                    api::tensor::build(api::FLOAT32, {0}),
+                    api::tensor::build(api::INT32, {0})};
         }
 
         result = BoxSelector::cat_boxlist(result, 4, 1);
