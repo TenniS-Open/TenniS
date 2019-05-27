@@ -39,5 +39,10 @@ try:
 except Exception as e:
     import sys
     sys.stderr.write("import tensorflow failed with: {}\n".format(e))
+try:
+    from . import darknet
+except Exception as e:
+    import sys
+    sys.stderr.write("import darknet failed with: {}\n".format(e))
 
 __version__ = "0.0.9"
