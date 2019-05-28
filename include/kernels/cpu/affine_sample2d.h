@@ -15,7 +15,7 @@ namespace ts {
             Affine_Sample2D() = default;
 
             void affine_sample_run(const Tensor &x, float rz00, float rz01, float rz02, float rz10, float rz11, float rz12,
-                                           float rz20, float rz21, float rz22, Affine_Sample2DType type, int dim,
+                                           float rz20, float rz21, float rz22, Affine_Sample2DType type, int dim, float outer_value,
                                            Tensor &out) override;
         };
     }

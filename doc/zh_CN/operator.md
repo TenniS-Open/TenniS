@@ -680,6 +680,7 @@ Note: 这是对应某一个实现的版本。
 参数：
 - `type`: `Enum[linear=0, cubic=1, nearest=2] Default linear`
 - `dim`: `Int Default -2`
+- `outer_value`: `Optional Float Default [0]`
 
 说明：
 y的坐标为`[x, y]`映射到原图为`affine * [x, y, 1]'`，然后根据type进行采样。
