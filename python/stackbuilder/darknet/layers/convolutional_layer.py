@@ -87,7 +87,16 @@ def make_convolutional_layer(batch, h, w, c, n, groups, size, stride, padding, a
     if xnor != 0:
         raise NotImplementedError("Not supporting convert with xnor=1")
     if batch_normalize != 0:
-        pass
+        l.scales = None
+        l.scale_updates = None
+        l.mean = None
+        l.variance = None
+        l.mean_delta = None
+        l.variance_delta = None
+        l.rolling_mean = None
+        l.rolling_variance = None
+        l.x = None
+        l.x_norm = None
 
     """
     No memry alloc code

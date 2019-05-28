@@ -43,7 +43,13 @@ class ListOf(object):
 
     def __iter__(self):
         return self.__data.__iter__()
-    
+
+    def __str__(self):
+        return self.__data.__str__()
+
+    def __repr__(self):
+        return self.__data.__repr__()
+
     
 def calloc(n, cls):
     """
@@ -57,6 +63,10 @@ def calloc(n, cls):
 class Layer(object):
     def __init__(self):
         super(Layer, self).__setattr__("__attr", {})
+        self.type_string = "unknown"
+        self.out_c = -1
+        self.out_h = -1
+        self.out_w = -1
 
     def __setattr__(self, key, value):
         if key == "__attr" and not isinstance(value, dict):
@@ -75,6 +85,12 @@ class Layer(object):
     def has(self, item):
         __attr = super(Layer, self).__getattribute__("__attr")
         return item in __attr and __attr[item] is not None
+
+    def __str__(self):
+        return "Layer[{}]({}, {}, {}, {})".format(self.type_string, -1, self.out_c, self.out_h, self.out_w)
+
+    def __repr__(self):
+        return "Layer[{}]({}, {}, {}, {})".format(self.type_string, -1, self.out_c, self.out_h, self.out_w)
 
 
 def get_policy(s):

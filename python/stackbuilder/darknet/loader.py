@@ -13,23 +13,65 @@ from sys import stderr
 from param import *
 from enum import *
 
+import numpy
 
-def load_convolutional_weights(layer, fp):
+
+def load_float_tensor(fp, shape):
+    count = shape
+    if isinstance(shape, (tuple, list)):
+        count = numpy.prod(shape)
+    bytes = fp.read(count * 4)
+    dtype_numpy = numpy.dtype(numpy.float32)
+    dtype_numpy = dtype_numpy.newbyteorder('<')
+    tensor = numpy.frombuffer(bytes, dtype=dtype_numpy)
+    if isinstance(shape, (tuple, list)):
+        tensor = numpy.resize(tensor, new_shape=shape)
+    return tensor
+
+
+def transpose_matrix(a, rows, cols):
+    # type: (numpy.ndarray, int, int) ->numpy.ndarray
+    a = numpy.reshape(a, newshape=(rows, cols))
+    a = a.transpose()
+    return a
+
+
+def load_convolutional_weights(l, fp):
     # type: (Layer, file) -> None
-    raise NotImplementedError("load_convolutional_weights")
-    pass
+    if l.binary:
+        raise NotImplementedError("can not load weights: binary")
+    if l.numload:
+        l.n = l.numload
+    num = l.c // l.groups * l.n * l.size * l.size
+    l.biases = load_float_tensor(fp, l.n)
+    if l.batch_normalize and not l.dontloadscales:
+        l.scales = load_float_tensor(fp, l.n)
+        l.rolling_mean = load_float_tensor(fp, l.n)
+        l.rolling_variance = load_float_tensor(fp, l.n)
+
+    l.weights = load_float_tensor(fp, num)
+    if l.flipped:
+        transpose_matrix(l.weights, l.c*l.size*l.size, l.n)
 
 
-def load_batchnorm_weights(layer, fp):
+def load_batchnorm_weights(l, fp):
     # type: (Layer, file) -> None
-    raise NotImplementedError("load_batchnorm_weights")
-    pass
+    l.scales = load_float_tensor(fp, l.c)
+    l.rolling_mean = load_float_tensor(fp, l.c)
+    l.rolling_variance = load_float_tensor(fp, l.c)
 
 
-def load_connected_weights(layer, fp, transpose):
+def load_connected_weights(l, fp, transpose):
     # type: (Layer, file, bool) -> None
-    raise NotImplementedError("load_connected_weights")
-    pass
+    l.biases = load_float_tensor(fp, l.outputs)
+    l.weights = load_float_tensor(fp, l.outputs*l.inputs)
+    if transpose:
+        transpose_matrix(l.weights, l.inputs, l.outputs)
+
+    if l.batch_normalize and not l.dontloadscales:
+        l.scales = load_float_tensor(fp, l.outputs)
+        l.rolling_mean = load_float_tensor(fp, l.outputs)
+        l.rolling_variance = load_float_tensor(fp, l.outputs)
 
 
 def load_weights_upto(net, filename, start, cutoff):
@@ -94,7 +136,7 @@ def load_weights_upto(net, filename, start, cutoff):
                 locations = l.out_w*l.out_h
                 size = l.size*l.size*l.c*l.n*locations
                 l.biases, = read_param(fp, [Float] * l.outputs)
-                l.weights = read_param(fp, [Float] * size)
+                l.weights, = read_param(fp, [Float] * size)
 
     fprintf(stderr, "Done!\n")
 
