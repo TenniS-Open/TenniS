@@ -19,7 +19,8 @@ namespace ts {
                                  int y_height, int y_width,
                                  //unsigned int x_offset, unsigned int y_offset,
                                  int channels, float rz00, float rz01, float rz02, float rz10,
-                                 float rz11, float rz12, float rz20, float rz21, float rz22) {
+                                 float rz11, float rz12, float rz20, float rz21, float rz22,
+                                 T outer_value = T(0)) {
             int index = blockDim.x * blockIdx.x + threadIdx.x;
             if (index >= size) {
                 return;
@@ -44,12 +45,13 @@ namespace ts {
             double lf_x_s = lfx_scl * n_x_d + bias_x;
             double lf_y_s = lfy_scl * n_y_d + bias_y;
 
+            auto inner = lf_x_s >= 0 && lf_x_s < x_width - 1 &&
+                         lf_y_s >= 0 && lf_y_s < x_height - 1;
 
-
-            lf_x_s = lf_x_s >= 0 ? lf_x_s : 0;
-            lf_x_s = lf_x_s < x_width - 1 ? lf_x_s : x_width - 1 - 1e-5;
-            lf_y_s = lf_y_s >= 0 ? lf_y_s : 0;
-            lf_y_s = lf_y_s < x_height - 1 ? lf_y_s : x_height - 1 - 1e-5;
+            if (!inner) {
+                pdst[index] = outer_value;
+                return;
+            }
 
             int n_x_s = int(lf_x_s);
             int n_y_s = int(lf_y_s);
@@ -74,7 +76,8 @@ namespace ts {
                                  int y_height, int y_width,
                                  //unsigned int x_offset, unsigned int y_offset,
                                  int channels, float rz00, float rz01, float rz02, float rz10,
-                                 float rz11, float rz12, float rz20, float rz21, float rz22) {
+                                 float rz11, float rz12, float rz20, float rz21, float rz22,
+                                 T outer_value = T(0)) {
             int index = blockDim.x * blockIdx.x + threadIdx.x;
             if (index >= size) {
                 return;
@@ -102,10 +105,13 @@ namespace ts {
             auto n_x_s = int(lf_x_s + 0.5);
             auto n_y_s = int(lf_y_s + 0.5);
 
-            n_x_s = n_x_s >= 0 ? n_x_s : 0;
-            n_x_s = n_x_s < x_width - 1 ? n_x_s : x_width - 1;
-            n_y_s = n_y_s >= 0 ? n_y_s : 0;
-            n_y_s = n_y_s < x_height - 1 ? n_y_s : x_height - 1;
+            auto inner = n_x_s >= 0 && n_x_s < x_width - 1 &&
+                         n_y_s >= 0 && n_y_s < x_height - 1;
+
+            if (!inner) {
+                pdst[index] = outer_value;
+                return;
+            }
 
             pdst[index] = (T) psrc[(n_y_s * x_width + n_x_s) * channels + c];
 
@@ -116,7 +122,8 @@ namespace ts {
                                  int y_height, int y_width,
                                  //unsigned int x_offset, unsigned int y_offset,
                                  int channels, float rz00, float rz01, float rz02, float rz10,
-                                 float rz11, float rz12, float rz20, float rz21, float rz22) {
+                                 float rz11, float rz12, float rz20, float rz21, float rz22,
+                                 T outer_value = T(0)) {
             int index = blockDim.x * blockIdx.x + threadIdx.x;
             if (index >= size) {
                 return;
@@ -136,35 +143,26 @@ namespace ts {
             double fx = rz00 * i + rz01 * j + rz02 *1;
             double fy = rz10 * i + rz11 * j + rz12 *1;
 
+            const double A = -0.75f;
+
             int sy = floor(fy);
             fy -= sy;
 
-            if (sy < 1) {
-                fy = 0;
-                sy = 1;
-            }
+            int sx = floor(fx);
+            fx -= sx;
 
-            if (sy >= x_height - 3) {
-                fy = 0, sy = x_height - 3;
-            }
+            auto outter = sy < 1 || sy >= x_height - 3 || sx < 1 || sx >= x_width - 3;
 
-            const double A = -0.75f;
+            if (outter) {
+                pdst[index] = outer_value;
+                return;
+            }
 
             double coeffsY[4];
             coeffsY[0] = ((A * (fy + 1) - 5 * A) * (fy + 1) + 8 * A) * (fy + 1) - 4 * A;
             coeffsY[1] = ((A + 2) * fy - (A + 3)) * fy * fy + 1;
             coeffsY[2] = ((A + 2) * (1 - fy) - (A + 3)) * (1 - fy) * (1 - fy) + 1;
             coeffsY[3] = 1.f - coeffsY[0] - coeffsY[1] - coeffsY[2];
-
-            int sx = floor(fx);
-            fx -= sx;
-
-            if (sx < 1) {
-                fx = 0, sx = 1;
-            }
-            if (sx >= x_width - 3) {
-                fx = 0, sx = x_width - 3;
-            }
 
             double coeffsX[4];
             coeffsX[0] = ((A * (fx + 1) - 5 * A) * (fx + 1) + 8 * A) * (fx + 1) - 4 * A;
@@ -203,7 +201,8 @@ namespace ts {
                                  int y_height, int y_width,
                                  unsigned int x_batch_step, unsigned int y_batch_step,
                                  int channels,Affine_Sample2DType type, float rz00, float rz01, float rz02, float rz10,
-                                 float rz11, float rz12, float rz20, float rz21, float rz22) {
+                                 float rz11, float rz12, float rz20, float rz21, float rz22,
+                                 T outer_value = T(0)) {
 
              int ncount = y_height * y_width * channels;
 
@@ -216,7 +215,7 @@ namespace ts {
                      T *pdst = y->data<T>() + k * y_batch_step;
                      affine_sample2d_cubic_kernel<T> << < CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >> >
                                               (psrc,pdst,ncount, x_height,x_width,y_height,y_width, channels,
-                                               rz00,rz01,rz02,rz10,rz11,rz12,rz20,rz21,rz22);
+                                               rz00,rz01,rz02,rz10,rz11,rz12,rz20,rz21,rz22, outer_value);
                  } 
              }else if(type == Affine_Sample2DType::NEAREST) {
 
@@ -227,7 +226,7 @@ namespace ts {
                      
                      affine_sample2d_nearest_kernel<T> << < CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >> >
                                               (psrc,pdst,ncount,x_height,x_width,y_height,y_width, channels,
-                                               rz00,rz01,rz02,rz10,rz11,rz12,rz20,rz21,rz22);
+                                               rz00,rz01,rz02,rz10,rz11,rz12,rz20,rz21,rz22, outer_value);
                  } 
              }else { //LINEAR
                  for(int k=0; k<number; k++) {
@@ -237,13 +236,14 @@ namespace ts {
 
                      affine_sample2d_linear_kernel<T> << < CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >> >
                                               (psrc,pdst,ncount,x_height,x_width,y_height,y_width, channels,
-                                               rz00,rz01,rz02,rz10,rz11,rz12,rz20,rz21,rz22);
+                                               rz00,rz01,rz02,rz10,rz11,rz12,rz20,rz21,rz22, outer_value);
                  } 
              }
         }
 
         void Affine_Sample2D::affine_sample_run(const Tensor &x, float rz00, float rz01, float rz02, float rz10,
                                            float rz11, float rz12, float rz20, float rz21, float rz22, Affine_Sample2DType type, int dim,
+                                           float outer_value,
                                            Tensor &out) {
 
             auto &output_shape = out.sizes();
@@ -277,7 +277,7 @@ namespace ts {
                         number, input, output, \
                         x_height, x_width, \
                         y_height, y_width, \
-                        x_batch_step, y_batch_step, channels, type, rz00,rz01,rz02,rz10,rz11,rz12,rz20,rz21,rz22); break; }
+                        x_batch_step, y_batch_step, channels, type, rz00,rz01,rz02,rz10,rz11,rz12,rz20,rz21,rz22, outer_value); break; }
                 DECLARE_COMPUTE_RUN(INT8, int8_t);
                 DECLARE_COMPUTE_RUN(UINT8, uint8_t);
                 DECLARE_COMPUTE_RUN(INT16, int16_t);
