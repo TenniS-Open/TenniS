@@ -35,7 +35,7 @@ namespace ts {
                                  unsigned int x_offset, unsigned int y_offset,
                                  int channels, float rz00, float rz01, float rz02, float rz10,
                                  float rz11, float rz12, float rz20, float rz21, float rz22,
-                                 T outer_value = T(0)) {
+                                 base::AffineOuterMode outer_mode = base::AffineOuterMode::NEAREST, T outer_value = T(0)) {
 
             const T *src_im = x->data<T>() + x_offset;
             T *dst_im = y->data<T>() + y_offset;
@@ -58,12 +58,17 @@ namespace ts {
                     auto inner = lf_x_s >= 0 && lf_x_s < src_width - 1 &&
                             lf_y_s >= 0 && lf_y_s < src_height - 1;
 
-                    if (!inner) {
+                    if (!inner && outer_mode == base::AffineOuterMode::VALUE) {
                         for (int c = 0; c < channels; c++) {
                             dst_im[(n_y_d * dst_width + n_x_d) * channels + c] = outer_value;
                         }
                         continue;
                     }
+
+                    lf_x_s = lf_x_s >= 0 ? lf_x_s : 0;
+                    lf_x_s = lf_x_s < src_width - 1 ? lf_x_s : src_width - 1 - 1e-5;
+                    lf_y_s = lf_y_s >= 0 ? lf_y_s : 0;
+                    lf_y_s = lf_y_s < src_height - 1 ? lf_y_s : src_height - 1 - 1e-5;
 
                     int n_x_s = int(lf_x_s);
                     int n_y_s = int(lf_y_s);
@@ -93,7 +98,7 @@ namespace ts {
                                  unsigned int x_offset, unsigned int y_offset,
                                  int channels, float rz00, float rz01, float rz02, float rz10,
                                  float rz11, float rz12, float rz20, float rz21, float rz22,
-                                 T outer_value = T(0)) {
+                                 base::AffineOuterMode outer_mode = base::AffineOuterMode::NEAREST, T outer_value = T(0)) {
             const T *src_im = x->data<T>() + x_offset;
             T *dst_im = y->data<T>() + y_offset;
 
@@ -120,12 +125,17 @@ namespace ts {
                     auto inner = n_x_s >= 0 && n_x_s < src_width - 1 &&
                             n_y_s >= 0 && n_y_s < src_height - 1;
 
-                    if (!inner) {
+                    if (!inner && outer_mode == base::AffineOuterMode::VALUE) {
                         for (int c = 0; c < channels; c++) {
                             dst_im[(n_y_d * dst_width + n_x_d) * channels + c] = outer_value;
                         }
                         continue;
                     }
+
+                    n_x_s = n_x_s >= 0 ? n_x_s : 0;
+                    n_x_s = n_x_s < src_width - 1 ? n_x_s : src_width - 1;
+                    n_y_s = n_y_s >= 0 ? n_y_s : 0;
+                    n_y_s = n_y_s < src_height - 1 ? n_y_s : src_height - 1;
 
                     for (int c = 0; c < channels; c++) {
                         dst_im[(n_y_d * dst_width + n_x_d) * channels + c] = src_im[(n_y_s * src_width + n_x_s) * channels + c];
@@ -141,7 +151,7 @@ namespace ts {
                                  unsigned int x_offset, unsigned int y_offset,
                                  int channels, float rz00, float rz01, float rz02, float rz10,
                                  float rz11, float rz12, float rz20, float rz21, float rz22,
-                                 T outer_value = T(0)) {
+                                 base::AffineOuterMode outer_mode = base::AffineOuterMode::NEAREST, T outer_value = T(0)) {
             const T *psrc = x->data<T>() + x_offset;
             T *pdst = y->data<T>() + y_offset;
             const double A = -0.75f;
@@ -169,11 +179,28 @@ namespace ts {
 
                     auto outter = sy < 1 || sy >= x_height - 3 || sx < 1 || sx >= x_width - 3;
 
-                    if (outter) {
+                    if (outter && outer_mode == base::AffineOuterMode::VALUE) {
                         for (int k = 0; k < channels; k++) {
                             pdst[m * dstrows + n * channels + k] = outer_value;
                         }
                         continue;
+                    }
+
+                    if(sy < 1) {
+                        fy = 0;
+                        sy = 1;
+                    }
+                    if(sy >= x_height - 3) {
+                        fy = 0;
+                        sy = x_height - 3;
+                    }
+                    if(sx < 1) {
+                        fx = 0;
+                        sx = 1;
+                    }
+                    if(sx >= x_width - 3) {
+                        fx = 0;
+                        sx = x_width - 3;
                     }
 
                     coeffsY[0] = ((A * (fy + 1) - 5 * A) * (fy + 1) + 8 * A) * (fy + 1) - 4 * A;
@@ -222,29 +249,30 @@ namespace ts {
                                  unsigned int x_batch_step, unsigned int y_batch_step,
                                  int channels,Affine_Sample2DType type, float rz00, float rz01, float rz02, float rz10,
                                  float rz11, float rz12, float rz20, float rz21, float rz22,
-                                 T outer_value = T(0)) {
+                                 base::AffineOuterMode outer_mode, T outer_value = T(0)) {
              if(type == Affine_Sample2DType::CUBIC) {
                  for(int k=0; k<number; k++) {
                      affine_sample2d_cubic<T>(x,y,x_height,x_width,y_height,y_width,k*x_batch_step, k*y_batch_step, channels,
-                                               rz00,rz01,rz02,rz10,rz11,rz12,rz20,rz21,rz22, outer_value);
+                                               rz00,rz01,rz02,rz10,rz11,rz12,rz20,rz21,rz22, outer_mode, outer_value);
                  } 
              }else if(type == Affine_Sample2DType::NEAREST) {
 
                  for(int k=0; k<number; k++) {
                      affine_sample2d_nearest<T>(x,y,x_height,x_width,y_height,y_width,k*x_batch_step, k*y_batch_step, channels,
-                                               rz00,rz01,rz02,rz10,rz11,rz12,rz20,rz21,rz22, outer_value);
+                                               rz00,rz01,rz02,rz10,rz11,rz12,rz20,rz21,rz22, outer_mode, outer_value);
                  } 
              }else { //LINEAR
                  for(int k=0; k<number; k++) {
                      affine_sample2d_linear<T>(x,y,x_height,x_width,y_height,y_width,k*x_batch_step, k*y_batch_step, channels,
-                                               rz00,rz01,rz02,rz10,rz11,rz12,rz20,rz21,rz22, outer_value);
+                                               rz00,rz01,rz02,rz10,rz11,rz12,rz20,rz21,rz22, outer_mode, outer_value);
                  } 
              }
         }
 
         void Affine_Sample2D::affine_sample_run(const Tensor &x, float rz00, float rz01, float rz02, float rz10,
                                            float rz11, float rz12, float rz20, float rz21, float rz22,
-                                           Affine_Sample2DType type, int dim, float outer_value,
+                                           Affine_Sample2DType type, int dim,
+                                           base::AffineOuterMode outer_mode, float outer_value,
                                            Tensor &out) {
 
             auto &output_shape = out.sizes();
@@ -281,7 +309,8 @@ namespace ts {
                         number, input, output, \
                         x_height, x_width, \
                         y_height, y_width, \
-                        x_batch_step, y_batch_step, channels, type, rz00,rz01,rz02,rz10,rz11,rz12,rz20,rz21,rz22, outer_value); break; }
+                        x_batch_step, y_batch_step, channels, type, rz00,rz01,rz02,rz10,rz11,rz12,rz20,rz21,rz22, \
+                        outer_mode, outer_value); break; }
                 DECLARE_COMPUTE_RUN(INT8, int8_t);
                 DECLARE_COMPUTE_RUN(UINT8, uint8_t);
                 DECLARE_COMPUTE_RUN(INT16, int16_t);
