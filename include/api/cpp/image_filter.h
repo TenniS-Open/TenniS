@@ -18,6 +18,12 @@ namespace ts {
     namespace api {
         class ImageFilter {
         public:
+            enum class ResizeMethod : int32_t {
+                BICUBIC = TS_RESIZE_BICUBIC,
+                BILINEAR = TS_RESIZE_BILINEAR,
+                NEAREST = TS_RESIZE_NEAREST,
+            };
+
             using self = ImageFilter;
             using raw = ts_ImageFilter;
 
@@ -96,6 +102,38 @@ namespace ts {
 
             void prewhiten() {
                 TS_API_AUTO_CHECK(ts_ImageFilter_prewhiten(m_impl.get()));
+            }
+
+            void letterbox(int width, int height, float outer_value) {
+                TS_API_AUTO_CHECK(ts_ImageFilter_letterbox(m_impl.get(), width, height, outer_value));
+            }
+
+            void divide(int width, int height, float padding_value) {
+                TS_API_AUTO_CHECK(ts_ImageFilter_divided(m_impl.get(), width, height, padding_value));
+            }
+
+            void resize(int width, int height, ts_ResizeMethod method) {
+                TS_API_AUTO_CHECK(ts_ImageFilter_resize_v2(m_impl.get(), width, height, method));
+            }
+
+            void resize(int width, ts_ResizeMethod method) {
+                TS_API_AUTO_CHECK(ts_ImageFilter_resize_scalar_v2(m_impl.get(), width, method));
+            }
+
+            void letterbox(int width, int height, float outer_value, ts_ResizeMethod method) {
+                TS_API_AUTO_CHECK(ts_ImageFilter_letterbox_v2(m_impl.get(), width, height, outer_value, method));
+            }
+
+            void resize(int width, int height, ResizeMethod method) {
+                return resize(width, height, ts_ResizeMethod(method));
+            }
+
+            void resize(int width, ResizeMethod method) {
+                return resize(width, ts_ResizeMethod(method));
+            }
+
+            void letterbox(int width, int height, float outer_value, ResizeMethod method) {
+                return letterbox(width, height, outer_value, ts_ResizeMethod(method));
             }
 
             Tensor run(const Tensor &tensor) {

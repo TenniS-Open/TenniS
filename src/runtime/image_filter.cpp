@@ -234,9 +234,19 @@ namespace ts {
         ctx::bind<Graph> _bind_graph(m_impl->m_graph.get());
         auto x = m_impl->m_graph->nodes().back();
         auto node = bubble::op(serial_name(), name::layer::nhwc_letterbox(), {x});
-        node->set(name::size, tensor::build(INT32, {width, height}));  // set resize method
-        node->set(name::type, tensor::build(INT32, int32_t(method)));  // set resize method
-        node->set(name::outer_value, tensor::build(FLOAT32, outer_value));  // set resize method
+        node->set(name::size, tensor::build(INT32, {width, height}));
+        node->set(name::type, tensor::build(INT32, int32_t(method)));
+        node->set(name::outer_value, tensor::build(FLOAT32, outer_value));
+        (void)(node);
+        m_impl->m_compiled = false;
+    }
+
+    void ImageFilter::divided(int width, int height, float padding_value) {
+        ctx::bind<Graph> _bind_graph(m_impl->m_graph.get());
+        auto x = m_impl->m_graph->nodes().back();
+        auto node = bubble::op(serial_name(), name::layer::divided(), {x});
+        node->set(name::size, tensor::build(INT32, {1, height, width, 1}));
+        node->set(name::padding_value, tensor::from<float>(padding_value));
         (void)(node);
         m_impl->m_compiled = false;
     }

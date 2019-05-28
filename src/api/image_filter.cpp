@@ -70,32 +70,32 @@ ts_bool ts_ImageFilter_div_std(ts_ImageFilter *filter, const float *std, int32_t
     RETURN_OR_CATCH(ts_true, ts_false)
 }
 
-ts_bool ts_ImageFilter_resize(ts_ImageFilter *filter, int width, int height) {
+ts_bool ts_ImageFilter_resize(ts_ImageFilter *filter, int32_t width, int32_t height) {
     TRY_HEAD
     if (!filter) throw Exception("NullPointerException: @param: 1");
-    (*filter)->resize(width, height);
+    (*filter)->resize(width, height, ImageFilter::ResizeMethod::BILINEAR);
     RETURN_OR_CATCH(ts_true, ts_false)
 }
 
-ts_bool ts_ImageFilter_resize_scalar(ts_ImageFilter *filter, int width) {
+ts_bool ts_ImageFilter_resize_scalar(ts_ImageFilter *filter, int32_t width) {
     TRY_HEAD
         if (!filter) throw Exception("NullPointerException: @param: 1");
-        (*filter)->resize(width);
+        (*filter)->resize(width, ImageFilter::ResizeMethod::BILINEAR);
     RETURN_OR_CATCH(ts_true, ts_false)
 }
 
-ts_bool ts_ImageFilter_center_crop(ts_ImageFilter *filter, int width, int height) {
+ts_bool ts_ImageFilter_center_crop(ts_ImageFilter *filter, int32_t width, int32_t height) {
     TRY_HEAD
     if (!filter) throw Exception("NullPointerException: @param: 1");
     (*filter)->center_crop(width, height);
     RETURN_OR_CATCH(ts_true, ts_false)
 }
 
-ts_bool ts_ImageFilter_channel_swap(ts_ImageFilter *filter, const int *shuffle, int32_t len) {
+ts_bool ts_ImageFilter_channel_swap(ts_ImageFilter *filter, const int32_t *shuffle, int32_t len) {
     TRY_HEAD
     if (!filter) throw Exception("NullPointerException: @param: 1");
     if (!shuffle) throw Exception("NullPointerException: @param: 2");
-    (*filter)->channel_swap(std::vector<int>(shuffle, shuffle + len));
+    (*filter)->channel_swap(std::vector<int32_t>(shuffle, shuffle + len));
     RETURN_OR_CATCH(ts_true, ts_false)
 }
 
@@ -121,4 +121,42 @@ ts_Tensor *ts_ImageFilter_run(ts_ImageFilter *filter, const ts_Tensor *tensor) {
                 (*filter)->run(**tensor)
         ));
     RETURN_OR_CATCH(dolly.release(), nullptr)
+}
+
+ts_bool ts_ImageFilter_letterbox(ts_ImageFilter *filter, int32_t width, int32_t height, float outer_value) {
+    TRY_HEAD
+        if (!filter) throw Exception("NullPointerException: @param: 1");
+        (*filter)->letterbox(width, height, outer_value, ImageFilter::ResizeMethod::BILINEAR);
+    RETURN_OR_CATCH(ts_true, ts_false)
+}
+
+ts_bool ts_ImageFilter_divided(ts_ImageFilter *filter, int32_t width, int32_t height, float padding_value) {
+    TRY_HEAD
+        if (!filter) throw Exception("NullPointerException: @param: 1");
+        (*filter)->divided(width, height, padding_value);
+    RETURN_OR_CATCH(ts_true, ts_false)
+}
+
+ts_bool ts_ImageFilter_resize_v2(ts_ImageFilter *filter, int32_t width, int32_t height,
+        ts_ResizeMethod method) {
+    TRY_HEAD
+        if (!filter) throw Exception("NullPointerException: @param: 1");
+        (*filter)->resize(width, height, ImageFilter::ResizeMethod(int32_t(method)));
+    RETURN_OR_CATCH(ts_true, ts_false)
+}
+
+ts_bool ts_ImageFilter_resize_scalar_v2(ts_ImageFilter *filter, int32_t width,
+        ts_ResizeMethod method) {
+    TRY_HEAD
+        if (!filter) throw Exception("NullPointerException: @param: 1");
+        (*filter)->resize(width, ImageFilter::ResizeMethod(int32_t(method)));
+    RETURN_OR_CATCH(ts_true, ts_false)
+}
+
+ts_bool ts_ImageFilter_letterbox_v2(ts_ImageFilter *filter, int32_t width, int32_t height, float outer_value,
+        ts_ResizeMethod method) {
+    TRY_HEAD
+        if (!filter) throw Exception("NullPointerException: @param: 1");
+        (*filter)->letterbox(width, height, outer_value, ImageFilter::ResizeMethod(int32_t(method)));
+    RETURN_OR_CATCH(ts_true, ts_false)
 }
