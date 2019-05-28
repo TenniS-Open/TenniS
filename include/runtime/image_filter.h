@@ -55,6 +55,8 @@ namespace ts {
 
         void to_chw();
 
+        void letterbox(int width, int height, float outer_value = 0, ResizeMethod method = ResizeMethod::BILINEAR);
+
         /**
          * Clear all set processor
          */

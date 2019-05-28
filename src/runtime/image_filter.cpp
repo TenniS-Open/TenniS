@@ -229,4 +229,15 @@ namespace ts {
     Program::shared ImageFilter::program() const {
         return m_impl->m_program;
     }
+
+    void ImageFilter::letterbox(int width, int height, float outer_value, ResizeMethod method) {
+        ctx::bind<Graph> _bind_graph(m_impl->m_graph.get());
+        auto x = m_impl->m_graph->nodes().back();
+        auto node = bubble::op(serial_name(), name::layer::nhwc_letterbox(), {x});
+        node->set(name::size, tensor::build(INT32, {width, height}));  // set resize method
+        node->set(name::type, tensor::build(INT32, int32_t(method)));  // set resize method
+        node->set(name::outer_value, tensor::build(FLOAT32, outer_value));  // set resize method
+        (void)(node);
+        m_impl->m_compiled = false;
+    }
 }

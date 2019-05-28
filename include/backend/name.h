@@ -107,6 +107,13 @@ namespace ts {
 
             TS_DEBUG_API const string &winograd_transform_kernel() TS_NOEXCEPT;
             TS_DEBUG_API const string &conv2d_winograd() TS_NOEXCEPT;
+
+            // 2019-05-28
+            TS_DEBUG_API const string &nhwc_letterbox() TS_NOEXCEPT;
+            TS_DEBUG_API const string &sample2d() TS_NOEXCEPT;
+            TS_DEBUG_API const string &divided() TS_NOEXCEPT;
+
+
         }
 
         namespace typo {
@@ -181,6 +188,9 @@ namespace ts {
         TS_DEBUG_API extern string winograd_mode;
         TS_DEBUG_API extern string winograd_f23;
         TS_DEBUG_API extern string winograd_f63;
+
+        TS_DEBUG_API extern string outer_value;
+        TS_DEBUG_API extern string scale;
     }
 }
 
