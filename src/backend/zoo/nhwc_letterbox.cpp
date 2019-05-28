@@ -45,8 +45,8 @@ namespace ts {
 
             m_sample_op->init();
 
-            m_sample_size = tensor::build<int32_t>(INT32, {2, }, nullptr);
-            m_sample_affine = tensor::build<float>(FLOAT32, {3, 3}, nullptr);
+            m_sample_size = Tensor(INT32, {2, });
+            m_sample_affine = Tensor(FLOAT32, {3, 3});
 
             if (m_size.size() == 2) {
                 m_sample_size.data<int32_t>(0) = m_size[0];
