@@ -49,8 +49,8 @@ namespace ts {
             m_sample_affine = Tensor(FLOAT32, {3, 3});
 
             if (m_size.size() == 2) {
-                m_sample_size.data<int32_t>(0) = m_size[0];
-                m_sample_size.data<int32_t>(1) = m_size[1];
+                m_sample_size.data<int32_t>(0) = m_size[1];
+                m_sample_size.data<int32_t>(1) = m_size[0];
             } else {
                 m_sample_size.data<int32_t>(0) = m_size[0];
                 m_sample_size.data<int32_t>(1) = m_size[0];

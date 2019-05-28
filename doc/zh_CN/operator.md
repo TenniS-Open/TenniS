@@ -674,7 +674,7 @@ Note: 这是对应某一个实现的版本。
 
 描述：根据affine，在x上采样出大小为size的图像
 输入：`x`: `Tensor`
-输入：`size`: `Int[2]` 表示2d的采样大小
+输入：`size`: `Int[2]` 表示2d的采样大小, {height, width}
 输入：`affine`: `Float[3, 3]` 仿射变换矩阵
 
 参数：
@@ -794,6 +794,7 @@ Waitting for sure
 
 说明：  
 如果`outer_value`不设置，则采样不到取最近邻的值。否则用`outer_value`填充每个单元。
+size为{width, height}格式。
 
 
 ### divided(x..device) -> y.device
@@ -803,7 +804,7 @@ Waitting for sure
 
 说明：  
 把x的大小调整为可以被size序列整除的大小。
-size
+size大小和x.dims相同，表示了每一个维度带下
 
 
 ### _nhwc_channel_swap(x..device) = delete
