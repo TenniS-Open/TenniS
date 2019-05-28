@@ -54,7 +54,7 @@ namespace ts {
             TS_AUTO_CHECK(input_shape.size() >= 2);
             int dim = m_dim;
             if(dim < 0) {
-               dim = input_shape.size() + dim;
+               dim = int(input_shape.size()) + dim;
             }
 
             TS_AUTO_CHECK((dim >= 0) && (dim + 1  < input_shape.size()));
@@ -88,7 +88,7 @@ namespace ts {
             TS_AUTO_CHECK(input_shape.size() >= 2);
             int dim = m_dim;
             if(dim < 0) {
-               dim = input_shape.size() + dim;
+               dim = int(input_shape.size()) + dim;
             }
             TS_AUTO_CHECK((dim >= 0) && (dim + 1  < input_shape.size()));
 
