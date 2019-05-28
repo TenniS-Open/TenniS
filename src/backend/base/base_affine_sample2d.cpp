@@ -35,8 +35,10 @@ namespace ts {
             m_dim = tensor::to_int(dim_tensor);
 
             m_outer_value = 0.0f;
+            m_outer_mode = AffineOuterMode::NEAREST;
             if (has(OUTER_VALUE)) {
                 m_outer_value = tensor::to_float(get(OUTER_VALUE));
+                m_outer_mode = AffineOuterMode::VALUE;
             }
 
             TS_AUTO_CHECK((m_type >= Affine_Sample2DType::LINEAR) && (m_type <= Affine_Sample2DType::NEAREST));
@@ -107,7 +109,7 @@ namespace ts {
             float * paffine = affine_tensor.data<float>(); 
             
             affine_sample_run((const Tensor &)x, paffine[0], paffine[1], paffine[2], paffine[3], paffine[4], paffine[5], paffine[6], paffine[7], paffine[8],
-                              m_type, dim, m_outer_value, out);
+                              m_type, dim, m_outer_mode, m_outer_value, out);
             return 1;
         }
     }
