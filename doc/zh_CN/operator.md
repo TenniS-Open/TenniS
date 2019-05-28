@@ -785,6 +785,26 @@ Waitting for sure
 如果输入为单个int值，则将输入图像的短边resize到这个int数，长边根据对应比例调整，图像长宽比保持不变。  
 如果输入为(h,w)，且h、w为int，则直接将输入图像resize到(h,w)尺寸，图像的长宽比可能会发生变化
 
+
+### _nhwc_letterbox(x..device)
+参数：
+- `size` `Int[1]` 或 `Int[2]`
+- `type`: `Enum[linear=0, cubic=1] Default linear` `[Optional]` 图像缩放类型  
+- `outer_value`: `Float Default 0` `[Optional]` 采样图像外区域的值  
+
+说明：  
+如果`outer_value`不设置，则采样不到取最近邻的值。否则用`outer_value`填充每个单元。
+
+
+### divided(x..device) -> y.device
+参数：  
+- `size` `IntArray` 表示了每个维度向上去整的值。
+- `padding_value` `Float` `Optional` 填充值。
+
+说明：  
+把x的大小调整为可以被size序列整除的大小。
+
+
 ### _nhwc_channel_swap(x..device) = delete
 
 参数：  
