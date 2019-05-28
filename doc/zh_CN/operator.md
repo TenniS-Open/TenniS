@@ -803,6 +803,7 @@ Waitting for sure
 
 说明：  
 把x的大小调整为可以被size序列整除的大小。
+size
 
 
 ### _nhwc_channel_swap(x..device) = delete
