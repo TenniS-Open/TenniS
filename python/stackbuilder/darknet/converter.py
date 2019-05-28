@@ -6,6 +6,9 @@ author: kier
 
 from .parser import parse_network_cfg
 from .loader import load_weights
+from .module import darknet2module
+from . import darknet
+
 import sys
 
 
@@ -21,6 +24,9 @@ def convert(cfg_file, weights_file, output_file):
     net = parse_network_cfg(cfg_file)
     load_weights(net, weights_file)
 
-    print net
+    darknet.set_batch_network(net, 1)
 
-    return None
+
+    module = darknet2module(net)
+
+    return module

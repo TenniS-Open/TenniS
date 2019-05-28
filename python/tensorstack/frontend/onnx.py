@@ -36,6 +36,7 @@ class Name(object):
 
 def pooling2d_padding(name, x, padding, ksize, stride, auto_pad=Name.NOTSET):
     assert isinstance(x, Node)
+    assert auto_pad in {Name.NOTSET, Name.SAME_LOWER, Name.SAME_UPPER, Name.VALID}
 
     padding = zoo.adjust_padding(padding, format=zoo.Name.NCHW)
     ksize = zoo.adjust_ksize(ksize, format=zoo.Name.NCHW)

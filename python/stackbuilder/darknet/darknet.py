@@ -79,7 +79,7 @@ class Layer(object):
         if item == "__attr":
             return __attr
         if item not in __attr:
-            return AttributeError(item)
+            raise AttributeError(item)
         return __attr[item]
 
     def has(self, item):
@@ -194,6 +194,8 @@ class Network(object):
         self.input = None
         self.truth = None
 
+        self.index = 0
+
 
 def is_network(options):
     # type: (Session) -> bool
@@ -246,3 +248,10 @@ def get_network_output_layer(net):
             found_i = i
             break
     return net.layers[found_i]
+
+
+def set_batch_network(net, b):
+    # type: (Network, int) -> None
+    net.batch = b
+    for layer in net.layers:
+        layer.batch = b

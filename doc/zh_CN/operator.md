@@ -687,6 +687,20 @@ y的坐标为`[x, y]`映射到原图为`affine * [x, y, 1]'`，然后根据type�
 这里坐标全部为列向量。
 `dim` 和 `dim+1` 表示了图像的二维采样。
 
+### sample2d(x..device) -> y..device
+
+描述：根据affine，在x上采样出大小为size的图像
+输入：`x`: `Tensor`
+
+参数：
+- `type`: `Enum[linear=0, cubic=1, nearest=2] Default nearest`
+- `dim`: `Int Default -2`
+- `scale`: `Float`
+
+说明：
+`scale > 1` 表示上采样，`scale < 0` 下采样。
+`dim` 和 `dim+1` 表示了图像的二维采样。
+
 ### chunk(x..device) -> y..device
 
 描述：concat的逆操作

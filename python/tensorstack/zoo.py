@@ -64,6 +64,7 @@ class Name(object):
         chunk = "chunk"
         squeeze = "squeeze"
         rsqrt = "rsqrt"
+        sample2d = "sample2d"
 
     dim = "dim"
     shuffle = "shuffle"
@@ -88,6 +89,7 @@ class Name(object):
     chunks = "chunks"
     axes = "axes"
     transpose = "transpose"
+    scale = "scale"
 
 
 class Default(object):
@@ -759,3 +761,15 @@ def rsqrt(name, x):
     node = menu.op(name=name, op_name=Name.Layer.rsqrt, inputs=[x, ])
 
     return node
+
+
+def sample2d(name, x, scale, type=Type.resize2d_type.nearest, dim=-2):
+    assert isinstance(x, Node)
+
+    node = menu.op(name=name, op_name=Name.Layer.sample2d, inputs=[x])
+    node.set(Name.type, type, numpy.int32)
+    node.set(Name.scale, scale, numpy.float32)
+    node.set(Name.dim, dim, numpy.int32)
+
+    return node
+
