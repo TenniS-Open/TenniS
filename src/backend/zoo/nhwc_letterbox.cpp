@@ -63,7 +63,7 @@ namespace ts {
 
         static inline Size2D infer_size(const Size2D &x, const std::vector<int> &size) {
             if (size.size() == 2) {
-                return Size2D(size[0], size[1]);
+                return Size2D(size[1], size[0]);
             } else {
                 return Size2D(size[0], size[0]);
             }

@@ -778,12 +778,12 @@ Waitting for sure
 
 ### _nhwc_scale_resize2d(x..device)
 参数：
-- `size` `Int[1]` 或 `Int[2]`
+- `size` `Int[1]` 或 `Int[2]` 内容为 `{width, height}`
 - `type`: `Enum[linear=0, cubic=1] Default linear` `[Optional]` 图像缩放类型  
 
 说明：  
 如果输入为单个int值，则将输入图像的短边resize到这个int数，长边根据对应比例调整，图像长宽比保持不变。  
-如果输入为(h,w)，且h、w为int，则直接将输入图像resize到(h,w)尺寸，图像的长宽比可能会发生变化
+如果输入为(w,h)，且w、h为int，则直接将输入图像resize到(w,h)尺寸，图像的长宽比可能会发生变化
 
 
 ### _nhwc_letterbox(x..device)
