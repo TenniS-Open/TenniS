@@ -83,3 +83,20 @@ STAIR = enum()
 HARDTAN = enum()
 LHTAN = enum()
 SELU = enum()
+
+ACTIVATION_STRING = {
+    0: "LOGISTIC",
+    1: "RELU",
+    2: "RELIE",
+    3: "LINEAR",
+    4: "RAMP",
+    5: "TANH",
+    6: "PLSE",
+    7: "LEAKY",
+    8: "ELU",
+    9: "LOGGY",
+    10: "STAIR",
+    11: "HARDTAN",
+    12: "LHTAN",
+    13: "SELU",
+}

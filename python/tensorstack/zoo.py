@@ -555,9 +555,9 @@ def relu_max(name, x, max):
 
 def prelu(name, x, dim, slope):
     assert isinstance(x, Node)
-    node = menu.op(name=name, op_name=Name.Layer.prelu, inputs=[x, ])
+    slope = to_node(value=slope, name=name + "_slope")
+    node = menu.op(name=name, op_name=Name.Layer.prelu, inputs=[x, slope])
     node.set(Name.dim, dim, numpy.int32)
-    node.set(Name.slope, slope)
     return node
 
 

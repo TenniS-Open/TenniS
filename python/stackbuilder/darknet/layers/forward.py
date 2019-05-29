@@ -31,6 +31,27 @@ def __fused_batch_scale(w, b, scale, bias, w_shape=None):
     return w, b
 
 
+def activate_array(x, shape, a, name=None):
+    # type: (ts.Node, Union[tuple, list], int, str) -> ts.Node
+    if name is None:
+        name = x.name + "_act"
+
+    map_activation = {
+        RELU: ts.zoo.relu,
+        LEAKY: lambda name, x: ts.zoo.prelu(name=name, x=x, dim=1,
+                                            slope=numpy.asarray([0.1] * shape[1], dtype=numpy.float32)),
+        LINEAR: ts.zoo.copy,
+    }
+
+    if a not in map_activation:
+        a_str = ACTIVATION_STRING[a] if a in ACTIVATION_STRING else "unknown"
+        raise Exception("Activation = {}".format(a_str))
+
+    x = map_activation[a](name=name, x=x)
+
+    return x
+
+
 def forward_convolutional_layer(l, net):
     # type: (Layer, Network) -> ts.Node
     if l.xnor:
@@ -77,7 +98,9 @@ def forward_convolutional_layer(l, net):
         x = ts.zoo.conv2d(name=layer_name + "_conv", x=x, w=weights,
                           padding=l.pad, stride=l.stride)
 
-    x = ts.zoo.add_bias(name=layer_name, x=x, b=biases)
+    x = ts.zoo.add_bias(name=layer_name + "_bias", x=x, b=biases)
+
+    x = activate_array(x, (l.batch, l.out_c, l.out_h, l.out_w), l.activation, name=layer_name)
 
     l.output = x
     return x
