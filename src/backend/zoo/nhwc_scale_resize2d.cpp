@@ -45,9 +45,15 @@ namespace ts {
             m_dynamic_size = tensor::build(INT32, {-1, -1, -1, -1});
         }
 
+        /**
+         *
+         * @param x
+         * @param size {W, H} format
+         * @return
+         */
         static inline Size2D infer_size(const Size2D &x, const std::vector<int> &size) {
             if (size.size() == 2) {
-                return Size2D(size[0], size[1]);
+                return Size2D(size[1], size[0]);
             } else {
                 if (x.height > x.width) {
                     return Size2D(size[0] * x.height / x.width, size[0]);

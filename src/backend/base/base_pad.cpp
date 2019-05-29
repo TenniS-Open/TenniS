@@ -74,7 +74,7 @@ namespace ts {
                 return 1;
             }
 
-            auto out = *stack.push(output[0], memory_device);
+            auto &out = *stack.push(output[0], memory_device);
 
             std::vector<std::array<int, 2>> padding;
 

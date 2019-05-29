@@ -104,11 +104,15 @@ namespace ts {
                 TS_API_AUTO_CHECK(ts_ImageFilter_prewhiten(m_impl.get()));
             }
 
-            void letterbox(int width, int height, float outer_value) {
+            void letterbox(int width, int height, float outer_value = 0) {
                 TS_API_AUTO_CHECK(ts_ImageFilter_letterbox(m_impl.get(), width, height, outer_value));
             }
 
-            void divide(int width, int height, float padding_value) {
+            void letterbox(int width, float outer_value = 0) {
+                letterbox(width, width, outer_value);
+            }
+
+            void divide(int width, int height, float padding_value = 0) {
                 TS_API_AUTO_CHECK(ts_ImageFilter_divided(m_impl.get(), width, height, padding_value));
             }
 
@@ -125,15 +129,23 @@ namespace ts {
             }
 
             void resize(int width, int height, ResizeMethod method) {
-                return resize(width, height, ts_ResizeMethod(method));
+                resize(width, height, ts_ResizeMethod(method));
             }
 
             void resize(int width, ResizeMethod method) {
-                return resize(width, ts_ResizeMethod(method));
+                resize(width, ts_ResizeMethod(method));
             }
 
             void letterbox(int width, int height, float outer_value, ResizeMethod method) {
-                return letterbox(width, height, outer_value, ts_ResizeMethod(method));
+                letterbox(width, height, outer_value, ts_ResizeMethod(method));
+            }
+
+            void letterbox(int width, float outer_value, ResizeMethod method) {
+                letterbox(width, width, outer_value, method);
+            }
+
+            void letterbox(int width, float outer_value, ts_ResizeMethod method) {
+                letterbox(width, width, outer_value, method);
             }
 
             Tensor run(const Tensor &tensor) {
