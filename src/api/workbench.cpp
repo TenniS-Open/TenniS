@@ -147,3 +147,17 @@ ts_bool ts_Workbench_setup_runtime(ts_Workbench *workbench) {
         (*workbench)->setup_runtime();
     RETURN_OR_CATCH(ts_true, ts_false)
 }
+
+int32_t ts_Workbench_input_count(ts_Workbench *workbench) {
+    TRY_HEAD
+        if (!workbench) throw Exception("NullPointerException: @param: 1");
+        auto result = (*workbench)->input_count();
+    RETURN_OR_CATCH(result, 0)
+}
+
+int32_t ts_Workbench_output_count(ts_Workbench *workbench) {
+    TRY_HEAD
+        if (!workbench) throw Exception("NullPointerException: @param: 1");
+        auto result = (*workbench)->output_count();
+    RETURN_OR_CATCH(result, 0)
+}
