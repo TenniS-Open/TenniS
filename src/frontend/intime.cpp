@@ -86,6 +86,7 @@ namespace ts {
         }
 
         Tensor concat(const std::vector<Tensor> &x, int32_t dim) {
+            if (x.size() == 1) return x[0];
             return run(desc::concat(dim), x);
         }
 
@@ -95,6 +96,11 @@ namespace ts {
 
         Tensor pad(const Tensor &x, const Tensor &padding, float padding_value) {
             return run(desc::pad(padding_value), {x, padding});
+        }
+
+        Tensor cast(const Tensor &x, DTYPE dtype) {
+            if (x.dtype() == dtype) return x;
+            return run(desc::cast(dtype), {x});
         }
     }
 }

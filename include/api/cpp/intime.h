@@ -64,6 +64,12 @@ namespace ts {
                 auto padding_tensor = tensor::build(INT32, {int(padding.size()), 2}, &padding[0].first);
                 return pad(x, padding_tensor, padding_value);
             }
+
+            inline Tensor cast(const Tensor &x, DTYPE dtype) {
+                auto y = ts_intime_cast(x.get_raw(), dtype);
+                TS_API_AUTO_CHECK(y != nullptr);
+                return Tensor::NewRef(y);
+            }
         }
     }
 }

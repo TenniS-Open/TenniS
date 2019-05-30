@@ -123,10 +123,7 @@ namespace ts {
 
         Tensor cast(DTYPE dtype, const Tensor &value) {
             if (value.dtype() == dtype) {
-                auto device = MemoryDevice(CPU);
-                if (value.device() == device) return value;
-                auto cpu_controller = std::make_shared<DynamicMemoryController>(device);
-                return value.clone(cpu_controller);
+                return value.view(MemoryDevice(CPU));   // return strong ref now
             }
             auto cpu_value = value.view(MemoryDevice(CPU));
 
@@ -150,8 +147,7 @@ namespace ts {
 
         Tensor clone(DTYPE dtype, const Tensor &value) {
             if (value.dtype() == dtype) {
-                auto cpu_controller = std::make_shared<DynamicMemoryController>(MemoryDevice(CPU));
-                return value.clone(cpu_controller);
+                return value.view(MemoryDevice(CPU)).clone();
             }
 
             return cast(dtype, value);
