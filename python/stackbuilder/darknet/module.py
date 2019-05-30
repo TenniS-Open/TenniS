@@ -11,6 +11,8 @@ from .enum import *
 
 from .layers.forward import *
 
+import sys
+
 
 map_layer_inference = {
     CONVOLUTIONAL: forward_convolutional_layer,
@@ -37,14 +39,17 @@ def darknet2module(net, yolo=True, out=None):
 
     assert out is None or isinstance(out, (tuple, list))
 
+    if yolo:
+        sys.stderr.write("Module output all yolo layer\n")
+        out = []
+
     if out is None:
-        out = [] if yolo else [-1]
+        sys.stderr.write("Module output last non-cost layer\n")
+        out = [-1]
 
     out = [net.n + x if x < 0 else x for x in out]
 
     if yolo:
-        if out is None:
-            out = []
         for i in range(net.n):
             if net.layers[i].type == YOLO:
                 out.append(i)
@@ -74,6 +79,11 @@ def darknet2module(net, yolo=True, out=None):
     output_nodes = [net.layers[i].output for i in out]
 
     module = ts.Module()
+    if yolo:
+        yolo_nodes = output_nodes
+        yolo_poster = ts.frontend.darknet.yolo_poster(name="yolo", x=input, inputs=yolo_nodes, thresh=0.5, nms=0.45)
+        output_nodes = [yolo_poster]
+
     module.load(output_nodes)
 
     return module

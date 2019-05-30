@@ -113,7 +113,9 @@ namespace ts {
             TS_DEBUG_API const string &sample2d() TS_NOEXCEPT;
             TS_DEBUG_API const string &divided() TS_NOEXCEPT;
 
-
+            // 2019-05-29
+            TS_DEBUG_API const string &yolo() TS_NOEXCEPT;
+            TS_DEBUG_API const string &yolo_poster() TS_NOEXCEPT;
         }
 
         namespace typo {

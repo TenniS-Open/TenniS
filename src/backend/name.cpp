@@ -101,6 +101,9 @@ namespace ts {
             const string &nhwc_letterbox() TS_NOEXCEPT { static string str = "_nhwc_letterbox"; return str; }
             const string &sample2d() TS_NOEXCEPT { static string str = "sample2d"; return str; }
             const string &divided() TS_NOEXCEPT { static string str = "divided"; return str; }
+
+            const string &yolo() TS_NOEXCEPT { static string str = "yolo"; return str; }
+            const string &yolo_poster() TS_NOEXCEPT { static string str = "yolo_poster"; return str; }
         }
 
         namespace typo {

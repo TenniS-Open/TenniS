@@ -21,8 +21,8 @@ def make_maxpool_layer(batch, h, w, c, size, stride, padding):
     l.w = w
     l.c = c
     l.pad = padding
-    l.out_w = (w + padding - size)/stride + 1
-    l.out_h = (h + padding - size)/stride + 1
+    l.out_w = (w + padding - size)//stride + 1
+    l.out_h = (h + padding - size)//stride + 1
     l.out_c = c
     l.outputs = l.out_h * l.out_w * l.out_c
     l.inputs = h*w*c

@@ -28,8 +28,8 @@ namespace ts {
             Tensor type_tensor = tensor::cast(INT32, get(name::type));
             Tensor dim_tensor = tensor::cast(INT32, get(name::dim));
 
-            TS_AUTO_CHECK(type_tensor.has_shape({1}));
-            TS_AUTO_CHECK(dim_tensor.has_shape({1}));
+            TS_AUTO_CHECK(type_tensor.has_shape(1) || type_tensor.dims() == 0);
+            TS_AUTO_CHECK(dim_tensor.has_shape(1) || type_tensor.dims() == 0);
 
             m_type = Affine_Sample2DType(tensor::to_int(type_tensor));
             m_dim = tensor::to_int(dim_tensor);

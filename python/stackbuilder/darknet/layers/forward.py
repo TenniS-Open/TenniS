@@ -81,7 +81,7 @@ def forward_convolutional_layer(l, net):
         variance = l.rolling_variance
         scales = l.scales
 
-        w, b = weights, biases
+        w, b = weights, numpy.zeros_like(scales)
         w, b = __fused_batch_norm(w=w, b=b, mean=mean, variance=variance, epsilon=0.000001,
                                   w_shape=w_shape)
         w, b = __fused_batch_scale(w=w, b=b, scale=scales, bias=biases,
@@ -112,9 +112,15 @@ def forward_maxpool_layer(l, net):
     layer_name = str(net.index)
 
     x = net.input
+
+    padding = [
+        [l.pad // 2, l.pad - l.pad // 2],
+        [l.pad // 2, l.pad - l.pad // 2],
+    ]
+
     x = ts.frontend.onnx.pooling2d(name=layer_name, x=x, ksize=l.size, stride=l.stride,
                                    type=ts.zoo.Type.pooling_type.max,
-                                   padding=l.pad // 2, padding_type=ts.zoo.Type.padding_type.black,
+                                   padding=padding, padding_type=ts.zoo.Type.padding_type.black,
                                    auto_pad="NOTSET")
 
     l.output = x
@@ -127,7 +133,7 @@ def forward_yolo_layer(l, net):
     layer_name = str(net.index)
 
     x = net.input
-    x = ts.frontend.yolo(name=layer_name, x=x)
+    x = ts.frontend.yolo(name=layer_name, x=x, classes=l.classes, mask=l.mask, anchors=l.biases)
 
     l.output = x
     return x
@@ -140,10 +146,8 @@ def forward_route_layer(l, net):
 
     input_nodes = [net.layers[i].output for i in l.input_layers]
 
-    x = net.input
-
     if len(input_nodes) == 1:
-        x = ts.zoo.copy(name=layer_name, x=x)
+        x = ts.zoo.copy(name=layer_name, x=input_nodes[0])
     else:
         x = ts.zoo.concat(name=layer_name, inputs=input_nodes, dim=1)
 
