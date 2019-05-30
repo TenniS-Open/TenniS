@@ -71,3 +71,12 @@ ts_Tensor *ts_intime_pad(const ts_Tensor *x, const ts_Tensor *padding, float pad
         ));
     RETURN_OR_CATCH(dolly.release(), nullptr)
 }
+
+ts_Tensor *ts_intime_cast(const ts_Tensor *x, ts_DTYPE dtype) {
+    TRY_HEAD
+        if (!x) throw Exception("NullPointerException: @param: 1");
+        std::unique_ptr<ts_Tensor> dolly(new ts_Tensor(
+                intime::cast(**x, ts::DTYPE(dtype))
+        ));
+    RETURN_OR_CATCH(dolly.release(), nullptr)
+}

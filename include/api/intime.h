@@ -24,6 +24,8 @@ TENSOR_STACK_C_API ts_Tensor *ts_intime_softmax(const ts_Tensor *x, int32_t dim,
 
 TENSOR_STACK_C_API ts_Tensor *ts_intime_pad(const ts_Tensor *x, const ts_Tensor *padding, float padding_value);
 
+TENSOR_STACK_C_API ts_Tensor *ts_intime_cast(const ts_Tensor *x, ts_DTYPE dtype);
+
 #ifdef __cplusplus
 }
 #endif
