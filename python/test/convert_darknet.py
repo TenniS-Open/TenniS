@@ -10,9 +10,9 @@ import tensorstack as ts
 
 
 def test():
-    convert("/Users/seetadev/Documents/SDK/CLion/darknet/bin/yolov3-tiny.cfg",
-            "/Users/seetadev/Documents/SDK/CLion/darknet/bin/yolov3-tiny.weights",
-            "yolov3-tiny.tsm")
+    convert("/Users/seetadev/Documents/SDK/CLion/darknet/bin/yolov3.cfg",
+            "/Users/seetadev/Documents/SDK/CLion/darknet/bin/yolov3.weights",
+            "yolov3.tsm")
 
 
 if __name__ == '__main__':
