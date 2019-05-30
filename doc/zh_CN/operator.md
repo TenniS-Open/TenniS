@@ -807,6 +807,32 @@ size为{width, height}格式。
 size大小和x.dims相同，表示了每一个维度带下
 
 
+## yolo(x..device) -> y.device, classes, mask, anchors
+描述：等价于darknet.yolo 层(CPU)的计算  
+输入：`x` `Tensor4D`
+输出：`y` `PackedTensor`
+
+参数：  
+- `classes` `Int` 分类数  
+- `mask` `IntArray`   
+- `anchors` `FloatArray`  
+
+
+## yolo_poster(x, yolo...) -> y.host
+描述：进行yolo的后处理，输入为每个yolo层的输出。输出检测的框。
+输入：`x` 输入节点，用于获取网络输入的形状。
+输入：`yolo` 可变长度的yolo层的输入
+
+参数：  
+- `thresh` `Float` 置信度阈值。  
+- `nms` `Float` NMS 的阈值。
+
+说明：  
+输出格式为：N * M, 其中N为输出结果数量，
+其中M 为 4(box: x, y, w, h) + 1(prob) + 1(label)
+矩形表示为`[0, 1]`区间的值。
+
+
 ### _nhwc_channel_swap(x..device) = delete
 
 参数：  
