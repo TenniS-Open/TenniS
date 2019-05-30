@@ -12,25 +12,6 @@ import sys
 import math
 
 
-def get_activation(s):
-    if strcmp(s, "logistic", None, None): return LOGISTIC
-    if strcmp(s, "loggy", None, None): return LOGGY
-    if strcmp(s, "relu", None, None): return RELU
-    if strcmp(s, "elu", None, None): return ELU
-    if strcmp(s, "selu", None, None): return SELU
-    if strcmp(s, "relie", None, None): return RELIE
-    if strcmp(s, "plse", None, None): return PLSE
-    if strcmp(s, "hardtan", None, None): return HARDTAN
-    if strcmp(s, "lhtan", None, None): return LHTAN
-    if strcmp(s, "linear", None, None): return LINEAR
-    if strcmp(s, "ramp", None, None): return RAMP
-    if strcmp(s, "leaky", None, None): return LEAKY
-    if strcmp(s, "tanh", None, None): return TANH
-    if strcmp(s, "stair", None, None): return STAIR
-    sys.stderr.write("Couldn't find activation function %s, going with ReLU\n" % (s,))
-    return RELU
-
-
 def convolutional_out_height(l):
     # type: (Layer) -> int
     return (l.h + 2*l.pad - l.size) / l.stride + 1

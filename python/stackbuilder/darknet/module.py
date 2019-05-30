@@ -20,6 +20,7 @@ map_layer_inference = {
     YOLO: forward_yolo_layer,
     ROUTE: forward_route_layer,
     UPSAMPLE: forward_upsample_layer,
+    SHORTCUT: forward_shortcut_layer,
 }
 
 

@@ -48,7 +48,8 @@ map_layer_parsers = {
     MAXPOOL: parse_max_pool,
     YOLO: parse_yolo,
     ROUTE: parse_route,
-    UPSAMPLE: parse_upsample
+    UPSAMPLE: parse_upsample,
+    SHORTCUT: parse_shortcut,
 }
 
 

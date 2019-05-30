@@ -14,10 +14,20 @@ import numpy
 
 
 def __fused_batch_norm(w, b, mean, variance, epsilon=1e-5, w_shape=None):
+    """
+    Notice y = (x - mean) / (sqrt(var) + eps), not same as common BN
+    :param w:
+    :param b:
+    :param mean:
+    :param variance:
+    :param epsilon:
+    :param w_shape:
+    :return:
+    """
     if w_shape is None:
         w_shape = (variance.shape[0], 1, 1, 1)
     d = variance + epsilon
-    std = numpy.sqrt(variance + epsilon)
+    std = numpy.sqrt(variance) + epsilon
     w = w / numpy.reshape(std, newshape=w_shape)
     b = (b - mean) / std
     return w, b
@@ -172,6 +182,30 @@ def forward_upsample_layer(l, net):
         x = ts.zoo.mul(name=layer_name + "_scale", lhs=x, rhs=ts.tensor.from_any(l.scale, numpy.float32))
 
     x.name = layer_name
+
+    l.output = x
+    return x
+
+
+def forward_shortcut_layer(l, net):
+    # type: (Layer, Network) -> ts.Node
+    layer_name = str(net.index)
+
+    lhs = net.input
+    rhs = net.layers[l.index].output
+
+    scale_lhs = l.alpha
+    scale_rhs = l.beta
+
+    if scale_lhs != 1:
+        lhs = ts.zoo.mul(name=layer_name + "_alpha_lhs", lhs=lhs, rhs=numpy.asarray(scale_lhs, dtype=numpy.float32))
+
+    if scale_rhs != 1:
+        rhs = ts.zoo.mul(name=layer_name + "_beta_rhs", lhs=rhs, rhs=numpy.asarray(scale_rhs, dtype=numpy.float32))
+
+    x = ts.zoo.add(name=layer_name + "_add", lhs=lhs, rhs=rhs)
+
+    x = activate_array(x, (l.batch, l.out_c, l.out_h, l.out_w), l.activation, name=layer_name)
 
     l.output = x
     return x
