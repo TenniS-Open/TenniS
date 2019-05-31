@@ -1,6 +1,7 @@
 #include <kernels/gpu/cast.h>
 #include <core/tensor_builder.h>
 #include <global/operator_factory.h>
+#include "global/fp16_operator_factory.h"
 #include <backend/name.h>
 #include <utils/assert.h>
 #include <core/device.h>
@@ -122,3 +123,4 @@ namespace ts {
 using namespace ts;
 using namespace gpu;
 TS_REGISTER_OPERATOR(CastV2, GPU, name::layer::cast())
+TS_REGISTER_FP16_OPERATOR(CastV2, ts::GPU, name::layer::cast())

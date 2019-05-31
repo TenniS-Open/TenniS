@@ -1,5 +1,6 @@
 #include <kernels/gpu/to_float.h>
 #include <global/operator_factory.h>
+#include <global/fp16_operator_factory.h>
 #include <backend/name.h>
 
 #include "utils/ctxmgr_lite.h"
@@ -63,4 +64,5 @@ namespace ts {
 using namespace ts;
 using namespace gpu;
 TS_REGISTER_OPERATOR(ToFloat, GPU, name::layer::to_float())
+TS_REGISTER_FP16_OPERATOR(ToFloat, GPU, name::layer::to_float())
 

@@ -2,6 +2,7 @@
 #include <core/tensor_builder.h>
 #include <kernels/cpu/math_cpu.h>
 #include <global/operator_factory.h>
+#include <global/fp16_operator_factory.h>
 #include <backend/name.h>
 #include <core/device.h>
 #include <utils/assert.h>
@@ -30,19 +31,19 @@ namespace ts {
             int Row = by * blockDim.y + ty;
             int Col = bx * blockDim.x + tx;
 
-            T comp = 0;
-            T Cvalue = 0;
+            T comp = T(0.f);
+            T Cvalue = T(0.f);
 
             for (int t=0; t<(n - 1) / TRANS_BLOCK_DIM + 1; ++t) {
                 if (Row < m && t * blockDim.x + tx < n)
                     ds_A[ty][tx] = A[Row*n+t*blockDim.x+tx];
                 else
-                    ds_A[ty][tx] = 0.0;
+                    ds_A[ty][tx] = T(0.f);
 
                 if (t * blockDim.y + ty < n && Col < k)
                     ds_B[ty][tx] = B[(t*blockDim.y + ty)*k+Col];
                 else
-                    ds_B[ty][tx] = 0.0;
+                    ds_B[ty][tx] = T(0.f);
 
                 __syncthreads();
 
@@ -84,15 +85,16 @@ namespace ts {
             auto N = transpose ? rhs_shape[0] : rhs_shape[1];
 
             cublas::math<T>::gemm(cublas_handle, cublas::NoTrans, rhs_tranpose,
-                lhs_shape[0], N, lhs_shape[1], 1, psrc, pdot, 0, pdst);
+                lhs_shape[0], N, lhs_shape[1], T(1.f), psrc, pdot, T(0.f), pdst);
             /*cublas::math<T>::gemm(cublas_handle,cublas::RowMajor,cublas::NoTrans, cublas::NoTrans, 
                 lhs_shape[0], rhs_shape[1], lhs_shape[1], 1,psrc, lhs_shape[1], pdot, rhs_shape[1], 0,pdst, rhs_shape[1]);*/
             
 #else
             auto rhs_tranpose = transpose ? cublas::Trans : cublas::NoTrans;
+            auto N = transpose ? rhs_shape[0] : rhs_shape[1];
             gpu::math<T>::gemm(
                     cublas::NoTrans, rhs_tranpose,
-                    lhs_shape[0], N, lhs_shape[1], 1, psrc, pdot, 0, pdst);
+                    lhs_shape[0], N, lhs_shape[1], T(1.f), psrc, pdot, T(0.f), pdst);
             /*
             auto cuda_stream = handle->stream();
             dim3 blocksize(CUDA_BLOCK(rhs_shape[1], TRANS_BLOCK_DIM), CUDA_BLOCK(lhs_shape[0], TRANS_BLOCK_DIM),1);
@@ -108,6 +110,7 @@ namespace ts {
             switch (dtype) {
 #define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
         case DTYPE: { gpu_inner_prod_compute_run<TYPE>(lhs, rhs, transpose, out); break; }
+                DECLARE_COMPUTE_RUN(FLOAT16, half);
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
@@ -123,3 +126,4 @@ namespace ts {
 using namespace ts;
 using namespace gpu;
 TS_REGISTER_OPERATOR(InnerProd, GPU, name::layer::inner_prod())
+TS_REGISTER_FP16_OPERATOR(InnerProd, GPU, name::layer::inner_prod())

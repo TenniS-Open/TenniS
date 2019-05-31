@@ -3,8 +3,10 @@
 #include "backend/name.h"
 
 #include "global/operator_factory.h"
+#include "global/fp16_operator_factory.h"
 
 #include <cuda_runtime.h>
+#include <cuda_fp16.h>
 #include <device_launch_parameters.h>
 
 #include "kernels/gpu/gpu_helper.h"
@@ -20,6 +22,20 @@ namespace ts {
                 T val = input_data[index];
                 T max_temp = val > T(0) ? val : T(0);
                 T min_temp = val < T(0) ? val : T(0);
+                output_data[index] = max_temp + slope[slope_index] * min_temp;
+            }
+        }
+
+        template<>
+        __global__  void prelu_kernel<half>(const half* input_data, half* output_data, const half*slope, int dim_num, int last_dims, int size) {
+            int index = blockDim.x * blockIdx.x + threadIdx.x;
+            half zero(0.f);
+            if (index < size)
+            {
+                int slope_index = index % (dim_num * last_dims) / last_dims;
+                half val = input_data[index];
+                half max_temp = val > zero ? val : zero;
+                half min_temp = val < zero ? val : zero;
                 output_data[index] = max_temp + slope[slope_index] * min_temp;
             }
         }
@@ -62,6 +78,7 @@ namespace ts {
                 //DECLARE_COMPUTE_RUN(UINT32, uint32_t);
                 //DECLARE_COMPUTE_RUN(INT64, int64_t);
                 //DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+                DECLARE_COMPUTE_RUN(FLOAT16, half);
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
@@ -77,3 +94,4 @@ namespace ts {
 using namespace ts;
 using namespace gpu;
 TS_REGISTER_OPERATOR(PReLU, GPU, name::layer::prelu())
+TS_REGISTER_FP16_OPERATOR(PReLU, GPU, name::layer::prelu())

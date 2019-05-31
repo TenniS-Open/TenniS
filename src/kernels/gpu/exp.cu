@@ -3,8 +3,10 @@
 
 #include "backend/name.h"
 #include "global/operator_factory.h"
+#include "global/fp16_operator_factory.h"
 
 #include <cuda_runtime.h>
+#include <cuda_fp16.h>
 #include <device_launch_parameters.h>
 
 #include <math_functions.h>
@@ -21,7 +23,6 @@ namespace ts {
                 output_data[index] = exp(input_data[index]);
             }
         }
-
 
         template<typename T>
         static void gpu_exp_compute_run(const Tensor &x, Tensor &out) {
@@ -52,6 +53,7 @@ namespace ts {
                 DECLARE_COMPUTE_RUN(INT64, int64_t);
                 DECLARE_COMPUTE_RUN(UINT64, uint64_t);
 */
+                DECLARE_COMPUTE_RUN(FLOAT16, half);
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
@@ -67,3 +69,4 @@ namespace ts {
 using namespace ts;
 using namespace gpu;
 TS_REGISTER_OPERATOR(Exp, GPU, name::layer::exp())
+TS_REGISTER_FP16_OPERATOR(Exp, GPU, name::layer::exp())

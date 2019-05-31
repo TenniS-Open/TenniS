@@ -8,6 +8,7 @@
 #include "kernels/gpu/gpu_helper.h"
 #include <numeric>
 #include <cuda_runtime.h>
+#include <device_launch_parameters.h>
 
 #include "kernels/gpu/cuda_context.h"
 #include "core/device_context.h"

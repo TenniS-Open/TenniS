@@ -3,10 +3,12 @@
 
 #include "backend/name.h"
 #include "global/operator_factory.h"
+#include "global/fp16_operator_factory.h"
 #include "kernels/gpu/memory_gpu.h"
 
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
+#include <cuda_fp16.h>
 
 #include "kernels/gpu/gpu_helper.h"
 
@@ -20,6 +22,17 @@ namespace ts {
             {
                 T val = input_data[index];
                 output_data[index] = val > T(0.0) ? val : T(0.0);
+            }
+        }
+
+        template<>
+        __global__ void relu_kernel<half>(const half* input_data, half* output_data, int size) {
+            int index = blockDim.x * blockIdx.x + threadIdx.x;
+            half zero(0.f);
+            if (index < size)
+            {
+                half val = input_data[index];
+                output_data[index] = val > zero ? val : zero;
             }
         }
 
@@ -52,6 +65,7 @@ namespace ts {
                 //DECLARE_COMPUTE_RUN(UINT32, uint32_t);
                 //DECLARE_COMPUTE_RUN(INT64, int64_t);
                 //DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+                DECLARE_COMPUTE_RUN(FLOAT16, half);
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
@@ -67,3 +81,4 @@ namespace ts {
 using namespace ts;
 using namespace gpu;
 TS_REGISTER_OPERATOR(ReLU, ts::GPU, name::layer::relu())
+TS_REGISTER_FP16_OPERATOR(ReLU, ts::GPU, name::layer::relu())

@@ -3,8 +3,10 @@
 
 #include "backend/name.h"
 #include "global/operator_factory.h"
+#include "global/fp16_operator_factory.h"
 
 #include <cuda_runtime.h>
+#include <cuda_fp16.h>
 #include <device_launch_parameters.h>
 
 
@@ -37,7 +39,17 @@ double InvSqrt(double number)
             int index = blockDim.x * blockIdx.x + threadIdx.x;
             if (index < size)
             {
-                output_data[index] = T(1) / sqrt(input_data[index]);
+                output_data[index] = T(1) / T(sqrt(input_data[index]));
+            }
+        }
+
+        template<>
+        __global__ void gpu_rsqrt_kernel<half>(const half* input_data, half* output_data, int size) {
+            int index = blockDim.x * blockIdx.x + threadIdx.x;
+            half one(1.f);
+            if (index < size)
+            {
+                output_data[index] = one / half(sqrt(input_data[index]));
             }
         }
 
@@ -72,6 +84,7 @@ double InvSqrt(double number)
                 DECLARE_COMPUTE_RUN(INT64, int64_t);
                 DECLARE_COMPUTE_RUN(UINT64, uint64_t);
 */
+                DECLARE_COMPUTE_RUN(FLOAT16, half);
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
@@ -87,3 +100,4 @@ double InvSqrt(double number)
 using namespace ts;
 using namespace gpu;
 TS_REGISTER_OPERATOR(Rsqrt, GPU, name::layer::rsqrt())
+TS_REGISTER_FP16_OPERATOR(Rsqrt, GPU, name::layer::rsqrt())

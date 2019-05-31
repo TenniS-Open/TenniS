@@ -2,8 +2,10 @@
 
 #include "backend/name.h"
 #include "global/operator_factory.h"
+#include "global/fp16_operator_factory.h"
 
 #include <cuda_runtime.h>
+#include <cuda_fp16.h>
 #include <device_launch_parameters.h>
 
 #include "kernels/gpu/gpu_helper.h"
@@ -16,6 +18,16 @@ namespace ts {
             if (index < size)
             {
                 output_data[index] = T(1) / (T(1) + exp(-input_data[index]));
+            }
+        }
+
+        template<>
+        __global__ void sigmoid_kernel<half>(const half* input_data, half* output_data, int size) {
+            int index = blockDim.x * blockIdx.x + threadIdx.x;
+            half one(1.f);
+            if (index < size)
+            {
+                output_data[index] = one / (one + half(exp(-input_data[index])));
             }
         }
 
@@ -49,6 +61,7 @@ namespace ts {
                 //DECLARE_COMPUTE_RUN(UINT32, uint32_t);
                 //DECLARE_COMPUTE_RUN(INT64, int64_t);
                 //DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+                DECLARE_COMPUTE_RUN(FLOAT16, half);
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
@@ -64,3 +77,4 @@ namespace ts {
 using namespace ts;
 using namespace gpu;
 TS_REGISTER_OPERATOR(Sigmoid, ts::GPU, name::layer::sigmoid())
+TS_REGISTER_FP16_OPERATOR(Sigmoid, ts::GPU, name::layer::sigmoid())

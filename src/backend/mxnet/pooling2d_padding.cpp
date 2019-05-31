@@ -16,6 +16,7 @@
 
 #include "core/device.h"
 #include "global/operator_factory.h"
+#include "global/fp16_operator_factory.h"
 
 namespace ts {
     namespace mxnet {
@@ -73,8 +74,8 @@ namespace ts {
 
             // convert input
             auto shape = stack.index(0)->sizes();
-            auto ksize_tensor = tensor::cast(INT32, *stack.index(1));
-            auto stride_tensor = tensor::cast(INT32, *stack.index(2));
+            auto ksize_tensor = tensor::cast(INT32, stack.index(1)->view(MemoryDevice(CPU)));
+            auto stride_tensor = tensor::cast(INT32, stack.index(2)->view(MemoryDevice(CPU)));
 
             Padding2D dynamic_padding;
 
@@ -152,3 +153,5 @@ using namespace ts;
 using namespace ts::mxnet;
 
 TS_REGISTER_OPERATOR(Pooling2dPadding, CPU, name::layer::mx_pooling2d_padding())
+
+TS_REGISTER_FP16_OPERATOR(Pooling2dPadding, GPU, name::layer::mx_pooling2d_padding())

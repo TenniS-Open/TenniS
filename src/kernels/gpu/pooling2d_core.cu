@@ -5,6 +5,7 @@
 #include <algorithm>
 
 #include <cuda_runtime.h>
+#include <cuda_fp16.h>
 #include <device_launch_parameters.h>
 
 #include "kernels/gpu/gpu_helper.h"
@@ -48,8 +49,9 @@ namespace ts {
                 {
                     for (int w = index_col_start; w < input_col_end; w++)
                     {
-                        max_val = max(max_val, input_data[((n * input_channal + c) * input_height + h) * input_width + w]);
-                        //max_val = max_val > input_data[((n * input_channal + c) * input_height + h) * input_width + w] ? max_val : input_data[((n * input_channal + c) * input_height + h) * input_width + w];
+                        //max_val = max(max_val, input_data[((n * input_channal + c) * input_height + h) * input_width + w]);
+                        T input_cur = input_data[((n * input_channal + c) * input_height + h) * input_width + w];
+                        max_val = max_val > input_cur ? max_val : input_cur;
                     }
                 }
                 output_data[index] = max_val;
@@ -82,7 +84,7 @@ namespace ts {
                 int index_row_start = max(input_row_start, 0);
                 int index_col_start = max(input_col_start, 0);
 
-                T sumValue = T(0);
+                T sumValue = T(0.f);
                 int count = 0;
                 for (int h = index_row_start; h < input_row_end; h++)
                 {
@@ -93,9 +95,9 @@ namespace ts {
                     }
                 }
                 if (count == 0)
-                    output_data[index] = T(0);
+                    output_data[index] = T(0.f);
                 else
-                    output_data[index] = sumValue / count;
+                    output_data[index] = sumValue / T((float)count);
             }
         }
 
@@ -126,7 +128,7 @@ namespace ts {
                 int index_row_start = max(input_row_start, 0);
                 int index_col_start = max(input_col_start, 0);
 
-                T sumValue = T(0);
+                T sumValue = T(0.f);
                 for (int h = index_row_start; h < input_row_end; h++)
                 {
                     for (int w = index_col_start; w < input_col_end; w++)
@@ -134,7 +136,7 @@ namespace ts {
                         sumValue += input_data[((n * input_channal + c) * input_height + h) * input_width + w];
                     }
                 }
-                output_data[index] = sumValue / kernel_count;
+                output_data[index] = sumValue / T((float)kernel_count);
             }
         }
 
@@ -260,6 +262,7 @@ namespace ts {
             switch (dtype) {
 #define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
         case DTYPE: { cpu_pooling2d_compute_run<TYPE>(x, type, padding, padding_type, ksize, stride, format, out); break; }
+                DECLARE_COMPUTE_RUN(FLOAT16, half);
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN

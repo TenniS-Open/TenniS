@@ -1,6 +1,7 @@
 #include <kernels/gpu/transpose_conv2d_core.h>
 #include <core/tensor_builder.h>
 #include <global/operator_factory.h>
+#include <global/fp16_operator_factory.h>
 #include <backend/name.h>
 #include <utils/assert.h>
 #include <core/device.h>
@@ -11,6 +12,7 @@
 
 #include "device_launch_parameters.h"
 #include <cuda_runtime.h>
+#include <cuda_fp16.h>
 
 #include "kernels/gpu/cuda_context.h"
 #include "core/device_context.h"
@@ -33,7 +35,7 @@ namespace ts {
             const int height_col, const int width_col, T* data_im) {
 
             for (int index = blockIdx.x * blockDim.x + threadIdx.x; index < n; index += blockDim.x * gridDim.x) {
-                T val = 0; 
+                T val = T(0.f); 
                 const int w_im = index % width + pad_left;
                 const int h_im = (index / width) % height + pad_top;
                 const int c_im = index / (width * height);
@@ -73,8 +75,8 @@ namespace ts {
             int dwGlobalIdxM = blockDim.x * blockIdx.x + threadIdx.x;
             int dwLocalIdxN = threadIdx.y;
             int dwLocalIdxM = threadIdx.x;
-            T fResults = 0;
-            T fComp = 0;
+            T fResults = T(0.f);
+            T fComp = T(0.f);
             for (int j = 0; j < dwP; j += TRANS_BLOCK_DIM) {
                 if (dwGlobalIdxN < dwN && dwLocalIdxM + j < dwP) {
                     pfTmpA[dwLocalIdxN][dwLocalIdxM] = pfA[(dwLocalIdxM + j) * dwN + dwGlobalIdxN]; 
@@ -159,7 +161,7 @@ namespace ts {
                 auto cublas_handle = handle->cublas_handle();
 
                 cublas::math<T>::gemm(cublas_handle, cublas::Trans, cublas::NoTrans,
-                    kernel_dims, conv_out_spatial_dim, weight_shape[0], 1, pweight, pinput, 0, col_buffer);
+                    kernel_dims, conv_out_spatial_dim, weight_shape[0], T(1.f), pweight, pinput, T(0.f), col_buffer);
 
             #else
                 auto cuda_stream = handle->stream();
@@ -201,6 +203,7 @@ namespace ts {
            switch (dtype) {
            #define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
            case DTYPE: { gpu_transpose_conv2d_nchw_compute_run<TYPE>(x, padding, padding_value, w, stride, dilation, out, stack);; break; }
+           DECLARE_COMPUTE_RUN(FLOAT16, half);
            DECLARE_COMPUTE_RUN(FLOAT32, float);
            DECLARE_COMPUTE_RUN(FLOAT64, double);
            #undef DECLARE_COMPUTE_RUN

@@ -2,12 +2,15 @@
 #include <core/tensor_builder.h>
 
 #include <global/operator_factory.h>
+#include <global/fp16_operator_factory.h>
 #include <backend/name.h>
 #include <utils/assert.h>
 #include <core/device.h>
 #include <vector>
 
 #include "kernels/gpu/gpu_helper.h"
+
+#include <cuda_fp16.h>
 
 //#include "kernels/common/simd.h"
 
@@ -83,7 +86,7 @@ namespace ts {
 
             const T * pinput = x.data<T>();
             T * poutput = out.data<T>();
-            T n = T(0);
+            T n = T(0.f);
             memset(poutput, out.device(), out.count() * sizeof(T), &n, MemoryDevice(CPU), sizeof(T));
 
             auto cuda_stream = get_cuda_stream_on_context();
@@ -114,6 +117,7 @@ namespace ts {
                 DECLARE_COMPUTE_RUN(UINT32, uint32_t);
                 DECLARE_COMPUTE_RUN(INT64, int64_t);
                 DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+                DECLARE_COMPUTE_RUN(FLOAT16, half);
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
@@ -129,3 +133,4 @@ namespace ts {
 using namespace ts;
 using namespace gpu;
 TS_REGISTER_OPERATOR(SpaceToBatch4D, GPU, name::layer::spacetobatch4d())
+TS_REGISTER_FP16_OPERATOR(SpaceToBatch4D, GPU, name::layer::spacetobatch4d())

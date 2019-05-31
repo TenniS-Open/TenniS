@@ -2,12 +2,14 @@
 #include <core/tensor_builder.h>
 #include <memory>
 #include <global/operator_factory.h>
+#include <global/fp16_operator_factory.h>
 #include <backend/name.h>
 #include <core/device.h>
 #include <utils/assert.h>
 
 #include "device_launch_parameters.h"
 #include <cuda_runtime.h>
+#include <cuda_fp16.h>
 
 #include "kernels/gpu/gpu_helper.h"
 
@@ -60,6 +62,56 @@ namespace ts {
                              src_im[((n_y_s + 1) * src_width + n_x_s + 1) * channels + c]);
 
  
+        }
+
+        template<>
+        __global__ void Resize2d_ResizeImageLinear_kernel<half>(const half* src_im, int src_width, int src_height,
+            int channels, half *dst_im, int dst_width, int dst_height, int size) {
+            int index = blockDim.x * blockIdx.x + threadIdx.x;
+            if (index >= size) {
+                return;
+            }
+
+            int ntmp = index;
+
+            int nstep = channels * dst_width;
+            int n_y_d = ntmp / nstep;
+            ntmp = ntmp % nstep;
+
+            int n_x_d = ntmp / channels;
+            int c = ntmp % channels;
+
+            double lfx_scl = double(src_width) / dst_width;
+            double lfy_scl = double(src_height) / dst_height;
+            double bias_x = lfx_scl / 2 - 0.5;
+            double bias_y = lfy_scl / 2 - 0.5;
+
+            double lf_x_s = lfx_scl * n_x_d + bias_x;
+            double lf_y_s = lfy_scl * n_y_d + bias_y;
+
+            lf_x_s = lf_x_s >= 0 ? lf_x_s : 0;
+            lf_x_s = lf_x_s < src_width - 1 ? lf_x_s : src_width - 1 - 1e-5;
+            lf_y_s = lf_y_s >= 0 ? lf_y_s : 0;
+            lf_y_s = lf_y_s < src_height - 1 ? lf_y_s : src_height - 1 - 1e-5;
+
+            int n_x_s = int(lf_x_s);
+            int n_y_s = int(lf_y_s);
+
+            half lf_weight_x = half(lf_x_s) - half(float(n_x_s));
+            half lf_weight_y = half(lf_y_s) - half(float(n_y_s));
+
+            half half_one = half(1.f);
+
+            dst_im[index] = (half)((half_one - lf_weight_y) * (half_one - lf_weight_x) *
+                src_im[(n_y_s * src_width + n_x_s) * channels + c] +
+                (half_one - lf_weight_y) * lf_weight_x *
+                src_im[(n_y_s * src_width + n_x_s + 1) * channels + c] +
+                lf_weight_y * (half_one - lf_weight_x) *
+                src_im[((n_y_s + 1) * src_width + n_x_s) * channels + c] +
+                lf_weight_y * lf_weight_x *
+                src_im[((n_y_s + 1) * src_width + n_x_s + 1) * channels + c]);
+
+
         }
 
 
@@ -146,6 +198,91 @@ namespace ts {
                                 src_im[(sy + 2) * srcrows + (sx + 2) * channels + k] * coeffsX[3] * coeffsY[3]));
 
         }
+
+        template<>
+        __global__ void Resize2d_ResizeImageCubic_kernel<half>(const half* src_im, int src_width, int src_height,
+            int channels, half *dst_im, int dst_width, int dst_height, int size) {
+            int index = blockDim.x * blockIdx.x + threadIdx.x;
+            if (index >= size) {
+                return;
+            }
+
+            int ntmp = index;
+
+            int nstep = channels * dst_width;
+            int j = ntmp / nstep;
+            ntmp = ntmp % nstep;
+
+            int i = ntmp / channels;
+            int k = ntmp % channels;
+
+            double scale_x = (double)src_width / dst_width;
+            double scale_y = (double)src_height / dst_height;
+
+            int srcrows = src_width * channels;
+            // int dstrows = dst_width * channels;
+
+            double fy = (double)((j + 0.5) * scale_y - 0.5);
+            int sy = floor(fy);
+            fy -= sy;
+
+            if (sy < 1) {
+                fy = 0;
+                sy = 1;
+            }
+
+            if (sy >= src_height - 3) {
+                fy = 0, sy = src_height - 3;
+            }
+
+            const double A = -0.75f;
+
+            half coeffsY[4];
+            coeffsY[0] = ((A * (fy + 1) - 5 * A) * (fy + 1) + 8 * A) * (fy + 1) - 4 * A;
+            coeffsY[1] = ((A + 2) * fy - (A + 3)) * fy * fy + 1;
+            coeffsY[2] = ((A + 2) * (1 - fy) - (A + 3)) * (1 - fy) * (1 - fy) + 1;
+            coeffsY[3] = half(1.f) - coeffsY[0] - coeffsY[1] - coeffsY[2];
+
+            double fx = (double)((i + 0.5) * scale_x - 0.5);
+            int sx = floor(fx);
+            fx -= sx;
+
+            if (sx < 1) {
+                fx = 0, sx = 1;
+            }
+            if (sx >= src_width - 3) {
+                fx = 0, sx = src_width - 3;
+            }
+
+            half coeffsX[4];
+            coeffsX[0] = ((A * (fx + 1) - 5 * A) * (fx + 1) + 8 * A) * (fx + 1) - 4 * A;
+            coeffsX[1] = ((A + 2) * fx - (A + 3)) * fx * fx + 1;
+            coeffsX[2] = ((A + 2) * (1 - fx) - (A + 3)) * (1 - fx) * (1 - fx) + 1;
+            coeffsX[3] = half(1.f) - coeffsX[0] - coeffsX[1] - coeffsX[2];
+
+            dst_im[index] = (half)((
+                src_im[(sy - 1) * srcrows + (sx - 1) * channels + k] * coeffsX[0] * coeffsY[0] +
+                src_im[(sy)* srcrows + (sx - 1) * channels + k] * coeffsX[0] * coeffsY[1] +
+                src_im[(sy + 1) * srcrows + (sx - 1) * channels + k] * coeffsX[0] * coeffsY[2] +
+                src_im[(sy + 2) * srcrows + (sx - 1) * channels + k] * coeffsX[0] * coeffsY[3] +
+
+                src_im[(sy - 1) * srcrows + (sx)* channels + k] * coeffsX[1] * coeffsY[0] +
+                src_im[(sy)* srcrows + (sx)* channels + k] * coeffsX[1] * coeffsY[1] +
+                src_im[(sy + 1) * srcrows + (sx)* channels + k] * coeffsX[1] * coeffsY[2] +
+                src_im[(sy + 2) * srcrows + (sx)* channels + k] * coeffsX[1] * coeffsY[3] +
+
+                src_im[(sy - 1) * srcrows + (sx + 1) * channels + k] * coeffsX[2] * coeffsY[0] +
+                src_im[(sy)* srcrows + (sx + 1) * channels + k] * coeffsX[2] * coeffsY[1] +
+                src_im[(sy + 1) * srcrows + (sx + 1) * channels + k] * coeffsX[2] * coeffsY[2] +
+                src_im[(sy + 2) * srcrows + (sx + 1) * channels + k] * coeffsX[2] * coeffsY[3] +
+
+                src_im[(sy - 1) * srcrows + (sx + 2) * channels + k] * coeffsX[3] * coeffsY[0] +
+                src_im[(sy)* srcrows + (sx + 2) * channels + k] * coeffsX[3] * coeffsY[1] +
+                src_im[(sy + 1) * srcrows + (sx + 2) * channels + k] * coeffsX[3] * coeffsY[2] +
+                src_im[(sy + 2) * srcrows + (sx + 2) * channels + k] * coeffsX[3] * coeffsY[3]));
+
+        }
+
 
         template<typename T>
         static __global__ void Resize2d_ResizeNearest_kernel(const T* src_im, int src_width, int src_height,
@@ -332,6 +469,7 @@ namespace ts {
                 DECLARE_COMPUTE_RUN(UINT32, uint32_t);
                 DECLARE_COMPUTE_RUN(INT64, int64_t);
                 DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+                DECLARE_COMPUTE_RUN(FLOAT16, half);
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
@@ -347,3 +485,4 @@ namespace ts {
 using namespace ts;
 using namespace gpu;
 TS_REGISTER_OPERATOR(Resize2D, GPU, name::layer::resize2d())
+TS_REGISTER_FP16_OPERATOR(Resize2D, GPU, name::layer::resize2d())

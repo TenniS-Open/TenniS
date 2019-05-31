@@ -1,10 +1,12 @@
 #include <kernels/gpu/prewhiten.h>
 #include <algorithm>
 #include "global/operator_factory.h"
+#include "global/fp16_operator_factory.h"
 
 #include "backend/name.h"
 
 #include <cuda_runtime.h>
+#include <cuda_fp16.h>
 #include <device_launch_parameters.h>
 
 #include "kernels/gpu/math_gpu.h"
@@ -31,7 +33,7 @@ namespace ts {
             __shared__ T cache[CUDA_THREAD_NUM];
 
             int cache_index = threadIdx.x;
-            T temp = T(0);
+            T temp = T(0.f);
             for (; index < N; index += blockDim.x * gridDim.x) {
                 T sub_tmp = x[index] - *mean;
                 temp += sub_tmp * sub_tmp;
@@ -77,7 +79,20 @@ namespace ts {
                 x[index] = max(x[index], T(1 / sqrt(T(N))));
                 x[index] = T(1) / x[index];
             }
+        }
 
+        template<>
+        __global__  void std_dev_kernel<half>(const int N, half *x) {
+            int index = blockDim.x * blockIdx.x + threadIdx.x;
+
+            half half_N = half(float(N));
+
+            for (; index < 1; index += gridDim.x * blockDim.x) {
+                x[index] = half(sqrt(x[index] / half_N));
+                half temp = half(1 / sqrt(half_N));
+                x[index] = x[index] > temp ? x[index] : temp;
+                x[index] = half(1.f) / x[index];
+            }
         }
 
         template<typename T>
@@ -162,6 +177,7 @@ namespace ts {
                 //DECLARE_TYPE_AND_RUN(UINT32, uint32_t);
                 //DECLARE_TYPE_AND_RUN(INT64, int64_t);
                 //DECLARE_TYPE_AND_RUN(UINT64, uint64_t);
+                DECLARE_TYPE_AND_RUN(FLOAT16, half);
                 DECLARE_TYPE_AND_RUN(FLOAT32, float);
                 DECLARE_TYPE_AND_RUN(FLOAT64, double);
 #undef DECLARE_TYPE_AND_RUN
@@ -177,3 +193,4 @@ namespace ts {
 using namespace ts;
 using namespace gpu;
 TS_REGISTER_OPERATOR(PreWhiten, GPU, name::layer::prewhiten())
+TS_REGISTER_FP16_OPERATOR(PreWhiten, GPU, name::layer::prewhiten())

@@ -1,12 +1,14 @@
 #include <kernels/gpu/conv2d_core.h>
 #include <core/tensor_builder.h>
 #include <global/operator_factory.h>
+#include <global/fp16_operator_factory.h>
 #include <backend/name.h>
 #include <core/device.h>
 #include <utils/assert.h>
 
 #include "device_launch_parameters.h"
 #include <cuda_runtime.h>
+#include <cuda_fp16.h>
 
 #include "kernels/gpu/cuda_context.h"
 #include "core/device_context.h"
@@ -64,19 +66,19 @@ namespace ts {
             int Row = by * blockDim.y + ty;
             int Col = bx * blockDim.x + tx;
 
-            T comp = 0;
-            T Cvalue = 0;
+            T comp = T(0);
+            T Cvalue = T(0);
 
             for (int t=0; t<(n - 1) / TRANS_BLOCK_DIM + 1; ++t) {
                 if (Row < m && t * blockDim.x + tx < n)
                     ds_A[ty][tx] = A[Row*n+t*blockDim.x+tx];
                 else
-                    ds_A[ty][tx] = 0.0;
+                    ds_A[ty][tx] = T(0);
 
                 if (t * blockDim.y + ty < n && Col < k)
                     ds_B[ty][tx] = B[(t*blockDim.y + ty)*k+Col];
                 else
-                    ds_B[ty][tx] = 0.0;
+                    ds_B[ty][tx] = T(0);
 
                 __syncthreads();
 
@@ -93,6 +95,53 @@ namespace ts {
 
                 if(Row < m && Col < k) {
                     C[Row*k+Col]=Cvalue;
+                }
+            }//end for
+        }
+
+        template<>
+        __global__ void gpu_conv2d_compute_run_kernel<half>(int m, int n, int k, const half *A, const half *B, half *C) {
+            __shared__ half ds_A[TRANS_BLOCK_DIM][TRANS_BLOCK_DIM];
+            __shared__ half ds_B[TRANS_BLOCK_DIM][TRANS_BLOCK_DIM];
+
+            int bx = blockIdx.x;
+            int by = blockIdx.y;
+            int tx = threadIdx.x;
+            int ty = threadIdx.y;
+
+            int Row = by * blockDim.y + ty;
+            int Col = bx * blockDim.x + tx;
+
+            half comp(0.f);
+            half Cvalue(0.f);
+            half zero(0.f);
+
+            for (int t = 0; t<(n - 1) / TRANS_BLOCK_DIM + 1; ++t) {
+                if (Row < m && t * blockDim.x + tx < n)
+                    ds_A[ty][tx] = A[Row*n + t*blockDim.x + tx];
+                else
+                    ds_A[ty][tx] = zero;
+
+                if (t * blockDim.y + ty < n && Col < k)
+                    ds_B[ty][tx] = B[(t*blockDim.y + ty)*k + Col];
+                else
+                    ds_B[ty][tx] = zero;
+
+                __syncthreads();
+
+                for (int i = 0; i < blockDim.x; ++i) {
+                    //Cvalue += ds_A[ty][i] * ds_B[i][tx];
+                    half t;
+                    comp -= ds_A[ty][i] * ds_B[i][tx];
+                    t = Cvalue - comp;
+                    comp = (t - Cvalue) + comp;
+                    Cvalue = t;
+                }
+
+                __syncthreads();
+
+                if (Row < m && Col < k) {
+                    C[Row*k + Col] = Cvalue;
                 }
             }//end for
         }
@@ -160,9 +209,8 @@ namespace ts {
                 CUDAContextHandle* handle = reinterpret_cast<CUDAContextHandle*>(context.handle);
 #ifdef TS_USE_CUBLAS
                 auto cublas_handle = handle->cublas_handle();
-
                 cublas::math<T>::gemm(cublas_handle, cublas::NoTrans, cublas::NoTrans,
-                    weight_shape[0], conv_out_spatial_dim, kernel_dims, 1, pweight, col_buffer, 0, poutput);
+                    weight_shape[0], conv_out_spatial_dim, kernel_dims, T(1.f), pweight, col_buffer, T(0.f), poutput);
 
 #else
                 auto cuda_stream = handle->stream();
@@ -186,6 +234,7 @@ namespace ts {
             switch (dtype) {
 #define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
         case DTYPE: { gpu_conv2d_nchw_compute_run<TYPE>(x, padding, padding_value, w, stride, dilation, out, stack);; break; }
+                DECLARE_COMPUTE_RUN(FLOAT16, half);
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN

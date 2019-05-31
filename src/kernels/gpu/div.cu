@@ -3,11 +3,13 @@
 #include <backend/name.h>
 #include <utils/assert.h>
 #include <global/operator_factory.h>
+#include <global/fp16_operator_factory.h>
 #include <core/device.h>
 
 #include <numeric>
 #include "device_launch_parameters.h"
 #include <cuda_runtime.h>
+#include <cuda_fp16.h>
 
 #include "kernels/gpu/gpu_helper.h"
 
@@ -19,8 +21,19 @@ namespace ts {
             int index = blockDim.x * blockIdx.x + threadIdx.x;
             if (index < size) {
                 data[index] = (*scalar) == T(0)
-                ? (data[index] > 0 ? maxvalue : minvalue)
+                ? (data[index] > T(0) ? maxvalue : minvalue)
                 : data[index] / (*scalar);
+            }
+        }
+
+        template<>
+        __global__ void reduce_operator_scalar_kernel<half>(half* data, int size, const half *scalar, half maxvalue, half minvalue) {
+            int index = blockDim.x * blockIdx.x + threadIdx.x;
+            half zero = half(0.f);
+            if (index < size) {
+                data[index] = (*scalar) == zero
+                    ? (data[index] > zero ? maxvalue : minvalue)
+                    : data[index] / (*scalar);
             }
         }
 
@@ -29,8 +42,19 @@ namespace ts {
             int index = blockDim.x * blockIdx.x + threadIdx.x;
             if (index < size) {
                 data[index] = data[index] == T(0)
-                              ? ((*scalar) > 0 ? maxvalue : minvalue)
+                              ? ((*scalar) > T(0) ? maxvalue : minvalue)
                               : (*scalar) / data[index];
+            }
+        }
+
+        template<>
+        __global__ void reduce_operator_scalar_cross_kernel<half>(half* data, int size, const half *scalar, half maxvalue, half minvalue) {
+            int index = blockDim.x * blockIdx.x + threadIdx.x;
+            half zero = half(0.f);
+            if (index < size) {
+                data[index] = data[index] == zero
+                    ? ((*scalar) > zero ? maxvalue : minvalue)
+                    : (*scalar) / data[index];
             }
         }
 
@@ -39,8 +63,19 @@ namespace ts {
             int index = blockDim.x * blockIdx.x + threadIdx.x;
             if (index < size) {
                 data[index] = (bias[index]) == T(0)
-                ? (data[index] > 0 ? maxvalue : minvalue)
+                ? (data[index] > T(0) ? maxvalue : minvalue)
                 : data[index] / (bias[index]);
+            }
+        }
+
+        template<>
+        __global__ void reduce_operator_same_shape_kernel<half>(half* data, const half* bias, int size, half maxvalue, half minvalue) {
+            int index = blockDim.x * blockIdx.x + threadIdx.x;
+            half zero = half(0.f);
+            if (index < size) {
+                data[index] = (bias[index]) == zero
+                    ? (data[index] > zero ? maxvalue : minvalue)
+                    : data[index] / (bias[index]);
             }
         }
 
@@ -51,8 +86,21 @@ namespace ts {
             if (index < size) {
                 int dim = index % ( step * slice ) / (step);
                 data[index] = (bias[dim]) == T(0)
-                ? (data[index] > 0 ? maxvalue: minvalue)
+                ? (data[index] > T(0) ? maxvalue: minvalue)
                 : data[index] / (bias[dim]);
+            }
+        }
+
+        template<>
+        __global__ void reduce_operator_bias_kernel<half>(half* data, int size, int step, int slice,
+            const half* bias, int biaslen, half maxvalue, half minvalue) {
+            int index = blockDim.x * blockIdx.x + threadIdx.x;
+            half zero = half(0.f);
+            if (index < size) {
+                int dim = index % (step * slice) / (step);
+                data[index] = (bias[dim]) == zero
+                    ? (data[index] > zero ? maxvalue : minvalue)
+                    : data[index] / (bias[dim]);
             }
         }
 
@@ -63,8 +111,21 @@ namespace ts {
             if (index < size) {
                 int dim = index % (step * slice) / (step);
                 data[index] = (data[index]) == T(0)
-                              ? (bias[dim] > 0 ? maxvalue : minvalue)
+                              ? (bias[dim] > T(0) ? maxvalue : minvalue)
                               : bias[dim] / (data[index]);
+            }
+        }
+
+        template<>
+        __global__ void reduce_operator_bias_cross_kernel<half>(half* data, int size, int step, int slice,
+            const half* bias, int biaslen, half maxvalue, half minvalue) {
+            int index = blockDim.x * blockIdx.x + threadIdx.x;
+            half zero = half(0.f);
+            if (index < size) {
+                int dim = index % (step * slice) / (step);
+                data[index] = (data[index]) == zero
+                    ? (bias[dim] > zero ? maxvalue : minvalue)
+                    : bias[dim] / (data[index]);
             }
         }
 
@@ -112,7 +173,60 @@ namespace ts {
             }
 
             out[index] = (rhs[rhsindex]) == T(0)
-                ? (lhs[lhsindex] > 0 ? maxvalue : minvalue)
+                ? (lhs[lhsindex] > T(0) ? maxvalue : minvalue)
+                : lhs[lhsindex] / (rhs[rhsindex]);
+
+        }
+
+        template<>
+        __global__ void reduce_operator_kernel<half>(half* out, int size, const half* lhs, const half* rhs,
+            int *lhsshape, int *lhsweight,
+            int *rhsshape, int *rhsweight,
+            int *outweight, int shapelen, half maxvalue, half minvalue) {
+            int index = blockDim.x * blockIdx.x + threadIdx.x;
+            if (index >= size)
+                return;
+
+            half zero = half(0.f);
+
+            int *ptmp = outweight + 1;
+            int ntmp = index;
+
+            int rhsindex = 0;
+            int lhsindex = 0;
+            int nbuff1, nbuff2;
+            nbuff1 = nbuff2 = 0;
+            for (int m = 0, i = shapelen - 1; i >= 0; --i, m++) {
+                if (i > 0) {
+                    nbuff1 = ntmp / *ptmp;
+                    ntmp %= *ptmp;
+                }
+                else {
+                    nbuff1 = ntmp;
+                }
+
+                nbuff2 = nbuff1 % lhsshape[m];
+                if (m < shapelen - 1) {
+                    lhsindex += nbuff2 * lhsweight[m + 1];
+                }
+                else {
+                    lhsindex += nbuff2;
+                }
+
+                nbuff2 = nbuff1 % rhsshape[m];
+
+                if (m < shapelen - 1) {
+                    rhsindex += nbuff2 * rhsweight[m + 1];
+                }
+                else {
+                    rhsindex += nbuff2;
+                }
+
+                ++ptmp;
+            }
+
+            out[index] = (rhs[rhsindex]) == zero
+                ? (lhs[lhsindex] > zero ? maxvalue : minvalue)
                 : lhs[lhsindex] / (rhs[rhsindex]);
 
         }
@@ -300,6 +414,7 @@ namespace ts {
                 DECLARE_COMPUTE_RUN(UINT32, uint32_t);
                 DECLARE_COMPUTE_RUN(INT64, int64_t);
                 DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+                DECLARE_COMPUTE_RUN(FLOAT16, half);
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
@@ -324,6 +439,7 @@ namespace ts {
                 DECLARE_COMPUTE_RUN(UINT32, uint32_t);
                 DECLARE_COMPUTE_RUN(INT64, int64_t);
                 DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+                DECLARE_COMPUTE_RUN(FLOAT16, half);
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
@@ -348,6 +464,7 @@ namespace ts {
                 DECLARE_COMPUTE_RUN(UINT32, uint32_t);
                 DECLARE_COMPUTE_RUN(INT64, int64_t);
                 DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+                DECLARE_COMPUTE_RUN(FLOAT16, half);
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
@@ -372,6 +489,7 @@ namespace ts {
                 DECLARE_COMPUTE_RUN(UINT32, uint32_t);
                 DECLARE_COMPUTE_RUN(INT64, int64_t);
                 DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+                DECLARE_COMPUTE_RUN(FLOAT16, half);
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
@@ -396,6 +514,7 @@ namespace ts {
                 DECLARE_COMPUTE_RUN(UINT32, uint32_t);
                 DECLARE_COMPUTE_RUN(INT64, int64_t);
                 DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+                DECLARE_COMPUTE_RUN(FLOAT16, half);
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
@@ -420,6 +539,7 @@ namespace ts {
                 DECLARE_COMPUTE_RUN(UINT32, uint32_t);
                 DECLARE_COMPUTE_RUN(INT64, int64_t);
                 DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+                DECLARE_COMPUTE_RUN(FLOAT16, half);
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
@@ -435,4 +555,4 @@ namespace ts {
 using namespace ts;
 using namespace gpu;
 TS_REGISTER_OPERATOR(Div, GPU, name::layer::div())
-
+TS_REGISTER_FP16_OPERATOR(Div, ts::GPU, name::layer::div())
