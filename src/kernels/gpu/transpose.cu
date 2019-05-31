@@ -1,6 +1,7 @@
 #include <kernels/gpu/transpose.h>
 #include <set>
 #include <global/operator_factory.h>
+#include <global/fp16_operator_factory.h>
 #include <backend/name.h>
 #include <core/device.h>
 #include <utils/assert.h>
@@ -9,6 +10,7 @@
 
 #include "device_launch_parameters.h"
 #include <cuda_runtime.h>
+#include <cuda_fp16.h>
 #include <kernels/gpu/gpu_helper.h>
 
 
@@ -100,6 +102,7 @@ namespace ts {
                 DECLARE_COMPUTE_RUN(UINT32, uint32_t);
                 DECLARE_COMPUTE_RUN(INT64, int64_t);
                 DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+                DECLARE_COMPUTE_RUN(FLOAT16, half);
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
@@ -115,3 +118,4 @@ namespace ts {
 using namespace ts;
 using namespace gpu;
 TS_REGISTER_OPERATOR(Transpose, GPU, name::layer::transpose())
+TS_REGISTER_FP16_OPERATOR(Transpose, GPU, name::layer::transpose())

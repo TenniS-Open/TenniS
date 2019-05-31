@@ -2,6 +2,7 @@
 #include <core/tensor_builder.h>
 
 #include <global/operator_factory.h>
+#include "global/fp16_operator_factory.h"
 #include <backend/name.h>
 #include <utils/assert.h>
 #include <core/device.h>
@@ -9,6 +10,7 @@
 
 #include "device_launch_parameters.h"
 #include <cuda_runtime.h>
+#include <cuda_fp16.h>
 #include <math_functions.h>
 #include <runtime/runtime.h>
 
@@ -27,11 +29,19 @@ namespace ts {
         }
 
         template<typename T>
-        static __global__ void vec_kernel(const int N,float epsilon, const T* input,T* output) {
+        static __global__ void vec_kernel(const int N, T one, T epsilon, const T* input,T* output) {
             int index = blockDim.x * blockIdx.x + threadIdx.x;
 
             for (; index < N; index += blockDim.x * gridDim.x) {
-                output[index] = T(1) / sqrt(input[index] + T(epsilon));
+                output[index] = one / sqrt(input[index] + epsilon);
+            }
+        }
+
+        template<>
+        __global__ void vec_kernel<half>(const int N, half one, half epsilon, const half* input, half* output) {
+            int index = blockDim.x * blockIdx.x + threadIdx.x;
+            for (; index < N; index += blockDim.x * gridDim.x) {
+                output[index] = one / hsqrt(input[index] + epsilon);
             }
         }
 
@@ -63,7 +73,9 @@ namespace ts {
             int vec_len = vec_tensor.count();
             dim3 block_size(CUDA_THREAD_NUM);
             dim3 grid_size(CUDA_BLOCK(vec_len, block_size.x));
-            vec_kernel<T> << <grid_size, block_size, 0, cuda_stream >> > (vec_len, epsilon, pvariance,vec_data);
+            T one(1.f);
+            T temp_epsilon(epsilon);
+            vec_kernel<T> << <grid_size, block_size, 0, cuda_stream >> > (vec_len, one, temp_epsilon, pvariance,vec_data);
 
             gpu_batch_norm_compute_kernel<T> << < CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >> > (psrc, pdst, out.count(), backdims, shape[dim], pmean, vec_data);
            
@@ -85,6 +97,7 @@ namespace ts {
                 //DECLARE_COMPUTE_RUN(UINT32, uint32_t);
                 //DECLARE_COMPUTE_RUN(INT64, int64_t);
                 //DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+                DECLARE_COMPUTE_RUN(FLOAT16, half);
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
@@ -100,3 +113,4 @@ namespace ts {
 using namespace ts;
 using namespace gpu;
 TS_REGISTER_OPERATOR(BatchNorm, GPU, name::layer::batch_norm())
+TS_REGISTER_FP16_OPERATOR(BatchNorm, ts::GPU, name::layer::batch_norm())

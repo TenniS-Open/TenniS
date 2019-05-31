@@ -1,5 +1,6 @@
 #include <kernels/cpu/pooling2d_v2.h>
 #include <global/operator_factory.h>
+#include <global/fp16_operator_factory.h>
 #include <backend/name.h>
 
 #include "utils/ctxmgr_lite.h"
@@ -120,3 +121,5 @@ namespace ts {
 using namespace ts;
 using namespace cpu;
 TS_REGISTER_OPERATOR(Pooling2DV2, CPU, name::layer::pooling2d_v2())
+
+TS_REGISTER_FP16_OPERATOR(Pooling2DV2, CPU, name::layer::pooling2d_v2())

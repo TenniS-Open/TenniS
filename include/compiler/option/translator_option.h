@@ -3,8 +3,7 @@
 
 #include "module/graph.h"
 #include "utils/static.h"
-
-#include <set>
+#include "module/module.h"
 
 namespace ts {
 
@@ -13,36 +12,29 @@ namespace ts {
         using self = TranslatorOption;
 
         /**
-        * translate node on device
-        * @param device computing device
-        * @param node checking node
-        * @param translated_node get translated_node if return true
-        * @param operators supported operator's name
-        * @param output_flag mark current node is output or not.
-        * @return translated return true, or false
-        */
-        virtual bool translate(const ComputingDevice &device, 
-                               Node node, 
-                               Node &zipped_node, 
-                               std::set<const std::string> operators,
-                               bool output_flag = false) const = 0;
+         * translate node on device
+         * @param device computing device
+         * @param node wait to translate
+         * @param translated node
+         * @param output_flag true when current node is output,otherwise false
+         * @return translated return true, or false
+         */
+
+        virtual bool translate(const ComputingDevice &device,
+            const Node node,
+            Node &translated_node,
+            bool output_flag = false) const = 0;
     };
 
-    const std::map<const TranslatorOption*, std::set<const std::string>> &GetFullTranslateOptions();
+    const std::vector<const TranslatorOption*> &GetFullTranslateOptions();
 
-    void RegisterTranslateOption(const TranslatorOption *option, std::initializer_list<const std::string>& op_list);
-    //void RegisterTranslateOption(const TranslatorOption *option, std::vector<const std::string>& op_list) {
+    void RegisterTranslateOption(const TranslatorOption *option);
 }
 
-#define TS_REGISTER_TRANSLATOR_OPTION(option,op_list) \
+#define TS_REGISTER_TRANSLATOR_OPTION(option) \
 namespace { \
     static option ts_serial_name(_ts_translator_option); \
-    TS_STATIC_ACTION(ts::RegisterTranslateOption, &(ts_serial_name(_ts_translator_option)),op_list); \
+    TS_STATIC_ACTION(ts::RegisterTranslateOption, &(ts_serial_name(_ts_translator_option))); \
 }
-
-//#define TS_REGISTER_OPERATOR_ON_OPTION(option,op) \
-//namespace { \
-//    TS_STATIC_ACTION(ts::RegisterTranslateOption, &(ts_serial_name(_ts_translator_option))); \
-//}
 
 #endif //TENSORSTACK_COMPILER_OPTION_TRANSLATOR_OPTION_H

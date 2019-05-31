@@ -2,10 +2,12 @@
 #include <core/tensor_builder.h>
 #include "backend/name.h"
 #include "global/operator_factory.h"
+#include "global/fp16_operator_factory.h"
 //#include <algorithm>
 #include <math.h>
 
 #include <cuda_runtime.h>
+#include <cuda_fp16.h>
 #include <device_launch_parameters.h>
 
 #include "kernels/gpu/gpu_helper.h"
@@ -26,6 +28,25 @@ namespace ts {
                 {
                     max_val = max(input_data[(n * dim_num + k) * inner_num + s], max_val);
                 }   
+                scale_data[index] = max_val;
+            }
+        }
+
+        template<>
+        __global__ void max_kernel<half>(const half* input_data, half* scale_data, int dim_num, int outer_num, int inner_num)
+        {
+            int index = blockDim.x * blockIdx.x + threadIdx.x;
+            int size = outer_num * inner_num;
+            for (; index < size; index += blockDim.x * gridDim.x)
+            {
+                int n = index / inner_num;
+                int s = index % inner_num;
+                half max_val = input_data[n * dim_num * inner_num + s];
+                for (int k = 1; k < dim_num; k++)
+                {
+                    half input_cur = input_data[(n * dim_num + k) * inner_num + s];
+                    max_val = input_cur > max_val ? input_cur : max_val;
+                }
                 scale_data[index] = max_val;
             }
         }
@@ -61,7 +82,7 @@ namespace ts {
             {
                 int n = index / inner_num;
                 int s = index % inner_num;
-                T sum = (T)0;
+                T sum = T(0.f);
                 for (int k = 0; k < dim_num; k++)
                 {
                     sum += input_data[(n * dim_num + k) * inner_num + s];
@@ -144,6 +165,7 @@ namespace ts {
             switch (dtype) {
 #define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
         case DTYPE: { cpu_softmax_compute_run<TYPE>(x, dim, smooth, out, running_mem_device); break; }
+                DECLARE_COMPUTE_RUN(FLOAT16, half);
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
@@ -159,3 +181,4 @@ namespace ts {
 using namespace ts;
 using namespace gpu;
 TS_REGISTER_OPERATOR(Softmax, ts::GPU, name::layer::softmax())
+TS_REGISTER_FP16_OPERATOR(Softmax, ts::GPU, name::layer::softmax())

@@ -8,32 +8,27 @@ namespace ts {
         namespace cublas{
 
             template<typename T>
-            inline bool cublas_dot(cublasHandle_t handle, int N, const T *x,int incx, const T *y, int incy, T *z ) {
-                return gpu::math<T>::dot(N, x, incx, y, incy, z);
+            inline bool cublas_dot(cublasHandle_t handle, int N, const T *x, const T *y, T *z ) {
+                return gpu::math<T>::dot(N, x, y, z);
             }
 
             template<>
-            inline bool cublas_dot<float>(cublasHandle_t handle,int N, const float *x,int incx, const float *y, int incy, float *z) {
-                if (CUBLAS_STATUS_SUCCESS == cublasSdot(handle, N, x, incx, y, incy, z))
+            inline bool cublas_dot<float>(cublasHandle_t handle,int N, const float *x, const float *y, float *z) {
+                if (CUBLAS_STATUS_SUCCESS == cublasSdot(handle, N, x, 1, y, 1, z))
                     return true;
                 return false;
             }
 
             template<>
-            inline bool cublas_dot<double>(cublasHandle_t handle,int N, const double *x,int incx, const double *y, int incy, double *z) {
-                if (CUBLAS_STATUS_SUCCESS == cublasDdot(handle, N, x, incx, y, incy, z))
+            inline bool cublas_dot<double>(cublasHandle_t handle,int N, const double *x, const double *y, double *z) {
+                if (CUBLAS_STATUS_SUCCESS == cublasDdot(handle, N, x, 1, y, 1, z))
                     return true;
                 return false;
             }
 
             template<typename T>
-            bool math<T>::dot(cublasHandle_t handle,int N, const T *x, int incx, const T *y, int incy, T *z) {
-                return cublas_dot<T>(handle,N, x, incx, y, incy,z);
-            }
-
-            template<typename T>
-            bool math<T>::dot(cublasHandle_t handle, int N, const T *x, const T *y, T *z) {
-                return dot(handle, N, x, 1, y, 1,z);
+            bool math<T>::dot(cublasHandle_t handle,int N, const T *x, const T *y, T *z) {
+                return cublas_dot<T>(handle,N, x, y, z);
             }
 
             template<typename T>
@@ -43,6 +38,28 @@ namespace ts {
                 const T *B, int ldb, T beta,
                 T *C, int ldc) {
                 return gpu::math<T>::gemm(Order,TransA,TransB,M,N,K,alpha,A,lda,B,ldb,beta,C,ldc);
+            }
+
+            template<>
+            bool cblas_gemm<half>(cublasHandle_t handle, Order Order, Transpose TransA, Transpose TransB,
+                int M, int N, int K,
+                half alpha, const half *A, int lda,
+                const half *B, int ldb, half beta,
+                half *C, int ldc) {
+                cublasOperation_t cblas_TransA = TransA == ts::gpu::cublas::NoTrans ? CUBLAS_OP_N : CUBLAS_OP_T;
+                cublasOperation_t cblas_TransB = TransB == ts::gpu::cublas::NoTrans ? CUBLAS_OP_N : CUBLAS_OP_T;
+                if (Order == ColMajor) {
+                    if (CUBLAS_STATUS_SUCCESS == cublasHgemm(handle, cblas_TransA, cblas_TransB,
+                        M, N, K, &alpha, A, lda, B, ldb, &beta, C, ldc))
+                        return true;
+                    return false;
+                }
+                else {
+                    if (CUBLAS_STATUS_SUCCESS == cublasHgemm(handle, cblas_TransB, cblas_TransA,
+                        N, M, K, &alpha, B, ldb, A, lda, &beta, C, ldc))
+                        return true;
+                    return false;
+                }
             }
 
             template<>
@@ -112,28 +129,30 @@ namespace ts {
             }
 
             template <typename T>
-            bool cublas_asum(cublasHandle_t handle, int N, const T *x, int incx,T* out) {
-                return gpu::math<T>::asum(N, x, incx,out);
+            bool cublas_asum(cublasHandle_t handle, int N, const T *x, T* out) {
+                return gpu::math<T>::asum(N, x, out);
             }
 
             template <>
-            bool cublas_asum<float>(cublasHandle_t handle, int N, const float *x, int incx,float *out) {
-                return CUBLAS_STATUS_SUCCESS == cublasSasum(handle, N, x, incx, out);
+            bool cublas_asum<float>(cublasHandle_t handle, int N, const float *x ,float *out) {
+                return CUBLAS_STATUS_SUCCESS == cublasSasum(handle, N, x, 1, out);
             }
 
             template <>
-            bool cublas_asum<double>(cublasHandle_t handle, int N, const double *x, int incx, double *out) {
-                return CUBLAS_STATUS_SUCCESS == cublasDasum(handle, N, x, incx, out);
+            bool cublas_asum<double>(cublasHandle_t handle, int N, const double *x, double *out) {
+                return CUBLAS_STATUS_SUCCESS == cublasDasum(handle, N, x, 1, out);
             }
 
             template<typename T>
-            bool math<T>::asum(cublasHandle_t handle, int N, const T *x, int incx, T *out) {
-                return cublas_asum(handle,N, x, incx,out);
+            bool math<T>::asum(cublasHandle_t handle, int N, const T *x, T *out) {
+                return cublas_asum(handle, N, x, out);
             }
         }
 
     }
 }
 
+//support "half" on nivdia gpu
+template class ts::gpu::cublas::math<half>;
 template class ts::gpu::cublas::math<ts::dtype<ts::FLOAT32>::declare>;
 template class ts::gpu::cublas::math<ts::dtype<ts::FLOAT64>::declare>;

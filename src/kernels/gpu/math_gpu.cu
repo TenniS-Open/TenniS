@@ -39,8 +39,8 @@ namespace ts {
             int Row = by * blockDim.y + ty;
             int Col = bx * blockDim.x + tx;
 
-            T comp = 0;
-            T Cvalue = 0;
+            T comp = T(0.f);
+            T Cvalue = T(0.f);
 
             for (int t = 0; t< (K - 1) / TRANS_BLOCK_DIM + 1; ++t) {
                 if (Row < M && t * blockDim.x + tx < K) {
@@ -50,7 +50,7 @@ namespace ts {
                         ds_A[tx][ty] = alpha * A[Row*lda + t*blockDim.x + tx];
                 }
                 else
-                    ds_A[tx][ty] = 0.0;
+                    ds_A[tx][ty] = T(0.f);
 
                 if (t * blockDim.y + ty < K && Col < N)
                     if (transB)
@@ -58,7 +58,7 @@ namespace ts {
                     else
                         ds_B[tx][ty] = B[(t*blockDim.y + ty)*ldb + Col];
                 else
-                    ds_B[tx][ty] = 0.0;
+                    ds_B[tx][ty] = T(0.f);
 
                 __syncthreads();
 
@@ -134,7 +134,7 @@ namespace ts {
             __shared__ T cache[CUDA_THREAD_NUM];
 
             int cache_index = threadIdx.x;
-            T temp = T(0);
+            T temp = T(0.f);
             for (; index < N ; index += blockDim.x * gridDim.x) {
                 temp += x[index];
             }
@@ -177,7 +177,7 @@ namespace ts {
             __shared__ T cache[CUDA_THREAD_NUM];
 
             int cache_index = threadIdx.x;
-            T temp = T(0);
+            T temp = T(0.f);
             for (; index < N; index += blockDim.x * gridDim.x) {
                 temp += (x[index] * y[index]);
             }
@@ -342,6 +342,7 @@ namespace ts {
 
     }
 }
-
+//support "half" on nvidia gpu
+template class ts::gpu::math<half>;
 template class ts::gpu::math<ts::dtype<ts::FLOAT32>::declare>;
 template class ts::gpu::math<ts::dtype<ts::FLOAT64>::declare>;

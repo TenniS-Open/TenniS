@@ -13,13 +13,13 @@ namespace ts {
      * translate Graph to TGraph
      * translate Graph from other framework to TS support Graph
      */
-    class Translator {
+    class TS_DEBUG_API Translator {
     public:
         using self = Translator;
 
         explicit Translator(const ComputingDevice &device);
 
-        Module translate(const Module &module) const;
+        Module::shared translate(const Module::shared& module) const;
 
     private:
         ComputingDevice m_device;

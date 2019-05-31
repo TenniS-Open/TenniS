@@ -2,6 +2,7 @@
 #include <core/tensor_builder.h>
 
 #include <global/operator_factory.h>
+#include <global/fp16_operator_factory.h>
 #include <backend/name.h>
 #include <utils/assert.h>
 #include <core/device.h>
@@ -9,6 +10,7 @@
 
 #include "device_launch_parameters.h"
 #include <cuda_runtime.h>
+#include <cuda_fp16.h>
 #include <runtime/runtime.h>
 
 #include "kernels/gpu/cuda_context.h"
@@ -34,7 +36,17 @@ namespace ts {
             int index = blockDim.x * blockIdx.x + threadIdx.x;
 
             for (; index < N; index += blockDim.x * gridDim.x) {
-                output[index] = T(1) / sqrt(input[index] + T(epsilon));
+                output[index] = T(1) / T(sqrt(input[index] + T(epsilon)));
+            }
+        }
+
+        template<>
+        __global__ void inner_vec_kernel<half>(const int N, float epsilon, const half* input, half* output) {
+            int index = blockDim.x * blockIdx.x + threadIdx.x;
+            half one = half(1.f);
+            half half_epsilon = half(epsilon);
+            for (; index < N; index += blockDim.x * gridDim.x) {
+                output[index] = one / half(sqrt(input[index] + half_epsilon));
             }
         }
 
@@ -94,6 +106,7 @@ namespace ts {
                 //DECLARE_COMPUTE_RUN(UINT32, uint32_t);
                 //DECLARE_COMPUTE_RUN(INT64, int64_t);
                 //DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+                DECLARE_COMPUTE_RUN(FLOAT16, half);
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
@@ -109,3 +122,4 @@ namespace ts {
 using namespace ts;
 using namespace gpu;
 TS_REGISTER_OPERATOR(FusedBatchNorm, GPU, name::layer::fused_batch_norm())
+TS_REGISTER_FP16_OPERATOR(FusedBatchNorm, GPU, name::layer::fused_batch_norm())

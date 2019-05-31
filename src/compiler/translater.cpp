@@ -14,10 +14,10 @@ namespace ts {
     }
 
     static Node translate_node(const Node& node,
-                               std::unordered_map<Node, Node> &ready_map,
-                               const ComputingDevice &device,
-                               std::map<const TranslatorOption*, std::set<const std::string>> &options,
-                               bool output_flag) {
+        std::unordered_map<Node, Node> &ready_map,
+        const ComputingDevice &device,
+        std::vector<const TranslatorOption*> &options,
+        bool output_flag) {
 
         //check ready map
         auto ready_it = ready_map.find(node);
@@ -26,49 +26,53 @@ namespace ts {
         }
 
         auto translated_node = node;
-        for ( auto option : options ){
-            if (option.first->translate(device, node, translated_node, option.second, output_flag)) {
+        for (auto option : options) {
+            if (option->translate(device, node, translated_node, output_flag)) {
                 break;
             }
         }
 
-        bool translated = false;
         std::vector<Node> translated_inputs;
-        auto input_nodes = node.inputs();
-        for (auto &node : input_nodes) {
-            auto translated_node = translate_node(node, ready_map, device, options, false);
-            if (translated_node != node) {
-                translated = true;
-            }
-            translated_inputs.emplace_back(translated_node);
+        auto input_nodes = translated_node.inputs();
+        for (auto &input : input_nodes) {
+            auto translated_input = translate_node(input, ready_map, device, options, false);
+            translated_inputs.emplace_back(translated_input);
         }
 
-        if (translated) {
-            translated_node = bubble::bubble(translated_node.bubble());
-            Node::Link(translated_node, translated_inputs);
-        }
+        ready_map.insert(std::make_pair(node, translated_node));
+
+        Node::Link(translated_node, translated_inputs);
+
+        return translated_node;
     }
 
-    Module Translator::translate(const Module &module) const {
+    Module::shared Translator::translate(const Module::shared& module) const {
 
-        Module new_module;
+        //std::cout << "+++++++++++++++++ original graph ++++++++++++++++++++++" << std::endl;
+        //plot_graph(std::cout, module->outputs());
+
+        Module::shared new_module;
 
         Graph temp_graph;
         ctx::bind<Graph> _bind_graph(temp_graph);
+        //auto temp_graph = ctx::get<Graph>();
 
         auto options = GetFullTranslateOptions();
 
         std::vector<Node> traslated_nodes;
         std::unordered_map<Node, Node> ready_map;
 
-        auto output_nodes = module.outputs();
-        for ( auto & node: output_nodes)
+        auto output_nodes = module->outputs();
+        for (auto & node : output_nodes)
         {
             auto translated_node = translate_node(node, ready_map, m_device, options, true);
             traslated_nodes.emplace_back(translated_node);
         }
 
-        new_module.Load(temp_graph, traslated_nodes);
-        return std::move(new_module);
+        //std::cout << "+++++++++++++++++ translated graph ++++++++++++++++++++++" << std::endl;
+        //plot_graph(std::cout, traslated_nodes);
+
+        new_module = Module::Load(temp_graph, traslated_nodes);
+        return new_module;
     }
 }
