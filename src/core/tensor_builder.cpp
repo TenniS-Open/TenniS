@@ -126,7 +126,7 @@ namespace ts {
                 auto device = MemoryDevice(CPU);
                 if (value.device() == device) return value;
                 auto cpu_controller = std::make_shared<DynamicMemoryController>(device);
-                return value.clone(cpu_controller);
+                return value.view(device).clone(cpu_controller);
             }
             auto cpu_value = value.view(MemoryDevice(CPU));
 
