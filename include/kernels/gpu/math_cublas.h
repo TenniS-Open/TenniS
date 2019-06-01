@@ -5,6 +5,7 @@
 #include "../common/blas.h"
 
 #include <cublas_v2.h>
+#include <cuda_fp16.h>
 
 namespace ts {
     namespace gpu {
@@ -16,9 +17,7 @@ namespace ts {
                     if (tensor.device().type() != CUBLAS) throw DeviceMismatchException(Device(CUBLAS), tensor.device());
                 }
 
-                static bool dot(cublasHandle_t hadnle,const int N, const T *x, int incx, const T *y, int incy, T * z);
-
-                static bool dot(cublasHandle_t hadnle, int N, const T *x, const T *y, T *z);
+                static bool dot(cublasHandle_t hadnle, const int N, const T *x, const T *y, T * z);
 
                 static bool gemm(
                     cublasHandle_t hadnle,
@@ -47,7 +46,6 @@ namespace ts {
                     cublasHandle_t hadnle,
                     int N,
                     const T *x,
-                    int incx,
                     T *out
                 );
             };
@@ -55,6 +53,7 @@ namespace ts {
     }
 }
 
+extern template class ts::gpu::cublas::math<half>;
 extern template class ts::gpu::cublas::math<ts::dtype<ts::FLOAT32>::declare>;
 extern template class ts::gpu::cublas::math<ts::dtype<ts::FLOAT64>::declare>;
 
