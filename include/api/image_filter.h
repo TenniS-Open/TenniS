@@ -25,7 +25,7 @@ enum ts_ResizeMethod {
     TS_RESIZE_BICUBIC = 1,
     TS_RESIZE_NEAREST = 2,
 };
-typedef enum ts_ResizeMethod ts_ImageFilterResizeMethod;
+typedef enum ts_ResizeMethod ts_ResizeMethod;
 
 /**
  * New ts_new_ImageFilter

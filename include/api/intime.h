@@ -20,6 +20,22 @@ TENSOR_STACK_C_API ts_Tensor *ts_intime_gather(const ts_Tensor *x, const ts_Tens
 
 TENSOR_STACK_C_API ts_Tensor *ts_intime_concat(const ts_Tensor *const *x, int32_t len, int32_t dim);
 
+/**
+ * @param x
+ * @param dim
+ * @param smooth
+ * @param return
+ *
+if not smooth:
+```
+y_i = exp(x_i) / \sum{exp(x_i)}
+```
+else:
+```
+t_i = x_i - max(x)
+y_i = exp(t_i) / \sum{exp(t_i)}
+in framework like caffe, smooth is true
+ */
 TENSOR_STACK_C_API ts_Tensor *ts_intime_softmax(const ts_Tensor *x, int32_t dim, ts_bool smooth);
 
 TENSOR_STACK_C_API ts_Tensor *ts_intime_pad(const ts_Tensor *x, const ts_Tensor *padding, float padding_value);
