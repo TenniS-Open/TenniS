@@ -7,6 +7,8 @@
 import ctypes
 from ctypes import *
 from ctypes.util import find_library
+import platform
+
 
 libTensorStack = "TensorStackd"
 libTensorStack = find_library(libTensorStack)
@@ -56,9 +58,9 @@ ts_setup = __TS_IMPORT(lib, "ts_setup", None)
 """ ================================================================================================================ +++
 stream.h
 """
-ts_stream_write = CFUNCTYPE(c_ulonglong, c_void_p, c_char_p, c_ulonglong)
+ts_stream_write = CFUNCTYPE(c_ulonglong, c_void_p, c_void_p, c_ulonglong)
 
-ts_stream_read = CFUNCTYPE(c_ulonglong, c_void_p, c_char_p, c_ulonglong)
+ts_stream_read = CFUNCTYPE(c_ulonglong, c_void_p, c_void_p, c_ulonglong)
 
 """ ================================================================================================================ +++
 module.h
