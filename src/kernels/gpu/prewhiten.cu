@@ -26,6 +26,17 @@ namespace ts {
             }
         }
 
+        template<>
+        __global__ void mean_kernel<half>(const int N, half *x) {
+
+            int index = blockDim.x * blockIdx.x + threadIdx.x;
+            half half_N = half(float(N));
+
+            for (; index < 1; index += blockDim.x * gridDim.x) {
+                x[index] /= half_N;
+            }
+        }
+
         template<typename T>
         __global__ static void dev_kernel(const int N, const T *x,T* mean, T * z) {
             int index = blockDim.x * blockIdx.x + threadIdx.x;
@@ -86,12 +97,13 @@ namespace ts {
             int index = blockDim.x * blockIdx.x + threadIdx.x;
 
             half half_N = half(float(N));
+            half one(1.f);
 
             for (; index < 1; index += gridDim.x * blockDim.x) {
-                x[index] = half(sqrt(x[index] / half_N));
-                half temp = half(1 / sqrt(half_N));
+                x[index] = hsqrt(x[index] / half_N);
+                half temp = one / hsqrt(half_N);
                 x[index] = x[index] > temp ? x[index] : temp;
-                x[index] = half(1.f) / x[index];
+                x[index] = one / x[index];
             }
         }
 
