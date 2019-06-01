@@ -1,6 +1,6 @@
 #include "kernels/gpu/argmax.h"
 #include "global/operator_factory.h"
-#include "global/fp16_operator_factory.h"
+//#include "global/fp16_operator_factory.h"
 #include "backend/name.h"
 
 #include <numeric>
@@ -97,4 +97,4 @@ namespace ts {
 using namespace ts;
 using namespace gpu;
 TS_REGISTER_OPERATOR(ArgMax, GPU, name::layer::argmax())
-TS_REGISTER_FP16_OPERATOR(ArgMax, ts::GPU, name::layer::argmax())
+//TS_REGISTER_FP16_OPERATOR(ArgMax, ts::GPU, name::layer::argmax())
