@@ -50,6 +50,12 @@ typedef int32_t ts_bool;
  */
 TENSOR_STACK_C_API const char *ts_last_error_message();
 
+/**
+ * Set error message in current thread.
+ * @param message error message.
+ */
+TENSOR_STACK_C_API void ts_set_error_message(const char *message);
+
 #ifdef __cplusplus
 }
 #endif
