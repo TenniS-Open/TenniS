@@ -84,9 +84,14 @@ class Module(object):
     def _as_parameter_(self):
         return self.__shared.raw
 
+    @property
+    def raw(self):
+        return self._as_parameter_
+
     @staticmethod
     def Load(module, format=BINARY):
         # type: (Union[str, file], int) -> Module
+        assert format in {BINARY, TEXT}
         module = compatible_string(module)
         if isinstance(module, str):
             module = _C.ts_Module_Load(module, format)
@@ -99,7 +104,7 @@ class Module(object):
                 stream = obj.contents.value
                 cbytes = stream.read(count)
                 read_size = len(cbytes)
-                _C.memmove(data, bytes(cbytes), min(count, read_size))
+                _C.memmove(data, cbytes, min(count, read_size))
                 return read_size
 
             c_stream_read = _C.ts_stream_read(stream_read)
@@ -109,6 +114,26 @@ class Module(object):
                             format(1, type(module).__name__))
         _C.ts_api_check_pointer(module)
         return Module(module)
+
+
+class Device(object):
+    def __init__(self, type="cpu", id=0):
+        # type: (str, int) -> None
+        self.__object = _C.ts_Device(type, id)
+
+    @property
+    def _as_parameter_(self):
+        # type: () -> _C.POINTER(_C.ts_Device)
+        return _C.byref(self.__object)
+
+    @property
+    def raw(self):
+        return self._as_parameter_
+
+    @property
+    def ref(self):
+        # type: () -> _C.ts_Device
+        return self.__object
 
 
 VOID         = _C.TS_VOID
@@ -176,6 +201,7 @@ class Tensor(object):
             if in_flow is None:
                 c_tensor = _C.ts_new_Tensor(c_shape, c_len, c_dtype, c_data)
             else:
+                assert in_flow in {HOST, DEVICE}
                 c_in_flow = in_flow
                 c_tensor = _C.ts_new_Tensor_in_flow(c_in_flow, c_shape, c_len, c_dtype, c_data)
             _C.ts_api_check_pointer(c_tensor)
@@ -217,6 +243,13 @@ class Tensor(object):
         return self.__shared.raw
 
     @property
+    def raw(self):
+        return self._as_parameter_
+
+    def __nonzero__(self):
+        return bool(self.__shared.raw)
+
+    @property
     def numpy(self):
         c_tensor = self.__shared.raw
         if c_tensor is None:
@@ -229,9 +262,160 @@ class Tensor(object):
         c_shape = _C.ts_Tensor_shape(c_tensor)
         c_shape_size = _C.ts_Tensor_shape_size(c_tensor)
         shape = [c_shape[i] for i in range(c_shape_size)]
-        print c_dtype
         c_dtype_data = _C.cast(c_data, _C.POINTER(DC.to_ctypes(c_dtype)))
-        print c_dtype_data
         np = numpy.ctypeslib.as_array(c_dtype_data, shape=shape).copy()
         return np
+
+    @property
+    def shape(self):
+        # type: () -> tuple
+        c_tensor = self.__shared.raw
+        c_shape = _C.ts_Tensor_shape(c_tensor)
+        if not c_shape:
+            return tuple()
+        c_shape_size = _C.ts_Tensor_shape_size(c_tensor)
+        shape = [c_shape[i] for i in range(c_shape_size)]
+
+        return tuple(shape)
+
+    @property
+    def dims(self):
+        # type: () -> int
+        return int(_C.ts_Tensor_shape_size(self))
+
+    @property
+    def shape_size(self):
+        # type: () -> int
+        return self.dims
+
+    @property
+    def dtype(self):
+        # type: () -> int
+        return int(_C.ts_Tensor_dtype(self))
+
+    def copy(self):
+        # type: () -> Tensor
+        dolly = _C.ts_Tensor_clone(self)
+        _C.ts_api_check_pointer(dolly)
+
+        return Tensor(dolly)
+
+    def clone(self):
+        # type: () -> Tensor
+        return self.copy()
+
+    def sync_cpu(self):
+        # type: () -> None
+        _C.ts_api_check_bool(_C.ts_Tensor_sync_cpu())
+
+    def cast(self, dtype):
+        # type: (Uinon[int, type]) -> Tensor
+        dtype = DC.to_ts_dtype(dtype)
+        x = _C.ts_Tensor_cast(self, dtype)
+        _C.ts_api_check_pointer(x)
+        return Tensor(x)
+
+    def reshape(self, shape):
+        # type: (tuple) -> Tensor
+        np_shape = numpy.ascontiguousarray(shape, dtype=numpy.int32)
+
+        c_len = len(np_shape)
+        c_shape = np_shape.ctypes.data_as(_C.POINTER(_C.c_int32))
+
+        x = _C.ts_Tensor_reshape(self, c_shape, c_len)
+        _C.ts_api_check_pointer(x)
+
+        return Tensor(x)
+
+    def view(self, in_flow):
+        # type: (int) -> Tensor
+        assert in_flow in {HOST, DEVICE}
+        x =_C.ts_Tensor_view_in_flow(self, in_flow)
+        _C.ts_api_check_pointer(x)
+        return Tensor(x)
+
+    def field(self, index):
+        # type: (int) -> Tensor
+        x = _C.ts_Tensor_field(self, index)
+        _C.ts_api_check_pointer(x)
+        return Tensor(x)
+
+    def __getitem__(self, item):
+        # type: (int) -> Tensor
+        return self.field(item)
+
+    def packed(self):
+        # type: () -> bool
+        return _C.ts_Tensor_packed(self)
+
+    def fields_count(self):
+        # type: () -> int
+        return _C.ts_Tensor_fields_count(self)
+
+    def __len__(self):
+        # type: () -> int
+        return self.fields_count()
+
+    @staticmethod
+    def Pack(fileds):
+        # type: (List[Tensor]) -> Tensor
+        if isinstance(fileds, Tensor):
+            return fileds
+        if isinstance(fileds, (tuple, list)):
+            tensors = [Tensor(field) for field in fileds]
+            c_tensors = [tensor.raw for tensor in tensors]
+            c_len = len(tensors)
+            c_fields = (_C.POINTER(_C.ts_Tensor) * c_len)(*c_tensors)
+            x = _C.ts_Tensor_pack(c_fields, c_len)
+            _C.ts_api_check_pointer(x)
+            return Tensor(x)
+
+        raise Exception("Fields must be list of Tensor")
+
+    def __iter__(self):
+        class Iteration(object):
+            def __init__(self, tensor):
+                # type: (Tensor) -> None
+                self.__tensor = tensor
+                self.__count = tensor.fields_count()
+                self.__i = 0
+
+            def next(self):
+                if self.__i >= self.__count:
+                    raise StopIteration
+                x = self.__tensor[self.__i]
+                self.__i += 1
+                return x
+        return Iteration(self)
+
+    def unpack(self):
+        # type () -> Tuple[Tensor]
+        count = self.fields_count()
+        if count == 1:
+            return self,
+        return (x for x in self)
+
+    def slice(self, beg, end=None):
+        # type: (int, int) -> Tensor
+        x = None
+        if end:
+            x = _C.ts_Tensor_slice_v2(self, beg, end)
+        else:
+            x = _C.ts_Tensor_slice(self, beg)
+        _C.ts_api_check_pointer(x)
+        return Tensor(x)
+
+    @staticmethod
+    def Save(path, tensor):
+        # type: (str, Tensor) -> None
+        c_flag = _C.ts_Tensor_save(path, tensor.raw)
+        _C.ts_api_check_bool(c_flag)
+
+    @staticmethod
+    def Load(path):
+        # type: (str) -> Tensor
+        x = _C.ts_Tensor_load(path)
+        _C.ts_api_check_pointer(x)
+        return Tensor(x)
+
 

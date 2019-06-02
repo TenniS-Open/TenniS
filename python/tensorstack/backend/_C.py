@@ -10,7 +10,7 @@ from ctypes.util import find_library
 import platform
 
 
-libTensorStack = "TensorStackd"
+libTensorStack = "TensorStack"
 libTensorStack = find_library(libTensorStack)
 
 if libTensorStack is None:
@@ -159,7 +159,7 @@ ts_Tensor_slice = __TS_IMPORT(lib, "ts_Tensor_slice", POINTER(ts_Tensor), c_int3
 
 ts_Tensor_slice_v2 = __TS_IMPORT(lib, "ts_Tensor_slice_v2", POINTER(ts_Tensor), c_int32, c_int32)
 
-ts_Tensor_save = __TS_IMPORT(lib, "ts_Tensor_save", ts_bool, POINTER(ts_Tensor))
+ts_Tensor_save = __TS_IMPORT(lib, "ts_Tensor_save", ts_bool, c_char_p, POINTER(ts_Tensor))
 
 ts_Tensor_load = __TS_IMPORT(lib, "ts_Tensor_load", POINTER(ts_Tensor), c_char_p)
 
