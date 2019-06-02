@@ -217,7 +217,7 @@ class Tensor(object):
         """
         new tensor
         """
-        if dtype and shape:
+        if dtype is not None or shape is not None:
             if dtype is None:
                 dtype = _C.TS_FLOAT32
             else:
@@ -553,7 +553,7 @@ class ImageFilter(object):
 
     def resize(self, width, height=None, method=None):
         # type: (int, int, int) -> None
-        assert method in {ResizeMethod.BICUBIC, ResizeMethod.BILINEAR, ResizeMethod.NEAREST}
+        assert method is None or method in {ResizeMethod.BICUBIC, ResizeMethod.BILINEAR, ResizeMethod.NEAREST}
         if method is not None:
             if height:
                 _C.ts_api_check_bool(_C.ts_ImageFilter_resize_v2(self, width, height, method))
@@ -584,7 +584,7 @@ class ImageFilter(object):
 
     def letterbox(self, width, height, outer_value=0, method=None):
         # type: (int, int, float, int) -> None
-        assert method in {ResizeMethod.BICUBIC, ResizeMethod.BILINEAR, ResizeMethod.NEAREST}
+        assert method is None or method in {ResizeMethod.BICUBIC, ResizeMethod.BILINEAR, ResizeMethod.NEAREST}
         if method is not None:
             _C.ts_api_check_bool(_C.ts_ImageFilter_letterbox_v2(self, width, height, outer_value, method))
         else:
@@ -717,9 +717,11 @@ class Workbench(object):
                             format(2, type(filter).__name__))
         if isinstance(slot, int):
             _C.ts_api_check_bool(_C.ts_Workbench_bind_filter(self, slot, filter))
+            return
         slot = _compatible_string(slot)
         if isinstance(slot, str):
             _C.ts_api_check_bool(_C.ts_Workbench_bind_filter_by_name(self, slot, filter))
+            return
         raise Exception("argument {}: expected int or str instance instead of {}".
                         format(1, type(slot).__name__))
 
@@ -734,15 +736,12 @@ class Workbench(object):
         # type: () -> None
         _C.ts_api_check_bool(_C.ts_Workbench_setup_context(self))
 
-    def compile(self, module, device):
-        # type: (Module, Device) -> Program
+    def compile(self, module):
+        # type: (Module) -> Program
         if not isinstance(module, (Module, _C.POINTER(_C.ts_Module))):
             raise Exception("argument {}: expected Module or POINTER(ts_Module) instance instead of {}".
                             format(1, type(module).__name__))
-        if not isinstance(device, (Device, _C.POINTER(_C.ts_Device))):
-            raise Exception("argument {}: expected Device or POINTER(ts_Device) instance instead of {}".
-                            format(2, type(device).__name__))
-        c_program = _C.ts_Workbench_compile(self, module, device)
+        c_program = _C.ts_Workbench_compile(self, module)
         _C.ts_api_check_pointer(c_program)
         return Program(c_program)
 
