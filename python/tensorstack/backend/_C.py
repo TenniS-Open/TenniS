@@ -289,7 +289,7 @@ ts_Workbench_bind_filter = __TS_IMPORT(lib, "ts_Workbench_bind_filter",
 ts_Workbench_bind_filter_by_name = __TS_IMPORT(lib, "ts_Workbench_bind_filter_by_name",
                                                ts_bool, POINTER(ts_Workbench), c_char_p, POINTER(ts_ImageFilter))
 
-ts_new_Workbench = __TS_IMPORT(lib, "ts_new_Workbench", ts_bool, POINTER(ts_Device))
+ts_new_Workbench = __TS_IMPORT(lib, "ts_new_Workbench", POINTER(ts_Workbench), POINTER(ts_Device))
 
 ts_Workbench_setup = __TS_IMPORT(lib, "ts_Workbench_setup", ts_bool, POINTER(ts_Workbench), POINTER(ts_Program))
 
