@@ -47,6 +47,11 @@ def last_error_message():
     return str(_C.ts_last_error_message())
 
 
+def set_error_message(message):
+    # type: (str) -> None
+    _C.ts_set_error_message(str(message))
+
+
 def setup():
     # type: () -> None
     _C.ts_setup()
@@ -211,7 +216,7 @@ class Tensor(object):
                 c_in_flow = in_flow
                 c_tensor = _C.ts_new_Tensor_in_flow(c_in_flow, c_shape, c_len, c_dtype, c_data)
             _C.ts_api_check_pointer(c_tensor)
-            self.__shared = _Shared(c_tensor, _C.ts_free_Tensor)
+            self.__shared = _Shared(c_tensor, None if borrow else _C.ts_free_Tensor)
             return
 
         """
@@ -235,7 +240,7 @@ class Tensor(object):
                 c_in_flow = in_flow
                 c_tensor = _C.ts_new_Tensor_in_flow(c_in_flow, c_shape, c_len, c_dtype, None)
             _C.ts_api_check_pointer(c_tensor)
-            self.__shared = _Shared(c_tensor, _C.ts_free_Tensor)
+            self.__shared = _Shared(c_tensor, None if borrow else _C.ts_free_Tensor)
             return
 
     def dispose(self):
@@ -248,6 +253,9 @@ class Tensor(object):
     @property
     def raw(self):
         return self._as_parameter_
+
+    def release(self):
+        return self.__shared.release()
 
     def __nonzero__(self):
         return bool(self.__shared.raw)
@@ -359,7 +367,7 @@ class Tensor(object):
     def Pack(fileds):
         # type: (List[Tensor]) -> Tensor
         if isinstance(fileds, Tensor):
-            return fileds
+            fileds = (fileds,)
         if isinstance(fileds, (tuple, list)):
             tensors = [Tensor(field) for field in fileds]
             c_tensors = [tensor.raw for tensor in tensors]
@@ -515,7 +523,7 @@ class ImageFilter(object):
         """
         c_image_filter = _C.ts_new_ImageFilter(device)
         _C.ts_api_check_pointer(c_image_filter)
-        self.__shared = _Shared(c_image_filter, _C.ts_free_ImageFilter)
+        self.__shared = _Shared(c_image_filter, None if borrow else _C.ts_free_ImageFilter)
 
     def dispose(self):
         self.__shared.dispose()
@@ -636,7 +644,7 @@ class Workbench(object):
         """
         c_workbench = _C.ts_new_Workbench(device)
         _C.ts_api_check_pointer(c_workbench)
-        self.__shared = _Shared(c_workbench, _C.ts_free_Workbench)
+        self.__shared = _Shared(c_workbench, None if borrow else _C.ts_free_Workbench)
 
     def dispose(self):
         self.__shared.dispose()
@@ -760,4 +768,274 @@ class Workbench(object):
     def output_count(self):
         # type: () -> int
         return _C.ts_Workbench_output_count(self)
+
+
+class OperatorParams(object):
+    def __init__(self, obj=None, borrow=False):
+        self.__shared = _Shared(None)
+        """
+        OperatorParams
+        """
+        if isinstance(obj, OperatorParams):
+            self.__shared = obj.__shared
+            return
+        """
+        _C.ts_OperatorParams
+        """
+        if isinstance(obj, _C.POINTER(_C.ts_OperatorParams)):
+            if not borrow:
+                raise NotImplementedError("No free function given in _C")
+            self.__shared = _Shared(obj, None)
+            return
+
+        if obj is not None:
+            raise Exception("argument {}: expected OperatorParams or POINTER(ts_OperatorParams) instance instead of {}".
+                            format(1, type(obj).__name__))
+
+    def dispose(self):
+        self.__shared.dispose()
+
+    @property
+    def _as_parameter_(self):
+        return self.__shared.raw
+
+    @property
+    def raw(self):
+        return self._as_parameter_
+
+    def get(self, item):
+        # type: (str) -> Tensor
+        x = _C.ts_OperatorParams_get(self, item)
+        return Tensor(x)
+
+    def has(self, item):
+        # type: (str) -> bool
+        x = self.get(item)
+        y = bool(x)
+        del x
+        return y
+
+    def __getitem__(self, item):
+        return self.get(item)
+
+    def __contains__(self, item):
+        return self.has(item)
+
+
+class OperatorContext(object):
+    def __init__(self, obj=None, borrow=False):
+        self.__shared = _Shared(None)
+        """
+        OperatorContext
+        """
+        if isinstance(obj, OperatorContext):
+            self.__shared = obj.__shared
+            return
+        """
+        _C.ts_OperatorContext
+        """
+        if isinstance(obj, _C.POINTER(_C.ts_OperatorContext)):
+            if not borrow:
+                raise NotImplementedError("No free function given in _C")
+            self.__shared = _Shared(obj, None)
+            return
+
+        if obj is not None:
+            raise Exception("argument {}: expected OperatorContext or POINTER(ts_OperatorContext) instance instead of {}".
+                            format(1, type(obj).__name__))
+
+    def dispose(self):
+        self.__shared.dispose()
+
+    @property
+    def _as_parameter_(self):
+        return self.__shared.raw
+
+    @property
+    def raw(self):
+        return self._as_parameter_
+
+
+class Operator(object):
+    def __init__(self):
+        pass
+
+    def dispose(self):
+        # type: () -> None
+        """
+        Will called in Operator_free
+        :return:
+        """
+        pass
+
+    def init(self, params, context):
+        # type: (OperatorParams, OperatorContext) -> None
+        """
+        :param params:
+        :param context:
+        :return: None
+        """
+        pass
+
+    def infer(self, args, context):
+        # type: (List[Tensor], OperatorContext) -> List[tuple]
+        """
+        :param args:
+        :param context:
+        :return: list of tuple like [(FLOAT32, (1, 3, 4, 4)), (INT32, (1, 2))]
+        """
+        raise NotImplementedError
+
+    def run(self, args, context):
+        # type: (List[Tensor], OperatorContext) -> Union[Tensor, List[Tensor]]
+        """
+        :param args:
+        :param context:
+        :return: list of tuple like [(FLOAT32, (1, 3, 4, 4)), (INT32, (1, 2))]
+        """
+        raise NotImplementedError
+
+
+_RegisterOperator = {}
+_OperatorPool = {}
+
+
+def RegisterOperator(cls, device, op):
+    # type: (type, str, str) -> None
+    if not isinstance(cls, type) and not issubclass(cls, Operator):
+        raise Exception("cls must be the subclass of Operator")
+
+    def operator_new():
+        try:
+            pyobj = _C.py_object(cls())
+            p_pyobj = _C.pointer(pyobj)
+            p_pyobj = _C.cast(p_pyobj, _C.c_void_p)
+            c_void_ptr = p_pyobj.value
+            _OperatorPool[c_void_ptr] = pyobj
+            return c_void_ptr
+        except Exception as e:
+            import traceback
+            message = traceback.format_exc()
+            set_error_message(message=message)
+        return None
+
+    def operator_free(obj):
+        try:
+            if bool(obj):
+                obj = _C.cast(obj, _C.c_void_p)
+                c_void_ptr = obj.value
+
+                if c_void_ptr in _OperatorPool:
+                    del _OperatorPool[c_void_ptr]
+
+                p_pyobj = _C.cast(obj, _C.POINTER(_C.py_object))
+                obj = p_pyobj.contents.value
+
+                if isinstance(obj, Operator):
+                    obj.dispose()
+            return
+        except Exception as e:
+            import traceback
+            message = traceback.format_exc()
+            sys.stderr.write("{}\n".format(message))
+            set_error_message(message=message)
+        return
+
+    def operator_init_ex(obj, params, context):
+        try:
+            obj = _C.cast(obj, _C.c_void_p)
+            c_void_ptr = obj.value
+            assert c_void_ptr in _OperatorPool
+            p_pyobj = _C.cast(obj, _C.POINTER(_C.py_object))
+            obj = p_pyobj.contents.value
+            if isinstance(obj, Operator):
+                obj.init(OperatorParams(params, borrow=True), OperatorContext(context, borrow=True))
+                return 1
+            else:
+                raise Exception("argument {}: expected py_object instance instead of {}".
+                                format(1, type(obj).__name__))
+        except Exception as e:
+            import traceback
+            message = traceback.format_exc()
+            set_error_message(message=message)
+        return 0
+
+    def operator_run(obj, argc, argv, context):
+        try:
+            obj = _C.cast(obj, _C.c_void_p)
+            c_void_ptr = obj.value
+            assert c_void_ptr in _OperatorPool
+            p_pyobj = _C.cast(obj, _C.POINTER(_C.py_object))
+            obj = p_pyobj.contents.value
+            if isinstance(obj, Operator):
+                argc = int(argc)
+                args = [Tensor(argv[i], borrow=True) for i in range(argc)]
+                out = obj.run(args, OperatorContext(context, borrow=True))
+                if not isinstance(out, (list, tuple)):
+                    out = [out]
+                out = [Tensor(t) for t in out]
+                out = Tensor.Pack(out)
+                x = out.release()
+                x = _C.cast(x, _C.c_void_p)
+                return x.value
+            else:
+                raise Exception("argument {}: expected py_object instance instead of {}".
+                                format(1, type(obj).__name__))
+        except Exception as e:
+            import traceback
+            message = traceback.format_exc()
+            set_error_message(message=message)
+        return None
+
+    def operator_infer(obj, argc, argv, context):
+        try:
+            obj = _C.cast(obj, _C.c_void_p)
+            c_void_ptr = obj.value
+            assert c_void_ptr in _OperatorPool
+            p_pyobj = _C.cast(obj, _C.POINTER(_C.py_object))
+            obj = p_pyobj.contents.value
+            if isinstance(obj, Operator):
+                proto = []
+                if obj.infer == Operator.infer: # no infer override, call run instead
+                    out = operator_run(obj, argc, argv, context)
+                    if not out:
+                        return None
+                    out = Tensor(out, borrow=False)
+                    proto = [(field.dtype, field.shape) for field in out]
+                else:
+                    argc = int(argc)
+                    args = [Tensor(argv[i], borrow=True) for i in range(argc)]
+                    proto = obj.infer(args, OperatorContext(context, borrow=True))
+                packed = [len(proto)]
+                for p in proto:
+                    packed.append(p[0])
+                    packed.append(len(p[1]))
+                    packed.extend(p[1])
+                x = Tensor(obj=packed, dtype=INT32).release()
+                x = _C.cast(x, _C.c_void_p)
+                return x.value
+            else:
+                raise Exception("argument {}: expected py_object instance instead of {}".
+                                format(1, type(obj).__name__))
+        except Exception as e:
+            import traceback
+            message = traceback.format_exc()
+            set_error_message(message=message)
+        return None
+
+    operator_new = _C.ts_new_Operator(operator_new)
+    operator_free = _C.ts_free_Operator(operator_free)
+    operator_init_ex = _C.ts_Operator_init_ex(operator_init_ex)
+    operator_infer = _C.ts_Operator_infer(operator_infer)
+    operator_run = _C.ts_Operator_run(operator_run)
+
+    _RegisterOperator[(device, op)] = (operator_new, operator_free, operator_init_ex, operator_infer, operator_run)
+
+    _C.ts_Operator_RegisterEx(device, op,
+                              operator_new,
+                              operator_free,
+                              operator_init_ex,
+                              operator_infer,
+                              operator_run)
+
 

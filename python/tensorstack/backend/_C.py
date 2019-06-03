@@ -7,7 +7,6 @@
 import ctypes
 from ctypes import *
 from ctypes.util import find_library
-import platform
 
 
 libTensorStack = "TensorStack"
@@ -21,6 +20,16 @@ lib = CDLL(libTensorStack, RTLD_GLOBAL)
 
 def __TS_IMPORT(lib, sym, restype=None, *argtypes):
     # type: (CDLL, str, object, object) -> callable
+    if not hasattr(lib, sym):
+        import sys
+        restype_str = "void" if restype is None else restype.__name__
+        argtypes_str = ["void" if t is None else t.__name__ for t in argtypes]
+        argtypes_str = ", ".join(argtypes_str)
+        sys.stderr.write("[Warning]: Can not open sym: {} {}({})\n".format(restype_str, sym, argtypes_str))
+
+        def log_error(*args, **kwargs):
+            raise Exception("Use unloaded function: {}".format(sym))
+        return log_error
     f = getattr(lib, sym)
     f.argtypes = argtypes
     f.restype = restype
@@ -32,7 +41,7 @@ def ts_api_check_pointer(pointer):
     if not pointer:
         import sys
         message = ts_last_error_message()
-        sys.stderr.write("[ERROR]: {}\n".format(message))
+        # sys.stderr.write("[ERROR]: {}\n".format(message))
         raise Exception(message)
 
 
@@ -41,7 +50,7 @@ def ts_api_check_bool(value):
     if not value:
         import sys
         message = ts_last_error_message()
-        sys.stderr.write("[ERROR]: {}\n".format(message))
+        # sys.stderr.write("[ERROR]: {}\n".format(message))
         raise Exception(message)
 
 
@@ -49,6 +58,7 @@ def ts_api_check_bool(value):
 common.h
 """
 ts_last_error_message = __TS_IMPORT(lib, "ts_last_error_message", c_char_p)
+ts_set_error_message = __TS_IMPORT(lib, "ts_set_error_message", None, c_char_p)
 
 """ ================================================================================================================ +++
 setup.h
@@ -380,10 +390,12 @@ ts_free_Operator = CFUNCTYPE(None, c_void_p)
 
 ts_Operator_init = CFUNCTYPE(None, c_void_p, POINTER(ts_OperatorParams), POINTER(ts_OperatorContext))
 
-ts_Operator_infer = CFUNCTYPE(POINTER(ts_Tensor),
+ts_Operator_init_ex = CFUNCTYPE(ts_bool, c_void_p, POINTER(ts_OperatorParams), POINTER(ts_OperatorContext))
+
+ts_Operator_infer = CFUNCTYPE(c_void_p,
                               c_void_p, c_int32, POINTER(POINTER(ts_Tensor)), POINTER(ts_OperatorContext))
 
-ts_Operator_run = CFUNCTYPE(POINTER(ts_Tensor),
+ts_Operator_run = CFUNCTYPE(c_void_p,
                             c_void_p, c_int32, POINTER(POINTER(ts_Tensor)), POINTER(ts_OperatorContext))
 
 ts_Operator_Register = __TS_IMPORT(lib, "ts_Operator_Register", None,
@@ -394,6 +406,15 @@ ts_Operator_Register = __TS_IMPORT(lib, "ts_Operator_Register", None,
                                    ts_Operator_init,
                                    ts_Operator_infer,
                                    ts_Operator_run)
+
+ts_Operator_RegisterEx = __TS_IMPORT(lib, "ts_Operator_RegisterEx", None,
+                                     c_char_p,
+                                     c_char_p,
+                                     ts_new_Operator,
+                                     ts_free_Operator,
+                                     ts_Operator_init_ex,
+                                     ts_Operator_infer,
+                                     ts_Operator_run)
 
 ts_Operator_Throw = __TS_IMPORT(lib, "ts_Operator_Throw", None, c_char_p)
 
