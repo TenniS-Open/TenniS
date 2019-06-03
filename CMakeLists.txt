@@ -152,9 +152,9 @@ if (TS_USE_CUDA)
     find_package(CUDA REQUIRED)
     message(STATUS "[Optional] Use CUDA: [ON]; Found ${CUDA_VERSION}")
 
-    if (NOT CUDA_HAS_FP16)
-        message(FATAL_ERROR "CUDA: use version greater 7.5, to support float16")
-    endif()
+    # if (NOT CUDA_HAS_FP16)
+    #     message(FATAL_ERROR "CUDA: use version greater 7.5, to support float16")
+    # endif()
 
     if (${CUDA_VERSION} VERSION_LESS "7.0")
         message(FATAL_ERROR "CUDA: verison must greater than 7.0, found ${CUDA_VERSION}")
@@ -361,3 +361,4 @@ foreach (path ${TOOL_FILES})
             )
 endforeach ()
 endif (TS_BUILD_TOOLS)
+

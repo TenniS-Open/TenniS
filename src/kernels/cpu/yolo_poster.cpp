@@ -7,6 +7,7 @@
 #include "backend/name.h"
 #include "core/tensor_builder.h"
 #include "runtime/stack.h"
+#include <algorithm>
 
 #include <cstring>
 #include <cstdlib>
