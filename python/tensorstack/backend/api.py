@@ -1039,3 +1039,60 @@ def RegisterOperator(cls, device, op):
                               operator_run)
 
 
+class intime(object):
+    @staticmethod
+    def transpose(x, shuffle):
+        x = Tensor(x)
+        c_array, c_len, _ = _to_ctypes_array(shuffle, INT32)
+        y = _C.ts_intime_transpose(x, c_array, c_len)
+        _C.ts_api_check_pointer(y)
+        return Tensor(y)
+
+    @staticmethod
+    def sigmoid(x,):
+        x = Tensor(x)
+        y = _C.ts_intime_sigmoid(x)
+        _C.ts_api_check_pointer(y)
+        return Tensor(y)
+
+    @staticmethod
+    def gather(x, indices):
+        x = Tensor(x)
+        indices = Tensor(indices, dtype=INT32)
+        y = _C.ts_intime_gather(x, indices)
+        _C.ts_api_check_pointer(y)
+        return Tensor(y)
+
+    @staticmethod
+    def concat(tensors, dim):
+        tensors = [Tensor(tensor) for tensor in tensors]
+        c_tensors = [tensor.raw for tensor in tensors]
+        c_len = len(tensors)
+        c_tensors = (_C.POINTER(_C.ts_Tensor) * c_len)(*c_tensors)
+        y = _C.ts_intime_concat(c_tensors, c_len, dim)
+        _C.ts_api_check_pointer(y)
+        return Tensor(y)
+
+    @staticmethod
+    def softmax(x, dim, smooth=True):
+        x = Tensor(x)
+        smooth = 1 if smooth else 0
+        y = _C.ts_intime_softmax(x, dim, smooth)
+        _C.ts_api_check_pointer(y)
+        return Tensor(y)
+
+    @staticmethod
+    def pad(x, padding, padding_value=0):
+        x = Tensor(x)
+        padding = Tensor(padding, dtype=INT32)
+        y = _C.ts_intime_pad(x, padding, padding_value)
+        _C.ts_api_check_pointer(y)
+        return Tensor(y)
+
+    @staticmethod
+    def cast(x, dtype):
+        x = Tensor(x)
+        dtype = DC.to_ts_dtype(dtype=dtype)
+        y = _C.ts_intime_cast(x, dtype)
+        _C.ts_api_check_pointer(y)
+        return Tensor(y)
