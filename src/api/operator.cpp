@@ -29,8 +29,9 @@ public:
         api::SetLEM("");
         obj = this->f_new();
         if (obj == nullptr) {
-            TS_LOG_ERROR << "Call ts_new_Operator failed on " << device << " for " << op
-                         << ". \n  Message: \"" << api::GetLEM() << "\"" << eject;
+            auto &message = api::GetLEM();
+            TS_LOG_ERROR << "Call ts_new_Operator failed on " << device << " for " << op << "."
+                         << (message.empty() ? "" : "\nWith: " + message) << eject;
         }
         set_param_checking_mode(ParamCheckingMode::WEAK);
     }
@@ -48,8 +49,10 @@ public:
         }
         api::SetLEM("");
         if (!f_init_ex(obj, &params, &context)) {
-            TS_LOG_ERROR << "Call ts_Operator_init failed on " << device << " for " << op
-                         << ". \n  Message: \"" << api::GetLEM() << "\"" << eject;
+            auto &message = api::GetLEM();
+            TS_LOG_ERROR << "Call ts_Operator_init failed on " << device << " for " << op << "."
+                         << (message.empty() ? "" : "\nWith: " + message) << eject;
+
         }
     }
 
@@ -59,8 +62,9 @@ public:
         api::SetLEM("");
         std::shared_ptr<ts_Tensor> out(f_run(obj, int32_t(args.args.size()), args.args.data(), &context), ts_free_Tensor);
         if (out == nullptr) {
-            TS_LOG_ERROR << "Call ts_Operator_run failed (return null) on " << device << " for " << op
-                         << ". \n  Message: \"" << api::GetLEM() << "\"" << eject;
+            auto &message = api::GetLEM();
+            TS_LOG_ERROR << "Call ts_Operator_run failed (return null) on " << device << " for " << op << "."
+                         << (message.empty() ? "" : "\nWith: " + message) << eject;
         }
         return out;
     }
@@ -72,8 +76,9 @@ public:
         std::shared_ptr<ts_Tensor> out(f_infer(obj, int32_t(args.args.size()), args.args.data(), &context),
                                        ts_free_Tensor);
         if (out == nullptr) {
-            TS_LOG_ERROR << "Call ts_Operator_infer failed (return null) on " << device << " for " << op
-                         << ". \n  Message: \"" << api::GetLEM() << "\"" << eject;
+            auto &message = api::GetLEM();
+            TS_LOG_ERROR << "Call ts_Operator_infer failed (return null) on " << device << " for " << op << "."
+                         << (message.empty() ? "" : "\nWith: " + message) << eject;
         }
         return out;
     }
@@ -114,7 +119,8 @@ public:
                 }
                 output = packed_proto;
             } catch (const _&) {
-                TS_LOG_ERROR << "Call ts_Operator_infer failed (format error) on " << device << " for " << op << eject;
+                TS_LOG_ERROR << "Call ts_Operator_infer failed (format error) on " << device << " for " << op << "."
+                             << eject;
             }
         }
         return 1;
