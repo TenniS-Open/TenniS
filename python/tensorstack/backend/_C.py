@@ -9,13 +9,23 @@ from ctypes import *
 from ctypes.util import find_library
 
 
-libTensorStack = "TensorStack"
-libTensorStack = find_library(libTensorStack)
+TensorStackName = "TensorStack"
+libTensorStack = find_library(TensorStackName)
 
-if libTensorStack is None:
-    raise ImportError("Can find library: TensorStack")
+lib = None
+if libTensorStack is not None:
+    try:
+        lib = CDLL(libTensorStack, RTLD_GLOBAL)
+    except:
+        pass
 
-lib = CDLL(libTensorStack, RTLD_GLOBAL)
+if lib is None:
+    from . import libfinder
+    lib = libfinder.load_library(TensorStackName)
+
+
+if lib is None:
+    raise ImportError("Can find library: {}".format(TensorStackName))
 
 
 def __TS_IMPORT(lib, sym, restype=None, *argtypes):
