@@ -108,6 +108,7 @@ class Module(object):
         assert format in {BINARY, TEXT}
         module = _compatible_string(module)
         if isinstance(module, str):
+            module = module.encode()
             module = _C.ts_Module_Load(module, format)
         elif hasattr(module, "read"):
             obj = _C.py_object(module)
@@ -133,6 +134,7 @@ class Module(object):
 class Device(object):
     def __init__(self, type="cpu", id=0):
         # type: (str, int) -> None
+        type = type.encode()
         self.__object = _C.ts_Device(type, id)
 
     @property
@@ -580,7 +582,7 @@ class ImageFilter(object):
         _C.ts_api_check_bool(_C.ts_ImageFilter_center_crop(self, width, height))
 
     def channel_swap(self, shuffle):
-        # type: (float) -> None
+        # type: (List[int]) -> None
         c_array, c_len, _ = _to_ctypes_array(shuffle, _C.c_int32)
         _C.ts_api_check_bool(_C.ts_ImageFilter_channel_swap(self, c_array, c_len))
 

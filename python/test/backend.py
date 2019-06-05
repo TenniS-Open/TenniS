@@ -9,17 +9,10 @@ import sys
 sys.path.append(
     os.path.join(os.path.abspath(os.path.dirname(__file__)), ".."))
 
-RuntimeRoot = "/Users/seetadev/Documents/SDK/CLion/TensorStack/lib/"
-LD_LIBRARY_PATH = "LD_LIBRARY_PATH"
-if LD_LIBRARY_PATH in os.environ:
-    os.environ[LD_LIBRARY_PATH] = RuntimeRoot + ";" + os.environ[LD_LIBRARY_PATH]
-else:
-    os.environ[LD_LIBRARY_PATH] = RuntimeRoot
+RuntimeRoot = "/home/kier/git/TensorStack/lib/"
+sys.path.append(RuntimeRoot)
 
-pwd = os.getcwd()
-os.chdir(RuntimeRoot)
 from tensorstack.backend.api import *
-os.chdir(pwd)
 
 import cv2
 import random
@@ -28,8 +21,8 @@ import random
 if __name__ == '__main__':
     device = Device("cpu", 0)
 
-    cvimage = cv2.imread("/Users/seetadev/Documents/SDK/CLion/darknet/bin/data/000195.jpg")
-    model = "/Users/seetadev/Documents/SDK/CLion/TensorStack/python/test/yolov3.tsm"
+    cvimage = cv2.imread("/home/kier/000195.jpg")
+    model = "/home/kier/yolov3.tsm"
     categories = [
         "bai_sui_shan",
         "cestbon",
@@ -98,6 +91,9 @@ if __name__ == '__main__':
 
     cv2.imshow("Test", cvimage)
     cv2.waitKey()
+
+    bench.dispose()
+    filter.dispose()
 
 
 
