@@ -460,8 +460,8 @@ namespace ts {
                 return Status::FAILED;
             }
 
-            static const float MAX_MAX = 1e-2f;
-            static const float MAX_AVG = 1e-3f;
+            static const float MAX_MAX = 1e-4f;
+            static const float MAX_AVG = 1e-5f;
 
             ctx::bind<DeviceContext> _bind_device_context(bench.device());
             // check diff
