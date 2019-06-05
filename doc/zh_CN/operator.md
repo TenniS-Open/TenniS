@@ -674,16 +674,31 @@ Note: 这是对应某一个实现的版本。
 
 描述：根据affine，在x上采样出大小为size的图像
 输入：`x`: `Tensor`
-输入：`size`: `Int[2]` 表示2d的采样大小
+输入：`size`: `Int[2]` 表示2d的采样大小, {height, width}
 输入：`affine`: `Float[3, 3]` 仿射变换矩阵
 
 参数：
 - `type`: `Enum[linear=0, cubic=1, nearest=2] Default linear`
 - `dim`: `Int Default -2`
+- `outer_value`: `Optional Float Default [0]`
 
 说明：
 y的坐标为`[x, y]`映射到原图为`affine * [x, y, 1]'`，然后根据type进行采样。
 这里坐标全部为列向量。
+`dim` 和 `dim+1` 表示了图像的二维采样。
+
+### sample2d(x..device) -> y..device
+
+描述：根据affine，在x上采样出大小为size的图像
+输入：`x`: `Tensor`
+
+参数：
+- `type`: `Enum[linear=0, cubic=1, nearest=2] Default nearest`
+- `dim`: `Int Default -2`
+- `scale`: `Float`
+
+说明：
+`scale > 1` 表示上采样，`scale < 0` 下采样。
 `dim` 和 `dim+1` 表示了图像的二维采样。
 
 ### chunk(x..device) -> y..device
@@ -763,12 +778,60 @@ Waitting for sure
 
 ### _nhwc_scale_resize2d(x..device)
 参数：
-- `size` `Int[1]` 或 `Int[2]`
+- `size` `Int[1]` 或 `Int[2]` 内容为 `{width, height}`
 - `type`: `Enum[linear=0, cubic=1] Default linear` `[Optional]` 图像缩放类型  
 
 说明：  
 如果输入为单个int值，则将输入图像的短边resize到这个int数，长边根据对应比例调整，图像长宽比保持不变。  
-如果输入为(h,w)，且h、w为int，则直接将输入图像resize到(h,w)尺寸，图像的长宽比可能会发生变化
+如果输入为(w,h)，且w、h为int，则直接将输入图像resize到(w,h)尺寸，图像的长宽比可能会发生变化
+
+
+### _nhwc_letterbox(x..device)
+参数：
+- `size` `Int[1]` 或 `Int[2]`
+- `type`: `Enum[linear=0, cubic=1] Default linear` `[Optional]` 图像缩放类型  
+- `outer_value`: `Float Default 0` `[Optional]` 采样图像外区域的值  
+
+说明：  
+如果`outer_value`不设置，则采样不到取最近邻的值。否则用`outer_value`填充每个单元。
+size为{width, height}格式。
+
+
+### divided(x..device) -> y.device
+参数：  
+- `size` `IntArray` 表示了每个维度向上去整的值。
+- `padding_value` `Float` `Optional` 填充值。
+
+说明：  
+把x的大小调整为可以被size序列整除的大小。
+size大小和x.dims相同，表示了每一个维度带下
+
+
+## yolo(x..device) -> y.device, classes, mask, anchors
+描述：等价于darknet.yolo 层(CPU)的计算  
+输入：`x` `Tensor4D`
+输出：`y` `PackedTensor`
+
+参数：  
+- `classes` `Int` 分类数  
+- `mask` `IntArray`   
+- `anchors` `FloatArray`  
+
+
+## yolo_poster(x, yolo...) -> y.host
+描述：进行yolo的后处理，输入为每个yolo层的输出。输出检测的框。
+输入：`x` 输入节点，用于获取网络输入的形状。
+输入：`yolo` 可变长度的yolo层的输入
+
+参数：  
+- `thresh` `Float` 置信度阈值。  
+- `nms` `Float` NMS 的阈值。
+
+说明：  
+输出格式为：N * M, 其中N为输出结果数量，
+其中M 为 4(box: x, y, w, h) + 1(prob) + 1(label)
+矩形表示为`[0, 1]`区间的值。
+
 
 ### _nhwc_channel_swap(x..device) = delete
 

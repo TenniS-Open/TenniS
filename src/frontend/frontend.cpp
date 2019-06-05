@@ -87,5 +87,9 @@ namespace ts {
         Node softmax(const std::string &name, const NodeOrTensor &x, int32_t dim, bool smooth) {
             return symbol::softmax(name, x, dim, smooth);
         }
+
+        Node cast(const std::string &name, const NodeOrTensor &x, DTYPE dtype) {
+            return symbol::cast(name, x, dtype);
+        }
     }
 }

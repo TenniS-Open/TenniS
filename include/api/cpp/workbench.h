@@ -173,6 +173,14 @@ namespace ts {
                 TS_API_AUTO_CHECK(ts_Workbench_setup_runtime(m_impl.get()));
             }
 
+            int input_count() const {
+                return ts_Workbench_input_count(m_impl.get());
+            }
+
+            int output_count() const {
+                return ts_Workbench_output_count(m_impl.get());
+            }
+
         private:
             Workbench(raw *ptr) : m_impl(pack(ptr)) {}
 

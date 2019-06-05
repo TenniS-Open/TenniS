@@ -2,7 +2,11 @@
 // Created by kier on 19-5-8.
 //
 
+#include <api/operator.h>
+
 #include "declare_operator.h"
+
+#include "errno.h"
 
 using namespace ts;
 
@@ -17,13 +21,17 @@ public:
     APIPluginOperator(
             const std::string &device, const std::string &op,
             ts_new_Operator *f_new, ts_free_Operator *f_free,
-            ts_Operator_init *f_init, ts_Operator_infer *f_infer, ts_Operator_run *f_run)
+            ts_Operator_init *f_init, ts_Operator_infer *f_infer, ts_Operator_run *f_run,
+            ts_Operator_init_ex *f_init_ex = nullptr)
             : device(device), op(op)
             , f_new(f_new), f_free(f_free)
-            , f_init(f_init), f_infer(f_infer), f_run(f_run) {
+            , f_init(f_init), f_infer(f_infer), f_run(f_run), f_init_ex(f_init_ex) {
+        api::SetLEM("");
         obj = this->f_new();
         if (obj == nullptr) {
-            TS_LOG_ERROR << "Call ts_new_Operator failed on " << device << " for " << op << eject;
+            auto &message = api::GetLEM();
+            TS_LOG_ERROR << "Call ts_new_Operator failed on " << device << " for " << op << "."
+                         << (message.empty() ? "" : "\nWith: " + message) << eject;
         }
         set_param_checking_mode(ParamCheckingMode::WEAK);
     }
@@ -35,15 +43,28 @@ public:
     void init() override {
         ts_OperatorParams params(this);
         ts_OperatorContext context;
-        f_init(obj, &params, &context);
+        if (!f_init_ex) {
+            f_init(obj, &params, &context);
+            return;
+        }
+        api::SetLEM("");
+        if (!f_init_ex(obj, &params, &context)) {
+            auto &message = api::GetLEM();
+            TS_LOG_ERROR << "Call ts_Operator_init failed on " << device << " for " << op << "."
+                         << (message.empty() ? "" : "\nWith: " + message) << eject;
+
+        }
     }
 
     std::shared_ptr<ts_Tensor> CallOperatorRun(Stack &stack) {
         APIPluginStack args(stack);
         ts_OperatorContext context;
+        api::SetLEM("");
         std::shared_ptr<ts_Tensor> out(f_run(obj, int32_t(args.args.size()), args.args.data(), &context), ts_free_Tensor);
         if (out == nullptr) {
-            TS_LOG_ERROR << "Call ts_Operator_run failed (return null) on " << device << " for " << op << eject;
+            auto &message = api::GetLEM();
+            TS_LOG_ERROR << "Call ts_Operator_run failed (return null) on " << device << " for " << op << "."
+                         << (message.empty() ? "" : "\nWith: " + message) << eject;
         }
         return out;
     }
@@ -51,9 +72,13 @@ public:
     std::shared_ptr<ts_Tensor> CallOperatorInfer(Stack &stack) {
         APIPluginStack args(stack);
         ts_OperatorContext context;
-        std::shared_ptr<ts_Tensor> out(f_infer(obj, int32_t(args.args.size()), args.args.data(), &context), ts_free_Tensor);
+        api::SetLEM("");
+        std::shared_ptr<ts_Tensor> out(f_infer(obj, int32_t(args.args.size()), args.args.data(), &context),
+                                       ts_free_Tensor);
         if (out == nullptr) {
-            TS_LOG_ERROR << "Call ts_Operator_infer failed (return null) on " << device << " for " << op << eject;
+            auto &message = api::GetLEM();
+            TS_LOG_ERROR << "Call ts_Operator_infer failed (return null) on " << device << " for " << op << "."
+                         << (message.empty() ? "" : "\nWith: " + message) << eject;
         }
         return out;
     }
@@ -94,7 +119,8 @@ public:
                 }
                 output = packed_proto;
             } catch (const _&) {
-                TS_LOG_ERROR << "Call ts_Operator_infer failed (format error) on " << device << " for " << op << eject;
+                TS_LOG_ERROR << "Call ts_Operator_infer failed (format error) on " << device << " for " << op << "."
+                             << eject;
             }
         }
         return 1;
@@ -111,6 +137,7 @@ private:
     ts_Operator_init *f_init = nullptr;
     ts_Operator_infer *f_infer = nullptr;
     ts_Operator_run *f_run = nullptr;
+    ts_Operator_init_ex *f_init_ex = nullptr;
 };
 
 void ts_Operator_Register(const char *device, const char *op,
@@ -155,4 +182,21 @@ void ts_Operator_ThrowV2(const char *message, const char *filename, int32_t line
     } else {
         LogStream(LOG_ERROR) << "[" << filename << ":" << line_number << "]: [TS API]: " << message << eject;
     }
+}
+
+void ts_Operator_RegisterEx(const char *device, const char *op, ts_new_Operator *f_new, ts_free_Operator *f_free,
+                            ts_Operator_init_ex *f_init, ts_Operator_infer *f_infer, ts_Operator_run *f_run) {
+    TRY_HEAD
+        if (f_new == nullptr || f_free == nullptr || f_init == nullptr || f_run == nullptr) {
+            TS_LOG_ERROR << "f_new, f_free, f_init and f_run can't be nullptr" << eject;
+        }
+        std::string cpp_device(device);
+        std::string cpp_op(op);
+        auto creator = [=]() -> Operator::shared {
+            return std::make_shared<APIPluginOperator>(cpp_device, cpp_op,
+                                                       f_new, f_free,
+                                                       nullptr, f_infer, f_run, f_init);
+        };
+        OperatorCreator::Register(cpp_device, cpp_op, creator);
+    TRY_TAIL
 }

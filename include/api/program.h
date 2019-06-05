@@ -35,6 +35,10 @@ TENSOR_STACK_C_API void ts_free_Program(const ts_Program *program);
  */
 TENSOR_STACK_C_API ts_Program *ts_Program_clone(ts_Program *program);
 
+TENSOR_STACK_C_API int32_t ts_Program_input_count(ts_Program *program);
+
+TENSOR_STACK_C_API int32_t ts_Program_output_count(ts_Program *program);
+
 
 #ifdef __cplusplus
 }

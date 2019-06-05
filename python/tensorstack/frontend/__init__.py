@@ -19,3 +19,5 @@ from .tf import stack
 from .tf import mean
 
 from .torch import dcn_v2_forward
+
+from .darknet import yolo

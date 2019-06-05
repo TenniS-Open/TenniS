@@ -44,6 +44,14 @@ typedef void ts_Operator_init(void *op, const ts_OperatorParams *dict, ts_Operat
 /**
  *
  * @param op return value of @see ts_new_Operator
+ * @param dict params dict
+ * @return return ts_false if init failed
+ */
+typedef ts_bool ts_Operator_init_ex(void *op, const ts_OperatorParams *dict, ts_OperatorContext *context);
+
+/**
+ *
+ * @param op return value of @see ts_new_Operator
  * @param argc argument count
  * @param argv argument values, are borrowed refs
  * @return shape of ready values
@@ -79,6 +87,24 @@ TENSOR_STACK_C_API void ts_Operator_Register(
         ts_new_Operator *f_new,
         ts_free_Operator *f_free,
         ts_Operator_init *f_init,
+        ts_Operator_infer *f_infer,
+        ts_Operator_run *f_run);
+
+
+/**
+ * @param device register device
+ * @param op register op
+ * @param f_new function to new Operator, will parsed as f_new(arg)
+ * @param f_free function to free parameter
+ * @param f_init function to init operator with given attributes
+ * @param f_infer function to infer data shape
+ * @param f_run function to run operator
+ */
+TENSOR_STACK_C_API void ts_Operator_RegisterEx(
+        const char *device, const char *op,
+        ts_new_Operator *f_new,
+        ts_free_Operator *f_free,
+        ts_Operator_init_ex *f_init,
         ts_Operator_infer *f_infer,
         ts_Operator_run *f_run);
 

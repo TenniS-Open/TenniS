@@ -72,6 +72,8 @@ namespace ts {
         TS_DEBUG_API Node concat(const std::string &name, const std::vector<NodeOrTensor> &x, int32_t dim);
 
         TS_DEBUG_API Node softmax(const std::string &name, const NodeOrTensor &x, int32_t dim, bool smooth = true);
+
+        TS_DEBUG_API Node cast(const std::string &name, const NodeOrTensor &x, DTYPE dtype);
     }
 }
 

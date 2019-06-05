@@ -75,5 +75,11 @@ namespace ts {
             Node::Link(node, {x});
             return node;
         }
+
+        Node cast(const std::string &name, const Node &x, DTYPE dtype) {
+            Node node = bubble::bubble(desc::cast(dtype), name);
+            Node::Link(node, {x});
+            return node;
+        }
     }
 }

@@ -9,5 +9,9 @@ using namespace ts;
 using namespace api;
 
 const char *ts_last_error_message() {
-    return _thread_local_last_error_message.c_str();
+    return GetLEM().c_str();
+}
+
+void ts_set_error_message(const char *message) {
+    SetLEM(message);
 }

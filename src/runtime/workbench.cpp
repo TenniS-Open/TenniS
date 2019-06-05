@@ -33,7 +33,7 @@ namespace ts {
 
         explicit BindWorkbenchRuntime(Workbench &bench)
             : bind_thread_pool(bench.runtime().thread_pool())
-            , bind_device_context(bench.device())
+            // , bind_device_context(bench.device())
             , bind_runtime_context(bench.runtime())
             , bind_work_bench(bench) {
             // bench.device().active();
@@ -49,7 +49,7 @@ namespace ts {
         ctx::bind<ThreadPool> bind_thread_pool;
 
         // bind device context
-        ctx::bind<DeviceContext> bind_device_context;
+        // ctx::bind<DeviceContext> bind_device_context;
 
         // bind runtime context
         ctx::bind<RuntimeContext> bind_runtime_context;

@@ -24,7 +24,7 @@ namespace ts {
             int infer(Stack &stack, std::vector<Tensor::Prototype> &output) override;
 
         private:
-            std::vector<int> m_size;
+            std::vector<int> m_size;    // {width, height} format
             Operator::shared m_resize2d_op;
 
             Tensor m_dynamic_size;
