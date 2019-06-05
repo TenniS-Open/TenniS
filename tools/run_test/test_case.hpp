@@ -15,12 +15,14 @@
 #include <core/tensor.h>
 #include <module/io/fstream.h>
 #include <global/operator_factory.h>
+#include <global/fp16_operator_factory.h>
 #include <module/bubble.h>
 #include <core/tensor_builder.h>
 #include <runtime/stack.h>
 #include <core/device_context.h>
 #include <utils/ctxmgr_lite.h>
 #include <runtime/workbench.h>
+#include <backend/name.h>
 
 #include "utils/box.h"
 #include "utils/platform.h"
@@ -243,6 +245,49 @@ namespace ts {
             return true;
         }
 
+        Status convert_type(DTYPE convert_type, DeviceType device, bool strict) {
+            bool support_flag = false;
+
+            switch (convert_type)
+            {
+            case ts::FLOAT16:
+                support_flag = (Fp16OperatorCreator::Query(device, op, strict) != nullptr);
+                if (op == name::layer::cast() || op == name::layer::to_float())
+                    support_flag = false;
+                if (support_flag) {
+                    //convert to fp16 if we can
+                    for (auto &pair : param) {
+                        auto type = pair.second.dtype();
+                        if (type == FLOAT16 || type == FLOAT32 || type == FLOAT64) {
+                            pair.second = tensor::cast(FLOAT16, pair.second);
+                        }
+                    }
+
+                    for (int i = 0; i < input_count; ++i) {
+                        auto type = input.at(i).dtype();
+                        if (type == FLOAT16 || type == FLOAT32 || type == FLOAT64) {
+                            input.at(i) = tensor::cast(FLOAT16, input.at(i));
+                        }
+                    }
+
+                    for (int i = 0; i < output_count; ++i) {
+                        auto type = output.at(i).dtype();
+                        if (type == FLOAT16 || type == FLOAT32 || type == FLOAT64) {
+                            output.at(i) = tensor::cast(FLOAT16, output.at(i));
+                        }
+                    }
+                }
+                break;
+            default:
+                TS_LOG_INFO << "don't support convert type: " << type_str(convert_type);
+                return Status::FAILED;
+            }  
+
+            if (support_flag)
+                return Status::OK;
+            return Status::SKIP;
+        }
+
         // try load test case in files, throw exception if there is an broken case
         bool load(const std::string &root, const std::vector<std::string> &filenames) {
             TestCase tc;
@@ -415,8 +460,8 @@ namespace ts {
                 return Status::FAILED;
             }
 
-            static const float MAX_MAX = 1e-4f;
-            static const float MAX_AVG = 1e-5f;
+            static const float MAX_MAX = 1e-2f;
+            static const float MAX_AVG = 1e-3f;
 
             ctx::bind<DeviceContext> _bind_device_context(bench.device());
             // check diff
