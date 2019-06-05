@@ -37,8 +37,9 @@ namespace ts {
             if (Bubble::IsEndPoint(op_name)) {
                 if (op_name == Bubble::Parameter)
                     translated_node = bubble::param(node.bubble().name());
-                else if(op_name == Bubble::Const)
+                else if (op_name == Bubble::Const) {
                     translated_node = bubble::bubble(node.bubble());
+                }         
                 return true;
             }         
 
@@ -98,6 +99,7 @@ namespace ts {
                     cast_fp16_node.bubble().set(name::dtype, dtype);
                     translated_inputs.emplace_back(cast_fp16_node);
                 }
+                //status: current stream is fp16 but op doesn't support fp16
                 else if (stream_is_fp16 && fp16_op_creator == nullptr) {
                     auto cast_fp32_node = bubble::op(input.bubble().name() + "_cast_fp32", name::layer::cast(), { input });
                     Tensor dtype = tensor::from<int>(DTYPE::FLOAT32);
@@ -111,6 +113,42 @@ namespace ts {
 
             translated_node = bubble::bubble(node.bubble());
             Node::Link(translated_node, translated_inputs);
+
+            //NOTE:Advance calculations are used to improve accuracy on batch norm
+            if (translated_node.bubble().op() == name::layer::batch_norm()) {
+                bool change_param = false;
+                auto epsilon = translated_node.bubble().get(name::epsilon);
+                auto variance_node = translated_node.inputs()[2];
+                DTYPE dtype;
+                while (!Bubble::IsEndPoint(variance_node.bubble().op())) {
+                    variance_node = variance_node.inputs()[0];
+                    if (variance_node.bubble().op() == Bubble::Const) {
+                        dtype = variance_node.bubble().get(name::value).dtype();
+                        change_param = true;
+                    }
+                }
+                if (change_param) {
+                    Tensor variance = variance_node.bubble().get(name::value);
+                    Tensor epsilon_fp32 = tensor::cast(FLOAT32, epsilon);
+                    Tensor variance_fp32 = tensor::cast(FLOAT32, variance);
+                    auto epsilon_data = epsilon_fp32.data<float>();
+                    auto variance_data = variance_fp32.data<float>();
+
+                    for (int i = 0; i < variance.count(); i++)
+                    {
+                        variance_data[i] += *epsilon_data;
+                    }
+                    *epsilon_data = 0.f;
+
+                    Tensor epsilon_temp = tensor::cast(dtype, epsilon_fp32);
+                    Tensor variance_temp = tensor::cast(dtype, variance_fp32);
+                    auto test_e = epsilon_temp.data<float>();
+                    auto test_v = variance_temp.data<float>();
+                    translated_node.bubble().set(name::epsilon, epsilon_temp);
+                    variance_node.bubble().set(name::value, variance_temp);
+                }
+            }
+
             return true;
 
         }
