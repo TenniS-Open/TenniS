@@ -1033,6 +1033,8 @@ def RegisterOperator(cls, device, op):
 
     _RegisterOperator[(device, op)] = (operator_new, operator_free, operator_init_ex, operator_infer, operator_run)
 
+    device = device.encode()
+    op = op.encode()
     _C.ts_Operator_RegisterEx(device, op,
                               operator_new,
                               operator_free,
