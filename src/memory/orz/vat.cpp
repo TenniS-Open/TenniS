@@ -45,6 +45,7 @@ namespace ts {
     }
 
     void *Vat::malloc(size_t _size) {
+        if (_size == 0) return nullptr;
         // find first small piece
         Pot pot(m_allocator);
         if (!m_heap.empty())
@@ -60,6 +61,7 @@ namespace ts {
     }
 
     void Vat::free(const void *ptr) {
+        if (ptr == nullptr) return;
         auto key = const_cast<void *>(ptr);
         auto it = m_dict.find(key);
         if (it == m_dict.end()) {

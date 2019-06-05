@@ -100,6 +100,10 @@ TENSOR_STACK_C_API ts_bool ts_Workbench_setup_device(ts_Workbench *workbench);
  */
 TENSOR_STACK_C_API ts_bool ts_Workbench_setup_runtime(ts_Workbench *workbench);
 
+TENSOR_STACK_C_API int32_t ts_Workbench_input_count(ts_Workbench *workbench);
+
+TENSOR_STACK_C_API int32_t ts_Workbench_output_count(ts_Workbench *workbench);
+
 
 #ifdef __cplusplus
 }

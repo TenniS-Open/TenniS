@@ -42,6 +42,8 @@ namespace ts {
         TS_DEBUG_API Bubble softmax(int32_t dim, bool smooth = true);
 
         TS_DEBUG_API Bubble pad(float padding_value = 0);
+
+        TS_DEBUG_API Bubble cast(DTYPE dtype);
     }
 }
 

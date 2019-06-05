@@ -63,6 +63,14 @@ namespace ts {
                 return std::move(dolly);
             }
 
+            int input_count() const {
+                return ts_Program_input_count(m_impl.get());
+            }
+
+            int output_count() const {
+                return ts_Program_output_count(m_impl.get());
+            }
+
         private:
             Program(raw *ptr) : m_impl(pack(ptr)) {}
 

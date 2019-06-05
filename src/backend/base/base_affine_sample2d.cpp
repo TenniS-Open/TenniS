@@ -14,11 +14,12 @@
 namespace ts {
     namespace base {
 
-
+        const static std::string OUTER_VALUE = "outer_value";
 
         Affine_Sample2D::Affine_Sample2D() {
             field(name::type, REQUIRED);
             field(name::dim, REQUIRED);
+            field(OUTER_VALUE, OPTIONAL);
         }
 
         void Affine_Sample2D::init() {
@@ -27,11 +28,18 @@ namespace ts {
             Tensor type_tensor = tensor::cast(INT32, get(name::type));
             Tensor dim_tensor = tensor::cast(INT32, get(name::dim));
 
-            TS_AUTO_CHECK(type_tensor.has_shape({1}));
-            TS_AUTO_CHECK(dim_tensor.has_shape({1}));
+            TS_AUTO_CHECK(type_tensor.has_shape(1) || type_tensor.dims() == 0);
+            TS_AUTO_CHECK(dim_tensor.has_shape(1) || type_tensor.dims() == 0);
 
             m_type = Affine_Sample2DType(tensor::to_int(type_tensor));
             m_dim = tensor::to_int(dim_tensor);
+
+            m_outer_value = 0.0f;
+            m_outer_mode = AffineOuterMode::NEAREST;
+            if (has(OUTER_VALUE)) {
+                m_outer_value = tensor::to_float(get(OUTER_VALUE));
+                m_outer_mode = AffineOuterMode::VALUE;
+            }
 
             TS_AUTO_CHECK((m_type >= Affine_Sample2DType::LINEAR) && (m_type <= Affine_Sample2DType::NEAREST));
 
@@ -46,7 +54,7 @@ namespace ts {
             TS_AUTO_CHECK(input_shape.size() >= 2);
             int dim = m_dim;
             if(dim < 0) {
-               dim = input_shape.size() + dim;
+               dim = int(input_shape.size()) + dim;
             }
 
             TS_AUTO_CHECK((dim >= 0) && (dim + 1  < input_shape.size()));
@@ -80,7 +88,7 @@ namespace ts {
             TS_AUTO_CHECK(input_shape.size() >= 2);
             int dim = m_dim;
             if(dim < 0) {
-               dim = input_shape.size() + dim;
+               dim = int(input_shape.size()) + dim;
             }
             TS_AUTO_CHECK((dim >= 0) && (dim + 1  < input_shape.size()));
 
@@ -101,7 +109,7 @@ namespace ts {
             float * paffine = affine_tensor.data<float>(); 
             
             affine_sample_run((const Tensor &)x, paffine[0], paffine[1], paffine[2], paffine[3], paffine[4], paffine[5], paffine[6], paffine[7], paffine[8],
-                              m_type, dim, out);
+                              m_type, dim, m_outer_mode, m_outer_value, out);
             return 1;
         }
     }

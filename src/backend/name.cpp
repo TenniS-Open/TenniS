@@ -97,6 +97,13 @@ namespace ts {
 
             const string &winograd_transform_kernel() TS_NOEXCEPT { static string str = "winograd_transform_kernel"; return str; }
             const string &conv2d_winograd() TS_NOEXCEPT { static string str = "conv2d_winograd"; return str; }
+
+            const string &nhwc_letterbox() TS_NOEXCEPT { static string str = "_nhwc_letterbox"; return str; }
+            const string &sample2d() TS_NOEXCEPT { static string str = "sample2d"; return str; }
+            const string &divided() TS_NOEXCEPT { static string str = "divided"; return str; }
+
+            const string &yolo() TS_NOEXCEPT { static string str = "yolo"; return str; }
+            const string &yolo_poster() TS_NOEXCEPT { static string str = "yolo_poster"; return str; }
         }
 
         namespace typo {
@@ -170,5 +177,8 @@ namespace ts {
         string winograd_mode = "winograd_mode";
         string winograd_f23 = "winograd_f23";
         string winograd_f63 = "winograd_f63";
+
+        string outer_value = "outer_value";
+        string scale = "scale";
     }
 }

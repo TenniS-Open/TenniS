@@ -1,4 +1,4 @@
-#ifndef TENSORSTACK_KERNELS_CPU_RANGE_H_
+#ifndef TENSORSTACK_KERNELS_CPU_RANGE_H
 #define TENSORSTACK_KERNELS_CPU_RANGE_H
 
 #include "operator_on_cpu.h"
@@ -24,4 +24,4 @@ namespace ts {
 }
 
 
-#endif
+#endif  // TENSORSTACK_KERNELS_CPU_RANGE_H

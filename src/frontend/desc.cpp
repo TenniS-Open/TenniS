@@ -65,5 +65,11 @@ namespace ts {
             bubble.set(name::padding_value, tensor::from<float>(padding_value));
             return std::move(bubble);
         }
+
+        Bubble cast(DTYPE dtype) {
+            Bubble bubble(name::layer::cast(), name::layer::cast());
+            bubble.set(name::dtype, tensor::from<int>(dtype));
+            return std::move(bubble);
+        }
     }
 }

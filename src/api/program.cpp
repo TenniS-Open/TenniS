@@ -31,3 +31,17 @@ ts_Program *ts_Program_clone(ts_Program *program) {
         std::unique_ptr<ts_Program> dolly(new ts_Program((*program)->clone()));
     RETURN_OR_CATCH(dolly.release(), nullptr)
 }
+
+int32_t ts_Program_input_count(ts_Program *program) {
+    TRY_HEAD
+        if (!program) throw Exception("NullPointerException: @param: 1");
+        auto result = (*program)->input_count();
+    RETURN_OR_CATCH(result, 0)
+}
+
+int32_t ts_Program_output_count(ts_Program *program) {
+    TRY_HEAD
+        if (!program) throw Exception("NullPointerException: @param: 1");
+        auto result = (*program)->output_count();
+    RETURN_OR_CATCH(result, 0)
+}

@@ -54,6 +54,8 @@ namespace ts {
         TS_DEBUG_API Tensor softmax(const Tensor &x, int32_t dim, bool smooth = true);
 
         TS_DEBUG_API Tensor pad(const Tensor &x, const Tensor &padding, float padding_value = 0);
+
+        TS_DEBUG_API Tensor cast(const Tensor &x, DTYPE dtype);
     }
 }
 

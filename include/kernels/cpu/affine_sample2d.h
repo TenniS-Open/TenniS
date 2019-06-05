@@ -16,6 +16,7 @@ namespace ts {
 
             void affine_sample_run(const Tensor &x, float rz00, float rz01, float rz02, float rz10, float rz11, float rz12,
                                            float rz20, float rz21, float rz22, Affine_Sample2DType type, int dim,
+                                           base::AffineOuterMode outer_mode, float outer_value,
                                            Tensor &out) override;
         };
     }
