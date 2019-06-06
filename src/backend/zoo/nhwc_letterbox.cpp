@@ -11,6 +11,8 @@
 #include "utils/ctxmgr_lite.h"
 #include "runtime/stack.h"
 
+#include <algorithm>
+
 namespace ts {
     namespace zoo {
         // static const std::string OUTER_VALUE = "outer_value";
