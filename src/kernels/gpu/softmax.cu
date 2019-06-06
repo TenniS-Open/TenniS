@@ -32,6 +32,7 @@ namespace ts {
             }
         }
 
+#ifdef TS_USE_CUDA_FP16
         template<>
         __global__ void max_kernel<half>(const half* input_data, half* scale_data, int dim_num, int outer_num, int inner_num)
         {
@@ -50,6 +51,7 @@ namespace ts {
                 scale_data[index] = max_val;
             }
         }
+#endif
 
         template<typename T>
         __global__ static void substract_kernel(const T* scale_data,T* output_data,int count,int dim_num, int outer_num, int inner_num)
@@ -165,7 +167,9 @@ namespace ts {
             switch (dtype) {
 #define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
         case DTYPE: { cpu_softmax_compute_run<TYPE>(x, dim, smooth, out, running_mem_device); break; }
+#ifdef TS_USE_CUDA_FP16
                 DECLARE_COMPUTE_RUN(FLOAT16, half);
+#endif
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
@@ -181,4 +185,6 @@ namespace ts {
 using namespace ts;
 using namespace gpu;
 TS_REGISTER_OPERATOR(Softmax, ts::GPU, name::layer::softmax())
+#ifdef TS_USE_CUDA_FP16
 TS_REGISTER_FP16_OPERATOR(Softmax, ts::GPU, name::layer::softmax())
+#endif

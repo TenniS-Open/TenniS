@@ -159,6 +159,11 @@ if (TS_USE_CUDA)
     if (${CUDA_VERSION} VERSION_LESS "7.0")
         message(FATAL_ERROR "CUDA: verison must greater than 7.0, found ${CUDA_VERSION}")
     endif()
+
+    if (${CUDA_VERSION} VERSION_GREATER "8.x")
+        add_definitions(-DTS_USE_CUDA_FP16)
+    endif()
+
     set(CUDA_ARCH)
     if (TS_CUDA_ARCH)
         message(STATUS "CUDA: support in ${TS_CUDA_ARCH}")
