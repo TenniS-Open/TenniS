@@ -30,7 +30,7 @@ namespace ts {
                     int dim, float epsilon, Tensor &out) = 0;
 
         private:
-            float m_epsilon = 1e-5;
+            float m_epsilon = 10e-5;
             int m_dim = -1;
 
             bool check_inputs(Stack &stack) const;
