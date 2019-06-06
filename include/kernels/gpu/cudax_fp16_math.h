@@ -19,6 +19,12 @@ namespace ts {
     __device__ inline half operator*(const half &lhs, const half &rhs) { return __hmul(lhs, rhs); }
     __device__ inline half operator/(const half &lhs, const half &rhs) { return __hdiv(lhs, rhs); }
     __device__ inline half operator-(const half &a) { return __hneg(a); }
+    __device__ inline half operator==(const half &lhs, const half &rhs) { return __heq(lhs, rhs); }
+    __device__ inline half operator>=(const half &lhs, const half &rhs) { return __hge(lhs, rhs); }
+    __device__ inline half operator>(const half &lhs, const half &rhs) { return __hgt(lhs, rhs); }
+    __device__ inline half operator<=(const half &lhs, const half &rhs) { return __hle(lhs, rhs); }
+    __device__ inline half operator<(const half &lhs, const half &rhs) { return __hlt(lhs, rhs); }
+    __device__ inline half operator!=(const half &lhs, const half &rhs) { return __hne(lhs, rhs); }
 #endif
 // For CUDA 9
 #if CUDART_VERSION < 10000
