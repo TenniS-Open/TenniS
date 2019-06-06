@@ -64,6 +64,7 @@ namespace ts {
  
         }
 
+#ifdef TS_USE_CUDA_FP16
         template<>
         __global__ void Resize2d_ResizeImageLinear_kernel<half>(const half* src_im, int src_width, int src_height,
             int channels, half *dst_im, int dst_width, int dst_height, int size) {
@@ -113,6 +114,7 @@ namespace ts {
 
 
         }
+#endif
 
 
         template<typename T>
@@ -199,6 +201,7 @@ namespace ts {
 
         }
 
+#ifdef TS_USE_CUDA_FP16
         template<>
         __global__ void Resize2d_ResizeImageCubic_kernel<half>(const half* src_im, int src_width, int src_height,
             int channels, half *dst_im, int dst_width, int dst_height, int size) {
@@ -282,7 +285,7 @@ namespace ts {
                 src_im[(sy + 2) * srcrows + (sx + 2) * channels + k] * coeffsX[3] * coeffsY[3]));
 
         }
-
+#endif
 
         template<typename T>
         static __global__ void Resize2d_ResizeNearest_kernel(const T* src_im, int src_width, int src_height,
@@ -319,7 +322,6 @@ namespace ts {
 
             dst_im[index] = (T) src_im[(n_y_s * src_width + n_x_s) * channels + c];
         }
-
 
         template<typename T>
         static inline void resize_linear(const Tensor *x, Tensor *y, int x_height, int x_width,
@@ -469,7 +471,9 @@ namespace ts {
                 DECLARE_COMPUTE_RUN(UINT32, uint32_t);
                 DECLARE_COMPUTE_RUN(INT64, int64_t);
                 DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+#ifdef TS_USE_CUDA_FP16
                 DECLARE_COMPUTE_RUN(FLOAT16, half);
+#endif
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
@@ -485,4 +489,6 @@ namespace ts {
 using namespace ts;
 using namespace gpu;
 TS_REGISTER_OPERATOR(Resize2D, GPU, name::layer::resize2d())
+#ifdef TS_USE_CUDA_FP16
 TS_REGISTER_FP16_OPERATOR(Resize2D, GPU, name::layer::resize2d())
+#endif

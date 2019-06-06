@@ -6,4 +6,6 @@
 using namespace ts;
 using namespace gpu;
 TS_REGISTER_OPERATOR(Pooling2D, GPU, name::layer::pooling2d())
+#ifdef TS_USE_CUDA_FP16
 TS_REGISTER_FP16_OPERATOR(Pooling2D, GPU, name::layer::pooling2d())
+#endif

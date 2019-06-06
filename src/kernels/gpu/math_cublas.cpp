@@ -153,6 +153,8 @@ namespace ts {
 }
 
 //support "half" on nivdia gpu
+#ifdef TS_USE_CUDA_FP16
 template class ts::gpu::cublas::math<half>;
+#endif
 template class ts::gpu::cublas::math<ts::dtype<ts::FLOAT32>::declare>;
 template class ts::gpu::cublas::math<ts::dtype<ts::FLOAT64>::declare>;

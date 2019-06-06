@@ -26,6 +26,7 @@ namespace ts {
             }
         }
 
+#ifdef TS_USE_CUDA_FP16
         template<>
         __global__ void mean_kernel<half>(const int N, half *x) {
 
@@ -36,6 +37,7 @@ namespace ts {
                 x[index] /= half_N;
             }
         }
+#endif
 
         template<typename T>
         __global__ static void dev_kernel(const int N, const T *x,T* mean, T * z) {
@@ -92,6 +94,7 @@ namespace ts {
             }
         }
 
+#ifdef TS_USE_CUDA_FP16
         template<>
         __global__  void std_dev_kernel<half>(const int N, half *x) {
             int index = blockDim.x * blockIdx.x + threadIdx.x;
@@ -106,6 +109,7 @@ namespace ts {
                 x[index] = one / x[index];
             }
         }
+#endif
 
         template<typename T>
         __global__ static void prewhiten_kernel(const int N, T *x, T* mean,T * dev_rec) {
@@ -189,7 +193,9 @@ namespace ts {
                 //DECLARE_TYPE_AND_RUN(UINT32, uint32_t);
                 //DECLARE_TYPE_AND_RUN(INT64, int64_t);
                 //DECLARE_TYPE_AND_RUN(UINT64, uint64_t);
+#ifdef TS_USE_CUDA_FP16
                 DECLARE_TYPE_AND_RUN(FLOAT16, half);
+#endif
                 DECLARE_TYPE_AND_RUN(FLOAT32, float);
                 DECLARE_TYPE_AND_RUN(FLOAT64, double);
 #undef DECLARE_TYPE_AND_RUN
@@ -205,4 +211,6 @@ namespace ts {
 using namespace ts;
 using namespace gpu;
 TS_REGISTER_OPERATOR(PreWhiten, GPU, name::layer::prewhiten())
+#ifdef TS_USE_CUDA_FP16
 TS_REGISTER_FP16_OPERATOR(PreWhiten, GPU, name::layer::prewhiten())
+#endif

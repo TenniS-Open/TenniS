@@ -343,6 +343,8 @@ namespace ts {
     }
 }
 //support "half" on nvidia gpu
+#ifdef TS_USE_CUDA_FP16
 template class ts::gpu::math<half>;
+#endif
 template class ts::gpu::math<ts::dtype<ts::FLOAT32>::declare>;
 template class ts::gpu::math<ts::dtype<ts::FLOAT64>::declare>;

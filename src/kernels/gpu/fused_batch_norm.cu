@@ -40,6 +40,7 @@ namespace ts {
             }
         }
 
+#ifdef TS_USE_CUDA_FP16
         template<>
         __global__ void inner_vec_kernel<half>(const int N, float epsilon, const half* input, half* output) {
             int index = blockDim.x * blockIdx.x + threadIdx.x;
@@ -49,6 +50,7 @@ namespace ts {
                 output[index] = one / half(sqrt(input[index] + half_epsilon));
             }
         }
+#endif
 
         template<typename T>
         static void gpu_fused_batch_norm_compute_run(const Tensor &x,
@@ -106,7 +108,9 @@ namespace ts {
                 //DECLARE_COMPUTE_RUN(UINT32, uint32_t);
                 //DECLARE_COMPUTE_RUN(INT64, int64_t);
                 //DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+#ifdef TS_USE_CUDA_FP16
                 DECLARE_COMPUTE_RUN(FLOAT16, half);
+#endif
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
@@ -122,4 +126,6 @@ namespace ts {
 using namespace ts;
 using namespace gpu;
 TS_REGISTER_OPERATOR(FusedBatchNorm, GPU, name::layer::fused_batch_norm())
+#ifdef TS_USE_CUDA_FP16
 TS_REGISTER_FP16_OPERATOR(FusedBatchNorm, GPU, name::layer::fused_batch_norm())
+#endif
