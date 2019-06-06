@@ -101,7 +101,7 @@ namespace ts {
 
 
 #ifdef TS_USE_CUDA_FP16
-
+#ifndef TS_USE_CUBLAS
         template<>
         __global__ void gpu_conv2d_compute_run_kernel<half>(int m, int n, int k, const half *A, const half *B, half *C) {
             __shared__ half ds_A[TRANS_BLOCK_DIM][TRANS_BLOCK_DIM];
@@ -148,6 +148,7 @@ namespace ts {
                 }
             }//end for
         }
+#endif
 #endif
 
         template<typename T>

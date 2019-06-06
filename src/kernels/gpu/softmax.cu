@@ -12,6 +12,8 @@
 
 #include "kernels/gpu/gpu_helper.h"
 
+#include "kernels/gpu/cudax_fp16_math.h"
+
 namespace ts {
     namespace gpu {
         template<typename T>
