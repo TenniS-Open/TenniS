@@ -123,7 +123,7 @@ namespace ts {
         template<>
         __global__ void reduce_operator_scalar_kernel<half>(half* data, int size, const half *scalar, half maxvalue, half minvalue) {
             int index = blockDim.x * blockIdx.x + threadIdx.x;
-            constexpr half zero = half(0.f);
+            half zero = half(0.f);
             if (index < size) {
                 data[index] = (*scalar) == zero
                               ? (data[index] > zero ? maxvalue : minvalue)

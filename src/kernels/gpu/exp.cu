@@ -11,6 +11,8 @@
 
 #include <math_functions.h>
 
+#include "kernels/gpu/cudax_fp16_math.h"
+
 namespace ts {
     namespace gpu {
 

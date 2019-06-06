@@ -17,6 +17,8 @@
 #include "core/device_context.h"
 #include "utils/ctxmgr_lite.h"
 
+#include "kernels/gpu/cudax_fp16_math.h"
+
 
 namespace ts {
     namespace gpu {
