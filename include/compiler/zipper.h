@@ -10,7 +10,7 @@
 #include "module/graph.h"
 
 namespace ts {
-
+    class ZipperOption;
     /**
      * zip TGraph to ZGraph
      * may remove or add nodes
@@ -21,10 +21,16 @@ namespace ts {
 
         explicit Zipper(const ComputingDevice &device);
 
+        explicit Zipper(const ComputingDevice &device, const std::string &params);
+
+        ~Zipper();
+
         std::vector<Node> zip(const std::vector<Node> &nodes) const;
 
     private:
         ComputingDevice m_device;
+
+        std::vector<const ZipperOption *> m_options;
     };
 }
 

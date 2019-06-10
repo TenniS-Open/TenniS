@@ -11,6 +11,8 @@ namespace ts {
     public:
         using self = TranslatorOption;
 
+        virtual ~TranslatorOption() = default;
+
         /**
          * translate node on device
          * @param device computing device

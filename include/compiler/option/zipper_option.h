@@ -14,6 +14,8 @@ namespace ts {
     public:
         using self = ZipperOption;
 
+        virtual ~ZipperOption() = default;
+
         /**
          * zip node on device
          * @param device computing device
