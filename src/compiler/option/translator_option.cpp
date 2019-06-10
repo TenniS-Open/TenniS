@@ -142,8 +142,6 @@ namespace ts {
 
                     Tensor epsilon_temp = tensor::cast(dtype, epsilon_fp32);
                     Tensor variance_temp = tensor::cast(dtype, variance_fp32);
-                    auto test_e = epsilon_temp.data<float>();
-                    auto test_v = variance_temp.data<float>();
                     translated_node.bubble().set(name::epsilon, epsilon_temp);
                     variance_node.bubble().set(name::value, variance_temp);
                 }
