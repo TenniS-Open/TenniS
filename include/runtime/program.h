@@ -29,6 +29,16 @@ namespace ts {
          */
         static shared Compile(const Module::shared &module, const ComputingDevice &device);
 
+        /**
+         *
+         * @param module
+         * @param device
+         * @param options like --winograd
+         * @return
+         * @context Workbench for compile usage
+         */
+        static shared Compile(const Module::shared &module, const ComputingDevice &device, const std::string &options);
+
         shared clone() const;
 
         void bind_filter(int slot, shared filter);

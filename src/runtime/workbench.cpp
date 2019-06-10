@@ -503,6 +503,18 @@ namespace ts {
     void Workbench::setup_device() {
         DeviceContext::Switch(&this->device());
     }
+
+    Program::shared Workbench::compile(const Module::shared &module, const std::string &options) {
+        BindWorkbenchRuntime _bind_runtime(*this);
+        return Program::Compile(module, this->device().computing_device, options);
+    }
+
+    Workbench::shared
+    Workbench::Load(const Module::shared &module, const ComputingDevice &device, const std::string &options) {
+        auto bench = std::make_shared<Workbench>(device);
+        bench->setup(bench->compile(module, options));
+        return bench;
+    }
 }
 
 TS_LITE_CONTEXT(ts::Workbench)

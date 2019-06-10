@@ -50,7 +50,7 @@ namespace ts {
         }
     }
 
-    Program::shared Program::Compile(const Module::shared &module, const ComputingDevice &device) {
+    Program::shared Program::Compile(const Module::shared &module, const ComputingDevice &device, const std::string &options) {
         Program::shared program(new Program(device));
         // convert module to bench
         // here running compilation codes
@@ -68,7 +68,7 @@ namespace ts {
             }
         }
 
-        block = compiler.compile(module_inputs, module_outputs);
+        block = compiler.compile(module_inputs, module_outputs, options);
 
         // link data sagment
         // TODO: link multi-data-sagment
@@ -252,5 +252,9 @@ namespace ts {
             node->set(param, value);
             node->init();
         }
+    }
+
+    Program::shared Program::Compile(const Module::shared &module, const ComputingDevice &device) {
+        return Compile(module, device, "");
     }
 }
