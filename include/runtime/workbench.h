@@ -89,6 +89,8 @@ namespace ts {
         Workbench::shared clone() const;
 
         static shared Load(const Module::shared &module, const ComputingDevice &device);
+        
+        static shared Load(const Module::shared &module, const ComputingDevice &device, const std::string &options);
 
         const DeviceContext &device() const { return m_device_context; }
 
@@ -216,6 +218,8 @@ namespace ts {
         std::vector<Tensor> launch_offline(Program::shared program, const std::map<std::string, Tensor> &args);
 
         Program::shared compile(const Module::shared &module);
+        
+        Program::shared compile(const Module::shared &module, const std::string &options);
 
         /**
          * setup context DeviceContext

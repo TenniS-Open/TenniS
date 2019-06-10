@@ -95,7 +95,8 @@ namespace ts {
     }
 
     // TODO: inputs only support Parameter, try support other op
-    InstructionBlock Compiler::compile(const std::vector<Node> &raw_inputs, const std::vector<Node> &raw_outputs) {
+    InstructionBlock Compiler::compile(const std::vector<Node> &raw_inputs, const std::vector<Node> &raw_outputs,
+            const std::string &options) {
         DeviceContext device_context(m_computing_device);
         ctx::bind<DeviceContext> _bind_device_context(device_context);
 
@@ -109,7 +110,7 @@ namespace ts {
         
         // zip graph
         {
-            Zipper zipper(m_computing_device);
+            Zipper zipper(m_computing_device, options);
             outputs = zipper.zip(outputs);
         }
 
@@ -443,5 +444,9 @@ namespace ts {
             run_const_node(node, node, ready_const, ready_nonconst);
             const_nodes.emplace_back(node);
         }
+    }
+
+    InstructionBlock Compiler::compile(const std::vector<Node> &raw_inputs, const std::vector<Node> &outputs) {
+        return compile(raw_inputs, outputs, "");
     }
 }
