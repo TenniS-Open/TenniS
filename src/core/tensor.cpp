@@ -301,12 +301,8 @@ namespace ts {
 
     static size_t externalize_prototype_memory(StreamReader &stream,
                                                Tensor::Prototype &proto, Memory &memory) {
-        std::unique_ptr<MemoryController> may_controller;
-        auto controller =  ctx::ptr<MemoryController>();
-        if (controller == nullptr) {
-            may_controller.reset(new DynamicMemoryController(memory.device()));
-            controller = may_controller.get();
-        }
+        std::unique_ptr<MemoryController> may_controller(new DynamicMemoryController(memory.device()));
+        auto controller = may_controller.get();
         size_t read_size = 0;
         // 1. read prototype
         DTYPE dtype;

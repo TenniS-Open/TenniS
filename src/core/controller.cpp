@@ -22,4 +22,4 @@ namespace ts {
     }
 }
 
-TS_LITE_CONTEXT(ts::MemoryController)
+// TS_LITE_CONTEXT(ts::MemoryController)
