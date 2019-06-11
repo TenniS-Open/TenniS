@@ -104,6 +104,23 @@ TENSOR_STACK_C_API int32_t ts_Workbench_input_count(ts_Workbench *workbench);
 
 TENSOR_STACK_C_API int32_t ts_Workbench_output_count(ts_Workbench *workbench);
 
+/**
+ * Return NULL if failed.
+ * Option can have:
+ * 1. "--winograd" using winograd conv2d
+ */
+TENSOR_STACK_C_API ts_Workbench *ts_Workbench_Load_v2(const ts_Module *module, const ts_Device *device,
+        const char *options);
+
+/**
+ * Return nullptr if failed.
+ * Note: remember call free on return value
+ * Option can have:
+ * 1. "--winograd" using winograd conv2d
+ */
+TENSOR_STACK_C_API ts_Program *ts_Workbench_compile_v2(ts_Workbench *workbench, const ts_Module *module,
+        const char *options);
+
 
 #ifdef __cplusplus
 }

@@ -45,3 +45,14 @@ int32_t ts_Program_output_count(ts_Program *program) {
         auto result = (*program)->output_count();
     RETURN_OR_CATCH(result, 0)
 }
+
+ts_Program *ts_Program_Compile_v2(const ts_Module *module, const ts_Device *device, const char *options) {
+    TRY_HEAD
+        if (!module) throw Exception("NullPointerException: @param: 1");
+        if (!device) throw Exception("NullPointerException: @param: 2");
+        if (!options) throw Exception("NullPointerException: @param: 3");
+        std::unique_ptr<ts_Program> program(new ts_Program(
+                Program::Compile(module->pointer, ComputingDevice(device->type, device->id), options)
+                ));
+    RETURN_OR_CATCH(program.release(), nullptr)
+}

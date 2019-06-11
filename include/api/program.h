@@ -39,6 +39,15 @@ TENSOR_STACK_C_API int32_t ts_Program_input_count(ts_Program *program);
 
 TENSOR_STACK_C_API int32_t ts_Program_output_count(ts_Program *program);
 
+/**
+ * Return NULL if failed.
+ * Note: call ts_Workbench_setup_context, before compile, or call ts_Workbench_compile instead
+ * Option can have:
+ * 1. "--winograd" using winograd conv2d
+ */
+TENSOR_STACK_C_API ts_Program *ts_Program_Compile_v2(const ts_Module *module, const ts_Device *device,
+        const char *options);
+
 
 #ifdef __cplusplus
 }
