@@ -699,6 +699,14 @@ class Workbench(object):
         # type: () -> None
         _C.ts_api_check_bool(_C.ts_Workbench_run(self))
 
+    def run_hook(self, node_names):
+        # type: (List[str]) -> None
+        if not isinstance(node_names, (list, tuple)):
+            node_names = [node_names, ]
+        c_node_names = (_C.c_char_p * len(node_names))(*node_names)
+        c_len = _C.c_int32(len(node_names))
+        _C.ts_api_check_bool(_C.ts_Workbench_run_hook(self, c_node_names, c_len))
+
     def output(self, slot, tensor=None):
         # type: (Union[int, str], Tensor) -> Tensor
         if tensor is not None and not isinstance(tensor, (Tensor, _C.POINTER(_C.ts_Tensor))):

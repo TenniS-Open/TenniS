@@ -326,6 +326,9 @@ ts_Workbench_input_count = __TS_IMPORT(lib, "ts_Workbench_input_count", c_int32,
 
 ts_Workbench_output_count = __TS_IMPORT(lib, "ts_Workbench_output_count", c_int32, POINTER(ts_Workbench))
 
+ts_Workbench_run_hook = __TS_IMPORT(lib, "ts_Workbench_run_hook",
+                                    ts_bool, POINTER(ts_Workbench), POINTER(c_char_p), c_int32)
+
 
 """ ================================================================================================================ +++
 intime.h
