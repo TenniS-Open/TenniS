@@ -16,6 +16,7 @@
 #include "global/hard_converter.h"
 
 #include <climits>
+#include <board/hook.h>
 #include "utils/need.h"
 
 #include "kernels/common/math.h"
@@ -99,6 +100,8 @@ namespace ts {
         if (m_desktop == nullptr) {
             TS_LOG_ERROR << "Can not run workbench with no program setup" << eject;
         }
+
+        this->m_hooked_tensor.clear();
 
         auto outputs = launch_offline(m_desktop, m_inputs);
 
@@ -191,6 +194,12 @@ namespace ts {
     }
 
     const Tensor &Workbench::output(const std::string &name) const {
+        {
+            auto it = m_hooked_tensor.find(name);
+            if (it != m_hooked_tensor.end()) {
+                return it->second;
+            }
+        }
         if (m_desktop == nullptr) {
             TS_LOG_ERROR << "Can not run workbench with no program setup" << eject;
         }
@@ -442,6 +451,7 @@ namespace ts {
             this->m_inputs.resize(program->input_count());
             this->m_outputs.resize(program->output_count());
         }
+        this->m_hooked_tensor.clear();
     }
 
     std::vector<Tensor> Workbench::launch_offline(Program::shared program, const std::vector<Tensor> &args) {
@@ -514,6 +524,37 @@ namespace ts {
         auto bench = std::make_shared<Workbench>(device);
         bench->setup(bench->compile(module, options));
         return bench;
+    }
+
+    void Workbench::run_hook(const std::vector<std::string> &node_names) {
+        this->m_hooked_tensor.clear();
+
+        std::unordered_set<std::string> node_name_set;
+        for (auto &node_name : node_names) {
+            node_name_set.insert(node_name);
+        }
+
+        auto controller = std::make_shared<DynamicMemoryController>(MemoryDevice(CPU));
+
+        Hook hooker;
+        hooker.after_run([&](const Hook::StructAfterRun &info) {
+            auto &op = *info.op;
+            auto &stack = *info.stack;
+            auto name = op.name();
+            auto it = node_name_set.find(name);
+            if (it == node_name_set.end()) return;
+            if (stack.size() < 1) return;
+            auto &value = stack[0];
+            auto name_it = m_hooked_tensor.find(name);
+            if (name_it == m_hooked_tensor.end()) {
+                m_hooked_tensor.insert(std::make_pair(name, value.clone(controller)));
+            } else {
+                name_it->second =value.clone(controller);
+            }
+        });
+        ctx::bind<Hook> _hook(hooker);
+
+        this->run();
     }
 }
 
