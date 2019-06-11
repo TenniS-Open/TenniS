@@ -90,6 +90,7 @@ namespace ts {
         parser.add({"--float16", "-fp16"}, {"--no-float16", "-no-fp16"}, false);
         parser.parse(params);
         if (parser.get("--float16")) {
+             TS_LOG_STATUS << "Compiling with --float16";
             m_options.push_back(new Fp16TranslatorOption);
         }
     }

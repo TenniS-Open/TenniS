@@ -89,6 +89,7 @@ namespace ts {
         parser.add({"--winograd", "-win"}, {"--no-winograd", "-no-win"}, false);
         parser.parse(params);
         if (parser.get("--winograd")) {
+            TS_LOG_STATUS << "Compiling with --winograd";
             m_options.push_back(new Conv2dZipperOption);
         }
     }
