@@ -460,15 +460,24 @@ class Program(object):
         return self._as_parameter_
 
     @staticmethod
-    def Compile(module, device):
-        # type: (Module, Device) -> Program
+    def Compile(module, device, options=None):
+        # type: (Module, Device, str) -> Program
         if not isinstance(module, (Module, _C.POINTER(_C.ts_Module))):
             raise Exception("argument {}: expected Module or POINTER(ts_Module) instance instead of {}".
                             format(1, type(module).__name__))
         if not isinstance(device, (Device, _C.POINTER(_C.ts_Device))):
             raise Exception("argument {}: expected Device or POINTER(ts_Device) instance instead of {}".
                             format(2, type(device).__name__))
-        c_program = _C.ts_Program_Compile(module, device)
+        options = _compatible_string(options)
+        if options is not None and not isinstance(options, str):
+            raise Exception("argument {}: expected None or str instance instead of {}".
+                            format(3, type(options).__name__))
+        c_program = _C.POINTER(_C.ts_Program)
+        if isinstance(options, str):
+            options = options.encode()
+            c_program = _C.ts_Program_Compile_v2(module, device, options)
+        else:
+            c_program = _C.ts_Program_Compile(module, device)
         _C.ts_api_check_pointer(c_program)
         return Program(c_program)
 
@@ -660,15 +669,24 @@ class Workbench(object):
         return self._as_parameter_
 
     @staticmethod
-    def Load(module, device):
-        # type: (Module, Device) -> Workbench
+    def Load(module, device, options=None):
+        # type: (Module, Device, str) -> Workbench
         if not isinstance(module, (Module, _C.POINTER(_C.ts_Module))):
             raise Exception("argument {}: expected Module or POINTER(ts_Module) instance instead of {}".
                             format(1, type(module).__name__))
         if not isinstance(device, (Device, _C.POINTER(_C.ts_Device))):
             raise Exception("argument {}: expected Device or POINTER(ts_Device) instance instead of {}".
                             format(2, type(device).__name__))
-        c_workbench = _C.ts_Workbench_Load(module, device)
+        options = _compatible_string(options)
+        if options is not None and not isinstance(options, str):
+            raise Exception("argument {}: expected None or str instance instead of {}".
+                            format(3, type(options).__name__))
+        c_workbench = _C.POINTER(_C.ts_Workbench)
+        if isinstance(options, str):
+            options = options.encode()
+            c_workbench = _C.ts_Workbench_Load_v2(module, device, options)
+        else:
+            c_workbench = _C.ts_Workbench_Load(module, device)
         _C.ts_api_check_pointer(c_workbench)
         return Workbench(c_workbench)
 
@@ -757,12 +775,21 @@ class Workbench(object):
         # type: () -> None
         _C.ts_api_check_bool(_C.ts_Workbench_setup_context(self))
 
-    def compile(self, module):
-        # type: (Module) -> Program
+    def compile(self, module, options=None):
+        # type: (Module, str) -> Program
         if not isinstance(module, (Module, _C.POINTER(_C.ts_Module))):
             raise Exception("argument {}: expected Module or POINTER(ts_Module) instance instead of {}".
                             format(1, type(module).__name__))
-        c_program = _C.ts_Workbench_compile(self, module)
+        options = _compatible_string(options)
+        if options is not None and not isinstance(options, str):
+            raise Exception("argument {}: expected None or str instance instead of {}".
+                            format(2, type(options).__name__))
+        c_program = _C.POINTER(_C.ts_Program)
+        if isinstance(options, str):
+            options = options.encode()
+            c_program = _C.ts_Workbench_compile_v2(self, module, options)
+        else:
+            c_program = _C.ts_Workbench_compile(self, module)
         _C.ts_api_check_pointer(c_program)
         return Program(c_program)
 

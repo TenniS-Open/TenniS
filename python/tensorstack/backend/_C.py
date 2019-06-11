@@ -195,6 +195,9 @@ class ts_Program(Structure):
 
 ts_Program_Compile = __TS_IMPORT(lib, "ts_Program_Compile", POINTER(ts_Program), POINTER(ts_Module), POINTER(ts_Device))
 
+ts_Program_Compile_v2 = __TS_IMPORT(lib, "ts_Program_Compile_v2",
+                                    POINTER(ts_Program), POINTER(ts_Module), POINTER(ts_Device), c_char_p)
+
 ts_free_Program = __TS_IMPORT(lib, "ts_free_Program", None, POINTER(ts_Program))
 
 ts_Program_clone = __TS_IMPORT(lib, "ts_Program_clone", POINTER(ts_Program), POINTER(ts_Program))
@@ -328,6 +331,12 @@ ts_Workbench_output_count = __TS_IMPORT(lib, "ts_Workbench_output_count", c_int3
 
 ts_Workbench_run_hook = __TS_IMPORT(lib, "ts_Workbench_run_hook",
                                     ts_bool, POINTER(ts_Workbench), POINTER(c_char_p), c_int32)
+
+ts_Workbench_Load_v2 = __TS_IMPORT(lib, "ts_Workbench_Load_v2",
+                                   POINTER(ts_Workbench), POINTER(ts_Module), POINTER(ts_Device), c_char_p)
+
+ts_Workbench_compile_v2 = __TS_IMPORT(lib, "ts_Workbench_compile_v2",
+                                      POINTER(ts_Program), POINTER(ts_Workbench), POINTER(ts_Module), c_char_p)
 
 
 """ ================================================================================================================ +++
