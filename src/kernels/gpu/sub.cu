@@ -269,7 +269,9 @@ namespace ts {
                 DECLARE_COMPUTE_RUN(UINT32, uint32_t);
                 DECLARE_COMPUTE_RUN(INT64, int64_t);
                 DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+#ifdef TS_USE_CUDA_FP16
                 DECLARE_COMPUTE_RUN(FLOAT16, half);
+#endif
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
@@ -294,7 +296,9 @@ namespace ts {
                 DECLARE_COMPUTE_RUN(UINT32, uint32_t);
                 DECLARE_COMPUTE_RUN(INT64, int64_t);
                 DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+#ifdef TS_USE_CUDA_FP16
                 DECLARE_COMPUTE_RUN(FLOAT16, half);
+#endif
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
@@ -319,7 +323,9 @@ namespace ts {
                 DECLARE_COMPUTE_RUN(UINT32, uint32_t);
                 DECLARE_COMPUTE_RUN(INT64, int64_t);
                 DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+#ifdef TS_USE_CUDA_FP16
                 DECLARE_COMPUTE_RUN(FLOAT16, half);
+#endif
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
@@ -344,7 +350,9 @@ namespace ts {
                 DECLARE_COMPUTE_RUN(UINT32, uint32_t);
                 DECLARE_COMPUTE_RUN(INT64, int64_t);
                 DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+#ifdef TS_USE_CUDA_FP16
                 DECLARE_COMPUTE_RUN(FLOAT16, half);
+#endif
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
@@ -369,7 +377,9 @@ namespace ts {
                 DECLARE_COMPUTE_RUN(UINT32, uint32_t);
                 DECLARE_COMPUTE_RUN(INT64, int64_t);
                 DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+#ifdef TS_USE_CUDA_FP16
                 DECLARE_COMPUTE_RUN(FLOAT16, half);
+#endif
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
@@ -394,7 +404,9 @@ namespace ts {
                 DECLARE_COMPUTE_RUN(UINT32, uint32_t);
                 DECLARE_COMPUTE_RUN(INT64, int64_t);
                 DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+#ifdef TS_USE_CUDA_FP16
                 DECLARE_COMPUTE_RUN(FLOAT16, half);
+#endif
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
@@ -410,5 +422,7 @@ namespace ts {
 using namespace ts;
 using namespace gpu;
 TS_REGISTER_OPERATOR(Sub, GPU, name::layer::sub())
+#ifdef TS_USE_CUDA_FP16
 TS_REGISTER_FP16_OPERATOR(Sub, GPU, name::layer::sub())
+#endif
 

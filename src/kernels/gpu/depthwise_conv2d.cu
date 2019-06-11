@@ -6,4 +6,6 @@
 using namespace ts;
 using namespace gpu;
 TS_REGISTER_OPERATOR(DepthwiseConv2D, GPU, name::layer::depthwise_conv2d())
+#ifdef TS_USE_CUDA_FP16
 TS_REGISTER_FP16_OPERATOR(DepthwiseConv2D, ts::GPU, name::layer::depthwise_conv2d())
+#endif

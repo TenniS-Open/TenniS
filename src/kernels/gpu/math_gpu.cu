@@ -15,6 +15,8 @@
 #include "core/device_context.h"
 #include "utils/ctxmgr_lite.h"
 
+#include "kernels/gpu/cudax_fp16_math.h"
+
 namespace ts {
     namespace gpu {
 
@@ -343,6 +345,8 @@ namespace ts {
     }
 }
 //support "half" on nvidia gpu
+#ifdef TS_USE_CUDA_FP16
 template class ts::gpu::math<half>;
+#endif
 template class ts::gpu::math<ts::dtype<ts::FLOAT32>::declare>;
 template class ts::gpu::math<ts::dtype<ts::FLOAT64>::declare>;

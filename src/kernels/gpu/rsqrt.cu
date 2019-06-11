@@ -9,6 +9,8 @@
 #include <cuda_fp16.h>
 #include <device_launch_parameters.h>
 
+#include "kernels/gpu/cudax_fp16_math.h"
+
 
 namespace ts {
     namespace gpu {
@@ -43,6 +45,7 @@ double InvSqrt(double number)
             }
         }
 
+#ifdef TS_USE_CUDA_FP16
         template<>
         __global__ void gpu_rsqrt_kernel<half>(const half* input_data, half* output_data, int size) {
             int index = blockDim.x * blockIdx.x + threadIdx.x;
@@ -52,6 +55,7 @@ double InvSqrt(double number)
                 output_data[index] = one / half(sqrt(input_data[index]));
             }
         }
+#endif
 
         template<typename T>
         static void gpu_rsqrt_compute_run(const Tensor &x, Tensor &out) {
@@ -84,7 +88,9 @@ double InvSqrt(double number)
                 DECLARE_COMPUTE_RUN(INT64, int64_t);
                 DECLARE_COMPUTE_RUN(UINT64, uint64_t);
 */
+#ifdef TS_USE_CUDA_FP16
                 DECLARE_COMPUTE_RUN(FLOAT16, half);
+#endif
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
@@ -100,4 +106,6 @@ double InvSqrt(double number)
 using namespace ts;
 using namespace gpu;
 TS_REGISTER_OPERATOR(Rsqrt, GPU, name::layer::rsqrt())
+#ifdef TS_USE_CUDA_FP16
 TS_REGISTER_FP16_OPERATOR(Rsqrt, GPU, name::layer::rsqrt())
+#endif

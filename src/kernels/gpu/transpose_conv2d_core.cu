@@ -203,7 +203,9 @@ namespace ts {
            switch (dtype) {
            #define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
            case DTYPE: { gpu_transpose_conv2d_nchw_compute_run<TYPE>(x, padding, padding_value, w, stride, dilation, out, stack);; break; }
+#ifdef TS_USE_CUDA_FP16
            DECLARE_COMPUTE_RUN(FLOAT16, half);
+#endif
            DECLARE_COMPUTE_RUN(FLOAT32, float);
            DECLARE_COMPUTE_RUN(FLOAT64, double);
            #undef DECLARE_COMPUTE_RUN
