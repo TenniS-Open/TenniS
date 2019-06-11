@@ -183,3 +183,11 @@ ts_Program *ts_Workbench_compile_v2(ts_Workbench *workbench, const ts_Module *mo
                 ));
     RETURN_OR_CATCH(program.release(), nullptr)
 }
+
+ts_bool ts_Workbench_run_hook(ts_Workbench *workbench, const char **node_names, int32_t len) {
+    TRY_HEAD
+        if (!workbench) throw Exception("NullPointerException: @param: 1");
+        if (!node_names) throw Exception("NullPointerException: @param: 2");
+        (*workbench)->run_hook(std::vector<std::string>(node_names, node_names + len));
+    RETURN_OR_CATCH(ts_true, ts_false)
+}
