@@ -103,7 +103,7 @@ ts::Fp16TranslatorOption::translate(const ts::ComputingDevice &device, const ts:
         bool change_param = false;
         auto epsilon = translated_node.bubble().get(name::epsilon);
         auto variance_node = translated_node.inputs()[2];
-        DTYPE dtype;
+        DTYPE dtype = VOID;
         while (!Bubble::IsEndPoint(variance_node.bubble().op())) {
             variance_node = variance_node.inputs()[0];
             if (variance_node.bubble().op() == Bubble::Const) {
