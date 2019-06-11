@@ -190,6 +190,18 @@ namespace ts {
                         ts_Workbench_run_hook(m_impl.get(), c_node_names.data(), int32_t(c_node_names.size())));
             }
 
+            static Workbench Load(const Module &module, const Device &device, const std::string &options) {
+                Workbench loaded(ts_Workbench_Load_v2(module.get_raw(), device.get_raw(), options.c_str()));
+                TS_API_AUTO_CHECK(loaded.m_impl != nullptr);
+                return std::move(loaded);
+            }
+
+            Program compile(const Module &module, const std::string &options) {
+                auto program = Program::NewRef(ts_Workbench_compile_v2(m_impl.get(), module.get_raw(), options.c_str()));
+                TS_API_AUTO_CHECK(program != nullptr);
+                return std::move(program);
+            }
+
         private:
             Workbench(raw *ptr) : m_impl(pack(ptr)) {}
 
