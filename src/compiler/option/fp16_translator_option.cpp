@@ -14,8 +14,8 @@ bool
 ts::Fp16TranslatorOption::translate(const ts::ComputingDevice &device, const ts::Node node, ts::Node &translated_node,
                                     bool output_flag) const {
 
-    if (device.type() != GPU)
-        return false;
+//    if (device.type() != GPU)
+//        return false;
 
     auto op_name = node.bubble().op();
 

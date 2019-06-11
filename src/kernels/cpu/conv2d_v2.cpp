@@ -1,5 +1,6 @@
 #include <kernels/cpu/conv2d_v2.h>
 #include <global/operator_factory.h>
+#include <global/fp16_operator_factory.h>
 #include <backend/name.h>
 
 #include "utils/ctxmgr_lite.h"
@@ -93,3 +94,5 @@ namespace ts {
 using namespace ts;
 using namespace cpu;
 TS_REGISTER_OPERATOR(Conv2DV2, CPU, name::layer::conv2d_v2())
+
+TS_REGISTER_FP16_OPERATOR(Conv2DV2, GPU, name::layer::conv2d_v2())
