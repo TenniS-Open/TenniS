@@ -276,7 +276,7 @@ output_w = floor((width + pad_w -
 
 参数：
 - `dim`: `Int` 表示`channel`所在的维度
-- `epsilon`: `Scalar Default(10e-5)` 表示约束系数，作用见说明
+- `epsilon`: `Scalar Default(1e-5)` 表示约束系数，作用见说明
 
 说明：
 `y = (x - mean) / (sqrt(var + epsilon))`

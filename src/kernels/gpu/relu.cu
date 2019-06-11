@@ -25,6 +25,7 @@ namespace ts {
             }
         }
 
+#ifdef TS_USE_CUDA_FP16
         template<>
         __global__ void relu_kernel<half>(const half* input_data, half* output_data, int size) {
             int index = blockDim.x * blockIdx.x + threadIdx.x;
@@ -35,6 +36,7 @@ namespace ts {
                 output_data[index] = val > zero ? val : zero;
             }
         }
+#endif
 
         template<typename T>
         void cpu_relu_compute_run(const Tensor &x, Tensor &out) {
@@ -65,7 +67,9 @@ namespace ts {
                 //DECLARE_COMPUTE_RUN(UINT32, uint32_t);
                 //DECLARE_COMPUTE_RUN(INT64, int64_t);
                 //DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+#ifdef TS_USE_CUDA_FP16
                 DECLARE_COMPUTE_RUN(FLOAT16, half);
+#endif
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN

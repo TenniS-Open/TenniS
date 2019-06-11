@@ -26,17 +26,6 @@ namespace ts {
             }
         }
 
-        template<>
-        __global__ void reduce_operator_scalar_kernel<half>(half* data, int size, const half *scalar, half maxvalue, half minvalue) {
-            int index = blockDim.x * blockIdx.x + threadIdx.x;
-            half zero = half(0.f);
-            if (index < size) {
-                data[index] = (*scalar) == zero
-                    ? (data[index] > zero ? maxvalue : minvalue)
-                    : data[index] / (*scalar);
-            }
-        }
-
         template<typename T>
         static __global__ void reduce_operator_scalar_cross_kernel(T* data, int size, const T *scalar, T maxvalue, T minvalue) {
             int index = blockDim.x * blockIdx.x + threadIdx.x;
@@ -47,17 +36,6 @@ namespace ts {
             }
         }
 
-        template<>
-        __global__ void reduce_operator_scalar_cross_kernel<half>(half* data, int size, const half *scalar, half maxvalue, half minvalue) {
-            int index = blockDim.x * blockIdx.x + threadIdx.x;
-            half zero = half(0.f);
-            if (index < size) {
-                data[index] = data[index] == zero
-                    ? ((*scalar) > zero ? maxvalue : minvalue)
-                    : (*scalar) / data[index];
-            }
-        }
-
         template<typename T>
         static __global__ void reduce_operator_same_shape_kernel(T* data, const T*bias, int size, T maxvalue, T minvalue) {
             int index = blockDim.x * blockIdx.x + threadIdx.x;
@@ -65,17 +43,6 @@ namespace ts {
                 data[index] = (bias[index]) == T(0)
                 ? (data[index] > T(0) ? maxvalue : minvalue)
                 : data[index] / (bias[index]);
-            }
-        }
-
-        template<>
-        __global__ void reduce_operator_same_shape_kernel<half>(half* data, const half* bias, int size, half maxvalue, half minvalue) {
-            int index = blockDim.x * blockIdx.x + threadIdx.x;
-            half zero = half(0.f);
-            if (index < size) {
-                data[index] = (bias[index]) == zero
-                    ? (data[index] > zero ? maxvalue : minvalue)
-                    : data[index] / (bias[index]);
             }
         }
 
@@ -91,19 +58,6 @@ namespace ts {
             }
         }
 
-        template<>
-        __global__ void reduce_operator_bias_kernel<half>(half* data, int size, int step, int slice,
-            const half* bias, int biaslen, half maxvalue, half minvalue) {
-            int index = blockDim.x * blockIdx.x + threadIdx.x;
-            half zero = half(0.f);
-            if (index < size) {
-                int dim = index % (step * slice) / (step);
-                data[index] = (bias[dim]) == zero
-                    ? (data[index] > zero ? maxvalue : minvalue)
-                    : data[index] / (bias[dim]);
-            }
-        }
-
         template<typename T>
         static __global__ void reduce_operator_bias_cross_kernel(T* data, int size, int step, int slice,
                                                            const T* bias, int biaslen, T maxvalue, T minvalue ) {
@@ -113,19 +67,6 @@ namespace ts {
                 data[index] = (data[index]) == T(0)
                               ? (bias[dim] > T(0) ? maxvalue : minvalue)
                               : bias[dim] / (data[index]);
-            }
-        }
-
-        template<>
-        __global__ void reduce_operator_bias_cross_kernel<half>(half* data, int size, int step, int slice,
-            const half* bias, int biaslen, half maxvalue, half minvalue) {
-            int index = blockDim.x * blockIdx.x + threadIdx.x;
-            half zero = half(0.f);
-            if (index < size) {
-                int dim = index % (step * slice) / (step);
-                data[index] = (data[index]) == zero
-                    ? (bias[dim] > zero ? maxvalue : minvalue)
-                    : bias[dim] / (data[index]);
             }
         }
 
@@ -176,6 +117,66 @@ namespace ts {
                 ? (lhs[lhsindex] > T(0) ? maxvalue : minvalue)
                 : lhs[lhsindex] / (rhs[rhsindex]);
 
+        }
+
+#ifdef TS_USE_CUDA_FP16
+        template<>
+        __global__ void reduce_operator_scalar_kernel<half>(half* data, int size, const half *scalar, half maxvalue, half minvalue) {
+            int index = blockDim.x * blockIdx.x + threadIdx.x;
+            half zero = half(0.f);
+            if (index < size) {
+                data[index] = (*scalar) == zero
+                              ? (data[index] > zero ? maxvalue : minvalue)
+                              : data[index] / (*scalar);
+            }
+        }
+
+        template<>
+        __global__ void reduce_operator_scalar_cross_kernel<half>(half* data, int size, const half *scalar, half maxvalue, half minvalue) {
+            int index = blockDim.x * blockIdx.x + threadIdx.x;
+            half zero = half(0.f);
+            if (index < size) {
+                data[index] = data[index] == zero
+                              ? ((*scalar) > zero ? maxvalue : minvalue)
+                              : (*scalar) / data[index];
+            }
+        }
+
+        template<>
+        __global__ void reduce_operator_same_shape_kernel<half>(half* data, const half* bias, int size, half maxvalue, half minvalue) {
+            int index = blockDim.x * blockIdx.x + threadIdx.x;
+            half zero = half(0.f);
+            if (index < size) {
+                data[index] = (bias[index]) == zero
+                              ? (data[index] > zero ? maxvalue : minvalue)
+                              : data[index] / (bias[index]);
+            }
+        }
+
+        template<>
+        __global__ void reduce_operator_bias_kernel<half>(half* data, int size, int step, int slice,
+                                                          const half* bias, int biaslen, half maxvalue, half minvalue) {
+            int index = blockDim.x * blockIdx.x + threadIdx.x;
+            half zero = half(0.f);
+            if (index < size) {
+                int dim = index % (step * slice) / (step);
+                data[index] = (bias[dim]) == zero
+                              ? (data[index] > zero ? maxvalue : minvalue)
+                              : data[index] / (bias[dim]);
+            }
+        }
+
+        template<>
+        __global__ void reduce_operator_bias_cross_kernel<half>(half* data, int size, int step, int slice,
+                                                                const half* bias, int biaslen, half maxvalue, half minvalue) {
+            int index = blockDim.x * blockIdx.x + threadIdx.x;
+            half zero = half(0.f);
+            if (index < size) {
+                int dim = index % (step * slice) / (step);
+                data[index] = (data[index]) == zero
+                              ? (bias[dim] > zero ? maxvalue : minvalue)
+                              : bias[dim] / (data[index]);
+            }
         }
 
         template<>
@@ -230,6 +231,7 @@ namespace ts {
                 : lhs[lhsindex] / (rhs[rhsindex]);
 
         }
+#endif
 
 
         template<typename T>
@@ -414,7 +416,9 @@ namespace ts {
                 DECLARE_COMPUTE_RUN(UINT32, uint32_t);
                 DECLARE_COMPUTE_RUN(INT64, int64_t);
                 DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+#ifdef TS_USE_CUDA_FP16
                 DECLARE_COMPUTE_RUN(FLOAT16, half);
+#endif
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
@@ -439,7 +443,9 @@ namespace ts {
                 DECLARE_COMPUTE_RUN(UINT32, uint32_t);
                 DECLARE_COMPUTE_RUN(INT64, int64_t);
                 DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+#ifdef TS_USE_CUDA_FP16
                 DECLARE_COMPUTE_RUN(FLOAT16, half);
+#endif
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
@@ -464,7 +470,9 @@ namespace ts {
                 DECLARE_COMPUTE_RUN(UINT32, uint32_t);
                 DECLARE_COMPUTE_RUN(INT64, int64_t);
                 DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+#ifdef TS_USE_CUDA_FP16
                 DECLARE_COMPUTE_RUN(FLOAT16, half);
+#endif
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
@@ -489,7 +497,9 @@ namespace ts {
                 DECLARE_COMPUTE_RUN(UINT32, uint32_t);
                 DECLARE_COMPUTE_RUN(INT64, int64_t);
                 DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+#ifdef TS_USE_CUDA_FP16
                 DECLARE_COMPUTE_RUN(FLOAT16, half);
+#endif
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
@@ -514,7 +524,9 @@ namespace ts {
                 DECLARE_COMPUTE_RUN(UINT32, uint32_t);
                 DECLARE_COMPUTE_RUN(INT64, int64_t);
                 DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+#ifdef TS_USE_CUDA_FP16
                 DECLARE_COMPUTE_RUN(FLOAT16, half);
+#endif
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
@@ -539,7 +551,9 @@ namespace ts {
                 DECLARE_COMPUTE_RUN(UINT32, uint32_t);
                 DECLARE_COMPUTE_RUN(INT64, int64_t);
                 DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+#ifdef TS_USE_CUDA_FP16
                 DECLARE_COMPUTE_RUN(FLOAT16, half);
+#endif
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
@@ -555,4 +569,6 @@ namespace ts {
 using namespace ts;
 using namespace gpu;
 TS_REGISTER_OPERATOR(Div, GPU, name::layer::div())
+#ifdef TS_USE_CUDA_FP16
 TS_REGISTER_FP16_OPERATOR(Div, ts::GPU, name::layer::div())
+#endif

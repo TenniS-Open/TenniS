@@ -26,6 +26,7 @@ namespace ts {
             }
         }
 
+#ifdef TS_USE_CUDA_FP16
         template<>
         __global__  void prelu_kernel<half>(const half* input_data, half* output_data, const half*slope, int dim_num, int last_dims, int size) {
             int index = blockDim.x * blockIdx.x + threadIdx.x;
@@ -39,6 +40,7 @@ namespace ts {
                 output_data[index] = max_temp + slope[slope_index] * min_temp;
             }
         }
+#endif
 
         template <typename T>
         void cpu_prelu_compute_run(const Tensor &x, const Tensor &slope, int dim, Tensor &out) {
@@ -78,7 +80,9 @@ namespace ts {
                 //DECLARE_COMPUTE_RUN(UINT32, uint32_t);
                 //DECLARE_COMPUTE_RUN(INT64, int64_t);
                 //DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+#ifdef TS_USE_CUDA_FP16
                 DECLARE_COMPUTE_RUN(FLOAT16, half);
+#endif
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
@@ -94,4 +98,6 @@ namespace ts {
 using namespace ts;
 using namespace gpu;
 TS_REGISTER_OPERATOR(PReLU, GPU, name::layer::prelu())
+#ifdef TS_USE_CUDA_FP16
 TS_REGISTER_FP16_OPERATOR(PReLU, GPU, name::layer::prelu())
+#endif
