@@ -89,7 +89,7 @@ namespace ts {
         Workbench::shared clone() const;
 
         static shared Load(const Module::shared &module, const ComputingDevice &device);
-        
+
         static shared Load(const Module::shared &module, const ComputingDevice &device, const std::string &options);
 
         const DeviceContext &device() const { return m_device_context; }
@@ -218,7 +218,7 @@ namespace ts {
         std::vector<Tensor> launch_offline(Program::shared program, const std::map<std::string, Tensor> &args);
 
         Program::shared compile(const Module::shared &module);
-        
+
         Program::shared compile(const Module::shared &module, const std::string &options);
 
         /**
@@ -230,6 +230,11 @@ namespace ts {
          * setup context RuntimeContext
          */
         void setup_runtime();
+
+        /**
+         *
+         */
+        void run_hook(const std::vector<std::string> &node_names);
 
     private:
         // size_t m_pointer = 0;   // pointer to running function
@@ -265,6 +270,8 @@ namespace ts {
         std::stack<ProgramEnv> m_env;
 
         Program::shared m_desktop;
+
+        std::map<std::string, Tensor> m_hooked_tensor;
 
     private:
         Operator::shared m_cast_op; ///< for input cast
