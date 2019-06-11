@@ -181,6 +181,15 @@ namespace ts {
                 return ts_Workbench_output_count(m_impl.get());
             }
 
+            void run_hook(const std::vector<std::string> &node_names) {
+                std::vector<const char *> c_node_names(node_names.size());
+                for (size_t i = 0; i < node_names.size(); ++i) {
+                    c_node_names[i] = node_names[i].c_str();
+                }
+                TS_API_AUTO_CHECK(
+                        ts_Workbench_run_hook(m_impl.get(), c_node_names.data(), int32_t(c_node_names.size())));
+            }
+
         private:
             Workbench(raw *ptr) : m_impl(pack(ptr)) {}
 

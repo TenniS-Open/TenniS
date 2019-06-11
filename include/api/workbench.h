@@ -104,6 +104,8 @@ TENSOR_STACK_C_API int32_t ts_Workbench_input_count(ts_Workbench *workbench);
 
 TENSOR_STACK_C_API int32_t ts_Workbench_output_count(ts_Workbench *workbench);
 
+TENSOR_STACK_C_API ts_bool ts_Workbench_run_hook(ts_Workbench *workbench, const char **node_names, int32_t len);
+
 /**
  * Return NULL if failed.
  * Option can have:
