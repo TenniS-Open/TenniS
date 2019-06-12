@@ -57,6 +57,12 @@ namespace ts {
                 return std::move(loaded);
             }
 
+            static Program Compile(const Module &module, const Device &device, const std::string &options) {
+                Program loaded(ts_Program_Compile_v2(module.get_raw(), device.get_raw(), options.c_str()));
+                TS_API_AUTO_CHECK(loaded.m_impl != nullptr);
+                return std::move(loaded);
+            }
+
             Program clone() const {
                 Program dolly(ts_Program_clone(m_impl.get()));
                 TS_API_AUTO_CHECK(dolly.m_impl != nullptr);

@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "stream.h"
+#include "device.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -36,6 +37,7 @@ TENSOR_STACK_C_API ts_Module *ts_Module_LoadFromStream(void *obj, ts_stream_read
  * Happen nothing if failed.
  */
 TENSOR_STACK_C_API void ts_free_Module(const ts_Module *module);
+
 
 #ifdef __cplusplus
 }

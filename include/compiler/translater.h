@@ -9,6 +9,7 @@
 #include <core/device.h>
 
 namespace ts {
+    class TranslatorOption;
     /**
      * translate Graph to TGraph
      * translate Graph from other framework to TS support Graph
@@ -17,12 +18,17 @@ namespace ts {
     public:
         using self = Translator;
 
+        ~Translator();
+
         explicit Translator(const ComputingDevice &device);
+
+        explicit Translator(const ComputingDevice &device, const std::string &params);
 
         Module::shared translate(const Module::shared& module) const;
 
     private:
         ComputingDevice m_device;
+        std::vector<const TranslatorOption*> m_options;
     };
 }
 

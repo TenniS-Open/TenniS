@@ -60,6 +60,8 @@ namespace ts {
 
         static shared Load(Graph g, const std::vector<std::string> &outputs);
 
+        static shared Translate(shared module, const ComputingDevice &device, const std::string &options);
+
     private:
         /**
          * @param g reference Graph

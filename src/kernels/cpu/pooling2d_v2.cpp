@@ -122,4 +122,4 @@ using namespace ts;
 using namespace cpu;
 TS_REGISTER_OPERATOR(Pooling2DV2, CPU, name::layer::pooling2d_v2())
 
-TS_REGISTER_FP16_OPERATOR(Pooling2DV2, CPU, name::layer::pooling2d_v2())
+TS_REGISTER_FP16_OPERATOR(Pooling2DV2, GPU, name::layer::pooling2d_v2())
