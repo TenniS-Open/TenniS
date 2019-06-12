@@ -9,8 +9,6 @@
 #include <cuda_fp16.h>
 #include <device_launch_parameters.h>
 
-#include <math_functions.h>
-
 #include "kernels/gpu/cudax_fp16_math.h"
 
 namespace ts {
