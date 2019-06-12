@@ -2,8 +2,11 @@
 // Created by kier on 2018/11/1.
 //
 
+#include <compiler/argparse.h>
 #include "compiler/translater.h"
 #include "compiler/option/translator_option.h"
+
+#include "compiler/option/fp16_translator_option.h"
 
 #include "module/menu.h"
 
@@ -58,6 +61,11 @@ namespace ts {
         //auto temp_graph = ctx::get<Graph>();
 
         auto options = GetFullTranslateOptions();
+        for (auto &option : m_options) {
+            options.push_back(option);
+        }
+
+        if (options.empty()) return module;
 
         std::vector<Node> traslated_nodes;
         std::unordered_map<Node, Node> ready_map;
@@ -74,5 +82,23 @@ namespace ts {
 
         new_module = Module::Load(temp_graph, traslated_nodes);
         return new_module;
+    }
+
+    Translator::Translator(const ComputingDevice &device, const std::string &params)
+        : m_device(device) {
+        ArgParser parser;
+        parser.add({"--float16", "-fp16"}, {"--no-float16", "-no-fp16"}, false);
+        parser.parse(params);
+        if (parser.get("--float16")) {
+             TS_LOG_STATUS << "Compiling with --float16";
+            m_options.push_back(new Fp16TranslatorOption);
+        }
+    }
+
+    Translator::~Translator() {
+        for (auto &option : m_options) {
+            delete option;
+        }
+        m_options.clear();
     }
 }

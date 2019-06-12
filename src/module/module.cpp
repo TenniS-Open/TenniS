@@ -19,6 +19,8 @@
 #include "module/menu.h"
 #include "module/header.h"
 
+#include "compiler/translater.h"
+
 namespace ts {
 
     void Module::load(Graph g) {
@@ -351,5 +353,10 @@ namespace ts {
         auto module = std::make_shared<Module>();
         module->load(g, outputs);
         return std::move(module);
+    }
+
+    Module::shared Module::Translate(Module::shared module, const ComputingDevice &device, const std::string &options) {
+        Translator translator(device, options);
+        return translator.translate(module);
     }
 }

@@ -27,6 +27,7 @@
 #include "module/menu.h"
 #include "frontend/intime.h"
 #include "compiler/zipper.h"
+#include "compiler/translater.h"
 
 
 
@@ -94,21 +95,31 @@ namespace ts {
     }
 
     // TODO: inputs only support Parameter, try support other op
-    InstructionBlock Compiler::compile(const std::vector<Node> &inputs, const std::vector<Node> &raw_outputs) {
+    InstructionBlock Compiler::compile(const std::vector<Node> &raw_inputs, const std::vector<Node> &raw_outputs,
+            const std::string &options) {
         DeviceContext device_context(m_computing_device);
         ctx::bind<DeviceContext> _bind_device_context(device_context);
 
-        Graph temp_graph;
-        ctx::bind<Graph> _bind_graph(temp_graph);
-
-        Zipper zipper(m_computing_device);
-        std::vector<Node> zip_ouputs = zipper.zip(raw_outputs);
+        auto inputs = raw_inputs;
+        auto outputs = raw_outputs;
 
         // std::cout << "+++++++++++++++++ original graph ++++++++++++++++++++++" << std::endl;
-        // plot_graph(std::cout, zip_ouputs);
+        // plot_graph(std::cout, outputs);
+        Graph temp_graph;
+        ctx::bind<Graph> _bind_graph(temp_graph);
+        
+        // zip graph
+        {
+            Zipper zipper(m_computing_device, options);
+            outputs = zipper.zip(outputs);
+        }
 
-        std::vector<Node> outputs;
-        run_const_nodes(zip_ouputs, outputs);
+        // const graph
+        {
+            std::vector<Node> const_outputs;
+            run_const_nodes(outputs, const_outputs);
+            outputs = const_outputs;
+        }
 
         // std::cout << "+++++++++++++++++ const graph ++++++++++++++++++++++" << std::endl;
         // plot_graph(std::cout, outputs);
@@ -433,5 +444,9 @@ namespace ts {
             run_const_node(node, node, ready_const, ready_nonconst);
             const_nodes.emplace_back(node);
         }
+    }
+
+    InstructionBlock Compiler::compile(const std::vector<Node> &raw_inputs, const std::vector<Node> &outputs) {
+        return compile(raw_inputs, outputs, "");
     }
 }

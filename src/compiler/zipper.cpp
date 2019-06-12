@@ -8,6 +8,9 @@
 #include "module/menu.h"
 
 #include <unordered_set>
+#include <compiler/argparse.h>
+
+#include "compiler/option/winograd_zipper_option.h"
 
 namespace ts {
 
@@ -66,11 +69,35 @@ namespace ts {
         // TODO: add more options
         std::vector<const ZipperOption *> options = GetFullOptions();
 
+        for (auto &option : options) {
+            options.push_back(option);
+        }
+
+        if (options.empty()) return nodes;
+
         std::vector<Node> zipped_nodes;
         std::unordered_map<Node, Node> ready_map;
         for (auto &node : nodes) {
             zipped_nodes.emplace_back(zip_node(node, ready_map, m_device, options));
         }
         return std::move(zipped_nodes);
+    }
+
+    Zipper::Zipper(const ComputingDevice &device, const std::string &params)
+        : m_device(device) {
+        ArgParser parser;
+        parser.add({"--winograd", "-win"}, {"--no-winograd", "-no-win"}, false);
+        parser.parse(params);
+        if (parser.get("--winograd")) {
+            TS_LOG_STATUS << "Compiling with --winograd";
+            m_options.push_back(new Conv2dZipperOption);
+        }
+    }
+
+    Zipper::~Zipper() {
+        for (auto option : m_options) {
+            delete option;
+        }
+        m_options.clear();
     }
 }

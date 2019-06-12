@@ -50,14 +50,14 @@ namespace ts {
         }
     }
 
-    Program::shared Program::Compile(const Module::shared &module, const ComputingDevice &device) {
+    Program::shared Program::Compile(const Module::shared &module, const ComputingDevice &device, const std::string &options) {
         Program::shared program(new Program(device));
-        // convert module to bench
-        // here running compilation codes
+        // translate module
+        auto translated_module = Module::Translate(module, device, options);
         // TODO: support RNN
         Compiler compiler(device);
-        auto module_inputs = module->inputs();
-        auto module_outputs = module->outputs();
+        auto module_inputs = translated_module->inputs();
+        auto module_outputs = translated_module->outputs();
         InstructionBlock block;
 
         // check workbench context
@@ -68,7 +68,7 @@ namespace ts {
             }
         }
 
-        block = compiler.compile(module_inputs, module_outputs);
+        block = compiler.compile(module_inputs, module_outputs, options);
 
         // link data sagment
         // TODO: link multi-data-sagment
@@ -252,5 +252,9 @@ namespace ts {
             node->set(param, value);
             node->init();
         }
+    }
+
+    Program::shared Program::Compile(const Module::shared &module, const ComputingDevice &device) {
+        return Compile(module, device, "");
     }
 }

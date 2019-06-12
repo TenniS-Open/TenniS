@@ -161,3 +161,33 @@ int32_t ts_Workbench_output_count(ts_Workbench *workbench) {
         auto result = (*workbench)->output_count();
     RETURN_OR_CATCH(result, 0)
 }
+
+ts_Workbench *ts_Workbench_Load_v2(const ts_Module *module, const ts_Device *device, const char *options) {
+    TRY_HEAD
+        if (!module) throw Exception("NullPointerException: @param: 1");
+        if (!device) throw Exception("NullPointerException: @param: 2");
+        if (!options) throw Exception("NullPointerException: @param: 3");
+        std::unique_ptr<ts_Workbench> workbench(new ts_Workbench(
+                Workbench::Load(module->pointer, ComputingDevice(device->type, device->id), options)
+                ));
+    RETURN_OR_CATCH(workbench.release(), nullptr)
+}
+
+ts_Program *ts_Workbench_compile_v2(ts_Workbench *workbench, const ts_Module *module, const char *options) {
+    TRY_HEAD
+        if (!workbench) throw Exception("NullPointerException: @param: 1");
+        if (!module) throw Exception("NullPointerException: @param: 2");
+        if (!options) throw Exception("NullPointerException: @param: 3");
+        std::unique_ptr<ts_Program> program(new ts_Program(
+                (*workbench)->compile(module->pointer, options)
+                ));
+    RETURN_OR_CATCH(program.release(), nullptr)
+}
+
+ts_bool ts_Workbench_run_hook(ts_Workbench *workbench, const char **node_names, int32_t len) {
+    TRY_HEAD
+        if (!workbench) throw Exception("NullPointerException: @param: 1");
+        if (!node_names) throw Exception("NullPointerException: @param: 2");
+        (*workbench)->run_hook(std::vector<std::string>(node_names, node_names + len));
+    RETURN_OR_CATCH(ts_true, ts_false)
+}
