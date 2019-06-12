@@ -1002,6 +1002,26 @@ output_w = floor((width + pad_w -
 			(dilation_w * (kernel_w - 1) + 1)) / stride_w + 1);
 ```
 
+### l2_norm(x..device) -> y..device
+说明：执行L2范数在dim维度上。
+
+参数：
+- `dim` `Int`
+- `epsilon` `Float`
+
+说明：  
+For 1-D NDArray, it computes:  
+```
+out = data / sqrt(sum(data ** 2) + eps)
+```
+For N-D NDArray, if the input array has shape (N, N, ..., N),
+```
+for dim in 2...N
+  for i in 0...N
+    out[.....,i,...] = take(out, indices=i, axis=dim) / sqrt(sum(take(out, indices=i, axis=dim) ** 2) + eps)
+        -dim-
+```
+
 ## 附录
 
 1. 在做基础运算的时候，`x`和`a`有会三种意义，分别为`标量`，`张量`和`广播张量`。这里的广播张量的意义为：
