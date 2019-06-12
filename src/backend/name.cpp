@@ -104,6 +104,8 @@ namespace ts {
 
             const string &yolo() TS_NOEXCEPT { static string str = "yolo"; return str; }
             const string &yolo_poster() TS_NOEXCEPT { static string str = "yolo_poster"; return str; }
+
+            const string &l2_norm() TS_NOEXCEPT { static string str = "l2_norm"; return str; }
         }
 
         namespace typo {

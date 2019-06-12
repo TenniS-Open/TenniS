@@ -116,6 +116,9 @@ namespace ts {
             // 2019-05-29
             TS_DEBUG_API const string &yolo() TS_NOEXCEPT;
             TS_DEBUG_API const string &yolo_poster() TS_NOEXCEPT;
+
+            // 2019-06-12
+            TS_DEBUG_API const string &l2_norm() TS_NOEXCEPT;
         }
 
         namespace typo {
