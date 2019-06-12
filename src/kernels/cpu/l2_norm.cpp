@@ -65,7 +65,7 @@ namespace ts {
                     for (int i = 0; i < body_num; ++i) {
                         T data = T(*loop_in * *loop_in);
                         sum += data;
-                        *loop_out = data;
+                        // *loop_out = *loop_in;
 
                         loop_in += tail_num;
                         loop_out += tail_num;
@@ -74,7 +74,7 @@ namespace ts {
                     loop_in = input_channel_data;
                     loop_out = output_channel_data;
                     for (int i = 0; i < body_num; ++i) {
-                        *loop_out /= norm;
+                        *loop_out = *loop_in / norm;
 
                         loop_in += tail_num;
                         loop_out += tail_num;
