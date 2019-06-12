@@ -507,11 +507,13 @@ namespace ts {
     }
 
     void Workbench::setup_runtime() {
-        this->runtime().setup_context();
+        // this->runtime().setup_context();
+        this->setup_context();
     }
 
     void Workbench::setup_device() {
-        DeviceContext::Switch(&this->device());
+        // DeviceContext::Switch(&this->device());
+        this->setup_context();
     }
 
     Program::shared Workbench::compile(const Module::shared &module, const std::string &options) {
