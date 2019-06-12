@@ -65,6 +65,7 @@ class Name(object):
         squeeze = "squeeze"
         rsqrt = "rsqrt"
         sample2d = "sample2d"
+        l2_norm = "l2_norm"
 
     dim = "dim"
     shuffle = "shuffle"
@@ -772,4 +773,13 @@ def sample2d(name, x, scale, type=Type.resize2d_type.nearest, dim=-2):
     node.set(Name.dim, dim, numpy.int32)
 
     return node
+
+
+def l2_norm(name, x, dim=-1, epsilon=1.00000001e-10):
+    assert isinstance(x, Node)
+    node = menu.op(name=name, op_name=Name.Layer.l2_norm, inputs=[x, ])
+    node.set(Name.dim, dim, numpy.int32)
+    node.set(Name.epsilon, epsilon, numpy.float32)
+    return node
+
 
