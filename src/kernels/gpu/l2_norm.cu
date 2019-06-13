@@ -61,7 +61,7 @@ namespace ts {
         }
 
         template<typename T>
-        __global__ static void div_kernel(const T* input_data, T* output_data, int count, int dim_num, int outer_num, int inner_num,
+        __global__ static void div_kernel(const T *input_data, const T* scale_data, T* output_data, int count, int dim_num, int outer_num, int inner_num,
                 T epsilon)
         {
             int index = blockDim.x * blockIdx.x + threadIdx.x;
@@ -69,7 +69,7 @@ namespace ts {
             {
                 int n = index / dim_num / inner_num;
                 int s = index % inner_num;
-                output_data[index] /= sqrt(input_data[n * inner_num + s] + epsilon);
+                output_data[index] = input_data[index] / sqrt(scale_data[n * inner_num + s] + epsilon);
             }
         }
 
@@ -107,7 +107,7 @@ namespace ts {
             T *output_data = out.data<T>();
 
             int count = out.count();
-            memcpy(output_data, out.device(), count * sizeof(T), input_data, x.device(), count * sizeof(T));
+            // memcpy(output_data, out.device(), count * sizeof(T), input_data, x.device(), count * sizeof(T));
 
             int scale_data_size = out.count() / axis;
 
@@ -122,13 +122,13 @@ namespace ts {
             auto cuda_stream = get_cuda_stream_on_context();
 
             dim3 square_kernel_grid_size((count + block_size.x - 1) / block_size.x);
-            square_kernel<T> << <square_kernel_grid_size, block_size, 0, cuda_stream >> > (output_data, output_data, count);
+            square_kernel<T> << <square_kernel_grid_size, block_size, 0, cuda_stream >> > (input_data, output_data, count);
 
             dim3 sum_kernel_grid_size((pre_num * inner_num + block_size.x - 1) / block_size.x);
             sum_kernel<T> << <sum_kernel_grid_size, block_size, 0, cuda_stream >> > (output_data, scale_data, axis, pre_num, inner_num);
 
             dim3 div_kernel_grid_size((count + block_size.x - 1) / block_size.x);
-            div_kernel<T> << <div_kernel_grid_size,block_size, 0, cuda_stream >> > (scale_data,output_data,count,axis,pre_num,inner_num, float_to<T>::F(epsilon));
+            div_kernel<T> << <div_kernel_grid_size,block_size, 0, cuda_stream >> > (input_data, scale_data, output_data, count,axis,pre_num,inner_num, float_to<T>::F(epsilon));
         }
 
         void L2Norm::normalize(const Tensor &x, int dim, float epsilon, Tensor &out) {
