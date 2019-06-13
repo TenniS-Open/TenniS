@@ -276,7 +276,7 @@ class Tensor(object):
         c_shape_size = _C.ts_Tensor_shape_size(c_tensor)
         shape = [c_shape[i] for i in range(c_shape_size)]
         c_dtype_data = _C.cast(c_data, _C.POINTER(DC.to_ctypes(c_dtype)))
-        np = numpy.ctypeslib.as_array(c_dtype_data, shape=shape).copy()
+        np = numpy.ctypeslib.as_array(c_dtype_data, shape=tuple(shape)).copy()
         return np
 
     @property

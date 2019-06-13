@@ -493,36 +493,36 @@ def fused_batch_norm(name, x, mean, variance, scale, bias, dim, epsilon):
     return node
 
 
-def add(name, lhs, rhs):
-    lhs = to_node(lhs, name="_const_" + name + "_lhs")
-    rhs = to_node(rhs, name="_const_" + name + "_rhs")
+def add(name, lhs, rhs, dtype=None):
+    lhs = to_node(lhs, name="_const_" + name + "_lhs", dtype=dtype)
+    rhs = to_node(rhs, name="_const_" + name + "_rhs", dtype=dtype)
 
     node = menu.op(name=name, op_name=Name.Layer.add, inputs=[lhs, rhs])
 
     return node
 
 
-def sub(name, lhs, rhs):
-    lhs = to_node(lhs, name="_const_" + name + "_lhs")
-    rhs = to_node(rhs, name="_const_" + name + "_rhs")
+def sub(name, lhs, rhs, dtype=None):
+    lhs = to_node(lhs, name="_const_" + name + "_lhs", dtype=dtype)
+    rhs = to_node(rhs, name="_const_" + name + "_rhs", dtype=dtype)
 
     node = menu.op(name=name, op_name=Name.Layer.sub, inputs=[lhs, rhs])
 
     return node
 
 
-def mul(name, lhs, rhs):
-    lhs = to_node(lhs, name="_const_" + name + "_lhs")
-    rhs = to_node(rhs, name="_const_" + name + "_rhs")
+def mul(name, lhs, rhs, dtype=None):
+    lhs = to_node(lhs, name="_const_" + name + "_lhs", dtype=dtype)
+    rhs = to_node(rhs, name="_const_" + name + "_rhs", dtype=dtype)
 
     node = menu.op(name=name, op_name=Name.Layer.mul, inputs=[lhs, rhs])
 
     return node
 
 
-def div(name, lhs, rhs):
-    lhs = to_node(lhs, name="_const_" + name + "_lhs")
-    rhs = to_node(rhs, name="_const_" + name + "_rhs")
+def div(name, lhs, rhs, dtype=None):
+    lhs = to_node(lhs, name="_const_" + name + "_lhs", dtype=dtype)
+    rhs = to_node(rhs, name="_const_" + name + "_rhs", dtype=dtype)
 
     node = menu.op(name=name, op_name=Name.Layer.div, inputs=[lhs, rhs])
 
