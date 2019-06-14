@@ -19,6 +19,9 @@ namespace ts {
 
         using Shape = std::vector<int32_t>;
 
+        /**
+         * @see ts_Tensor
+         */
         class Tensor {
         public:
             enum class InFlow : int32_t {

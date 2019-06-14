@@ -18,6 +18,9 @@
 
 namespace ts {
     namespace api {
+        /**
+         * @see ts_Workbench
+         */
         class Workbench {
         public:
             using self = Workbench;
@@ -200,6 +203,11 @@ namespace ts {
                 auto program = Program::NewRef(ts_Workbench_compile_v2(m_impl.get(), module.get_raw(), options.c_str()));
                 TS_API_AUTO_CHECK(program != nullptr);
                 return std::move(program);
+            }
+
+            void set_operator_param(const std::string &node_name, const std::string &param, const Tensor &value) {
+                TS_API_AUTO_CHECK(ts_Workbench_set_operator_param(
+                        m_impl.get(), node_name.c_str(), param.c_str(), value.get_raw()))
             }
 
         private:

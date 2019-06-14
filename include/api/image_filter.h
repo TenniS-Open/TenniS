@@ -20,6 +20,9 @@ extern "C" {
 struct ts_ImageFilter;
 typedef struct ts_ImageFilter ts_ImageFilter;
 
+/**
+ * Resize method
+ */
 enum ts_ResizeMethod {
     TS_RESIZE_BILINEAR = 0,
     TS_RESIZE_BICUBIC = 1,
@@ -42,51 +45,167 @@ TENSOR_STACK_C_API ts_ImageFilter *ts_new_ImageFilter(const ts_Device *device);
  */
 TENSOR_STACK_C_API void ts_free_ImageFilter(const ts_ImageFilter *filter);
 
+/**
+ * Clear set image filter
+ * @param filter the return value of ts_new_ImageFilter
+ * @return false if failed
+ */
 TENSOR_STACK_C_API ts_bool ts_ImageFilter_clear(ts_ImageFilter *filter);
 
+/**
+ * Compile set image filters
+ * @param filter the return value of ts_new_ImageFilter
+ * @return false if failed
+ * No need to call explicitly.
+ */
 TENSOR_STACK_C_API ts_bool ts_ImageFilter_compile(ts_ImageFilter *filter);
 
+/**
+ * Add filter to stream: to float.
+ * @param filter the return value of ts_new_ImageFilter
+ * @return false if failed
+ */
 TENSOR_STACK_C_API ts_bool ts_ImageFilter_to_float(ts_ImageFilter *filter);
 
+/**
+ * Add filter to stream: scale image; multiply f on each pixel.
+ * @param filter the return value of ts_new_ImageFilter
+ * @param f scale value
+ * @return false if failed
+ */
 TENSOR_STACK_C_API ts_bool ts_ImageFilter_scale(ts_ImageFilter *filter, float f);
 
+/**
+ * Add filter to stream: sub mean value on image; sub mean on each channel.
+ * @param filter the return value of ts_new_ImageFilter
+ * @param mean mean value
+ * @param len length of given mean
+ * @return false if failed
+ */
 TENSOR_STACK_C_API ts_bool ts_ImageFilter_sub_mean(ts_ImageFilter *filter, const float *mean, int32_t len);
 
+/**
+ * Add filter to stream: div std value on image; div std on each channel.
+ * @param filter the return value of ts_new_ImageFilter
+ * @param std std value
+ * @param len length of given std
+ * @return false if failed
+ */
 TENSOR_STACK_C_API ts_bool ts_ImageFilter_div_std(ts_ImageFilter *filter, const float *std, int32_t len);
 
 /**
+ * Add filter to stream: resize image to given [width, height].
+ * @param filter the return value of ts_new_ImageFilter
+ * @param width new width
+ * @param height new height
+ * @return false if failed
  * @note using TS_RESIZE_BILINEAR by default
  */
 TENSOR_STACK_C_API ts_bool ts_ImageFilter_resize(ts_ImageFilter *filter, int32_t width, int32_t height);
 
 /**
+ * Add filter to stream: equal scale image short edge to given width.
+ * @param filter the return value of ts_new_ImageFilter
+ * @param width short edge dest size
+ * @return false if failed
  * @note using TS_RESIZE_BILINEAR by default
  */
 TENSOR_STACK_C_API ts_bool ts_ImageFilter_resize_scalar(ts_ImageFilter *filter, int32_t width);
 
+/**
+ * Add filter to stream: center crop image to given [width, height]
+ * @param filter the return value of ts_new_ImageFilter
+ * @param width wanted width
+ * @param height wanted height
+ * @return false if failed
+ * @note if given image is smaller than [width, height], this filter will zero pad image to [width, height]
+ */
 TENSOR_STACK_C_API ts_bool ts_ImageFilter_center_crop(ts_ImageFilter *filter, int32_t width, int32_t height);
 
+/**
+ * Add filter to stream: swap channel
+ * @param filter the return value of ts_new_ImageFilter
+ * @param shuffle new layout of channel
+ * @param len length of given shuffle
+ * @return flase if failed
+ * @note call ts_ImageFilter_channel_swap(filter, {2, 1, 0}, 3) means do BGR2RGB method
+ */
 TENSOR_STACK_C_API ts_bool ts_ImageFilter_channel_swap(ts_ImageFilter *filter, const int32_t *shuffle, int32_t len);
 
+/**
+ * Add filter to stream: final change HWC image to CHW
+ * @param filter the return value of ts_new_ImageFilter
+ * @return flase if failed
+ * @note this filter must be final filter, because that image format changed
+ */
 TENSOR_STACK_C_API ts_bool ts_ImageFilter_to_chw(ts_ImageFilter *filter);
 
+/**
+ * Add filter to stream: prewhiten image
+ * @param filter the return value of ts_new_ImageFilter
+ * @return false if failed
+ */
 TENSOR_STACK_C_API ts_bool ts_ImageFilter_prewhiten(ts_ImageFilter *filter);
 
 /**
+ * Add filter to stream: equal scale image' long edge to given [width, height], fill outer image area with outer_value
+ * @param filter the return value of ts_new_ImageFilter
+ * @param width wanted image width
+ * @param height wanted image height
+ * @return false if failed
  * @note using TS_RESIZE_BILINEAR by default
  */
 TENSOR_STACK_C_API ts_bool ts_ImageFilter_letterbox(ts_ImageFilter *filter, int32_t width, int32_t height, float outer_value);
 
+/**
+ * Add filter to stream: adjust image to can be divided by [width, height]
+ * @param filter the return value of ts_new_ImageFilter
+ * @param width times of width
+ * @param height times of height
+ * @param padding_value padding value
+ * @return false if failed
+ * @note Ex: input [800, 600] image, divided [32, 32], will pad image to [800, 608]
+ */
 TENSOR_STACK_C_API ts_bool ts_ImageFilter_divided(ts_ImageFilter *filter, int32_t width, int32_t height, float padding_value);
 
+/**
+ * Filter image in given tensor, NHWC format or HWC format
+ * @param filter the return value of ts_new_ImageFilter
+ * @param tensor ready tensor in NHWC or HWC format
+ * @return new reference, filtered image
+ */
 TENSOR_STACK_C_API ts_Tensor *ts_ImageFilter_run(ts_ImageFilter *filter, const ts_Tensor *tensor);
 
+/**
+ * Add filter to stream: adjust image to can be divided by [width, height]
+ * @param filter the return value of ts_new_ImageFilter
+ * @param width times of width
+ * @param height times of height
+ * @param padding_value padding value
+ * @param method @see ts_ResizeMethod
+ * @return false if failed
+ * @note Ex: input [800, 600] image, divided [32, 32], will pad image to [800, 608]
+ */
 TENSOR_STACK_C_API ts_bool ts_ImageFilter_letterbox_v2(ts_ImageFilter *filter, int32_t width, int32_t height, float outer_value,
                                                        ts_ResizeMethod method);
-
+/**
+ * Add filter to stream: resize image to given [width, height].
+ * @param filter the return value of ts_new_ImageFilter
+ * @param width new width
+ * @param height new height
+ * @param method @see ts_ResizeMethod
+ * @return false if failed
+ */
 TENSOR_STACK_C_API ts_bool ts_ImageFilter_resize_v2(ts_ImageFilter *filter, int32_t width, int32_t height,
                                                     ts_ResizeMethod method);
 
+/**
+ * Add filter to stream: equal scale image short edge to given width.
+ * @param filter the return value of ts_new_ImageFilter
+ * @param width short edge dest size
+ * @param method @see ts_ResizeMethod
+ * @return false if failed
+ */
 TENSOR_STACK_C_API ts_bool ts_ImageFilter_resize_scalar_v2(ts_ImageFilter *filter, int32_t width,
                                                            ts_ResizeMethod method);
 
