@@ -168,8 +168,8 @@ CHAR8        = _C.TS_CHAR8
 
 class Tensor(object):
     class InFlow(object):
-        HOST = _C.TS_HOST,
-        DEVICE = _C.TS_DEVICE,
+        HOST = _C.TS_HOST
+        DEVICE = _C.TS_DEVICE
 
     def __init__(self, obj=None, dtype=None, shape=None, in_flow=None, borrow=False):
         """
@@ -215,7 +215,7 @@ class Tensor(object):
                 c_tensor = _C.ts_new_Tensor(c_shape, c_len, c_dtype, c_data)
             else:
                 assert in_flow in {self.InFlow.HOST, self.InFlow.DEVICE}
-                c_in_flow = in_flow
+                c_in_flow = _C.c_int32(in_flow)
                 c_tensor = _C.ts_new_Tensor_in_flow(c_in_flow, c_shape, c_len, c_dtype, c_data)
             _C.ts_api_check_pointer(c_tensor)
             self.__shared = _Shared(c_tensor, None if borrow else _C.ts_free_Tensor)
@@ -239,7 +239,8 @@ class Tensor(object):
             if in_flow is None:
                 c_tensor = _C.ts_new_Tensor(c_shape, c_len, c_dtype, None)
             else:
-                c_in_flow = in_flow
+                assert in_flow in {self.InFlow.HOST, self.InFlow.DEVICE}
+                c_in_flow = _C.c_int32(in_flow)
                 c_tensor = _C.ts_new_Tensor_in_flow(c_in_flow, c_shape, c_len, c_dtype, None)
             _C.ts_api_check_pointer(c_tensor)
             self.__shared = _Shared(c_tensor, None if borrow else _C.ts_free_Tensor)
