@@ -56,3 +56,14 @@ ts_Program *ts_Program_Compile_v2(const ts_Module *module, const ts_Device *devi
                 ));
     RETURN_OR_CATCH(program.release(), nullptr)
 }
+
+ts_bool
+ts_Program_set_operator_param(ts_Program *program, const char *node_name, const char *param, const ts_Tensor *value) {
+    TRY_HEAD
+        if (!program) throw Exception("NullPointerException: @param: 1");
+        if (!node_name) throw Exception("NullPointerException: @param: 2");
+        if (!param) throw Exception("NullPointerException: @param: 3");
+        if (!value) throw Exception("NullPointerException: @param: 4");
+        (*program)->set_operator_param(node_name, param, **value);
+    RETURN_OR_CATCH(ts_true, ts_false)
+}

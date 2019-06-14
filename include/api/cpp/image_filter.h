@@ -16,8 +16,14 @@
 
 namespace ts {
     namespace api {
+        /**
+         * @see ts_ImageFilter
+         */
         class ImageFilter {
         public:
+            /**
+             * @see ts_ResizeMethod
+             */
             enum class ResizeMethod : int32_t {
                 BICUBIC = TS_RESIZE_BICUBIC,
                 BILINEAR = TS_RESIZE_BILINEAR,

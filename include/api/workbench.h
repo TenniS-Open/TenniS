@@ -15,99 +15,180 @@
 extern "C" {
 #endif
 
+/**
+ * Run program on ME!
+ */
 struct ts_Workbench;
 typedef struct ts_Workbench ts_Workbench;
 
 // Workbench API
 
 /**
- * Return NULL if failed.
+ * New workbench and setup compiled program with module.
+ * @param module instance of module
+ * @param device workbench computing device
+ * @return new reference, NULL if failed.
+ * @note @sa ts_free_Workbench to free ts_Workbench
  */
 TENSOR_STACK_C_API ts_Workbench *ts_Workbench_Load(const ts_Module *module, const ts_Device *device);
 
 /**
+ * Free workbench.
+ * @param workbench instance of workbench
  * Happen nothing if failed.
  */
 TENSOR_STACK_C_API void ts_free_Workbench(const ts_Workbench *workbench);
 
 /**
- * Return NULL if failed.
+ * Clone existing ts_Workbench with setup program.
+ * @param workbench instance of workbench
+ * @return new reference, NULL if failed.
  */
 TENSOR_STACK_C_API ts_Workbench *ts_Workbench_clone(ts_Workbench *workbench);
 
 /**
- * Return false if failed.
+ * Input i-th tensor.
+ * @param workbench instance of workbench
+ * @param i slot index
+ * @param tensor input tensor
+ * @return false if failed.
  */
 TENSOR_STACK_C_API ts_bool ts_Workbench_input(ts_Workbench *workbench, int32_t i, const ts_Tensor *tensor);
 
 /**
- * Return false if failed.
+ * Input named tensor.
+ * @param workbench instance of workbench
+ * @param name slot name
+ * @param tensor input tensor
+ * @return false if failed.
  */
 TENSOR_STACK_C_API ts_bool ts_Workbench_input_by_name(ts_Workbench *workbench, const char *name, const ts_Tensor *tensor);
 
 /**
- * Return false if failed.
+ * Run network. then get output by ts_Workbench_output or ts_Workbench_output_by_name
+ * @param workbench instance of workbench
+ * @return false if failed.
  */
 TENSOR_STACK_C_API ts_bool ts_Workbench_run(ts_Workbench *workbench);
 
 /**
- * Return false if failed.
+ * Get output i-th tensor.
+ * @param workbench instance of workbench
+ * @param i slot index
+ * @param tensor output tensor
+ * @return false if failed.
  */
 TENSOR_STACK_C_API ts_bool ts_Workbench_output(ts_Workbench *workbench, int32_t i, ts_Tensor *tensor);
 
 /**
- * Return false if failed.
+ * Get output named tensor.
+ * @param workbench instance of workbench
+ * @param name slot name
+ * @param tensor output tensor
+ * @return false if failed.
  */
 TENSOR_STACK_C_API ts_bool ts_Workbench_output_by_name(ts_Workbench *workbench, const char *name, ts_Tensor *tensor);
 
 /**
- * Happen Nothing if failed.
+ * Set computing thread number
+ * @param workbench instance of workbench
+ * @param number thread number
+ * @return false if failed.
  */
 TENSOR_STACK_C_API ts_bool ts_Workbench_set_computing_thread_number(ts_Workbench *workbench, int32_t number);
 
+/**
+ * Bind filter on i-th input.
+ * @param workbench instance of workbench
+ * @param i slot index
+ * @param filter output tensor
+ * @return false if failed.
+ */
 TENSOR_STACK_C_API ts_bool ts_Workbench_bind_filter(ts_Workbench *workbench, int32_t i, const ts_ImageFilter *filter);
 
+/**
+ * Bind filter on named input.
+ * @param workbench instance of workbench
+ * @param name slot name
+ * @param filter output tensor
+ * @return false if failed.
+ */
 TENSOR_STACK_C_API ts_bool ts_Workbench_bind_filter_by_name(ts_Workbench *workbench, const char *name, const ts_ImageFilter *filter);
 
 /**
- * Return NULL if failed.
+ * New workbench.
+ * @param device @sa ts_Device
+ * @return new reference, NULL if failed.
  */
 TENSOR_STACK_C_API ts_Workbench *ts_new_Workbench(const ts_Device *device);
 
 /**
- * Return false if failed.
+ * Setup program on workbench. workbench device must same with program device.
+ * @param workbench instance of workbench
+ * @param program instance of program
+ * @return false if failed.
+ * @note this api will change next input, output and run APIs
  */
 TENSOR_STACK_C_API ts_bool ts_Workbench_setup(ts_Workbench *workbench, const ts_Program *program);
 
 /**
- * Return false if failed.
+ * Setup context of workbench.
+ * @param workbench instance of workbench
+ * @return false if failed.
+ * @note this API influence:
+ *     ts_new_Tensor_in_flow, ts_Program_Compile_XXX, ts_intime_XXX
+ *     ts_Tensor_view_in_flow
  */
 TENSOR_STACK_C_API ts_bool ts_Workbench_setup_context(ts_Workbench *workbench);
 
 /**
- * Return nullptr if failed.
- * Note: remember call free on return value
+ * Compile module to program
+ * @param workbench instance of workbench
+ * @param module instance of module
+ * @return new reference, NULL if failed.
  */
 TENSOR_STACK_C_API ts_Program *ts_Workbench_compile(ts_Workbench *workbench, const ts_Module *module);
 
 /**
- * Return false if failed.
+ * @deprecated Use ts_Workbench_setup_context instead
  */
 TENSOR_STACK_C_API ts_bool ts_Workbench_setup_device(ts_Workbench *workbench);
 
 /**
- * Return false if failed
+ * @deprecated Use ts_Workbench_setup_context instead
  */
 TENSOR_STACK_C_API ts_bool ts_Workbench_setup_runtime(ts_Workbench *workbench);
 
+/**
+ * Get setup program's input count
+ * @param workbench instance of workbench
+ * @return input count
+ */
 TENSOR_STACK_C_API int32_t ts_Workbench_input_count(ts_Workbench *workbench);
 
+/**
+ * Get setup program's output count
+ * @param workbench instance of workbench
+ * @return output count
+ */
 TENSOR_STACK_C_API int32_t ts_Workbench_output_count(ts_Workbench *workbench);
 
+/**
+ * Run network hook inner node value, for debug using.
+ * @param workbench instance of workbench
+ * @param node_names hook node_names
+ * @param len length of node_names
+ * @return false if failed.
+ */
 TENSOR_STACK_C_API ts_bool ts_Workbench_run_hook(ts_Workbench *workbench, const char **node_names, int32_t len);
 
 /**
- * Return NULL if failed.
+ * New workbench and setup compiled program with module.
+ * @param module instance of module
+ * @param device workbench computing device
+ * @param options compile option, split with space word
+ * @return new reference, NULL if failed.
+ * @note @sa ts_free_Workbench to free ts_Workbench
  * Option can have:
  * 1. "--float16" using float16 operator
  * 2. "--winograd" using winograd conv2d
@@ -116,14 +197,28 @@ TENSOR_STACK_C_API ts_Workbench *ts_Workbench_Load_v2(const ts_Module *module, c
         const char *options);
 
 /**
- * Return nullptr if failed.
- * Note: remember call free on return value
+ * Compile module to program
+ * @param workbench instance of workbench
+ * @param module instance of module
+ * @param options compile option, split with space word
+ * @return new reference, NULL if failed.
  * Option can have:
  * 1. "--float16" using float16 operator
  * 2. "--winograd" using winograd conv2d
  */
 TENSOR_STACK_C_API ts_Program *ts_Workbench_compile_v2(ts_Workbench *workbench, const ts_Module *module,
         const char *options);
+
+/**
+ * Set operator's param value.
+ * @param workbench instance of workbench
+ * @param node_name node name
+ * @param param param name
+ * @param value param value
+ * @return false if failed
+ */
+TENSOR_STACK_C_API ts_bool ts_Workbench_set_operator_param(ts_Workbench *workbench, const char *node_name,
+        const char *param, const ts_Tensor *value);
 
 
 #ifdef __cplusplus

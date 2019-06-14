@@ -9,6 +9,9 @@
 
 namespace ts {
     namespace api {
+        /**
+         * @see ts_DTYPE
+         */
         class DTYPE {
         public:
             using self = DTYPE;
@@ -35,6 +38,11 @@ namespace ts {
         static const DTYPE FLOAT64 = TS_FLOAT64;
         static const DTYPE CHAR8 = TS_CHAR8;
 
+        /**
+         * Get dtype width
+         * @param dtype in ts_DTYPE
+         * @return type width
+         */
         inline int type_bytes(DTYPE dtype) {
             switch (dtype.raw) {
                 case TS_VOID: return 0;
@@ -53,6 +61,11 @@ namespace ts {
             return 0;
         }
 
+        /**
+         * Get dtype description string
+         * @param dtype in ts_DTYPE
+         * @return string description
+         */
         inline const char *type_str(DTYPE dtype) {
             switch (dtype.raw) {
                 case TS_VOID: return "void";

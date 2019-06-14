@@ -11,14 +11,24 @@
 extern "C" {
 #endif
 
+/**
+ * Operator's param
+ */
 struct ts_OperatorParams;
 typedef struct ts_OperatorParams ts_OperatorParams;
 
+/**
+ * Operator's context, which can get context running.
+ * @sa ts_OperatorContext_cuda_stream and @sa TS_CUDA_STREAM
+ */
 struct ts_OperatorContext;
 typedef struct ts_OperatorContext ts_OperatorContext;
 
 /**
- * Return new reference, NULL if param is not exist
+ * Get param value from ts_OperatorParams by name
+ * @param dict instance of operator's param
+ * @param param param name
+ * @return new reference, NULL if param is not exist
  */
 TENSOR_STACK_C_API ts_Tensor *ts_OperatorParams_get(const ts_OperatorParams *dict, const char *param);
 
@@ -108,11 +118,25 @@ TENSOR_STACK_C_API void ts_Operator_RegisterEx(
         ts_Operator_infer *f_infer,
         ts_Operator_run *f_run);
 
-
+/**
+ * Throw exception message to break running in operator's functions
+ * @param message throw message
+ */
 TENSOR_STACK_C_API void ts_Operator_Throw(const char *message);
 
+/**
+ * Throw exception message to break running in operator's functions
+ * @param message throw message
+ * @param filename Exceptional filename
+ * @param line_number Exceptional line number
+ */
 TENSOR_STACK_C_API void ts_Operator_ThrowV2(const char *message, const char *filename, int32_t line_number);
 
+/**
+ * Throw exception message to break running in operator's functions
+ * @param message throw message
+ * @note auto gather filename and line number information.
+ */
 #define TS_C_THROW(message) \
     ts_Operator_ThrowV2((message), __FILE__, __LINE__)
 
