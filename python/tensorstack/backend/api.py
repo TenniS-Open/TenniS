@@ -567,6 +567,13 @@ class Program(object):
         # type: () -> int
         return _C.ts_Program_output_count(self)
 
+    def set_operator_param(self, node_name, param, value):
+        # type: (str, str, Tensor) -> None
+        node_name = node_name.encode()
+        param = param.encode()
+        value = Tensor(value)
+        _C.ts_api_check_bool(_C.ts_Program_set_operator_param(self, node_name, param, value))
+
 
 class ImageFilter(object):
     class ResizeMethod(object):
@@ -876,6 +883,13 @@ class Workbench(object):
     def output_count(self):
         # type: () -> int
         return _C.ts_Workbench_output_count(self)
+
+    def set_operator_param(self, node_name, param, value):
+        # type: (str, str, Tensor) -> None
+        node_name = node_name.encode()
+        param = param.encode()
+        value = Tensor(value)
+        _C.ts_api_check_bool(_C.ts_Workbench_set_operator_param(self, node_name, param, value))
 
 
 class OperatorParams(object):

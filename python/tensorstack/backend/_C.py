@@ -206,6 +206,9 @@ ts_Program_input_count = __TS_IMPORT(lib, "ts_Program_input_count", c_int32, POI
 
 ts_Program_output_count = __TS_IMPORT(lib, "ts_Program_output_count", c_int32, POINTER(ts_Program))
 
+ts_Program_set_operator_param = __TS_IMPORT(lib, "ts_Program_set_operator_param",
+                                            c_int32, POINTER(ts_Program), c_char_p, c_char_p, POINTER(ts_Tensor))
+
 
 """ ================================================================================================================ +++
 image_filter.h
@@ -337,6 +340,9 @@ ts_Workbench_Load_v2 = __TS_IMPORT(lib, "ts_Workbench_Load_v2",
 
 ts_Workbench_compile_v2 = __TS_IMPORT(lib, "ts_Workbench_compile_v2",
                                       POINTER(ts_Program), POINTER(ts_Workbench), POINTER(ts_Module), c_char_p)
+
+ts_Workbench_set_operator_param = __TS_IMPORT(lib, "ts_Workbench_set_operator_param",
+                                              c_int32, POINTER(ts_Workbench), c_char_p, c_char_p, POINTER(ts_Tensor))
 
 
 """ ================================================================================================================ +++
