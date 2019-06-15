@@ -195,6 +195,38 @@ class Tensor(object):
             return
 
         """
+        string
+        """
+        if isinstance(obj, numpy.ndarray) and obj.dtype.type == numpy.string_:
+            obj = str(obj)
+        str_obj = _compatible_string(obj)
+        if isinstance(str_obj, str):
+            obj = str_obj
+            obj = obj.encode()
+            if dtype is not None and dtype != CHAR8:
+                raise ValueError("dtype should be None or CHAR8 with type(obj)==str")
+            if shape is not None and shape != (len(obj),):
+                raise ValueError("shape should be None or [{}] with type(obj)==str".format(len(obj)))
+
+            shape = (len(obj),)
+
+            c_shape, c_len, _ = _to_ctypes_array(shape, _C.c_int32)
+            c_dtype = CHAR8
+            c_str = _C.c_char_p(obj)
+            c_data = _C.cast(c_str, _C.c_void_p).value
+
+            c_tensor = None
+            if in_flow is None:
+                c_tensor = _C.ts_new_Tensor(c_shape, c_len, c_dtype, c_data)
+            else:
+                assert in_flow in {self.InFlow.HOST, self.InFlow.DEVICE}
+                c_in_flow = _C.c_int32(in_flow)
+                c_tensor = _C.ts_new_Tensor_in_flow(c_in_flow, c_shape, c_len, c_dtype, c_data)
+            _C.ts_api_check_pointer(c_tensor)
+            self.__shared = _Shared(c_tensor, None if borrow else _C.ts_free_Tensor)
+            return
+
+        """
         numpy.ndarray or array object
         """
         if obj is not None:
@@ -269,9 +301,13 @@ class Tensor(object):
         if c_tensor is None:
             return None
 
+        c_dtype = _C.ts_Tensor_dtype(c_tensor)
+
+        if int(c_dtype) == CHAR8:
+            return numpy.asarray(self.str)
+
         c_flag = _C.ts_Tensor_sync_cpu(c_tensor)
         _C.ts_api_check_bool(c_flag)
-        c_dtype = _C.ts_Tensor_dtype(c_tensor)
         c_data = _C.ts_Tensor_data(c_tensor)
         c_shape = _C.ts_Tensor_shape(c_tensor)
         c_shape_size = _C.ts_Tensor_shape_size(c_tensor)
@@ -279,6 +315,37 @@ class Tensor(object):
         c_dtype_data = _C.cast(c_data, _C.POINTER(DC.to_ctypes(c_dtype)))
         np = numpy.ctypeslib.as_array(c_dtype_data, shape=tuple(shape)).copy()
         return np
+
+    @property
+    def str(self):
+        # type: () -> Union[str, None]
+        c_tensor = self.__shared.raw
+        if c_tensor is None:
+            return None
+
+        c_dtype = _C.ts_Tensor_dtype(c_tensor)
+
+        if int(c_dtype) != CHAR8:
+            raise NotImplementedError("Can not convert dtype {} to {}".format(c_dtype, CHAR8))
+
+        c_flag = _C.ts_Tensor_sync_cpu(c_tensor)
+        _C.ts_api_check_bool(c_flag)
+        c_data = _C.ts_Tensor_data(c_tensor)
+        c_shape = _C.ts_Tensor_shape(c_tensor)
+        c_shape_size = _C.ts_Tensor_shape_size(c_tensor)
+        shape = [c_shape[i] for i in range(c_shape_size)]
+
+        count = numpy.prod(shape)
+
+        c_char_buffer = _C.cast(c_data, _C.POINTER(_C.c_char))
+
+        _C.resize(c_char_buffer, max(count + 1, 8))
+        c_char_buffer[count] = '\0'
+
+        c_str = _C.cast(c_char_buffer, _C.c_char_p)
+
+        return c_str.value
+
 
     @property
     def shape(self):
