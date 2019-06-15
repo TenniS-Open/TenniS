@@ -197,7 +197,7 @@ class Tensor(object):
         """
         string
         """
-        if isinstance(obj, numpy.ndarray) and obj.dtype.type == numpy.string_:
+        if isinstance(obj, numpy.ndarray) and (obj.dtype.type == numpy.string_ or obj.dtype.type == numpy.str_):
             obj = str(obj)
         str_obj = _compatible_string(obj)
         if isinstance(str_obj, str):
@@ -340,11 +340,11 @@ class Tensor(object):
         c_char_buffer = _C.cast(c_data, _C.POINTER(_C.c_char))
 
         _C.resize(c_char_buffer, max(count + 1, 8))
-        c_char_buffer[count] = '\0'
+        c_char_buffer[count] = '\0'.encode()
 
         c_str = _C.cast(c_char_buffer, _C.c_char_p)
 
-        return c_str.value
+        return str(c_str.value.decode())
 
 
     @property
