@@ -30,13 +30,13 @@ struct API_TYPE { \
 #define ts_true 1
 
 #define TRY_HEAD \
-ts::api::_thread_local_last_error_message.clear(); \
+ts::api::ClearLEM(); \
 try {
 
 #define RETURN_OR_CATCH(ret, cat) \
 return ret; \
 } catch (const Exception &e) { \
-ts::api::_thread_local_last_error_message = e.what(); \
+ts::api::SetLEM(e.what()); \
 return cat; \
 }
 
