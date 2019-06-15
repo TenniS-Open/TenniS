@@ -457,7 +457,7 @@ def convert_fully_connected(node, inputs):
     weight_value = None
     try:
         weight_value = ts.zoo.to_const(weight, "weight")
-    except Exception, e:
+    except Exception as e:
         pass
 
     x = ts.zoo.flatten(name=node_name + "_flatten", x=x)

@@ -550,7 +550,7 @@ def relu(name, x):
 def relu_max(name, x, max):
     assert isinstance(x, Node)
     node = menu.op(name=name, op_name=Name.Layer.relu_max, inputs=[x, ])
-    node.set(Name.max, max)
+    node.set(Name.max, max, numpy.float32)
     return node
 
 
@@ -688,6 +688,9 @@ def cast(name, x, dtype):
     assert isinstance(x, Node)
 
     dtype = to_const(dtype, "dtype")
+
+    if not isinstance(dtype, int):
+        dtype = tensor.ts_dtype.from_numpy(dtype)
 
     node = menu.op(name=name, op_name=Name.Layer.cast, inputs=[x, ])
     node.set(Name.dtype, dtype, numpy.int32)
