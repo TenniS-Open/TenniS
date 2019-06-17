@@ -843,6 +843,7 @@ class Workbench(object):
             return
         slot = _compatible_string(slot)
         if isinstance(slot, str):
+            slot = slot.encode()
             _C.ts_api_check_bool(_C.ts_Workbench_bind_filter_by_name(self, slot, filter))
             return
         raise Exception("argument {}: expected int or str instance instead of {}".
@@ -936,6 +937,7 @@ class OperatorParams(object):
 
     def get(self, item):
         # type: (str) -> Tensor
+        item = item.encode()
         x = _C.ts_OperatorParams_get(self, item)
         return Tensor(x)
 
