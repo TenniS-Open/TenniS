@@ -175,9 +175,9 @@ ts_Tensor_fields_count = __TS_IMPORT(lib, "ts_Tensor_fields_count", c_int32, POI
 
 ts_Tensor_pack = __TS_IMPORT(lib, "ts_Tensor_pack", POINTER(ts_Tensor), POINTER(POINTER(ts_Tensor)), c_int32)
 
-ts_Tensor_slice = __TS_IMPORT(lib, "ts_Tensor_slice", POINTER(ts_Tensor), c_int32)
+ts_Tensor_slice = __TS_IMPORT(lib, "ts_Tensor_slice", POINTER(ts_Tensor), POINTER(ts_Tensor), c_int32)
 
-ts_Tensor_slice_v2 = __TS_IMPORT(lib, "ts_Tensor_slice_v2", POINTER(ts_Tensor), c_int32, c_int32)
+ts_Tensor_slice_v2 = __TS_IMPORT(lib, "ts_Tensor_slice_v2", POINTER(ts_Tensor), POINTER(ts_Tensor), c_int32, c_int32)
 
 ts_Tensor_save = __TS_IMPORT(lib, "ts_Tensor_save", ts_bool, c_char_p, POINTER(ts_Tensor))
 

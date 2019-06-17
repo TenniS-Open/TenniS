@@ -52,9 +52,14 @@
 - `permute`: `IntArray` `[Optional]` 数组的长度，要和 `a` 的维度一致。输入的第 `i` 个维度就是 `permute[i]` 的维度。
 如果，没有设置该参数，则相当于普通矩阵转置。
 
+Note:  
+if x.dims greater than permute.size, will expand x to same dims to permute.size. 
+
 举例：  
 如果 `x.shape` 为 `[1, 640, 480, 3]`，`permute` 为 `[0, 3, 1, 2]`，
 输出 `b.shape` 为 `[1, 3, 640, 480]`。数据类型不变。
+如果 `x.shape` 为 `[3]`，`permute` 为 `[0, 3, 1, 2]`，
+输出 `b.shape` 为 `[1, 3, 1, 1]`。数据类型不变。
 
 说明：  
 `permute` 中的元素必须是有效维度下标，且每个下标有且必须出现一次。`tranpose` 会对存储格式产生影响。
@@ -1021,6 +1026,12 @@ for dim in 2...N
     out[.....,i,...] = take(out, indices=i, axis=dim) / sqrt(sum(take(out, indices=i, axis=dim) ** 2) + eps)
         -dim-
 ```
+
+### _dims(x..device) -> y..host
+Return x.dims()
+
+### _expand(x..device, dims..host) -> y..device
+Return x if dims <= x.dims(), else expanded x shape to has dims
 
 ## 附录
 

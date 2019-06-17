@@ -316,6 +316,9 @@ class Tensor(object):
         np = numpy.ctypeslib.as_array(c_dtype_data, shape=tuple(shape)).copy()
         return np
 
+    def __array__(self):
+        return self.numpy
+
     @property
     def str(self):
         # type: () -> Union[str, None]
@@ -476,8 +479,11 @@ class Tensor(object):
         # type: (int, int) -> Tensor
         x = None
         if end is not None:
+            beg = _C.c_int32(beg)
+            end = _C.c_int32(end)
             x = _C.ts_Tensor_slice_v2(self, beg, end)
         else:
+            beg = _C.c_int32(beg)
             x = _C.ts_Tensor_slice(self, beg)
         _C.ts_api_check_pointer(x)
         return Tensor(x)
@@ -485,12 +491,15 @@ class Tensor(object):
     @staticmethod
     def Save(path, tensor):
         # type: (str, Tensor) -> None
+        path = path.encode()
+        tensor = Tensor(tensor)
         c_flag = _C.ts_Tensor_save(path, tensor.raw)
         _C.ts_api_check_bool(c_flag)
 
     @staticmethod
     def Load(path):
         # type: (str) -> Tensor
+        path = path.encode()
         x = _C.ts_Tensor_load(path)
         _C.ts_api_check_pointer(x)
         return Tensor(x)

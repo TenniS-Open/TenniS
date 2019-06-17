@@ -66,6 +66,8 @@ class Name(object):
         rsqrt = "rsqrt"
         sample2d = "sample2d"
         l2_norm = "l2_norm"
+        dims = "_dims"
+        expand = "_expand"
 
     dim = "dim"
     shuffle = "shuffle"
@@ -785,4 +787,13 @@ def l2_norm(name, x, dim=-1, epsilon=1.00000001e-10):
     node.set(Name.epsilon, epsilon, numpy.float32)
     return node
 
+def dims(name, x):
+    assert isinstance(x, Node)
+    node = menu.op(name=name, op_name=Name.Layer.dims, inputs=[x, ])
+    return node
 
+def expand(name, x, dims):
+    assert isinstance(x, Node)
+    dims = to_node(dims, name=name + "_dims", device=device.CPU, dtype=numpy.int32);
+    node = menu.op(name=name, op_name=Name.Layer.expand, inputs=[x, dims])
+    return node
