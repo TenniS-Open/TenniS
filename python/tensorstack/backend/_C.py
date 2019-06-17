@@ -17,15 +17,19 @@ if libTensorStack is not None:
     try:
         lib = CDLL(libTensorStack, RTLD_GLOBAL)
     except:
-        pass
+        raise
 
+msg = None
 if lib is None:
     from . import libfinder
-    lib = libfinder.load_library(TensorStackName)
+    lib, msg = libfinder.load_library(TensorStackName)
 
 
 if lib is None:
-    raise ImportError("Can find library: {}".format(TensorStackName))
+    if msg is None:
+        raise ImportError("Can find library: {}".format(TensorStackName))
+    else:
+        raise ImportError(msg)
 
 
 def __TS_IMPORT(lib, sym, restype=None, *argtypes):
