@@ -13,7 +13,7 @@ namespace ts {
     {
         auto cuda_error = cudaSetDevice(device_id);
         if (cuda_error != cudaSuccess) {
-            TS_LOG_ERROR << "cudaSetDevice(" << device_id << ") failed. error=" << cuda_error << eject;
+            TS_LOG_ERROR << "cudaSetDevice(" << device_id << ") failed. Error(" << cuda_error << "): " << cudaGetErrorString(cuda_error) << eject;
         }
         switch (action)
         {

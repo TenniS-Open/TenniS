@@ -17,7 +17,7 @@ namespace ts {
         CUDAContextHandle(int id) {
             auto cuda_error = cudaSetDevice(id);
             if (cuda_error != cudaSuccess) {
-                TS_LOG_ERROR << "cudaSetDevice(" << id << ") failed. error=" << cuda_error << eject;
+                TS_LOG_ERROR << "cudaSetDevice(" << id << ") failed. Error(" << cuda_error << "): " << cudaGetErrorString(cuda_error) << eject;
             }
             if(cublasCreate(&m_cublas_handle) != CUBLAS_STATUS_SUCCESS)
                 TS_LOG_ERROR << "The cublasHandle_t initialize failed " << eject;
