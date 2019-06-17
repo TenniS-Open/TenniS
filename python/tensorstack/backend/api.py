@@ -239,8 +239,19 @@ class Tensor(object):
                 shape = np.shape
 
             c_shape, c_len, _ = _to_ctypes_array(shape, _C.c_int32)
-            c_dtype = DC.to_ts_dtype(dtype)
-            c_data = np.ctypes.data_as(_C.c_void_p)
+
+            c_dtype = VOID
+            c_data = None
+            if dtype.type == numpy.object_:
+                if np.shape == ():
+                    pass
+                else:
+                    object_item = np.flatten()[0]
+                    if object_item is not None:
+                        raise NotImplementedError("array of type={}", type(object_item))
+            else:
+                c_dtype = DC.to_ts_dtype(dtype)
+                c_data = np.ctypes.data_as(_C.c_void_p)
 
             c_tensor = None
             if in_flow is None:
@@ -305,6 +316,12 @@ class Tensor(object):
 
         if int(c_dtype) == CHAR8:
             return numpy.asarray(self.str)
+
+        if int(c_dtype) == VOID:
+            self_shape = self.shape
+            if self_shape == ():
+                return None
+            return numpy.reshape([None] * numpy.prod(self_shape), self_shape)
 
         c_flag = _C.ts_Tensor_sync_cpu(c_tensor)
         _C.ts_api_check_bool(c_flag)
