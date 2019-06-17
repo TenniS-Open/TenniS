@@ -16,9 +16,17 @@
  *  TS_PLATFORM_OS_MAC
  *  TS_PLATFORM_OS_LINUX
  *  TS_PLATFORM_OS_IOS
+ *  TS_PLATFORM_OS_ANDROID
  */
-#if defined(__WINDOWS__) || defined(_WIN32) || defined(WIN32) || defined(_WIN64) || \
+#if defined(__ANDROID__)
+#   define TS_PLATFORM_OS_ANDROID 1
+#   define TS_PLATFORM_OS_WINDOWS 0
+#   define TS_PLATFORM_OS_MAC     0
+#   define TS_PLATFORM_OS_LINUX   1
+#   define TS_PLATFORM_OS_IOS     0
+#elif defined(__WINDOWS__) || defined(_WIN32) || defined(WIN32) || defined(_WIN64) || \
     defined(WIN64) || defined(__WIN32__) || defined(__TOS_WIN__)
+#   define TS_PLATFORM_OS_ANDROID 0
 #   define TS_PLATFORM_OS_WINDOWS 1
 #   define TS_PLATFORM_OS_MAC     0
 #   define TS_PLATFORM_OS_LINUX   0
@@ -26,17 +34,20 @@
 #elif defined(__MACOSX) || defined(__MACOS_CLASSIC__) || defined(__APPLE__) || defined(__apple__)
 #include "TargetConditionals.h"
 #if TARGET_IPHONE_SIMULATOR || TARGET_OS_IPHONE
+#   define TS_PLATFORM_OS_ANDROID 0
 #   define TS_PLATFORM_OS_WINDOWS 0
 #   define TS_PLATFORM_OS_MAC     0
 #   define TS_PLATFORM_OS_LINUX   0
 #   define TS_PLATFORM_OS_IOS     1
 #elif TARGET_OS_MAC
+#   define TS_PLATFORM_OS_ANDROID 0
 #   define TS_PLATFORM_OS_WINDOWS 0
 #   define TS_PLATFORM_OS_MAC     1
 #   define TS_PLATFORM_OS_LINUX   0
 #   define TS_PLATFORM_OS_IOS     0
 #else
 //#   error "Unknown Apple platform"
+#   define TS_PLATFORM_OS_ANDROID 0
 #   define TS_PLATFORM_OS_WINDOWS 0
 #   define TS_PLATFORM_OS_MAC     0
 #   define TS_PLATFORM_OS_LINUX   0
@@ -44,12 +55,14 @@
 #endif
 #elif defined(__linux__) || defined(linux) || defined(__linux) || defined(__LINUX__) || \
     defined(LINUX) || defined(_LINUX)
+#   define TS_PLATFORM_OS_ANDROID 0
 #   define TS_PLATFORM_OS_WINDOWS 0
 #   define TS_PLATFORM_OS_MAC     0
 #   define TS_PLATFORM_OS_LINUX   1
 #   define TS_PLATFORM_OS_IOS     0
 #else
 //#   error Unknown OS
+#   define TS_PLATFORM_OS_ANDROID 0
 #   define TS_PLATFORM_OS_WINDOWS 0
 #   define TS_PLATFORM_OS_MAC     0
 #   define TS_PLATFORM_OS_LINUX   0

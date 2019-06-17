@@ -13,6 +13,17 @@
 
 #include "except.h"
 #include "box.h"
+#include "platform.h"
+
+#if TS_PLATFORM_OS_ANDROID
+#include "android/log.h"
+#define ANDROID_LOG_TAG "TensorStack"
+#define ANDROID_LOG(LEVEL, ...) __android_log_print(LEVEL,          ANDROID_LOG_TAG, __VA_ARGS__)
+#define ANDROID_LOGV(...) __android_log_print(ANDROID_LOG_VERBOSE,  ANDROID_LOG_TAG, __VA_ARGS__)
+#define ANDROID_LOGI(...) __android_log_print(ANDROID_LOG_INFO,     ANDROID_LOG_TAG, __VA_ARGS__)
+#define ANDROID_LOGD(...) __android_log_print(ANDROID_LOG_DEBUG,    ANDROID_LOG_TAG, __VA_ARGS__)
+#define ANDROID_LOGE(...) __android_log_print(ANDROID_LOG_ERROR,    ANDROID_LOG_TAG, __VA_ARGS__)
+#endif
 
 namespace ts {
 
@@ -30,6 +41,20 @@ namespace ts {
         LOG_ERROR = 4,
         LOG_FATAL = 5,
     };
+
+#if TS_PLATFORM_OS_ANDROID
+    inline android_LogPriority __android_log_level(LogLevel level) {
+        switch (level) {
+            default: return ANDROID_LOG_UNKONWN;
+            case LOG_NONE: return ANDROID_LOG_VERBOSE;
+            case LOG_DEBUG: return ANDROID_LOG_DEBUG;
+            case LOG_STATUS: return ANDROID_LOG_INFO;
+            case LOG_INFO: return ANDROID_LOG_INFO;
+            case LOG_ERROR: return ANDROID_LOG_ERROR;
+            case LOG_FATAL: return ANDROID_LOG_FATAL;
+        }
+    }
+#endif
 
     inline std::string LogString(LogLevel level) {
         switch (level) {
@@ -105,7 +130,17 @@ namespace ts {
                 m_buffer.str("");
                 m_buffer << LogString(m_level) << ": " << msg << std::endl;
                 m_log << m_buffer.str();
+#if TS_PLATFORM_OS_ANDROID
+                ANDROID_LOG(__android_log_level(m_level), "%s", msg.c_str());
+#endif
             }
+#if TS_PLATFORM_OS_ANDROID
+            else {
+                auto msg = m_buffer.str();
+                m_buffer.str("");
+                ANDROID_LOG(__android_log_level(m_level), "%s", msg.c_str());
+            }
+#endif
             m_level = LOG_NONE;
             m_buffer.str("");
             m_log.flush();
