@@ -137,7 +137,6 @@ namespace ts {
 #if TS_PLATFORM_OS_ANDROID
             else {
                 auto msg = m_buffer.str();
-                m_buffer.str("");
                 ANDROID_LOG(__android_log_level(m_level), "%s", msg.c_str());
             }
 #endif
