@@ -94,6 +94,11 @@ def convert(input_file, output_file,
         OPType.Enum_PoolingLayer: convert_pooling_layer,
         OPType.Enum_InnerProductLayer: convert_inner_product_layer,
         OPType.Enum_EltwiseLayer: convert_eltwise_layer,
+        OPType.Enum_SplitLayer: convert_split_layer,
+        OPType.Enum_PreReLULayer: convert_prelu_layer,
+        OPType.Enum_DeconvolutionLayer: convert_deconvolution_layer,
+        OPType.Enum_SigmoidLayer: convert_sigmoid_layer,
+        OPType.Enum_ConcatLayer: convert_concat_layer,
     }
 
     nodes = []
@@ -658,6 +663,176 @@ def convert_eltwise_layer(layer, input_nodes, output_names):
         raise NotImplementedError(layer)
 
     node.name = node_name
+
+    return node,
+
+
+def convert_split_layer(layer, input_nodes, output_names):
+    # type: (hd.Holiday_LayerParameter, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} ]=-".format(OPType.EnumString[layer.type], output_names))
+
+    assert len(input_nodes) == 1
+    # assert len(output_names) == 1
+
+    x = input_nodes[0]
+
+    top_nodes = [ ts.zoo.copy(name=node_name, x=x) for node_name in output_names]
+
+    return top_nodes
+
+
+def convert_prelu_layer(layer, input_nodes, output_names):
+    # type: (hd.Holiday_LayerParameter, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} ]=-".format(OPType.EnumString[layer.type], output_names))
+
+    assert len(input_nodes) == 1
+    assert len(output_names) == 1
+
+    x = input_nodes[0]
+    node_name = output_names[0]
+
+    param = layer.prelu_param
+
+    slope_blob = blob2numpy(param.param)
+    print("--##    Slope shape: {}".format(slope_blob.shape))
+
+    node = ts.zoo.prelu(name=node_name, x=x, dim=1, slope=slope_blob)
+
+    return node,
+
+
+def convert_deconvolution_layer(layer, input_nodes, output_names):
+    # type: (hd.Holiday_LayerParameter, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} ]=-".format(OPType.EnumString[layer.type], output_names))
+
+    assert len(input_nodes) == 1
+    assert len(output_names) == 1
+
+    conv2d_name = "_conv2d_" + output_names[0]
+    bias_name = "_bias_" + output_names[0]
+    node_name = output_names[0]
+
+    param = layer.convolution_param
+
+    bias_blob = None    # [output_channels, ]
+    if param.HasField("bias_param"):
+        bias_blob = blob2numpy(param.bias_param)
+        print("--##    Bias shape: {}".format(bias_blob.shape))
+
+    # is [output_channels, input_channels / group, input_height, input_width]
+    weights_blob = blob2numpy(param.kernel_param)
+    print("--##    Weights shape: {}".format(weights_blob.shape))
+
+    dilation = [param.dilation_height, param.dilation_width]
+    print("--##    Dilation: {}".format(dilation))
+
+    num_output = None
+    if param.HasField("num_output"):
+        num_output = param.num_output
+
+    padding = [param.pad_height, param.pad_width]
+    print("--##    Padding: {}".format(padding))
+
+    kernel_size = [param.kernel_height, param.kernel_width]
+
+    assert kernel_size[0] == weights_blob.shape[2] and kernel_size[1] == weights_blob.shape[3]
+
+    stride = [param.stride_height, param.stride_width]
+    print("--##    Stride: {}".format(stride))
+
+    group = 1
+    if param.HasField("group"):
+        group = param.group
+        print("--##    Group: {}".format(group))
+
+    if group != 1:
+        raise NotImplementedError("group={}".format(group))
+
+    input_channels = weights_blob.shape[0]
+
+    assert weights_blob.shape[1] * group == num_output
+
+    axis = 1
+    if param.HasField("axis"):
+        axis = param.axis
+
+    assert axis == 1
+
+    force_nd_im2col = False
+    if param.HasField("force_nd_im2col"):
+        force_nd_im2col = param.force_nd_im2col
+
+    assert not force_nd_im2col
+
+    tf_padding = None
+    if param.HasField("tf_padding"):
+        tf_padding = param.tf_padding
+        print("--##    TF padding: {}".format(tf_padding))
+
+    if tf_padding is not None:
+        raise NotImplementedError("tf_padding={}".format(tf_padding))
+
+    assert tf_padding is None or tf_padding == "SAME" or tf_padding == "VALID"
+
+    if group != 1 and weights_blob.shape[1] != 1:
+        raise NotImplementedError("group = {} with weights.shape[1] = {}".format(group, weights_blob.shape[1]))
+
+    is_conv2d = group == 1
+    # is_depthwise_conv2d = weights_blob.shape[1] == 1
+
+    node = None
+
+    if is_conv2d:
+        node = ts.zoo.transpose_conv2d(conv2d_name, x=input_nodes[0], w=weights_blob, format=ts.zoo.Name.NCHW,
+                                       padding=[[0, 0], [0, 0], [padding[0], padding[0]], [padding[1], padding[1]]],
+                                       padding_value=0,
+                                       stride=[1, 1, stride[0], stride[1]],
+                                       dilation=[1, 1, dilation[0], dilation[1]])
+
+    if node is None:
+        raise NotImplementedError(layer)
+
+    if bias_blob is not None:
+        node = ts.zoo.add_bias(bias_name, x=node, b=bias_blob, format=ts.zoo.Name.NCHW)
+
+    node.name = node_name
+
+    return node,
+
+
+def convert_sigmoid_layer(layer, input_nodes, output_names):
+    # type: (hd.Holiday_LayerParameter, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} ]=-".format(OPType.EnumString[layer.type], output_names))
+
+    assert len(input_nodes) == 1
+    assert len(output_names) == 1
+
+    x = input_nodes[0]
+    node_name = output_names[0]
+
+    node = ts.zoo.sigmoid(node_name, x=x)
+
+    return node,
+
+
+def convert_concat_layer(layer, input_nodes, output_names):
+    # type: (hd.Holiday_LayerParameter, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} ]=-".format(OPType.EnumString[layer.type], output_names))
+
+    # assert len(input_nodes) == 1
+    assert len(output_names) == 1
+
+    x = input_nodes[0]
+    node_name = output_names[0]
+
+    param = layer.concat_param
+
+    axis = 1
+    if param.HasField("axis"):
+        axis = param.axis
+        print("--##    axis: {}".format(axis))
+
+    node = ts.zoo.concat(node_name, inputs=input_nodes, dim=axis)
 
     return node,
 

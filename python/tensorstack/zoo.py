@@ -25,6 +25,7 @@ class Name(object):
         transpose = "_transpose"
         reshape = "_reshape"
         conv2d = "conv2d"
+        transpose_conv2d = "transpose_conv2d"
         conv2d_v2 = "conv2d_v2"
         # conv2d_bias = "conv2d_bias"
         # padding_conv2d_bias = "padding_conv2d_bias"
@@ -369,6 +370,44 @@ def conv2d(name, x, w,
         # node.set(Name.padding, Default.padding())
     else:
         node = menu.op(name=name, op_name=Name.Layer.conv2d, inputs=[x, w])
+        node.set(Name.padding, padding, numpy.int32)
+
+    node.set(Name.format, format)
+    node.set(Name.padding_value, padding_value)
+    node.set(Name.stride, stride, numpy.int32)
+    node.set(Name.dilation, dilation, numpy.int32)
+
+    return node
+
+
+def transpose_conv2d(name, x, w,
+                     format=Name.NCHW,
+                     padding=None,
+                     padding_value=None,
+                     stride=None,
+                     dilation=None):
+    assert isinstance(x, Node)
+
+    padding = adjust_padding(padding, format=format)
+    stride = adjust_stride(stride, format=format)
+    dilation = adjust_dilation(dilation, format=format)
+
+    if padding is None:
+        padding = Default.padding()
+    if padding_value is None:
+        padding_value = Default.padding_value()
+    if stride is None:
+        stride = Default.stride()
+    if dilation is None:
+        dilation = Default.dilation()
+    w = to_node(w, name="_const_" + name + "_weights")
+
+    node = None
+
+    if isinstance(padding, Node):
+        raise NotImplementedError("padding={}".format(padding))
+    else:
+        node = menu.op(name=name, op_name=Name.Layer.transpose_conv2d, inputs=[x, w])
         node.set(Name.padding, padding, numpy.int32)
 
     node.set(Name.format, format)
