@@ -56,7 +56,7 @@ namespace ts {
                     T scale_val = pscale[k];
                     T bias_val = pbias[k];
                     T *pdst_temp = pdst + offset;
-                    for (int m = backdims; m < backdims; m++) {
+                    for (int m = 0; m < backdims; m++) {
                         *pdst_temp = (*pdst_temp - mean_val) * vec_val * scale_val + bias_val;
                         pdst_temp++;
                     }
