@@ -45,7 +45,7 @@ namespace ts {
 #if TS_PLATFORM_OS_ANDROID
     inline android_LogPriority __android_log_level(LogLevel level) {
         switch (level) {
-            default: return ANDROID_LOG_UNKONWN;
+            default: return ANDROID_LOG_UNKNOWN;
             case LOG_NONE: return ANDROID_LOG_VERBOSE;
             case LOG_DEBUG: return ANDROID_LOG_DEBUG;
             case LOG_STATUS: return ANDROID_LOG_INFO;
