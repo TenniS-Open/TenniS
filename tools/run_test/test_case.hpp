@@ -419,14 +419,12 @@ namespace ts {
             Operator::shared built_op;
             try {
                 built_op = bench.offline_create(bubble, true);
-            } catch (const Exception &e) {
-                std::cerr << e.what() << std::endl;
-            }
-
-            if (built_op == nullptr) {
+            } catch (const OperatorNotFoundException &e) {
                 m_log << "[SKIP]: " << "Not supported operator \"" << op << "\" for " << device << std::endl;
                 return Status::SKIP;
-            } else {
+            } catch (const Exception &e) {
+                m_log << "[FAILED]: " << e.what() << std::endl;
+                return Status::FAILED;
             }
 
             TS_AUTO_ASSERT(output_count == 1);

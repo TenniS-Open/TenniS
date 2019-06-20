@@ -45,7 +45,7 @@ namespace ts {
     }
 
     static OperatorCreator::function TalentQuery(const DeviceType &device_type,
-            const std::string &operator_name, bool strict) {
+                                                 const std::string &operator_name, bool strict) {
         // step 1: check in strict mode
         auto creator = OperatorCreator::Query(device_type, operator_name);
 
@@ -67,8 +67,8 @@ namespace ts {
         return creator;
     }
 
-    Operator::shared
-    OperatorCreator::Create(const DeviceType &device_type, const std::string &operator_name, bool strict) TS_NOEXCEPT {
+    Operator::shared OperatorCreator::CreateNoException(const DeviceType &device_type, const std::string &operator_name,
+                                                        bool strict) TS_NOEXCEPT {
         auto creator = TalentQuery(device_type, operator_name, strict);
         if (!creator) return nullptr;
         return creator();
@@ -77,5 +77,12 @@ namespace ts {
     OperatorCreator::function
     OperatorCreator::Query(const DeviceType &device_type, const std::string &operator_name, bool strict) TS_NOEXCEPT {
         return TalentQuery(device_type, operator_name, strict);
+    }
+
+    Operator::shared
+    OperatorCreator::Create(const DeviceType &device_type, const std::string &operator_name, bool strict)  {
+        auto op = CreateNoException(device_type, operator_name, strict);
+        if (op == nullptr) throw OperatorNotFoundException(device_type, operator_name);
+        return op;
     }
 }
