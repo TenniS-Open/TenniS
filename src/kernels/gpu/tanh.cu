@@ -53,13 +53,12 @@ namespace ts {
         }
 
 #ifdef TS_USE_CUDA_FP16
-        template <>
-        __global__ void tanh_kernel<half>(const T* input_data, T* output_data, int size, half one, half two) {
+        __global__ void tanh_kernel(const half* input_data, half* output_data, int size, half one, half two) {
             int index = blockDim.x * blockIdx.x + threadIdx.x;
             if (index < size)
             {
-                T val = input_data[index];
-                auto sigmoid = one / (one + exp(-(two * val)))
+                auto val = input_data[index];
+                auto sigmoid = one / (one + exp(-(two * val)));
                 output_data[index] = two * sigmoid - one;
             }
         }
@@ -79,7 +78,7 @@ namespace ts {
             auto one = __float2half(1);
             auto two = __float2half(2);
 
-            tanh_kernel<half> << < gridSize, blockSize, 0, cuda_stream >> > (input_data, output_data, count, one, two);
+            tanh_kernel << < gridSize, blockSize, 0, cuda_stream >> > (input_data, output_data, count, one, two);
         }
 #endif
 

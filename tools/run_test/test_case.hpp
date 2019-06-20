@@ -195,6 +195,7 @@ namespace ts {
             return *this;
         }
 
+        /*
         TestCase &operator=(TestCase &&other) {
             op = std::move(other.op);
             name = std::move(other.name);
@@ -207,6 +208,7 @@ namespace ts {
             m_log = std::move(other.m_log);
             return *this;
         }
+        */
 
         enum class Status : int {
             OK,
