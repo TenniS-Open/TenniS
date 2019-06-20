@@ -1033,6 +1033,12 @@ Return x.dims()
 ### _expand(x..device, dims..host) -> y..device
 Return x if dims <= x.dims(), else expanded x shape to has dims
 
+### tanh(x..device) -> y..device
+Return `\frac{exp(x)-exp(-x)}{exp(x)+exp(-x)}`, equals `2 * sigmoid(2 * x) - 1`.
+
+### abs(x..device) -> y..device
+Return `abs(x)`
+
 ## 附录
 
 1. 在做基础运算的时候，`x`和`a`有会三种意义，分别为`标量`，`张量`和`广播张量`。这里的广播张量的意义为：
