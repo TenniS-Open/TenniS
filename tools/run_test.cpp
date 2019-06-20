@@ -71,7 +71,7 @@ int main(int argc, const char *argv[]) {
             case TestCase::Status::SKIP: {
                 skip_count++;
                 std::cout << "[SKIP]: " << subdir << " on " << computing_device << std::endl;
-                std::cout << tc.log();
+                // std::cout << tc.log();
                 break;
             }
             case TestCase::Status::WARNING: {

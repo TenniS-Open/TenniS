@@ -223,6 +223,7 @@ elseif (APPLE)
     set(CMAKE_MACOSX_RPATH 1)
 elseif (UNIX)
     list(APPEND third_libraries pthread)
+    list(APPEND third_libraries m)
 else ()
 endif ()
 
