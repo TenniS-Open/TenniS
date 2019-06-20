@@ -132,6 +132,53 @@ def generate_stack(path):
         iter += 1
 
 
+def list_raw_l2_norm():
+    """
+    yield([data, dim, epsilon])
+    :return:
+    """
+    data = [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12], [13, 14, 15, 16], [17, 18, 19, 20]]
+    yield data, 1, 1e-10
+
+
+def list_l2_norm():
+    """
+    yield bubble, inputs, outputs
+    :return:
+    """
+    for data, dim, epsilon in list_raw_l2_norm():
+        x = numpy.asarray(data, dtype=numpy.float32)
+        N = x.shape[0]
+        y = numpy.zeros_like(x)
+        for i in range(N):
+            y[i, :] = x[i, :] / numpy.sqrt(numpy.sum(x[i, :] ** 2) + epsilon)
+
+        l2_norm_data = ts.menu.data(name="data", value=data)
+        l2_norm = ts.zoo.l2_norm(
+            name="l2_norm", x=l2_norm_data, dim=dim, epsilon=epsilon)
+
+        data = numpy.asarray(data, dtype=numpy.float32)
+        y = numpy.asarray(y, dtype=numpy.float32)
+
+        yield l2_norm, [data, ], [y, ]
+
+
+def generate_l2_norm(path):
+    """
+    generate test case
+    :param path: path to write case
+    :return:
+    """
+    iter = 1
+    for bubble, inputs, outputs in list_l2_norm():
+        case_path = os.path.join(path, str(iter))
+
+        write_case(case_path, bubble, inputs, outputs)
+
+        iter += 1
+
+
 if __name__ == '__main__':
     generate_strided_slice("strided_slice")
     generate_stack("stack")
+    generate_l2_norm("l2_norm")
