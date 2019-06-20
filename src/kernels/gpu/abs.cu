@@ -45,6 +45,35 @@ namespace ts {
             }
         }
 
+#ifdef TS_USE_CUDA_FP16
+        template<>
+        __global__ void abs_kernel<half>(const half* input_data, half* output_data, int size, half zero) {
+            int index = blockDim.x * blockIdx.x + threadIdx.x;
+            if (index < size)
+            {
+                auto val = input_data[index];
+                output_data[index] = val > zero ? val : -val;
+            }
+        }
+
+        template<>
+        void gpu_abs_compute_run<half>(const Tensor &x, Tensor &out) {
+            using T = half;
+            const T *input_data = x.data<T>();
+            T *output_data = out.data<T>();
+            int count = out.count();
+            // int bytes_num = count * sizeof(T);
+
+            dim3 blockSize(CUDA_THREAD_NUM);
+            dim3 gridSize(CUDA_BLOCK(count, blockSize.x));
+
+            auto cuda_stream = get_cuda_stream_on_context();
+
+            half zero = __float2half(0);
+            abs_kernel<T> << < gridSize, blockSize, 0, cuda_stream >> > (input_data, output_data, count, zero);
+        }
+#endif
+
         template<typename T>
         void gpu_abs_compute_run(const Tensor &x, Tensor &out) {
             const T *input_data = x.data<T>();
