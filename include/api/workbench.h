@@ -220,6 +220,15 @@ TENSOR_STACK_C_API ts_Program *ts_Workbench_compile_v2(ts_Workbench *workbench, 
 TENSOR_STACK_C_API ts_bool ts_Workbench_set_operator_param(ts_Workbench *workbench, const char *node_name,
         const char *param, const ts_Tensor *value);
 
+/**
+ * Get operator's summary
+ * @param workbench instance of workbench
+ * @return summary string, NULL if failed
+ * summary is a json string, like:
+ *     {"device": "gpu:0", "thread": 4, "shared": "97.8MB", "memory": {"cpu:0": "32B", "gpu:0": "7.3MB"}}
+ */
+TENSOR_STACK_C_API const char *ts_Workbench_summary(ts_Workbench *workbench);
+
 
 #ifdef __cplusplus
 }

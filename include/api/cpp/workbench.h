@@ -210,6 +210,12 @@ namespace ts {
                         m_impl.get(), node_name.c_str(), param.c_str(), value.get_raw()))
             }
 
+            std::string summary() const {
+                auto json = ts_Workbench_summary(m_impl.get());
+                TS_API_AUTO_CHECK(json != nullptr);
+                return json;
+            }
+
         private:
             Workbench(raw *ptr) : m_impl(pack(ptr)) {}
 
