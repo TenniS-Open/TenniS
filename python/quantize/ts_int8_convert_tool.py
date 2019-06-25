@@ -38,7 +38,8 @@ def parse_args():
     parser.add_argument('--dataset_path', help='Calibration dataset path', type=str, default=None)
     parser.add_argument('--model_path', help='Tensorstack model path', type=str, default=None)
     parser.add_argument('--device', help='compute device:cpu or gpu', type=str, default='cpu')
-    parser.add_argument('--output', help='save path for calibration table file', type=str, default=None) 
+    parser.add_argument('--output_table', help='save path for calibration table file', type=str, default=None) 
+    parser.add_argument('--output_module', help='save path for int8 module file', type=str, default=None) 
 
     args = parser.parse_args()
     return args,parser
@@ -81,19 +82,13 @@ def convert():
     args,parser = parse_args()
     print(args)
 
-    # num_bins = args.num_bins
-    # num_quantized_bins = args.num_quantized_bins
-    # model_path = args.model_path
-    # dataset_path = args.dataset_path
-    # compute_device = args.device
-    # output_path = args.output  
-    num_bins = 2048
-    num_quantized_bins = 127
-    model_path = "D:/yang/workPro/tensorStack/TensorStack/model/RN30.tsm"
-    dataset_path = "D:/yang/workPro/tensorStack/TensorStack/Quantize/2kx2k/quantization_248x248"
-    compute_device = "cpu"
-    output_path = "test.table"
-    output_module = "RN30_INT8_py.tsm"
+    num_bins = args.num_bins
+    num_quantized_bins = args.num_quantized_bins
+    model_path = args.model_path
+    dataset_path = args.dataset_path
+    compute_device = args.device
+    output_path = args.output_table
+    output_module = args.output_module
 
     node_list = quantize.QuantizNodeList()  
 
