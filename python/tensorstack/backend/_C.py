@@ -399,6 +399,13 @@ ts_intime_cast = __TS_IMPORT(
     ts_DTYPE,               # dtype
 )
 
+ts_intime_resize2d = __TS_IMPORT(
+    lib, "ts_intime_resize2d", POINTER(ts_Tensor),
+    POINTER(ts_Tensor),     # x
+    POINTER(ts_Tensor),     # size
+    c_int32,                # method
+)
+
 
 """ ================================================================================================================ +++
 operator.h

@@ -1248,3 +1248,12 @@ class intime(object):
         y = _C.ts_intime_cast(x, dtype)
         _C.ts_api_check_pointer(y)
         return Tensor(y)
+
+    @staticmethod
+    def resize2d(x, size, method):
+        x = Tensor(x)
+        size = Tensor(size, dtype=INT32)
+        assert method is None or method in {ResizeMethod.BICUBIC, ResizeMethod.BILINEAR, ResizeMethod.NEAREST}
+        y = _C.ts_intime_resize2d(x, size, method)
+        _C.ts_api_check_pointer(y)
+        return Tensor(y)
