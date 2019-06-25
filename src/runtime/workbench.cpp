@@ -560,9 +560,20 @@ namespace ts {
     }
 
     const std::string &Workbench::summary() {
+        uint64_t shared_memory = 0;
+        if (m_desktop) {
+            auto &stack = m_desktop->data_sagment();
+            auto size = stack.size();
+            for (size_t i = 0; i < size; ++i) {
+                auto &tensor = stack[i];
+                shared_memory += tensor.count() * tensor.proto().type_bytes();
+            }
+        }
+
         std::ostringstream oss;
         oss << "{\"device\": \"" << m_device_context.computing_device << "\""
             << ", \"thread\": " << m_runtime_context.get_computing_thread_number()
+            << ", \"shared\": \"" << memory_size_string(shared_memory) << "\""
             << ", \"memory\": " << m_flow_memory->summary()
             << "}";
         m_summary = oss.str();
