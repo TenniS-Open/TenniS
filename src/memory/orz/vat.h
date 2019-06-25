@@ -56,6 +56,7 @@ namespace ts {
 
         Vat &operator=(Vat &&that);
 
+        uint64_t summary() const;
     private:
         Vat(const Vat &that) = delete;
 

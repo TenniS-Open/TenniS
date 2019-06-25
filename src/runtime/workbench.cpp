@@ -558,6 +558,16 @@ namespace ts {
 
         this->run();
     }
+
+    const std::string &Workbench::summary() {
+        std::ostringstream oss;
+        oss << "{\"device\": \"" << m_device_context.computing_device << "\""
+            << ", \"thread\": " << m_runtime_context.get_computing_thread_number()
+            << ", \"memory\": " << m_flow_memory->summary()
+            << "}";
+        m_summary = oss.str();
+        return m_summary;
+    }
 }
 
 TS_LITE_CONTEXT(ts::Workbench)

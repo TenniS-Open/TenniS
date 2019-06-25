@@ -56,6 +56,8 @@ namespace ts {
     TS_DEBUG_API std::vector<std::string> Split(const std::string &str, const std::string &sep, size_t _size = 1);
 
     TS_DEBUG_API std::string Join(const std::vector<std::string>& list, const std::string &sep);
+
+    TS_DEBUG_API  std::string memory_size_string(uint64_t memory_size);
 }
 
 

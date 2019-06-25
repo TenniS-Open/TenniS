@@ -25,6 +25,12 @@ namespace ts {
          * @return allocated memory
          */
         virtual Memory alloc(size_t size) = 0;
+
+        /**
+         * Get memory size under control
+         * @return
+         */
+        virtual uint64_t summary() const { return 0; };
     };
 
     class TS_DEBUG_API DynamicMemoryController : public MemoryController {
