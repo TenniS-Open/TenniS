@@ -67,6 +67,8 @@ namespace ts {
 
         void set_operator_param(const std::string &node_name, const std::string &param, const Tensor &value);
 
+        const Stack &data_sagment() const;
+
     private:
         Program(const ComputingDevice &device);
         Program(const ComputingDevice &device, const std::shared_ptr<std::mutex> &mutex);
