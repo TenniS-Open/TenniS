@@ -38,6 +38,8 @@ namespace ts {
 
         Memory alloc(size_t size) override;
 
+        uint64_t summary() const override ;
+
     private:
         class Implement;
         Declare<Implement> m_impl;

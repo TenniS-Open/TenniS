@@ -40,6 +40,8 @@ namespace ts {
         virtual SyncMemory alloc(const MemoryDevice &device, size_t size) = 0;
 
         virtual SyncMemoryController::shared clone() const = 0;
+
+        virtual std::string summary() const { return "{}"; }
     };
 
     class TS_DEBUG_API SyncDeviceMemoryController : public SyncMemoryController {
@@ -113,6 +115,21 @@ namespace ts {
                 memcpy(to_memory, from_memory);
                 return to_memory;
             };
+        }
+
+        std::string summary() const override {
+            std::ostringstream oss;
+            oss << "{";
+            bool comma = false;
+            m_sync_controllers.foreach([&](
+                    const typename SyncControllerBlock::key_t &device,
+                    const typename SyncControllerBlock::value_t &controller){
+                if (comma) oss << ", ";
+                else comma = true;
+                oss << "\"" << device << "\": \"" << memory_size_string(controller->summary()) << "\"";
+            });
+            oss << "}";
+            return oss.str();
         }
 
     private:

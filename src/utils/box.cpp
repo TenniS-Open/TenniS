@@ -162,4 +162,23 @@ namespace ts {
         }
         return oss.str();
     }
+
+    std::string memory_size_string(uint64_t memory_size) {
+        static const char *base[] = {"B", "KB", "MB", "GB", "TB"};
+        static const uint64_t base_size = sizeof(base) / sizeof(base[0]);
+        auto number = double(memory_size);
+        uint64_t base_time = 0;
+        while (number >= 1024.0 && base_time + 1 < base_size) {
+            number /= 1024.0;
+            base_time++;
+        }
+        number = std::round(number * 10.0) / 10.0;
+        std::ostringstream oss;
+        if (uint64_t(number * 10) % 10 == 0) {
+            oss << std::fixed << std::setprecision(0) << number << base[base_time];
+        } else {
+            oss << std::fixed << std::setprecision(1) << number << base[base_time];
+        }
+        return oss.str();
+    }
 }
