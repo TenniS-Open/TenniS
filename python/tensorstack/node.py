@@ -184,7 +184,7 @@ def read_bubble(stream):
         v = read_tensor(stream=stream)
         params[k] = v
         size -= 1
-    output_count = None if Node.RetentionParam.output_count not in params else params[Node.RetentionParam.output_count]
+    output_count = 1 if Node.RetentionParam.output_count not in params else params[Node.RetentionParam.output_count]
     if output_count != 1:
         raise Exception("All operators' output count must be 1.")
     node = Node(op=to_str(params[Node.RetentionParam.op]),
