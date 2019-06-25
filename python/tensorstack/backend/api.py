@@ -44,12 +44,14 @@ def last_error_message():
     """
     :return: Last error message
     """
-    return str(_C.ts_last_error_message())
+    message = _C.ts_last_error_message()
+    return message.decode()
 
 
 def set_error_message(message):
     # type: (str) -> None
-    _C.ts_set_error_message(str(message))
+    message = message.encode()
+    _C.ts_set_error_message(message)
 
 
 def setup():
@@ -917,6 +919,12 @@ class Workbench(object):
         param = param.encode()
         value = Tensor(value)
         _C.ts_api_check_bool(_C.ts_Workbench_set_operator_param(self, node_name, param, value))
+
+    def summary(self):
+        # type: () -> str
+        s = _C.ts_Workbench_summary(self)
+        _C.ts_api_check_pointer(s)
+        return str(s.decode())
 
 
 class OperatorParams(object):

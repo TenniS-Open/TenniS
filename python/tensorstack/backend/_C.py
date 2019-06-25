@@ -55,6 +55,7 @@ def ts_api_check_pointer(pointer):
     if not pointer:
         import sys
         message = ts_last_error_message()
+        message = message.decode()
         # sys.stderr.write("[ERROR]: {}\n".format(message))
         raise Exception(message)
 
@@ -64,6 +65,7 @@ def ts_api_check_bool(value):
     if not value:
         import sys
         message = ts_last_error_message()
+        message = message.decode()
         # sys.stderr.write("[ERROR]: {}\n".format(message))
         raise Exception(message)
 
@@ -347,6 +349,9 @@ ts_Workbench_compile_v2 = __TS_IMPORT(lib, "ts_Workbench_compile_v2",
 
 ts_Workbench_set_operator_param = __TS_IMPORT(lib, "ts_Workbench_set_operator_param",
                                               c_int32, POINTER(ts_Workbench), c_char_p, c_char_p, POINTER(ts_Tensor))
+
+ts_Workbench_summary = __TS_IMPORT(lib, "ts_Workbench_summary",
+                                   c_char_p, POINTER(ts_Workbench))
 
 
 """ ================================================================================================================ +++

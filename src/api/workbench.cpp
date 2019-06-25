@@ -202,3 +202,10 @@ ts_bool ts_Workbench_set_operator_param(ts_Workbench *workbench, const char *nod
         (*workbench)->set_operator_param(node_name, param, **value);
     RETURN_OR_CATCH(ts_true, ts_false)
 }
+
+const char *ts_Workbench_summary(ts_Workbench *workbench) {
+    TRY_HEAD
+        if (!workbench) throw Exception("NullPointerException: @param: 1");
+        auto summary = (*workbench)->summary().c_str();
+    RETURN_OR_CATCH(summary, nullptr)
+}
