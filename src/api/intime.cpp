@@ -80,3 +80,13 @@ ts_Tensor *ts_intime_cast(const ts_Tensor *x, ts_DTYPE dtype) {
         ));
     RETURN_OR_CATCH(dolly.release(), nullptr)
 }
+
+ts_Tensor *ts_intime_resize2d(const ts_Tensor *x, const ts_Tensor *size, int32_t method) {
+    TRY_HEAD
+        if (!x) throw Exception("NullPointerException: @param: 1");
+        if (!size) throw Exception("NullPointerException: @param: 2");
+        std::unique_ptr<ts_Tensor> dolly(new ts_Tensor(
+                intime::resize2d(**x, **size, ts::desc::ResizeType(method))
+        ));
+    RETURN_OR_CATCH(dolly.release(), nullptr)
+}

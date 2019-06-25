@@ -7,6 +7,7 @@
 
 #include "tensor.h"
 #include "../intime.h"
+#include "../image_filter.h"
 
 namespace ts {
     namespace api {
@@ -18,6 +19,15 @@ namespace ts {
 
                 int32_t first = 0;
                 int32_t second = 0;
+            };
+
+            /**
+             * @see ts_ResizeMethod
+             */
+            enum class ResizeMethod : int32_t {
+                BICUBIC = TS_RESIZE_BICUBIC,
+                BILINEAR = TS_RESIZE_BILINEAR,
+                NEAREST = TS_RESIZE_NEAREST,
             };
 
             inline Tensor transpose(const Tensor &x, const std::vector<int32_t> &permute) {
@@ -67,6 +77,12 @@ namespace ts {
 
             inline Tensor cast(const Tensor &x, DTYPE dtype) {
                 auto y = ts_intime_cast(x.get_raw(), dtype);
+                TS_API_AUTO_CHECK(y != nullptr);
+                return Tensor::NewRef(y);
+            }
+
+            inline Tensor resize2d(const Tensor &x, const Tensor &size, ResizeMethod method = ResizeMethod::BILINEAR) {
+                auto y = ts_intime_resize2d(x.get_raw(), size.get_raw(), int32_t(method));
                 TS_API_AUTO_CHECK(y != nullptr);
                 return Tensor::NewRef(y);
             }
