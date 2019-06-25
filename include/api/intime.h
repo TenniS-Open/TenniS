@@ -97,6 +97,17 @@ TENSOR_STACK_C_API ts_Tensor *ts_intime_pad(const ts_Tensor *x, const ts_Tensor 
  */
 TENSOR_STACK_C_API ts_Tensor *ts_intime_cast(const ts_Tensor *x, ts_DTYPE dtype);
 
+/**
+ * Return resized tensor
+ * @param x input tensor
+ * @param size size tensor, size.size(0) same as x.dims
+ * @param method 0-BILINEAR, 1-BICUBIC, 2-NEAREST, @sa ts_ResizeMethod
+ * @return new reference tensor, nullptr if failed.
+ * @note call ts_Workbench_setup_context to fix Exception "Must bind Workbench before run"
+ */
+TENSOR_STACK_C_API ts_Tensor *ts_intime_resize2d(const ts_Tensor *x, const ts_Tensor *size, int32_t method);
+
+
 #ifdef __cplusplus
 }
 #endif
