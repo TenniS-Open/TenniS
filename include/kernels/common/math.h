@@ -25,6 +25,26 @@ namespace ts {
     }
 
     template <>
+    inline uint8_t abs(uint8_t value) {
+        return value;
+    }
+
+    template <>
+    inline uint16_t abs(uint16_t value) {
+        return value;
+    }
+
+    template <>
+    inline uint32_t abs(uint32_t value) {
+        return value;
+    }
+
+    template <>
+    inline uint64_t abs(uint64_t value) {
+        return value;
+    }
+
+    template <>
     inline float abs(float value) {
         using namespace std;
         return fabsf(value);
