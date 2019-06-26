@@ -41,7 +41,9 @@ namespace ts {
             auto &x = stack[0];
             TS_AUTO_CHECK(x.dims() > 0);
 
-            if (x.size(x.dims() - 1) == 1) return 1;
+            auto channels = x.size(x.dims() - 1);
+
+            if (channels == 1) return 1;
 
             auto output_size = x.sizes();
             output_size.back() = 1;
@@ -53,13 +55,13 @@ namespace ts {
 
             auto scale = m_scale;
             if (scale.empty()) {
-                if (x.size(x.dims() - 1) != 3) {
+                if (channels != 3) {
                     TS_LOG_ERROR << "Can not force image " << to_string(x.sizes()) << " to gray." << eject;
                 }
                 static const std::vector<float> bgr_scale = {0.114, 0.587, 0.299};
                 force_gray(image, bgr_scale, out);
             } else {
-                if (x.size(x.dims() - 1) != m_scale.size()) {
+                if (channels != m_scale.size()) {
                     TS_LOG_ERROR << "Can not force image " << to_string(x.sizes()) << " to gray." << eject;
                 }
                 force_gray(image, m_scale, out);

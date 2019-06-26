@@ -250,4 +250,29 @@ namespace ts {
         (void)(node);
         m_impl->m_compiled = false;
     }
+
+    void ImageFilter::force_color() {
+        ctx::bind<Graph> _bind_graph(m_impl->m_graph.get());
+        auto top = m_impl->m_graph->nodes().back();
+        auto node = bubble::op(serial_name(), name::layer::force_color(), {top});
+        (void)(node);
+        m_impl->m_compiled = false;
+    }
+
+    void ImageFilter::force_gray() {
+        ctx::bind<Graph> _bind_graph(m_impl->m_graph.get());
+        auto top = m_impl->m_graph->nodes().back();
+        auto node = bubble::op(serial_name(), name::layer::force_gray(), {top});
+        (void)(node);
+        m_impl->m_compiled = false;
+    }
+
+    void ImageFilter::force_gray(const std::vector<float> &scale) {
+        auto scale_tensor = tensor::build(FLOAT32, {int32_t(scale.size())}, scale);
+        ctx::bind<Graph> _bind_graph(m_impl->m_graph.get());
+        auto top = m_impl->m_graph->nodes().back();
+        auto node = bubble::op(serial_name(), name::layer::force_gray(), {top});
+        node->set(name::scale, scale_tensor);
+        m_impl->m_compiled = false;
+    }
 }
