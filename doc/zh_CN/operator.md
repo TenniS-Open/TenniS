@@ -1039,6 +1039,40 @@ Return `\frac{exp(x)-exp(-x)}{exp(x)+exp(-x)}`, equals `2 * sigmoid(2 * x) - 1`.
 ### abs(x..device) -> y..device
 Return `abs(x)`
 
+
+### force_gray(x..device) -> y..device
+Return convert image to gray mode. Assume that channel is last dim.
+In:  
+- `x` `Tensor` Input image.
+
+Out:  
+- `y` `Tensor`
+
+Param:  
+- `scale` `FloatArray` `Optional` `Default [0.114, 0.587, 0.299]` for `BGR` format.
+
+Description:  
+`x.shape[-1]` equals the `dims` of `map` or `1` 
+
+
+### force_color(x..device) -> y..device
+Return convert image to color mode. Assume that channel is last dim.
+In:  
+- `x` `Tensor` Input image.
+
+Out:  
+- `y` `Tensor`
+
+
+### convert_color(x..device, code..host) -> y..device = delete
+In:  
+- `x` `Tensor` Input image.
+- `code` `Int`
+
+Out:  
+- `y` `Tensor`
+
+
 ## 附录
 
 1. 在做基础运算的时候，`x`和`a`有会三种意义，分别为`标量`，`张量`和`广播张量`。这里的广播张量的意义为：
