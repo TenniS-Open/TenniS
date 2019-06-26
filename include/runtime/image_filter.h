@@ -58,6 +58,16 @@ namespace ts {
         void letterbox(int width, int height, float outer_value = 0, ResizeMethod method = ResizeMethod::BILINEAR);
 
         void divided(int width, int height, float padding_value);
+        
+        void force_color();
+        
+        void force_gray();
+        
+        /**
+         * ensure image to gray
+         * @param scale [0.114, 0.587, 0.299] as BGR format may give
+         */
+        void force_gray(const std::vector<float> &scale);
 
         /**
          * Clear all set processor

@@ -106,6 +106,10 @@ namespace ts {
             const string &yolo_poster() TS_NOEXCEPT { static string str = "yolo_poster"; return str; }
 
             const string &l2_norm() TS_NOEXCEPT { static string str = "l2_norm"; return str; }
+
+            // 2019-06-27
+            const string &force_color() TS_NOEXCEPT { static string str = "force_color"; return str; }
+            const string &force_gray() TS_NOEXCEPT { static string str = "force_gray"; return str; }
         }
 
         namespace typo {

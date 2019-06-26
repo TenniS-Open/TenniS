@@ -34,7 +34,13 @@ namespace ts {
             auto &x = stack[0];
             TS_AUTO_CHECK(x.dims() > 0);
 
-            if (x.size(x.dims() - 1) == 3) return 1;
+            auto channels = x.size(x.dims() - 1);
+
+            if (channels == 3) return 1;
+
+            if (channels != 1) {
+                TS_LOG_ERROR << "Can not force image " << to_string(x.sizes()) << " to color." << eject;
+            }
 
             auto output_size = x.sizes();
             output_size.back() = 3;

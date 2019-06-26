@@ -25,6 +25,11 @@ namespace ts {
 
             int infer(Stack &stack, std::vector<Tensor::Prototype> &output) override;
 
+            /**
+             *
+             * @param x channel = 1
+             * @param out
+             */
             virtual void force_color(const Tensor &x, Tensor &out) = 0;
 
         private:
