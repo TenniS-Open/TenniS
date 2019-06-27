@@ -9,13 +9,21 @@
 #include <cmath>
 #include <cstdlib>
 #include <math.h>
+#include <stdint.h>
 
 namespace ts {
-    inline bool near(double value1, double value2) {
+    template <typename T>
+    inline bool near(T value1, T value2) {
+        return (value1 - value2 == 0);
+    }
+
+    template<>
+    inline bool near<double>(double value1, double value2) {
         return (value1 > value2 ? value1 - value2 : value2 - value1) < DBL_EPSILON;
     }
 
-    inline bool near(float value1, float value2) {
+    template<>
+    inline bool near<float>(float value1, float value2) {
         return (value1 > value2 ? value1 - value2 : value2 - value1) < FLT_EPSILON;
     }
 

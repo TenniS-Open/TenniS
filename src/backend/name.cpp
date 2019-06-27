@@ -104,6 +104,9 @@ namespace ts {
 
             const string &yolo() TS_NOEXCEPT { static string str = "yolo"; return str; }
             const string &yolo_poster() TS_NOEXCEPT { static string str = "yolo_poster"; return str; }
+
+            const string &quantize() TS_NOEXCEPT { static string str = "quantize"; return str; }
+            const string &conv2d_quantized() TS_NOEXCEPT { static string str = "conv2d_quantized"; return str; }
         }
 
         namespace typo {
@@ -180,5 +183,8 @@ namespace ts {
 
         string outer_value = "outer_value";
         string scale = "scale";
+
+        string quantize_scale = "quantize_scale";
+        string dequantize_scales = "dequantize_scales";
     }
 }

@@ -24,9 +24,9 @@
 
 namespace ts {
     namespace cpu {
-        template<typename T>
-        inline T inline_dot(int N, const T *x, int incx, const T *y, int incy) {
-            T sum = 0;
+        template<typename T_IN,typename T_OUT>
+        inline T_OUT inline_dot(int N, const T_IN *x, int incx, const T_IN *y, int incy) {
+            T_OUT sum = 0;
 
             const int BLOCK = 4;
             int BODY = N / BLOCK, TAIL = N % BLOCK;
@@ -44,7 +44,7 @@ namespace ts {
         }
 #ifdef TS_USE_SIMD
         template <>
-        inline float inline_dot<float>(int N, const float *x, int incx, const float *y, int incy) {
+        inline float inline_dot<float,float>(int N, const float *x, int incx, const float *y, int incy) {
             const auto incx1 = incx;
             const auto incx2 = incx1 + incx;
             const auto incx3 = incx2 + incx;
@@ -76,10 +76,10 @@ namespace ts {
         }
 #endif
 
-        template<typename T>
-        inline void inline_zero(int N, T *x, int incx) {
+        template<typename T_IN>
+        inline void inline_zero(int N, T_IN *x, int incx) {
             if (incx == 1) {
-                std::memset(x, 0, N * sizeof(T));
+                std::memset(x, 0, N * sizeof(T_IN));
                 return;
             }
             TS_PARALLEL_RANGE_BEGIN(range, 0, N)
@@ -98,11 +98,11 @@ namespace ts {
             TS_PARALLEL_RANGE_END()
         }
 
-        template<typename T>
-        inline void inline_scal(int N, T alpha, T *x, int incx) {
-            if (ts::near(alpha, 1)) return; // TODO: update float number equal check method
-            if (ts::near(alpha, 0)) {
-                inline_zero<T>(N, x, incx);
+        template<typename T_IN>
+        inline void inline_scal(int N, T_IN alpha, T_IN *x, int incx) {
+            if (ts::near(alpha, T_IN(1))) return; // TODO: update float number equal check method
+            if (ts::near(alpha, T_IN(0))) {
+                inline_zero<T_IN>(N, x, incx);
                 return;
             }
             // use thread
@@ -123,30 +123,30 @@ namespace ts {
         }
 
 
-        template<typename T>
-        T math<T>::dot(int N, const T *x, int incx, const T *y, int incy) {
-            std::vector<T> parallel_sum(TS_PARALLEL_SIZE, T(0));
+        template<typename T_IN,typename T_OUT>
+        T_OUT math<T_IN,T_OUT>::dot(int N, const T_IN *x, int incx, const T_IN *y, int incy) {
+            std::vector<T_OUT> parallel_sum(TS_PARALLEL_SIZE, T_OUT(0));
             TS_PARALLEL_RANGE_BEGIN(range, 0, N)
                     auto xx = x + range.first * incx;
                     auto yy = y + range.first * incy;
                     const auto count = range.second - range.first;
-                    parallel_sum[__parallel_id] += inline_dot<T>(count, xx, incx, yy, incy);
+                    parallel_sum[__parallel_id] += inline_dot<T_IN,T_OUT>(count, xx, incx, yy, incy);
             TS_PARALLEL_RANGE_END()
-            T sum = 0;
+            T_OUT sum = 0;
             for (auto value : parallel_sum) sum += value;
             return sum;
         }
 
-        template<typename T>
+        template<typename T_IN,typename T_OUT>
         inline void inline_gemm_row_major(
                 blas::Transpose TransA,
                 blas::Transpose TransB,
                 int M, int N, int K,
-                T alpha,
-                const T *A, int lda,
-                const T *B, int ldb,
-                T beta,
-                T *C, int ldc) {
+                T_IN alpha,
+                const T_IN *A, int lda,
+                const T_IN *B, int ldb,
+                T_IN beta,
+                T_OUT *C, int ldc) {
             // TODO: check if lda, ldb, ldc use correct
             TS_AUTO_CHECK(lda >= (TransA == blas::NoTrans ? K : M));
             TS_AUTO_CHECK(ldb >= (TransB == blas::NoTrans ? N : K));
@@ -156,50 +156,50 @@ namespace ts {
 
             // calculate beta * C
             // C is RowMajor
-            if (ldc == N) inline_scal(M * N, beta, C, 1);
+            if (ldc == N) inline_scal<T_OUT>(M * N, beta, C, 1);
             else {
                 TS_PARALLEL_FOR_BEGIN(m, 0, M)
                             auto CC = &C[m * ldc];
-                            inline_scal(N, beta, CC, 1);
+                            inline_scal<T_OUT>(N, beta, CC, 1);
                 TS_PARALLEL_FOR_END()
             }
 
-            if (ts::near(alpha, 0)) return;
+            if (ts::near(alpha, T_IN(0))) return;
 
             unsigned int condition = (TransA == blas::NoTrans ? 0U : 1U) | ((TransB == blas::NoTrans ? 0U : 2U));
             switch (condition) {
                 case 0: // A: NoTrans, B: NoTrans
                 TS_PARALLEL_FOR_BEGIN(i, 0, M)
-                            T *C_anchor = &C[i * ldc];
+                            T_OUT *C_anchor = &C[i * ldc];
                             for (int j = 0; j < N; ++j) {
-                                *C_anchor += alpha * inline_dot(K, &A[i * lda], 1, &B[j], ldb);
+                                *C_anchor += alpha * inline_dot<T_IN, T_OUT>(K, &A[i * lda], 1, &B[j], ldb);
                                 C_anchor++;
                             }
                 TS_PARALLEL_FOR_END()
                     break;
                 case 1: // A: Trans, B: NoTrans
                 TS_PARALLEL_FOR_BEGIN(i, 0, M)
-                            T *C_anchor = &C[i * ldc];
+                            T_OUT *C_anchor = &C[i * ldc];
                             for (int j = 0; j < N; ++j) {
-                                *C_anchor += alpha * inline_dot(K, &A[i], lda, &B[j], ldb);
+                                *C_anchor += alpha * inline_dot<T_IN, T_OUT>(K, &A[i], lda, &B[j], ldb);
                                 C_anchor++;
                             }
                 TS_PARALLEL_FOR_END()
                     break;
                 case 2: // A: NoTrans, B: Trans
                 TS_PARALLEL_FOR_BEGIN(i, 0, M)
-                            T *C_anchor = &C[i * ldc];
+                            T_OUT *C_anchor = &C[i * ldc];
                             for (int j = 0; j < N; ++j) {
-                                *C_anchor += alpha * inline_dot(K, &A[i * lda], 1, &B[j * ldb], 1);
+                                *C_anchor += alpha * inline_dot<T_IN, T_OUT>(K, &A[i * lda], 1, &B[j * ldb], 1);
                                 C_anchor++;
                             }
                 TS_PARALLEL_FOR_END()
                     break;
                 default: // A: Trans, B: Trans
                 TS_PARALLEL_FOR_BEGIN(i, 0, M)
-                            T *C_anchor = &C[i * ldc];
+                            T_OUT *C_anchor = &C[i * ldc];
                             for (int j = 0; j < N; ++j) {
-                                *C_anchor += alpha * inline_dot(K, &A[i], lda, &B[j * ldb], 1);
+                                *C_anchor += alpha * inline_dot<T_IN, T_OUT>(K, &A[i], lda, &B[j * ldb], 1);
                                 C_anchor++;
                             }
                 TS_PARALLEL_FOR_END()
@@ -208,42 +208,42 @@ namespace ts {
         }
 
         // TODO: it has deviation in some case, when N, M, K is large
-        template<typename T>
+        template<typename T_IN,typename T_OUT>
         void
-        math<T>::gemm(
+        math<T_IN,T_OUT>::gemm(
                 blas::Order Order,
                 blas::Transpose TransA,
                 blas::Transpose TransB,
                 int M, int N, int K,
-                T alpha,
-                const T *A, int lda,
-                const T *B, int ldb,
-                T beta,
-                T *C, int ldc) {
+                T_IN alpha,
+                const T_IN *A, int lda,
+                const T_IN *B, int ldb,
+                T_IN beta,
+                T_OUT *C, int ldc) {
             if (Order == blas::ColMajor) {
-                inline_gemm_row_major<T>(TransB, TransA, N, M, K, alpha, B, ldb, A, lda, beta, C, ldc);
+                inline_gemm_row_major<T_IN, T_OUT>(TransB, TransA, N, M, K, alpha, B, ldb, A, lda, beta, C, ldc);
             } else {
-                inline_gemm_row_major<T>(TransA, TransB, M, N, K, alpha, A, lda, B, ldb, beta, C, ldc);
+                inline_gemm_row_major<T_IN, T_OUT>(TransA, TransB, M, N, K, alpha, A, lda, B, ldb, beta, C, ldc);
             }
         }
 
-        template<typename T>
-        T math<T>::dot(int N, const T *x, const T *y) {
+        template<typename T_IN,typename T_OUT>
+        T_OUT math<T_IN,T_OUT>::dot(int N, const T_IN *x, const T_IN *y) {
             return dot(N, x, 1, y, 1);
         }
 
-        template<typename T>
-        void math<T>::gemm(blas::Transpose TransA, blas::Transpose TransB, int M, int N, int K, T alpha, const T *A,
-                           const T *B, T beta, T *C) {
+        template<typename T_IN, typename T_OUT>
+        void math<T_IN, T_OUT>::gemm(blas::Transpose TransA, blas::Transpose TransB, int M, int N, int K, T_IN alpha, const T_IN *A,
+                           const T_IN *B, T_IN beta, T_OUT *C) {
             int lda = (TransA == blas::NoTrans ? K : M);
             int ldb = (TransB == blas::NoTrans ? N : K);
             int ldc = N;
-            inline_gemm_row_major<T>(TransA, TransB, M, N, K, alpha, A, lda, B, ldb, beta, C, ldc);
+            inline_gemm_row_major<T_IN, T_OUT>(TransA, TransB, M, N, K, alpha, A, lda, B, ldb, beta, C, ldc);
         }
 
-        template<typename T>
-        inline T inline_asum(int N, const T *x, int incx) {
-            T sum = 0;
+        template<typename T_IN, typename T_OUT>
+        inline T_OUT inline_asum(int N, const T_IN *x, int incx) {
+            T_OUT sum = 0;
             // block: 4
             int i = 0;
             static const int block_size = 4;
@@ -260,25 +260,26 @@ namespace ts {
             return sum;
         }
 
-        template<typename T>
-        T math<T>::asum(int N, const T *x, int incx) {
-            std::vector<T> parallel_sum(TS_PARALLEL_SIZE, T(0));
+        template<typename T_IN, typename T_OUT>
+        T_OUT math<T_IN, T_OUT>::asum(int N, const T_IN *x, int incx) {
+            std::vector<T_OUT> parallel_sum(TS_PARALLEL_SIZE, T_OUT(0));
             TS_PARALLEL_RANGE_BEGIN(range, 0, N)
-                    const T *xx = x + range.first * incx;
+                    const T_IN *xx = x + range.first * incx;
                     const auto count = range.second - range.first;
-                    parallel_sum[__parallel_id] += inline_asum<T>(count, xx, incx);
+                    parallel_sum[__parallel_id] += inline_asum<T_IN, T_OUT>(count, xx, incx);
             TS_PARALLEL_RANGE_END()
-            T sum = 0;
+            T_OUT sum = 0;
             for (auto value : parallel_sum) sum += value;
             return sum;
         }
 
-        template<typename T>
-        T math<T>::abs(T val) {
-            return std::fabs(val);
+        template<typename T_IN, typename T_OUT>
+        T_OUT math<T_IN, T_OUT>::abs(T_IN val) {
+            return T_OUT(std::fabs(val));
         }
     }
 }
 
-template class ts::cpu::math<ts::dtype<ts::FLOAT32>::declare>;
-template class ts::cpu::math<ts::dtype<ts::FLOAT64>::declare>;
+template class ts::cpu::math<ts::dtype<ts::FLOAT32>::declare, ts::dtype<ts::FLOAT32>::declare>;
+template class ts::cpu::math<ts::dtype<ts::FLOAT64>::declare, ts::dtype<ts::FLOAT64>::declare>;
+template class ts::cpu::math<ts::dtype<ts::INT8>::declare, ts::dtype<ts::INT32>::declare>;
