@@ -209,6 +209,31 @@ TENSOR_STACK_C_API ts_bool ts_ImageFilter_resize_v2(ts_ImageFilter *filter, int3
 TENSOR_STACK_C_API ts_bool ts_ImageFilter_resize_scalar_v2(ts_ImageFilter *filter, int32_t width,
                                                            ts_ResizeMethod method);
 
+/**
+ * Add filter to stream: force image to color mode, may copy each gary channel to output channels
+ * @param filter the return value of ts_new_ImageFilter
+ * @return false if failed
+ */
+TENSOR_STACK_C_API ts_bool ts_ImageFilter_force_color(ts_ImageFilter *filter);
+
+/**
+ * Add filter to stream: force image to gray mode, use [0.114, 0.587, 0.299] converting BGR mode.
+ * @return false if failed
+ */
+TENSOR_STACK_C_API ts_bool ts_ImageFilter_force_gray(ts_ImageFilter *filter);
+
+/**
+ * Add filter to stream: force image to gray mode
+ * @param filter the return value of ts_new_ImageFilter
+ * @param scale scale value
+ * @param len length of given scale
+ * @return false if failed
+ * @note if scale is NULL or len is 0, this function same as ts_ImageFilter_force_gray
+ * @note use [0.114, 0.587, 0.299] converting BGR mode.
+ * @note use [0.299, 0.587, 0.114] converting RGB mode.
+ */
+TENSOR_STACK_C_API ts_bool ts_ImageFilter_force_gray_v2(ts_ImageFilter *filter, const float *scale, int32_t len);
+
 
 #ifdef __cplusplus
 }

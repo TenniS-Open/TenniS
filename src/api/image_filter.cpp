@@ -160,3 +160,25 @@ ts_bool ts_ImageFilter_letterbox_v2(ts_ImageFilter *filter, int32_t width, int32
         (*filter)->letterbox(width, height, outer_value, ImageFilter::ResizeMethod(int32_t(method)));
     RETURN_OR_CATCH(ts_true, ts_false)
 }
+
+ts_bool ts_ImageFilter_force_color(ts_ImageFilter *filter) {
+    TRY_HEAD
+        if (!filter) throw Exception("NullPointerException: @param: 1");
+        (*filter)->force_color();
+    RETURN_OR_CATCH(ts_true, ts_false)
+}
+
+ts_bool ts_ImageFilter_force_gray(ts_ImageFilter *filter) {
+    TRY_HEAD
+        if (!filter) throw Exception("NullPointerException: @param: 1");
+        (*filter)->force_gray();
+    RETURN_OR_CATCH(ts_true, ts_false)
+}
+
+ts_bool ts_ImageFilter_force_gray_v2(ts_ImageFilter *filter, const float *scale, int32_t len) {
+    TRY_HEAD
+        if (!filter) throw Exception("NullPointerException: @param: 1");
+        if (!scale) throw Exception("NullPointerException: @param: 2");
+        (*filter)->force_gray(std::vector<float>(scale, scale + len));
+    RETURN_OR_CATCH(ts_true, ts_false)
+}
