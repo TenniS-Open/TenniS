@@ -9,6 +9,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <math.h>
+#include <cstdint>
 
 namespace ts {
     inline bool near(double value1, double value2) {
