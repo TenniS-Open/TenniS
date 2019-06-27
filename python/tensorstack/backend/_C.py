@@ -283,6 +283,13 @@ ts_ImageFilter_resize_v2 = __TS_IMPORT(lib, "ts_ImageFilter_resize_v2",
 ts_ImageFilter_resize_scalar_v2 = __TS_IMPORT(lib, "ts_ImageFilter_resize_scalar_v2",
                                               ts_bool, POINTER(ts_ImageFilter), c_int32, ts_ResizeMethod)
 
+ts_ImageFilter_force_color = __TS_IMPORT(lib, "ts_ImageFilter_force_color", ts_bool, POINTER(ts_ImageFilter))
+
+ts_ImageFilter_force_gray = __TS_IMPORT(lib, "ts_ImageFilter_force_gray", ts_bool, POINTER(ts_ImageFilter))
+
+ts_ImageFilter_force_gray_v2 = __TS_IMPORT(lib, "ts_ImageFilter_force_gray_v2",
+                                           ts_bool, POINTER(ts_ImageFilter), POINTER(c_float), c_int32)
+
 
 """ ================================================================================================================ +++
 workbench.h

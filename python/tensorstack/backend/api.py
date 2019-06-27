@@ -725,6 +725,23 @@ class ImageFilter(object):
         _C.ts_api_check_pointer(y)
         return Tensor(y)
 
+    def force_color(self):
+        _C.ts_api_check_bool(_C.ts_ImageFilter_force_color(self))
+
+    def force_gray(self, scale=None):
+        # type: (List[float]) -> None
+        if scale is None:
+            _C.ts_api_check_bool(_C.ts_ImageFilter_force_gray(self))
+        else:
+            c_array, c_len, _ = _to_ctypes_array(scale, _C.c_float)
+            _C.ts_api_check_bool(_C.ts_ImageFilter_force_gray_v2(self, c_array, c_len))
+
+    def force_bgr2gray(self):
+        return self.force_gray([0.114, 0.587, 0.299])
+
+    def force_rgb2gray(self):
+        return self.force_gray([0.299, 0.587, 0.114])
+
 
 ResizeMethod = ImageFilter.ResizeMethod
 
