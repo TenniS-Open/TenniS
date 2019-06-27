@@ -10,6 +10,7 @@
 #include "core/device_context.h"
 #include "utils/ctxmgr_lite.h"
 #include "runtime/stack.h"
+#include <algorithm>
 
 namespace ts {
     namespace zoo {
