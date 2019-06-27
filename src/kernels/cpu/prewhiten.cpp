@@ -63,7 +63,7 @@ namespace ts {
 				DECLARE_TYPE_AND_RUN(FLOAT64, double);
 #undef DECLARE_TYPE_AND_RUN
 				default: {
-					TS_LOG_ERROR << "pre_whiten not support this data type: " << type_str(dtype) << eject;
+                    TS_LOG_ERROR << this->op() << " not support data type(" << dtype << "): " << type_str(dtype) << eject;
 					break;
 				}
 			}
