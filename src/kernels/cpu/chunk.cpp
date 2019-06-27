@@ -85,8 +85,8 @@ namespace ts {
                     cpu_chunk_run<uint128_t>(x, dim, out);
                     break;
                 default: {
-                    TS_LOG_ERROR << this->op() << " not support this data type: "
-                                 << type_str(x.proto().dtype()) << eject;
+                    auto dtype = x.dtype();
+                    TS_LOG_ERROR << this->op() << " not support data type(" << dtype << "): " << type_str(dtype) << eject;
                     break;
                 }
             }

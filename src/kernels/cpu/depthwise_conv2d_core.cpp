@@ -50,7 +50,7 @@ namespace ts {
                                     const Stride2D &stride, const Dilation2D &dilation, Conv2DFormat format,
                                     Tensor &out, Stack &stack) {
             if (format != FORMAT_NCHW) {
-                TS_LOG_ERROR << "Conv2D only support NCHW" << eject;
+                TS_LOG_ERROR << "DepthwiseConv2D only support NCHW" << eject;
             }
             DTYPE dtype = out.dtype();
             switch (dtype) {
@@ -60,7 +60,7 @@ namespace ts {
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
                 default: {
-                    TS_LOG_ERROR << "Conv2D not support this data type: " << type_str(dtype) << eject;
+                    TS_LOG_ERROR << "DepthwiseConv2D not support data type(" << dtype << "): " << type_str(dtype) << eject;
                     break;
                 }
             }
