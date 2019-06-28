@@ -21,7 +21,7 @@ inline _simd_int32x4 _simd_int32x4_set(_simd_int32 a, _simd_int32 b, _simd_int32
 }
 
 inline void _simd_int32x4_store(_simd_int32 *p, _simd_int32x4 m) {
-    _mm_store_si128((_simd_int32x4*)p, m);
+    _mm_storeu_si128((_simd_int32x4*)p, m);
 }
 
 inline _simd_int32x4 _simd_int32x4_add(_simd_int32x4 lhs, _simd_int32x4 rhs) {
@@ -30,10 +30,6 @@ inline _simd_int32x4 _simd_int32x4_add(_simd_int32x4 lhs, _simd_int32x4 rhs) {
 
 inline _simd_int32x4 _simd_int32x4_sub(_simd_int32x4 lhs, _simd_int32x4 rhs) {
     return _mm_sub_epi32(lhs, rhs);
-}
-
-inline _simd_int32x4 _simd_int32x4_mul(_simd_int32x4 lhs, _simd_int32x4 rhs) {
-    return _mm_mul_epi32(lhs, rhs);
 }
 
 inline _simd_int32x4x2 _simd_int32x4x2_load(const _simd_int32* p) {
@@ -46,7 +42,7 @@ inline _simd_int32x4x2 _simd_int32x4x2_set(_simd_int32 a, _simd_int32 b, _simd_i
 }
 
 inline void _simd_int32x4x2_store(_simd_int32 *p, _simd_int32x4x2 m) {
-    _mm256_store_si256((_simd_int32x4x2*)p, m);
+    _mm256_storeu_si256((_simd_int32x4x2*)p, m);
 }
 
 inline _simd_int32x4x2 _simd_int32x4x2_add(_simd_int32x4x2 lhs, _simd_int32x4x2 rhs) {
@@ -55,10 +51,6 @@ inline _simd_int32x4x2 _simd_int32x4x2_add(_simd_int32x4x2 lhs, _simd_int32x4x2 
 
 inline _simd_int32x4x2 _simd_int32x4x2_sub(_simd_int32x4x2 lhs, _simd_int32x4x2 rhs) {
     return _mm256_sub_epi32(lhs, rhs);
-}
-
-inline _simd_int32x4x2 _simd_int32x4x2_mul(_simd_int32x4x2 lhs, _simd_int32x4x2 rhs) {
-    return _mm256_mul_epi32(lhs, rhs);
 }
 
 
@@ -143,6 +135,10 @@ inline _simd_f32x4x2 _simd_f32x4x2_fmadd(_simd_f32x4x2 q0, _simd_f32x4x2 q1, _si
 //cast
 inline _simd_int32x4x2 _simd_floatx4x2_to_int32x4x2(_simd_f32x4x2 src) {
     return _mm256_cvtps_epi32(src);
+}
+
+inline _simd_f32x4x2 _simd_intx4x2_to_float32x4x2(_simd_int32x4x2 src) {
+    return _mm256_cvtepi32_ps(src);
 }
 
 #endif //TS_USE_AVX

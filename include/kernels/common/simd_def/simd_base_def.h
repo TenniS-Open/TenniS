@@ -2,10 +2,62 @@
 #define TENSORSTACK_KERNELS_COMMON_SIMD_DEF_SIMD_BASE_DEF_H
 
 #include <array>
+#include <math.h>
 
 using _simd_f32 = float;
 using _simd_f32x4 = std::array<_simd_f32, 4>;
 using _simd_f32x4x2 = std::array<_simd_f32, 8>;
+using _simd_int32 = int32_t;
+using _simd_int32x4 = std::array<_simd_int32, 4>;
+using _simd_int32x4x2 = std::array<_simd_int32, 8>;
+
+inline _simd_int32x4 _simd_int32x4_load(const _simd_int32* p) {
+    return{ p[0], p[1], p[2], p[3] };
+}
+
+inline _simd_int32x4 _simd_int32x4_set(_simd_int32 a, _simd_int32 b, _simd_int32 c, _simd_int32 d) {
+    return{ a, b, c, d };
+}
+
+inline void _simd_int32x4_store(_simd_int32 *p, _simd_int32x4 m) {
+    p[0] = m[0];
+    p[1] = m[1];
+    p[2] = m[2];
+    p[3] = m[3];
+}
+
+inline _simd_int32x4 _simd_int32x4_add(_simd_int32x4 lhs, _simd_int32x4 rhs) {
+    return{ lhs[0] + rhs[0], lhs[1] + rhs[1], lhs[2] + rhs[2], lhs[3] + rhs[3] };
+}
+
+inline _simd_int32x4 _simd_int32x4_sub(_simd_int32x4 lhs, _simd_int32x4 rhs) {
+    return{ lhs[0] - rhs[0], lhs[1] - rhs[1], lhs[2] - rhs[2], lhs[3] - rhs[3] };
+}
+
+inline _simd_int32x4x2 _simd_int32x4x2_load(const _simd_int32* p) {
+    return{ p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7] };
+}
+
+inline _simd_int32x4x2 _simd_int32x4x2_set(_simd_int32 a, _simd_int32 b, _simd_int32 c, _simd_int32 d,
+    _simd_int32 e, _simd_int32 f, _simd_int32 g, _simd_int32 h) {
+    return{ a, b, c, d, e, f, g, h };
+}
+
+inline void _simd_int32x4x2_store(_simd_int32 *p, _simd_int32x4x2 m) {
+    p[0] = m[0]; p[1] = m[1];
+    p[2] = m[2]; p[3] = m[3];
+    p[4] = m[4]; p[5] = m[5];
+    p[6] = m[6]; p[7] = m[7];
+}
+
+inline _simd_int32x4x2 _simd_int32x4x2_add(_simd_int32x4x2 lhs, _simd_int32x4x2 rhs) {
+    return{ lhs[0] + rhs[0], lhs[1] + rhs[1], lhs[2] + rhs[2], lhs[3] + rhs[3], lhs[4] + rhs[4], lhs[5] + rhs[5], lhs[6] + rhs[6], lhs[7] + rhs[7] };
+}
+
+inline _simd_int32x4x2 _simd_int32x4x2_sub(_simd_int32x4x2 lhs, _simd_int32x4x2 rhs) {
+    return{ lhs[0] - rhs[0], lhs[1] - rhs[1], lhs[2] - rhs[2], lhs[3] - rhs[3], lhs[4] - rhs[4], lhs[5] - rhs[5], lhs[6] - rhs[6], lhs[7] - rhs[7] };
+}
+
 
 inline _simd_f32x4 _simd_f32x4_load(const _simd_f32 *p) {
     return { p[0], p[1], p[2], p[3] };
@@ -105,6 +157,15 @@ inline _simd_f32x4x2 _simd_f32x4x2_div(_simd_f32x4x2 lhs, _simd_f32x4x2 rhs) {
 
 inline _simd_f32x4x2 _simd_f32x4x2_fmadd(_simd_f32x4x2 q0, _simd_f32x4x2 q1, _simd_f32x4x2 q2) {
     return {q0[0] * q1[0] + q2[0], q0[1] * q1[1] + q2[1], q0[2] * q1[2] + q2[2], q0[3] * q1[3] + q2[3], q0[4] * q1[4] + q2[4], q0[5] * q1[5] + q2[5], q0[6] * q1[6] + q2[6], q0[7] * q1[7] + q2[7]};
+}
+
+//cast
+inline _simd_int32x4x2 _simd_floatx4x2_to_int32x4x2(_simd_f32x4x2 src) {
+    return{ (int32_t)round(src[0]), (int32_t)round(src[1]), (int32_t)round(src[2]), (int32_t)round(src[3]),(int32_t)round(src[4]), (int32_t)round(src[5]), (int32_t)round(src[6]), (int32_t)round(src[7]) };
+}
+
+inline _simd_f32x4x2 _simd_intx4x2_to_float32x4x2(_simd_int32x4x2 src) {
+    return{ (float)src[0], (float)src[1], (float)src[2], (float)src[3],(float)src[4], (float)src[5], (float)src[6], (float)src[7] };
 }
 
 #endif //TENSORSTACK_KERNELS_COMMON_SIMD_DEF_SIMD_BASE_DEF_H

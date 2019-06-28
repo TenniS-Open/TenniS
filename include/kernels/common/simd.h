@@ -5,6 +5,7 @@
 #ifndef TENSORSTACK_KERNELS_COMMON_SIMD_H
 #define TENSORSTACK_KERNELS_COMMON_SIMD_H
 
+#include <stdint.h>
 //#include "simd_def.h"
 #ifdef TS_USE_AVX
 #include "simd_def/simd_avx_def.h"
@@ -199,10 +200,6 @@ namespace ts {
         return _simd_int32x4_sub(lhs.value, rhs.value);
     }
 
-    inline simd<int32_t, 4> operator*(const simd<int32_t, 4> &lhs, const simd<int32_t, 4> &rhs) {
-        return _simd_int32x4_mul(lhs.value, rhs.value);
-    }
-
     template<>
     class simd<int32_t, 8> : public simd_base<int32_t, 8> {
     public:
@@ -233,13 +230,13 @@ namespace ts {
         return _simd_int32x4x2_sub(lhs.value, rhs.value);
     }
 
-    inline simd<int32_t, 8> operator*(const simd<int32_t, 8> &lhs, const simd<int32_t, 8> &rhs) {
-        return _simd_int32x4x2_mul(lhs.value, rhs.value);
+    //cast
+    inline int32x4x2 floatx4x2_to_int32x4x2(const float32x4x2 &lhs) {
+        return _simd_floatx4x2_to_int32x4x2(lhs.value);
     }
 
-    //cast
-    inline simd<int32_t, 8> floatx4x2_to_int32x4x2(const simd<float, 8> &lhs) {
-        return _simd_floatx4x2_to_int32x4x2(lhs.value);
+    inline float32x4x2 intx4x2_to_float32x4x2(const int32x4x2 &lhs) {
+        return _simd_intx4x2_to_float32x4x2(lhs.value);
     }
 
 }
