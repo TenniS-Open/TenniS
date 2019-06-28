@@ -7,6 +7,7 @@
 #include <core/device.h>
 #include <utils/assert.h>
 
+#include "kernels/common/simd.h"
 #ifdef TS_USE_OPENMP
 #include "kernels/common/openmp.h"
 #endif
@@ -17,7 +18,7 @@ namespace ts {
         template<typename T>
         static void cpu_conv2d_nchw_compute_run(const Tensor &x, const Padding2D &padding, float padding_value,
                                            const Tensor &w, const Stride2D &stride, const Dilation2D &dilation,
-                                           std::vector<float>dequantize_scale, Tensor &out, Stack &stack) {
+                                           std::vector<float>dequantize_scales, Tensor &out, Stack &stack) {
             auto weight_shape = w.sizes();
             auto output_shape = out.sizes();
             auto x_shape = x.sizes();
@@ -78,34 +79,62 @@ namespace ts {
 
             //NOTE:fuse Dequantize(int32 to fp32) in conv2d_quantize now.
             auto input_data = output_int32.data<int32_t>();
-            int dequantize_group = dequantize_scale.size();
-            int output_count = out.count();
-            int loop_count = std::ceil(static_cast<float>(output_count) / dequantize_group);
-            int index = 0;
+            auto out_shape = out.sizes();
+            int channal_offset = out_shape[2] * out_shape[3];
+            int num_offset = out_shape[1] * channal_offset;
+            for (int n = 0; n < out_shape[0]; n++){
 #ifdef TS_USE_OPENMP
-            #pragma omp parallel for num_threads(openmp_threads())
+                #pragma omp parallel for num_threads(openmp_threads())
 #endif
-            for (int n = 0; n < dequantize_group; n++) {
-                float dquantize_scale = dequantize_scale[n];
-                int loop_count_temp = loop_count;
-                while (index < output_count && loop_count_temp) {
-                    poutput[index] = input_data[index] * dquantize_scale;
-                    index++;
-                    loop_count_temp--;
+                for (int c = 0; c < out_shape[1]; c++){
+                    auto input_cur = input_data + n * num_offset + c * channal_offset;
+                    float dequantize_scale = dequantize_scales[c];
+                    float32x4x2 dequantize_scale_x4x2(dequantize_scale);
+                    int count = channal_offset;
+                    int count_x8 = count >> 3;
+                    int remain = count_x8 << 3;
+                    for (int i = 0; i < count_x8; i++){
+                        int ii = i * 8;
+                        float32x4x2 input_x4x2 = intx4x2_to_float32x4x2(int32x4x2(&input_cur[ii]));
+                        float32x4x2 out_x4x2 = input_x4x2 * dequantize_scale_x4x2;
+                        out_x4x2.store(poutput);
+                        poutput += 8;
+                    }
+                    for (int i = remain; i < count; i++){
+                        *poutput++ = input_cur[i] * dequantize_scale;
+                    }
                 }
             }
+
+//            auto input_data = output_int32.data<int32_t>();
+//            int dequantize_group = dequantize_scales.size();
+//            int output_count = out.count();
+//            int loop_count = std::ceil(static_cast<float>(output_count) / dequantize_group);
+//            int index = 0;
+//#ifdef TS_USE_OPENMP
+//            #pragma omp parallel for num_threads(openmp_threads())
+//#endif
+//            for (int n = 0; n < dequantize_group; n++) {
+//                float dequantize_scale = dequantize_scales[n];
+//                int loop_count_temp = loop_count;
+//                while (index < output_count && loop_count_temp) {
+//                    poutput[index] = input_data[index] * dequantize_scale;
+//                    index++;
+//                    loop_count_temp--;
+//                }
+//            }
         }
 
         void Conv2DQuantizedCore::conv2d(const Tensor &x, const Padding2D &padding, float padding_value, const Tensor &w,
                             const Stride2D &stride, const Dilation2D &dilation, Conv2DFormat format, 
-                            std::vector<float>dequantize_scale,Tensor &out,Stack &stack) {
+                            std::vector<float>dequantize_scales,Tensor &out,Stack &stack) {
             if (format != FORMAT_NCHW) {
                 TS_LOG_ERROR << "Conv2D_quantized only support NCHW" << eject;
             }
             DTYPE dtype = x.dtype();
             switch (dtype) {
 #define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
-        case DTYPE: { cpu_conv2d_nchw_compute_run<TYPE>(x, padding, padding_value, w, stride, dilation, dequantize_scale, out, stack);; break; }
+        case DTYPE: { cpu_conv2d_nchw_compute_run<TYPE>(x, padding, padding_value, w, stride, dilation, dequantize_scales, out, stack);; break; }
                 //DECLARE_COMPUTE_RUN(FLOAT32, float);
                 //DECLARE_COMPUTE_RUN(FLOAT64, double);
                 DECLARE_COMPUTE_RUN(INT8, int8_t);
