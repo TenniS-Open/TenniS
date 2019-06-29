@@ -1072,6 +1072,20 @@ In:
 Out:  
 - `y` `Tensor`
 
+## norm_image(x) -> y
+Norm image with mean and std_dev.  
+In: `x`: `Tensor`  
+Out: `y`: `Tensor`  
+
+Param:
+- `epsilon` `Float`
+
+Description：  
+For each `x_i` run：
+```
+x_i = (x_i - mean(x_i)) / (std_dev(x_i) + epsilon)
+```
+
 
 ## 附录
 

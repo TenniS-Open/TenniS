@@ -123,6 +123,9 @@ namespace ts {
             // 2019-06-27
             TS_DEBUG_API const string &force_color() TS_NOEXCEPT;
             TS_DEBUG_API const string &force_gray() TS_NOEXCEPT;
+
+            // 2019-06-29
+            TS_DEBUG_API const string &norm_image() TS_NOEXCEPT;
         }
 
         namespace typo {

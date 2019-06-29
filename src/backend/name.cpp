@@ -110,6 +110,8 @@ namespace ts {
             // 2019-06-27
             const string &force_color() TS_NOEXCEPT { static string str = "force_color"; return str; }
             const string &force_gray() TS_NOEXCEPT { static string str = "force_gray"; return str; }
+
+            const string &norm_image() TS_NOEXCEPT { static string str = "norm_image"; return str; }
         }
 
         namespace typo {
