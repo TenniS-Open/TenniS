@@ -184,6 +184,10 @@ namespace ts {
                 force_gray({0.299, 0.587, 0.114});
             }
 
+            void norm_image(float epsilon) {
+                TS_API_AUTO_CHECK(ts_ImageFilter_norm_image(m_impl.get(), epsilon));
+            }
+
         private:
             ImageFilter(raw *ptr) : m_impl(pack(ptr)) {}
 

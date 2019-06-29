@@ -234,6 +234,14 @@ TENSOR_STACK_C_API ts_bool ts_ImageFilter_force_gray(ts_ImageFilter *filter);
  */
 TENSOR_STACK_C_API ts_bool ts_ImageFilter_force_gray_v2(ts_ImageFilter *filter, const float *scale, int32_t len);
 
+/**
+ * Add filter to stream: norm image; x = (x - mean) / (std_dev + epsilon)
+ * @param filter the return value of ts_new_ImageFilter
+ * @param epsilon epsilon value
+ * @return false if failed
+ */
+TENSOR_STACK_C_API ts_bool ts_ImageFilter_norm_image(ts_ImageFilter *filter, float epsilon);
+
 
 #ifdef __cplusplus
 }

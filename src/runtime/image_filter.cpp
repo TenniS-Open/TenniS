@@ -275,4 +275,12 @@ namespace ts {
         node->set(name::scale, scale_tensor);
         m_impl->m_compiled = false;
     }
+
+    void ImageFilter::norm_image(float epsilon) {
+        ctx::bind<Graph> _bind_graph(m_impl->m_graph.get());
+        auto top = m_impl->m_graph->nodes().back();
+        auto node = bubble::op(serial_name(), name::layer::norm_image(), {top});
+        node->set(name::epsilon, tensor::from<float>(epsilon));
+        m_impl->m_compiled = false;
+    }
 }

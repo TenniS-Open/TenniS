@@ -182,3 +182,10 @@ ts_bool ts_ImageFilter_force_gray_v2(ts_ImageFilter *filter, const float *scale,
         (*filter)->force_gray(std::vector<float>(scale, scale + len));
     RETURN_OR_CATCH(ts_true, ts_false)
 }
+
+ts_bool ts_ImageFilter_norm_image(ts_ImageFilter *filter, float epsilon) {
+    TRY_HEAD
+        if (!filter) throw Exception("NullPointerException: @param: 1");
+        (*filter)->norm_image(epsilon);
+    RETURN_OR_CATCH(ts_true, ts_false)
+}
