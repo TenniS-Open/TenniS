@@ -290,6 +290,8 @@ ts_ImageFilter_force_gray = __TS_IMPORT(lib, "ts_ImageFilter_force_gray", ts_boo
 ts_ImageFilter_force_gray_v2 = __TS_IMPORT(lib, "ts_ImageFilter_force_gray_v2",
                                            ts_bool, POINTER(ts_ImageFilter), POINTER(c_float), c_int32)
 
+ts_ImageFilter_norm_image = __TS_IMPORT(lib, "ts_ImageFilter_norm_image", ts_bool, POINTER(ts_ImageFilter), c_float)
+
 
 """ ================================================================================================================ +++
 workbench.h

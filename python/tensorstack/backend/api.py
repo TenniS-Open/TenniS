@@ -742,6 +742,10 @@ class ImageFilter(object):
     def force_rgb2gray(self):
         return self.force_gray([0.299, 0.587, 0.114])
 
+    def norm_image(self, epsilon):
+        # type: (float) -> None
+        _C.ts_api_check_bool(_C.ts_ImageFilter_norm_image(self, epsilon))
+
 
 ResizeMethod = ImageFilter.ResizeMethod
 

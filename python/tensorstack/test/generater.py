@@ -93,13 +93,55 @@ def list_tanh_case():
     """
     for data, dtype in list_raw_tanh_case():
         x = numpy.asarray(data, dtype=dtype)
-        y = numpy.exp(x) - numpy.exp(-x) / (numpy.exp(x) + numpy.exp(-x))
+        y = (numpy.exp(x) - numpy.exp(-x)) / (numpy.exp(x) + numpy.exp(-x))
 
         bubble_inputs = [x, ]
         bubble_outputs = [y, ]
 
         ts_input = ts.menu.param(name="")
         ts_node = ts.zoo.tanh(name="tanh", x=ts_input)
+
+        yield ts_node, bubble_inputs, bubble_outputs
+
+
+def list_raw_norm_image_case():
+    """
+    yield image, epsilon
+    :return:
+    """
+    import cv2
+    image = cv2.imread("face.png")
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    yield image, 1e-5
+
+
+def list_norm_image_case():
+    """
+    yield bubble, inputs, outputs
+    :return:
+    """
+    for image, epsilon in list_raw_norm_image_case():
+        import cv2
+        x = numpy.asarray(image, dtype=numpy.float32)
+        mean, std_dev = cv2.meanStdDev(x)
+        new_m = mean[0][0]
+        new_sd = std_dev[0][0]
+        y = (x - new_m) / (new_sd + epsilon)
+
+        print("mean={}, std_dev={}, epsilon={}".format(new_m, new_sd, epsilon))
+
+        x = numpy.expand_dims(x, 0)
+        y = numpy.expand_dims(y, 0)
+
+        print("x.shape={}".format(x.shape))
+        print("y.shape={}".format(y.shape))
+
+        bubble_inputs = [x, ]
+        bubble_outputs = [y, ]
+
+        ts_input = ts.menu.param(name="")
+        ts_node = ts.menu.op(name="norm_image", op_name="norm_image", inputs=[ts_input, ])
+        ts_node.set("epsilon", epsilon, numpy.float32)
 
         yield ts_node, bubble_inputs, bubble_outputs
 
@@ -123,3 +165,4 @@ def generate_func(path, func):
 if __name__ == '__main__':
     generate_func("abs", list_abs_case)
     generate_func("tanh", list_tanh_case)
+    generate_func("norm_image", list_norm_image_case)

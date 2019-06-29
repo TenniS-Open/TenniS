@@ -69,6 +69,8 @@ namespace ts {
          */
         void force_gray(const std::vector<float> &scale);
 
+        void norm_image(float epsilon);
+
         /**
          * Clear all set processor
          */
