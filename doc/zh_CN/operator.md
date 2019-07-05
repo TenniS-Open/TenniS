@@ -371,6 +371,8 @@ output_w = floor((width + pad_w -
 
 Attr: `transpose` `bool Default=false`, if do transpose on RHS before ip 
 
+Notice: if x.dims > 2, do `flatten(x) \dot a` instead.
+
 ### relu(x) -> y
 描述： `y = x > 0 ? x : 0`  
 输入: `x`: `Tensor`  
