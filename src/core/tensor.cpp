@@ -15,6 +15,7 @@
 
 #include <core/device_context.h>
 #include <runtime/runtime.h>
+#include <runtime/workbench.h>
 
 namespace ts {
     static Smart<SyncMemory> empty_memory() {
@@ -301,12 +302,8 @@ namespace ts {
 
     static size_t externalize_prototype_memory(StreamReader &stream,
                                                Tensor::Prototype &proto, Memory &memory) {
-        std::unique_ptr<MemoryController> may_controller;
-        auto controller =  ctx::ptr<MemoryController>();
-        if (controller == nullptr) {
-            may_controller.reset(new DynamicMemoryController(memory.device()));
-            controller = may_controller.get();
-        }
+        std::unique_ptr<MemoryController> may_controller(new DynamicMemoryController(memory.device()));
+        auto controller = may_controller.get();
         size_t read_size = 0;
         // 1. read prototype
         DTYPE dtype;
@@ -529,7 +526,7 @@ namespace ts {
     Tensor::Tensor(Tensor::InFlow in_flow, const Tensor::Prototype &proto, const MemoryDevice &device) {
         switch (in_flow) {
             case InFlow::HOST: {
-                auto flow = ctx::of<RuntimeContext>::ref().flow();
+                auto flow = ctx::of<Workbench>::ref().runtime().flow();
                 if (flow) {
                     *this = Tensor(flow, proto, MemoryDevice(CPU));
                 } else {
@@ -538,7 +535,7 @@ namespace ts {
                 break;
             }
             case InFlow::DEVICE: {
-                auto flow = ctx::of<RuntimeContext>::ref().flow();
+                auto flow = ctx::of<Workbench>::ref().runtime().flow();
                 if (flow) {
                     *this = Tensor(flow, proto, device);
                 } else {
@@ -552,7 +549,7 @@ namespace ts {
     Tensor::Tensor(Tensor::InFlow in_flow, const Tensor::Prototype &proto) {
         switch (in_flow) {
             case InFlow::HOST: {
-                auto flow = ctx::of<RuntimeContext>::ref().flow();
+                auto flow = ctx::of<Workbench>::ref().runtime().flow();
                 if (flow) {
                     *this = Tensor(flow, proto, MemoryDevice(CPU));
                 } else {
@@ -561,8 +558,8 @@ namespace ts {
                 break;
             }
             case InFlow::DEVICE: {
-                auto flow = ctx::of<RuntimeContext>::ref().flow();
-                auto device = ctx::of<DeviceContext>::ref().memory_device;
+                auto flow = ctx::of<Workbench>::ref().runtime().flow();
+                auto device = ctx::of<Workbench>::ref().device().memory_device;
                 if (flow) {
                     *this = Tensor(flow, proto, device);
                 } else {
@@ -579,7 +576,7 @@ namespace ts {
                 return view(MemoryDevice(CPU, 0));
             }
             case InFlow::DEVICE: {
-                return view(ctx::of<DeviceContext>::ref().memory_device);
+                return view(ctx::of<Workbench>::ref().device().memory_device);
             }
         }
         return *this;

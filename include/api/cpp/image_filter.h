@@ -16,8 +16,14 @@
 
 namespace ts {
     namespace api {
+        /**
+         * @see ts_ImageFilter
+         */
         class ImageFilter {
         public:
+            /**
+             * @see ts_ResizeMethod
+             */
             enum class ResizeMethod : int32_t {
                 BICUBIC = TS_RESIZE_BICUBIC,
                 BILINEAR = TS_RESIZE_BILINEAR,
@@ -156,6 +162,30 @@ namespace ts {
                 auto ret = ts_ImageFilter_run(m_impl.get(), tensor);
                 TS_API_AUTO_CHECK(ret != nullptr);
                 return Tensor::NewRef(ret);
+            }
+
+            void force_color() {
+                TS_API_AUTO_CHECK(ts_ImageFilter_force_color(m_impl.get()));
+            }
+
+            void force_gray() {
+                TS_API_AUTO_CHECK(ts_ImageFilter_force_gray(m_impl.get()));
+            }
+
+            void force_gray(const std::vector<float> &scale) {
+                TS_API_AUTO_CHECK(ts_ImageFilter_force_gray_v2(m_impl.get(), scale.data(), int(scale.size())));
+            }
+
+            void force_bgr2gray() {
+                force_gray({0.114, 0.587, 0.299});
+            }
+
+            void force_rgb2gray() {
+                force_gray({0.299, 0.587, 0.114});
+            }
+
+            void norm_image(float epsilon) {
+                TS_API_AUTO_CHECK(ts_ImageFilter_norm_image(m_impl.get(), epsilon));
             }
 
         private:

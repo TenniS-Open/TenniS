@@ -101,7 +101,7 @@ void Conv2DTransposeCore::conv2d_transpose(const Tensor &x, const Padding2D &pad
         DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
         default: {
-            TS_LOG_ERROR << "Conv2DTransposeCoore not support this data type: " << type_str(dtype) << eject;
+            TS_LOG_ERROR << "Conv2DTransposeCore not support this data type: " << "(" << dtype << ")" << type_str(dtype) << eject;
             break;
         }
     }

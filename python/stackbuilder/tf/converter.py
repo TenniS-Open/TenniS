@@ -19,6 +19,14 @@ def tensor_to_numpy(x):
 ts.tensor.register_dtype(tf.Tensor, to_numpy=tensor_to_numpy)
 
 
+layer2converter = {
+}
+
+
+def register_layer_converter(layer, converter):
+    layer2converter[layer] = converter
+
+
 def convert(graph, inputs, outputs, output_file):
     if inputs is None:
         raise Exception("param #2 inputs must be set.")
@@ -48,8 +56,8 @@ def convert(graph, inputs, outputs, output_file):
         "StridedSlice": convert_not_implemented,
         "Pack": convert_not_implemented,
         "Pad": convert_pad,
-        "AvgPool": convert_not_implemented,
-        "MaxPool": convert_max_pool,
+        "AvgPool": convert_any_pool,
+        "MaxPool": convert_any_pool,
         "Add": convert_add,
         "Mul": convert_mul,
         "BiasAdd": convert_bias_add,
@@ -79,7 +87,11 @@ def convert(graph, inputs, outputs, output_file):
         "Mean": convert_mean,
         "BatchToSpaceND": convert_batch_to_space_nd,
         "SpaceToBatchND": convert_space_to_batch_nd,
+
+        # 2019-06-14
+        # add in layer2converter
     }
+    map_converter.update(layer2converter)
 
     # set_no_log_converter = set(map_converter.keys())
 
@@ -484,7 +496,7 @@ def convert_relu(tf_node, inputs):
     return ts.zoo.relu(node_name, x)
 
 
-def convert_max_pool(tf_node, inputs):
+def convert_any_pool(tf_node, inputs):
     # type: (tf.Tensor, List[ts.Node]) -> ts.Node
 
     assert len(inputs) == 1
@@ -524,10 +536,20 @@ def convert_max_pool(tf_node, inputs):
         strides = numpy.take(strides, (0, 3, 1, 2), axis=0)
         ksize = numpy.take(ksize, (0, 3, 1, 2), axis=0)
 
+    pooling_type_map = {
+        "AvgPool": ts.zoo.Type.pooling_type.avg,
+        "MaxPool": ts.zoo.Type.pooling_type.max,
+    }
+
+    if tf_node.op.type not in pooling_type_map:
+        raise NotImplementedError("node.op.type={}".format(tf_node.op.type))
+
+    pooling_type = pooling_type_map[tf_node.op.type]
+
     node = ts.frontend.tf.pooling2d(name=node_name + "_nchw", x=x,
                                     ksize=ksize,
                                     stride=strides,
-                                    type=ts.zoo.Type.pooling_type.max,
+                                    type=pooling_type,
                                     format=ts.zoo.Name.NCHW,
                                     padding=static_padding,
                                     padding_method=dynamic_padding)
@@ -733,6 +755,288 @@ def convert_mean(tf_node, inputs):
         node.name = node_name
 
     return node
+
+
+def convert_fused_batch_norm(tf_node, inputs):
+    # type: (tf.Tensor, List[ts.Node]) -> ts.Node
+
+    assert len(inputs) == 5
+    attr_dict = node_def_attr_dict(tf_node)
+    print("--##    attr: {}".format(attr_dict))
+    node_name = tf_node.op.name
+
+    x = inputs[0]
+    gamma = inputs[1]
+    beta = inputs[2]
+    moving_mean = inputs[3]
+    moving_variance = inputs[4]
+
+    data_fromat = attr_dict['data_format']
+    assert data_fromat == 'NHWC' or data_fromat == 'NCHW'
+
+    epsilon = attr_dict['epsilon']
+
+    if data_fromat == 'NHWC':
+        x = zipper.nhwc2nchw(x, name=x.name + "_nchw")
+
+
+    node = ts.zoo.fused_batch_norm(name=node_name, x=x,
+                                   mean=moving_mean, variance=moving_variance, scale=gamma, bias=beta,
+                                   dim=1, epsilon=epsilon)
+
+    if data_fromat == 'NHWC':
+        node = zipper.nchw2nhwc(x=node, name=node_name)
+    else:
+        node.name = node_name
+
+    return node
+
+
+register_layer_converter("FusedBatchNorm", convert_fused_batch_norm)
+
+
+def convert_relu6(tf_node, inputs):
+    # type: (tf.Tensor, List[ts.Node]) -> ts.Node
+
+    assert len(inputs) == 1
+    # attr_dict = node_def_attr_dict(tf_node)
+    # print("--##    attr: {}".format(attr_dict))
+    node_name = tf_node.op.name
+
+    x = inputs[0]
+
+    return ts.zoo.relu_max(node_name, x, max=6)
+
+
+register_layer_converter("Relu6", convert_relu6)
+
+
+def depthwise_conv2d_convert_weight(w):
+    # type: (ts.Node) -> ts.Node
+    if w.op == ts.Node.Const:
+        value = w.params["value"]
+        value = ts.tensor.from_any(value)
+        value = value.transpose(3, 2, 0, 1)
+        return ts.menu.data(w.name + "_nchw", value=value)
+    else:
+        return ts.zoo.transpose(w.name + "_nchw", x=w, pemute=[3, 2, 0, 1])
+
+
+def convert_depthwise_conv2d_native(tf_node, inputs):
+    # type: (tf.Tensor, List[ts.Node]) -> ts.Node
+
+    assert len(inputs) == 2
+    attr_dict = node_def_attr_dict(tf_node)
+    print("--##    attr: {}".format(attr_dict))
+    node_name = tf_node.op.name
+
+    x = inputs[0]
+    w = inputs[1]
+
+    assert isinstance(x, ts.Node)
+    static_padding = None
+    if x.op == ts.zoo.Name.Layer.pad:
+        x_padding = x.inputs[1]
+        assert isinstance(x_padding, ts.Node)
+        if x_padding.op == ts.Node.Const:
+            static_padding = x_padding.get("value")
+            static_padding = ts.tensor.from_any(static_padding, numpy.int32)
+            x = x.inputs[0]
+            assert static_padding.shape == (4, 2)
+            print("--##    static_padding: {}".format(static_padding))
+
+    w = depthwise_conv2d_convert_weight(w)
+    data_fromat = attr_dict['data_format']
+    assert data_fromat == 'NHWC' or data_fromat == 'NCHW'
+
+    dynamic_padding = attr_dict['padding']
+
+    strides = [1, 1, 1, 1]
+    if 'strides' in attr_dict:
+        strides = attr_dict['strides']
+
+    dilations = [1, 1, 1, 1]
+    if 'dilations' in attr_dict:
+        dilations = attr_dict['dilations']
+
+    if data_fromat == 'NHWC':
+        x = zipper.nhwc2nchw(x, name=x.name + "_nchw")
+        if static_padding is not None:
+            static_padding = numpy.take(static_padding, (0, 3, 1, 2), axis=0)
+        strides = numpy.take(strides, (0, 3, 1, 2), axis=0)
+        dilations = numpy.take(dilations, (0, 3, 1, 2), axis=0)
+
+    node = ts.frontend.tf.depthwise_conv2d(name=node_name + "_nchw", x=x, w=w,
+                                           format=ts.zoo.Name.NCHW,
+                                           padding=static_padding,
+                                           padding_method=dynamic_padding,
+                                           stride=strides,
+                                           dilation=dilations)
+
+    if data_fromat == 'NHWC':
+        node = zipper.nchw2nhwc(x=node, name=node_name)
+    else:
+        node.name = node_name
+
+    return node
+
+
+register_layer_converter("DepthwiseConv2dNative", convert_depthwise_conv2d_native)
+
+
+def convert_tensor_gather_v3(tf_node, inputs):
+    # type: (tf.Tensor, List[ts.Node]) -> ts.Node
+
+    assert len(inputs) == 1
+    attr_dict = node_def_attr_dict(tf_node)
+    print("--##    attr: {}".format(attr_dict))
+    node_name = tf_node.op.name
+
+    x = inputs[0]
+
+    raise NotImplementedError("type={}".format(tf_node.op.type))
+
+
+register_layer_converter("TensorArrayGatherV3", convert_tensor_gather_v3)
+
+
+def convert_tensor_array_size_v3(tf_node, inputs):
+    # type: (tf.Tensor, List[ts.Node]) -> ts.Node
+
+    assert len(inputs) == 1
+    attr_dict = node_def_attr_dict(tf_node)
+    print("--##    attr: {}".format(attr_dict))
+    node_name = tf_node.op.name
+
+    x = inputs[0]
+
+    raise NotImplementedError("type={}".format(tf_node.op.type))
+
+
+register_layer_converter("TensorArraySizeV3", convert_tensor_array_size_v3)
+
+
+def convert_exit(tf_node, inputs):
+    # type: (tf.Tensor, List[ts.Node]) -> ts.Node
+
+    assert len(inputs) == 1
+    attr_dict = node_def_attr_dict(tf_node)
+    print("--##    attr: {}".format(attr_dict))
+    node_name = tf_node.op.name
+
+    x = inputs[0]
+
+    raise NotImplementedError("type={}".format(tf_node.op.type))
+
+
+register_layer_converter("Exit", convert_exit)
+
+
+def convert_switch(tf_node, inputs):
+    # type: (tf.Tensor, List[ts.Node]) -> ts.Node
+
+    assert len(inputs) == 1
+    attr_dict = node_def_attr_dict(tf_node)
+    print("--##    attr: {}".format(attr_dict))
+    node_name = tf_node.op.name
+
+    x = inputs[0]
+
+    raise NotImplementedError("type={}".format(tf_node.op.type))
+
+
+register_layer_converter("Switch", convert_switch)
+
+
+def convert_merge(tf_node, inputs):
+    # type: (tf.Tensor, List[ts.Node]) -> ts.Node
+
+    assert len(inputs) == 1
+    attr_dict = node_def_attr_dict(tf_node)
+    print("--##    attr: {}".format(attr_dict))
+    node_name = tf_node.op.name
+
+    x = inputs[0]
+
+    raise NotImplementedError("type={}".format(tf_node.op.type))
+
+
+register_layer_converter("Merge", convert_merge)
+
+
+def convert_enter(tf_node, inputs):
+    # type: (tf.Tensor, List[ts.Node]) -> ts.Node
+
+    assert len(inputs) == 1
+    attr_dict = node_def_attr_dict(tf_node)
+    print("--##    attr: {}".format(attr_dict))
+    node_name = tf_node.op.name
+
+    raise NotImplementedError("type={}".format(tf_node.op.type))
+
+    x = inputs[0]
+
+    node = ts.menu.op(name=node_name, op_name="_enter", inputs=inputs)
+
+    return node
+
+
+register_layer_converter("Enter", convert_enter)
+
+
+def convert_tensor_array_v3(tf_node, inputs):
+    # type: (tf.Tensor, List[ts.Node]) -> ts.Node
+
+    assert len(inputs) == 1
+    attr_dict = node_def_attr_dict(tf_node)
+    print("--##    attr: {}".format(attr_dict))
+    node_name = tf_node.op.name
+
+    dtype = attr_dict["dtype"]
+
+    numpy_dtype = dtype.as_numpy_dtype
+
+    x = inputs[0]
+
+    return ts.zoo.cast(name=node_name, x=x, dtype=numpy_dtype)
+
+
+register_layer_converter("TensorArrayV3", convert_tensor_array_v3)
+
+
+def convert_shape(tf_node, inputs):
+    # type: (tf.Tensor, List[ts.Node]) -> ts.Node
+
+    assert len(inputs) == 1
+    # attr_dict = node_def_attr_dict(tf_node)
+    # print("--##    attr: {}".format(attr_dict))
+    node_name = tf_node.op.name
+
+    x = inputs[0]
+
+    return ts.zoo.shape(name=node_name, x=x)
+
+
+register_layer_converter("Shape", convert_shape)
+
+
+def convert_stirded_slice(tf_node, inputs):
+    # type: (tf.Tensor, List[ts.Node]) -> ts.Node
+
+    assert len(inputs) == 4
+    # attr_dict = node_def_attr_dict(tf_node)
+    # print("--##    attr: {}".format(attr_dict))
+    node_name = tf_node.op.name
+
+    x = inputs[0]
+    begin = inputs[1]
+    end = inputs[2]
+    stride = inputs[3]
+
+    return ts.frontend.tf.strided_slice(name=node_name, x=x, begin=begin, end=end, stride=stride)
+
+
+register_layer_converter("StridedSlice", convert_stirded_slice)
 
 
 

@@ -61,7 +61,11 @@ supported_map = {
     Name.Layer.nchw2nhwc: map_nchw2nchw_to_nchw,
     "_copy": map_copy_to_nchw,
     "add": map_copy_to_nchw,
+    "sub": map_copy_to_nchw,
+    "mul": map_copy_to_nchw,
+    "div": map_copy_to_nchw,
     "relu": map_copy_to_nchw,
+    "relu_max": map_copy_to_nchw,
     "fused_batch_norm": map_fused_batch_norm_to_nchw,
 }
 

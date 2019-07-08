@@ -105,6 +105,14 @@ namespace ts {
             const string &yolo() TS_NOEXCEPT { static string str = "yolo"; return str; }
             const string &yolo_poster() TS_NOEXCEPT { static string str = "yolo_poster"; return str; }
 
+            const string &l2_norm() TS_NOEXCEPT { static string str = "l2_norm"; return str; }
+
+            // 2019-06-27
+            const string &force_color() TS_NOEXCEPT { static string str = "force_color"; return str; }
+            const string &force_gray() TS_NOEXCEPT { static string str = "force_gray"; return str; }
+
+            const string &norm_image() TS_NOEXCEPT { static string str = "norm_image"; return str; }
+
             const string &quantize() TS_NOEXCEPT { static string str = "quantize"; return str; }
             const string &conv2d_quantized() TS_NOEXCEPT { static string str = "conv2d_quantized"; return str; }
         }

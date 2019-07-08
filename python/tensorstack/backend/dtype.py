@@ -34,6 +34,7 @@ triple_list = [
     (TS_UINT64, numpy.uint64, ctypes.c_uint64),
     (TS_FLOAT32, numpy.float32, ctypes.c_float),
     (TS_FLOAT64, numpy.float64, ctypes.c_double),
+    (TS_CHAR8, numpy.string_, ctypes.c_char),
 ]
 
 map_key_ts_dtype = {triple[0]: (triple[1], triple[2]) for triple in triple_list}

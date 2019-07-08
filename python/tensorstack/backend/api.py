@@ -44,12 +44,14 @@ def last_error_message():
     """
     :return: Last error message
     """
-    return str(_C.ts_last_error_message())
+    message = _C.ts_last_error_message()
+    return message.decode()
 
 
 def set_error_message(message):
     # type: (str) -> None
-    _C.ts_set_error_message(str(message))
+    message = message.encode()
+    _C.ts_set_error_message(message)
 
 
 def setup():
@@ -168,8 +170,8 @@ CHAR8        = _C.TS_CHAR8
 
 class Tensor(object):
     class InFlow(object):
-        HOST = _C.TS_HOST,
-        DEVICE = _C.TS_DEVICE,
+        HOST = _C.TS_HOST
+        DEVICE = _C.TS_DEVICE
 
     def __init__(self, obj=None, dtype=None, shape=None, in_flow=None, borrow=False):
         """
@@ -195,6 +197,38 @@ class Tensor(object):
             return
 
         """
+        string
+        """
+        if isinstance(obj, numpy.ndarray) and (obj.dtype.type == numpy.string_ or obj.dtype.type == numpy.str_):
+            obj = str(obj)
+        str_obj = _compatible_string(obj)
+        if isinstance(str_obj, str):
+            obj = str_obj
+            obj = obj.encode()
+            if dtype is not None and dtype != CHAR8:
+                raise ValueError("dtype should be None or CHAR8 with type(obj)==str")
+            if shape is not None and shape != (len(obj),):
+                raise ValueError("shape should be None or [{}] with type(obj)==str".format(len(obj)))
+
+            shape = (len(obj),)
+
+            c_shape, c_len, _ = _to_ctypes_array(shape, _C.c_int32)
+            c_dtype = CHAR8
+            c_str = _C.c_char_p(obj)
+            c_data = _C.cast(c_str, _C.c_void_p).value
+
+            c_tensor = None
+            if in_flow is None:
+                c_tensor = _C.ts_new_Tensor(c_shape, c_len, c_dtype, c_data)
+            else:
+                assert in_flow in {self.InFlow.HOST, self.InFlow.DEVICE}
+                c_in_flow = _C.c_int32(in_flow)
+                c_tensor = _C.ts_new_Tensor_in_flow(c_in_flow, c_shape, c_len, c_dtype, c_data)
+            _C.ts_api_check_pointer(c_tensor)
+            self.__shared = _Shared(c_tensor, None if borrow else _C.ts_free_Tensor)
+            return
+
+        """
         numpy.ndarray or array object
         """
         if obj is not None:
@@ -207,15 +241,26 @@ class Tensor(object):
                 shape = np.shape
 
             c_shape, c_len, _ = _to_ctypes_array(shape, _C.c_int32)
-            c_dtype = DC.to_ts_dtype(dtype)
-            c_data = np.ctypes.data_as(_C.c_void_p)
+
+            c_dtype = VOID
+            c_data = None
+            if dtype.type == numpy.object_:
+                if np.shape == ():
+                    pass
+                else:
+                    object_item = np.flatten()[0]
+                    if object_item is not None:
+                        raise NotImplementedError("array of type={}", type(object_item))
+            else:
+                c_dtype = DC.to_ts_dtype(dtype)
+                c_data = np.ctypes.data_as(_C.c_void_p)
 
             c_tensor = None
             if in_flow is None:
                 c_tensor = _C.ts_new_Tensor(c_shape, c_len, c_dtype, c_data)
             else:
                 assert in_flow in {self.InFlow.HOST, self.InFlow.DEVICE}
-                c_in_flow = in_flow
+                c_in_flow = _C.c_int32(in_flow)
                 c_tensor = _C.ts_new_Tensor_in_flow(c_in_flow, c_shape, c_len, c_dtype, c_data)
             _C.ts_api_check_pointer(c_tensor)
             self.__shared = _Shared(c_tensor, None if borrow else _C.ts_free_Tensor)
@@ -239,7 +284,8 @@ class Tensor(object):
             if in_flow is None:
                 c_tensor = _C.ts_new_Tensor(c_shape, c_len, c_dtype, None)
             else:
-                c_in_flow = in_flow
+                assert in_flow in {self.InFlow.HOST, self.InFlow.DEVICE}
+                c_in_flow = _C.c_int32(in_flow)
                 c_tensor = _C.ts_new_Tensor_in_flow(c_in_flow, c_shape, c_len, c_dtype, None)
             _C.ts_api_check_pointer(c_tensor)
             self.__shared = _Shared(c_tensor, None if borrow else _C.ts_free_Tensor)
@@ -268,16 +314,60 @@ class Tensor(object):
         if c_tensor is None:
             return None
 
+        c_dtype = _C.ts_Tensor_dtype(c_tensor)
+
+        if int(c_dtype) == CHAR8:
+            return numpy.asarray(self.str)
+
+        if int(c_dtype) == VOID:
+            self_shape = self.shape
+            if self_shape == ():
+                return None
+            return numpy.reshape([None] * numpy.prod(self_shape), self_shape)
+
         c_flag = _C.ts_Tensor_sync_cpu(c_tensor)
         _C.ts_api_check_bool(c_flag)
-        c_dtype = _C.ts_Tensor_dtype(c_tensor)
         c_data = _C.ts_Tensor_data(c_tensor)
         c_shape = _C.ts_Tensor_shape(c_tensor)
         c_shape_size = _C.ts_Tensor_shape_size(c_tensor)
         shape = [c_shape[i] for i in range(c_shape_size)]
         c_dtype_data = _C.cast(c_data, _C.POINTER(DC.to_ctypes(c_dtype)))
-        np = numpy.ctypeslib.as_array(c_dtype_data, shape=shape).copy()
+        np = numpy.ctypeslib.as_array(c_dtype_data, shape=tuple(shape)).copy()
         return np
+
+    def __array__(self):
+        return self.numpy
+
+    @property
+    def str(self):
+        # type: () -> Union[str, None]
+        c_tensor = self.__shared.raw
+        if c_tensor is None:
+            return None
+
+        c_dtype = _C.ts_Tensor_dtype(c_tensor)
+
+        if int(c_dtype) != CHAR8:
+            raise NotImplementedError("Can not convert dtype {} to {}".format(c_dtype, CHAR8))
+
+        c_flag = _C.ts_Tensor_sync_cpu(c_tensor)
+        _C.ts_api_check_bool(c_flag)
+        c_data = _C.ts_Tensor_data(c_tensor)
+        c_shape = _C.ts_Tensor_shape(c_tensor)
+        c_shape_size = _C.ts_Tensor_shape_size(c_tensor)
+        shape = [c_shape[i] for i in range(c_shape_size)]
+
+        count = numpy.prod(shape)
+
+        c_char_buffer = _C.cast(c_data, _C.POINTER(_C.c_char))
+
+        _C.resize(c_char_buffer, max(count + 1, 8))
+        c_char_buffer[count] = '\0'.encode()
+
+        c_str = _C.cast(c_char_buffer, _C.c_char_p)
+
+        return str(c_str.value.decode())
+
 
     @property
     def shape(self):
@@ -408,8 +498,11 @@ class Tensor(object):
         # type: (int, int) -> Tensor
         x = None
         if end is not None:
+            beg = _C.c_int32(beg)
+            end = _C.c_int32(end)
             x = _C.ts_Tensor_slice_v2(self, beg, end)
         else:
+            beg = _C.c_int32(beg)
             x = _C.ts_Tensor_slice(self, beg)
         _C.ts_api_check_pointer(x)
         return Tensor(x)
@@ -417,12 +510,15 @@ class Tensor(object):
     @staticmethod
     def Save(path, tensor):
         # type: (str, Tensor) -> None
+        path = path.encode()
+        tensor = Tensor(tensor)
         c_flag = _C.ts_Tensor_save(path, tensor.raw)
         _C.ts_api_check_bool(c_flag)
 
     @staticmethod
     def Load(path):
         # type: (str) -> Tensor
+        path = path.encode()
         x = _C.ts_Tensor_load(path)
         _C.ts_api_check_pointer(x)
         return Tensor(x)
@@ -498,6 +594,13 @@ class Program(object):
     def output_count(self):
         # type: () -> int
         return _C.ts_Program_output_count(self)
+
+    def set_operator_param(self, node_name, param, value):
+        # type: (str, str, Tensor) -> None
+        node_name = node_name.encode()
+        param = param.encode()
+        value = Tensor(value)
+        _C.ts_api_check_bool(_C.ts_Program_set_operator_param(self, node_name, param, value))
 
 
 class ImageFilter(object):
@@ -621,6 +724,27 @@ class ImageFilter(object):
         y = _C.ts_ImageFilter_run(self, x)
         _C.ts_api_check_pointer(y)
         return Tensor(y)
+
+    def force_color(self):
+        _C.ts_api_check_bool(_C.ts_ImageFilter_force_color(self))
+
+    def force_gray(self, scale=None):
+        # type: (List[float]) -> None
+        if scale is None:
+            _C.ts_api_check_bool(_C.ts_ImageFilter_force_gray(self))
+        else:
+            c_array, c_len, _ = _to_ctypes_array(scale, _C.c_float)
+            _C.ts_api_check_bool(_C.ts_ImageFilter_force_gray_v2(self, c_array, c_len))
+
+    def force_bgr2gray(self):
+        return self.force_gray([0.114, 0.587, 0.299])
+
+    def force_rgb2gray(self):
+        return self.force_gray([0.299, 0.587, 0.114])
+
+    def norm_image(self, epsilon):
+        # type: (float) -> None
+        _C.ts_api_check_bool(_C.ts_ImageFilter_norm_image(self, epsilon))
 
 
 ResizeMethod = ImageFilter.ResizeMethod
@@ -759,6 +883,7 @@ class Workbench(object):
             return
         slot = _compatible_string(slot)
         if isinstance(slot, str):
+            slot = slot.encode()
             _C.ts_api_check_bool(_C.ts_Workbench_bind_filter_by_name(self, slot, filter))
             return
         raise Exception("argument {}: expected int or str instance instead of {}".
@@ -809,6 +934,19 @@ class Workbench(object):
         # type: () -> int
         return _C.ts_Workbench_output_count(self)
 
+    def set_operator_param(self, node_name, param, value):
+        # type: (str, str, Tensor) -> None
+        node_name = node_name.encode()
+        param = param.encode()
+        value = Tensor(value)
+        _C.ts_api_check_bool(_C.ts_Workbench_set_operator_param(self, node_name, param, value))
+
+    def summary(self):
+        # type: () -> str
+        s = _C.ts_Workbench_summary(self)
+        _C.ts_api_check_pointer(s)
+        return str(s.decode())
+
 
 class OperatorParams(object):
     def __init__(self, obj=None, borrow=False):
@@ -845,6 +983,7 @@ class OperatorParams(object):
 
     def get(self, item):
         # type: (str) -> Tensor
+        item = item.encode()
         x = _C.ts_OperatorParams_get(self, item)
         return Tensor(x)
 
@@ -1136,5 +1275,14 @@ class intime(object):
         x = Tensor(x)
         dtype = DC.to_ts_dtype(dtype=dtype)
         y = _C.ts_intime_cast(x, dtype)
+        _C.ts_api_check_pointer(y)
+        return Tensor(y)
+
+    @staticmethod
+    def resize2d(x, size, method):
+        x = Tensor(x)
+        size = Tensor(size, dtype=INT32)
+        assert method is None or method in {ResizeMethod.BICUBIC, ResizeMethod.BILINEAR, ResizeMethod.NEAREST}
+        y = _C.ts_intime_resize2d(x, size, method)
         _C.ts_api_check_pointer(y)
         return Tensor(y)

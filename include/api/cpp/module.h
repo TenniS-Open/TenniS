@@ -15,6 +15,9 @@
 
 namespace ts {
     namespace api {
+        /**
+         * @see ts_SerializationFormat
+         */
         class SerializationFormat {
         public:
             using self = SerializationFormat;
@@ -31,6 +34,9 @@ namespace ts {
         static const SerializationFormat BINARY = TS_BINARY;
         static const SerializationFormat TEXT = TS_TEXT;
 
+        /**
+         * @see ts_Module
+         */
         class Module {
         public:
             using self = Module;

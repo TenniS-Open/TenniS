@@ -117,4 +117,15 @@ namespace ts {
         this->clean();
         m_deprecated = true;
     }
+
+    uint64_t Vat::summary() const {
+        uint64_t sum = 0;
+        for (auto &a : this->m_heap) {
+            sum += a.capacity();
+        }
+        for (auto &b : this->m_dict) {
+            sum  += b.second.capacity();
+        }
+        return sum;
+    }
 }

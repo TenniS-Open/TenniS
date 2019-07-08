@@ -236,6 +236,8 @@ namespace ts {
          */
         void run_hook(const std::vector<std::string> &node_names);
 
+        const std::string &summary();
+
     private:
         // size_t m_pointer = 0;   // pointer to running function
         // std::vector<Instruction::shared> m_program; // running function, program area
@@ -273,6 +275,7 @@ namespace ts {
 
         std::map<std::string, Tensor> m_hooked_tensor;
 
+        std::string m_summary;
     private:
         Operator::shared m_cast_op; ///< for input cast
 

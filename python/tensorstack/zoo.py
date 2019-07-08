@@ -25,6 +25,7 @@ class Name(object):
         transpose = "_transpose"
         reshape = "_reshape"
         conv2d = "conv2d"
+        transpose_conv2d = "transpose_conv2d"
         conv2d_v2 = "conv2d_v2"
         # conv2d_bias = "conv2d_bias"
         # padding_conv2d_bias = "padding_conv2d_bias"
@@ -65,6 +66,11 @@ class Name(object):
         squeeze = "squeeze"
         rsqrt = "rsqrt"
         sample2d = "sample2d"
+        l2_norm = "l2_norm"
+        dims = "_dims"
+        expand = "_expand"
+        abs = "abs"
+        tanh = "tanh"
 
     dim = "dim"
     shuffle = "shuffle"
@@ -376,6 +382,44 @@ def conv2d(name, x, w,
     return node
 
 
+def transpose_conv2d(name, x, w,
+                     format=Name.NCHW,
+                     padding=None,
+                     padding_value=None,
+                     stride=None,
+                     dilation=None):
+    assert isinstance(x, Node)
+
+    padding = adjust_padding(padding, format=format)
+    stride = adjust_stride(stride, format=format)
+    dilation = adjust_dilation(dilation, format=format)
+
+    if padding is None:
+        padding = Default.padding()
+    if padding_value is None:
+        padding_value = Default.padding_value()
+    if stride is None:
+        stride = Default.stride()
+    if dilation is None:
+        dilation = Default.dilation()
+    w = to_node(w, name="_const_" + name + "_weights")
+
+    node = None
+
+    if isinstance(padding, Node):
+        raise NotImplementedError("padding={}".format(padding))
+    else:
+        node = menu.op(name=name, op_name=Name.Layer.transpose_conv2d, inputs=[x, w])
+        node.set(Name.padding, padding, numpy.int32)
+
+    node.set(Name.format, format)
+    node.set(Name.padding_value, padding_value)
+    node.set(Name.stride, stride, numpy.int32)
+    node.set(Name.dilation, dilation, numpy.int32)
+
+    return node
+
+
 def shape(name, x):
     assert isinstance(x, Node)
 
@@ -492,36 +536,36 @@ def fused_batch_norm(name, x, mean, variance, scale, bias, dim, epsilon):
     return node
 
 
-def add(name, lhs, rhs):
-    lhs = to_node(lhs, name="_const_" + name + "_lhs")
-    rhs = to_node(rhs, name="_const_" + name + "_rhs")
+def add(name, lhs, rhs, dtype=None):
+    lhs = to_node(lhs, name="_const_" + name + "_lhs", dtype=dtype)
+    rhs = to_node(rhs, name="_const_" + name + "_rhs", dtype=dtype)
 
     node = menu.op(name=name, op_name=Name.Layer.add, inputs=[lhs, rhs])
 
     return node
 
 
-def sub(name, lhs, rhs):
-    lhs = to_node(lhs, name="_const_" + name + "_lhs")
-    rhs = to_node(rhs, name="_const_" + name + "_rhs")
+def sub(name, lhs, rhs, dtype=None):
+    lhs = to_node(lhs, name="_const_" + name + "_lhs", dtype=dtype)
+    rhs = to_node(rhs, name="_const_" + name + "_rhs", dtype=dtype)
 
     node = menu.op(name=name, op_name=Name.Layer.sub, inputs=[lhs, rhs])
 
     return node
 
 
-def mul(name, lhs, rhs):
-    lhs = to_node(lhs, name="_const_" + name + "_lhs")
-    rhs = to_node(rhs, name="_const_" + name + "_rhs")
+def mul(name, lhs, rhs, dtype=None):
+    lhs = to_node(lhs, name="_const_" + name + "_lhs", dtype=dtype)
+    rhs = to_node(rhs, name="_const_" + name + "_rhs", dtype=dtype)
 
     node = menu.op(name=name, op_name=Name.Layer.mul, inputs=[lhs, rhs])
 
     return node
 
 
-def div(name, lhs, rhs):
-    lhs = to_node(lhs, name="_const_" + name + "_lhs")
-    rhs = to_node(rhs, name="_const_" + name + "_rhs")
+def div(name, lhs, rhs, dtype=None):
+    lhs = to_node(lhs, name="_const_" + name + "_lhs", dtype=dtype)
+    rhs = to_node(rhs, name="_const_" + name + "_rhs", dtype=dtype)
 
     node = menu.op(name=name, op_name=Name.Layer.div, inputs=[lhs, rhs])
 
@@ -549,7 +593,7 @@ def relu(name, x):
 def relu_max(name, x, max):
     assert isinstance(x, Node)
     node = menu.op(name=name, op_name=Name.Layer.relu_max, inputs=[x, ])
-    node.set(Name.max, max)
+    node.set(Name.max, max, numpy.float32)
     return node
 
 
@@ -688,6 +732,9 @@ def cast(name, x, dtype):
 
     dtype = to_const(dtype, "dtype")
 
+    if not isinstance(dtype, int):
+        dtype = tensor.ts_dtype.from_numpy(dtype)
+
     node = menu.op(name=name, op_name=Name.Layer.cast, inputs=[x, ])
     node.set(Name.dtype, dtype, numpy.int32)
 
@@ -773,3 +820,35 @@ def sample2d(name, x, scale, type=Type.resize2d_type.nearest, dim=-2):
 
     return node
 
+
+def l2_norm(name, x, dim=-1, epsilon=1.00000001e-10):
+    assert isinstance(x, Node)
+    node = menu.op(name=name, op_name=Name.Layer.l2_norm, inputs=[x, ])
+    node.set(Name.dim, dim, numpy.int32)
+    node.set(Name.epsilon, epsilon, numpy.float32)
+    return node
+
+
+def dims(name, x):
+    assert isinstance(x, Node)
+    node = menu.op(name=name, op_name=Name.Layer.dims, inputs=[x, ])
+    return node
+
+
+def expand(name, x, dims):
+    assert isinstance(x, Node)
+    dims = to_node(dims, name=name + "_dims", device=device.CPU, dtype=numpy.int32);
+    node = menu.op(name=name, op_name=Name.Layer.expand, inputs=[x, dims])
+    return node
+
+
+def abs(name, x):
+    assert isinstance(x, Node)
+    node = menu.op(name=name, op_name=Name.Layer.abs, inputs=[x, ])
+    return node
+
+
+def tanh(name, x):
+    assert isinstance(x, Node)
+    node = menu.op(name=name, op_name=Name.Layer.tanh, inputs=[x, ])
+    return node

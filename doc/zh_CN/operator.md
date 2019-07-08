@@ -52,9 +52,14 @@
 - `permute`: `IntArray` `[Optional]` 数组的长度，要和 `a` 的维度一致。输入的第 `i` 个维度就是 `permute[i]` 的维度。
 如果，没有设置该参数，则相当于普通矩阵转置。
 
+Note:  
+if x.dims greater than permute.size, will expand x to same dims to permute.size. 
+
 举例：  
 如果 `x.shape` 为 `[1, 640, 480, 3]`，`permute` 为 `[0, 3, 1, 2]`，
 输出 `b.shape` 为 `[1, 3, 640, 480]`。数据类型不变。
+如果 `x.shape` 为 `[3]`，`permute` 为 `[0, 3, 1, 2]`，
+输出 `b.shape` 为 `[1, 3, 1, 1]`。数据类型不变。
 
 说明：  
 `permute` 中的元素必须是有效维度下标，且每个下标有且必须出现一次。`tranpose` 会对存储格式产生影响。
@@ -365,6 +370,8 @@ output_w = floor((width + pad_w -
 输出: `y`: `Matrix`  
 
 Attr: `transpose` `bool Default=false`, if do transpose on RHS before ip 
+
+Notice: if x.dims > 2, do `flatten(x) \dot a` instead.
 
 ### relu(x) -> y
 描述： `y = x > 0 ? x : 0`  
@@ -1001,6 +1008,86 @@ output_h = floor((height + pad_h -
 output_w = floor((width + pad_w -
 			(dilation_w * (kernel_w - 1) + 1)) / stride_w + 1);
 ```
+
+### l2_norm(x..device) -> y..device
+说明：执行L2范数在dim维度上。
+
+参数：
+- `dim` `Int`
+- `epsilon` `Float`
+
+说明：  
+For 1-D NDArray, it computes:  
+```
+out = data / sqrt(sum(data ** 2) + eps)
+```
+For N-D NDArray, if the input array has shape (N, N, ..., N),
+```
+for dim in 2...N
+  for i in 0...N
+    out[.....,i,...] = take(out, indices=i, axis=dim) / sqrt(sum(take(out, indices=i, axis=dim) ** 2) + eps)
+        -dim-
+```
+
+### _dims(x..device) -> y..host
+Return x.dims()
+
+### _expand(x..device, dims..host) -> y..device
+Return x if dims <= x.dims(), else expanded x shape to has dims
+
+### tanh(x..device) -> y..device
+Return `\frac{exp(x)-exp(-x)}{exp(x)+exp(-x)}`, equals `2 * sigmoid(2 * x) - 1`.
+
+### abs(x..device) -> y..device
+Return `abs(x)`
+
+
+### force_gray(x..device) -> y..device
+Return convert image to gray mode. Assume that channel is last dim.
+In:  
+- `x` `Tensor` Input image.
+
+Out:  
+- `y` `Tensor`
+
+Param:  
+- `scale` `FloatArray` `Optional` `Default [0.114, 0.587, 0.299]` for `BGR` format.
+
+Description:  
+`x.shape[-1]` equals the `dims` of `map` or `1` 
+
+
+### force_color(x..device) -> y..device
+Return convert image to color mode. Assume that channel is last dim.
+In:  
+- `x` `Tensor` Input image.
+
+Out:  
+- `y` `Tensor`
+
+
+### convert_color(x..device, code..host) -> y..device = delete
+In:  
+- `x` `Tensor` Input image.
+- `code` `Int`
+
+Out:  
+- `y` `Tensor`
+
+## norm_image(x) -> y
+Norm image with mean and std_dev.  
+In: `x`: `Tensor`  
+Out: `y`: `Tensor`  
+
+Param:
+- `epsilon` `Float`
+
+Description：  
+For each `x_i` run：
+```
+x_i = (x_i - mean(x_i)) / (std_dev(x_i) + epsilon)
+```
+
 
 ## 附录
 

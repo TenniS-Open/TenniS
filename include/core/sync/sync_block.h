@@ -144,6 +144,13 @@ namespace ts {
             m_default_value = &(pair_it_flag.first->second);
         }
 
+        void foreach(const std::function<void(const _KEY &key, const _VALUE &value)> &handler) const {
+            auto _read = this->lock_read();
+            for (auto &pair : this->m_param->m_sync_values) {
+                handler(pair.first, pair.second);
+            }
+        }
+
     private:
         SyncBlock() = default;
 

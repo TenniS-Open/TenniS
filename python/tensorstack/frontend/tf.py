@@ -173,6 +173,44 @@ def conv2d(name, x, w,
                       stride=stride, dilation=dilation)
 
 
+def depthwise_conv2d(name, x, w,
+                     format=zoo.Name.NCHW,
+                     padding=None,
+                     padding_method=Name.SAME,
+                     padding_value=None,
+                     stride=None,
+                     dilation=None):
+    assert isinstance(x, Node)
+
+    padding = zoo.adjust_padding(padding, format=format)
+    stride = zoo.adjust_stride(stride, format=format)
+    dilation = zoo.adjust_dilation(dilation, format=format)
+
+    if padding_method not in {Name.SAME, Name.VALID}:
+        raise NotImplementedError("padding_method = {}".format(padding_method))
+
+    if format not in {zoo.Name.NCHW, zoo.Name.NHWC}:
+        raise NotImplementedError("format = {}".format(format))
+
+    if padding is None:
+        padding = zoo.Default.padding()
+    if padding_value is None:
+        padding_value = zoo.Default.padding_value()
+    if stride is None:
+        stride = zoo.Default.stride()
+    if dilation is None:
+        dilation = zoo.Default.dilation()
+    w = zoo.to_node(w, name="_const_" + name + "_weights")
+
+    # operator
+    dynamic_padding = conv2d_padding(name="_op_" + name + "_tf_padding",
+                                     x=x, w=w, format=format, padding=padding, padding_method=padding_method,
+                                     stride=stride, dilation=dilation)
+
+    return zoo.depthwise_conv2d(name=name, x=x, w=w, format=format, padding=dynamic_padding, padding_value=padding_value,
+                                stride=stride, dilation=dilation)
+
+
 def strided_slice(name, x, begin, end, stride=None):
     """
     return x in [begin, end) with stride

@@ -9,8 +9,6 @@
 #include <cuda_fp16.h>
 #include <device_launch_parameters.h>
 
-#include <math_functions.h>
-
 #include "kernels/gpu/cudax_fp16_math.h"
 
 namespace ts {
@@ -62,7 +60,7 @@ namespace ts {
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
                 default: {
-                    TS_LOG_ERROR << this->op() << " not support this data type: " << dtype << eject;
+                    TS_LOG_ERROR << this->op() << " not support data type(" << dtype << "): " << type_str(dtype) << eject;
                     break;
                 }
             }

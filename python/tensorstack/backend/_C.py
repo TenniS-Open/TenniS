@@ -17,15 +17,19 @@ if libTensorStack is not None:
     try:
         lib = CDLL(libTensorStack, RTLD_GLOBAL)
     except:
-        pass
+        raise
 
+msg = None
 if lib is None:
     from . import libfinder
-    lib = libfinder.load_library(TensorStackName)
+    lib, msg = libfinder.load_library(TensorStackName)
 
 
 if lib is None:
-    raise ImportError("Can find library: {}".format(TensorStackName))
+    if msg is None:
+        raise ImportError("Can find library: {}".format(TensorStackName))
+    else:
+        raise ImportError(msg)
 
 
 def __TS_IMPORT(lib, sym, restype=None, *argtypes):
@@ -51,6 +55,7 @@ def ts_api_check_pointer(pointer):
     if not pointer:
         import sys
         message = ts_last_error_message()
+        message = message.decode()
         # sys.stderr.write("[ERROR]: {}\n".format(message))
         raise Exception(message)
 
@@ -60,6 +65,7 @@ def ts_api_check_bool(value):
     if not value:
         import sys
         message = ts_last_error_message()
+        message = message.decode()
         # sys.stderr.write("[ERROR]: {}\n".format(message))
         raise Exception(message)
 
@@ -175,9 +181,9 @@ ts_Tensor_fields_count = __TS_IMPORT(lib, "ts_Tensor_fields_count", c_int32, POI
 
 ts_Tensor_pack = __TS_IMPORT(lib, "ts_Tensor_pack", POINTER(ts_Tensor), POINTER(POINTER(ts_Tensor)), c_int32)
 
-ts_Tensor_slice = __TS_IMPORT(lib, "ts_Tensor_slice", POINTER(ts_Tensor), c_int32)
+ts_Tensor_slice = __TS_IMPORT(lib, "ts_Tensor_slice", POINTER(ts_Tensor), POINTER(ts_Tensor), c_int32)
 
-ts_Tensor_slice_v2 = __TS_IMPORT(lib, "ts_Tensor_slice_v2", POINTER(ts_Tensor), c_int32, c_int32)
+ts_Tensor_slice_v2 = __TS_IMPORT(lib, "ts_Tensor_slice_v2", POINTER(ts_Tensor), POINTER(ts_Tensor), c_int32, c_int32)
 
 ts_Tensor_save = __TS_IMPORT(lib, "ts_Tensor_save", ts_bool, c_char_p, POINTER(ts_Tensor))
 
@@ -205,6 +211,9 @@ ts_Program_clone = __TS_IMPORT(lib, "ts_Program_clone", POINTER(ts_Program), POI
 ts_Program_input_count = __TS_IMPORT(lib, "ts_Program_input_count", c_int32, POINTER(ts_Program))
 
 ts_Program_output_count = __TS_IMPORT(lib, "ts_Program_output_count", c_int32, POINTER(ts_Program))
+
+ts_Program_set_operator_param = __TS_IMPORT(lib, "ts_Program_set_operator_param",
+                                            c_int32, POINTER(ts_Program), c_char_p, c_char_p, POINTER(ts_Tensor))
 
 
 """ ================================================================================================================ +++
@@ -274,6 +283,15 @@ ts_ImageFilter_resize_v2 = __TS_IMPORT(lib, "ts_ImageFilter_resize_v2",
 ts_ImageFilter_resize_scalar_v2 = __TS_IMPORT(lib, "ts_ImageFilter_resize_scalar_v2",
                                               ts_bool, POINTER(ts_ImageFilter), c_int32, ts_ResizeMethod)
 
+ts_ImageFilter_force_color = __TS_IMPORT(lib, "ts_ImageFilter_force_color", ts_bool, POINTER(ts_ImageFilter))
+
+ts_ImageFilter_force_gray = __TS_IMPORT(lib, "ts_ImageFilter_force_gray", ts_bool, POINTER(ts_ImageFilter))
+
+ts_ImageFilter_force_gray_v2 = __TS_IMPORT(lib, "ts_ImageFilter_force_gray_v2",
+                                           ts_bool, POINTER(ts_ImageFilter), POINTER(c_float), c_int32)
+
+ts_ImageFilter_norm_image = __TS_IMPORT(lib, "ts_ImageFilter_norm_image", ts_bool, POINTER(ts_ImageFilter), c_float)
+
 
 """ ================================================================================================================ +++
 workbench.h
@@ -338,6 +356,12 @@ ts_Workbench_Load_v2 = __TS_IMPORT(lib, "ts_Workbench_Load_v2",
 ts_Workbench_compile_v2 = __TS_IMPORT(lib, "ts_Workbench_compile_v2",
                                       POINTER(ts_Program), POINTER(ts_Workbench), POINTER(ts_Module), c_char_p)
 
+ts_Workbench_set_operator_param = __TS_IMPORT(lib, "ts_Workbench_set_operator_param",
+                                              c_int32, POINTER(ts_Workbench), c_char_p, c_char_p, POINTER(ts_Tensor))
+
+ts_Workbench_summary = __TS_IMPORT(lib, "ts_Workbench_summary",
+                                   c_char_p, POINTER(ts_Workbench))
+
 
 """ ================================================================================================================ +++
 intime.h
@@ -387,6 +411,13 @@ ts_intime_cast = __TS_IMPORT(
     lib, "ts_intime_cast", POINTER(ts_Tensor),
     POINTER(ts_Tensor),     # x
     ts_DTYPE,               # dtype
+)
+
+ts_intime_resize2d = __TS_IMPORT(
+    lib, "ts_intime_resize2d", POINTER(ts_Tensor),
+    POINTER(ts_Tensor),     # x
+    POINTER(ts_Tensor),     # size
+    c_int32,                # method
 )
 
 

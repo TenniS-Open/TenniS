@@ -21,40 +21,64 @@ namespace ts {
             m_transpose = tensor::to_bool(get("transpose"));
         }
 
-        int InnerProd::infer(Stack &stack, std::vector<Tensor::Prototype> &output) {
-            TS_AUTO_CHECK(stack.size() == 2);
+        static void infer_size(bool m_transpose, Tensor &lhs, const Tensor &rhs, std::vector<Tensor::Prototype> &output) {
+            if (lhs.dims() == 0) {
+                TS_LOG_ERROR << "InnerProd failed with LHS is scalar." << eject;
+            }
 
-            auto &lhs = stack[0];
-            auto &rhs = stack[1];
+            if (lhs.dims() != 2) {
+                lhs = lhs.reshape({lhs.size(0), -1});
+            }
 
             if (m_transpose) {
-                TS_AUTO_CHECK(lhs.dims() == 2 && rhs.dims() == 2 && lhs.size(1) == rhs.size(1));
+                if (!(lhs.dims() == 2 && rhs.dims() == 2 && lhs.size(1) == rhs.size(1))) {
+                    TS_LOG_ERROR << "Can not inner-product between "
+                                 << to_string(lhs.sizes()) << " and "
+                                 << to_string(rhs.sizes()) << "^T" << eject;
+                }
 
                 TS_AUTO_CHECK(lhs.dtype() == rhs.dtype());
 
                 output.resize(1);
                 output[0] = Tensor::Prototype(lhs.dtype(), {lhs.size(0), rhs.size(0)});
             } else {
-                TS_AUTO_CHECK(lhs.dims() == 2 && rhs.dims() == 2 && lhs.size(1) == rhs.size(0));
+                if (!(lhs.dims() == 2 && rhs.dims() == 2 && lhs.size(1) == rhs.size(0))) {
+                    TS_LOG_ERROR << "Can not inner-product between "
+                                 << to_string(lhs.sizes()) << " and "
+                                 << to_string(rhs.sizes()) << eject;
+                }
 
                 TS_AUTO_CHECK(lhs.dtype() == rhs.dtype());
 
                 output.resize(1);
                 output[0] = Tensor::Prototype(lhs.dtype(), {lhs.size(0), rhs.size(1)});
             }
+        }
 
+        int InnerProd::infer(Stack &stack, std::vector<Tensor::Prototype> &output) {
+            TS_AUTO_CHECK(stack.size() == 2);
+
+            auto lhs = stack[0];
+            auto &rhs = stack[1];
+
+            infer_size(m_transpose, lhs, rhs, output);
 
             return 1;
         }
 
         int InnerProd::run(Stack &stack) {
+            TS_AUTO_CHECK(stack.size() == 2);
+
             std::vector<Tensor::Prototype> output;
-            infer(stack, output);
+            auto lhs = stack[0];
+            auto rhs = stack[1];
+
+            infer_size(m_transpose, lhs, rhs, output);
 
             auto memory_device = running_memory_device();
 
-            auto lhs = stack[0].view(memory_device);
-            auto rhs = stack[1].view(memory_device);
+            lhs = lhs.view(memory_device);
+            rhs = rhs.view(memory_device);
 
             auto &out = *stack.push(output[0], memory_device);
 

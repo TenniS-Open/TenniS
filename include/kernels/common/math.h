@@ -9,7 +9,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <math.h>
-#include <stdint.h>
+#include <cstdint>
 
 namespace ts {
     template <typename T>
@@ -30,6 +30,26 @@ namespace ts {
     template <typename T>
     inline T abs(T value) {
         return T(std::abs(value));
+    }
+
+    template <>
+    inline uint8_t abs(uint8_t value) {
+        return value;
+    }
+
+    template <>
+    inline uint16_t abs(uint16_t value) {
+        return value;
+    }
+
+    template <>
+    inline uint32_t abs(uint32_t value) {
+        return value;
+    }
+
+    template <>
+    inline uint64_t abs(uint64_t value) {
+        return value;
     }
 
     template <>

@@ -56,7 +56,7 @@ namespace ts {
                     T scale_val = pscale[k];
                     T bias_val = pbias[k];
                     T *pdst_temp = pdst + offset;
-                    for (int m = backdims; m < backdims; m++) {
+                    for (int m = 0; m < backdims; m++) {
                         *pdst_temp = (*pdst_temp - mean_val) * vec_val * scale_val + bias_val;
                         pdst_temp++;
                     }
@@ -143,7 +143,7 @@ namespace ts {
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
                 default: {
-                    TS_LOG_ERROR << this->op() << " not support this data type: " << dtype << eject;
+                    TS_LOG_ERROR << this->op() << " not support data type(" << dtype << "): " << type_str(dtype) << eject;
                     break;
                 }
             }

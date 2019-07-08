@@ -14,7 +14,11 @@
 
 #include <algorithm>
 #include <kernels/common/blas.h>
+#ifdef TS_USE_CBLAS
 #include <kernels/cblas/math_cblas.h>
+#else
+#include <kernels/cpu/math_cpu.h>
+#endif
 
 namespace ts {
     namespace dcn {
@@ -99,8 +103,13 @@ namespace ts {
                                     float alpha, const float *a[], int64_t lda, const float *b[], int64_t ldb,
                                     float beta, float *c[], int64_t ldc, int64_t batchCount) {
                 for (int i = 0; i < batchCount; ++i) {
+#ifdef TS_USE_CBLAS
                     cblas::math<float>::gemm(blas::ColMajor, transa, transb, m, n, k, alpha, a[i], lda, b[i], ldb, beta,
                                              c[i], ldc);
+#else
+                    ts::cpu::math<float>::gemm(blas::ColMajor, transa, transb, m, n, k, alpha, a[i], lda, b[i], ldb, beta,
+                                               c[i], ldc);
+#endif
                 }
             }
 

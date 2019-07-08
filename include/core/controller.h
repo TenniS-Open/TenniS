@@ -8,13 +8,12 @@
 #include "memory.h"
 
 #include <utils/api.h>
-#include "utils/ctxmgr_lite.h"
 
 namespace ts {
     /**
      * MemoryController: Malloc memory and control them
      */
-    class TS_DEBUG_API MemoryController : public SetupContext<MemoryController> {
+    class TS_DEBUG_API MemoryController {
     public:
         using self = MemoryController;
         using shared = std::shared_ptr<self>;  ///< smart pointer
@@ -26,6 +25,12 @@ namespace ts {
          * @return allocated memory
          */
         virtual Memory alloc(size_t size) = 0;
+
+        /**
+         * Get memory size under control
+         * @return
+         */
+        virtual uint64_t summary() const { return 0; };
     };
 
     class TS_DEBUG_API DynamicMemoryController : public MemoryController {
