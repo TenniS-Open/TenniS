@@ -192,6 +192,13 @@ inline _simd_f32x4x2 _simd_intx4x2_to_float32x4x2(_simd_int32x4x2 src) {
     return res;
 }
 
+inline _simd_f32x4x2 _simd_broadcast2float32x4x2(const _simd_f32* src) {
+    _simd_f32x4x2 res;
+    res.val[0] = _mm_set1_ps(*src);
+    res.val[1] = _mm_set1_ps(*src);
+    return res;
+}
+
 #endif //TS_USE_SSE
 
 #endif //TENSORSTACK_KERNELS_COMMON_SIMD_DEF_SIMD_SSE_DEF_H
