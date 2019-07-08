@@ -31,6 +31,17 @@ namespace ts {
            static void conv2d_3x3_sse(const Tensor &x, const Tensor &w, Tensor &out);
 
            static void conv2d_3x3_sse_inplace(const Tensor &x, const Tensor &w, Tensor &out);
+
+           //pack
+           static void kernel_pack8x8(const Tensor &kernel, Tensor& kernel_packed);
+
+           //static void col_pack8x8(const Tensor& col_tensor, int col_h, int col_w, Tensor& col_packed);
+
+           //static void gemm_pack8x8(int M, int N, int K, const Tensor& kernel_packed, const Tensor& col_packed, Tensor& out);
+
+           static void col_pack8x8(const T* col_tensor, int col_h, int col_w, T* col_packed);
+
+           static void gemm_pack8x8(int M, int N, int K, const T* kernel_packed, const T* col_packed, T* out);
         };
     }
 
