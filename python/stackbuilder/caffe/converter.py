@@ -299,7 +299,7 @@ def convert_image_data_layer(layer, params, input_nodes, output_names, input_nam
     if new_width > 0 and new_height > 0:
         node = ts.zoo.resize2d("_resize2d_" + node_name, node, [-1, new_height, new_width, -1])
 
-    node = ts.zoo.transpose("_nchw_" + node_name, node, pemute=[0, 3, 1, 2])
+    node = ts.zoo.transpose("_nchw_" + node_name, node, permute=[0, 3, 1, 2])
     node = ts.zoo.to_float("_float_" + node_name, node)
 
     # transform param

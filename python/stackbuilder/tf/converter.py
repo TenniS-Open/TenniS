@@ -269,7 +269,7 @@ def conv2d_convert_weight(w):
         value = value.transpose(3, 2, 0, 1)
         return ts.menu.data(w.name + "_nchw", value=value)
     else:
-        return ts.zoo.transpose(w.name + "_nchw", x=w, pemute=[3, 2, 0, 1])
+        return ts.zoo.transpose(w.name + "_nchw", x=w, permute=[3, 2, 0, 1])
 
 
 def convert_conv2d(tf_node, inputs):
@@ -819,7 +819,7 @@ def depthwise_conv2d_convert_weight(w):
         value = value.transpose(3, 2, 0, 1)
         return ts.menu.data(w.name + "_nchw", value=value)
     else:
-        return ts.zoo.transpose(w.name + "_nchw", x=w, pemute=[3, 2, 0, 1])
+        return ts.zoo.transpose(w.name + "_nchw", x=w, permute=[3, 2, 0, 1])
 
 
 def convert_depthwise_conv2d_native(tf_node, inputs):

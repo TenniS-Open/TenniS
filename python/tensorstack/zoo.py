@@ -168,13 +168,13 @@ def dimsuffle(name, x, dim, shuffle):
     return node
 
 
-def transpose(name, x, pemute=None):
+def transpose(name, x, permute=None):
     assert isinstance(x, Node)
 
     node = menu.op(name=name, op_name=Name.Layer.transpose, inputs=[x, ])
-    if pemute is not None:
-        pemute = to_const(pemute, "pemute")
-        node.set(Name.permute, pemute, numpy.int32)
+    if permute is not None:
+        permute = to_const(permute, "permute")
+        node.set(Name.permute, permute, numpy.int32)
 
     return node
 
@@ -217,13 +217,13 @@ bgr2rgb = rgb2bgr
 def NCHW2NHWC(name, x):
     assert isinstance(x, Node)
 
-    return transpose(name=name, x=x, pemute=[0, 2, 3, 1])
+    return transpose(name=name, x=x, permute=[0, 2, 3, 1])
 
 
 def NHWC2NCHW(name, x):
     assert isinstance(x, Node)
 
-    return transpose(name=name, x=x, pemute=[0, 3, 1, 2])
+    return transpose(name=name, x=x, permute=[0, 3, 1, 2])
 
 def format4h(format):
     if format == Name.NCHW:

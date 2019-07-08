@@ -901,7 +901,7 @@ def convert_transpose_layer(node, input_nodes, output_names):
 
     x = input_nodes[0]
 
-    ts_node = ts.zoo.transpose(name=node_name, x=x, pemute=attr_dict["perm"])
+    ts_node = ts.zoo.transpose(name=node_name, x=x, permute=attr_dict["perm"])
 
     return ts_node,
 
