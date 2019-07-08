@@ -9,6 +9,7 @@
 #ifdef TS_USE_CBLAS
 #include <kernels/cblas/math_cblas.h>
 #endif
+#include "kernels/cpu/conv2d_algorithm.h"
 
 namespace ts {
     namespace cpu {
@@ -37,6 +38,8 @@ namespace ts {
 
             Tensor col_tensor;
             T *col_buffer = nullptr;
+            Tensor packed_col;
+            Shape packed_shape;
 
             bool is_1x1_conv = stride.height == 1 && stride.width == 1 &&
                                ksize.height == 1 && ksize.width == 1 &&
@@ -48,6 +51,7 @@ namespace ts {
                 Shape col_shape;
                 col_shape.resize(1);
                 col_shape[0] = col_buffer_size;
+                packed_shape = col_shape;
                 col_tensor = stack.make(out.dtype(), col_shape, MemoryDevice(CPU));
                 col_buffer = col_tensor.data<T>();
             }
@@ -56,6 +60,7 @@ namespace ts {
                 if (is_1x1_conv) {
                     //std::memcpy(col_buffer,pinput,sizeof(T)*col_buffer_size);
                     col_buffer = const_cast<T *>(pinput);
+                    packed_shape = x_shape;
                 } else {
                     ::memset(col_buffer, 0, col_buffer_size * sizeof(T));
                     im2col_cpu(pinput, input_channels, input.height, input.width,
@@ -66,13 +71,19 @@ namespace ts {
                                dilation.height, dilation.width,
                                col_buffer, T(padding_value));
                 }
-#ifdef TS_USE_CBLAS
-                cblas::math<T>::gemm(ts::blas::NoTrans, ts::blas::NoTrans, weight_shape[0], conv_out_spatial_dim,
-                                     kernel_dims, 1.0, pweight, col_buffer, 0, poutput);
-#else
-                cpu::math<T>::gemm(ts::blas::NoTrans,ts::blas::NoTrans, weight_shape[0], conv_out_spatial_dim,
-                               kernel_dims, 1.0, pweight, col_buffer, 0, poutput);
-#endif
+
+                Tensor kernel_packed = stack.make(w.dtype(), w.sizes(), MemoryDevice(CPU));
+                Conv2dAlgorithm<T>::kernel_pack8x8(w, kernel_packed);
+                packed_col = stack.make(x.dtype(), packed_shape, MemoryDevice(CPU));
+                Conv2dAlgorithm<T>::col_pack8x8(col_buffer, kernel_dims, conv_out_spatial_dim, packed_col.data<T>());
+                cpu::Conv2dAlgorithm<T>::gemm_pack8x8(weight_shape[0], conv_out_spatial_dim, kernel_dims, kernel_packed.data<T>(), packed_col.data<T>(), poutput);
+//#ifdef TS_USE_CBLAS
+//                cblas::math<T>::gemm(ts::blas::NoTrans, ts::blas::NoTrans, weight_shape[0], conv_out_spatial_dim,
+//                                     kernel_dims, 1.0, pweight, col_buffer, 0, poutput);
+//#else
+//                cpu::math<T>::gemm(ts::blas::NoTrans,ts::blas::NoTrans, weight_shape[0], conv_out_spatial_dim,
+//                               kernel_dims, 1.0, pweight, col_buffer, 0, poutput);
+//#endif
                 pinput += input_number_offset;
                 poutput += output_number_offset;
             }
