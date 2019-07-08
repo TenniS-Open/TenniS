@@ -90,6 +90,14 @@ def convert():
     output_path = args.output_table
     output_module = args.output_module
 
+    # num_bins = 2048
+    # num_quantized_bins = 127
+    # model_path = "D:/yang/workPro/tensorStack/TensorStack/model/RN30.tsm"
+    # dataset_path = "D:/yang/workPro/tensorStack/TensorStack/Quantize/2kx2k/quantization_248x248"
+    # compute_device = "cpu"
+    # output_path = "test.table"
+    # output_module = "RN30_INT8_py.tsm"
+
     node_list = quantize.QuantizNodeList()  
 
     #load module 

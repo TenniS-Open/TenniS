@@ -198,32 +198,35 @@ def node_quantize(node, num_bins, num_quantized_bins, quantize_node_list, ready_
     returns:
         none
     """
+    flag = True
     if node in ready_set:
-        return
+        flag = False
     name = node.name
-    # if name == 'stage1_unit1_conv2_with_bn' or name == 'stage3_unit2_conv3' or name == 'stage1_unit1_conv3':
-    #     return
-    op = node.op
+    # if name == 'stage3_unit2_conv3' or name == 'stage1_unit1_conv3' or name == 'stage1_unit1_conv2_with_bn' or name == 'stage2_unit4_conv2_with_bn':
+    #     flag = False
     inputs = node.inputs
-    #Note: input_name is mean the name of node of input stream.
-    input_name = ""
-    weight_node = Node()
-    need_quantize = False
-    if op == "conv2d" or op == "depthwise_conv2d":
-        input_name = inputs[0].name
-        need_quantize = True
-        weight_node = inputs[1]
-    elif op == "conv2d_v2" or op == "depthwise_conv2d_v2":
-        input_name = inputs[0].name
-        need_quantize = True
-        weight_node = inputs[2]
-    if need_quantize:
-        weight_data = weight_node.get("value")
-        kernel_num = weight_data.shape[0]
-        quantized_node = QuantizConvNode(name, op, input_name, kernel_num, num_bins, num_quantized_bins)
-        quantized_node.quantize_weight(weight_data)
-        quantize_node_list.push(quantized_node)
-        ready_set.add(node)
+    if flag:
+        op = node.op  
+        #Note: input_name is mean the name of node of input stream.
+        input_name = ""
+        weight_node = Node()
+        need_quantize = False
+        if op == "conv2d" or op == "depthwise_conv2d":
+            input_name = inputs[0].name
+            need_quantize = True
+            weight_node = inputs[1]
+        elif op == "conv2d_v2" or op == "depthwise_conv2d_v2":
+            input_name = inputs[0].name
+            need_quantize = True
+            weight_node = inputs[2]
+        if need_quantize:
+            weight_data = weight_node.get("value")
+            kernel_num = weight_data.shape[0]
+            quantized_node = QuantizConvNode(name, op, input_name, kernel_num, num_bins, num_quantized_bins)
+            quantized_node.quantize_weight(weight_data)
+            quantize_node_list.push(quantized_node)
+            ready_set.add(node)
+    
     for input in inputs:
         node_quantize(input, num_bins, num_quantized_bins, quantize_node_list, ready_set)
 
