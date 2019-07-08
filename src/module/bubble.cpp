@@ -191,7 +191,7 @@ namespace ts {
         m_name = tensor::to_string(m_params[RetentionParam::name]);
 
         {
-            auto it = m_params.find(RetentionParam::dtype);
+            auto it = m_params.find("#output_count");
             if (it != m_params.end()) {
                 auto m_output_count = tensor::to_int(it->second);
                 if (m_output_count != 1) {

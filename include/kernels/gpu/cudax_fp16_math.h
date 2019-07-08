@@ -8,7 +8,7 @@
 #ifdef TS_USE_CUDA_FP16
 
 #include <cuda_fp16.h>
-#include <host_defines.h>
+#include <cuda_runtime_api.h>
 #include <cmath>
 
 namespace ts {
@@ -27,7 +27,7 @@ namespace ts {
     __device__ inline half operator!=(const half &lhs, const half &rhs) { return __hne(lhs, rhs); }
 #endif
 // For CUDA 9
-#if CUDART_VERSION < 10000
+// #if CUDART_VERSION < 10000
     template <typename T>
     __device__ inline T exp(const T &a) { return T(std::exp(a)); }
     __device__ inline half exp(const half &a) { return hexp(a); }
@@ -37,7 +37,7 @@ namespace ts {
     template <typename T>
     __device__ inline T fabs(const T &a) { return T(std::fabs(a)); }
     __device__ inline half fabs(const half &a) { return a > half(0.0f) ? a : -a; }
-#endif
+// #endif
 }
 
 #endif

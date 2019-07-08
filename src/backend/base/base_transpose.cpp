@@ -48,8 +48,12 @@ namespace ts {
 
         std::vector<int> Transpose::get_permute(const Tensor &x) {
             if (!m_permute.empty()) {
-                TS_AUTO_CHECK(x.dims() == m_permute.size());
-
+                if(x.dims() > m_permute.size()) {
+                    TS_LOG_ERROR << "Can not transpose " << x.proto() << " with permute=" << to_string(m_permute) << eject;
+                }
+                if (x.dims() < m_permute.size()) {
+                    // It's OK now!
+                }
                 return m_permute;
             }
             std::vector<int> permute(x.dims());
@@ -64,9 +68,13 @@ namespace ts {
         }
 
         Shape permuted_shape(const Shape &shape, const std::vector<int> &permute) {
-            Shape newshape(shape.size());
+            auto fixed_shape = shape;
+            while (fixed_shape.size()  < permute.size()) {
+                fixed_shape.insert(fixed_shape.begin(), 1);
+            }
+            Shape newshape(fixed_shape.size());
             for (size_t i = 0; i < permute.size(); ++i) {
-                newshape[i] = shape[permute[i]];
+                newshape[i] = fixed_shape[permute[i]];
                 TS_AUTO_CHECK(newshape[i] > 0);
             }
             return std::move(newshape);
@@ -90,6 +98,14 @@ namespace ts {
 
             auto x = stack[0].view(memory_device);
             auto permute = get_permute(x);
+
+            if (permute.size() > x.dims()) {
+                auto fixed_shape = x.sizes();
+                while (fixed_shape.size() < permute.size()) {
+                    fixed_shape.insert(fixed_shape.begin(), 1);
+                }
+                x = x.reshape(fixed_shape);
+            }
 
             Tensor::Prototype output_proto(x.dtype(), permuted_shape(x.sizes(), permute));
 

@@ -12,6 +12,9 @@
 
 namespace ts {
     namespace api {
+        /**
+         * @see ts_Device
+         */
         class Device {
         public:
             using self = Device;

@@ -507,11 +507,13 @@ namespace ts {
     }
 
     void Workbench::setup_runtime() {
-        this->runtime().setup_context();
+        // this->runtime().setup_context();
+        this->setup_context();
     }
 
     void Workbench::setup_device() {
-        DeviceContext::Switch(&this->device());
+        // DeviceContext::Switch(&this->device());
+        this->setup_context();
     }
 
     Program::shared Workbench::compile(const Module::shared &module, const std::string &options) {
@@ -555,6 +557,27 @@ namespace ts {
         ctx::bind<Hook> _hook(hooker);
 
         this->run();
+    }
+
+    const std::string &Workbench::summary() {
+        uint64_t shared_memory = 0;
+        if (m_desktop) {
+            auto &stack = m_desktop->data_sagment();
+            auto size = stack.size();
+            for (size_t i = 0; i < size; ++i) {
+                auto &tensor = stack[i];
+                shared_memory += tensor.count() * tensor.proto().type_bytes();
+            }
+        }
+
+        std::ostringstream oss;
+        oss << "{\"device\": \"" << m_device_context.computing_device << "\""
+            << ", \"thread\": " << m_runtime_context.get_computing_thread_number()
+            << ", \"shared\": \"" << memory_size_string(shared_memory) << "\""
+            << ", \"memory\": " << m_flow_memory->summary()
+            << "}";
+        m_summary = oss.str();
+        return m_summary;
     }
 }
 

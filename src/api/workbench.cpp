@@ -191,3 +191,21 @@ ts_bool ts_Workbench_run_hook(ts_Workbench *workbench, const char **node_names, 
         (*workbench)->run_hook(std::vector<std::string>(node_names, node_names + len));
     RETURN_OR_CATCH(ts_true, ts_false)
 }
+
+ts_bool ts_Workbench_set_operator_param(ts_Workbench *workbench, const char *node_name, const char *param,
+                                        const ts_Tensor *value) {
+    TRY_HEAD
+        if (!workbench) throw Exception("NullPointerException: @param: 1");
+        if (!node_name) throw Exception("NullPointerException: @param: 2");
+        if (!param) throw Exception("NullPointerException: @param: 3");
+        if (!value) throw Exception("NullPointerException: @param: 4");
+        (*workbench)->set_operator_param(node_name, param, **value);
+    RETURN_OR_CATCH(ts_true, ts_false)
+}
+
+const char *ts_Workbench_summary(ts_Workbench *workbench) {
+    TRY_HEAD
+        if (!workbench) throw Exception("NullPointerException: @param: 1");
+        auto summary = (*workbench)->summary().c_str();
+    RETURN_OR_CATCH(summary, nullptr)
+}

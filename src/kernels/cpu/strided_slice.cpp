@@ -73,8 +73,8 @@ namespace ts {
                 DECLARE_COMPUTE_RUN(16, uint128_t)
 #undef DECLARE_COMPUTE_RUN
                 default: {
-                    TS_LOG_ERROR << this->op() << " not support this data type: "
-                                 << type_str(out.proto().dtype()) << eject;
+                    auto dtype = out.dtype();
+                    TS_LOG_ERROR << this->op() << " not support data type(" << dtype << "): " << type_str(dtype) << eject;
                     break;
                 }
             }

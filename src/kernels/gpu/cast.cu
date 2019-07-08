@@ -83,7 +83,7 @@ namespace ts {
                 DECLARE_COMPUTE_RUN_TEMPLATE(FLOAT16, half);
 #undef DECLARE_COMPUTE_RUN_TEMPLATE
             default: {
-                TS_LOG_ERROR << "_cast not support this data type: " << to_type << eject;
+                TS_LOG_ERROR << "_cast not support data type(" << to_type << "): " << type_str(to_type) << eject;
                 break;
             }
             }
@@ -110,7 +110,7 @@ namespace ts {
                 DECLARE_COMPUTE_RUN(FLOAT16, half);
 #undef DECLARE_COMPUTE_RUN
             default: {
-                TS_LOG_ERROR << this->op() << " not support this data type: " << dtype << eject;
+                TS_LOG_ERROR << this->op() << " not support data type(" << dtype << "): " << type_str(dtype) << eject;
                 break;
             }
             }

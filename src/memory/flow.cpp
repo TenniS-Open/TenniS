@@ -64,6 +64,10 @@ namespace ts {
         return Memory(std::make_shared<HardMemory>(m_impl->m_device, m_impl->m_managed_allocator, size));
     }
 
+    uint64_t VatMemoryController::summary() const {
+        return m_impl->m_vat->summary();
+    }
+
     class StackMemoryBlock {
     public:
         using self = StackMemoryBlock;

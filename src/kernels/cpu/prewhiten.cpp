@@ -23,8 +23,8 @@ namespace ts {
 			auto batch_outout_data = output_data;
 
 			for (int n = 0; n < batch; ++n) {
-                double mean = 0;
-                double std_dev = 0;
+                T mean = 0;
+                T std_dev = 0;
 				
                 at = batch_outout_data;
 				for (size_t i = 0; i < count; ++i, ++at) mean += *at;
@@ -51,19 +51,19 @@ namespace ts {
 			switch (dtype) {
 #define DECLARE_TYPE_AND_RUN(DTYPE, TYPE) \
 				case DTYPE: { cpu_pre_whiten_compute_run<TYPE>(x, out); break; }
-				DECLARE_TYPE_AND_RUN(INT8, int8_t);
-				DECLARE_TYPE_AND_RUN(UINT8, uint8_t);
-				DECLARE_TYPE_AND_RUN(INT16, int16_t);
-				DECLARE_TYPE_AND_RUN(UINT16, uint16_t);
-				DECLARE_TYPE_AND_RUN(INT32, int32_t);
-				DECLARE_TYPE_AND_RUN(UINT32, uint32_t);
-				DECLARE_TYPE_AND_RUN(INT64, int64_t);
-				DECLARE_TYPE_AND_RUN(UINT64, uint64_t);
+                // DECLARE_TYPE_AND_RUN(INT8, int8_t);
+                // DECLARE_TYPE_AND_RUN(UINT8, uint8_t);
+                // DECLARE_TYPE_AND_RUN(INT16, int16_t);
+                // DECLARE_TYPE_AND_RUN(UINT16, uint16_t);
+                // DECLARE_TYPE_AND_RUN(INT32, int32_t);
+                // DECLARE_TYPE_AND_RUN(UINT32, uint32_t);
+                // DECLARE_TYPE_AND_RUN(INT64, int64_t);
+                // DECLARE_TYPE_AND_RUN(UINT64, uint64_t);
 				DECLARE_TYPE_AND_RUN(FLOAT32, float);
 				DECLARE_TYPE_AND_RUN(FLOAT64, double);
 #undef DECLARE_TYPE_AND_RUN
 				default: {
-					TS_LOG_ERROR << "pre_whiten not support this data type: " << type_str(dtype) << eject;
+                    TS_LOG_ERROR << this->op() << " not support data type(" << dtype << "): " << type_str(dtype) << eject;
 					break;
 				}
 			}

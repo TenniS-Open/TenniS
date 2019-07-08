@@ -11,6 +11,32 @@
 
 namespace ts {
 
+    class TS_DEBUG_API OperatorNotFoundException : public Exception {
+    public:
+        explicit OperatorNotFoundException(const DeviceType &device_type, const std::string &operator_name)
+                : Exception(OperatorNotFoundMessage(device_type, operator_name))
+                , m_device_type(device_type), m_operator_name(operator_name) {
+        }
+
+        static std::string OperatorNotFoundMessage(const DeviceType &device_type, const std::string &operator_name) {
+            std::ostringstream oss;
+            oss << "No operator \"" << operator_name << "\" registered on device \"" << device_type << "\".";
+            return oss.str();
+        }
+
+        const DeviceType &device_type() const {
+            return m_device_type;
+        }
+
+        const std::string &operator_name() const {
+            return m_operator_name;
+        }
+
+    private:
+        DeviceType m_device_type;
+        std::string m_operator_name;
+    };
+
     class TS_DEBUG_API OperatorCreator {
     public:
 
@@ -25,9 +51,20 @@ namespace ts {
                              const std::string &operator_name,
                              const function &operator_creator) TS_NOEXCEPT;
 
+        static Operator::shared CreateNoException(const DeviceType &device_type,
+                                                  const std::string &operator_name,
+                                                  bool strict = false) TS_NOEXCEPT;
+
+        /**
+         * Will throw OperatorNotFoundException if operator not found
+         * @param device_type
+         * @param operator_name
+         * @param strict
+         * @return
+         */
         static Operator::shared Create(const DeviceType &device_type,
                                        const std::string &operator_name,
-                                       bool strict = false) TS_NOEXCEPT;
+                                       bool strict = false);
 
         static function Query(const DeviceType &device_type,
                               const std::string &operator_name, bool strict) TS_NOEXCEPT;

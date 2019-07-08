@@ -257,4 +257,8 @@ namespace ts {
     Program::shared Program::Compile(const Module::shared &module, const ComputingDevice &device) {
         return Compile(module, device, "");
     }
+
+    const Stack &Program::data_sagment() const {
+        return *m_data_sagment;
+    }
 }

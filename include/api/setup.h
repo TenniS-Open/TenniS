@@ -12,7 +12,7 @@ extern "C" {
 #endif
 
 /**
- * @return True if succeed.
+ * @return ts_true if succeed.
  * @note Happen nothing if failed.
  */
 TENSOR_STACK_C_API ts_bool ts_setup();

@@ -11,6 +11,9 @@
 
 namespace ts {
     namespace api {
+        /**
+         * @see ts_stream_read
+         */
         class StreamReader {
         public:
             using self = StreamReader;
@@ -22,6 +25,9 @@ namespace ts {
             }
         };
 
+        /**
+         * @see ts_stream_write
+         */
         class StreamWriter {
         public:
             using self = StreamWriter;

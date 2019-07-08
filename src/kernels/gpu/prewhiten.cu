@@ -13,6 +13,8 @@
 
 #include "kernels/gpu/gpu_helper.h"
 
+#include "frontend/intime.h"
+
 namespace ts {
     namespace gpu {
 
@@ -135,13 +137,13 @@ namespace ts {
             Shape mean_shape;
             mean_shape.resize(1);
             mean_shape[0] = 1;
-            Tensor mean_tensor = Tensor(mem_device, out.dtype(), mean_shape);
+            Tensor mean_tensor = Tensor(Tensor::InFlow::DEVICE, out.dtype(), mean_shape);
             T *mean = mean_tensor.data<T>();
 
             Shape std_dev_shape;
             std_dev_shape.resize(1);
             std_dev_shape[0] = 1;
-            Tensor std_dev_tensor = Tensor(mem_device, out.dtype(), std_dev_shape);
+            Tensor std_dev_tensor = Tensor(Tensor::InFlow::DEVICE, out.dtype(), std_dev_shape);
             T *std_dev = std_dev_tensor.data<T>();
 
             T *at = nullptr;
@@ -164,7 +166,7 @@ namespace ts {
                 Shape dev_shape;
                 dev_shape.resize(1);
                 dev_shape[0] = 1;
-                Tensor dev_tensor = Tensor(mem_device, out.dtype(), dev_shape);
+                Tensor dev_tensor = Tensor(Tensor::InFlow::DEVICE, out.dtype(), dev_shape);
                 T* dev_buffer = dev_tensor.data<T>();
                 //T* tmp_dev_out = (T*)gpu_allocator(device_id, grid_size * sizeof(T), nullptr, 0);
 
@@ -185,14 +187,14 @@ namespace ts {
             switch (dtype) {
 #define DECLARE_TYPE_AND_RUN(DTYPE, TYPE) \
 				case DTYPE: { gpu_pre_whiten_compute_run<TYPE>(x, out, running_mem_device); break; }
-                //DECLARE_TYPE_AND_RUN(INT8, int8_t);
-                //DECLARE_TYPE_AND_RUN(UINT8, uint8_t);
-                //DECLARE_TYPE_AND_RUN(INT16, int16_t);
-                //DECLARE_TYPE_AND_RUN(UINT16, uint16_t);
-                //DECLARE_TYPE_AND_RUN(INT32, int32_t);
-                //DECLARE_TYPE_AND_RUN(UINT32, uint32_t);
-                //DECLARE_TYPE_AND_RUN(INT64, int64_t);
-                //DECLARE_TYPE_AND_RUN(UINT64, uint64_t);
+                // DECLARE_TYPE_AND_RUN(INT8, int8_t);
+                // DECLARE_TYPE_AND_RUN(UINT8, uint8_t);
+                // DECLARE_TYPE_AND_RUN(INT16, int16_t);
+                // DECLARE_TYPE_AND_RUN(UINT16, uint16_t);
+                // DECLARE_TYPE_AND_RUN(INT32, int32_t);
+                // DECLARE_TYPE_AND_RUN(UINT32, uint32_t);
+                // DECLARE_TYPE_AND_RUN(INT64, int64_t);
+                // DECLARE_TYPE_AND_RUN(UINT64, uint64_t);
 #ifdef TS_USE_CUDA_FP16
                 DECLARE_TYPE_AND_RUN(FLOAT16, half);
 #endif
@@ -200,7 +202,7 @@ namespace ts {
                 DECLARE_TYPE_AND_RUN(FLOAT64, double);
 #undef DECLARE_TYPE_AND_RUN
             default: {
-                TS_LOG_ERROR << "pre_whiten not support this data type: " << type_str(dtype) << eject;
+                TS_LOG_ERROR << this->op() << " not support data type(" << dtype << "): " << type_str(dtype) << eject;
                 break;
             }
             }

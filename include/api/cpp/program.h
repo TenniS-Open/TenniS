@@ -15,6 +15,9 @@
 
 namespace ts {
     namespace api {
+        /**
+         * @see ts_Program
+         */
         class Program {
         public:
             using self = Program;
@@ -75,6 +78,11 @@ namespace ts {
 
             int output_count() const {
                 return ts_Program_output_count(m_impl.get());
+            }
+
+            void set_operator_param(const std::string &node_name, const std::string &param, const Tensor &value) {
+                TS_API_AUTO_CHECK(ts_Program_set_operator_param(
+                        m_impl.get(), node_name.c_str(), param.c_str(), value.get_raw()))
             }
 
         private:
