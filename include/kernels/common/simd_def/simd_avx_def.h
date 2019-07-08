@@ -141,6 +141,9 @@ inline _simd_f32x4x2 _simd_intx4x2_to_float32x4x2(_simd_int32x4x2 src) {
     return _mm256_cvtepi32_ps(src);
 }
 
+inline _simd_f32x4x2 _simd_broadcast2float32x4x2(const _simd_f32* src) {
+    return _mm256_broadcast_ss(src);
+}
 #endif //TS_USE_AVX
 
 #endif //TENSORSTACK_KERNELS_COMMON_SIMD_DEF_SIMD_AVX_DEF_H
