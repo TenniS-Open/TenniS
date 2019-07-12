@@ -26,7 +26,7 @@ namespace ts {
 
         template<typename T>
         inline T cblas_dot(int N, const T *x, int incx, const T *y, int incy) {
-            return cpu::math<T>::dot(N, x, incx, y, incy);
+            return cpu::math<T, T>::dot(N, x, incx, y, incy);
         }
 
         template <>
@@ -55,7 +55,7 @@ namespace ts {
                         T alpha, const T *A, int lda,
                         const T *B, int ldb, T beta,
                         T *C, int ldc) {
-            cpu::math<T>::gemm(Order, TransA, TransB, M, N, K, alpha, A, lda, B, ldb, beta, C, ldc);
+            cpu::math<T, T>::gemm(Order, TransA, TransB, M, N, K, alpha, A, lda, B, ldb, beta, C, ldc);
         }
 
         template <>
@@ -106,7 +106,7 @@ namespace ts {
 
         template <typename T>
         T cblas_asum(int N, const T *x, int incx) {
-            return cpu::math<T>::asum(N, x, incx);
+            return cpu::math<T, T>::asum(N, x, incx);
         }
 
         template <>

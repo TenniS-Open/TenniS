@@ -112,6 +112,9 @@ namespace ts {
             const string &force_gray() TS_NOEXCEPT { static string str = "force_gray"; return str; }
 
             const string &norm_image() TS_NOEXCEPT { static string str = "norm_image"; return str; }
+
+            const string &quantize() TS_NOEXCEPT { static string str = "quantize"; return str; }
+            const string &conv2d_quantized() TS_NOEXCEPT { static string str = "conv2d_quantized"; return str; }
         }
 
         namespace typo {
@@ -188,5 +191,8 @@ namespace ts {
 
         string outer_value = "outer_value";
         string scale = "scale";
+
+        string quantize_scale = "quantize_scale";
+        string dequantize_scales = "dequantize_scales";
     }
 }

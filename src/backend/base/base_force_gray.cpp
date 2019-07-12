@@ -58,7 +58,7 @@ namespace ts {
                 if (channels != 3) {
                     TS_LOG_ERROR << "Can not force image " << to_string(x.sizes()) << " to gray." << eject;
                 }
-                static const std::vector<float> bgr_scale = {0.114, 0.587, 0.299};
+                static const std::vector<float> bgr_scale = {0.114f, 0.587f, 0.299f};
                 force_gray(image, bgr_scale, out);
             } else {
                 if (channels != m_scale.size()) {

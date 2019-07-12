@@ -120,6 +120,10 @@ namespace ts {
             // 2019-06-12
             TS_DEBUG_API const string &l2_norm() TS_NOEXCEPT;
 
+            // 2019-06-18
+            TS_DEBUG_API const string &quantize() TS_NOEXCEPT;
+            TS_DEBUG_API const string &conv2d_quantized() TS_NOEXCEPT;
+
             // 2019-06-27
             TS_DEBUG_API const string &force_color() TS_NOEXCEPT;
             TS_DEBUG_API const string &force_gray() TS_NOEXCEPT;
@@ -203,6 +207,9 @@ namespace ts {
 
         TS_DEBUG_API extern string outer_value;
         TS_DEBUG_API extern string scale;
+
+        TS_DEBUG_API extern string quantize_scale;
+        TS_DEBUG_API extern string dequantize_scales;
     }
 }
 

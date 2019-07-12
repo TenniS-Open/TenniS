@@ -62,7 +62,7 @@ namespace ts {
             cblas::math<T>::gemm(blas_transA, blas_transB, M, N, K,
                                  (T) alpha, ptr_A, ptr_B, (T) beta, ptr_C);
 #else
-            cpu::math<T>::gemm(blas_transA, blas_transB, M, N, K,
+            cpu::math<T, T>::gemm(blas_transA, blas_transB, M, N, K,
                                (T) alpha, ptr_A, ptr_B, (T) beta, ptr_C);
 #endif
         }
