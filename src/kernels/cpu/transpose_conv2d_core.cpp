@@ -62,7 +62,7 @@ static void cpu_transpose_conv2d_nchw_compute_run(const Tensor &x, const Padding
                 cblas::math<T>::gemm(ts::blas::Trans, ts::blas::NoTrans, kernel_dims, conv_out_spatial_dim,
                                      weight_shape[0], 1.0, pweight, pinput, 0, col_buffer);
 #else
-                cpu::math<T>::gemm(ts::blas::Trans,ts::blas::NoTrans, kernel_dims, conv_out_spatial_dim,
+                cpu::math<T, T>::gemm(ts::blas::Trans,ts::blas::NoTrans, kernel_dims, conv_out_spatial_dim,
                                weight_shape[0], 1.0, pweight, pinput, 0, col_buffer);
 #endif
  

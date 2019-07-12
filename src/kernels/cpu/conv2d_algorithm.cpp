@@ -352,7 +352,7 @@ namespace ts {
                     #ifdef TS_USE_CBLAS
                     cblas::math<T>::gemm(blas::NoTrans, blas::NoTrans, 4, 3, 3, T(1), ktm, kernel_at, 0, tmp_mid);
                     #else
-                    cpu::math<T>::gemm(blas::NoTrans, blas::NoTrans, 4, 3, 3, T(1), ktm, kernel_at, 0, tmp_mid);
+                    cpu::math<T,T>::gemm(blas::NoTrans, blas::NoTrans, 4, 3, 3, T(1), ktm, kernel_at, 0, tmp_mid);
                     #endif
                     inner_transpose_temp<T>(4, 3, tmp_mid, tmp_out);
                     //inner_transpose_temp<T>(4, 3, (T*)ktm, tmp_out);
@@ -360,7 +360,7 @@ namespace ts {
                     cblas::math<T>::gemm(blas::NoTrans, blas::NoTrans, 4, 4, 3, T(1), ktm, (const T*)tmp_out, 0, kernel_tm_at);
                     //cblas::math<T>::gemm(blas::NoTrans, blas::NoTrans, 4, 4, 3, T(1), (const T*)tmp_out,ktm, 0, kernel_tm_at);
                     #else
-                    cpu::math<T>::gemm(blas::NoTrans, blas::NoTrans, 4, 3, 3, T(1), ktm, (const T*)tmp_out, 0, kernel_tm_at);
+                    cpu::math<T,T>::gemm(blas::NoTrans, blas::NoTrans, 4, 3, 3, T(1), ktm, (const T*)tmp_out, 0, kernel_tm_at);
                     #endif
                 }
             }
@@ -455,7 +455,7 @@ namespace ts {
                     #ifdef TS_USE_CBLAS
                     cblas::math<T>::gemm(blas::NoTrans, blas::NoTrans, 8, 3, 3, T(1), ktm, kernel_at, 0, tmp_mid);
                     #else
-                    cpu::math<T>::gemm(blas::NoTrans, blas::NoTrans, 8, 3, 3, T(1), ktm, kernel_at, 0, tmp_mid);
+                    cpu::math<T, T>::gemm(blas::NoTrans, blas::NoTrans, 8, 3, 3, T(1), ktm, kernel_at, 0, tmp_mid);
                     #endif
                     inner_transpose_temp<T>(8, 3, tmp_mid, tmp_out);
                     //inner_transpose_temp<T>(4, 3, (T*)ktm, tmp_out);
@@ -463,7 +463,7 @@ namespace ts {
                     cblas::math<T>::gemm(blas::NoTrans, blas::NoTrans, 8, 8, 3, T(1), ktm, (const T*)tmp_out, 0, kernel_tm_at);
                     //cblas::math<T>::gemm(blas::NoTrans, blas::NoTrans, 4, 4, 3, T(1), (const T*)tmp_out,ktm, 0, kernel_tm_at);
                     #else
-                    cpu::math<T>::gemm(blas::NoTrans, blas::NoTrans, 8, 8, 3, T(1), ktm, (const T*)tmp_out, 0, kernel_tm_at);
+                    cpu::math<T, T>::gemm(blas::NoTrans, blas::NoTrans, 8, 8, 3, T(1), ktm, (const T*)tmp_out, 0, kernel_tm_at);
                     #endif
                 }
             }
@@ -5965,7 +5965,7 @@ namespace ts {
                         c1 = fmadd(a0, k1, c1);
                         c2 = fmadd(a0, k2, c2);
                         c3 = fmadd(a0, k3, c3);
-                        //Note:
+                        //Note:The number of registers is limited
                         k0 = broadcast2float32x4x2(kernel_at + 4);               //[k40,k40,k40,k40,k40,k40,k40,k40]
                         k1 = broadcast2float32x4x2(kernel_at + 5);               //[k50,k50,k50,k50,k50,k50,k50,k50]
                         k2 = broadcast2float32x4x2(kernel_at + 6);               //[k60,k60,k60,k60,k60,k60,k60,k60]
