@@ -3,6 +3,7 @@
 
 #if defined(__ARM_NEON__) || defined(__ARM_NEON)
 #include <arm_neon.h>
+#include <utility>
 
 using _simd_f32x4 = float32x4_t;
 using _simd_f32x4x2 = float32x4x2_t;
@@ -34,42 +35,42 @@ inline _simd_int32x4 _simd_int32x4_sub(_simd_int32x4 lhs, _simd_int32x4 rhs) {
 }
 
 inline _simd_int32x4x2 _simd_int32x4x2_load(const _simd_int32* p) {
-    //_simd_f32x4x2 res;
-    //res.val[0] = vld1q_s32(p);
-    //res.val[1] = vld1q_s32(p + 4);
-    //return res;
-    return vld2q_s32(p);
+    _simd_int32x4x2 res;
+    res.val[0] = vld1q_s32(p);
+    res.val[1] = vld1q_s32(p + 4);
+    return std::move(res);
+    //return vld2q_s32(p);
 }
 
 inline _simd_int32x4x2 _simd_int32x4x2_set(_simd_int32 a, _simd_int32 b, _simd_int32 c, _simd_int32 d,
     _simd_int32 e, _simd_int32 f, _simd_int32 g, _simd_int32 h) {
-    //_simd_int32x4x2 res;
-    //_simd_int32 array_0[4] = { a, b, c, d };
-    //_simd_int32 array_1[4] = { e, f, g, h };
-    //res.val[0] = vld1q_s32(array_0); res.val[1] = vld1q_s32(array_1);
-    //return res;
-    _simd_int32 array[8] = { a, b, c, d, e, f, g, h };
-    return vld2q_s32(array);
+    _simd_int32x4x2 res;
+    _simd_int32 array_0[4] = { a, b, c, d };
+    _simd_int32 array_1[4] = { e, f, g, h };
+    res.val[0] = vld1q_s32(array_0); res.val[1] = vld1q_s32(array_1);
+    return std::move(res);
+    //_simd_int32 array[8] = { a, b, c, d, e, f, g, h };
+    //return vld2q_s32(array);
 }
 
 inline void _simd_int32x4x2_store(_simd_int32 *p, _simd_int32x4x2 m) {
-    //vst1q_s32(p, m.val[0]);
-    //vst1q_s32(p + 4, m.val[1]);
-    vst2q_s32(p, m);
+    vst1q_s32(p, m.val[0]);
+    vst1q_s32(p + 4, m.val[1]);
+    //vst2q_s32(p, m);
 }
 
 inline _simd_int32x4x2 _simd_int32x4x2_add(_simd_int32x4x2 lhs, _simd_int32x4x2 rhs) {
     _simd_int32x4x2 res;
     res.val[0] = vaddq_s32(lhs.val[0], rhs.val[0]);
     res.val[1] = vaddq_s32(lhs.val[1], rhs.val[1]);
-    return res;
+    return std::move(res);
 }
 
 inline _simd_int32x4x2 _simd_int32x4x2_sub(_simd_int32x4x2 lhs, _simd_int32x4x2 rhs) {
     _simd_int32x4x2 res;
     res.val[0] = vsubq_s32(lhs.val[0], rhs.val[0]);
     res.val[1] = vsubq_s32(lhs.val[1], rhs.val[1]);
-    return res;
+    return std::move(res);
 }
 
 inline _simd_f32x4 _simd_f32x4_load(const _simd_f32 *p){
@@ -152,49 +153,49 @@ inline _simd_f32x4 _simd_f32x4_fmadd(const _simd_f32x4& q0, const _simd_f32x4& q
 
 
 inline _simd_f32x4x2 _simd_f32x4x2_load(const _simd_f32 *p) {
-    //_simd_f32x4x2 res;
-    //res.val[0] = vld1q_f32(p); 
-    //res.val[1] = vld1q_f32(p + 4);
-    //return res;
-    return vld2q_f32(p);
+    _simd_f32x4x2 res;
+    res.val[0] = vld1q_f32(p); 
+    res.val[1] = vld1q_f32(p + 4);
+    return std::move(res);
+    //return vld2q_f32(p);
 }
 
 inline _simd_f32x4x2 _simd_f32x4x2_set(_simd_f32 a, _simd_f32 b, _simd_f32 c, _simd_f32 d,
     _simd_f32 e, _simd_f32 f, _simd_f32 g, _simd_f32 h) {
-    //_simd_f32x4x2 res;
-    //_simd_f32 array_0[4] = { a, b, c, d };
-    //_simd_f32 array_1[4] = { e, f, g, h };
-    //res.val[0] = vld1q_f32(array_0); res.val[1] = vld1q_f32(array_1);
-    //return res;
-    _simd_f32 array[8] = { a, b, c, d, e, f, g, h };
-    return vld2q_f32(array);
+    _simd_f32x4x2 res;
+    _simd_f32 array_0[4] = { a, b, c, d };
+    _simd_f32 array_1[4] = { e, f, g, h };
+    res.val[0] = vld1q_f32(array_0); res.val[1] = vld1q_f32(array_1);
+    return std::move(res);
+    //_simd_f32 array[8] = { a, b, c, d, e, f, g, h };
+    //return vld2q_f32(array);
 }
 
 inline void _simd_f32x4x2_store(_simd_f32 *p, _simd_f32x4x2 m) {
-    //vst1q_f32(p, m.val[0]);
-    //vst1q_f32(p + 4, m.val[1]);
-    vst2q_f32(p, m);
+    vst1q_f32(p, m.val[0]);
+    vst1q_f32(p + 4, m.val[1]);
+    //vst2q_f32(p, m);
 }
 
 inline _simd_f32x4x2 _simd_f32x4x2_add(_simd_f32x4x2 lhs, _simd_f32x4x2 rhs) {
     _simd_f32x4x2 res;
     res.val[0] = vaddq_f32(lhs.val[0], rhs.val[0]);
     res.val[1] = vaddq_f32(lhs.val[1], rhs.val[1]);
-    return res;
+    return std::move(res);
 }
 
 inline _simd_f32x4x2 _simd_f32x4x2_sub(_simd_f32x4x2 lhs, _simd_f32x4x2 rhs) {
     _simd_f32x4x2 res;
     res.val[0] = vsubq_f32(lhs.val[0], rhs.val[0]);
     res.val[1] = vsubq_f32(lhs.val[1], rhs.val[1]);
-    return res;
+    return std::move(res);
 }
 
 inline _simd_f32x4x2 _simd_f32x4x2_mul(_simd_f32x4x2 lhs, _simd_f32x4x2 rhs) {
     _simd_f32x4x2 res;
     res.val[0] = vmulq_f32(lhs.val[0], rhs.val[0]);
     res.val[1] = vmulq_f32(lhs.val[1], rhs.val[1]);
-    return res;
+    return std::move(res);
 }
 
 inline _simd_f32x4x2 _simd_f32x4x2_div(_simd_f32x4x2 lhs, _simd_f32x4x2 rhs) {
@@ -203,7 +204,7 @@ inline _simd_f32x4x2 _simd_f32x4x2_div(_simd_f32x4x2 lhs, _simd_f32x4x2 rhs) {
     _simd_f32x4 recip_1 = vrecpeq_f32(rhs.val[1]);
     res.val[0] = vmulq_f32(lhs.val[0], recip_0);
     res.val[1] = vmulq_f32(lhs.val[1], recip_1);
-    return res;
+    return std::move(res);
 }
 
 inline _simd_f32x4x2 _simd_f32x4x2_fmadd(_simd_f32x4x2 q0, _simd_f32x4x2 q1, _simd_f32x4x2 q2) {
@@ -214,7 +215,7 @@ inline _simd_f32x4x2 _simd_f32x4x2_fmadd(_simd_f32x4x2 q0, _simd_f32x4x2 q1, _si
     //_simd_f32x4 mul_tmp_1 = vmulq_f32(q0.val[1], q1.val[1]);
     //res.val[0] = vaddq_f32(mul_tmp_0, q2.val[0]);
     //res.val[1] = vaddq_f32(mul_tmp_1, q2.val[1]);
-    return res;
+    return std::move(res);
 }
 
 //cast
@@ -222,14 +223,14 @@ inline _simd_int32x4x2 _simd_floatx4x2_to_int32x4x2(_simd_f32x4x2 src) {
     _simd_int32x4x2 res;
     res.val[0] = vcvtq_s32_f32(src.val[0]);
     res.val[1] = vcvtq_s32_f32(src.val[1]);
-    return res;
+    return std::move(res);
 }
 
 inline _simd_f32x4x2 _simd_intx4x2_to_float32x4x2(_simd_int32x4x2 src) {
     _simd_f32x4x2 res;
     res.val[0] = vcvtq_f32_s32(src.val[0]);
     res.val[1] = vcvtq_f32_s32(src.val[1]);
-    return res;
+    return std::move(res);
 }
 
 //broad cast
@@ -237,7 +238,7 @@ inline _simd_f32x4x2 _simd_broadcast2float32x4x2(const _simd_f32* src) {
     _simd_f32x4x2 res;
     res.val[0] = vdupq_n_f32(*src);
     res.val[1] = vdupq_n_f32(*src);
-    return res;
+    return std::move(res);
 }
 
 #endif
