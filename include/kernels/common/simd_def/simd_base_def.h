@@ -168,4 +168,10 @@ inline _simd_f32x4x2 _simd_intx4x2_to_float32x4x2(_simd_int32x4x2 src) {
     return{ (float)src[0], (float)src[1], (float)src[2], (float)src[3],(float)src[4], (float)src[5], (float)src[6], (float)src[7] };
 }
 
+//broad cast
+inline _simd_f32x4x2 _simd_broadcast2float32x4x2(const _simd_f32* src) {
+    float val = *src;
+    return{ val, val, val, val, val, val, val, val };
+}
+
 #endif //TENSORSTACK_KERNELS_COMMON_SIMD_DEF_SIMD_BASE_DEF_H
