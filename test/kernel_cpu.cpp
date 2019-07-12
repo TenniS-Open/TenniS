@@ -55,7 +55,7 @@ void test_blas(ts::Random &rand, float *ratio = nullptr)
 
     auto start = system_clock::now();
     try {
-        ts::cpu::math<T>::gemm(order, TransA, TransB, M, N, K, alpha, A.get(), lda, B.get(), ldb, beta, C.get(), ldc);
+        ts::cpu::math<T, T>::gemm(order, TransA, TransB, M, N, K, alpha, A.get(), lda, B.get(), ldb, beta, C.get(), ldc);
     } catch (const ts::Exception &e) {
         return;
     }
@@ -68,7 +68,7 @@ void test_blas(ts::Random &rand, float *ratio = nullptr)
 #ifdef TS_USE_CBLAS
     ts::cblas::math<T>::gemm(order, TransA, TransB, M, N, K, alpha, A.get(), lda, B.get(), ldb, beta, cblas_C.get(), ldc);
 #else
-    ts::cpu::math<T>::gemm(order, TransA, TransB, M, N, K, alpha, A.get(), lda, B.get(), ldb, beta, C.get(), ldc);
+    ts::cpu::math<T, T>::gemm(order, TransA, TransB, M, N, K, alpha, A.get(), lda, B.get(), ldb, beta, C.get(), ldc);
 #endif
     end = system_clock::now();
     duration += duration_cast<microseconds>(end - start);
