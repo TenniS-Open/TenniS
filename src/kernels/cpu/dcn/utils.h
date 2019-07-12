@@ -107,7 +107,7 @@ namespace ts {
                     cblas::math<float>::gemm(blas::ColMajor, transa, transb, m, n, k, alpha, a[i], lda, b[i], ldb, beta,
                                              c[i], ldc);
 #else
-                    ts::cpu::math<float>::gemm(blas::ColMajor, transa, transb, m, n, k, alpha, a[i], lda, b[i], ldb, beta,
+                    ts::cpu::math<float, float>::gemm(blas::ColMajor, transa, transb, m, n, k, alpha, a[i], lda, b[i], ldb, beta,
                                                c[i], ldc);
 #endif
                 }

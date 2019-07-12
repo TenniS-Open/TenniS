@@ -30,7 +30,7 @@ namespace ts {
             cblas::math<T>::gemm(blas::NoTrans, rhs_transpose, lhs_shape[0], N, lhs_shape[1],
                                  (T) 1, psrc, pdot, (T) 0, pdst);
 #else
-            cpu::math<T>::gemm(blas::NoTrans, rhs_transpose, lhs_shape[0], N, lhs_shape[1],
+            cpu::math<T, T>::gemm(blas::NoTrans, rhs_transpose, lhs_shape[0], N, lhs_shape[1],
                                (T) 1, psrc, pdot, (T) 0, pdst);
 #endif
         }
