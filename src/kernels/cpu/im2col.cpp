@@ -48,7 +48,7 @@ void im2col_cpu(const Dtype* data_im, const int channels,
     const int channel_size = height * width;
 
     auto omp_threads = openmp_threads();
-    if (omp_threads <= 1) {
+    if (true) {
         for (int channel = channels; channel--; data_im += channel_size) {
             for (int kernel_row = 0; kernel_row < kernel_h; kernel_row++) {
                 for (int kernel_col = 0; kernel_col < kernel_w; kernel_col++) {
