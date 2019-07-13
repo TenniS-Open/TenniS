@@ -242,7 +242,17 @@ namespace ts {
                 auto count = value.count();
                 auto t = cast(BOOLEAN, value);
                 auto data = t.data<dtype<BOOLEAN>::declare>();
-                return std::vector<bool>(data, data + count);
+				std::vector<bool> bool_array(count);
+				auto to_it = bool_array.begin();
+				auto from_it = data;
+				const auto from_end = data + count;
+				while (from_it != from_end)
+				{
+					*to_it = *from_it != 0;
+					++to_it;
+					++from_it;
+				}
+				return std::move(bool_array);
             }
         }
 

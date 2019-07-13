@@ -39,7 +39,7 @@ if (TS_USE_HOOK)
     add_definitions(-DTS_USE_HOOK)
 endif()
 
-option(TS_USE_DEBUG_API "[Optional] Use CBLAS" OFF)
+option(TS_USE_DEBUG_API "[Optional] Use Debug API" OFF)
 if (TS_USE_DEBUG_API)
     add_definitions(-DTS_USE_DEBUG_API)
 endif()
