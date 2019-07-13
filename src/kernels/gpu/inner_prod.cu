@@ -76,9 +76,9 @@ namespace ts {
             const T *pdot = rhs.data<T>();
             T *pdst = out.data<T>();
 
+#ifdef TS_USE_CUBLAS
             auto &context = ctx::ref<DeviceContext>();
             CUDAContextHandle* handle = reinterpret_cast<CUDAContextHandle*>(context.handle);
-#ifdef TS_USE_CUBLAS
             auto cublas_handle = handle->cublas_handle();
 
             auto rhs_tranpose = transpose ? cublas::Trans : cublas::NoTrans;
