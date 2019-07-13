@@ -42,5 +42,6 @@ endif()
 
 if (TS_USE_DEBUG_API)
 add_compile_options(/wd4251)
+add_compile_options(/wd4275)
 add_compile_options(/wd4910)
 endif ()
