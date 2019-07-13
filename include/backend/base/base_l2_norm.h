@@ -29,7 +29,7 @@ namespace ts {
 
         private:
             int m_dim = -1;
-            float m_epsilon = 1.00000001e-10;
+            float m_epsilon = 1.00000001e-10f;
 
             bool check_inputs(Stack &stack) const;
         };

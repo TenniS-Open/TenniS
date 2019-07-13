@@ -39,7 +39,7 @@ namespace ts {
 
     class TS_DEBUG_API Tensor : public Serializable {
     public:
-        class Prototype {
+        class TS_DEBUG_API Prototype {
         public:
             using self = Prototype;
 

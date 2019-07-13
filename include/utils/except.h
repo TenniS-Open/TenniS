@@ -19,6 +19,7 @@
 #include "api.h"
 
 namespace ts {
+	class TS_DEBUG_API std::exception;
     class TS_DEBUG_API Exception : public std::exception {
     public:
         Exception();

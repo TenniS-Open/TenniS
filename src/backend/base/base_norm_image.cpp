@@ -10,7 +10,7 @@
 namespace ts {
     namespace base {
         NormImage::NormImage() {
-            field(name::epsilon, OPTIONAL, tensor::from<float>(1e-5));
+            field(name::epsilon, OPTIONAL, tensor::from<float>(1e-5f));
         }
 
         void NormImage::init() {
