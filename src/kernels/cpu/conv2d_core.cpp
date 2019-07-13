@@ -33,7 +33,6 @@ namespace ts {
             Size2D input(x_shape[2], x_shape[3]);
 
             const T *pinput = x.data<T>();
-            const T *pweight = w.data<T>();
             T *poutput = out.data<T>();
 
             Tensor col_tensor;
@@ -73,6 +72,7 @@ namespace ts {
                 }
                 
 #ifdef TS_USE_CBLAS
+                const T *pweight = w.data<T>();
                 cblas::math<T>::gemm(ts::blas::NoTrans, ts::blas::NoTrans, weight_shape[0], conv_out_spatial_dim,
                                      kernel_dims, 1.0, pweight, col_buffer, 0, poutput);
 #else

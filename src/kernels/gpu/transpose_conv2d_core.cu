@@ -146,15 +146,17 @@ namespace ts {
             col_buffer = col_tensor.data<T>();
           
             int put_param = input_channels * output_shape[2]  * output_shape[3];
-            int N = conv_out_spatial_dim;
-            int M = kernel_dims;
-            int K = x_shape[1];
-
-            dim3 blocksize(CUDA_BLOCK(N, TRANS_BLOCK_DIM),CUDA_BLOCK(M, TRANS_BLOCK_DIM), 1);
-            dim3 threadsize(TRANS_BLOCK_DIM, TRANS_BLOCK_DIM,1);
 
             auto &context = ctx::ref<DeviceContext>();
             auto* handle = reinterpret_cast<CUDAContextHandle*>(context.handle);
+
+#ifndef TS_USE_CUBLAS
+            int N = conv_out_spatial_dim;
+            int M = kernel_dims;
+            int K = x_shape[1];
+            dim3 blocksize(CUDA_BLOCK(N, TRANS_BLOCK_DIM),CUDA_BLOCK(M, TRANS_BLOCK_DIM), 1);
+            dim3 threadsize(TRANS_BLOCK_DIM, TRANS_BLOCK_DIM,1);
+#endif
 
             for (int i = 0; i < number; i++) {
             #ifdef TS_USE_CUBLAS
