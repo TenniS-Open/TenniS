@@ -103,6 +103,7 @@ def convert(input_file, output_file,
         OPType.Enum_SoftmaxLayer: convert_softmax_layer,
         OPType.Enum_ReshapeLayer: convert_reshape_layer,
         OPType.Enum_RealMulLayer: convert_real_mul_layer,
+        OPType.Enum_ShapeIndexPatchLayer: convert_shape_index_patch_layer,
     }
 
     nodes = []
@@ -342,7 +343,7 @@ def convert_convolution_layer(layer, input_nodes, output_names):
         raise NotImplementedError("group = {} with weights.shape[1] = {}".format(group, weights_blob.shape[1]))
 
     is_conv2d = group == 1
-    is_depthwise_conv2d = weights_blob.shape[1] == 1
+    is_depthwise_conv2d = not is_conv2d and weights_blob.shape[1] == 1
     is_tf = tf_padding is not None
 
     if is_depthwise_conv2d:
@@ -574,6 +575,7 @@ def convert_inner_product_layer(layer, input_nodes, output_names):
     num_output = None
     if param.HasField("num_output"):
         num_output = param.num_output
+        print("--##    num_output: {}".format(num_output))
 
     axis = 1
     if param.HasField("axis"):
@@ -586,6 +588,9 @@ def convert_inner_product_layer(layer, input_nodes, output_names):
         transpose = param.transpose
     print("--##    Transpose: {}".format(transpose))
 
+    if not transpose:
+        raise NotImplementedError("Holiday only support transpose=True")
+
     weights_blob = blob2numpy(param.Inner_param)
     print("--##    Weights shape: {}".format(weights_blob.shape))
 
@@ -596,16 +601,21 @@ def convert_inner_product_layer(layer, input_nodes, output_names):
             bias_blob = bias_param
             print("--##    Bias shape: {}".format(bias_blob.shape))
 
-    assert num_output == weights_blob.shape[0]
-    num_input = weights_blob.shape[1]
+    num_input = -1
+    if transpose:
+        assert num_output == weights_blob.shape[0]
+        num_input = weights_blob.shape[1]
+    else:
+        assert num_output == weights_blob.shape[1]
+        num_input = weights_blob.shape[0]
 
     if transpose:
         weights_blob = numpy.reshape(weights_blob, newshape=[num_input, num_output])
     else:
-        weights_blob = weights_blob.transpose()
+        weights_blob = weights_blob
 
     node = ts.zoo.flatten("_flatten_" + node_name, x=x)
-    node = ts.zoo.inner_prod("_ip_" + node_name, node, weights_blob)
+    node = ts.zoo.inner_prod("_ip_" + node_name, node, weights_blob.transpose(), transpose=True)
 
     if bias_blob is not None:
         node = ts.zoo.add_bias("_add_bias_" + node_name, x=node, b=bias_blob, format=ts.zoo.Name.NCHW)
@@ -925,6 +935,27 @@ def convert_real_mul_layer(layer, input_nodes, output_names):
     y = blob2numpy(param.y)
 
     node = ts.zoo.mul(name=node_name, lhs=x, rhs=y, dtype=numpy.float32)
+
+    return node,
+
+
+def convert_shape_index_patch_layer(layer, input_nodes, output_names):
+    # type: (hd.Holiday_LayerParameter, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} ]=-".format(OPType.EnumString[layer.type], output_names))
+
+    assert len(input_nodes) == 2
+    assert len(output_names) == 1
+
+    param = layer.shape_index_patch_param
+
+    x = input_nodes[0]
+    patch = input_nodes[1]
+    node_name = output_names[0]
+
+    origin_patch = param.origin_patch
+    origin = param.origin
+
+    node = ts.frontend.vvvv.shape_index_patch(node_name, feat=x, pos=patch, origin_patch=origin_patch, origin=origin)
 
     return node,
 

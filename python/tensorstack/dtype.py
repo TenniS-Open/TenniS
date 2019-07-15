@@ -147,7 +147,7 @@ def to_numpy(dtype):
     :return: numpy.dtype
     """
     if dtype not in __dtype_to_numpy_dtype:
-        raise Exception("Not supported converting tensorstack dtype ={}".format(dtype))
+        raise Exception("Not supported converting tensorstack dtype = {}".format(dtype))
     return __dtype_to_numpy_dtype[dtype]
 
 

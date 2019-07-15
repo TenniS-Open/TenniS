@@ -210,6 +210,13 @@ message Holiday_RealMulLayer {
     optional Holiday_BlobProto y = 1;
 }
 
+message Holiday_ShapeIndexPatchLayer {
+    // {h, w}
+    repeated int32 origin_patch = 1;
+    // {h, w}
+    repeated int32 origin = 2;
+}
+
 message Holiday_LayerParameter {
     repeated string bottom = 1;
     repeated string top = 2;
@@ -242,5 +249,8 @@ message Holiday_LayerParameter {
     optional Holiday_RealMulLayer real_mul_param = 28;
 
     optional uint32 layer_index = 30;
+
+    // for converting vvvv to holiday usage
+    optional Holiday_ShapeIndexPatchLayer shape_index_patch_param = 31;
 }
 
