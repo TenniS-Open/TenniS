@@ -4,9 +4,14 @@
 author: kier
 """
 
+import sys
+
+if sys.version_info.major == 2:
+    import Queue as queue
+else:
+    import queue
 
 import tensorstack as ts
-import Queue as queue
 import numpy
 
 from .loadnet import Net
@@ -349,8 +354,8 @@ def convert_sn_convolution(node, layer):
     param.dilation_height = dilation[2]
     param.dilation_width = dilation[3]
     param.num_output = weights.shape[0]
-    param.pad_height = (padding[2][0] + padding[2][1]) / 2
-    param.pad_width = (padding[3][0] + padding[3][1]) / 2
+    param.pad_height = padding[2][0] + padding[2][1] // 2
+    param.pad_width = padding[3][0] + padding[3][1] // 2
     param.kernel_height = weights.shape[2]
     param.kernel_width = weights.shape[3]
     param.stride_height = stride[2]
@@ -380,8 +385,8 @@ def convert_sn_pooling(node, layer):
 
     param.kernel_height = ksize[2]
     param.kernel_width = ksize[3]
-    param.pad_height = (padding[2][0] + padding[2][1]) / 2
-    param.pad_width = (padding[3][0] + padding[3][1]) / 2
+    param.pad_height = padding[2][0] + padding[2][1] // 2
+    param.pad_width = padding[3][0] + padding[3][1] // 2
     param.stride_height = stride[2]
     param.stride_width = stride[3]
 
