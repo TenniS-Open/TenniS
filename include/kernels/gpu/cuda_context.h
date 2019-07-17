@@ -22,7 +22,7 @@ namespace ts {
             if(cublasCreate(&m_cublas_handle) != CUBLAS_STATUS_SUCCESS)
                 TS_LOG_ERROR << "The cublasHandle_t initialize failed " << eject;
 
-            int flags = cudaStreamDefault;  // cudaStreamNonBlocking
+            int flags = cudaStreamNonBlocking;  // cudaStreamDefault
             if(cudaStreamCreateWithFlags(&m_stream, flags) != cudaSuccess) {
                 TS_LOG_ERROR << "The cudaStream_t initialize failed " << eject;
             }
