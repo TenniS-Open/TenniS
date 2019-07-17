@@ -51,6 +51,9 @@ namespace ts {
         SyncMemory(const HardMemory::shared &hard, size_t size, size_t shift = 0)
                 : SyncMemory(Memory(hard, size, shift)) {}
 
+        SyncMemory(const HardMemory::shared &hard, size_t size, size_t shift, bool lock)
+                : SyncMemory(Memory(hard, size, shift), lock) {}
+
         /**
          * Initialize Memory
          * @param hard ready memory
@@ -59,6 +62,9 @@ namespace ts {
          */
         SyncMemory(HardMemory::shared &&hard, size_t size, size_t shift = 0)
                 : SyncMemory(Memory(std::move(hard), size, shift)) {}
+
+        SyncMemory(HardMemory::shared &&hard, size_t size, size_t shift, bool lock)
+                : SyncMemory(Memory(std::move(hard), size, shift), lock) {}
 
         /**
          * Initialize Memory
@@ -69,6 +75,9 @@ namespace ts {
         SyncMemory(const HardMemory::shared &hard)
                 : SyncMemory(Memory(hard)) {}
 
+        SyncMemory(const HardMemory::shared &hard, bool lock)
+                : SyncMemory(Memory(hard), lock) {}
+
         /**
          * Initialize Memory
          * @param hard ready memory
@@ -77,6 +86,9 @@ namespace ts {
          */
         SyncMemory(HardMemory::shared &&hard)
                 : SyncMemory(Memory(std::move(hard))) {}
+
+        SyncMemory(HardMemory::shared &&hard, bool lock)
+                : SyncMemory(Memory(std::move(hard)), lock) {}
 
         /**
          * Moving constructed function
