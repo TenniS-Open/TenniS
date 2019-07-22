@@ -759,6 +759,23 @@ Waitting for sure
 返回`reduction_indices`维度内的平均数  
 绝大多数情况优先采用global_average_pooling.
 
+### reduce_sum(x..device) -> y..device
+参数：  
+- `dims` `Int` 要进行求和的维度  
+- `keep_dims` `Boolean` `Default 1` 是否保留求和后的位置  
+
+说明：  
+返回在对应维度上分别求和的结果。
+
+### reduce_mean(x..device) -> y..device
+参数：  
+- `dims` `Int` 要进行求和的维度  
+- `keep_dims` `Boolean` `Default 1` 是否保留求和后的位置  
+
+说明：  
+返回在对应维度上分别求均值的结果。
+
+
 ### squeeze(x..device) -> y
 
 参数：  
