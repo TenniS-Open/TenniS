@@ -5769,6 +5769,389 @@ namespace ts {
         }
 
         template<typename T>
+        void Conv2dAlgorithm<T>::kernel_pack4x4(const Tensor &kernel, Tensor& kernel_packed) {
+            auto shape = kernel.sizes();
+            int kernel_num = shape[0];
+            int kernel_channel = shape[1];
+            int kernel_h = shape[2];
+            int kernel_w = shape[3];
+            int num_offset = kernel_channel * kernel_h * kernel_w;
+            const T* pkernel = kernel.data<T>();
+            T* pkernel_packed = kernel_packed.data<T>();
+
+            int out_loop = kernel_num >> 2;
+            int remain = out_loop << 2;
+
+#ifdef TS_USE_OPENMP
+            #pragma omp parallel for num_threads(openmp_threads())
+#endif
+            for (int nn = 0; nn < out_loop; nn++){
+                int n = nn * 4;
+
+                const T* k0 = pkernel + n * num_offset;
+                const T* k1 = k0 + num_offset;
+                const T* k2 = k1 + num_offset;
+                const T* k3 = k2 + num_offset;
+
+                T* kernel_packed_at = pkernel_packed + n * num_offset;
+
+                for (int i = 0; i < num_offset; i++) {
+                    *kernel_packed_at++ = *k0++;
+                    *kernel_packed_at++ = *k1++;
+                    *kernel_packed_at++ = *k2++;
+                    *kernel_packed_at++ = *k3++;
+                }
+            }
+
+#ifdef TS_USE_OPENMP
+            #pragma omp parallel for num_threads(openmp_threads())
+#endif
+            for (int n = remain; n < kernel_num; n++){
+                const T* k0 = pkernel + n * num_offset;
+                T* kernel_packed_at = pkernel_packed + n * num_offset;
+                for (int i = 0; i < num_offset; i++) {
+                    *kernel_packed_at++ = *k0++;
+                }
+            }
+        }
+
+        template<typename T>
+        void Conv2dAlgorithm<T>::col_pack4x4(const T* col_tensor, int col_h, int col_w, T* col_packed) {
+            const T* pcol = col_tensor;
+            T* pcol_packed = col_packed;
+
+            int out_loop = col_w >> 2;
+            int remain = out_loop << 2;
+
+#ifdef TS_USE_OPENMP
+            #pragma omp parallel for num_threads(openmp_threads())
+#endif
+            for (int nn = 0; nn < out_loop; nn++){
+                int n = nn * 4;
+                const T* col_at = pcol + n;
+                T* packed_at = pcol_packed + n * col_h;
+
+                for (int i = 0; i < col_h; i++){
+                    *packed_at++ = col_at[0];
+                    *packed_at++ = col_at[1];
+                    *packed_at++ = col_at[2];
+                    *packed_at++ = col_at[3];
+
+                    col_at += col_w;
+                }
+            }
+#ifdef TS_USE_OPENMP
+            #pragma omp parallel for num_threads(openmp_threads())
+#endif
+            for (int n = remain; n < col_w; n++){
+                const T* col_at = pcol + n;
+                T* packed_at = pcol_packed + n * col_h;
+
+                for (int i = 0; i < col_h; i++) {
+                    *packed_at++ = col_at[0];
+                    col_at += col_w;
+                }
+            }
+        }
+
+        template<>
+        void Conv2dAlgorithm<float>::col_pack4x4(const float* col_tensor, int col_h, int col_w, float* col_packed) {
+            const float* pcol = col_tensor;
+            float* pcol_packed = col_packed;
+
+            int out_loop = col_w >> 2;
+            int remain = out_loop << 2;
+
+#ifdef TS_USE_OPENMP
+            #pragma omp parallel for num_threads(openmp_threads())
+#endif
+            for (int nn = 0; nn < out_loop; nn++) {
+                int n = nn * 4;
+                const float* col_at = pcol + n;
+                float* packed_at = pcol_packed + n * col_h;
+
+                for (int i = 0; i < col_h; i++) {
+                    float32x4 col_at_x4(col_at);
+                    col_at_x4.store(packed_at);
+
+                    col_at += col_w;
+                    packed_at += 4;
+                }
+            }
+#ifdef TS_USE_OPENMP
+#pragma omp parallel for num_threads(openmp_threads())
+#endif
+            for (int n = remain; n < col_w; n++) {
+                const float* col_at = pcol + n;
+                float* packed_at = pcol_packed + n * col_h;
+
+                for (int i = 0; i < col_h; i++) {
+                    *packed_at++ = col_at[0];
+                    col_at += col_w;
+                }
+            }
+        }
+
+        template<typename T>
+        void Conv2dAlgorithm<T>::gemm_pack4x4(int M, int N, int K, const T* kernel_packed, const T* col_packed, T* out) {
+
+        }
+
+        template<>
+        void Conv2dAlgorithm<float>::gemm_pack4x4(int M, int N, int K, const float* kernel_packed, const float* col_packed, float* out) {
+            const float* pkernel_packed = kernel_packed;
+            const float* pcol_packed = col_packed;
+            float* pout = out;
+
+            int out_channel_offset = N;
+            int kernel_num_offset = K;
+
+            int out_loop = M >> 2;
+            int remain = out_loop << 2;
+            float* output_at = pout;
+#ifdef TS_USE_OPENMP
+            #pragma omp parallel for num_threads(openmp_threads())
+#endif
+            for (int mm = 0; mm < out_loop; mm++){
+                int m = mm * 4;
+                float* output_row0 = output_at + m * out_channel_offset;
+                float* output_row1 = output_row0 + out_channel_offset;
+                float* output_row2 = output_row1 + out_channel_offset;
+                float* output_row3 = output_row2 + out_channel_offset;
+
+                const float* kernel_store = pkernel_packed + m * kernel_num_offset;
+
+                int n_loop = N >> 2;
+                int n_remain = n_loop << 2;
+                for (int nn = 0; nn < n_loop; nn++){
+                    int n = nn * 4;
+                    const float* kernel_at = kernel_store;
+                    const float* col_at = pcol_packed + n * kernel_num_offset;
+
+                    float32x4 c0(0.f), c1(0.f), c2(0.f), c3(0.f);
+
+                    int k_loop = K >> 2;
+                    int k_remain = k_loop << 2;
+                    for (int kk = 0; kk < k_loop; kk++){
+                        //=====================pack_gemm k==0=====================
+                        float32x4 k0 = broadcast2float32x4(kernel_at);       //[k00,k00,k00,k00]
+                        float32x4 k1 = broadcast2float32x4(kernel_at + 1);   //[k10,k10,k10,k10]
+                        float32x4 k2 = broadcast2float32x4(kernel_at + 2);   //[k20,k20,k20,k20]
+                        float32x4 k3 = broadcast2float32x4(kernel_at + 3);   //[k30,k30,k30,k30]
+
+                        float32x4 a0(col_at);                                //[a00,a01,a02,a03]
+
+                        c0 = fmadd(a0, k0, c0);
+                        c1 = fmadd(a0, k1, c1);
+                        c2 = fmadd(a0, k2, c2);
+                        c3 = fmadd(a0, k3, c3);
+
+                        //=====================pack_gemm k==1=====================
+                        k0 = broadcast2float32x4(kernel_at + 4);              //[k01,k01,k01,k01]
+                        k1 = broadcast2float32x4(kernel_at + 5);              //[k11,k11,k11,k11]
+                        k2 = broadcast2float32x4(kernel_at + 6);              //[k21,k21,k21,k21]
+                        k3 = broadcast2float32x4(kernel_at + 7);              //[k31,k31,k31,k31]
+
+                        float32x4 a1(col_at + 4);                             //[a10,a11,a12,a13]
+
+                        c0 = fmadd(a1, k0, c0);
+                        c1 = fmadd(a1, k1, c1);
+                        c2 = fmadd(a1, k2, c2);
+                        c3 = fmadd(a1, k3, c3);
+
+                        //=====================pack_gemm k==2=====================
+                        k0 = broadcast2float32x4(kernel_at + 8);              //[k02,k02,k02,k02]
+                        k1 = broadcast2float32x4(kernel_at + 9);              //[k12,k12,k12,k12]
+                        k2 = broadcast2float32x4(kernel_at + 10);             //[k22,k21,k21,k21]
+                        k3 = broadcast2float32x4(kernel_at + 11);             //[k32,k32,k32,k32]
+
+                        float32x4 a2(col_at + 8);                             //[a20,a21,a22,a23]
+
+                        c0 = fmadd(a2, k0, c0);
+                        c1 = fmadd(a2, k1, c1);
+                        c2 = fmadd(a2, k2, c2);
+                        c3 = fmadd(a2, k3, c3);
+
+                        //=====================pack_gemm k==3=====================
+                        k0 = broadcast2float32x4(kernel_at + 12);              //[k03,k03,k03,k03]
+                        k1 = broadcast2float32x4(kernel_at + 13);              //[k13,k13,k13,k13]
+                        k2 = broadcast2float32x4(kernel_at + 14);              //[k23,k23,k23,k23]
+                        k3 = broadcast2float32x4(kernel_at + 15);              //[k33,k33,k33,k33]
+
+                        float32x4 a3(col_at + 12);                             //[a30,a31,a32,a33]
+
+                        c0 = fmadd(a3, k0, c0);
+                        c1 = fmadd(a3, k1, c1);
+                        c2 = fmadd(a3, k2, c2);
+                        c3 = fmadd(a3, k3, c3);
+
+                        kernel_at += 16;
+                        col_at += 16;
+                    }
+
+                    for (int k = k_remain; k < K; k++){
+                        float32x4 k0 = broadcast2float32x4(kernel_at);       //[k00,k00,k00,k00]
+                        float32x4 k1 = broadcast2float32x4(kernel_at + 1);   //[k10,k10,k10,k10]
+                        float32x4 k2 = broadcast2float32x4(kernel_at + 2);   //[k20,k20,k20,k20]
+                        float32x4 k3 = broadcast2float32x4(kernel_at + 3);   //[k30,k30,k30,k30]
+
+                        float32x4 a0(col_at);                                //[a00,a01,a02,a03]
+
+                        c0 = fmadd(a0, k0, c0);
+                        c1 = fmadd(a0, k1, c1);
+                        c2 = fmadd(a0, k2, c2);
+                        c3 = fmadd(a0, k3, c3);
+
+                        kernel_at += 4;
+                        col_at += 4;
+                    }
+
+                    c0.store(output_row0); c1.store(output_row1);
+                    c2.store(output_row2); c3.store(output_row3);
+
+                    output_row0 += 4; output_row1 += 4;
+                    output_row2 += 4; output_row3 += 4;
+                }
+
+                for (int n = n_remain; n < N; n++){
+                    const float* kernel_at = kernel_store;
+                    const float* col_at = pcol_packed + n * kernel_num_offset;
+                    float32x4 sum_col0(0.f), sum_col1(0.f), sum_col2(0.f), sum_col3(0.f);
+                    float32x4 sum_col(0.f);
+
+                    int k_loop = K >> 2;
+                    int k_remain = k_loop << 2;
+                    for (int kk = 0; kk < k_loop; kk++){
+                        int k = kk * 4;
+
+                        float32x4 a0 = broadcast2float32x4(col_at);          //[a00,a00,a00,a00]
+                        float32x4 a1 = broadcast2float32x4(col_at + 1);      //[a10,a10,a10,a10]
+                        float32x4 a2 = broadcast2float32x4(col_at + 2);      //[a20,a20,a20,a20]
+                        float32x4 a3 = broadcast2float32x4(col_at + 3);      //[a30,a30,a30,a30]
+
+                        float32x4 k0(kernel_at);                             //[k00,k10,k20,k30]
+                        float32x4 k1(kernel_at + 4);                         //[k01,k11,k21,k31]
+                        float32x4 k2(kernel_at + 8);                         //[k02,k12,k22,k32]
+                        float32x4 k3(kernel_at + 12);                        //[k03,k13,k23,k33]
+
+                        sum_col0 = fmadd(k0, a0, sum_col0);
+                        sum_col1 = fmadd(k1, a1, sum_col1);
+                        sum_col2 = fmadd(k2, a2, sum_col2);
+                        sum_col3 = fmadd(k3, a3, sum_col3);
+
+                        kernel_at += 16;
+                        col_at += 4;
+                    }
+
+                    sum_col0 += sum_col1;
+                    sum_col2 += sum_col3;
+                    sum_col += sum_col0;
+                    sum_col += sum_col2;
+
+                    for (int k = k_remain; k < K; k++){
+                        float32x4 a0 = broadcast2float32x4(col_at);          //[a00,a00,a00,a00]
+                        float32x4 k0(kernel_at);                             //[k00,k10,k20,k30]
+
+                        sum_col = fmadd(k0, a0, sum_col);
+
+                        kernel_at += 4;
+                        col_at += 1;
+                    }
+
+                    *output_row0++ = *((float*)&sum_col.value);
+                    *output_row1++ = *(((float*)&sum_col.value) + 1);
+                    *output_row2++ = *(((float*)&sum_col.value) + 2);
+                    *output_row3++ = *(((float*)&sum_col.value) + 3);
+                }
+            }
+
+#ifdef TS_USE_OPENMP
+            #pragma omp parallel for num_threads(openmp_threads())
+#endif
+            for (int m = remain; m < M; m++){
+                float* output_row0 = output_at + m * out_channel_offset;
+                const float* kernel_store = pkernel_packed + m * kernel_num_offset;
+
+                int n_loop = N >> 2;
+                int n_remain = n_loop << 2;
+                for (int nn = 0; nn < n_loop; nn++){
+                    int n = nn * 4;
+                    const float* kernel_at = kernel_store;
+                    const float* col_at = pcol_packed + n * kernel_num_offset;
+
+                    float32x4 c0(0.f);
+
+                    int k_loop = K >> 2;
+                    int k_remain = k_loop << 2;
+                    for (int kk = 0; kk < k_loop; kk++){
+                        float32x4 k0 = broadcast2float32x4(kernel_at);       //[k00,k00,k00,k00]
+                        float32x4 k1 = broadcast2float32x4(kernel_at + 1);   //[k01,k01,k01,k01]
+                        float32x4 k2 = broadcast2float32x4(kernel_at + 2);   //[k02,k02,k02,k02]
+                        float32x4 k3 = broadcast2float32x4(kernel_at + 3);   //[k03,k03,k03,k03]
+
+                        float32x4 a0(col_at);                                //[a00,a01,a02,a03]
+                        float32x4 a1(col_at + 4);                            //[a10,a11,a12,a13]
+                        float32x4 a2(col_at + 8);                            //[a20,a21,a22,a23]
+                        float32x4 a3(col_at + 12);                           //[a30,a31,a32,a33]
+
+                        c0 = fmadd(k0, a0, c0);
+                        c0 = fmadd(k1, a1, c0);
+                        c0 = fmadd(k2, a2, c0);
+                        c0 = fmadd(k3, a3, c0);
+
+                        kernel_at += 4;
+                        col_at += 16;
+                    }
+
+                    for (int k = k_remain; k < K; k++){
+                        float32x4 k0 = broadcast2float32x4(kernel_at);        //[k00,k00,k00,k00]
+                        float32x4 a0(col_at);                                 //[a00,a01,a02,a03]
+
+                        c0 = fmadd(k0, a0, c0);
+
+                        kernel_at += 1;
+                        col_at += 4;
+                    }
+
+                    c0.store(output_row0);
+                    output_row0 += 4;
+                }
+
+                for (int n = n_remain; n < N; n++){
+                    float32x4 c0(0.f);
+                    float sum0 = 0;
+
+                    const float* kernel_at = kernel_store;
+                    const float* col_at = pcol_packed + n * kernel_num_offset;
+
+                    int k_loop = K >> 2;
+                    int k_remain = k_loop << 2;
+                    for (int kk = 0; kk < k_loop; kk++){
+                        int k = kk * 4;
+                        float32x4 k0(kernel_at);
+                        float32x4 a0(col_at);
+
+                        c0 = fmadd(k0, a0, c0);
+
+                        kernel_at += 4;
+                        col_at += 4;
+                    }
+
+                    sum0 = ts::sum(c0);
+
+                    for (int k = k_remain; k < K; k++) {
+                        sum0 += (*kernel_at) * (*col_at);
+                        kernel_at++;
+                        col_at++;
+                    }
+
+                    *output_row0 = sum0;
+                    output_row0++;
+                }
+            }
+        }
+
+        template<typename T>
         void Conv2dAlgorithm<T>::kernel_pack8x8(const Tensor &kernel, Tensor& kernel_packed) {
             auto shape = kernel.sizes();
             int kernel_num = shape[0];
@@ -6227,7 +6610,6 @@ namespace ts {
                     *output_row0 = sum0;
                     output_row0++;
                 }
-
             }
         }
     }
