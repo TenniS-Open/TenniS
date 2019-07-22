@@ -42,6 +42,12 @@ namespace ts {
            static void col_pack8x8(const T* col_tensor, int col_h, int col_w, T* col_packed);
 
            static void gemm_pack8x8(int M, int N, int K, const T* kernel_packed, const T* col_packed, T* out);
+
+           static void kernel_pack4x4(const Tensor &kernel, Tensor& kernel_packed);
+
+           static void col_pack4x4(const T* col_tensor, int col_h, int col_w, T* col_packed);
+
+           static void gemm_pack4x4(int M, int N, int K, const T* kernel_packed, const T* col_packed, T* out);
         };
     }
 
