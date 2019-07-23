@@ -25,7 +25,7 @@ def get_tensor_stack_passes():
         "eliminate_nop_pad",
         "eliminate_nop_transpose",
         "eliminate_unused_initializer",
-        "extract_constant_to_initializer",
+        # "extract_constant_to_initializer",
         "fuse_add_bias_into_conv",
         "fuse_bn_into_conv",
         "fuse_consecutive_concats",
