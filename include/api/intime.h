@@ -107,6 +107,21 @@ TENSOR_STACK_C_API ts_Tensor *ts_intime_cast(const ts_Tensor *x, ts_DTYPE dtype)
  */
 TENSOR_STACK_C_API ts_Tensor *ts_intime_resize2d(const ts_Tensor *x, const ts_Tensor *size, int32_t method);
 
+/**
+ * Return sample2d tensor, out_position = affine * in_position
+ * @param x input tensor
+ * @param size size tensor like Int[2]
+ * @param affine affine tensor like Float[3, 3]
+ * @param method 0-BILINEAR, 1-BICUBIC, 2-NEAREST, @sa ts_ResizeMethod
+ * @return new reference tensor, nullptr if failed.
+ * @note call ts_Workbench_setup_context to fix Exception "Must bind Workbench before run"
+ */
+TENSOR_STACK_C_API ts_Tensor *ts_intime_affine_sample2d(
+        const ts_Tensor *x,
+        const ts_Tensor *size,
+        const ts_Tensor *affine,
+        int32_t dim, float outer_value, int32_t method);
+
 
 #ifdef __cplusplus
 }
