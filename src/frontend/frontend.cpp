@@ -11,7 +11,7 @@
 namespace ts {
     namespace frontend {
         NodeOrTensor::NodeOrTensor(const Node &node)
-            : m_node(node) {}
+                : m_node(node) {}
 
         NodeOrTensor::NodeOrTensor(const Tensor &tensor)
                 : m_node(bubble::data("", tensor)) {}
@@ -30,11 +30,12 @@ namespace ts {
         }
 
         Node pad(const std::string &name, const NodeOrTensor &x, const NodeOrTensor &padding,
-                           float padding_value) {
+                 float padding_value) {
             return symbol::pad(name, x, padding, padding_value);
         }
 
-        Node pad(const std::string &name, const NodeOrTensor &x, const std::vector<DimPadding> &padding, float padding_value) {
+        Node pad(const std::string &name, const NodeOrTensor &x, const std::vector<DimPadding> &padding,
+                 float padding_value) {
             TS_AUTO_CHECK(!padding.empty());
             auto padding_tensor = tensor::build(INT32, {int(padding.size()), 2}, &padding[0].first);
             return pad(name, x, {padding_tensor, CPU}, padding_value);
@@ -45,7 +46,7 @@ namespace ts {
         }
 
         Node resize2d(const std::string &name, const NodeOrTensor &x, const std::vector<int32_t> &size,
-                                desc::ResizeType type) {
+                      desc::ResizeType type) {
             TS_AUTO_CHECK(!size.empty());
             auto size_tensor = tensor::build(INT32, size.size(), size.data());
             return resize2d(name, x, {size_tensor, CPU}, type);
@@ -90,6 +91,37 @@ namespace ts {
 
         Node cast(const std::string &name, const NodeOrTensor &x, DTYPE dtype) {
             return symbol::cast(name, x, dtype);
+        }
+
+        Node affine_sample2d(const std::string &name, const NodeOrTensor &x, const NodeOrTensor &size,
+                             const NodeOrTensor &affine, int32_t dim, float outer_value, desc::ResizeType type) {
+            return symbol::affine_sample2d(name, x, size, affine, dim, outer_value, type);
+        }
+
+        Node affine_sample2d(const std::string &name, const NodeOrTensor &x, const std::array<int32_t, 2> &size,
+                             const NodeOrTensor &affine, int32_t dim, float outer_value, desc::ResizeType type) {
+            return affine_sample2d(name, x,
+                                   tensor::build(INT32, Shape({2,}), &size[0]),
+                                   affine,
+                                   dim, outer_value, type);
+        }
+
+        Node affine_sample2d(const std::string &name, const NodeOrTensor &x, const NodeOrTensor &size,
+                             const std::array<float, 9> &affine, int32_t dim, float outer_value,
+                             desc::ResizeType type) {
+            return affine_sample2d(name, x,
+                                   size,
+                                   tensor::build(FLOAT32, Shape({3, 3}), &affine[0]),
+                                   dim, outer_value, type);
+        }
+
+        Node affine_sample2d(const std::string &name, const NodeOrTensor &x, const std::array<int32_t, 2> &size,
+                             const std::array<float, 9> &affine, int32_t dim, float outer_value,
+                             desc::ResizeType type) {
+            return affine_sample2d(name, x,
+                                   tensor::build(INT32, Shape({2,}), &size[0]),
+                                   tensor::build(FLOAT32, Shape({3, 3}), &affine[0]),
+                                   dim, outer_value, type);
         }
     }
 }
