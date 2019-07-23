@@ -80,8 +80,6 @@ namespace ts {
                 stack.push(fixed_out);
             }
 
-            auto f = tensor::cast(FLOAT32, stack[1]);
-
             return 1;
         }
     }
