@@ -146,6 +146,62 @@ def list_norm_image_case():
         yield ts_node, bubble_inputs, bubble_outputs
 
 
+def list_raw_reduce_case():
+    """
+    yield data, dim, keep_dim, dtype
+    :return:
+    """
+    numpy.random.seed(4482)
+    data = numpy.random.rand(3, 4, 5, 6)
+    data = data * 200 - 100
+    yield data, 0, True, numpy.float32
+    yield data, 1, True, numpy.float32
+    yield data, 2, True, numpy.float32
+    yield data, 3, True, numpy.float32
+    yield data, -2, True, numpy.float32
+    yield data, 0, False, numpy.float32
+    yield data, 1, False, numpy.float32
+    yield data, 2, False, numpy.float32
+    yield data, 3, False, numpy.float32
+    yield data, -2, False, numpy.float32
+
+
+def list_reduce_sum_case():
+    """
+    yield bubble, inputs, outputs
+    :return:
+    """
+    for data, dim, keep_dim, dtype in list_raw_reduce_case():
+        x = numpy.asarray(data, dtype=dtype)
+        y = numpy.sum(x, axis=dim, keepdims=keep_dim)
+
+        bubble_inputs = [x, ]
+        bubble_outputs = [y, ]
+
+        ts_input = ts.menu.param(name="")
+        ts_node = ts.zoo.reduce_sum(name="reduce_sum", x=ts_input, reduce_dims=dim, keep_dims=keep_dim)
+
+        yield ts_node, bubble_inputs, bubble_outputs
+
+
+def list_reduce_mean_case():
+    """
+    yield bubble, inputs, outputs
+    :return:
+    """
+    for data, dim, keep_dim, dtype in list_raw_reduce_case():
+        x = numpy.asarray(data, dtype=dtype)
+        y = numpy.mean(x, axis=dim, keepdims=keep_dim)
+
+        bubble_inputs = [x, ]
+        bubble_outputs = [y, ]
+
+        ts_input = ts.menu.param(name="")
+        ts_node = ts.zoo.reduce_mean(name="reduce_mean", x=ts_input, reduce_dims=dim, keep_dims=keep_dim)
+
+        yield ts_node, bubble_inputs, bubble_outputs
+
+
 def generate_func(path, func):
     """
     generate test case
@@ -166,3 +222,5 @@ if __name__ == '__main__':
     generate_func("abs", list_abs_case)
     generate_func("tanh", list_tanh_case)
     generate_func("norm_image", list_norm_image_case)
+    generate_func("reduce_sum", list_reduce_sum_case)
+    generate_func("reduce_mean", list_reduce_mean_case)

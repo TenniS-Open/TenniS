@@ -54,7 +54,7 @@ namespace ts {
             checkout(stack, m_dim, m_keep_dim, output_shape);
 
             output.resize(1);
-            output[0] = output_shape;
+            output[0] = Tensor::Prototype(stack[0].dtype(), output_shape);
 
             return 1;
         }
@@ -69,7 +69,7 @@ namespace ts {
 
             auto x = stack[0].view(memory_device);
 
-            auto &out = *stack.push(x.dtype(), output_shape, memory_device);
+            auto out = *stack.push(x.dtype(), output_shape, memory_device);
 
             reduce(x, fixed_dim, out);
 
@@ -79,6 +79,8 @@ namespace ts {
                 stack.pop();
                 stack.push(fixed_out);
             }
+
+            auto f = tensor::cast(FLOAT32, stack[1]);
 
             return 1;
         }

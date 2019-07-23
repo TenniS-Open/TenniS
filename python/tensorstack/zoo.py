@@ -71,6 +71,8 @@ class Name(object):
         expand = "_expand"
         abs = "abs"
         tanh = "tanh"
+        reduce_sum = "reduce_sum"
+        reduce_mean = "reduce_mean"
 
     dim = "dim"
     shuffle = "shuffle"
@@ -851,4 +853,20 @@ def abs(name, x):
 def tanh(name, x):
     assert isinstance(x, Node)
     node = menu.op(name=name, op_name=Name.Layer.tanh, inputs=[x, ])
+    return node
+
+
+def reduce_sum(name, x, reduce_dims, keep_dims=True):
+    assert isinstance(x, Node)
+    node = menu.op(name=name, op_name=Name.Layer.reduce_sum, inputs=[x, ])
+    node.set("dims", reduce_dims, numpy.int32)
+    node.set("keep_dims", keep_dims, numpy.bool)
+    return node
+
+
+def reduce_mean(name, x, reduce_dims, keep_dims=True):
+    assert isinstance(x, Node)
+    node = menu.op(name=name, op_name=Name.Layer.reduce_mean, inputs=[x, ])
+    node.set("dims", reduce_dims, numpy.int32)
+    node.set("keep_dims", keep_dims, numpy.bool)
     return node
