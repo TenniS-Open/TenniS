@@ -202,6 +202,36 @@ def list_reduce_mean_case():
         yield ts_node, bubble_inputs, bubble_outputs
 
 
+def list_raw_sqrt_case():
+    """
+    yield data, dtype
+    :return:
+    """
+    numpy.random.seed(4482)
+    data = numpy.random.rand(4, 3)
+    data = data * 200 - 100
+    yield data, numpy.float32
+    yield data, numpy.float64
+
+
+def list_sqrt_case():
+    """
+    yield bubble, inputs, outputs
+    :return:
+    """
+    for data, dtype in list_raw_sqrt_case():
+        x = numpy.asarray(data, dtype=dtype)
+        y = numpy.sqrt(x).astype(dtype=dtype)
+
+        bubble_inputs = [x, ]
+        bubble_outputs = [y, ]
+
+        ts_input = ts.menu.param(name="")
+        ts_node = ts.zoo.sqrt(name="sqrt", x=ts_input)
+
+        yield ts_node, bubble_inputs, bubble_outputs
+
+
 def generate_func(path, func):
     """
     generate test case
@@ -224,3 +254,4 @@ if __name__ == '__main__':
     generate_func("norm_image", list_norm_image_case)
     generate_func("reduce_sum", list_reduce_sum_case)
     generate_func("reduce_mean", list_reduce_mean_case)
+    generate_func("sqrt", list_sqrt_case)

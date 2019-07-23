@@ -73,6 +73,7 @@ class Name(object):
         tanh = "tanh"
         reduce_sum = "reduce_sum"
         reduce_mean = "reduce_mean"
+        sqrt = "sqrt"
 
     dim = "dim"
     shuffle = "shuffle"
@@ -869,4 +870,13 @@ def reduce_mean(name, x, reduce_dims, keep_dims=True):
     node = menu.op(name=name, op_name=Name.Layer.reduce_mean, inputs=[x, ])
     node.set("dims", reduce_dims, numpy.int32)
     node.set("keep_dims", keep_dims, numpy.bool)
+    return node
+
+
+def sqrt(name, x):
+    assert isinstance(x, Node)
+
+    # operator
+    node = menu.op(name=name, op_name=Name.Layer.sqrt, inputs=[x, ])
+
     return node
