@@ -1105,6 +1105,13 @@ For each `x_i` run：
 x_i = (x_i - mean(x_i)) / (std_dev(x_i) + epsilon)
 ```
 
+## sqrt (x..device) -> y..device
+描述：计算 x 元素的平方根
+输入：
+x: Tensor 输入数据
+输出：
+y: Tensor
+
 
 ## 附录
 
