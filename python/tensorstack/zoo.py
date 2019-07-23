@@ -195,6 +195,11 @@ def reshape_v2(name, x, shape):
 def reshape(name, x, shape):
     assert isinstance(x, Node)
 
+    try:
+        shape = to_const(shape, "shape")
+    except:
+        pass
+
     node = None
     if isinstance(shape, Node):
         node = menu.op(name=name, op_name=Name.Layer.reshape_v2, inputs=[x, shape])
