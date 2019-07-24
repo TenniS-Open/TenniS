@@ -148,7 +148,10 @@ inline _simd_f32x4 _simd_f32x4_fmadd(const _simd_f32x4& q0, const _simd_f32x4& q
     return vmlaq_f32(q2, q0, q1);
     //_simd_f32x4 mul_tmp = vmulq_f32(q0, q1);
     //return vaddq_f32(mul_tmp, q2);
+}
 
+inline _simd_f32x4 _simd_broadcast2float32x4(const _simd_f32* src) {
+    return vdupq_n_f32(*src);
 }
 
 
