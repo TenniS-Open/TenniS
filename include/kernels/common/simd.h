@@ -239,6 +239,10 @@ namespace ts {
         return _simd_intx4x2_to_float32x4x2(lhs.value);
     }
 
+    inline float32x4 broadcast2float32x4(const float* src){
+        return _simd_broadcast2float32x4(src);
+    }
+
     inline float32x4x2 broadcast2float32x4x2(const float* src) {
         return _simd_broadcast2float32x4x2(src);
     }

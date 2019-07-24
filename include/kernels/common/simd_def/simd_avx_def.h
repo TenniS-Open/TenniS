@@ -98,6 +98,10 @@ inline _simd_f32x4 _simd_f32x4_fmadd(const _simd_f32x4& q0, const _simd_f32x4& q
     return _mm_fmadd_ps(q0, q1, q2);
 }
 
+inline _simd_f32x4 _simd_broadcast2float32x4(const _simd_f32* src) {
+    return _mm_set1_ps(*src);
+}
+
 
 inline _simd_f32x4x2 _simd_f32x4x2_load(const _simd_f32 *p) {
     return _mm256_loadu_ps(p);
