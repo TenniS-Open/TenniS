@@ -74,6 +74,7 @@ class Name(object):
         reduce_sum = "reduce_sum"
         reduce_mean = "reduce_mean"
         sqrt = "sqrt"
+        tile = "tile"
 
     dim = "dim"
     shuffle = "shuffle"
@@ -99,6 +100,10 @@ class Name(object):
     axes = "axes"
     transpose = "transpose"
     scale = "scale"
+
+    dims = "dims"
+    keep_dims = "keep_dims"
+    repeats = "repeats"
 
 
 class Default(object):
@@ -865,16 +870,16 @@ def tanh(name, x):
 def reduce_sum(name, x, reduce_dims, keep_dims=True):
     assert isinstance(x, Node)
     node = menu.op(name=name, op_name=Name.Layer.reduce_sum, inputs=[x, ])
-    node.set("dims", reduce_dims, numpy.int32)
-    node.set("keep_dims", keep_dims, numpy.bool)
+    node.set(Name.dims, reduce_dims, numpy.int32)
+    node.set(Name.keep_dims, keep_dims, numpy.bool)
     return node
 
 
 def reduce_mean(name, x, reduce_dims, keep_dims=True):
     assert isinstance(x, Node)
     node = menu.op(name=name, op_name=Name.Layer.reduce_mean, inputs=[x, ])
-    node.set("dims", reduce_dims, numpy.int32)
-    node.set("keep_dims", keep_dims, numpy.bool)
+    node.set(Name.dims, reduce_dims, numpy.int32)
+    node.set(Name.keep_dims, keep_dims, numpy.bool)
     return node
 
 
@@ -883,5 +888,16 @@ def sqrt(name, x):
 
     # operator
     node = menu.op(name=name, op_name=Name.Layer.sqrt, inputs=[x, ])
+
+    return node
+
+
+def tile(name, x, repeats):
+    assert isinstance(x, Node)
+
+    repeats = to_const(repeats, "repeats")
+
+    node = menu.op(name=name, op_name=Name.Layer.tile, inputs=[x, ])
+    node.set(Name.repeats, repeats, numpy.int32)
 
     return node

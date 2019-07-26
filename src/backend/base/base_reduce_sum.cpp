@@ -14,15 +14,15 @@
 namespace ts {
     namespace base {
         ReduceSum::ReduceSum() {
-            field("dims", REQUIRED);
-            field("keep_dims", OPTIONAL, tensor::from<bool>(true));
+            field(name::dims, REQUIRED);
+            field(name::keep_dims, OPTIONAL, tensor::from<bool>(true));
         }
 
         void ReduceSum::init() {
             supper::init();
 
-            m_dim = tensor::to_int(this->get("dims"));
-            m_keep_dim = tensor::to_bool(this->get("keep_dims"));
+            m_dim = tensor::to_int(this->get(name::dims));
+            m_keep_dim = tensor::to_bool(this->get(name::keep_dims));
         }
 
         static int checkout(Stack &stack, int dim, bool keep_dim, Shape &output) {

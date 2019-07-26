@@ -232,6 +232,44 @@ def list_sqrt_case():
         yield ts_node, bubble_inputs, bubble_outputs
 
 
+def list_raw_tile_case():
+    """
+    yield x, repeats, dtype
+    :return:
+    """
+    numpy.random.seed(4482)
+    data = numpy.random.rand(2, 3)
+    data = data * 200 - 100
+    yield data, (2, 1), numpy.float32
+    yield data, (3, 2), numpy.float32
+    yield data, (2), numpy.float32
+    yield data, (2, 1, 3), numpy.float32
+    yield data, (0, 1), numpy.float32
+
+
+def list_tile_case():
+    """
+    yield bubble, inputs, outputs
+    :return:
+    """
+    for data, repeats, dtype in list_raw_tile_case():
+        x = numpy.asarray(data, dtype=dtype)
+        y = numpy.tile(x, repeats)
+
+        print x.shape
+        print repeats
+        print y.shape
+
+        bubble_inputs = [x, ]
+        bubble_outputs = [y, ]
+
+        ts_input = ts.menu.param(name="")
+        ts_node = ts.zoo.tile(name="tile", repeats=repeats, x=ts_input)
+
+        yield ts_node, bubble_inputs, bubble_outputs
+
+
+
 def generate_func(path, func):
     """
     generate test case
@@ -255,3 +293,4 @@ if __name__ == '__main__':
     generate_func("reduce_sum", list_reduce_sum_case)
     generate_func("reduce_mean", list_reduce_mean_case)
     generate_func("sqrt", list_sqrt_case)
+    generate_func("tile", list_tile_case)
