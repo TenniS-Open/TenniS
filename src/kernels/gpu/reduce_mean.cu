@@ -190,8 +190,8 @@ namespace ts {
 
 using namespace ts;
 using namespace gpu;
-TS_REGISTER_OPERATOR(ReduceMean, ts::GPU, "reduce_mean")
+TS_REGISTER_OPERATOR(ReduceMean, ts::GPU, name::layer::reduce_mean())
 #ifdef TS_USE_CUDA_FP16
-TS_REGISTER_FP16_OPERATOR(ReduceMean, ts::GPU, "reduce_mean")
+TS_REGISTER_FP16_OPERATOR(ReduceMean, ts::GPU, name::layer::reduce_mean())
 #endif
 

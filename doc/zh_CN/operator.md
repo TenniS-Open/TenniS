@@ -1113,6 +1113,22 @@ x: Tensor 输入数据
 y: Tensor
 
 
+## tile (x..device) -> y..device
+描述：等价 numpy.tile  
+输入：  
+x: Tensor 
+
+输出：  
+y: Tensor
+
+参数：  
+`repeats` `IntArray` 长度和`x.shape`相同。
+
+说明：  
+`y = numpy.tile(x, repeats)`
+
+## tile_v2 (x..device, repeats..host) -> y..device = delete
+
 ## 附录
 
 1. 在做基础运算的时候，`x`和`a`有会三种意义，分别为`标量`，`张量`和`广播张量`。这里的广播张量的意义为：

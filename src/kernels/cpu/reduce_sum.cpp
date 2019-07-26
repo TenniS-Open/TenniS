@@ -78,4 +78,4 @@ namespace ts {
 
 using namespace ts;
 using namespace cpu;
-TS_REGISTER_OPERATOR(ReduceSum, ts::CPU, "reduce_sum")
+TS_REGISTER_OPERATOR(ReduceSum, ts::CPU, name::layer::reduce_sum())

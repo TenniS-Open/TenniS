@@ -130,6 +130,12 @@ namespace ts {
 
             // 2019-06-29
             TS_DEBUG_API const string &norm_image() TS_NOEXCEPT;
+
+            // 2019-07-27
+            TS_DEBUG_API const string &reduce_sum() TS_NOEXCEPT;
+            TS_DEBUG_API const string &reduce_mean() TS_NOEXCEPT;
+            TS_DEBUG_API const string &sqrt() TS_NOEXCEPT;
+            TS_DEBUG_API const string &tile() TS_NOEXCEPT;
         }
 
         namespace typo {
@@ -210,6 +216,9 @@ namespace ts {
 
         TS_DEBUG_API extern string quantize_scale;
         TS_DEBUG_API extern string dequantize_scales;
+
+        TS_DEBUG_API extern string dims;
+        TS_DEBUG_API extern string repeats;
     }
 }
 

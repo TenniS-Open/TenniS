@@ -15,6 +15,8 @@
 #include <kernels/gpu/cudax_fp16_math.h>
 #include "global/fp16_operator_factory.h"
 
+#include "backend/name.h"
+
 namespace ts {
     namespace gpu {
         template<typename T>
@@ -73,7 +75,7 @@ namespace ts {
 
 using namespace ts;
 using namespace gpu;
-TS_REGISTER_OPERATOR(Sqrt, GPU, "sqrt")
+TS_REGISTER_OPERATOR(Sqrt, GPU, name::layer::sqrt())
 #ifdef TS_USE_CUDA_FP16
-TS_REGISTER_FP16_OPERATOR(Sqrt, GPU, "sqrt")
+TS_REGISTER_FP16_OPERATOR(Sqrt, GPU, name::layer::sqrt())
 #endif

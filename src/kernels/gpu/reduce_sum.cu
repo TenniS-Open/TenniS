@@ -161,8 +161,8 @@ namespace ts {
 
 using namespace ts;
 using namespace gpu;
-TS_REGISTER_OPERATOR(ReduceSum, ts::GPU, "reduce_sum")
+TS_REGISTER_OPERATOR(ReduceSum, ts::GPU, name::layer::reduce_sum())
 #ifdef TS_USE_CUDA_FP16
-TS_REGISTER_FP16_OPERATOR(ReduceSum, ts::GPU, "reduce_sum")
+TS_REGISTER_FP16_OPERATOR(ReduceSum, ts::GPU, name::layer::reduce_sum()
 #endif
 
