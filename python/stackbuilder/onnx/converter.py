@@ -1220,3 +1220,52 @@ def convert_conv_traspose_layer(node, input_nodes, output_names):
 
 
 register_layer_converter("ConvTranspose", convert_conv_traspose_layer)
+
+
+def convert_tile_layer(node, input_nodes, output_names):
+    # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} -> {} ]=-".format(node.op_type, [n.name for n in input_nodes], output_names))
+
+    attribute = node.attribute
+    attr_dict = {}
+    for attr in attribute:
+        attr_dict[str(attr.name)] = topy(attr)
+
+    assert len(input_nodes) == 2
+    assert len(output_names) == 1
+
+    node_name = output_names[0]
+
+    x = input_nodes[0]
+    repeats = input_nodes[1]
+
+    ts_node = ts.zoo.tile(node_name, x=x, repeats=repeats)
+
+    return ts_node,
+
+
+register_layer_converter("Tile", convert_tile_layer)
+
+
+def convert_dropout_layer(node, input_nodes, output_names):
+    # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} -> {} ]=-".format(node.op_type, [n.name for n in input_nodes], output_names))
+
+    attribute = node.attribute
+    attr_dict = {}
+    for attr in attribute:
+        attr_dict[str(attr.name)] = topy(attr)
+
+    assert len(input_nodes) == 1
+    assert len(output_names) == 1
+
+    node_name = output_names[0]
+
+    x = input_nodes[0]
+
+    ts_node = ts.zoo.copy(node_name, x=x)
+
+    return ts_node,
+
+
+register_layer_converter("Dropout", convert_dropout_layer)
