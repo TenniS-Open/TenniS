@@ -164,8 +164,8 @@ namespace ts {
         int Conv2DPadding::run(Stack &stack) {
             TS_AUTO_CHECK(stack.size() == 2);
 
-            auto x_tensor = stack[0];
-            auto w_tensor = stack[1];
+            auto &x_tensor = stack[0];
+            auto &w_tensor = stack[1];
 
             TS_AUTO_CHECK(x_tensor.dims() == 4);
             TS_AUTO_CHECK(w_tensor.dims() == 4);
