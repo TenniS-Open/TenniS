@@ -11,7 +11,6 @@
 
 #include "kernels/cpu/conv2d_v2.h"
 #include "kernels/cpu/pooling2d_v2.h"
-#include "kernels/cpu/global_pooling2d.h"
 #include "kernels/cpu/depthwise_conv2d_v2.h"
 #include "kernels/cpu/concat.h"
 #include "kernels/cpu/gather.h"
@@ -35,7 +34,6 @@ TS_REGISTER_OPERATOR(NHWCScaleResize2D, GPU, name::layer::nhwc_scale_resize2d())
 using namespace cpu;
 TS_REGISTER_OPERATOR(Conv2DV2, GPU, name::layer::conv2d_v2())
 TS_REGISTER_OPERATOR(Pooling2DV2, GPU, name::layer::pooling2d_v2())
-TS_REGISTER_OPERATOR(GlobalPooling2D, GPU, name::layer::global_pooling2d())
 TS_REGISTER_OPERATOR(DepthwiseConv2DV2, GPU, name::layer::depthwise_conv2d_v2())
 TS_REGISTER_OPERATOR(Concat, GPU, name::layer::concat())
 TS_REGISTER_OPERATOR(Gather, GPU, name::layer::gather())
