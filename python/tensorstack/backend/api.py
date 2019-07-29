@@ -1279,10 +1279,21 @@ class intime(object):
         return Tensor(y)
 
     @staticmethod
-    def resize2d(x, size, method):
+    def resize2d(x, size, method=ResizeMethod.BILINEAR):
         x = Tensor(x)
         size = Tensor(size, dtype=INT32)
         assert method is None or method in {ResizeMethod.BICUBIC, ResizeMethod.BILINEAR, ResizeMethod.NEAREST}
         y = _C.ts_intime_resize2d(x, size, method)
         _C.ts_api_check_pointer(y)
         return Tensor(y)
+
+    @staticmethod
+    def affine_sample2d(x, size, affine, dim, outer_value=0, method=ResizeMethod.BILINEAR):
+        x = Tensor(x)
+        size = Tensor(size, dtype=INT32)
+        affine = Tensor(affine, dtype=FLOAT32)
+        assert method is None or method in {ResizeMethod.BICUBIC, ResizeMethod.BILINEAR, ResizeMethod.NEAREST}
+        y = _C.ts_intime_affine_sample2d(x, size, affine, dim, outer_value, method)
+        _C.ts_api_check_pointer(y)
+        return Tensor(y)
+
