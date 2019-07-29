@@ -7,7 +7,6 @@
 
 #include <string>
 #include <map>
-#include <regex>
 #include <fstream>
 #include <algorithm>
 #include <cmath>
@@ -290,6 +289,31 @@ namespace ts {
             return Status::SKIP;
         }
 
+        class SampleMatched {
+        public:
+            SampleMatched(const std::string &head, const std::string &tail, const std::string &body) {
+                m_matched = {head, body, tail};
+            }
+
+            SampleMatched() : SampleMatched("", "", "") {}
+
+            const std::string &str(size_t i) const {
+                return m_matched[i];
+            }
+
+        private:
+            std::vector<std::string> m_matched;
+        };
+
+        static bool simple_match(const std::string &str, SampleMatched &matched, const std::string &head, const std::string &tail) {
+            if (str.length() < head.length() + tail.length()) return false;
+            if (str.substr(0, head.length()) != head) return false;
+            if (str.substr(str.length() - tail.length(), tail.length()) != tail) return false;
+            auto body = str.substr(head.length(), str.length() - head.length() - tail.length());
+            matched = SampleMatched(head, tail, body);
+            return true;
+        }
+
         // try load test case in files, throw exception if there is an broken case
         bool load(const std::string &root, const std::vector<std::string> &filenames) {
             TestCase tc;
@@ -305,9 +329,10 @@ namespace ts {
                     default:
                         continue;
                     case 0: {
-                        std::regex pattern(R"(^0\.(.*)\.txt$)");
-                        std::smatch matched;
-                        if (!std::regex_match(filename, matched, pattern)) continue;
+                        // std::regex pattern(R"(^0\.(.*)\.txt$)");
+                        // std::smatch matched;
+                        SampleMatched matched;
+                        if (!simple_match(filename, matched, "0.", ".txt")) continue;
                         std::fstream ifile(fullpath);
                         if (!(ifile >> tc.param_count >> tc.input_count >> tc.output_count)) {
                             TS_LOG_ERROR << "format error in: " << fullpath << eject;
@@ -320,9 +345,10 @@ namespace ts {
                         break;
                     }
                     case 1: {
-                        std::regex pattern(R"(^1\.(.*)\.t$)");
-                        std::smatch matched;
-                        if (!std::regex_match(filename, matched, pattern)) continue;
+                        // std::regex pattern(R"(^1\.(.*)\.t$)");
+                        // std::smatch matched;
+                        SampleMatched matched;
+                        if (!simple_match(filename, matched, "1.", ".t")) continue;
                         FileStreamReader ifile(fullpath);
                         std::string name = matched.str(1);
                         Tensor value;
@@ -331,9 +357,10 @@ namespace ts {
                         break;
                     }
                     case 2: {
-                        std::regex pattern(R"(^2\.input_(.*)\.t$)");
-                        std::smatch matched;
-                        if (!std::regex_match(filename, matched, pattern)) continue;
+                        // std::regex pattern(R"(^2\.input_(.*)\.t$)");
+                        // std::smatch matched;
+                        SampleMatched matched;
+                        if (!simple_match(filename, matched, "2.input_", ".t")) continue;
                         FileStreamReader ifile(fullpath);
                         std::string id_str = matched.str(1);
                         auto id = int(std::strtol(id_str.c_str(), nullptr, 10));
@@ -343,9 +370,10 @@ namespace ts {
                         break;
                     }
                     case 3: {
-                        std::regex pattern(R"(^3\.output_(.*)\.t$)");
-                        std::smatch matched;
-                        if (!std::regex_match(filename, matched, pattern)) continue;
+                        // std::regex pattern(R"(^3\.output_(.*)\.t$)");
+                        // std::smatch matched;
+                        SampleMatched matched;
+                        if (!simple_match(filename, matched, "3.output_", ".t")) continue;
                         FileStreamReader ifile(fullpath);
                         std::string id_str = matched.str(1);
                         auto id = int(std::strtol(id_str.c_str(), nullptr, 10));
