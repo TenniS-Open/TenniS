@@ -145,21 +145,6 @@ namespace ts {
             memcpy(output_data, out.device(), count * sizeof(T), input_data, x.device(), count * sizeof(T));
             //memcpy(output_data, input_data, count * sizeof(T));
 
-
-            Shape mean_shape;
-            mean_shape.resize(1);
-            mean_shape[0] = 1;
-            Tensor mean_tensor = Tensor(Tensor::InFlow::DEVICE, out.dtype(), mean_shape);
-            T *mean = mean_tensor.data<T>();
-
-            Shape std_dev_shape;
-            std_dev_shape.resize(1);
-            std_dev_shape[0] = 1;
-            Tensor std_dev_tensor = Tensor(Tensor::InFlow::DEVICE, out.dtype(), std_dev_shape);
-            T *std_dev = std_dev_tensor.data<T>();
-
-            T *at = nullptr;
-
             // fot batch
             int batch = x.size(0);
             count /= batch;
@@ -167,21 +152,22 @@ namespace ts {
 
             auto cuda_stream = get_cuda_stream_on_context();
 
+            int grid_size = CUDA_BLOCK(count, CUDA_THREAD_NUM);
+            int block_size = CUDA_THREAD_NUM;
+
+            Tensor buffer_tensor = Tensor(Tensor::InFlow::DEVICE, out.dtype(), {1 + 1 + block_size});
+            T *mean = buffer_tensor.data<T>();
+            T *std_dev = mean + 1;
+            T *dev_buffer = std_dev + 1;
+
+            T *at = nullptr;
+
             for (int n = 0; n < batch; ++n) {
                 at = batch_outout_data;
                 math<T>::sum(count, at,mean);
                 mean_kernel<T> << < 1, 1, 0, cuda_stream >> > (count,mean);
 
                 at = batch_outout_data;
-                int grid_size = CUDA_BLOCK(count, CUDA_THREAD_NUM);
-                int block_size = CUDA_THREAD_NUM;
-                Shape dev_shape;
-                dev_shape.resize(1);
-                dev_shape[0] = 1;
-                Tensor dev_tensor = Tensor(Tensor::InFlow::DEVICE, out.dtype(), dev_shape);
-                T* dev_buffer = dev_tensor.data<T>();
-                //T* tmp_dev_out = (T*)gpu_allocator(device_id, grid_size * sizeof(T), nullptr, 0);
-
                 dev_kernel<T> << < grid_size, block_size, 0, cuda_stream >> > (count, at, mean, dev_buffer);
                 math<T>::sum(grid_size, dev_buffer, std_dev);
                 std_dev_kernel<T> << <1, 1, 0, cuda_stream >> > (count, std_dev, T(epsilon));
