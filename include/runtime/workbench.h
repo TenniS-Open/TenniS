@@ -24,6 +24,7 @@
 #include "board/profiler.h"
 
 #include "utils/ctxmgr_lite.h"
+#include "utils/cpu.h"
 
 #include "program.h"
 
@@ -39,6 +40,8 @@ namespace ts {
         explicit Workbench(const ComputingDevice &device);
 
         explicit Workbench(const ComputingDevice &device, int computing_thread_number);
+
+        explicit Workbench(const ComputingDevice &device, CpuEnable::CpuPowerMode cpu_mode);
 
         ~Workbench();
 

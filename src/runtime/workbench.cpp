@@ -81,6 +81,16 @@ namespace ts {
         this->m_runtime_context.set_computing_thread_number(computing_thread_number);
     }
 
+    Workbench::Workbench(const ComputingDevice &device, CpuEnable::CpuPowerMode cpu_mode)
+        : self(device) {
+        bool flag = CpuEnable::set_power_mode(cpu_mode);
+        if (!flag) {
+            TS_LOG_ERROR << "Set power mode failed : " << cpu_mode << eject;
+        }
+        auto fixed_thread_num = CpuEnable::get_cpu_num();
+        this->m_runtime_context.set_computing_thread_number(fixed_thread_num);
+    }
+
     Workbench::~Workbench() {
         this->m_desktop.reset();
         this->m_stack->clear();
