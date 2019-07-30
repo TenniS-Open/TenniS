@@ -71,9 +71,12 @@ if (TS_USE_SIMD)
 endif()
 
 # set winograd support
-option(TS_USE_WINOGRAD "[Optional] Use SIMD" OFF)
+option(TS_USE_WINOGRAD "[Optional] Use Winograd" OFF)
 if (TS_USE_WINOGRAD)
     add_definitions(-DTS_USE_WINOGRAD)
+    message(STATUS "[Optional] Use Winograd: [ON]")
+else (TS_USE_WINOGRAD)
+    message(STATUS "[Optional] Use Winograd: [OFF]")
 endif()
 
 # set common compiler flags
