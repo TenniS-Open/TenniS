@@ -90,7 +90,7 @@ namespace ts {
             auto overflowed = if_overflow(x.sizes(), limit);
             if (!overflowed) return 1;
 
-            auto x_padding_tensor = tensor::build(INT32, Shape({int(limit.size()), 2}));
+            auto x_padding_tensor = Tensor(INT32, Shape({int(limit.size()), 2}));
             auto x_padding_data = x_padding_tensor.data<int32_t>();
             auto limit_count = limit.size();
             for (size_t i = 0; i < limit_count; ++i) {

@@ -253,7 +253,7 @@ def convert_memorydata_layer(layer, input_nodes, output_names):
     elif len(mean_value) > 0:
         if len(mean_value) != input_channels:
             raise Exception("mean value size must be the input channels size")
-        mean = numpy.reshape(numpy.asarray(mean_value, dtype=float), newshape=[1, input_channels, 1, 1])
+        mean = numpy.reshape(numpy.asarray(mean_value, dtype=numpy.float32), newshape=[1, input_channels, 1, 1])
         input = ts.zoo.sub("_sub_mean_input", input, mean)
 
     if scale != 1:
