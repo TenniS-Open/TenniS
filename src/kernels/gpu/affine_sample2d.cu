@@ -242,7 +242,6 @@ namespace ts {
             auto cuda_stream = get_cuda_stream_on_context();
 
             if (type == Affine_Sample2DType::CUBIC) {
-                TS_LOG_INFO << "Affine with CUBIC kernel";
                 for (int k = 0; k < number; k++) {
 
                     const T *psrc = x->data<T>() + k * x_batch_step;
@@ -255,7 +254,6 @@ namespace ts {
                                     outer_mode, outer_value);
                 }
             } else if (type == Affine_Sample2DType::NEAREST) {
-                TS_LOG_INFO << "Affine with NEAREST kernel";
 
                 for (int k = 0; k < number; k++) {
 
@@ -270,7 +268,6 @@ namespace ts {
                                     outer_mode, outer_value);
                 }
             } else { //LINEAR
-                TS_LOG_INFO << "Affine with LINEAR kernel";
                 for (int k = 0; k < number; k++) {
 
                     const T *psrc = x->data<T>() + k * x_batch_step;
