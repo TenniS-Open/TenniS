@@ -48,6 +48,9 @@ namespace ts {
         TS_DEBUG_API Bubble affine_sample2d(int32_t dim = -1,
                                             float outer_value = 0,
                                             desc::ResizeType type = desc::ResizeType::LINEAR);
+
+        TS_DEBUG_API Bubble affine_on_sample2d(int32_t dim = -1,
+                                               desc::ResizeType type = desc::ResizeType::LINEAR);
     }
 }
 

@@ -85,6 +85,28 @@ namespace ts {
                                             int32_t dim = -1,
                                             float outer_value = 0,
                                             desc::ResizeType type = desc::ResizeType::LINEAR);
+
+        TS_DEBUG_API Tensor affine_on_sample2d(const Tensor &x, const Tensor &size, const Tensor &affine,
+                                               int32_t dim = -1,
+                                               desc::ResizeType type = desc::ResizeType::LINEAR);
+
+        TS_DEBUG_API Tensor affine_on_sample2d(const std::string &name,
+                                               const Tensor &x,
+                                               const std::array<int32_t, 2> &size, const Tensor &affine,
+                                               int32_t dim = -1,
+                                               desc::ResizeType type = desc::ResizeType::LINEAR);
+
+        TS_DEBUG_API Tensor affine_on_sample2d(const std::string &name,
+                                               const Tensor &x,
+                                               const Tensor &size, const std::array<float, 9> &affine,
+                                               int32_t dim = -1,
+                                               desc::ResizeType type = desc::ResizeType::LINEAR);
+
+        TS_DEBUG_API Tensor affine_on_sample2d(const std::string &name,
+                                               const Tensor &x,
+                                               const std::array<int32_t, 2> &size, const std::array<float, 9> &affine,
+                                               int32_t dim = -1,
+                                               desc::ResizeType type = desc::ResizeType::LINEAR);
     }
 }
 

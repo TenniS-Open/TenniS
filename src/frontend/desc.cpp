@@ -79,5 +79,12 @@ namespace ts {
             bubble.set(name::type, tensor::from(int32_t(type)));
             return std::move(bubble);
         }
+
+        Bubble affine_on_sample2d(int32_t dim, ResizeType type) {
+            Bubble bubble(name::layer::affine_sample2d(), name::layer::affine_sample2d());
+            bubble.set(name::dim, tensor::from<int32_t>(dim));
+            bubble.set(name::type, tensor::from(int32_t(type)));
+            return std::move(bubble);
+        }
     }
 }
