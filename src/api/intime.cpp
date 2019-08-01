@@ -102,3 +102,15 @@ ts_Tensor *ts_intime_affine_sample2d(const ts_Tensor *x, const ts_Tensor *size, 
         ));
     RETURN_OR_CATCH(dolly.release(), nullptr)
 }
+
+ts_Tensor *ts_intime_affine_on_sample2d(const ts_Tensor *x, const ts_Tensor *size, const ts_Tensor *affine, int32_t dim,
+                                        int32_t method) {
+    TRY_HEAD
+        if (!x) throw Exception("NullPointerException: @param: 1");
+        if (!size) throw Exception("NullPointerException: @param: 2");
+        if (!affine) throw Exception("NullPointerException: @param: 3");
+        std::unique_ptr<ts_Tensor> dolly(new ts_Tensor(
+                intime::affine_on_sample2d(**x, **size, **affine, dim, ts::desc::ResizeType(method))
+        ));
+    RETURN_OR_CATCH(dolly.release(), nullptr)
+}

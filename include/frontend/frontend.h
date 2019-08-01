@@ -108,6 +108,30 @@ namespace ts {
                                           int32_t dim = -1,
                                           float outer_value = 0,
                                           desc::ResizeType type = desc::ResizeType::LINEAR);
+
+        TS_DEBUG_API Node affine_on_sample2d(const std::string &name,
+                                             const NodeOrTensor &x, const NodeOrTensor &size,
+                                             const NodeOrTensor &affine,
+                                             int32_t dim = -1,
+                                             desc::ResizeType type = desc::ResizeType::LINEAR);
+
+        TS_DEBUG_API Node affine_on_sample2d(const std::string &name,
+                                             const NodeOrTensor &x,
+                                             const std::array<int32_t, 2> &size, const NodeOrTensor &affine,
+                                             int32_t dim = -1,
+                                             desc::ResizeType type = desc::ResizeType::LINEAR);
+
+        TS_DEBUG_API Node affine_on_sample2d(const std::string &name,
+                                             const NodeOrTensor &x,
+                                             const NodeOrTensor &size, const std::array<float, 9> &affine,
+                                             int32_t dim = -1,
+                                             desc::ResizeType type = desc::ResizeType::LINEAR);
+
+        TS_DEBUG_API Node affine_on_sample2d(const std::string &name,
+                                             const NodeOrTensor &x,
+                                             const std::array<int32_t, 2> &size, const std::array<float, 9> &affine,
+                                             int32_t dim = -1,
+                                             desc::ResizeType type = desc::ResizeType::LINEAR);
     }
 }
 
