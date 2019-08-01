@@ -221,7 +221,7 @@ def convert_memorydata_layer(layer, input_nodes, output_names):
 
     limit_shape = copy.copy(input_shape)
     limit_shape[0] = -1
-    limit_shape[3] = -1
+    limit_shape[1] = -1
 
     input = ts.zoo.limit("_limit_input", input, shape=limit_shape)
 
