@@ -365,7 +365,7 @@ def convert_convolution_layer(layer, input_nodes, output_names):
             node = ts.frontend.tf.depthwise_conv2d(conv2d_name, x=input_nodes[0], w=weights_blob, format=ts.zoo.Name.NCHW,
                                                    padding=[[0, 0], [0, 0], [padding[0], padding[0]], [padding[1], padding[1]]],
                                                    padding_method=tf_padding, padding_value=0,
-                                                   stride=[0, 0, stride[0], stride[1]],
+                                                   stride=[1, 1, stride[0], stride[1]],
                                                    dilation=[1, 1, dilation[0], dilation[1]])
     else:
         if is_conv2d:
@@ -381,7 +381,7 @@ def convert_convolution_layer(layer, input_nodes, output_names):
             node = ts.zoo.depthwise_conv2d(conv2d_name, x=input_nodes[0], w=weights_blob, format=ts.zoo.Name.NCHW,
                                              padding=[[0, 0], [0, 0], [padding[0], padding[0]], [padding[1], padding[1]]],
                                              padding_value=0,
-                                             stride=[0, 0, stride[0], stride[1]],
+                                             stride=[1, 1, stride[0], stride[1]],
                                              dilation=[1, 1, dilation[0], dilation[1]])
 
     if node is None:
