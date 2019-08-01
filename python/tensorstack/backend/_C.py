@@ -430,6 +430,15 @@ ts_intime_affine_sample2d = __TS_IMPORT(
     c_int32,                # method
 )
 
+ts_intime_affine_on_sample2d = __TS_IMPORT(
+    lib, "ts_intime_affine_on_sample2d", POINTER(ts_Tensor),
+    POINTER(ts_Tensor),     # x
+    POINTER(ts_Tensor),     # size
+    POINTER(ts_Tensor),     # affine
+    c_int32,                # dim
+    c_int32,                # method
+)
+
 
 """ ================================================================================================================ +++
 operator.h
