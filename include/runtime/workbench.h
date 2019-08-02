@@ -241,6 +241,14 @@ namespace ts {
 
         const std::string &summary();
 
+        /**
+        *
+        * @param [in] cpu_mode cpu power mode parameter
+        * @return return true is success
+        * only support android system now
+        */
+        bool set_cpu_power_mode(CpuEnable::CpuPowerMode cpu_mode);
+
     private:
         // size_t m_pointer = 0;   // pointer to running function
         // std::vector<Instruction::shared> m_program; // running function, program area

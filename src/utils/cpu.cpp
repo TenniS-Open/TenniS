@@ -25,6 +25,11 @@ namespace ts{
         float max_freq;
     }CpuInfo;
 
+    static std::vector<int> cpu_sorted_ids;
+    static std::vector<int> cpu_big_ids;
+    static std::vector<int> cpu_little_ids;
+    static bool g_set_cpu_set_power_mode_flag = false;
+
     static int static_get_cpu_num()
     {
     //NOTE:only support androi and linux now
@@ -184,14 +189,24 @@ namespace ts{
         return g_cpu_num;
     }
 
+    int CpuEnable::get_cpu_big_num()
+    {
+        if (g_set_cpu_set_power_mode_flag)
+            return cpu_big_ids.size();
+        return -1;
+    }
+
+    int CpuEnable::get_cpu_little_num()
+    {
+        if (g_set_cpu_set_power_mode_flag)
+            return cpu_little_ids.size();
+        return -1;
+    }
+
     bool CpuEnable::set_power_mode(CpuPowerMode mode)
     {
     //NOTE:only support androi and linux now
 #if TS_PLATFORM_OS_ANDROID || TS_PLATFORM_OS_LINUX
-
-        static std::vector<int> cpu_sorted_ids;
-        static std::vector<int> cpu_big_ids;
-        static std::vector<int> cpu_little_ids;
 
         if(cpu_sorted_ids.empty()){
             split_cpu_big_little(cpu_sorted_ids, cpu_big_ids, cpu_little_ids);
@@ -231,8 +246,10 @@ namespace ts{
 #else
         flag = set_sched_affinity(set_cpu_ids);
 #endif //end TS_USE_OPENMP
-        if(flag)
+        if (flag) {
             g_power_mode = mode;
+            g_set_cpu_set_power_mode_flag = true;
+        }       
         return flag;
 #endif
         return false;

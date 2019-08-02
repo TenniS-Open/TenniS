@@ -21,8 +21,11 @@ namespace ts{
 
     public:
         static int get_cpu_num();
+        static int get_cpu_big_num();
+        static int get_cpu_little_num();
         static bool set_power_mode(CpuPowerMode mode);
         static CpuPowerMode get_power_mode();
+        
     };
 }
 

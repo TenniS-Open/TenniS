@@ -83,12 +83,7 @@ namespace ts {
 
     Workbench::Workbench(const ComputingDevice &device, CpuEnable::CpuPowerMode cpu_mode)
         : self(device) {
-        bool flag = CpuEnable::set_power_mode(cpu_mode);
-        if (!flag) {
-            TS_LOG_ERROR << "Set power mode failed : " << cpu_mode << eject;
-        }
-        auto fixed_thread_num = CpuEnable::get_cpu_num();
-        this->m_runtime_context.set_computing_thread_number(fixed_thread_num);
+        set_cpu_power_mode(cpu_mode);
     }
 
     Workbench::~Workbench() {
@@ -588,6 +583,26 @@ namespace ts {
             << "}";
         m_summary = oss.str();
         return m_summary;
+    }
+
+    bool Workbench::set_cpu_power_mode(CpuEnable::CpuPowerMode cpu_mode){
+        bool flag = CpuEnable::set_power_mode(cpu_mode);
+        if (flag) {
+            int fixed_thread_num;
+            switch (cpu_mode)
+            {
+            case ts::CpuEnable::BALANCE:fixed_thread_num = CpuEnable::get_cpu_num();
+                break;
+            case ts::CpuEnable::BIGCORE:fixed_thread_num = CpuEnable::get_cpu_big_num();
+                break;
+            case ts::CpuEnable::LITTLECORE:fixed_thread_num = CpuEnable::get_cpu_little_num();
+                break;
+            default:
+                break;
+            }
+            this->m_runtime_context.set_computing_thread_number(fixed_thread_num);
+        }
+        return flag;
     }
 }
 
