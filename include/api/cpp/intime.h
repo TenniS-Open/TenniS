@@ -9,11 +9,14 @@
 #include "../intime.h"
 #include "../image_filter.h"
 
+#include <array>
+
 namespace ts {
     namespace api {
         namespace intime {
             struct DimPadding {
                 DimPadding() = default;
+
                 DimPadding(int32_t first, int32_t second)
                         : first(first), second(second) {}
 
@@ -49,7 +52,7 @@ namespace ts {
             }
 
             inline Tensor concat(const std::vector<Tensor> &x, int32_t dim) {
-                std::vector<ts_Tensor*> inputs;
+                std::vector<ts_Tensor *> inputs;
                 for (auto &input : x) {
                     inputs.emplace_back(input.get_raw());
                 }
@@ -85,6 +88,123 @@ namespace ts {
                 auto y = ts_intime_resize2d(x.get_raw(), size.get_raw(), int32_t(method));
                 TS_API_AUTO_CHECK(y != nullptr);
                 return Tensor::NewRef(y);
+            }
+
+            inline Tensor affine_sample2d(
+                    const Tensor &x,
+                    const Tensor &size,
+                    const Tensor &affine,
+                    int32_t dim = -2,
+                    float outer_value = 0,
+                    ResizeMethod method = ResizeMethod::BILINEAR) {
+                auto y = ts_intime_affine_sample2d(
+                        x.get_raw(),
+                        size.get_raw(),
+                        affine.get_raw(),
+                        dim,
+                        outer_value,
+                        int32_t(method));
+                TS_API_AUTO_CHECK(y != nullptr);
+                return Tensor::NewRef(y);
+            }
+
+            inline Tensor affine_sample2d(
+                    const Tensor &x,
+                    const std::array<int32_t, 2> &size,
+                    const Tensor &affine,
+                    int32_t dim = -2,
+                    float outer_value = 0,
+                    ResizeMethod method = ResizeMethod::BILINEAR) {
+                return affine_sample2d(
+                        x,
+                        tensor::build(INT32, Shape({2,}), &size[0]),
+                        affine,
+                        dim, outer_value, method);
+            }
+
+            inline Tensor affine_sample2d(
+                    const Tensor &x,
+                    const Tensor &size,
+                    const std::array<float, 9> &affine,
+                    int32_t dim = -2,
+                    float outer_value = 0,
+                    ResizeMethod method = ResizeMethod::BILINEAR) {
+                return affine_sample2d(
+                        x,
+                        size,
+                        tensor::build(FLOAT32, Shape({3, 3}), &affine[0]),
+                        dim, outer_value, method);
+            }
+
+            inline Tensor affine_sample2d(
+                    const Tensor &x,
+                    const std::array<int32_t, 2> &size,
+                    const std::array<float, 9> &affine,
+                    int32_t dim = -2,
+                    float outer_value = 0,
+                    ResizeMethod method = ResizeMethod::BILINEAR) {
+                return affine_sample2d(
+                        x,
+                        tensor::build(INT32, Shape({2,}), &size[0]),
+                        tensor::build(FLOAT32, Shape({3, 3}), &affine[0]),
+                        dim, outer_value, method);
+            }
+
+            inline Tensor affine_on_sample2d(
+                    const Tensor &x,
+                    const Tensor &size,
+                    const Tensor &affine,
+                    int32_t dim = -2,
+                    ResizeMethod method = ResizeMethod::BILINEAR) {
+                auto y = ts_intime_affine_on_sample2d(
+                        x.get_raw(),
+                        size.get_raw(),
+                        affine.get_raw(),
+                        dim,
+                        int32_t(method));
+                TS_API_AUTO_CHECK(y != nullptr);
+                return Tensor::NewRef(y);
+            }
+
+            inline Tensor affine_on_sample2d(
+                    const Tensor &x,
+                    const std::array<int32_t, 2> &size,
+                    const Tensor &affine,
+                    int32_t dim = -2,
+                    ResizeMethod method = ResizeMethod::BILINEAR) {
+                return affine_on_sample2d(
+                        x,
+                        tensor::build(INT32, Shape({2,}), &size[0]),
+                        affine,
+                        dim, method);
+            }
+
+            inline Tensor affine_on_sample2d(
+                    const Tensor &x,
+                    const Tensor &size,
+                    const std::array<float, 9> &affine,
+                    int32_t dim = -2,
+                    float outer_value = 0,
+                    ResizeMethod method = ResizeMethod::BILINEAR) {
+                return affine_on_sample2d(
+                        x,
+                        size,
+                        tensor::build(FLOAT32, Shape({3, 3}), &affine[0]),
+                        dim, method);
+            }
+
+            inline Tensor affine_on_sample2d(
+                    const Tensor &x,
+                    const std::array<int32_t, 2> &size,
+                    const std::array<float, 9> &affine,
+                    int32_t dim = -2,
+                    float outer_value = 0,
+                    ResizeMethod method = ResizeMethod::BILINEAR) {
+                return affine_on_sample2d(
+                        x,
+                        tensor::build(INT32, Shape({2,}), &size[0]),
+                        tensor::build(FLOAT32, Shape({3, 3}), &affine[0]),
+                        dim, method);
             }
         }
     }

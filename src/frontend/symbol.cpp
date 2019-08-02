@@ -81,5 +81,19 @@ namespace ts {
             Node::Link(node, {x});
             return node;
         }
+
+        Node affine_sample2d(const std::string &name, const Node &x, const Node &size, const Node &affine, int32_t dim,
+                             float outer_value, desc::ResizeType type) {
+            Node node = bubble::bubble(desc::affine_sample2d(dim, outer_value, type), name);
+            Node::Link(node, {x, size, affine});
+            return node;
+        }
+
+        Node affine_on_sample2d(const std::string &name, const Node &x, const Node &size, const Node &affine,
+                                int32_t dim, desc::ResizeType type) {
+            Node node = bubble::bubble(desc::affine_on_sample2d(dim, type), name);
+            Node::Link(node, {x, size, affine});
+            return node;
+        }
     }
 }

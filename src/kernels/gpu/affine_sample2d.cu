@@ -7,20 +7,27 @@
 #include <core/device.h>
 #include <vector>
 #include <cuda_runtime.h>
+#include <cuda_runtime_api.h>
 
 #include "kernels/gpu/gpu_helper.h"
 
 
 namespace ts {
     namespace gpu {
+        template<typename TO, typename FROM>
+        static __device__ TO clamp(FROM MIN, FROM MAX, FROM from) {
+            return TO(max(MIN, min(MAX, from)));
+        }
 
         template<typename T>
-        static __global__ void affine_sample2d_linear_kernel(const T *psrc, T *pdst, int size, int x_height, int x_width,
-                                 int y_height, int y_width,
-                                 //unsigned int x_offset, unsigned int y_offset,
-                                 int channels, float rz00, float rz01, float rz02, float rz10,
-                                 float rz11, float rz12, float rz20, float rz21, float rz22,
-                                 base::AffineOuterMode outer_mode, T outer_value = T(0)) {
+        static __global__ void
+        affine_sample2d_linear_kernel(const T *psrc, T *pdst, int size, int x_height, int x_width,
+                                      int y_height, int y_width,
+                //unsigned int x_offset, unsigned int y_offset,
+                                      int channels, float rz00, float rz01, float rz02, float rz10,
+                                      float rz11, float rz12, float rz20, float rz21, float rz22,
+                                      double data_min, double data_max,
+                                      base::AffineOuterMode outer_mode, T outer_value = T(0)) {
             int index = blockDim.x * blockIdx.x + threadIdx.x;
             if (index >= size) {
                 return;
@@ -35,15 +42,11 @@ namespace ts {
             int n_x_d = ntmp / channels;
             int c = ntmp % channels;
 
-            T curx = rz00 * n_x_d + rz01 * n_y_d + rz02 *1;
-            T cury = rz10 * n_x_d + rz11 * n_y_d + rz12 *1;
+            auto curx = rz00 * n_x_d + rz01 * n_y_d + rz02 * 1;
+            auto cury = rz10 * n_x_d + rz11 * n_y_d + rz12 * 1;
 
-            double lfx_scl =  curx / n_x_d;
-            double lfy_scl =  cury / n_y_d;
-            double bias_x = lfx_scl / 2 - 0.5;
-            double bias_y = lfy_scl / 2 - 0.5;
-            double lf_x_s = lfx_scl * n_x_d + bias_x;
-            double lf_y_s = lfy_scl * n_y_d + bias_y;
+            double lf_x_s = curx;
+            double lf_y_s = cury;
 
             auto inner = lf_x_s >= 0 && lf_x_s < x_width - 1 &&
                          lf_y_s >= 0 && lf_y_s < x_height - 1;
@@ -64,25 +67,27 @@ namespace ts {
             double lf_weight_x = lf_x_s - n_x_s;
             double lf_weight_y = lf_y_s - n_y_s;
 
-            pdst[index] = (T) ((1 - lf_weight_y) * (1 - lf_weight_x) *
-                             psrc[(n_y_s * x_width + n_x_s) * channels + c] +
-                             (1 - lf_weight_y) * lf_weight_x *
-                             psrc[(n_y_s * x_width + n_x_s + 1) * channels + c] +
-                             lf_weight_y * (1 - lf_weight_x) *
-                             psrc[((n_y_s + 1) * x_width + n_x_s) * channels + c] +
-                             lf_weight_y * lf_weight_x *
-                             psrc[((n_y_s + 1) * x_width + n_x_s + 1) * channels + c]);
-
+            pdst[index] = clamp<T, double>(data_min, data_max, (
+                    (1 - lf_weight_y) * (1 - lf_weight_x) *
+                    psrc[(n_y_s * x_width + n_x_s) * channels + c] +
+                    (1 - lf_weight_y) * lf_weight_x *
+                    psrc[(n_y_s * x_width + n_x_s + 1) * channels + c] +
+                    lf_weight_y * (1 - lf_weight_x) *
+                    psrc[((n_y_s + 1) * x_width + n_x_s) * channels + c] +
+                    lf_weight_y * lf_weight_x *
+                    psrc[((n_y_s + 1) * x_width + n_x_s + 1) * channels + c]));
 
         }
 
         template<typename T>
-        static __global__ void affine_sample2d_nearest_kernel(const T *psrc, T *pdst, int size, int x_height, int x_width,
-                                 int y_height, int y_width,
-                                 //unsigned int x_offset, unsigned int y_offset,
-                                 int channels, float rz00, float rz01, float rz02, float rz10,
-                                 float rz11, float rz12, float rz20, float rz21, float rz22,
-                                 base::AffineOuterMode outer_mode, T outer_value = T(0)) {
+        static __global__ void
+        affine_sample2d_nearest_kernel(const T *psrc, T *pdst, int size, int x_height, int x_width,
+                                       int y_height, int y_width,
+                //unsigned int x_offset, unsigned int y_offset,
+                                       int channels, float rz00, float rz01, float rz02, float rz10,
+                                       float rz11, float rz12, float rz20, float rz21, float rz22,
+                                       double data_min, double data_max,
+                                       base::AffineOuterMode outer_mode, T outer_value = T(0)) {
             int index = blockDim.x * blockIdx.x + threadIdx.x;
             if (index >= size) {
                 return;
@@ -97,15 +102,11 @@ namespace ts {
             int n_x_d = ntmp / channels;
             int c = ntmp % channels;
 
-            T curx = rz00 * n_x_d + rz01 * n_y_d + rz02 *1;
-            T cury = rz10 * n_x_d + rz11 * n_y_d + rz12 *1;
-            double lfx_scl =  curx / n_x_d;
-            double lfy_scl =  cury / n_y_d;
+            auto curx = rz00 * n_x_d + rz01 * n_y_d + rz02 * 1;
+            auto cury = rz10 * n_x_d + rz11 * n_y_d + rz12 * 1;
 
-            double bias_x = lfx_scl / 2 - 0.5;
-            double bias_y = lfy_scl / 2 - 0.5;
-            double lf_x_s = lfx_scl * n_x_d + bias_x;
-            double lf_y_s = lfy_scl * n_y_d + bias_y;
+            double lf_x_s = curx;
+            double lf_y_s = cury;
 
             auto n_x_s = int(lf_x_s + 0.5);
             auto n_y_s = int(lf_y_s + 0.5);
@@ -123,17 +124,21 @@ namespace ts {
             n_y_s = n_y_s >= 0 ? n_y_s : 0;
             n_y_s = n_y_s < x_height - 1 ? n_y_s : x_height - 1;
 
-            pdst[index] = (T) psrc[(n_y_s * x_width + n_x_s) * channels + c];
+            pdst[index] = clamp<T, double>(
+                    data_min, data_max,
+                    psrc[(n_y_s * x_width + n_x_s) * channels + c]);
 
         }
 
         template<typename T>
         static __global__ void affine_sample2d_cubic_kernel(const T *psrc, T *pdst, int size, int x_height, int x_width,
-                                 int y_height, int y_width,
-                                 //unsigned int x_offset, unsigned int y_offset,
-                                 int channels, float rz00, float rz01, float rz02, float rz10,
-                                 float rz11, float rz12, float rz20, float rz21, float rz22,
-                                 base::AffineOuterMode outer_mode, T outer_value = T(0)) {
+                                                            int y_height, int y_width,
+                //unsigned int x_offset, unsigned int y_offset,
+                                                            int channels, float rz00, float rz01, float rz02,
+                                                            float rz10,
+                                                            float rz11, float rz12, float rz20, float rz21, float rz22,
+                                                            double data_min, double data_max,
+                                                            base::AffineOuterMode outer_mode, T outer_value = T(0)) {
             int index = blockDim.x * blockIdx.x + threadIdx.x;
             if (index >= size) {
                 return;
@@ -150,8 +155,8 @@ namespace ts {
 
             int srcrows = x_width * channels;
 
-            double fx = rz00 * i + rz01 * j + rz02 *1;
-            double fy = rz10 * i + rz11 * j + rz12 *1;
+            double fx = rz00 * i + rz01 * j + rz02 * 1;
+            double fy = rz10 * i + rz11 * j + rz12 * 1;
 
             const double A = -0.75f;
 
@@ -168,19 +173,19 @@ namespace ts {
                 return;
             }
 
-            if(sy < 1) {
+            if (sy < 1) {
                 fy = 0;
                 sy = 1;
             }
-            if(sy >= x_height - 3) {
+            if (sy >= x_height - 3) {
                 fy = 0;
                 sy = x_height - 3;
             }
-            if(sx < 1) {
+            if (sx < 1) {
                 fx = 0;
                 sx = 1;
             }
-            if(sx >= x_width - 3) {
+            if (sx >= x_width - 3) {
                 fx = 0;
                 sx = x_width - 3;
             }
@@ -197,81 +202,92 @@ namespace ts {
             coeffsX[2] = ((A + 2) * (1 - fx) - (A + 3)) * (1 - fx) * (1 - fx) + 1;
             coeffsX[3] = 1.f - coeffsX[0] - coeffsX[1] - coeffsX[2];
 
-            pdst[index] = (T) ((
-                                psrc[(sy - 1) * srcrows + (sx - 1) * channels + k] * coeffsX[0] * coeffsY[0] +
-                                psrc[(sy) * srcrows + (sx - 1) * channels + k] * coeffsX[0] * coeffsY[1] +
-                                psrc[(sy + 1) * srcrows + (sx - 1) * channels + k] * coeffsX[0] * coeffsY[2] +
-                                psrc[(sy + 2) * srcrows + (sx - 1) * channels + k] * coeffsX[0] * coeffsY[3] +
+            pdst[index] = clamp<T, double>(data_min, data_max, ((
+                    psrc[(sy - 1) * srcrows + (sx - 1) * channels + k] * coeffsX[0] * coeffsY[0] +
+                    psrc[(sy) * srcrows + (sx - 1) * channels + k] * coeffsX[0] * coeffsY[1] +
+                    psrc[(sy + 1) * srcrows + (sx - 1) * channels + k] * coeffsX[0] * coeffsY[2] +
+                    psrc[(sy + 2) * srcrows + (sx - 1) * channels + k] * coeffsX[0] * coeffsY[3] +
 
-                                psrc[(sy - 1) * srcrows + (sx) * channels + k] * coeffsX[1] * coeffsY[0] +
-                                psrc[(sy) * srcrows + (sx) * channels + k] * coeffsX[1] * coeffsY[1] +
-                                psrc[(sy + 1) * srcrows + (sx) * channels + k] * coeffsX[1] * coeffsY[2] +
-                                psrc[(sy + 2) * srcrows + (sx) * channels + k] * coeffsX[1] * coeffsY[3] +
+                    psrc[(sy - 1) * srcrows + (sx) * channels + k] * coeffsX[1] * coeffsY[0] +
+                    psrc[(sy) * srcrows + (sx) * channels + k] * coeffsX[1] * coeffsY[1] +
+                    psrc[(sy + 1) * srcrows + (sx) * channels + k] * coeffsX[1] * coeffsY[2] +
+                    psrc[(sy + 2) * srcrows + (sx) * channels + k] * coeffsX[1] * coeffsY[3] +
 
-                                psrc[(sy - 1) * srcrows + (sx + 1) * channels + k] * coeffsX[2] * coeffsY[0] +
-                                psrc[(sy) * srcrows + (sx + 1) * channels + k] * coeffsX[2] * coeffsY[1] +
-                                psrc[(sy + 1) * srcrows + (sx + 1) * channels + k] * coeffsX[2] * coeffsY[2] +
-                                psrc[(sy + 2) * srcrows + (sx + 1) * channels + k] * coeffsX[2] * coeffsY[3] +
+                    psrc[(sy - 1) * srcrows + (sx + 1) * channels + k] * coeffsX[2] * coeffsY[0] +
+                    psrc[(sy) * srcrows + (sx + 1) * channels + k] * coeffsX[2] * coeffsY[1] +
+                    psrc[(sy + 1) * srcrows + (sx + 1) * channels + k] * coeffsX[2] * coeffsY[2] +
+                    psrc[(sy + 2) * srcrows + (sx + 1) * channels + k] * coeffsX[2] * coeffsY[3] +
 
-                                psrc[(sy - 1) * srcrows + (sx + 2) * channels + k] * coeffsX[3] * coeffsY[0] +
-                                psrc[(sy) * srcrows + (sx + 2) * channels + k] * coeffsX[3] * coeffsY[1] +
-                                psrc[(sy + 1) * srcrows + (sx + 2) * channels + k] * coeffsX[3] * coeffsY[2] +
-                                psrc[(sy + 2) * srcrows + (sx + 2) * channels + k] * coeffsX[3] * coeffsY[3]));
+                    psrc[(sy - 1) * srcrows + (sx + 2) * channels + k] * coeffsX[3] * coeffsY[0] +
+                    psrc[(sy) * srcrows + (sx + 2) * channels + k] * coeffsX[3] * coeffsY[1] +
+                    psrc[(sy + 1) * srcrows + (sx + 2) * channels + k] * coeffsX[3] * coeffsY[2] +
+                    psrc[(sy + 2) * srcrows + (sx + 2) * channels + k] * coeffsX[3] * coeffsY[3])));
 
         }
-
-
 
 
         template<typename T>
         static void batch_affine_sample2d(int number, const Tensor *x, Tensor *y, int x_height, int x_width,
-                                 int y_height, int y_width,
-                                 unsigned int x_batch_step, unsigned int y_batch_step,
-                                 int channels,Affine_Sample2DType type, float rz00, float rz01, float rz02, float rz10,
-                                 float rz11, float rz12, float rz20, float rz21, float rz22,
-                                 base::AffineOuterMode outer_mode, T outer_value = T(0)) {
+                                          int y_height, int y_width,
+                                          unsigned int x_batch_step, unsigned int y_batch_step,
+                                          int channels, Affine_Sample2DType type, float rz00, float rz01, float rz02,
+                                          float rz10,
+                                          float rz11, float rz12, float rz20, float rz21, float rz22,
+                                          base::AffineOuterMode outer_mode, T outer_value = T(0)) {
+            constexpr auto MAX = double(std::numeric_limits<T>::max());
+            constexpr auto MIN = double(std::numeric_limits<T>::lowest());
 
-             int ncount = y_height * y_width * channels;
+            int ncount = y_height * y_width * channels;
 
-             auto cuda_stream = get_cuda_stream_on_context();
+            auto cuda_stream = get_cuda_stream_on_context();
 
-             if(type == Affine_Sample2DType::CUBIC) {
-                 for(int k=0; k<number; k++) {
+            if (type == Affine_Sample2DType::CUBIC) {
+                for (int k = 0; k < number; k++) {
 
-                     const T *psrc = x->data<T>() + k * x_batch_step;
-                     T *pdst = y->data<T>() + k * y_batch_step;
-                     affine_sample2d_cubic_kernel<T> << < CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >> >
-                                              (psrc,pdst,ncount, x_height,x_width,y_height,y_width, channels,
-                                               rz00,rz01,rz02,rz10,rz11,rz12,rz20,rz21,rz22, outer_mode, outer_value);
-                 } 
-             }else if(type == Affine_Sample2DType::NEAREST) {
+                    const T *psrc = x->data<T>() + k * x_batch_step;
+                    T *pdst = y->data<T>() + k * y_batch_step;
+                    affine_sample2d_cubic_kernel<T> << < CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0,
+                            cuda_stream >> >
+                            (psrc, pdst, ncount, x_height, x_width, y_height, y_width, channels,
+                                    rz00, rz01, rz02, rz10, rz11, rz12, rz20, rz21, rz22,
+                                    MIN, MAX,
+                                    outer_mode, outer_value);
+                }
+            } else if (type == Affine_Sample2DType::NEAREST) {
 
-                 for(int k=0; k<number; k++) {
+                for (int k = 0; k < number; k++) {
 
-                     const T *psrc = x->data<T>() + k * x_batch_step;
-                     T *pdst = y->data<T>() + k * y_batch_step;
-                     
-                     affine_sample2d_nearest_kernel<T> << < CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >> >
-                                              (psrc,pdst,ncount,x_height,x_width,y_height,y_width, channels,
-                                               rz00,rz01,rz02,rz10,rz11,rz12,rz20,rz21,rz22, outer_mode, outer_value);
-                 } 
-             }else { //LINEAR
-                 for(int k=0; k<number; k++) {
+                    const T *psrc = x->data<T>() + k * x_batch_step;
+                    T *pdst = y->data<T>() + k * y_batch_step;
 
-                     const T *psrc = x->data<T>() + k * x_batch_step;
-                     T *pdst = y->data<T>() + k * y_batch_step;
+                    affine_sample2d_nearest_kernel<T> << < CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0,
+                            cuda_stream >> >
+                            (psrc, pdst, ncount, x_height, x_width, y_height, y_width, channels,
+                                    rz00, rz01, rz02, rz10, rz11, rz12, rz20, rz21, rz22,
+                                    MIN, MAX,
+                                    outer_mode, outer_value);
+                }
+            } else { //LINEAR
+                for (int k = 0; k < number; k++) {
 
-                     affine_sample2d_linear_kernel<T> << < CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >> >
-                                              (psrc,pdst,ncount,x_height,x_width,y_height,y_width, channels,
-                                               rz00,rz01,rz02,rz10,rz11,rz12,rz20,rz21,rz22, outer_mode, outer_value);
-                 } 
-             }
+                    const T *psrc = x->data<T>() + k * x_batch_step;
+                    T *pdst = y->data<T>() + k * y_batch_step;
+
+                    affine_sample2d_linear_kernel<T> << < CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0,
+                            cuda_stream >> >
+                            (psrc, pdst, ncount, x_height, x_width, y_height, y_width, channels,
+                                    rz00, rz01, rz02, rz10, rz11, rz12, rz20, rz21, rz22,
+                                    MIN, MAX,
+                                    outer_mode, outer_value);
+                }
+            }
         }
 
         void Affine_Sample2D::affine_sample_run(const Tensor &x, float rz00, float rz01, float rz02, float rz10,
-                                           float rz11, float rz12, float rz20, float rz21, float rz22, Affine_Sample2DType type, int dim,
-                                           base::AffineOuterMode outer_mode, float outer_value,
-                                           Tensor &out) {
+                                                float rz11, float rz12, float rz20, float rz21, float rz22,
+                                                Affine_Sample2DType type, int dim,
+                                                base::AffineOuterMode outer_mode, float outer_value,
+                                                Tensor &out) {
 
             auto &output_shape = out.sizes();
 
@@ -318,7 +334,8 @@ namespace ts {
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
                 default: {
-                    TS_LOG_ERROR << this->op() << " not support data type(" << dtype << "): " << type_str(dtype) << eject;
+                    TS_LOG_ERROR << this->op() << " not support data type(" << dtype << "): " << type_str(dtype)
+                                 << eject;
                     break;
                 }
             }

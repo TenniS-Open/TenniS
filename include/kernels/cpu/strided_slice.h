@@ -11,7 +11,7 @@
 
 namespace ts {
     namespace cpu {
-        class StridedSlice : public OperatorOnAny<base::StridedSlice> {
+        class StridedSlice : public OperatorOnCPU<base::StridedSlice> {
         public:
             using self = StridedSlice;
             using supper = OperatorOnCPU<base::StridedSlice>;

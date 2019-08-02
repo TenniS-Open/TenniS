@@ -191,11 +191,12 @@ namespace ts {
                 col_buffer = col_tensor.data<T>();
  
             }
-                  
-            dim3 blocksize(CUDA_BLOCK(conv_out_spatial_dim, TRANS_BLOCK_DIM),CUDA_BLOCK(weight_shape[0], TRANS_BLOCK_DIM), 1);
-            dim3 threadsize(TRANS_BLOCK_DIM, TRANS_BLOCK_DIM,1);
 
             auto cuda_stream = get_cuda_stream_on_context();
+#ifndef TS_USE_CUBLAS
+            dim3 blocksize(CUDA_BLOCK(conv_out_spatial_dim, TRANS_BLOCK_DIM),CUDA_BLOCK(weight_shape[0], TRANS_BLOCK_DIM), 1);
+            dim3 threadsize(TRANS_BLOCK_DIM, TRANS_BLOCK_DIM,1);
+#endif
 
             for(int i=0; i<number; i++) { 
                 if(!is_1x1_conv) {

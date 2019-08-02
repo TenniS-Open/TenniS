@@ -102,5 +102,69 @@ namespace ts {
             if (x.dtype() == dtype) return x;
             return run(desc::cast(dtype), {x});
         }
+
+        Tensor
+        affine_sample2d(const Tensor &x, const Tensor &size, const Tensor &affine, int32_t dim, float outer_value,
+                        desc::ResizeType type) {
+            return run(desc::affine_sample2d(dim, outer_value, type), {x, size, affine});
+        }
+
+        Tensor affine_sample2d(const std::string &name, const Tensor &x, const std::array<int32_t, 2> &size,
+                               const Tensor &affine, int32_t dim, float outer_value, desc::ResizeType type) {
+            return affine_sample2d(x,
+                                   tensor::build(INT32, Shape({2,}), &size[0]),
+                                   affine,
+                                   dim, outer_value, type);
+        }
+
+        Tensor affine_sample2d(const std::string &name, const Tensor &x, const Tensor &size,
+                               const std::array<float, 9> &affine, int32_t dim, float outer_value,
+                               desc::ResizeType type) {
+            return affine_sample2d(x,
+                                   size,
+                                   tensor::build(FLOAT32, Shape({3, 3}), &affine[0]),
+                                   dim, outer_value, type);
+        }
+
+        Tensor affine_sample2d(const std::string &name, const Tensor &x, const std::array<int32_t, 2> &size,
+                               const std::array<float, 9> &affine, int32_t dim, float outer_value,
+                               desc::ResizeType type) {
+            return affine_sample2d(x,
+                                   tensor::build(INT32, Shape({2,}), &size[0]),
+                                   tensor::build(FLOAT32, Shape({3, 3}), &affine[0]),
+                                   dim, outer_value, type);
+        }
+
+        Tensor
+        affine_on_sample2d(const Tensor &x, const Tensor &size, const Tensor &affine, int32_t dim,
+                           desc::ResizeType type) {
+            return run(desc::affine_on_sample2d(dim, type), {x, size, affine});
+        }
+
+        Tensor affine_on_sample2d(const std::string &name, const Tensor &x, const std::array<int32_t, 2> &size,
+                                  const Tensor &affine, int32_t dim, desc::ResizeType type) {
+            return affine_on_sample2d(x,
+                                      tensor::build(INT32, Shape({2,}), &size[0]),
+                                      affine,
+                                      dim, type);
+        }
+
+        Tensor affine_on_sample2d(const std::string &name, const Tensor &x, const Tensor &size,
+                                  const std::array<float, 9> &affine, int32_t dim,
+                                  desc::ResizeType type) {
+            return affine_on_sample2d(x,
+                                      size,
+                                      tensor::build(FLOAT32, Shape({3, 3}), &affine[0]),
+                                      dim, type);
+        }
+
+        Tensor affine_on_sample2d(const std::string &name, const Tensor &x, const std::array<int32_t, 2> &size,
+                                  const std::array<float, 9> &affine, int32_t dim,
+                                  desc::ResizeType type) {
+            return affine_on_sample2d(x,
+                                      tensor::build(INT32, Shape({2,}), &size[0]),
+                                      tensor::build(FLOAT32, Shape({3, 3}), &affine[0]),
+                                      dim, type);
+        }
     }
 }

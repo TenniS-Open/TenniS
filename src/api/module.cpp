@@ -52,8 +52,8 @@ ts_Module *ts_Module_translate(const ts_Module *module, const ts_Device *device,
         if (!module) throw Exception("NullPointerException: @param: 1");
         if (!device) throw Exception("NullPointerException: @param: 2");
         if (!options) throw Exception("NullPointerException: @param: 3");
-        std::unique_ptr<ts_Module> module(new ts_Module(
+        std::unique_ptr<ts_Module> translated_module(new ts_Module(
                 Module::Translate((*module).pointer, ComputingDevice(device->type, device->id), options)
                 ));
-    RETURN_OR_CATCH(module.release(), nullptr)
+    RETURN_OR_CATCH(translated_module.release(), nullptr)
 }

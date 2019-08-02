@@ -18,28 +18,61 @@
 #include <runtime/workbench.h>
 
 namespace ts {
-    static Smart<SyncMemory> empty_memory() {
-        static std::once_flag _empty_memory_flag;
-        static SyncMemory *_empty_memory = nullptr;
-        static struct _free_empty_memory {
-        public:
-            ~_free_empty_memory() {
-                delete _empty_memory;
+    struct EmptyMemoryKeeper {
+    public:
+        static void *Allocator(int id, size_t new_size, void *mem, size_t mem_size) {
+            if (new_size == 0 && mem == nullptr) return nullptr;
+            void *new_mem = nullptr;
+            if (new_size == 0) {
+                std::free(mem);
+                return nullptr;
+            } else if (mem != nullptr) {
+                if (mem_size) {
+                    new_mem = std::realloc(mem, new_size);
+                } else {
+                    std::free(mem);
+                    new_mem = std::malloc(new_size);
+                }
+            } else {
+                new_mem = std::malloc(new_size);
             }
-        } _free_empty_memory;
-        std::call_once(_empty_memory_flag, [&](){
+            if (new_mem == nullptr) throw OutOfMemoryException(MemoryDevice(CPU, id), new_size);
+            return new_mem;
+        }
+
+        EmptyMemoryKeeper() {
             Tensor::Prototype proto(VOID, {});
-            _empty_memory = new SyncMemory(proto.count(), true);
-        });
-        return Smart<SyncMemory>(_empty_memory, MANUALLY);
+            auto memory = std::make_shared<HardMemory>(CPU, Allocator, proto.type_bytes() * proto.count());
+            _empty_memory = new SyncMemory(memory, true);
+            object = new Smart<SyncMemory>(_empty_memory, EmptyDeleter);
+        }
+
+        ~EmptyMemoryKeeper() {
+            delete _empty_memory;
+        }
+
+        static void EmptyDeleter(const SyncMemory &memory) {}
+
+        Smart<SyncMemory> &get() {
+            return *object;
+        }
+    private:
+        SyncMemory *_empty_memory = nullptr;
+        Smart<SyncMemory> *object = nullptr;
+    };
+    namespace {
+        EmptyMemoryKeeper empty_memory_keeper;
+    }
+
+    static Smart<SyncMemory> empty_memory() {
+        return empty_memory_keeper.get().weak();
     }
 
     static Smart<SyncMemory> empty_memory(const MemoryDevice &device) {
-        auto on_cpu = empty_memory();
+        auto on_cpu = empty_memory_keeper.get().weak();
         if (device == on_cpu->device()) return on_cpu;
         return on_cpu->view(device);
     }
-
     static bool is_empty(const Tensor::Prototype &proto) {
         return proto.dtype() == VOID && proto.dims() == 0;
     }

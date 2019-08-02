@@ -6478,7 +6478,7 @@ namespace ts {
                     int k_loop = K >> 2;
                     int k_remain = k_loop << 2;
                     for (int kk = 0; kk < k_loop; kk++){
-                        int k = kk * 4;
+                        // int k = kk * 4;
                         
                         float32x4x2 a0 = broadcast2float32x4x2(col_at);          //[a00,a00,a00,a00,a00,a00,a00,a00]
                         float32x4x2 a1 = broadcast2float32x4x2(col_at + 1);      //[a10,a10,a10,a10,a10,a10,a10,a10]
@@ -6589,7 +6589,7 @@ namespace ts {
                     int k_loop = K >> 2;
                     int k_remain = k_loop << 2;
                     for (int kk = 0; kk < k_loop; kk++){
-                        int k = kk * 4;
+                        // int k = kk * 4;
                         float32x4 k0(kernel_at);
                         float32x4 a0(col_at);
 

@@ -39,7 +39,9 @@ namespace ts {
 
             auto &reshape_x = output[0];
 
-            TS_AUTO_CHECK(x.count() == reshape_x.count());
+            if (x.count() != reshape_x.count()) {
+                TS_LOG_ERROR << "Can not reshape " << to_string(x.sizes()) << " to " << to_string(new_shape) << eject;
+            }
 
             return 1;
         }
