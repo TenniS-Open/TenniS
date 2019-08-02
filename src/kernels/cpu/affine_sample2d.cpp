@@ -114,7 +114,7 @@ namespace ts {
                     cur.x = n_x_d;
                     cur.y = n_y_d;
                     cur.z = 1;
-                    vec3d<float> location = transform<float>(rz00, rz01, rz02, rz10, rz11, rz12, rz20, rz21, rz22, cur);
+                    auto location = transform<float>(rz00, rz01, rz02, rz10, rz11, rz12, rz20, rz21, rz22, cur);
 
                     double lf_x_s = location.x;
                     double lf_y_s = location.y;
@@ -164,11 +164,11 @@ namespace ts {
 
             for (int m = 0; m < y_height; m++) {
                 for (int n = 0; n < y_width; n++) {
-                    vec3d<T> cur;
+                    vec3d<float> cur;
                     cur.x = n;
                     cur.y = m;
                     cur.z = 1;
-                    vec3d<T> location = transform<T>(rz00, rz01, rz02, rz10, rz11, rz12, rz20, rz21, rz22, cur);
+                    auto location = transform<float>(rz00, rz01, rz02, rz10, rz11, rz12, rz20, rz21, rz22, cur);
 
                     double fy = location.y;
                     int sy = std::floor(fy);
