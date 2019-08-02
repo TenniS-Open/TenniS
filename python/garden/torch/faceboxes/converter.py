@@ -124,11 +124,11 @@ def convert_faceboxs(m, x, scope=None):
     i = 0
     for (x, l, c) in zip(sources, self.loc, self.conf):
         loc_i = sb.torch.module.convert_module(l, x=x, scope=scope + "/loc_%d" % i)
-        loc_i = ts.zoo.transpose(name=scope + "/loc_%d_nhwc" % i, x=loc_i, pemute=[0, 2, 3, 1])
+        loc_i = ts.zoo.transpose(name=scope + "/loc_%d_nhwc" % i, x=loc_i, permute=[0, 2, 3, 1])
         loc.append(loc_i)
 
         conf_i = sb.torch.module.convert_module(c, x=x, scope=scope + "/conf_%d" % i)
-        conf_i = ts.zoo.transpose(name=scope + "/conf_%d_nhwc" % i, x=conf_i, pemute=[0, 2, 3, 1])
+        conf_i = ts.zoo.transpose(name=scope + "/conf_%d_nhwc" % i, x=conf_i, permute=[0, 2, 3, 1])
         conf.append(conf_i)
 
         i += 1

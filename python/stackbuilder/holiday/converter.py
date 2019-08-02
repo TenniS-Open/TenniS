@@ -15,6 +15,7 @@ import numpy
 
 import copy
 
+
 class HolidayNode(object):
     def __init__(self, layer, blob_names):
         # type: (hd.Holiday_LayerParameter, List[str]) -> None
@@ -99,6 +100,10 @@ def convert(input_file, output_file,
         OPType.Enum_DeconvolutionLayer: convert_deconvolution_layer,
         OPType.Enum_SigmoidLayer: convert_sigmoid_layer,
         OPType.Enum_ConcatLayer: convert_concat_layer,
+        OPType.Enum_SoftmaxLayer: convert_softmax_layer,
+        OPType.Enum_ReshapeLayer: convert_reshape_layer,
+        OPType.Enum_RealMulLayer: convert_real_mul_layer,
+        OPType.Enum_ShapeIndexPatchLayer: convert_shape_index_patch_layer,
     }
 
     nodes = []
@@ -216,7 +221,7 @@ def convert_memorydata_layer(layer, input_nodes, output_names):
 
     limit_shape = copy.copy(input_shape)
     limit_shape[0] = -1
-    limit_shape[3] = -1
+    limit_shape[1] = -1
 
     input = ts.zoo.limit("_limit_input", input, shape=limit_shape)
 
@@ -248,7 +253,7 @@ def convert_memorydata_layer(layer, input_nodes, output_names):
     elif len(mean_value) > 0:
         if len(mean_value) != input_channels:
             raise Exception("mean value size must be the input channels size")
-        mean = numpy.asarray(mean_value, dtype=float).reshape(shape=[1, input_channels, 1, 1])
+        mean = numpy.reshape(numpy.asarray(mean_value, dtype=numpy.float32), newshape=[1, input_channels, 1, 1])
         input = ts.zoo.sub("_sub_mean_input", input, mean)
 
     if scale != 1:
@@ -282,8 +287,10 @@ def convert_convolution_layer(layer, input_nodes, output_names):
 
     bias_blob = None    # [output_channels, ]
     if param.HasField("bias_param"):
-        bias_blob = blob2numpy(param.bias_param)
-        print("--##    Bias shape: {}".format(bias_blob.shape))
+        bias_param = blob2numpy(param.bias_param)
+        if numpy.prod(bias_param.shape) != 0:
+            bias_blob = bias_param
+            print("--##    Bias shape: {}".format(bias_blob.shape))
 
     # is [output_channels, input_channels / group, input_height, input_width]
     weights_blob = blob2numpy(param.kernel_param)
@@ -313,8 +320,6 @@ def convert_convolution_layer(layer, input_nodes, output_names):
 
     input_channels = weights_blob.shape[1]
 
-    assert weights_blob.shape[0] * group == num_output
-
     axis = 1
     if param.HasField("axis"):
         axis = param.axis
@@ -334,32 +339,50 @@ def convert_convolution_layer(layer, input_nodes, output_names):
 
     assert tf_padding is None or tf_padding == "SAME" or tf_padding == "VALID"
 
-    if tf_padding is not None:
-        raise NotImplementedError("TF padding = {}".format(tf_padding))
-
     if group != 1 and weights_blob.shape[1] != 1:
         raise NotImplementedError("group = {} with weights.shape[1] = {}".format(group, weights_blob.shape[1]))
 
     is_conv2d = group == 1
-    is_depthwise_conv2d = weights_blob.shape[1] == 1
+    is_depthwise_conv2d = not is_conv2d and weights_blob.shape[1] == 1
+    is_tf = tf_padding is not None
+
+    if is_depthwise_conv2d:
+        assert weights_blob.shape[1] * group == num_output
 
     node = None
 
-    if is_conv2d:
-        node = ts.zoo.conv2d(conv2d_name, x=input_nodes[0], w=weights_blob, format=ts.zoo.Name.NCHW,
-                               padding=[[0, 0], [0, 0], [padding[0], padding[0]], [padding[1], padding[1]]],
-                               padding_value=0,
-                               stride=[1, 1, stride[0], stride[1]],
-                               dilation=[1, 1, dilation[0], dilation[1]])
-    elif is_depthwise_conv2d:
-        weights_shape = weights_blob.shape
-        depthwise_weights_shape = (weights_shape[1], weights_shape[0], weights_shape[2], weights_shape[3])
-        weights_blob = weights_blob.reshape(shape=depthwise_weights_shape)
-        node = ts.zoo.depthwise_conv2d(conv2d_name, x=input_nodes[0], w=weights_blob, format=ts.zoo.Name.NCHW,
+    if is_tf:
+        if is_conv2d:
+            node = ts.frontend.tf.conv2d(conv2d_name, x=input_nodes[0], w=weights_blob, format=ts.zoo.Name.NCHW,
                                          padding=[[0, 0], [0, 0], [padding[0], padding[0]], [padding[1], padding[1]]],
-                                         padding_value=0,
-                                         stride=[0, 0, stride[0], stride[1]],
+                                         padding_method=tf_padding, padding_value=0,
+                                         stride=[1, 1, stride[0], stride[1]],
                                          dilation=[1, 1, dilation[0], dilation[1]])
+        elif is_depthwise_conv2d:
+            weights_shape = weights_blob.shape
+            depthwise_weights_shape = (weights_shape[1], weights_shape[0], weights_shape[2], weights_shape[3])
+            weights_blob = numpy.reshape(weights_blob, newshape=depthwise_weights_shape)
+            node = ts.frontend.tf.depthwise_conv2d(conv2d_name, x=input_nodes[0], w=weights_blob, format=ts.zoo.Name.NCHW,
+                                                   padding=[[0, 0], [0, 0], [padding[0], padding[0]], [padding[1], padding[1]]],
+                                                   padding_method=tf_padding, padding_value=0,
+                                                   stride=[1, 1, stride[0], stride[1]],
+                                                   dilation=[1, 1, dilation[0], dilation[1]])
+    else:
+        if is_conv2d:
+            node = ts.zoo.conv2d(conv2d_name, x=input_nodes[0], w=weights_blob, format=ts.zoo.Name.NCHW,
+                                   padding=[[0, 0], [0, 0], [padding[0], padding[0]], [padding[1], padding[1]]],
+                                   padding_value=0,
+                                   stride=[1, 1, stride[0], stride[1]],
+                                   dilation=[1, 1, dilation[0], dilation[1]])
+        elif is_depthwise_conv2d:
+            weights_shape = weights_blob.shape
+            depthwise_weights_shape = (weights_shape[1], weights_shape[0], weights_shape[2], weights_shape[3])
+            weights_blob = numpy.reshape(weights_blob, newshape=depthwise_weights_shape)
+            node = ts.zoo.depthwise_conv2d(conv2d_name, x=input_nodes[0], w=weights_blob, format=ts.zoo.Name.NCHW,
+                                             padding=[[0, 0], [0, 0], [padding[0], padding[0]], [padding[1], padding[1]]],
+                                             padding_value=0,
+                                             stride=[1, 1, stride[0], stride[1]],
+                                             dilation=[1, 1, dilation[0], dilation[1]])
 
     if node is None:
         raise NotImplementedError(layer)
@@ -552,6 +575,7 @@ def convert_inner_product_layer(layer, input_nodes, output_names):
     num_output = None
     if param.HasField("num_output"):
         num_output = param.num_output
+        print("--##    num_output: {}".format(num_output))
 
     axis = 1
     if param.HasField("axis"):
@@ -564,24 +588,34 @@ def convert_inner_product_layer(layer, input_nodes, output_names):
         transpose = param.transpose
     print("--##    Transpose: {}".format(transpose))
 
+    if not transpose:
+        raise NotImplementedError("Holiday only support transpose=True")
+
     weights_blob = blob2numpy(param.Inner_param)
     print("--##    Weights shape: {}".format(weights_blob.shape))
 
     bias_blob = None
     if param.HasField("bias_param"):
-        bias_blob = blob2numpy(param.bias_param)
-        print("--##    Bias shape: {}".format(bias_blob.shape))
+        bias_param = blob2numpy(param.bias_param)
+        if numpy.prod(bias_param.shape) != 0:
+            bias_blob = bias_param
+            print("--##    Bias shape: {}".format(bias_blob.shape))
 
-    assert num_output == weights_blob.shape[0]
-    num_input = weights_blob.shape[1]
+    num_input = -1
+    if transpose:
+        assert num_output == weights_blob.shape[0]
+        num_input = weights_blob.shape[1]
+    else:
+        assert num_output == weights_blob.shape[1]
+        num_input = weights_blob.shape[0]
 
     if transpose:
         weights_blob = numpy.reshape(weights_blob, newshape=[num_input, num_output])
     else:
-        weights_blob = weights_blob.transpose()
+        weights_blob = weights_blob
 
     node = ts.zoo.flatten("_flatten_" + node_name, x=x)
-    node = ts.zoo.inner_prod("_ip_" + node_name, node, weights_blob)
+    node = ts.zoo.inner_prod("_ip_" + node_name, node, weights_blob.transpose(), transpose=True)
 
     if bias_blob is not None:
         node = ts.zoo.add_bias("_add_bias_" + node_name, x=node, b=bias_blob, format=ts.zoo.Name.NCHW)
@@ -716,8 +750,10 @@ def convert_deconvolution_layer(layer, input_nodes, output_names):
 
     bias_blob = None    # [output_channels, ]
     if param.HasField("bias_param"):
-        bias_blob = blob2numpy(param.bias_param)
-        print("--##    Bias shape: {}".format(bias_blob.shape))
+        bias_param = blob2numpy(param.bias_param)
+        if numpy.prod(bias_param.shape) != 0:
+            bias_blob = bias_param
+            print("--##    Bias shape: {}".format(bias_blob.shape))
 
     # is [output_channels, input_channels / group, input_height, input_width]
     weights_blob = blob2numpy(param.kernel_param)
@@ -833,6 +869,93 @@ def convert_concat_layer(layer, input_nodes, output_names):
         print("--##    axis: {}".format(axis))
 
     node = ts.zoo.concat(node_name, inputs=input_nodes, dim=axis)
+
+    return node,
+
+
+def convert_softmax_layer(layer, input_nodes, output_names):
+    # type: (hd.Holiday_LayerParameter, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} ]=-".format(OPType.EnumString[layer.type], output_names))
+
+    assert len(input_nodes) == 1
+    assert len(output_names) == 1
+
+    x = input_nodes[0]
+    node_name = output_names[0]
+
+    node = ts.zoo.softmax(node_name, x=x, dim=1)
+
+    return node,
+
+
+def convert_reshape_layer(layer, input_nodes, output_names):
+    # type: (hd.Holiday_LayerParameter, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} ]=-".format(OPType.EnumString[layer.type], output_names))
+
+    assert len(input_nodes) == 1
+    assert len(output_names) == 1
+
+    param = layer.reshape_param
+
+    x = input_nodes[0]
+    node_name = output_names[0]
+
+    shape = list(param.shape)
+    if len(shape) > 0:
+        print("--##    Shape: {}".format(shape))
+
+    permute = list(param.permute)
+    if len(permute) > 0:
+        print("--##    Permute: {}".format(permute))
+
+    node = x
+    if len(permute) > 0:
+        node = ts.zoo.transpose(name=node_name + "_permute", x=node, permute=permute)
+
+    if len(shape) == 0:
+        raise NotImplementedError("shape={}".format(shape))
+
+    node = ts.zoo.reshape(name=node_name, x=node, shape=shape)
+
+    return node,
+
+
+def convert_real_mul_layer(layer, input_nodes, output_names):
+    # type: (hd.Holiday_LayerParameter, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} ]=-".format(OPType.EnumString[layer.type], output_names))
+
+    assert len(input_nodes) == 1
+    assert len(output_names) == 1
+
+    param = layer.real_mul_param
+
+    x = input_nodes[0]
+    node_name = output_names[0]
+
+    y = blob2numpy(param.y)
+
+    node = ts.zoo.mul(name=node_name, lhs=x, rhs=y, dtype=numpy.float32)
+
+    return node,
+
+
+def convert_shape_index_patch_layer(layer, input_nodes, output_names):
+    # type: (hd.Holiday_LayerParameter, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} ]=-".format(OPType.EnumString[layer.type], output_names))
+
+    assert len(input_nodes) == 2
+    assert len(output_names) == 1
+
+    param = layer.shape_index_patch_param
+
+    x = input_nodes[0]
+    patch = input_nodes[1]
+    node_name = output_names[0]
+
+    origin_patch = param.origin_patch
+    origin = param.origin
+
+    node = ts.frontend.vvvv.shape_index_patch(node_name, feat=x, pos=patch, origin_patch=origin_patch, origin=origin)
 
     return node,
 

@@ -24,7 +24,7 @@ namespace ts {
                 using Type = T;
                 Type data[W];
 
-                __host__ __device__ __gpu_array() = default;
+                __gpu_array() = default;
 
                 template<typename Beg, typename End>
                 __host__ __gpu_array(Beg beg, End end) {

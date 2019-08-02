@@ -25,7 +25,7 @@ def get_tensor_stack_passes():
         "eliminate_nop_pad",
         "eliminate_nop_transpose",
         "eliminate_unused_initializer",
-        "extract_constant_to_initializer",
+        # "extract_constant_to_initializer",
         "fuse_add_bias_into_conv",
         "fuse_bn_into_conv",
         "fuse_consecutive_concats",
@@ -68,6 +68,9 @@ class Name(object):
         count_include_pad = "count_include_pad"
         ceil_mode = "ceil_mode"
 
+        output_padding = "output_padding"
+        output_shape = "output_shape"
+
     NOTSET = "NOTSET"
     SAME_UPPER = "SAME_UPPER"
     SAME_LOWER = "SAME_LOWER"
@@ -76,6 +79,14 @@ class Name(object):
     constant = "constant"
     reflect = "reflect"
     edge = "edge"
+
+
+layer2converter = {
+}
+
+
+def register_layer_converter(layer, converter):
+    layer2converter[layer] = converter
 
 
 def convert(input_file, output_file):
@@ -134,6 +145,7 @@ def convert(input_file, output_file):
         input[name] = (elem_type, shape)
 
     output = {} # str, shape
+    graph_output_names = []
     # output
     print("==================== Output ====================")
     for value_info in onnx_graph.output:
@@ -145,6 +157,7 @@ def convert(input_file, output_file):
         shape = to_tensor_shape(tensor_type.shape)
         print("{}: {}, {}".format(name, elem_type, shape))
         output[name] = (elem_type, shape)
+        graph_output_names.append(name)
 
     # set all initialized node
     name2node = {}  # str -> ts.Node
@@ -185,6 +198,7 @@ def convert(input_file, output_file):
         "Transpose": convert_transpose_layer,
         "Softmax": convert_softmax_layer,
     }
+    layer_converters.update(layer2converter)
 
     print("==================== Converting ====================")
     # convert each node
@@ -220,7 +234,7 @@ def convert(input_file, output_file):
 
     # get outputs from outout_blobs
     ts_outputs = []
-    for name in output.keys():
+    for name in graph_output_names:
         if name not in name2node:
             raise Exception("Not computed node: {}".format(name))
         ts_outputs.append(name2node[name])
@@ -901,7 +915,7 @@ def convert_transpose_layer(node, input_nodes, output_names):
 
     x = input_nodes[0]
 
-    ts_node = ts.zoo.transpose(name=node_name, x=x, pemute=attr_dict["perm"])
+    ts_node = ts.zoo.transpose(name=node_name, x=x, permute=attr_dict["perm"])
 
     return ts_node,
 
@@ -929,3 +943,329 @@ def convert_softmax_layer(node, input_nodes, output_names):
     ts_node = ts.zoo.softmax(name=node_name, x=x, dim=axis)
 
     return ts_node,
+
+
+def convert_sub_layer(node, input_nodes, output_names):
+    # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} -> {} ]=-".format(node.op_type, [n.name for n in input_nodes], output_names))
+
+    attribute = node.attribute
+    attr_dict = {}
+    for attr in attribute:
+        attr_dict[str(attr.name)] = topy(attr)
+
+    assert len(input_nodes) == 2
+    assert len(output_names) == 1
+
+    node_name = output_names[0]
+
+    x = input_nodes[0]
+    y = input_nodes[1]
+
+    ts_node = ts.zoo.sub(node_name, lhs=x, rhs=y)
+
+    return ts_node,
+
+
+register_layer_converter("Sub", convert_sub_layer)
+
+
+def convert_div_layer(node, input_nodes, output_names):
+    # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} -> {} ]=-".format(node.op_type, [n.name for n in input_nodes], output_names))
+
+    attribute = node.attribute
+    attr_dict = {}
+    for attr in attribute:
+        attr_dict[str(attr.name)] = topy(attr)
+
+    assert len(input_nodes) == 2
+    assert len(output_names) == 1
+
+    node_name = output_names[0]
+
+    x = input_nodes[0]
+    y = input_nodes[1]
+
+    ts_node = ts.zoo.div(node_name, lhs=x, rhs=y)
+
+    return ts_node,
+
+
+register_layer_converter("Div", convert_div_layer)
+
+
+def convert_mul_layer(node, input_nodes, output_names):
+    # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} -> {} ]=-".format(node.op_type, [n.name for n in input_nodes], output_names))
+
+    attribute = node.attribute
+    attr_dict = {}
+    for attr in attribute:
+        attr_dict[str(attr.name)] = topy(attr)
+
+    assert len(input_nodes) == 2
+    assert len(output_names) == 1
+
+    node_name = output_names[0]
+
+    x = input_nodes[0]
+    y = input_nodes[1]
+
+    ts_node = ts.zoo.mul(node_name, lhs=x, rhs=y)
+
+    return ts_node,
+
+
+register_layer_converter("Mul", convert_mul_layer)
+
+
+def convert_reduce_sum_layer(node, input_nodes, output_names):
+    # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} -> {} ]=-".format(node.op_type, [n.name for n in input_nodes], output_names))
+
+    attribute = node.attribute
+    attr_dict = {}
+    for attr in attribute:
+        attr_dict[str(attr.name)] = topy(attr)
+
+    assert len(input_nodes) == 1
+    assert len(output_names) == 1
+
+    node_name = output_names[0]
+
+    x = input_nodes[0]
+
+    axes = attr_dict["axes"]
+    keepdims = bool(attr_dict["keepdims"])
+
+    if len(axes) == 0:
+        node = ts.zoo.reshape(node_name + "_flatten", x=x, shape=[-1])
+        ts_node = ts.zoo.reduce_sum(node_name, x=node, reduce_dims=0, keep_dims=keepdims)
+    elif len(axes) == 1:
+        ts_node = ts.zoo.reduce_sum(node_name, x=x, reduce_dims=axes[0], keep_dims=keepdims)
+    else:
+        raise NotImplementedError("axes = {}".format(axes))
+
+    return ts_node,
+
+
+register_layer_converter("ReduceSum", convert_reduce_sum_layer)
+
+
+def convert_sqrt_layer(node, input_nodes, output_names):
+    # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} -> {} ]=-".format(node.op_type, [n.name for n in input_nodes], output_names))
+
+    attribute = node.attribute
+    attr_dict = {}
+    for attr in attribute:
+        attr_dict[str(attr.name)] = topy(attr)
+
+    assert len(input_nodes) == 1
+    assert len(output_names) == 1
+
+    node_name = output_names[0]
+
+    x = input_nodes[0]
+
+    ts_node = ts.zoo.sqrt(node_name, x)
+
+    return ts_node,
+
+
+register_layer_converter("Sqrt", convert_sqrt_layer)
+
+
+def convert_flatten_layer(node, input_nodes, output_names):
+    # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} -> {} ]=-".format(node.op_type, [n.name for n in input_nodes], output_names))
+
+    attribute = node.attribute
+    attr_dict = {}
+    for attr in attribute:
+        attr_dict[str(attr.name)] = topy(attr)
+
+    assert len(input_nodes) == 1
+    assert len(output_names) == 1
+
+    node_name = output_names[0]
+
+    x = input_nodes[0]
+
+    axis = 1
+    if "axis" in attr_dict:
+        axis = attr_dict["axis"]
+
+    ts_node = ts.zoo.flatten(node_name, x=x, dim=axis)
+
+    return ts_node,
+
+
+register_layer_converter("Flatten", convert_flatten_layer)
+
+
+def convert_conv_traspose_layer(node, input_nodes, output_names):
+    # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} -> {} ]=-".format(node.op_type, [n.name for n in input_nodes], output_names))
+
+    attribute = node.attribute
+    attr_dict = {}
+    for attr in attribute:
+        attr_dict[str(attr.name)] = topy(attr)
+
+    assert len(input_nodes) == 2 or len(input_nodes) == 3
+    assert len(output_names) == 1
+
+    conv2d_name = "_conv2d_" + output_names[0]
+    bias_name = "_bias_" + output_names[0]
+    node_name = output_names[0]
+
+    X = input_nodes[0]
+    W = input_nodes[1]  # (M x C/group x kH x kW)
+    B = None
+    if len(input_nodes) > 2:
+        B = input_nodes[2]
+
+    auto_pad = Name.NOTSET
+    if Name.Attr.auto_pad in attr_dict:
+        auto_pad = attr_dict[Name.Attr.auto_pad]
+        print("--##    AutoPad: {}".format(auto_pad))
+
+    dilations = attr_dict[Name.Attr.dilations]
+    print("--##    Dilations: {}".format(dilations))
+
+    group = 1
+    if Name.Attr.group in attr_dict:
+        group = attr_dict[Name.Attr.group]
+        print("--##    Group: {}".format(group))
+
+    kernel_shape = attr_dict[Name.Attr.kernel_shape]
+    print("--##    KernelShape: {}".format(kernel_shape))
+
+    pads = attr_dict[Name.Attr.pads]
+    print("--##    Pads: {}".format(pads))
+
+    strides = attr_dict[Name.Attr.strides]
+    print("--##    Strides: {}".format(strides))
+
+    output_padding = None
+    if Name.Attr.output_padding in attr_dict:
+        output_padding = attr_dict[Name.Attr.output_padding]
+        print("--##    output_padding: {}".format(output_padding))
+
+    output_shape = None
+    if Name.Attr.output_shape in attr_dict:
+        output_shape = attr_dict[Name.Attr.output_shape]
+        print("--##    output_shape: {}".format(output_shape))
+
+    if output_shape is not None:
+        raise NotImplementedError("output_shape = {}".format(output_shape))
+
+    if auto_pad != Name.NOTSET:
+        raise NotImplementedError("auto_pad = {}".format(auto_pad))
+
+    if group != 1:
+        raise NotImplementedError("group = {}".format(group))
+
+    if len(dilations) != 2:
+        raise NotImplementedError("dilations = {}".format(dilations))
+
+    if len(kernel_shape) != 2:
+        raise NotImplementedError("kernel_shape = {}".format(kernel_shape))
+
+    W_array = ts.zoo.to_const(W, "W")
+
+    if len(W_array.shape) != 4:
+        raise NotImplementedError("W.shape = {}".format(W_array.shape))
+
+    if group != 1 and W_array.shape[1] != 1:
+        raise NotImplementedError("group = {} with weights.shape[1] = {}".format(group, W_array.shape[1]))
+
+    if kernel_shape[0] != W_array.shape[2] or kernel_shape[1] != W_array.shape[3]:
+        raise NotImplementedError("kernel_shape = {} with W.shape = {}".format(kernel_shape, W_array.shape))
+
+    if len(pads) != 4:
+        raise NotImplementedError("pads = {}".format(pads))
+
+    if len(strides) != 2:
+        raise NotImplementedError("strides = {}".format(strides))
+
+    is_conv2d = group == 1
+    # is_depthwise_conv2d = W_array.shape[1] == 1
+
+    ts_node = None
+
+    if is_conv2d:
+        ts_node = ts.zoo.transpose_conv2d(conv2d_name, x=input_nodes[0], w=W, format=ts.zoo.Name.NCHW,
+                                          padding=[[0, 0], [0, 0], [pads[0], pads[2]], [pads[1], pads[3]]],
+                                          padding_value=0,
+                                          stride=[1, 1, strides[0], strides[1]],
+                                          dilation=[1, 1, dilations[0], dilations[1]])
+
+    if output_padding is not None:
+        assert len(output_padding) == 4
+        ts_node = ts.zoo.pad(node_name + "_out_pad", x=ts_node,
+                             padding=[[0, 0], [0, 0], [output_padding[0], output_padding[2]], [output_padding[1], output_padding[3]]])
+
+    if ts_node is None:
+        raise NotImplementedError(node)
+
+    if B is not None:
+        ts_node = ts.zoo.add_bias(bias_name, x=ts_node, b=B, format=ts.zoo.Name.NCHW)
+
+    ts_node.name = node_name
+
+    return ts_node,
+
+
+register_layer_converter("ConvTranspose", convert_conv_traspose_layer)
+
+
+def convert_tile_layer(node, input_nodes, output_names):
+    # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} -> {} ]=-".format(node.op_type, [n.name for n in input_nodes], output_names))
+
+    attribute = node.attribute
+    attr_dict = {}
+    for attr in attribute:
+        attr_dict[str(attr.name)] = topy(attr)
+
+    assert len(input_nodes) == 2
+    assert len(output_names) == 1
+
+    node_name = output_names[0]
+
+    x = input_nodes[0]
+    repeats = input_nodes[1]
+
+    ts_node = ts.zoo.tile(node_name, x=x, repeats=repeats)
+
+    return ts_node,
+
+
+register_layer_converter("Tile", convert_tile_layer)
+
+
+def convert_dropout_layer(node, input_nodes, output_names):
+    # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} -> {} ]=-".format(node.op_type, [n.name for n in input_nodes], output_names))
+
+    attribute = node.attribute
+    attr_dict = {}
+    for attr in attribute:
+        attr_dict[str(attr.name)] = topy(attr)
+
+    assert len(input_nodes) == 1
+    assert len(output_names) == 1
+
+    node_name = output_names[0]
+
+    x = input_nodes[0]
+
+    ts_node = ts.zoo.copy(node_name, x=x)
+
+    return ts_node,
+
+
+register_layer_converter("Dropout", convert_dropout_layer)

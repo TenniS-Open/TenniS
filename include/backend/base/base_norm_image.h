@@ -25,7 +25,7 @@ namespace ts {
             virtual void norm_image(const Tensor &x, float epsilon, Tensor &out) = 0;
 
         public:
-            float m_epsilon = 1e-5;
+            float m_epsilon = 1e-5f;
         };
     }
 }

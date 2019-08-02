@@ -13,14 +13,24 @@
 #include <utils/api.h>
 
 namespace ts {
+    template <typename T>
+    std::function<void(const T *)> default_deleter() {
+        return [](const T *object) {
+            delete object;
+        };
+    }
 
     template <typename T>
     class TS_DEBUG_API Counter {
     public:
         using self = Counter;
         using Object = T;
+        using Deleter = std::function<void(const T *)>;
 
         Counter() = default;
+
+        Counter(Object *object, int count, const Deleter &deleter)
+                : object(object), use_count(count), deleter(deleter) {}
 
         Counter(Object *object, int count)
             : object(object), use_count(count) {}
@@ -28,7 +38,7 @@ namespace ts {
         Counter(const Object &object) : self(new Object(object), 1) {}
 
         ~Counter() {
-            if (object) delete object;
+            if (object) deleter(object);
         }
 
         Counter(const self &) = delete;
@@ -49,6 +59,7 @@ namespace ts {
 
         Object *object = nullptr;
         int use_count = 0;
+        Deleter deleter = default_deleter<T>();
     };
 
     enum SmartMode {
@@ -69,8 +80,8 @@ namespace ts {
         Smart(const Object &object)
                 : m_mode(SMART), m_counted(new CountedObject(object)) {}
 
-        Smart(Object *object, SmartMode mode = SMART)
-                : m_mode(mode), m_counted(new CountedObject(object, mode == SMART ? 1 : 0)) {}
+        Smart(Object *object, const typename Counter<T>::Deleter &deleter)
+                : m_mode(SMART), m_counted(new CountedObject(object, 1, deleter)) {}
 
         Smart(const self &other) {
             *this = other;
@@ -159,6 +170,9 @@ namespace ts {
         }
 
     private:
+        Smart(Object *object, SmartMode mode = SMART)
+                : m_mode(mode), m_counted(new CountedObject(object, mode == SMART ? 1 : 0)) {}
+
         Smart(SmartMode mode, CountedObject *counted)
                 : m_mode(mode), m_counted(counted) {}
 
@@ -168,7 +182,7 @@ namespace ts {
 
     template <typename T, typename ...Args>
     TS_DEBUG_API Smart<T> make_smart(Args &&...args) {
-        return Smart<T>(new T(std::forward<Args>(args)...), SMART);
+        return Smart<T>(new T(std::forward<Args>(args)...), default_deleter<T>());
     }
 }
 

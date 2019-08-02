@@ -759,6 +759,23 @@ Waitting for sure
 返回`reduction_indices`维度内的平均数  
 绝大多数情况优先采用global_average_pooling.
 
+### reduce_sum(x..device) -> y..device
+参数：  
+- `dims` `Int` 要进行求和的维度  
+- `keep_dims` `Boolean` `Default 1` 是否保留求和后的位置  
+
+说明：  
+返回在对应维度上分别求和的结果。
+
+### reduce_mean(x..device) -> y..device
+参数：  
+- `dims` `Int` 要进行求和的维度  
+- `keep_dims` `Boolean` `Default 1` 是否保留求和后的位置  
+
+说明：  
+返回在对应维度上分别求均值的结果。
+
+
 ### squeeze(x..device) -> y
 
 参数：  
@@ -1088,6 +1105,29 @@ For each `x_i` run：
 x_i = (x_i - mean(x_i)) / (std_dev(x_i) + epsilon)
 ```
 
+## sqrt (x..device) -> y..device
+描述：计算 x 元素的平方根
+输入：
+x: Tensor 输入数据
+输出：
+y: Tensor
+
+
+## tile (x..device) -> y..device
+描述：等价 numpy.tile  
+输入：  
+x: Tensor 
+
+输出：  
+y: Tensor
+
+参数：  
+`repeats` `IntArray` 长度和`x.shape`相同。
+
+说明：  
+`y = numpy.tile(x, repeats)`
+
+## tile_v2 (x..device, repeats..host) -> y..device = delete
 
 ## 附录
 

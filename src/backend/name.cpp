@@ -115,6 +115,11 @@ namespace ts {
 
             const string &quantize() TS_NOEXCEPT { static string str = "quantize"; return str; }
             const string &conv2d_quantized() TS_NOEXCEPT { static string str = "conv2d_quantized"; return str; }
+
+            const string &reduce_sum() TS_NOEXCEPT { static string str = "reduce_sum"; return str; }
+            const string &reduce_mean() TS_NOEXCEPT { static string str = "reduce_mean"; return str; }
+            const string &sqrt() TS_NOEXCEPT { static string str = "sqrt"; return str; }
+            const string &tile() TS_NOEXCEPT { static string str = "tile"; return str; }
         }
 
         namespace typo {
@@ -194,5 +199,8 @@ namespace ts {
 
         string quantize_scale = "quantize_scale";
         string dequantize_scales = "dequantize_scales";
+
+        string dims = "dims";
+        string repeats = "repeats";
     }
 }

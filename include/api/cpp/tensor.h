@@ -274,7 +274,7 @@ namespace ts {
                 return std::move(dolly);
             }
 
-            Tensor from(const std::string &value) {
+            inline Tensor from(const std::string &value) {
                 return Tensor(TS_CHAR8, {int32_t(value.length())}, value.c_str());
             }
 
@@ -284,43 +284,43 @@ namespace ts {
             inline Tensor from(const char *value) { return from(std::string(value)); }
 
             template<typename T>
-            Tensor from(const T value) { return tensor_builder<T>::build(value); }
+            inline Tensor from(const T value) { return tensor_builder<T>::build(value); }
 
             template<typename T>
-            Tensor from(const std::initializer_list<T> &value) { return tensor_builder<T>::build(value); }
+            inline Tensor from(const std::initializer_list<T> &value) { return tensor_builder<T>::build(value); }
 
             template<typename T>
-            Tensor from(const std::vector<T> &value) { return tensor_builder<T>::build(value); }
+            inline Tensor from(const std::vector<T> &value) { return tensor_builder<T>::build(value); }
 
-            int to_int(const Tensor &value) {
+            inline int to_int(const Tensor &value) {
                 auto cpu_value = value;
                 cpu_value.sync_cpu();
                 if (cpu_value.dtype() != TS_INT32) cpu_value = cast(TS_INT32, cpu_value);
                 return cast(TS_INT32, cpu_value).data<int32_t>()[0];
             }
 
-            unsigned int to_uint(const Tensor &value) {
+            inline unsigned int to_uint(const Tensor &value) {
                 auto cpu_value = value;
                 cpu_value.sync_cpu();
                 if (cpu_value.dtype() != TS_UINT32) cpu_value = cast(TS_UINT32, cpu_value);
                 return cast(TS_UINT32, cpu_value).data<uint32_t>()[0];
             }
 
-            float to_float(const Tensor &value) {
+            inline float to_float(const Tensor &value) {
                 auto cpu_value = value;
                 cpu_value.sync_cpu();
                 if (cpu_value.dtype() != TS_FLOAT32) cpu_value = cast(TS_FLOAT32, cpu_value);
                 return cast(TS_FLOAT32, cpu_value).data<float>()[0];
             }
 
-            double to_double(const Tensor &value) {
+            inline double to_double(const Tensor &value) {
                 auto cpu_value = value;
                 cpu_value.sync_cpu();
                 if (cpu_value.dtype() != TS_FLOAT64) cpu_value = cast(TS_FLOAT64, cpu_value);
                 return cast(TS_FLOAT64, cpu_value).data<double>()[0];
             }
 
-            std::string to_string(const Tensor &value) {
+            inline std::string to_string(const Tensor &value) {
                 auto cpu_value = value;
                 cpu_value.sync_cpu();
                 if (cpu_value.dtype() != TS_CHAR8) {
@@ -331,28 +331,28 @@ namespace ts {
 
 
             namespace array {
-                std::vector<int32_t> to_int(const Tensor &value) {
+                inline std::vector<int32_t> to_int(const Tensor &value) {
                     auto count = value.count();
                     auto t = cast(INT32, value);
                     auto data = t.data<int32_t>();
                     return std::vector<int32_t>(data, data + count);
                 }
 
-                std::vector<uint32_t> to_uint(const Tensor &value) {
+                inline std::vector<uint32_t> to_uint(const Tensor &value) {
                     auto count = value.count();
                     auto t = cast(UINT32, value);
                     auto data = t.data<uint32_t>();
                     return std::vector<uint32_t>(data, data + count);
                 }
 
-                std::vector<float> to_float(const Tensor &value) {
+                inline std::vector<float> to_float(const Tensor &value) {
                     auto count = value.count();
                     auto t = cast(FLOAT32, value);
                     auto data = t.data<float>();
                     return std::vector<float>(data, data + count);
                 }
 
-                std::vector<double> to_double(const Tensor &value) {
+                inline std::vector<double> to_double(const Tensor &value) {
                     auto count = value.count();
                     auto t = cast(FLOAT64, value);
                     auto data = t.data<double>();

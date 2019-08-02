@@ -177,11 +177,11 @@ namespace ts {
             }
 
             void force_bgr2gray() {
-                force_gray({0.114, 0.587, 0.299});
+                force_gray({0.114f, 0.587f, 0.299f});
             }
 
             void force_rgb2gray() {
-                force_gray({0.299, 0.587, 0.114});
+                force_gray({0.299f, 0.587f, 0.114f});
             }
 
             void norm_image(float epsilon) {

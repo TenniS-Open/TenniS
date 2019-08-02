@@ -210,6 +210,8 @@ class OPType(object):
     Enum_ReshapeLayer = 22
     Enum_RealMulLayer = 23
 
+    Enum_ShapeIndexPatchLayer = 31
+
     EnumString = {
         Enum_ConvolutionLayer: "Convolution",
         Enum_EltwiseLayer: "Eltwise",
@@ -239,6 +241,8 @@ class OPType(object):
         # for tf
         Enum_ReshapeLayer: "Reshape",
         Enum_RealMulLayer: "RealMul",
+
+        Enum_ShapeIndexPatchLayer: "ShapeIndexPatch",
     }
 
 
