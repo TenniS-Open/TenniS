@@ -8,6 +8,7 @@
 #include "device_launch_parameters.h"
 #include <cuda_runtime.h>
 #include <cuda_fp16.h>
+#include <kernels/gpu/gpu_helper.h>
 
 
 namespace ts {
@@ -55,8 +56,9 @@ namespace ts {
 
             dim3 blockSize(CUDA_THREAD_NUM);
             dim3 gridSize(CUDA_BLOCK(number, blockSize.x));
+            auto cuda_stream = get_cuda_stream_on_context();
 
-            gpu_max_kernel<T> << <gridSize, blockSize >> > (x_data, out_data, number, width, input_width, x_shape[axis]);
+            gpu_max_kernel<T> << <gridSize, blockSize, 0, cuda_stream>> > (x_data, out_data, number, width, input_width, x_shape[axis]);
 
         }
 
