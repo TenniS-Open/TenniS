@@ -6,6 +6,7 @@
 #include <utils/assert.h>
 #include <core/device.h>
 #include <vector>
+#include <algorithm>
 
 
 namespace ts {
