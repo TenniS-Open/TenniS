@@ -13,12 +13,17 @@ namespace ts {
 
         InnerProd::InnerProd() {
             field("transpose", OPTIONAL, tensor::from<bool>(false));
+            field(name::kernel_need_pack, OPTIONAL, tensor::from<bool>(true));
         }
 
         void InnerProd::init() {
             supper::init();
 
             m_transpose = tensor::to_bool(get("transpose"));
+
+            if (has(name::kernel_need_pack)) {
+                m_kernel_need_pack = tensor::to_bool(get(name::kernel_need_pack));
+            }
         }
 
         static void infer_size(bool m_transpose, Tensor &lhs, const Tensor &rhs, std::vector<Tensor::Prototype> &output) {
@@ -82,7 +87,7 @@ namespace ts {
 
             auto &out = *stack.push(output[0], memory_device);
 
-            inner_prod(lhs, rhs, m_transpose, out);
+            inner_prod(lhs, rhs, m_transpose, out, stack, m_kernel_need_pack);
 
             return 1;
         }

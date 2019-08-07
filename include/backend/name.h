@@ -154,6 +154,7 @@ namespace ts {
         TS_DEBUG_API extern string padding_value;
         TS_DEBUG_API extern string stride;
         TS_DEBUG_API extern string dilation;
+        TS_DEBUG_API extern string kernel_need_pack;
         TS_DEBUG_API extern string epsilon;
         TS_DEBUG_API extern string max;
         TS_DEBUG_API extern string slope;

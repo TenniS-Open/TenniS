@@ -15,7 +15,7 @@
 namespace ts {
     namespace cpu {
         template<typename T>
-        static void cpu_inner_prod_compute_run(const Tensor &lhs, const Tensor &rhs, bool transpose, Tensor &out) {
+        static void cpu_inner_prod_compute_run(const Tensor &lhs, const Tensor &rhs, bool transpose, Tensor &out, Stack &stack, bool kernel_need_pack) {
             const Shape &lhs_shape = lhs.sizes();
             const Shape &rhs_shape = rhs.sizes();
             // const Shape &out_shape = out.sizes();
@@ -30,17 +30,22 @@ namespace ts {
             cblas::math<T>::gemm(blas::NoTrans, rhs_transpose, lhs_shape[0], N, lhs_shape[1],
                                  (T) 1, psrc, pdot, (T) 0, pdst);
 #else
-            cpu::math<T, T>::gemm(blas::NoTrans, rhs_transpose, lhs_shape[0], N, lhs_shape[1],
-                               (T) 1, psrc, pdot, (T) 0, pdst);
+            Tensor lhs_packed = stack.make(lhs.dtype(), lhs_shape, MemoryDevice(CPU));
+            Tensor rhs_packed = stack.make(rhs.dtype(), rhs_shape, MemoryDevice(CPU));
+            
+            cpu::math<T, T>::gemm(lhs_shape[0], N, lhs_shape[1], (T)1, lhs.data<T>(), lhs_packed.data<T>(),
+                rhs.data<T>(), rhs_packed.data<T>(), T(0), pdst, true, kernel_need_pack);
+            //cpu::math<T, T>::gemm(blas::NoTrans, rhs_transpose, lhs_shape[0], N, lhs_shape[1],
+            //                   (T) 1, psrc, pdot, (T) 0, pdst);
 #endif
         }
 
-        void InnerProd::inner_prod(const Tensor &lhs, const Tensor &rhs, bool transpose, Tensor &out) {
+        void InnerProd::inner_prod(const Tensor &lhs, const Tensor &rhs, bool transpose, Tensor &out, Stack &stack, bool kernel_need_pack) {
             // Notice: the all tensor' memory device are CPU, as given in running_memory_device
             DTYPE dtype = out.dtype();
             switch (dtype) {
 #define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
-        case DTYPE: { cpu_inner_prod_compute_run<TYPE>(lhs, rhs, transpose, out); break; }
+        case DTYPE: { cpu_inner_prod_compute_run<TYPE>(lhs, rhs, transpose, out, stack, kernel_need_pack); break; }
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
