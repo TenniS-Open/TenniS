@@ -13,8 +13,8 @@ namespace ts {
             DepthwiseConv2DCore() = default;
 
             void conv2d(const Tensor &x, const Padding2D &padding, float padding_value,
-                        const Tensor &w, const Stride2D &stride, const Dilation2D &dilation,
-                        Conv2DFormat format, Tensor &out, Stack &stack) override;
+                const Tensor &w, const Stride2D &stride, const Dilation2D &dilation,
+                Conv2DFormat format, Tensor &out, Stack &stack, bool kernel_need_pack) override;
         };
     }
 }

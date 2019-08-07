@@ -29,10 +29,11 @@ namespace ts {
              * @param out
              * @note all tensor's dtype is same, and all tensors' memory device are give in constructor
              */
-            virtual void inner_prod(const Tensor &lhs, const Tensor &rhs, bool transpose, Tensor &out) = 0;
+            virtual void inner_prod(const Tensor &lhs, const Tensor &rhs, bool transpose, Tensor &out, Stack &stack, bool kernel_need_pack) = 0;
 
         private:
             bool m_transpose = false;
+            bool m_kernel_need_pack = true;
         };
     }
 }

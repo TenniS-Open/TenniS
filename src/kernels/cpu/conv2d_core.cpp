@@ -17,7 +17,7 @@ namespace ts {
         template<typename T>
         static void cpu_conv2d_nchw_compute_run(const Tensor &x, const Padding2D &padding, float padding_value,
                                            const Tensor &w, const Stride2D &stride, const Dilation2D &dilation,
-                                           Tensor &out, Stack &stack) {
+                                           Tensor &out, Stack &stack, bool kernel_need_pack) {
             auto weight_shape = w.sizes();
             auto output_shape = out.sizes();
             auto x_shape = x.sizes();
@@ -76,11 +76,19 @@ namespace ts {
                 cblas::math<T>::gemm(ts::blas::NoTrans, ts::blas::NoTrans, weight_shape[0], conv_out_spatial_dim,
                                      kernel_dims, 1.0, pweight, col_buffer, 0, poutput);
 #else
-                Tensor kernel_packed = stack.make(w.dtype(), w.sizes(), MemoryDevice(CPU));
-                Conv2dAlgorithm<T>::kernel_pack8x8(w, kernel_packed);
                 packed_col = stack.make(x.dtype(), packed_shape, MemoryDevice(CPU));
-                Conv2dAlgorithm<T>::col_pack8x8(col_buffer, kernel_dims, conv_out_spatial_dim, packed_col.data<T>());
-                cpu::Conv2dAlgorithm<T>::gemm_pack8x8(weight_shape[0], conv_out_spatial_dim, kernel_dims, kernel_packed.data<T>(), packed_col.data<T>(), poutput);
+                Tensor kernel_packed;
+                if (kernel_need_pack) {
+                    kernel_packed = stack.make(w.dtype(), w.sizes(), MemoryDevice(CPU));
+                }
+                cpu::math<T, T>::gemm(weight_shape[0], conv_out_spatial_dim, kernel_dims, (T)1, w.data<T>(), kernel_packed.data<T>(), 
+                                      col_buffer, packed_col.data<T>(), T(0), poutput, kernel_need_pack, true);
+
+                //Tensor kernel_packed = stack.make(w.dtype(), w.sizes(), MemoryDevice(CPU));
+                //Conv2dAlgorithm<T>::kernel_pack8x8(w, kernel_packed);
+                //packed_col = stack.make(x.dtype(), packed_shape, MemoryDevice(CPU));
+                //Conv2dAlgorithm<T>::col_pack8x8(col_buffer, kernel_dims, conv_out_spatial_dim, packed_col.data<T>());
+                //cpu::Conv2dAlgorithm<T>::gemm_pack8x8(weight_shape[0], conv_out_spatial_dim, kernel_dims, kernel_packed.data<T>(), packed_col.data<T>(), poutput);
                 //cpu::math<T, T>::gemm(ts::blas::NoTrans,ts::blas::NoTrans, weight_shape[0], conv_out_spatial_dim,
                 //               kernel_dims, 1.0, pweight, col_buffer, 0, poutput);
 #endif
@@ -91,14 +99,14 @@ namespace ts {
 
         void Conv2DCore::conv2d(const Tensor &x, const Padding2D &padding, float padding_value, const Tensor &w,
                             const Stride2D &stride, const Dilation2D &dilation, Conv2DFormat format, Tensor &out,
-                            Stack &stack) {
+                            Stack &stack, bool kernel_need_pack) {
             if (format != FORMAT_NCHW) {
                 TS_LOG_ERROR << "Conv2D only support NCHW" << eject;
             }
             DTYPE dtype = out.dtype();
             switch (dtype) {
 #define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
-        case DTYPE: { cpu_conv2d_nchw_compute_run<TYPE>(x, padding, padding_value, w, stride, dilation, out, stack);; break; }
+        case DTYPE: { cpu_conv2d_nchw_compute_run<TYPE>(x, padding, padding_value, w, stride, dilation, out, stack, kernel_need_pack); break; }
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN

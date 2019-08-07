@@ -19,6 +19,7 @@ namespace ts {
             field(name::stride, REQUIRED);
             field(name::dilation, OPTIONAL);
             field(name::typo::dialations, OPTIONAL);
+            field(name::kernel_need_pack, OPTIONAL, tensor::from<bool>(true));
         }
 
         void Conv2DV2::init() {
