@@ -4,6 +4,7 @@
 #include "core/tensor_builder.h"
 #include "module/menu.h"
 #include "kernels/cpu/math_cpu.h"
+#include "kernels/common/math.h"
 
 bool ts::PackTranslatorOption::translate(const ComputingDevice &device, const Node node,
     Node &translated_node, bool output_flag) const {
@@ -21,8 +22,93 @@ bool ts::PackTranslatorOption::translate(const ComputingDevice &device, const No
     translated_node = bubble::bubble(node.bubble());
 
     if (op_name != name::layer::conv2d() && op_name != name::layer::conv2d_v2()
-        && op_name != name::layer::inner_prod() || op_name != name::layer::gemm()) {
+        && op_name != name::layer::inner_prod() && op_name != name::layer::gemm()) {
         Node::Link(translated_node, node.inputs());
+        return true;
+    }
+
+    //add gemm translate support,to alpha*[op(A)*op(B)]+beta*C
+    if (op_name == name::layer::gemm()) {
+        auto name = node.bubble().name();
+        auto inputs = node.inputs();
+        auto A_node = inputs[0],B_node = inputs[1],C_node = inputs[2];
+
+        float alpha = tensor::to_float(node.bubble().get(name::alpha));
+        float beta = tensor::to_float(node.bubble().get(name::beta));
+        bool transA = tensor::to_bool(node.bubble().get(name::transA));
+        bool transB = tensor::to_bool(node.bubble().get(name::transB));
+
+        //NOTE:Can not translate in this case,inner_product not support now
+        if (A_node.bubble().op() != Bubble::Const && transA) {
+            Node::Link(translated_node, node.inputs());
+            return true;
+        }
+
+        //transpose const if trans is true
+        auto A_trans_node = A_node;
+        auto B_trans_node = B_node;
+        if (A_node.bubble().op() == Bubble::Const && transA) {
+            auto A_tensor = A_node.bubble().get(name::value);
+            auto dtype = A_tensor.dtype();
+            auto shape = A_tensor.sizes();
+            Shape transposed_shape({ shape[1], shape[0] });
+            Tensor transposed(dtype, transposed_shape);
+            switch (dtype) {
+#define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
+            case DTYPE: { cpu::math<TYPE, TYPE>::matrix_transpose(A_tensor.data<TYPE>(), transposed.data<TYPE>(), shape[0], shape[1]); break; }
+                DECLARE_COMPUTE_RUN(FLOAT32, float);
+#undef DECLARE_COMPUTE_RUN
+                default: {
+                    TS_LOG_ERROR << "Pack translator not support data type(" << dtype << "): " << type_str(dtype) << eject;
+                    break;
+                }
+            }
+            A_trans_node.bubble().set(name::value, transposed);
+        }
+
+        if (B_node.bubble().op() == Bubble::Const && transB) {
+            auto B_tensor = B_node.bubble().get(name::value);
+            auto dtype = B_tensor.dtype();
+            auto shape = B_tensor.sizes();
+            Shape transposed_shape({ shape[1], shape[0] });
+            Tensor transposed(dtype, transposed_shape);
+            switch (dtype) {
+#define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
+            case DTYPE: { cpu::math<TYPE, TYPE>::matrix_transpose(B_tensor.data<TYPE>(), transposed.data<TYPE>(), shape[0], shape[1]); break; }
+                DECLARE_COMPUTE_RUN(FLOAT32, float);
+#undef DECLARE_COMPUTE_RUN
+                default: {
+                    TS_LOG_ERROR << "Pack translator not support data type(" << dtype << "): " << type_str(dtype) << eject;
+                    break;
+                }
+            }
+            B_trans_node.bubble().set(name::value, transposed);
+        }
+
+        auto inner_prod_node = bubble::op(name + "_inner_prod", name::layer::inner_prod(), { A_trans_node, B_trans_node });
+
+        auto alpha_node = bubble::data(name + "_alpha", node.bubble().get(name::alpha));
+        auto alpha_mul_node = bubble::op(name + "_alpha_mul", name::layer::mul(), { alpha_node, inner_prod_node });
+
+        auto beta_node = bubble::data(name + "_beta", node.bubble().get(name::beta));
+        auto beta_mul_node = bubble::op(name + "_beta_mul", name::layer::mul(), { beta_node, C_node });
+
+        if (ts::near(beta, float(0))) {
+            if (ts::near(alpha, float(1)))
+                translated_node = inner_prod_node;
+            else
+                translated_node = alpha_mul_node;
+        }
+        else {
+            if (ts::near(alpha, float(1))) {
+                auto add_node = bubble::op(name + "_add", name::layer::add(), { inner_prod_node, beta_mul_node });
+                translated_node = add_node;
+            }
+            else {
+                auto add_node = bubble::op(name + "_add", name::layer::add(), { alpha_mul_node, beta_mul_node });
+                translated_node = add_node;
+            }
+        }
         return true;
     }
 
