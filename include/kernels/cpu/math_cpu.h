@@ -47,11 +47,28 @@ namespace ts {
                     T_IN alpha, const T_IN *A, const T_IN *B,
                     T_IN beta, T_OUT *C);
 
+            static void pack8_A(int row, int col, const T_IN *from, int lda, T_IN *to);
+
+            static void pack8_B(int row, int col, const T_IN *from, int ldb, T_IN *to);
+
+            //NOTE:for pack gemm.
+            //only support row major now and no trans
+            //alpha==1,beta==0 should be promised now
+            //input and output should be float now
+            static void gemm(
+                    int M, int N, int K,
+                    T_IN alpha, const T_IN *A, T_IN *A_packed,
+                    const T_IN *B, T_IN *B_packed,
+                    T_IN beta, T_OUT *C,
+                    bool A_need_pack, bool B_need_pack);
+
             static T_OUT asum(
                     int N,
                     const T_IN *x,
                     int incx
                     );
+
+            static void matrix_transpose(const T_IN* A, T_OUT* B, int m, int n);
         };
     }
 }
