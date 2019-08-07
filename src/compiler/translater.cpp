@@ -7,6 +7,7 @@
 #include "compiler/option/translator_option.h"
 
 #include "compiler/option/fp16_translator_option.h"
+#include "compiler/option/pack_translator_option.h"
 
 #include "module/menu.h"
 
@@ -88,10 +89,15 @@ namespace ts {
         : m_device(device) {
         ArgParser parser;
         parser.add({"--float16", "-fp16"}, {"--no-float16", "-no-fp16"}, false);
+        parser.add({ "--pack" }, {"--no_pack"}, false);
         parser.parse(params);
         if (parser.get("--float16")) {
              TS_LOG_STATUS << "Compiling with --float16";
             m_options.push_back(new Fp16TranslatorOption);
+        }
+        if (parser.get("--pack")) {
+            TS_LOG_STATUS << "Compiling with --pack";
+            m_options.push_back(new PackTranslatorOption);
         }
     }
 
