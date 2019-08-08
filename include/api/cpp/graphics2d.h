@@ -88,15 +88,21 @@ namespace ts {
         using self = Vec3D;
         using supper = Vec<T, 3>;
 
-        T &x;
-        T &y;
-        T &z;
+        const T &x() const { return this->data(0); };
 
-        Vec3D()
-                : x(this->data(0)), y(this->data(1)), z(this->data(2)) {}
+        const T &y() const { return this->data(1); };
 
-        Vec3D(T x, T y, T z)
-                : Vec3D() {
+        const T &z() const { return this->data(2); };
+
+        T &x() { return this->data(0); };
+
+        T &y() { return this->data(1); };
+
+        T &z() { return this->data(2); };
+
+        Vec3D() : Vec3D(0, 0, 0) {}
+
+        Vec3D(T x, T y, T z) {
             this->data(0) = x;
             this->data(1) = y;
             this->data(2) = z;
@@ -112,14 +118,17 @@ namespace ts {
         using self = Vec2D;
         using supper = Vec<T, 2>;
 
-        T &x;
-        T &y;
+        T x() const { return this->data(0); };
 
-        Vec2D()
-                : x(this->data(0)), y(this->data(1)) {}
+        T y() const { return this->data(1); };
 
-        Vec2D(T x, T y)
-                : Vec2D() {
+        T &x() { return this->data(0); };
+
+        T &y() { return this->data(1); };
+
+        Vec2D() : Vec2D(0, 0) {}
+
+        Vec2D(T x, T y) {
             this->data(0) = x;
             this->data(1) = y;
         }

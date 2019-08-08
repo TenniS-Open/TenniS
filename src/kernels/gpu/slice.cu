@@ -66,9 +66,10 @@ namespace ts {
             int number = out.count();
             dim3 blockSize(CUDA_THREAD_NUM);
             dim3 gridSize(CUDA_BLOCK(number, blockSize.x));
+            auto cuda_stream = get_cuda_stream_on_context();
 
             int dims = x_shape.size();
-            gpu_slice_kernel<T> << <gridSize, blockSize >> >
+            gpu_slice_kernel<T> << <gridSize, blockSize, 0, cuda_stream>> >
                      (p_xdata, p_bdata, p_outdata, number, x_shape.size(),x_hype_shape, out_hype_shape);
 
         }
