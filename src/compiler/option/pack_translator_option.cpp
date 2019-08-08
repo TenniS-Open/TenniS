@@ -35,7 +35,10 @@ bool ts::PackTranslatorOption::translate(const ComputingDevice &device, const No
     }
 
     // not translate node if non-cpu device has defined op
-    if (device.type() != "cpu" && has_defined_op(device, op_name)) return false;
+    if (device.type() != "cpu" && has_defined_op(device, op_name)) {
+        Node::Link(translated_node, node.inputs());
+        return true;
+    }
 
     //add gemm translate support,to alpha*[op(A)*op(B)]+beta*C
     if (op_name == name::layer::gemm()) {
