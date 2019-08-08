@@ -13,6 +13,9 @@ namespace ts {
 
         template <typename Conv2D, typename Core>
         using DepthwiseConv2DWithCore = Conv2DWithCore<Conv2D, Core>;
+
+        template <typename Conv2D, typename Core>
+        using PackedDepthwiseConv2DWithCore = PackedConv2DWithCore<Conv2D, Core>;
     }
 }
 
