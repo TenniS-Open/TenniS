@@ -25,7 +25,6 @@ namespace ts{
         float max_freq;
     }CpuInfo;
 
-    static std::vector<int> cpu_sorted_ids;
     static std::vector<int> cpu_big_ids;
     static std::vector<int> cpu_little_ids;
     static bool g_set_cpu_set_power_mode_flag = false;
@@ -170,8 +169,9 @@ namespace ts{
         {
             CPU_SET(cpu_ids[i], &mask);
         }
-
+        //TS_LOG_ERROR << "syscall begin: ";
         int syscallret = syscall(__NR_sched_setaffinity, pid, sizeof(mask), &mask);
+        //TS_LOG_ERROR << "syscall end: " << syscallret;
         if (syscallret)
         {
             TS_LOG_ERROR << "syscall error,code: " << syscallret;
@@ -207,7 +207,7 @@ namespace ts{
     {
     //NOTE:only support androi and linux now
 #if TS_PLATFORM_OS_ANDROID || TS_PLATFORM_OS_LINUX
-
+        static std::vector<int> cpu_sorted_ids;
         if(cpu_sorted_ids.empty()){
             split_cpu_big_little(cpu_sorted_ids, cpu_big_ids, cpu_little_ids);
         }    
@@ -225,6 +225,11 @@ namespace ts{
 
         if((cpu_little_ids.empty() || cpu_little_ids.size() == 0) && mode != BALANCE){
             TS_LOG_ERROR << "cpu set power mode not supported";
+            return false;
+        }
+
+        if (set_cpu_ids.size() == 0) {
+            TS_LOG_ERROR << "cpu set is empty!";
             return false;
         }
 
@@ -249,7 +254,10 @@ namespace ts{
         if (flag) {
             g_power_mode = mode;
             g_set_cpu_set_power_mode_flag = true;
-        }       
+        }
+        else {
+            TS_LOG_ERROR << "set sched affinity failed";
+        }
         return flag;
 #endif
         return false;
