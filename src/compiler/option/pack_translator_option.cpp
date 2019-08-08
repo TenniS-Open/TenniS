@@ -189,6 +189,7 @@ bool ts::PackTranslatorOption::translate(const ComputingDevice &device, const No
     else
         Node::Link(translated_node, { inputs[0], inputs[1], kernel_packed_node });
 
+    return true;
 }
 
 
