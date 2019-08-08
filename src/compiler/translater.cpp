@@ -89,16 +89,18 @@ namespace ts {
         : m_device(device) {
         ArgParser parser;
         parser.add({"--float16", "-fp16"}, {"--no-float16", "-no-fp16"}, false);
-        parser.add({ "--pack" }, {"--no_pack"}, false);
+        parser.add({ "--pack" }, {"--no-pack"}, true);
         parser.parse(params);
         if (parser.get("--float16")) {
              TS_LOG_STATUS << "Compiling with --float16";
             m_options.push_back(new Fp16TranslatorOption);
         }
+#ifndef TS_USE_CBLAS
         if (parser.get("--pack")) {
             TS_LOG_STATUS << "Compiling with --pack";
             m_options.push_back(new PackTranslatorOption);
         }
+#endif
     }
 
     Translator::~Translator() {
