@@ -10,8 +10,8 @@ from .darknet import Layer
 from .darknet import fprintf
 from sys import stderr
 
-from param import *
-from enum import *
+from .param import *
+from .enum import *
 
 import numpy
 
