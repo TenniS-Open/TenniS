@@ -291,7 +291,7 @@ namespace ts {
         }
 
         template<typename T_IN, typename T_OUT>
-        void math<T_IN, T_OUT>::pack8_B(int row, int col, const T_IN *from, int ldb, T_IN *to) {
+        inline void inline_pack8_B(int row, int col, const T_IN *from, int ldb, T_IN *to) {
             int out_loop = col >> 3;
             int remain = out_loop << 3;
 
@@ -334,7 +334,7 @@ namespace ts {
         }
 
         template<>
-        void math<float, float>::pack8_B(int row, int col, const float *from, int ldb, float *to) {
+        inline void inline_pack8_B<float, float>(int row, int col, const float *from, int ldb, float *to) {
             int out_loop = col >> 3;
             int remain = out_loop << 3;
 
@@ -372,12 +372,17 @@ namespace ts {
         }
 
         template<typename T_IN, typename T_OUT>
-        static void kernel_8x8(int M, int K, int N, T_IN alpha, const T_IN *A, const T_IN *B, T_IN beta, T_OUT *C, int ldc) {
+        void math<T_IN, T_OUT>::pack8_B(int row, int col, const T_IN *from, int ldb, T_IN *to) {
+            inline_pack8_B<T_IN, T_OUT>(row, col, from, ldb, to);
+        }
+
+        template<typename T_IN, typename T_OUT>
+        inline void kernel_8x8(int M, int K, int N, T_IN alpha, const T_IN *A, const T_IN *B, T_IN beta, T_OUT *C, int ldc) {
 
         }
 
         template<>
-        static void kernel_8x8<float, float>(int M, int K, int N, float alpha, const float *A, const float *B, float beta, float *C, int ldc) {
+        inline void kernel_8x8<float, float>(int M, int K, int N, float alpha, const float *A, const float *B, float beta, float *C, int ldc) {
             const float* p_A = A;
             const float* p_B = B;
             float* p_C = C;
