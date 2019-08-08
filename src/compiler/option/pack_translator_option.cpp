@@ -6,6 +6,13 @@
 #include "kernels/cpu/math_cpu.h"
 #include "kernels/common/math.h"
 
+#include "global/operator_factory.h"
+
+static bool has_defined_op(const ts::ComputingDevice &device, const std::string &op) {
+    auto creator = ts::OperatorCreator::Query(device.type(), op, true);
+    return creator != nullptr;
+}
+
 bool ts::PackTranslatorOption::translate(const ComputingDevice &device, const Node node,
     Node &translated_node, bool output_flag) const {
     auto op_name = node.bubble().op();
@@ -26,6 +33,9 @@ bool ts::PackTranslatorOption::translate(const ComputingDevice &device, const No
         Node::Link(translated_node, node.inputs());
         return true;
     }
+
+    // not translate node if non-cpu device has defined op
+    if (device.type() != "cpu" && has_defined_op(device, op_name)) return false;
 
     //add gemm translate support,to alpha*[op(A)*op(B)]+beta*C
     if (op_name == name::layer::gemm()) {

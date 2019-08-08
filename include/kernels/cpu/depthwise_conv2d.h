@@ -8,7 +8,7 @@
 
 namespace ts {
 	namespace cpu {
-	    using DepthwiseConv2D = base::DepthwiseConv2DWithCore<OperatorOnCPU<base::DepthwiseConv2D>, DepthwiseConv2DCore>;
+	    using DepthwiseConv2D = base::PackedDepthwiseConv2DWithCore<OperatorOnCPU<base::DepthwiseConv2D>, DepthwiseConv2DCore>;
 	}
 }
 
