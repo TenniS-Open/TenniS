@@ -5,7 +5,7 @@ author: kier
 """
 
 
-from darknet import Network
+from .darknet import Network
 import tensorstack as ts
 from .enum import *
 

@@ -33,7 +33,7 @@ def get_tensor_stack_passes():
         "fuse_consecutive_reduce_unsqueeze",
         "fuse_consecutive_squeezes",
         "fuse_consecutive_transposes",
-        "fuse_matmul_add_bias_into_gemm",
+        # "fuse_matmul_add_bias_into_gemm",
         "fuse_pad_into_conv",
         "fuse_transpose_into_gemm",
         "lift_lexical_references",
@@ -372,11 +372,11 @@ def convert_conv_layer(node, input_nodes, output_names):
     elif is_depthwise_conv2d:
         weights_shape = W_array.shape
         depthwise_weights_shape = (weights_shape[1], weights_shape[0], weights_shape[2], weights_shape[3])
-        weights_blob = W_array.reshape(shape=depthwise_weights_shape)
+        weights_blob = W_array.reshape(depthwise_weights_shape)
         ts_node = ts.zoo.depthwise_conv2d(conv2d_name, x=input_nodes[0], w=weights_blob, format=ts.zoo.Name.NCHW,
                                           padding=[[0, 0], [0, 0], [pads[0], pads[2]], [pads[1], pads[3]]],
                                           padding_value=0,
-                                          stride=[0, 0, strides[0], strides[1]],
+                                          stride=[1, 1, strides[0], strides[1]],
                                           dilation=[1, 1, dilations[0], dilations[1]])
 
     if ts_node is None:
