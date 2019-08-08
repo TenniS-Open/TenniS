@@ -42,6 +42,7 @@ namespace ts {
             m_op_conv2d->set(name::format, get(name::format));
             m_op_conv2d->set(name::padding_value, get(name::padding_value));
             m_op_conv2d->set(name::stride, get(name::stride));
+            m_op_conv2d->set(name::kernel_need_pack, get(name::kernel_need_pack));
 
             if (has(name::dilation)) m_op_conv2d->set(name::dilation, get(name::dilation));
             if (has(name::typo::dialations)) m_op_conv2d->set(name::typo::dialations, get(name::typo::dialations));
