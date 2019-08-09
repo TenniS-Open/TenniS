@@ -138,7 +138,7 @@ namespace ts {
         string padding_value = "padding_value";
         string stride = "stride";
         string dilation = "dilation";
-        string kernel_need_pack = "kernel_need_pack";
+        string kernel_packed = "kernel_packed";
         string epsilon = "epsilon";
         string max = "max";
         string slope = "slope";

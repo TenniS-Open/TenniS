@@ -19,7 +19,7 @@ namespace ts {
             field(name::stride, REQUIRED);
             field(name::dilation, OPTIONAL);
             field(name::typo::dialations, OPTIONAL);
-            field(name::kernel_need_pack, OPTIONAL, tensor::from<bool>(true));
+            field(name::kernel_packed, OPTIONAL, tensor::from<bool>(false));
         }
 
         static std::string to_string(const std::valarray<int> &arr) {
@@ -53,8 +53,8 @@ namespace ts {
                 TS_LOG_ERROR << this->op() << " must set " << name::dilation << " or " << name::typo::dialations << eject;
             }
 
-            if (has(name::kernel_need_pack)) {
-                m_kernel_need_pack = tensor::to_bool(get(name::kernel_need_pack));
+            if (has(name::kernel_packed)) {
+                m_kernel_packed = tensor::to_bool(get(name::kernel_packed));
             }
 
             TS_AUTO_CHECK(padding_tensor.has_shape({4, 2}));
@@ -218,7 +218,7 @@ namespace ts {
 
                 TS_AUTO_CHECK(stack.size() == 0);
 
-                conv2d(x, padding, m_padding_value, w, stride, dilation, m_format, out, stack, m_kernel_need_pack);
+                conv2d(x, padding, m_padding_value, w, stride, dilation, m_format, out, stack, m_kernel_packed);
 
                 stack.clear();
             }

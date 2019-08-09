@@ -588,14 +588,17 @@ namespace ts {
     bool Workbench::set_cpu_power_mode(CpuEnable::CpuPowerMode cpu_mode){
         bool flag = CpuEnable::set_power_mode(cpu_mode);
         if (flag) {
-            int fixed_thread_num;
+            int fixed_thread_num = this->m_runtime_context.get_computing_thread_number();
             switch (cpu_mode)
             {
-            case ts::CpuEnable::BALANCE:fixed_thread_num = CpuEnable::get_cpu_num();
+            case ts::CpuEnable::BALANCE:
+                fixed_thread_num = CpuEnable::get_cpu_num();
                 break;
-            case ts::CpuEnable::BIGCORE:fixed_thread_num = CpuEnable::get_cpu_big_num();
+            case ts::CpuEnable::BIGCORE:
+                fixed_thread_num = CpuEnable::get_cpu_big_num();
                 break;
-            case ts::CpuEnable::LITTLECORE:fixed_thread_num = CpuEnable::get_cpu_little_num();
+            case ts::CpuEnable::LITTLECORE:
+                fixed_thread_num = CpuEnable::get_cpu_little_num();
                 break;
             default:
                 break;

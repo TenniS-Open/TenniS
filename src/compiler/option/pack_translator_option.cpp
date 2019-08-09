@@ -195,7 +195,11 @@ bool ts::PackTranslatorOption::translate(const ComputingDevice &device, const No
 
     Node kernel_packed_node = kernel_node;
     kernel_packed_node.bubble().set(name::value, kernel_packed);
-    translated_node.bubble().set(name::kernel_need_pack, tensor::from<bool>(false));
+    translated_node.bubble().set(name::kernel_packed, tensor::from<bool>(true));
+
+    if (op_name == name::layer::inner_prod()) {
+        translated_node.bubble().set("transpose", tensor::from<bool>(false));
+    }
 
     if(op_name == name::layer::conv2d() || op_name == name::layer::inner_prod())
         Node::Link(translated_node, { inputs[0], kernel_packed_node });

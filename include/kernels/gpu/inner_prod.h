@@ -13,6 +13,14 @@ namespace ts {
             using supper = OperatorOnGPU<base::InnerProd>;
 
             void inner_prod(const Tensor &lhs, const Tensor &rhs, bool transpose, Tensor &out) override;
+
+            void inner_prod(const Tensor &lhs, const Tensor &rhs, bool transpose, Tensor &out, Stack &stack,
+                            bool kernel_packed) override {
+                if (kernel_packed) {
+                    TS_LOG_ERROR << "What a Terrible Failure: dealing packed weights without pack support." << eject;
+                }
+                inner_prod(lhs, rhs, transpose, out);
+            }
         };
     }
 }

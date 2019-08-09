@@ -17,7 +17,7 @@ namespace ts {
         template<typename T>
         static void cpu_conv2d_nchw_compute_run(const Tensor &x, const Padding2D &padding, float padding_value,
                                            const Tensor &w, const Stride2D &stride, const Dilation2D &dilation,
-                                           Tensor &out, Stack &stack, bool kernel_need_pack) {
+                                           Tensor &out, Stack &stack, bool kernel_packed) {
             auto weight_shape = w.sizes();
             auto output_shape = out.sizes();
             auto x_shape = x.sizes();
@@ -77,11 +77,12 @@ namespace ts {
                                      kernel_dims, 1.0, pweight, col_buffer, 0, poutput);
 #else
                 packed_col = stack.make(x.dtype(), packed_shape, MemoryDevice(CPU));
-                Tensor kernel_packed;
+                Tensor packed_tensor;
+                auto kernel_need_pack = !kernel_packed;
                 if (kernel_need_pack) {
-                    kernel_packed = stack.make(w.dtype(), w.sizes(), MemoryDevice(CPU));
+                    packed_tensor = stack.make(w.dtype(), w.sizes(), MemoryDevice(CPU));
                 }
-                cpu::math<T, T>::gemm(weight_shape[0], conv_out_spatial_dim, kernel_dims, (T)1, w.data<T>(), kernel_packed.data<T>(), 
+                cpu::math<T, T>::gemm(weight_shape[0], conv_out_spatial_dim, kernel_dims, (T)1, w.data<T>(), packed_tensor.data<T>(),
                                       col_buffer, packed_col.data<T>(), T(0), poutput, kernel_need_pack, true);
 
                 //Tensor kernel_packed = stack.make(w.dtype(), w.sizes(), MemoryDevice(CPU));
@@ -99,14 +100,14 @@ namespace ts {
 
         void Conv2DCore::conv2d(const Tensor &x, const Padding2D &padding, float padding_value, const Tensor &w,
                             const Stride2D &stride, const Dilation2D &dilation, Conv2DFormat format, Tensor &out,
-                            Stack &stack, bool kernel_need_pack) {
+                            Stack &stack, bool kernel_packed) {
             if (format != FORMAT_NCHW) {
                 TS_LOG_ERROR << "Conv2D only support NCHW" << eject;
             }
             DTYPE dtype = out.dtype();
             switch (dtype) {
 #define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
-        case DTYPE: { cpu_conv2d_nchw_compute_run<TYPE>(x, padding, padding_value, w, stride, dilation, out, stack, kernel_need_pack); break; }
+        case DTYPE: { cpu_conv2d_nchw_compute_run<TYPE>(x, padding, padding_value, w, stride, dilation, out, stack, kernel_packed); break; }
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
