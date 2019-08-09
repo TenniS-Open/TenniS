@@ -20,6 +20,7 @@ namespace ts {
             field(name::dilation, OPTIONAL);
             field(name::typo::dialations, OPTIONAL);
             /*field(name::output_shape, OPTIONAL);*/
+            field(name::kernel_packed, OPTIONAL, tensor::from<bool>(false));
         }
 
         static std::string to_string(const std::valarray<int> &arr) {
@@ -48,6 +49,8 @@ namespace ts {
             } else if (has(name::typo::dialations)) {
                 dilation_tensor = tensor::cast(INT32, get(name::typo::dialations));
             }
+
+            m_kernel_packed = tensor::to_bool(get(name::kernel_packed));
 
             if (dilation_tensor.empty()) {
                 TS_LOG_ERROR << this->op() << " must set " << name::dilation << " or " << name::typo::dialations
@@ -245,7 +248,7 @@ namespace ts {
 
                 TS_AUTO_CHECK(stack.size() == 0);
 
-                conv2d_transpose(x, padding, m_padding_value, w, stride, dilation, m_format, out, stack);
+                conv2d_transpose(x, padding, m_padding_value, w, stride, dilation, m_format, out, stack, m_kernel_packed);
 
                 stack.clear();
             }

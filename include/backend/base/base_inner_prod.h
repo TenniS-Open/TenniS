@@ -29,11 +29,27 @@ namespace ts {
              * @param out
              * @note all tensor's dtype is same, and all tensors' memory device are give in constructor
              */
-            virtual void inner_prod(const Tensor &lhs, const Tensor &rhs, bool transpose, Tensor &out, Stack &stack, bool kernel_need_pack) = 0;
+            virtual void inner_prod(const Tensor &lhs, const Tensor &rhs, bool transpose, Tensor &out, Stack &stack, bool kernel_packed) {
+                if (kernel_packed) {
+                    TS_LOG_ERROR << "What a Terrible Failure: dealing packed weights without pack support." << eject;
+                }
+                inner_prod(lhs, rhs, transpose, out);
+            }
+
+            /**
+             *
+             * @param lhs
+             * @param rhs
+             * @param out
+             * @note all tensor's dtype is same, and all tensors' memory device are give in constructor
+             */
+            virtual void inner_prod(const Tensor &lhs, const Tensor &rhs, bool transpose, Tensor &out) {
+                TS_LOG_ERROR << "What a Terrible Failure: not implement inner_prod core." << eject;
+            }
 
         private:
             bool m_transpose = false;
-            bool m_kernel_need_pack = true;
+            bool m_kernel_packed = false;
         };
     }
 }

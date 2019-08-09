@@ -13,6 +13,8 @@ namespace ts {
         template <typename T_IN, typename T_OUT>
         class TS_DEBUG_API math {
         public:
+            using self = math;
+
             static void check(const Tensor &tensor) {
                 if (tensor.device().type() != CPU) throw DeviceMismatchException(Device(CPU), tensor.device());
             }
@@ -50,6 +52,13 @@ namespace ts {
             static void pack8_A(int row, int col, const T_IN *from, int lda, T_IN *to);
 
             static void pack8_B(int row, int col, const T_IN *from, int ldb, T_IN *to);
+
+            static void gemm(
+                    int M, int N, int K,
+                    T_IN alpha, const T_IN *A,
+                    const T_IN *B,
+                    T_IN beta, T_OUT *C,
+                    bool A_need_pack, bool B_need_pack);
 
             //NOTE:for pack gemm.
             //only support row major now and no trans
