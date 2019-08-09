@@ -17,6 +17,7 @@ namespace ts {
             field(name::stride, REQUIRED);
             field(name::dilation, OPTIONAL);
             field(name::typo::dialations, OPTIONAL);
+            field(name::kernel_packed, OPTIONAL, tensor::from<bool>(false));
         }
 
         void DepthwiseConv2DV2::init() {
@@ -39,6 +40,7 @@ namespace ts {
             m_op_conv2d->set(name::format, get(name::format));
             m_op_conv2d->set(name::padding_value, get(name::padding_value));
             m_op_conv2d->set(name::stride, get(name::stride));
+            m_op_conv2d->set(name::kernel_packed, get(name::kernel_packed));
 
             if (has(name::dilation)) m_op_conv2d->set(name::dilation, get(name::dilation));
             if (has(name::typo::dialations)) m_op_conv2d->set(name::typo::dialations, get(name::typo::dialations));

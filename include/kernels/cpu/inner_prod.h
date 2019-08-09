@@ -12,7 +12,7 @@ namespace ts {
             using self = InnerProd;
             using supper = OperatorOnCPU<base::InnerProd>;
 
-            void inner_prod(const Tensor &lhs, const Tensor &rhs, bool transpose, Tensor &out, Stack &stack, bool kernel_need_pack) override;
+            void inner_prod(const Tensor &lhs, const Tensor &rhs, bool transpose, Tensor &out, Stack &stack, bool kernel_packed) override;
         };
     }
 }

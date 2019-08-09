@@ -13,7 +13,7 @@ namespace ts {
 
         InnerProd::InnerProd() {
             field("transpose", OPTIONAL, tensor::from<bool>(false));
-            field(name::kernel_need_pack, OPTIONAL, tensor::from<bool>(true));
+            field(name::kernel_packed, OPTIONAL, tensor::from<bool>(false));
         }
 
         void InnerProd::init() {
@@ -21,8 +21,8 @@ namespace ts {
 
             m_transpose = tensor::to_bool(get("transpose"));
 
-            if (has(name::kernel_need_pack)) {
-                m_kernel_need_pack = tensor::to_bool(get(name::kernel_need_pack));
+            if (has(name::kernel_packed)) {
+                m_kernel_packed = tensor::to_bool(get(name::kernel_packed));
             }
         }
 
@@ -87,7 +87,7 @@ namespace ts {
 
             auto &out = *stack.push(output[0], memory_device);
 
-            inner_prod(lhs, rhs, m_transpose, out, stack, m_kernel_need_pack);
+            inner_prod(lhs, rhs, m_transpose, out, stack, m_kernel_packed);
 
             return 1;
         }

@@ -16,7 +16,7 @@ namespace ts {
 
             void conv2d(const Tensor &x, const Padding2D &padding, float padding_value,
                         const Tensor &w, const Stride2D &stride, const Dilation2D &dilation,
-                        Conv2DFormat format, Tensor &out, Stack &stack, bool kernel_need_pack) override;
+                        Conv2DFormat format, Tensor &out, Stack &stack, bool kernel_packed) override;
         };
     }
 }
