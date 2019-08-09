@@ -8,7 +8,7 @@
 
 namespace ts {
 	namespace cpu {
-	    using Conv2DTranspose = base::Conv2DTransposeWithCore<OperatorOnCPU<base::Conv2DTranspose>, Conv2DTransposeCore>;
+	    using Conv2DTranspose = base::PackedConv2DTransposeWithCore<OperatorOnCPU<base::Conv2DTranspose>, Conv2DTransposeCore>;
 	}
 }
 

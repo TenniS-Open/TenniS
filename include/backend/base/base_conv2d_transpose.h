@@ -41,6 +41,8 @@ namespace ts {
             std::valarray<int> m_dilation4;
 
             std::valarray<int> m_output_shape;
+
+            bool m_kernel_packed = false;
         };
     }
 }
