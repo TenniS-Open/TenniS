@@ -6,6 +6,13 @@
 #include "kernels/cpu/math_cpu.h"
 #include "kernels/common/math.h"
 
+#include "global/operator_factory.h"
+
+static bool has_defined_op(const ts::ComputingDevice &device, const std::string &op) {
+    auto creator = ts::OperatorCreator::Query(device.type(), op, true);
+    return creator != nullptr;
+}
+
 bool ts::PackTranslatorOption::translate(const ComputingDevice &device, const Node node,
     Node &translated_node, bool output_flag) const {
     auto op_name = node.bubble().op();
@@ -23,6 +30,12 @@ bool ts::PackTranslatorOption::translate(const ComputingDevice &device, const No
 
     if (op_name != name::layer::conv2d() && op_name != name::layer::conv2d_v2()
         && op_name != name::layer::inner_prod() && op_name != name::layer::gemm()) {
+        Node::Link(translated_node, node.inputs());
+        return true;
+    }
+
+    // not translate node if non-cpu device has defined op
+    if (device.type() != "cpu" && has_defined_op(device, op_name)) {
         Node::Link(translated_node, node.inputs());
         return true;
     }
@@ -182,7 +195,11 @@ bool ts::PackTranslatorOption::translate(const ComputingDevice &device, const No
 
     Node kernel_packed_node = kernel_node;
     kernel_packed_node.bubble().set(name::value, kernel_packed);
-    translated_node.bubble().set(name::kernel_need_pack, tensor::from<bool>(false));
+    translated_node.bubble().set(name::kernel_packed, tensor::from<bool>(true));
+
+    if (op_name == name::layer::inner_prod()) {
+        translated_node.bubble().set("transpose", tensor::from<bool>(false));
+    }
 
     if(op_name == name::layer::conv2d() || op_name == name::layer::inner_prod())
         Node::Link(translated_node, { inputs[0], kernel_packed_node });

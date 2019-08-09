@@ -20,6 +20,8 @@
 
 
 #include <omp.h>
+#include <core/dtype.h>
+#include <core/tensor.h>
 
 
 namespace ts {
@@ -696,6 +698,20 @@ namespace ts {
                     output_row0++;
                 }
             }
+        }
+
+        template<typename T_IN, typename T_OUT>
+        void math<T_IN, T_OUT>::gemm(int M, int N, int K, T_IN alpha, const T_IN *A, const T_IN *B,
+                                     T_IN beta, T_OUT *C, bool A_need_pack, bool B_need_pack) {
+            Tensor A_packed;
+            Tensor B_packed;
+            if (A_need_pack) {
+                A_packed = Tensor(Tensor::InFlow::HOST, dtypeid<T_IN>::id, {int32_t(M * K),});
+            }
+            if (B_need_pack) {
+                B_packed = Tensor(Tensor::InFlow::HOST, dtypeid<T_IN>::id, {int32_t(N * K),});
+            }
+            self::gemm(M, N, K, alpha, A, A_packed.data<T_IN>(), B, B_packed.data<T_IN>(), beta, C, A_need_pack, B_need_pack);
         }
 
         template<typename T_IN, typename T_OUT>

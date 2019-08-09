@@ -10,7 +10,11 @@ namespace ts {
         static void
         cpu_depthwise_conv2d_nchw_compute_run(const Tensor &x, const Padding2D &padding, float padding_value,
                                               const Tensor &weight, const Stride2D &stride, const Dilation2D &dilation,
-                                              Tensor &out, Stack &stack, bool kernel_need_pack) {
+                                              Tensor &out, Stack &stack, bool kernel_packed) {
+            if (kernel_packed) {
+                TS_LOG_ERROR << "What a Terrible Failure: dealing packed weights without pack support." << eject;
+            }
+
             auto weight_shape = weight.sizes();
             auto output_shape = out.sizes();
             auto input_shape = x.sizes();
@@ -48,14 +52,14 @@ namespace ts {
         void
         DepthwiseConv2DCore::conv2d(const Tensor &x, const Padding2D &padding, float padding_value, const Tensor &w,
                                     const Stride2D &stride, const Dilation2D &dilation, Conv2DFormat format,
-                                    Tensor &out, Stack &stack, bool kernel_need_pack) {
+                                    Tensor &out, Stack &stack, bool kernel_packed) {
             if (format != FORMAT_NCHW) {
                 TS_LOG_ERROR << "DepthwiseConv2D only support NCHW" << eject;
             }
             DTYPE dtype = out.dtype();
             switch (dtype) {
 #define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
-        case DTYPE: { cpu_depthwise_conv2d_nchw_compute_run<TYPE>(x, padding, padding_value, w, stride, dilation, out, stack, kernel_need_pack); break; }
+        case DTYPE: { cpu_depthwise_conv2d_nchw_compute_run<TYPE>(x, padding, padding_value, w, stride, dilation, out, stack, kernel_packed); break; }
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN

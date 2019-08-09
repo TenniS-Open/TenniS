@@ -33,7 +33,7 @@ def get_tensor_stack_passes():
         "fuse_consecutive_reduce_unsqueeze",
         "fuse_consecutive_squeezes",
         "fuse_consecutive_transposes",
-        "fuse_matmul_add_bias_into_gemm",
+        # "fuse_matmul_add_bias_into_gemm",
         "fuse_pad_into_conv",
         "fuse_transpose_into_gemm",
         "lift_lexical_references",
