@@ -177,8 +177,10 @@ bool ts::PackTranslatorOption::translate(const ComputingDevice &device, const No
                 if(need_transpose){ \
                     Shape transposed_shape({kernel_size_width, kernel_size_height}); \
                     Tensor transposed(kernel_type, transposed_shape); \
+                    Tensor packe_transposed(kernel_type, transposed_shape); \
                     cpu::math<TYPE, TYPE>::matrix_transpose(kernel_tensor.data<TYPE>(), transposed.data<TYPE>(), kernel_size_height, kernel_size_width); \
-                    cpu::math<TYPE, TYPE>::pack8_B(kernel_size_width, kernel_size_height, transposed.data<TYPE>(), kernel_size_height, kernel_packed.data<TYPE>()); \
+                    cpu::math<TYPE, TYPE>::pack8_B(kernel_size_width, kernel_size_height, transposed.data<TYPE>(), kernel_size_height, packe_transposed.data<TYPE>()); \
+                    kernel_packed = packe_transposed; \
                 } \
                 else{ \
                     cpu::math<TYPE, TYPE>::pack8_B(kernel_size_height, kernel_size_width, kernel_tensor.data<TYPE>(), kernel_size_width, kernel_packed.data<TYPE>()); \
