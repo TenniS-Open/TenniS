@@ -1,4 +1,4 @@
-#/usr/bin/env bash
+#!/usr/bin/env bash
 
 BASE=$(cd `dirname $0`; pwd)
 ROOT=$BASE/..
