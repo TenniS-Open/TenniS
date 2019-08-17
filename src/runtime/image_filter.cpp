@@ -43,6 +43,7 @@ namespace ts {
     }
 
     void ImageFilter::compile() {
+        if (m_impl->m_compiled) return;
         if (m_impl->m_graph->nodes().size() > 1) {
             Module::shared module = std::make_shared<Module>();
             module->load(*m_impl->m_graph);
@@ -224,6 +225,12 @@ namespace ts {
         auto x = m_impl->m_graph->nodes().back();
         auto node = bubble::op(serial_name(), name::layer::prewhiten(), {x});
         m_impl->m_compiled = false;
+    }
+
+    Module::shared ImageFilter::module() const {
+        Module::shared module = std::make_shared<Module>();
+        module->load(*m_impl->m_graph);
+        return module;
     }
 
     Program::shared ImageFilter::program() const {
