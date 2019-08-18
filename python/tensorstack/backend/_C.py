@@ -455,6 +455,13 @@ ts_intime_memcpy = __TS_IMPORT(
     c_int64,                # size
 )
 
+ts_intime_matmul = __TS_IMPORT(
+    lib, "ts_intime_matmul", POINTER(ts_Tensor),
+    POINTER(ts_Tensor),     # A
+    POINTER(ts_Tensor),     # B
+    ts_bool,                # transpose
+)
+
 
 """ ================================================================================================================ +++
 operator.h

@@ -95,5 +95,11 @@ namespace ts {
             Node::Link(node, {x, size, affine});
             return node;
         }
+
+        Node matmul(const std::string &name, const Node &A, const Node &B, bool transpose) {
+            Node node = bubble::bubble(desc::matmul(transpose), name);
+            Node::Link(node, {A, B});
+            return node;
+        }
     }
 }

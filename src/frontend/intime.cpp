@@ -177,5 +177,9 @@ namespace ts {
                                  reinterpret_cast<const char *>(src_data) + src_shift, src_desc.device(), size_t(size));
             return int64_t(copied);
         }
+
+        Tensor matmul(const Tensor &A, const Tensor &B, bool transpose) {
+            return run(desc::matmul(transpose), {A, B});
+        }
     }
 }
