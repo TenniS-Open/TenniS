@@ -132,6 +132,30 @@ class Module(object):
         _C.ts_api_check_pointer(module)
         return Module(module)
 
+    @staticmethod
+    def Fusion(in_module, in_out_slot, out_module, out_in_slot):
+        # type: (Module, int, Module, int) -> Workbench
+        if not isinstance(in_module, (Module, _C.POINTER(_C.ts_Module))):
+            raise Exception("argument {}: expected Module or POINTER(ts_Module) instance instead of {}".
+                            format(1, type(in_module).__name__))
+        if not isinstance(out_module, (Module, _C.POINTER(_C.ts_Module))):
+            raise Exception("argument {}: expected Module or POINTER(ts_Module) instance instead of {}".
+                            format(3, type(out_module).__name__))
+        try:
+            in_out_slot = int(in_out_slot)
+        except:
+            raise Exception("argument {}: expected int instead of {}".
+                            format(2, type(in_out_slot).__name__))
+        try:
+            out_in_slot = int(out_in_slot)
+        except:
+            raise Exception("argument {}: expected int instead of {}".
+                            format(4, type(out_in_slot).__name__))
+
+        module = _C.ts_Module_Fusion(in_module, in_out_slot, out_module, out_in_slot)
+        _C.ts_api_check_pointer(module)
+        return Module(module)
+
 
 class Device(object):
     def __init__(self, type="cpu", id=0):
@@ -745,6 +769,12 @@ class ImageFilter(object):
     def norm_image(self, epsilon):
         # type: (float) -> None
         _C.ts_api_check_bool(_C.ts_ImageFilter_norm_image(self, epsilon))
+
+    def module(self):
+        # type: () -> Module
+        module = _C.ts_ImageFilter_module(self)
+        _C.ts_api_check_pointer(module)
+        return Module(module)
 
 
 ResizeMethod = ImageFilter.ResizeMethod

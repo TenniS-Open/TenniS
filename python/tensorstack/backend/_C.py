@@ -107,6 +107,9 @@ ts_Module_LoadFromStream = __TS_IMPORT(lib, "ts_Module_LoadFromStream",
 
 ts_free_Module = __TS_IMPORT(lib, "ts_free_Module", None, POINTER(ts_Module))
 
+ts_Module_Fusion = __TS_IMPORT(lib, "ts_Module_Fusion", POINTER(ts_Module),
+                               POINTER(ts_Module), c_int32, POINTER(ts_Module), c_int32)
+
 """ ================================================================================================================ +++
 device.h
 """
@@ -291,6 +294,8 @@ ts_ImageFilter_force_gray_v2 = __TS_IMPORT(lib, "ts_ImageFilter_force_gray_v2",
                                            ts_bool, POINTER(ts_ImageFilter), POINTER(c_float), c_int32)
 
 ts_ImageFilter_norm_image = __TS_IMPORT(lib, "ts_ImageFilter_norm_image", ts_bool, POINTER(ts_ImageFilter), c_float)
+
+ts_ImageFilter_module = __TS_IMPORT(lib, "ts_ImageFilter_module", POINTER(ts_Module), POINTER(ts_ImageFilter))
 
 
 """ ================================================================================================================ +++
