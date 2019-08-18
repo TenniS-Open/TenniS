@@ -374,10 +374,6 @@ namespace ts {
     static std::vector<Node> clone_graph(const std::vector<Node> &nodes, std::unordered_map<Node, Node> &cloned_nodes, std::unordered_map<Node, Node> &linked_nodes) {
         std::vector<Node> dolly_nodes;
         for (auto &node : nodes) {
-            if (node->name() == "_input_data"){
-                std::cout << "_____________" << std::endl;
-            }
-
             {
                 auto it = linked_nodes.find(node);
                 if (it != linked_nodes.end()) {

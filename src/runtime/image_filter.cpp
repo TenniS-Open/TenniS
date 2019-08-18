@@ -38,7 +38,7 @@ namespace ts {
         m_impl->m_program.reset();
         m_impl->m_graph = std::make_shared<Graph>();
         ctx::bind<Graph> _bind_graph(m_impl->m_graph.get());
-        bubble::param(serial_name(), {-1, -1, -1});    // add input param to graph
+        bubble::param(serial_name(), UINT8, {-1, -1, -1});    // add input param to graph
         m_impl->m_compiled = false;
     }
 

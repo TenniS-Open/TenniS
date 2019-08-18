@@ -73,6 +73,12 @@ namespace ts {
                 return std::move(loaded);
             }
 
+            static Module Fusion(const Module &in, int32_t in_out_slot, const Module &out, int32_t out_in_slot) {
+                Module fusion(ts_Module_Fusion(in.get_raw(), in_out_slot, out.get_raw(), out_in_slot));
+                TS_API_AUTO_CHECK(fusion.m_impl != nullptr);
+                return std::move(fusion);
+            }
+
         private:
             Module(raw *ptr) : m_impl(pack(ptr)) {}
 
