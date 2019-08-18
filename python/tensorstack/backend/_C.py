@@ -444,6 +444,17 @@ ts_intime_affine_on_sample2d = __TS_IMPORT(
     c_int32,                # method
 )
 
+ts_intime_memcpy = __TS_IMPORT(
+    lib, "ts_intime_memcpy", c_int64,
+    POINTER(ts_Tensor),     # dst_desc
+    c_void_p,               # dst_ptr
+    c_int64,                # dst_shift
+    POINTER(ts_Tensor),     # src_desc
+    c_void_p,               # src_ptr
+    c_int64,                # src_shift
+    c_int64,                # size
+)
+
 
 """ ================================================================================================================ +++
 operator.h

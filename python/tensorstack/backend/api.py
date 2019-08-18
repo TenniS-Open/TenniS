@@ -1337,3 +1337,30 @@ class intime(object):
         _C.ts_api_check_pointer(y)
         return Tensor(y)
 
+    @staticmethod
+    def memcpy(dst_desc, dst_shift, src_desc, src_shift, size,
+               dst_ptr=None, src_ptr=None):
+        # type: (Tenosr, object, int, Tensor, object, int, int) -> None
+        if not isinstance(dst_desc, Tensor):
+            raise RuntimeError("argument {}: expected Tensor instance instead of {}".
+                               format(1, type(dst_desc).__name__))
+        if not isinstance(src_desc, Tensor):
+            raise RuntimeError("argument {}: expected Tensor instance instead of {}".
+                               format(2, type(src_desc).__name__))
+
+        if dst_ptr is not None:
+            raise NotImplementedError("dst_ptr = {}".format(type(dst_ptr).__name__))
+        if src_ptr is not None:
+            raise NotImplementedError("src_ptr = {}".format(type(src_ptr).__name__))
+
+        dst_shift = _C.c_int64(dst_shift)
+        src_shift = _C.c_int64(src_shift)
+        size = _C.c_int64(size)
+
+        copied = _C.ts_intime_memcpy(
+            dst_desc, dst_ptr, dst_shift,
+            src_desc, src_ptr, src_shift,
+            size)
+
+        return copied
+
