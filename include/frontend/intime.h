@@ -112,6 +112,8 @@ namespace ts {
                 Tensor &dst_desc, void *dst_data, int64_t dst_shift,
                 const Tensor &src_desc, const void *src_data, int64_t src_shift,
                 int64_t size);
+
+        TS_DEBUG_API Tensor matmul(const Tensor &A, const Tensor &B, bool transpose = false);
     }
 }
 

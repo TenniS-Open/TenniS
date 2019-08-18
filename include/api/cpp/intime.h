@@ -226,6 +226,12 @@ namespace ts {
                         src_desc.get_raw(), src_data, src_shift,
                         size);
             }
+
+            inline Tensor matmul(const Tensor &A, const Tensor &B, bool transpose = false) {
+                auto y = ts_intime_matmul(A.get_raw(), B.get_raw(), ts_bool(transpose));
+                TS_API_AUTO_CHECK(y != nullptr);
+                return Tensor::NewRef(y);
+            }
         }
     }
 }

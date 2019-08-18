@@ -157,6 +157,17 @@ TENSOR_STACK_C_API int64_t ts_intime_memcpy(
         const ts_Tensor *src_desc, const void *src_ptr, int64_t src_shift,
         int64_t size);
 
+/**
+ * Return A * B. or A * B^T if transpose
+ * @param A lhs tensor
+ * @param B rhs tensor
+ * @param transpose if B transposed
+ * @return new reference tensor, nullptr if failed.
+ * @note call ts_Workbench_setup_context to fix Exception "Must bind Workbench before run"
+ * @note output tensor should on device setting in setup context ts_Workbench
+ */
+TENSOR_STACK_C_API ts_Tensor *ts_intime_matmul(const ts_Tensor *A, const ts_Tensor *B, ts_bool transpose);
+
 
 #ifdef __cplusplus
 }

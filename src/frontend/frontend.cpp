@@ -154,5 +154,9 @@ namespace ts {
                                       tensor::build(FLOAT32, Shape({3, 3}), &affine[0]),
                                       dim, type);
         }
+
+        Node matmul(const std::string &name, const NodeOrTensor &A, const NodeOrTensor &B, bool transpose) {
+            return symbol::matmul(name, A, B, transpose);
+        }
     }
 }

@@ -128,3 +128,13 @@ int64_t ts_intime_memcpy(
                 size);
     RETURN_OR_CATCH(copied, 0);
 }
+
+ts_Tensor *ts_intime_matmul(const ts_Tensor *A, const ts_Tensor *B, ts_bool transpose) {
+    TRY_HEAD
+        if (!A) throw Exception("NullPointerException: @param: 1");
+        if (!B) throw Exception("NullPointerException: @param: 2");
+        std::unique_ptr<ts_Tensor> dolly(new ts_Tensor(
+                intime::matmul(**A, **B, bool(transpose))
+        ));
+    RETURN_OR_CATCH(dolly.release(), nullptr)
+}
