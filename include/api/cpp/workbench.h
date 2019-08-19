@@ -18,6 +18,12 @@
 
 namespace ts {
     namespace api {
+        enum class CpuPowerMode : int32_t {
+            BALANCE = TS_CPU_BALANCE,
+            BIG_CORE = TS_CPU_BIG_CORE,
+            LITTLE_CORE = TS_CPU_LITTLE_CORE,
+        };
+
         /**
          * @see ts_Workbench
          */
@@ -214,6 +220,14 @@ namespace ts {
                 auto json = ts_Workbench_summary(m_impl.get());
                 TS_API_AUTO_CHECK(json != nullptr);
                 return json;
+            }
+
+            bool set_cpu_mode(ts_CpuPowerMode mode) {
+                return ts_Workbench_set_cpu_mode(m_impl.get(), mode);
+            }
+
+            bool set_cpu_mode(CpuPowerMode mode) {
+                return ts_Workbench_set_cpu_mode(m_impl.get(), ts_CpuPowerMode(mode));
             }
 
         private:
