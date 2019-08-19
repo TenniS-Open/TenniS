@@ -1365,9 +1365,9 @@ class intime(object):
         return copied
 
     @staticmethod
-    def matmul(A, B, transpose=False):
-        A = Tensor(A)
-        B = Tensor(B)
+    def matmul(A, B, transpose=False, dtype=None):
+        A = Tensor(A, dtype=dtype)
+        B = Tensor(B, dtype=dtype)
         transpose = 1 if transpose else 0
         y = _C.ts_intime_matmul(A, B, transpose)
         _C.ts_api_check_pointer(y)
