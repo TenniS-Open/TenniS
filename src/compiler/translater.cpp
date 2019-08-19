@@ -55,23 +55,28 @@ namespace ts {
         //std::cout << "+++++++++++++++++ original graph ++++++++++++++++++++++" << std::endl;
         //plot_graph(std::cout, module->outputs());
 
-        Module::shared new_module;
+        Module::shared new_module = module;
 
         Graph temp_graph;
         ctx::bind<Graph> _bind_graph(temp_graph);
         //auto temp_graph = ctx::get<Graph>();
+
+        auto options_v2 = GetFullTranslateV2Options();
+        for (auto &option : options_v2) {
+            new_module = option->translate(m_device, new_module);
+        }
 
         auto options = GetFullTranslateOptions();
         for (auto &option : m_options) {
             options.push_back(option);
         }
 
-        if (options.empty()) return module;
+        if (options.empty()) return new_module;
 
         std::vector<Node> traslated_nodes;
         std::unordered_map<Node, Node> ready_map;
 
-        auto output_nodes = module->outputs();
+        auto output_nodes = new_module->outputs();
         for (auto & node : output_nodes)
         {
             auto translated_node = translate_node(node, ready_map, m_device, options, true);
