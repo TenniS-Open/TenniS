@@ -433,7 +433,7 @@ namespace ts {
                         {
                             depthwise_inner(input_at, kernel_at,
                                 h, w,
-                                padding, stride,
+                                padding, padding_value, stride,
                                 input_height, input_width,
                                 output_width, out_at);
                         }
@@ -443,13 +443,13 @@ namespace ts {
                         for (w = 0; w < w_start; w++) {
                             depthwise_inner(input_at, kernel_at,
                                 h, w,
-                                padding, stride,
+                                padding, padding_value, stride,
                                 input_height, input_width,
                                 output_width, out_at);
 
                             depthwise_inner(input_at, kernel_at,
                                 h + 1, w,
-                                padding, stride,
+                                padding, padding_value, stride,
                                 input_height, input_width,
                                 output_width, out_at);
                         }
@@ -496,13 +496,13 @@ namespace ts {
                         for (; w < output_width; w++) {
                             depthwise_inner(input_at, kernel_at,
                                 h, w,
-                                padding, stride,
+                                padding, padding_value, stride,
                                 input_height, input_width,
                                 output_width, out_at);
 
                             depthwise_inner(input_at, kernel_at,
                                 h + 1, w,
-                                padding, stride,
+                                padding, padding_value, stride,
                                 input_height, input_width,
                                 output_width, out_at);
                         }
@@ -511,7 +511,7 @@ namespace ts {
                         for (w = 0; w < output_width; w++) {
                             depthwise_inner(input_at, kernel_at,
                                 h, w,
-                                padding, stride,
+                                padding, padding_value, stride,
                                 input_height, input_width,
                                 output_width, out_at);
                         }
