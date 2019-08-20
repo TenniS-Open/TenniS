@@ -2,6 +2,7 @@
 #include <core/tensor_builder.h>
 #include <backend/name.h>
 #include <utils/assert.h>
+#include <kernels/cpu/depthwise_conv2d_algorithm.h>
 
 
 namespace ts {
@@ -16,36 +17,22 @@ namespace ts {
             }
 
             auto weight_shape = weight.sizes();
-            auto output_shape = out.sizes();
-            auto input_shape = x.sizes();
+            auto dtype = x.dtype();
+            if (dtype != FLOAT32) {
+                DepthwiseConv2dAlgorithm<T>::depthwise_general(x, padding, padding_value, weight, stride, dilation, out);
+                return;
+            }
 
-            const T *pinput = x.data<T>();
-            const T *pweight_base = weight.data<T>();
-            T *poutput = out.data<T>();
-            for (int n = 0; n < output_shape[0]; n++) {
-                for (int c = 0; c < output_shape[1]; c++) {
-                    for (int h = 0; h < output_shape[2]; h++) {
-                        for (int w = 0; w < output_shape[3]; w++) {
-                            const T *pweight = pweight_base + c * weight_shape[2] * weight_shape[3];
-                            T value = 0;
-                            for (int kh = 0; kh < weight_shape[2]; kh++) {
-                                for (int kw = 0; kw < weight_shape[3]; kw++) {
-                                    int h_in = -padding.top + h * stride.height + kh * dilation.height;
-                                    int w_in = -padding.left + w * stride.width + kw * dilation.width;
-                                    if ((h_in >= 0) && (h_in < input_shape[2]) && (w_in >= 0) &&
-                                        (w_in < input_shape[3])) {
-                                        int offset =
-                                                ((n * output_shape[1] + c) * input_shape[2] + h_in) * input_shape[3] +
-                                                w_in;
-                                        value += (*pweight) * pinput[offset];
-                                    }
-                                    ++pweight;
-                                }
-                            }
-                            *poutput++ = value;
-                        }
-                    }
-                }
+            if (weight_shape[2] == 3 && weight_shape[3] == 3 && stride.height == 1 && stride.width == 1 && dilation.height == 1 && dilation.width == 1) {
+                DepthwiseConv2dAlgorithm<T>::depthwise_3x3_s1(x, padding, padding_value, weight, stride, dilation, out);
+            }
+
+            else if (weight_shape[2] == 3 && weight_shape[3] == 3 && stride.height == 2 && stride.width == 2 && dilation.height == 1 && dilation.width == 1) {
+                DepthwiseConv2dAlgorithm<T>::depthwise_3x3_s2(x, padding, padding_value, weight, stride, dilation, out);
+            }
+
+            else {
+                DepthwiseConv2dAlgorithm<T>::depthwise_general(x, padding, padding_value, weight, stride, dilation, out);
             }
         }
 
