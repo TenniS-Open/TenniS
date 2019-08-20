@@ -150,8 +150,34 @@ inline _simd_f32x4 _simd_f32x4_fmadd(const _simd_f32x4& q0, const _simd_f32x4& q
     //return vaddq_f32(mul_tmp, q2);
 }
 
+inline _simd_f32x4 _simd_f32x4_fmadd(const _simd_f32x4& q0, const _simd_f32x4& q1, const _simd_f32x4& q2, const int index) {
+    if (index >= 0 && index <= 3) {
+#if defined(__aarch64__)
+        return vfmaq_laneq_f32(q2, q0, q1, index);
+#else
+        if(index == 0 || index == 1)
+            return vmlaq_lane_f32(q2, q0, vget_low_f32(q1), index);
+        else
+            return vmlaq_lane_f32(q2, q0, vget_high_f32(q1), index - 2);
+#endif
+    }
+}
+
 inline _simd_f32x4 _simd_broadcast2float32x4(const _simd_f32* src) {
     return vdupq_n_f32(*src);
+}
+
+inline _simd_f32x4 _simd_f32x4_concat(const _simd_f32x4& q0, const _simd_f32x4& q1, const int index) {
+    return vextq_f32(q0, q1, index);
+}
+
+inline _simd_f32x4 _simd_f32x4x2_interval_load(const _simd_f32* p, int inc) {
+    const _simd_f32* a = p;
+    const _simd_f32* b = a + inc;
+    const _simd_f32* c = b + inc;
+    const _simd_f32* d = c + inc;
+    _simd_f32 array[4] = { *a, *b, *c, *d };
+    return vld1q_f32(array);
 }
 
 
