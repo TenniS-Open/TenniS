@@ -9,9 +9,9 @@
 //#include "simd_def.h"
 #ifdef TS_USE_AVX
 #include "simd_def/simd_avx_def.h"
-#elif  TS_USE_SSE
+#elif  defined(TS_USE_SSE)
 #include "simd_def/simd_sse_def.h"
-#elif  TS_USE_NEON
+#elif  defined(TS_USE_NEON)
 #include "simd_def/simd_neon_def.h"
 #else
 #include "simd_def/simd_base_def.h"
@@ -126,6 +126,27 @@ namespace ts {
 
     inline simd<float, 4> fmadd(const simd<float, 4> &q0, const simd<float, 4> &q1, const simd<float, 4> &q2) {
         return _simd_f32x4_fmadd(q0.value, q1.value, q2.value);
+    }
+
+    //q0*dup(qi[index])+q2,index:[0-3]
+    inline simd<float, 4> fmadd(const simd<float, 4> &q0, const simd<float, 4> &q1, const simd<float, 4> &q2, const int index) {
+        if (index >= 0 && index <= 3) {
+            return _simd_f32x4_fmadd(q0.value, q1.value, q2.value, index);
+        }
+    }
+
+    //Note:The index value specifies the lowest vector element to extract from the first source register,
+    //and consecutive elements are extracted from the first, then second, 
+    //source registers until the destination vector is filled.
+    inline simd<float, 4> concat(const simd<float, 4> &q0, const simd<float, 4> &q1, const int index) {
+        if (index >= 0 && index <= 3) {
+            return _simd_f32x4_concat(q0.value, q1.value, index);
+        }
+    }
+
+    //load by inc
+    inline simd<float, 4> inc_load(const float *p, int inc) {
+        return _simd_f32x4x2_interval_load(p, inc);
     }
 
     template<>
