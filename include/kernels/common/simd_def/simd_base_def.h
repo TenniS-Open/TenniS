@@ -122,10 +122,36 @@ inline _simd_f32x4 _simd_f32x4_fmadd(const _simd_f32x4& q0, const _simd_f32x4& q
     return {q0[0] * q1[0] + q2[0], q0[1] * q1[1] + q2[1], q0[2] * q1[2] + q2[2], q0[3] * q1[3] + q2[3]};
 }
 
+inline _simd_f32x4 _simd_f32x4_fmadd(const _simd_f32x4& q0, const _simd_f32x4& q1, const _simd_f32x4& q2, const int index) {
+    return{ q0[0] * q1[index] + q2[0], q0[1] * q1[index] + q2[1], q0[2] * q1[index] + q2[2], q0[3] * q1[index] + q2[3] };
+}
+
 inline _simd_f32x4 _simd_broadcast2float32x4(const _simd_f32* src) {
     float val = *src;
     return{ val, val, val, val };
 }
+
+inline _simd_f32x4 _simd_f32x4_concat(const _simd_f32x4& q0, const _simd_f32x4& q1, const int index) {
+    if (index == 0)
+        return q0;
+    _simd_f32x4 res;
+    for (int i = index; i < 4; i++) {
+        res[i - index] = *(((float*)&q0) + i);
+    }
+    for (int i = 0; i < index; i++) {
+        res[i + 4 - index] = *(((float*)&q1) + i);
+    }
+    return res;
+}
+
+inline _simd_f32x4 _simd_f32x4x2_interval_load(const _simd_f32* p, int inc) {
+    const _simd_f32* a = p;
+    const _simd_f32* b = a + inc;
+    const _simd_f32* c = b + inc;
+    const _simd_f32* d = c + inc;
+    return{ *a, *b, *c, *d };
+}
+
 
 inline _simd_f32x4x2 _simd_f32x4x2_load(const _simd_f32 *p) {
     return { p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7] };
