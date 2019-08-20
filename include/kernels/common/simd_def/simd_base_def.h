@@ -122,6 +122,10 @@ inline _simd_f32x4 _simd_f32x4_fmadd(const _simd_f32x4& q0, const _simd_f32x4& q
     return {q0[0] * q1[0] + q2[0], q0[1] * q1[1] + q2[1], q0[2] * q1[2] + q2[2], q0[3] * q1[3] + q2[3]};
 }
 
+inline _simd_f32x4 _simd_broadcast2float32x4(const _simd_f32* src) {
+    float val = *src;
+    return{ val, val, val, val };
+}
 
 inline _simd_f32x4x2 _simd_f32x4x2_load(const _simd_f32 *p) {
     return { p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7] };
