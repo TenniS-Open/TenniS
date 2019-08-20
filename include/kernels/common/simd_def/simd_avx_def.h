@@ -98,8 +98,35 @@ inline _simd_f32x4 _simd_f32x4_fmadd(const _simd_f32x4& q0, const _simd_f32x4& q
     return _mm_fmadd_ps(q0, q1, q2);
 }
 
+//Note:Maybe i can find some instruction like vfmaq_laneq_f32 or vfmaq_lane_f32
+inline _simd_f32x4 _simd_f32x4_fmadd(const _simd_f32x4& q0, const _simd_f32x4& q1, const _simd_f32x4& q2, const int index) {
+    return _mm_fmadd_ps(q0, _mm_set1_ps(*((float*)&q1 + index)), q2);
+}
+
 inline _simd_f32x4 _simd_broadcast2float32x4(const _simd_f32* src) {
     return _mm_set1_ps(*src);
+}
+
+//Note:I can not find some instruction like vextq_f32,sad,- -
+inline _simd_f32x4 _simd_f32x4_concat(const _simd_f32x4& q0, const _simd_f32x4& q1, const int index) {
+    if (index == 0)
+        return q0;
+    float res[4];
+    for (int i = index; i < 4; i++){
+        res[i - index] = *(((float*)&q0) + i);
+    }
+    for (int i = 0; i < index; i++){
+        res[i + 4 - index] = *(((float*)&q1) + i);
+    }
+    return _mm_loadu_ps(res);
+}
+
+inline _simd_f32x4 _simd_f32x4x2_interval_load(const _simd_f32* p, int inc) {
+    const _simd_f32* a = p;
+    const _simd_f32* b = a + inc;
+    const _simd_f32* c = b + inc;
+    const _simd_f32* d = c + inc;
+    return _mm_set_ps(*d, *c, *b, *a);
 }
 
 
