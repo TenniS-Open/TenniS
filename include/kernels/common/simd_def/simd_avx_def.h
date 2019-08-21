@@ -121,7 +121,7 @@ inline _simd_f32x4 _simd_f32x4_concat(const _simd_f32x4& q0, const _simd_f32x4& 
     return _mm_loadu_ps(res);
 }
 
-inline _simd_f32x4 _simd_f32x4x2_interval_load(const _simd_f32* p, int inc) {
+inline _simd_f32x4 _simd_f32x4x2_interval_load(const _simd_f32* p, const int inc) {
     const _simd_f32* a = p;
     const _simd_f32* b = a + inc;
     const _simd_f32* c = b + inc;
