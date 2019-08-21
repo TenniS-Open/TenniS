@@ -131,10 +131,10 @@ namespace ts {
             const float* pkernel = weight.data<float>();
             float *poutput = out.data<float>();
 
+            for (int n = 0; n < input_shape[0]; n++){
 #ifdef TS_USE_OPENMP
 #pragma omp parallel for num_threads(openmp_threads())
 #endif
-            for (int n = 0; n < input_shape[0]; n++){
                 for (int c = 0; c < output_shape[1]; c++){
                     const float* input_at = pinput + n * input_num_offset + c * input_channel_offset;
                     const float* kernel_at = pkernel + c * 9;
@@ -288,10 +288,10 @@ namespace ts {
             const float* pkernel = weight.data<float>();
             float *poutput = out.data<float>();
 
+            for (int n = 0; n < input_shape[0]; n++) {
 #ifdef TS_USE_OPENMP
 #pragma omp parallel for num_threads(openmp_threads()) 
 #endif
-            for (int n = 0; n < input_shape[0]; n++) {
                 for (int c = 0; c < output_shape[1]; c++) {
                     const float* input_at = pinput + n * input_num_offset + c * input_channel_offset;
                     const float* kernel_at = pkernel + c * 9;
@@ -408,10 +408,10 @@ namespace ts {
             const float* pkernel = weight.data<float>();
             float *poutput = out.data<float>();
 
+            for (int n = 0; n < input_shape[0]; n++) {
 #ifdef TS_USE_OPENMP
 #pragma omp parallel for num_threads(openmp_threads()) 
 #endif
-            for (int n = 0; n < input_shape[0]; n++) {
                 for (int c = 0; c < output_shape[1]; c++) {
                     const float* input_at = pinput + n * input_num_offset + c * input_channel_offset;
                     const float* kernel_at = pkernel + c * 9;
