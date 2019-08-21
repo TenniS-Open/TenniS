@@ -150,17 +150,28 @@ inline _simd_f32x4 _simd_f32x4_fmadd(const _simd_f32x4& q0, const _simd_f32x4& q
     //return vaddq_f32(mul_tmp, q2);
 }
 
+//Note:index must be a constant integer,hard core.
 inline _simd_f32x4 _simd_f32x4_fmadd(const _simd_f32x4& q0, const _simd_f32x4& q1, const _simd_f32x4& q2, const int index) {
-    if (index >= 0 && index <= 3) {
 #if defined(__aarch64__)
-        return vfmaq_laneq_f32(q2, q0, q1, index);
+        switch (index)
+        {
+        case 0: return vfmaq_laneq_f32(q2, q0, q1, 0);
+        case 1: return vfmaq_laneq_f32(q2, q0, q1, 1);
+        case 2: return vfmaq_laneq_f32(q2, q0, q1, 2);
+        case 3: return vfmaq_laneq_f32(q2, q0, q1, 3);
+        default: _simd_f32 tmp[4] = { 0, 0, 0, 0 }; return vld1q_f32(tmp);
+            break;
+        }
 #else
-        if(index == 0 || index == 1)
-            return vmlaq_lane_f32(q2, q0, vget_low_f32(q1), index);
-        else
-            return vmlaq_lane_f32(q2, q0, vget_high_f32(q1), index - 2);
+        switch (index)
+        {
+        case 0: return vmlaq_lane_f32(q2, q0, vget_low_f32(q1), 0);
+        case 1: return vmlaq_lane_f32(q2, q0, vget_low_f32(q1), 1);
+        case 2: return vmlaq_lane_f32(q2, q0, vget_high_f32(q1), 0);
+        case 3: return vmlaq_lane_f32(q2, q0, vget_high_f32(q1), 1);
+        default:_simd_f32 tmp[4] = { 0, 0, 0, 0 }; return vld1q_f32(tmp);
+        }
 #endif
-    }
 }
 
 inline _simd_f32x4 _simd_broadcast2float32x4(const _simd_f32* src) {
@@ -168,10 +179,17 @@ inline _simd_f32x4 _simd_broadcast2float32x4(const _simd_f32* src) {
 }
 
 inline _simd_f32x4 _simd_f32x4_concat(const _simd_f32x4& q0, const _simd_f32x4& q1, const int index) {
-    return vextq_f32(q0, q1, index);
+    switch (index)
+    {
+    case 0: return vextq_f32(q0, q1, 0);
+    case 1: return vextq_f32(q0, q1, 1);
+    case 2: return vextq_f32(q0, q1, 2);
+    case 3: return vextq_f32(q0, q1, 3);
+    default:_simd_f32 tmp[4] = { 0, 0, 0, 0 }; return vld1q_f32(tmp);
+    }
 }
 
-inline _simd_f32x4 _simd_f32x4x2_interval_load(const _simd_f32* p, int inc) {
+inline _simd_f32x4 _simd_f32x4x2_interval_load(const _simd_f32* p, const int inc) {
     const _simd_f32* a = p;
     const _simd_f32* b = a + inc;
     const _simd_f32* c = b + inc;

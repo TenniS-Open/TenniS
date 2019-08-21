@@ -130,21 +130,23 @@ namespace ts {
 
     //q0*dup(qi[index])+q2,index:[0-3]
     inline simd<float, 4> fmadd(const simd<float, 4> &q0, const simd<float, 4> &q1, const simd<float, 4> &q2, const int index) {
-        if (index >= 0 && index <= 3) {
+        if (index >= 0 && index <= 3)
             return _simd_f32x4_fmadd(q0.value, q1.value, q2.value, index);
-        }
+        else
+            return _simd_f32x4_set(0.f, 0.f, 0.f, 0.f);
     }
 
     //Note:The index value specifies the lowest vector element to extract from the first source register,
     //and consecutive elements are extracted from the first, then second, 
     //source registers until the destination vector is filled.
     inline simd<float, 4> concat(const simd<float, 4> &q0, const simd<float, 4> &q1, const int index) {
-        if (index >= 0 && index <= 3) {
+        if (index >= 0 && index <= 3) 
             return _simd_f32x4_concat(q0.value, q1.value, index);
-        }
+        else
+            return _simd_f32x4_set(0.f, 0.f, 0.f, 0.f);
     }
 
-    //load by inc
+    //load by inc.
     inline simd<float, 4> inc_load(const float *p, int inc) {
         return _simd_f32x4x2_interval_load(p, inc);
     }
