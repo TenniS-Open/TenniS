@@ -99,6 +99,8 @@ def convert(prototxt, caffemodel, output_file,
         "Scale": convert_scale,
         "Pooling": convert_pooling,
         "InnerProduct": convert_inner_product,
+        "Eltwise": convert_eltwise,
+        "Softmax": convert_softmax,
     }
 
     blob2nodes = {}
@@ -248,6 +250,22 @@ def convert_relu_layer(layer, params, input_nodes, output_names):
     node_name = output_names[0]
 
     node = ts.zoo.relu(node_name, x=x)
+
+    return node,
+
+
+def convert_softmax(layer, params, input_nodes, output_names):
+    # type: (caffe.LayerParameter, List[ts.Node], List[caffe.BlobProto], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer({}): {} ]=-".format(layer.type, layer.name, output_names))
+
+    assert len(input_nodes) == 1
+    assert len(params) == 0
+    assert len(output_names) == 1
+
+    x = input_nodes[0]
+    node_name = output_names[0]
+
+    node = ts.zoo.softmax(node_name, x=x, dim=1)
 
     return node,
 
@@ -689,5 +707,30 @@ def convert_inner_product(layer, params, input_nodes, output_names):
     node = ts.zoo.reshape(name=node_name, x=node, shape=[-1, num_output, 1, 1])
 
     node.name = node_name
+
+    return node,
+
+
+def convert_eltwise(layer, params, input_nodes, output_names):
+    # type: (caffe.LayerParameter, List[ts.Node], List[caffe.BlobProto], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer({}): {} ]=-".format(layer.type, layer.name, output_names))
+
+    assert len(input_nodes) == 2
+    assert len(params) == 0
+    assert len(output_names) == 1
+
+    lhs = input_nodes[0]
+    rhs = input_nodes[1]
+    node_name = output_names[0]
+
+    layer_param = layer.eltwise_param
+    operation = layer_param.operation
+
+    node = None
+    if operation == caffe.EltwiseParameter.SUM:
+        node = ts.zoo.add(node_name, lhs=lhs, rhs=rhs, dtype=numpy.float32)
+
+    if node is None:
+        raise NotImplementedError(layer)
 
     return node,
