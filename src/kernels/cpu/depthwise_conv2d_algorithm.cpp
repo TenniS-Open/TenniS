@@ -185,11 +185,28 @@ namespace ts {
                             const float* i1 = i0 + input_width;
                             const float* i2 = i1 + input_width;
                             const float* i3 = i2 + input_width;
+                            
+                            //Note:i don't optimize concat by avx or sse now. 
+#ifdef TS_USE_NEON
+                            float32x4 i00_x4(i0), i00_tmp_x4(i0 + 4);
+                            float32x4 i10_x4(i1), i10_tmp_x4(i1 + 4);
+                            float32x4 i20_x4(i2), i20_tmp_x4(i2 + 4);
+                            float32x4 i30_x4(i3), i30_tmp_x4(i3 + 4);
 
+                            float32x4 i01_x4 = concat(i00_x4, i00_tmp_x4, 1);
+                            float32x4 i02_x4 = concat(i00_x4, i00_tmp_x4, 2);
+                            float32x4 i11_x4 = concat(i10_x4, i10_tmp_x4, 1);
+                            float32x4 i12_x4 = concat(i10_x4, i10_tmp_x4, 2);
+                            float32x4 i21_x4 = concat(i20_x4, i20_tmp_x4, 1);
+                            float32x4 i22_x4 = concat(i20_x4, i20_tmp_x4, 2);
+                            float32x4 i31_x4 = concat(i30_x4, i30_tmp_x4, 1);
+                            float32x4 i32_x4 = concat(i30_x4, i30_tmp_x4, 2);
+#else
                             float32x4 i00_x4(i0), i01_x4(i0 + 1), i02_x4(i0 + 2);
                             float32x4 i10_x4(i1), i11_x4(i1 + 1), i12_x4(i1 + 2);
                             float32x4 i20_x4(i2), i21_x4(i2 + 1), i22_x4(i2 + 2);
                             float32x4 i30_x4(i3), i31_x4(i3 + 1), i32_x4(i3 + 2);
+#endif
 
                             out0_x4 = fmadd(i00_x4, k0_x4, out0_x4, 0);
                             out0_x4 = fmadd(i01_x4, k0_x4, out0_x4, 1);
@@ -279,10 +296,10 @@ namespace ts {
             //h_end = padding.bottom == 0 ? output_height : output_height - ((padding.bottom - 1) / stride.height + 1)
             //w_strst = padding.left == 0 ? 0 : (padding.left - 1) / stride.width + 1
             //w_end = padding.right == 0 ? output_width : output_width - ((padding.right - 1) / stride.width + 1)
-            int h_start = padding.top == 0 ? 0 : padding.top;
-            int h_end = padding.bottom == 0 ? output_height : output_height - padding.bottom;
-            int w_start = padding.left == 0 ? 0 : padding.left;
-            int w_end = padding.right == 0 ? output_width : output_width - padding.right;
+            int h_start = padding.top == 0 ? 0 : (padding.top - 1) / 2 + 1;
+            int h_end = padding.bottom == 0 ? output_height : output_height - ((padding.bottom - 1) / 2 + 1);
+            int w_start = padding.left == 0 ? 0 : (padding.left - 1) / 2 + 1;
+            int w_end = padding.right == 0 ? output_width : output_width - ((padding.right - 1) / 2 + 1);
 
             const float* pinput = x.data<float>();
             const float* pkernel = weight.data<float>();
