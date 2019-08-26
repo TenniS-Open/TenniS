@@ -30,6 +30,8 @@ cmake ..
 -DCMAKE_INSTALL_PREFIX=/usr/local
 ```
 
+When compilation target is `arm-v7`, **MUST** set `-DTS_ON_ARMV7=ON`.
+
 2. Do `make -j16` and waiting.
 
 3. Do `make install`.
