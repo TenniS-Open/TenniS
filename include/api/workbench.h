@@ -21,6 +21,15 @@ extern "C" {
 struct ts_Workbench;
 typedef struct ts_Workbench ts_Workbench;
 
+/**
+ * CPU information, only support since v0.3.2
+ */
+enum ts_CpuPowerMode {
+    TS_CPU_BALANCE = 0,     ///< balance using big and little cores
+    TS_CPU_BIG_CORE = 1,    ///< only used in big core
+    TS_CPU_LITTLE_CORE = 2, ///< only used in little core
+};
+
 // Workbench API
 
 /**
@@ -228,6 +237,16 @@ TENSOR_STACK_C_API ts_bool ts_Workbench_set_operator_param(ts_Workbench *workben
  *     {"device": "gpu:0", "thread": 4, "shared": "97.8MB", "memory": {"cpu:0": "32B", "gpu:0": "7.3MB"}}
  */
 TENSOR_STACK_C_API const char *ts_Workbench_summary(ts_Workbench *workbench);
+
+/**
+ * Set workbench thread mode, effected now working thread
+ * @param workbench instance of workbench
+ * @param mode @ts_CPU_mode
+ * @return false if failed
+ * @note may call in each workbench in working thread.
+ * @note this is testing API
+ */
+TENSOR_STACK_C_API ts_bool ts_Workbench_set_cpu_mode(ts_Workbench *workbench, ts_CpuPowerMode mode);
 
 
 #ifdef __cplusplus

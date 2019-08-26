@@ -206,6 +206,32 @@ namespace ts {
                         tensor::build(FLOAT32, Shape({3, 3}), &affine[0]),
                         dim, method);
             }
+
+            inline int64_t memcpy(
+                    Tensor &dst_desc, int64_t dst_shift,
+                    const Tensor &src_desc, int64_t src_shift,
+                    int64_t size) {
+                return ts_intime_memcpy(
+                        dst_desc.get_raw(), nullptr, dst_shift,
+                        src_desc.get_raw(), nullptr, src_shift,
+                        size);
+            }
+
+            inline int64_t memcpy(
+                    Tensor &dst_desc, void *dst_data, int64_t dst_shift,
+                    const Tensor &src_desc, const void *src_data, int64_t src_shift,
+                    int64_t size) {
+                return ts_intime_memcpy(
+                        dst_desc.get_raw(), dst_data, dst_shift,
+                        src_desc.get_raw(), src_data, src_shift,
+                        size);
+            }
+
+            inline Tensor matmul(const Tensor &A, const Tensor &B, bool transpose = false) {
+                auto y = ts_intime_matmul(A.get_raw(), B.get_raw(), ts_bool(transpose));
+                TS_API_AUTO_CHECK(y != nullptr);
+                return Tensor::NewRef(y);
+            }
         }
     }
 }
