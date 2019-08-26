@@ -93,6 +93,8 @@ namespace ts {
 
         const Graph &graph() const;
 
+        Module::shared module() const;
+
         Program::shared program() const;
 
     private:

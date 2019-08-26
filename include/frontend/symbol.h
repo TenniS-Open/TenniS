@@ -45,6 +45,8 @@ namespace ts {
                                              const Node &x, const Node &size, const Node &affine,
                                              int32_t dim = -1,
                                              desc::ResizeType type = desc::ResizeType::LINEAR);
+
+        TS_DEBUG_API Node matmul(const std::string &name, const Node &A, const Node &B, bool transpose = false);
     }
 }
 

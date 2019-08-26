@@ -6,6 +6,7 @@
 
 #include "declare_image_filter.h"
 #include "declare_tensor.h"
+#include "declare_module.h"
 
 using namespace ts;
 
@@ -188,4 +189,13 @@ ts_bool ts_ImageFilter_norm_image(ts_ImageFilter *filter, float epsilon) {
         if (!filter) throw Exception("NullPointerException: @param: 1");
         (*filter)->norm_image(epsilon);
     RETURN_OR_CATCH(ts_true, ts_false)
+}
+
+ts_Module *ts_ImageFilter_module(const ts_ImageFilter *filter) {
+    TRY_HEAD
+        if (!filter) throw Exception("NullPointerException: @param: 1");
+        std::unique_ptr<ts_Module> module(new ts_Module(
+                (*filter)->module()
+                ));
+    RETURN_OR_CATCH(module.release(), nullptr)
 }

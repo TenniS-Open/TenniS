@@ -132,6 +132,30 @@ class Module(object):
         _C.ts_api_check_pointer(module)
         return Module(module)
 
+    @staticmethod
+    def Fusion(in_module, in_out_slot, out_module, out_in_slot):
+        # type: (Module, int, Module, int) -> Workbench
+        if not isinstance(in_module, (Module, _C.POINTER(_C.ts_Module))):
+            raise Exception("argument {}: expected Module or POINTER(ts_Module) instance instead of {}".
+                            format(1, type(in_module).__name__))
+        if not isinstance(out_module, (Module, _C.POINTER(_C.ts_Module))):
+            raise Exception("argument {}: expected Module or POINTER(ts_Module) instance instead of {}".
+                            format(3, type(out_module).__name__))
+        try:
+            in_out_slot = int(in_out_slot)
+        except:
+            raise Exception("argument {}: expected int instead of {}".
+                            format(2, type(in_out_slot).__name__))
+        try:
+            out_in_slot = int(out_in_slot)
+        except:
+            raise Exception("argument {}: expected int instead of {}".
+                            format(4, type(out_in_slot).__name__))
+
+        module = _C.ts_Module_Fusion(in_module, in_out_slot, out_module, out_in_slot)
+        _C.ts_api_check_pointer(module)
+        return Module(module)
+
 
 class Device(object):
     def __init__(self, type="cpu", id=0):
@@ -746,6 +770,12 @@ class ImageFilter(object):
         # type: (float) -> None
         _C.ts_api_check_bool(_C.ts_ImageFilter_norm_image(self, epsilon))
 
+    def module(self):
+        # type: () -> Module
+        module = _C.ts_ImageFilter_module(self)
+        _C.ts_api_check_pointer(module)
+        return Module(module)
+
 
 ResizeMethod = ImageFilter.ResizeMethod
 
@@ -1304,6 +1334,42 @@ class intime(object):
         affine = Tensor(affine, dtype=FLOAT32)
         assert method is None or method in {ResizeMethod.BICUBIC, ResizeMethod.BILINEAR, ResizeMethod.NEAREST}
         y = _C.ts_intime_affine_on_sample2d(x, size, affine, dim, method)
+        _C.ts_api_check_pointer(y)
+        return Tensor(y)
+
+    @staticmethod
+    def memcpy(dst_desc, dst_shift, src_desc, src_shift, size,
+               dst_ptr=None, src_ptr=None):
+        # type: (Tenosr, object, int, Tensor, object, int, int) -> None
+        if not isinstance(dst_desc, Tensor):
+            raise RuntimeError("argument {}: expected Tensor instance instead of {}".
+                               format(1, type(dst_desc).__name__))
+        if not isinstance(src_desc, Tensor):
+            raise RuntimeError("argument {}: expected Tensor instance instead of {}".
+                               format(2, type(src_desc).__name__))
+
+        if dst_ptr is not None:
+            raise NotImplementedError("dst_ptr = {}".format(type(dst_ptr).__name__))
+        if src_ptr is not None:
+            raise NotImplementedError("src_ptr = {}".format(type(src_ptr).__name__))
+
+        dst_shift = _C.c_int64(dst_shift)
+        src_shift = _C.c_int64(src_shift)
+        size = _C.c_int64(size)
+
+        copied = _C.ts_intime_memcpy(
+            dst_desc, dst_ptr, dst_shift,
+            src_desc, src_ptr, src_shift,
+            size)
+
+        return copied
+
+    @staticmethod
+    def matmul(A, B, transpose=False, dtype=None):
+        A = Tensor(A, dtype=dtype)
+        B = Tensor(B, dtype=dtype)
+        transpose = 1 if transpose else 0
+        y = _C.ts_intime_matmul(A, B, transpose)
         _C.ts_api_check_pointer(y)
         return Tensor(y)
 

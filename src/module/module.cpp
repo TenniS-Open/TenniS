@@ -20,6 +20,7 @@
 #include "module/header.h"
 
 #include "compiler/translater.h"
+#include "backend/name.h"
 
 namespace ts {
 
@@ -358,5 +359,115 @@ namespace ts {
     Module::shared Module::Translate(Module::shared module, const ComputingDevice &device, const std::string &options) {
         Translator translator(device, options);
         return translator.translate(module);
+    }
+
+    static Node clone_node(const Node &node, std::unordered_map<Node, Node> &cloned_nodes) {
+        auto it = cloned_nodes.find(node);
+        if (it != cloned_nodes.end()) return it->second;
+        auto &g = ctx::of<Graph>::ref();
+        auto dolly = g.make(node.bubble());
+        cloned_nodes.insert(std::make_pair(node, dolly));
+        cloned_nodes.insert(std::make_pair(dolly, dolly));
+        return dolly;
+    }
+
+    static std::vector<Node> clone_graph(const std::vector<Node> &nodes, std::unordered_map<Node, Node> &cloned_nodes, std::unordered_map<Node, Node> &linked_nodes) {
+        std::vector<Node> dolly_nodes;
+        for (auto &node : nodes) {
+            {
+                auto it = linked_nodes.find(node);
+                if (it != linked_nodes.end()) {
+                    dolly_nodes.emplace_back(it->second);
+                    continue;
+                }
+            }
+
+            auto dolly_inputs = clone_graph(node.inputs(), cloned_nodes, linked_nodes);
+            auto dolly_node = clone_node(node, cloned_nodes);
+            Node::Link(dolly_node, dolly_inputs);
+            dolly_nodes.emplace_back(dolly_node);
+            linked_nodes.insert(std::make_pair(node, dolly_node));
+            linked_nodes.insert(std::make_pair(dolly_node, dolly_node));
+        }
+        return dolly_nodes;
+    }
+
+    // static std::vector<Node> clone_graph(const std::vector<Node> &nodes, std::unordered_map<Node, Node> &cloned_nodes) {
+    //     std::unordered_map<Node, Node> linked_nodes;
+    //     return clone_graph(nodes, cloned_nodes, linked_nodes);
+    // }
+
+
+    Module::shared
+    Module::Fusion(const std::vector<shared> &submodules, const std::vector<Route> &routes) {
+        std::unordered_set<Node> set_linked_ins;
+        std::unordered_set<Node> set_linked_outs;
+
+        std::unordered_map<Node, Node> cloned_nodes;
+        std::unordered_map<Node, Node> linked_nodes;
+
+        Graph g;
+        ctx::bind<Graph> _bind(g);
+
+        for (auto &route : routes) {
+            if (route.in < 0 || route.in >= int(submodules.size()) ||
+                route.out < 0 || route.out >= int(submodules.size()) ||
+                (route.in_out_slot < 0 && submodules[route.in]->outputs().size() > 1) ||
+                (route.out_in_slot < 0 && submodules[route.out]->inputs().size() > 1) ||
+                route.in_out_slot >= int(submodules[route.in]->outputs().size()) ||
+                route.out_in_slot >= int(submodules[route.out]->inputs().size())) {
+                TS_LOG_ERROR << "Got invalid route: [" << route.in << ", "
+                             << route.in_out_slot << ", "
+                             << route.out << ", "
+                             << route.out_in_slot << "]" << eject;
+            }
+            auto route_in = route.in;
+            auto route_in_out_slot = route.in_out_slot;
+            auto route_out = route.out;
+            auto route_out_in_slot = route.out_in_slot;
+            if (route_in_out_slot < 0) route_in_out_slot = 0;
+            if (route_out_in_slot < 0) route_out_in_slot = 0;
+
+            auto node_in = submodules[route_out]->input(route_out_in_slot);
+            auto node_out = submodules[route_in]->output(route_in_out_slot);
+
+            set_linked_ins.insert(node_in);
+            set_linked_outs.insert(node_out);
+
+            auto copy_out_in = bubble::op(node_in->name(), name::layer::copy(),
+                    clone_graph({node_out}, cloned_nodes, linked_nodes));
+
+            cloned_nodes.insert(std::make_pair(node_in, copy_out_in));
+            cloned_nodes.insert(std::make_pair(copy_out_in, copy_out_in));
+            linked_nodes.insert(std::make_pair(node_in, copy_out_in));
+            linked_nodes.insert(std::make_pair(copy_out_in, copy_out_in));
+        }
+
+        std::vector<Node> inputs;
+        std::vector<Node> outputs;
+
+        for (auto &submodule : submodules) {
+            for (auto &input : submodule->inputs()) {
+                if (set_linked_ins.find(input) != set_linked_ins.end()) continue;
+                inputs.emplace_back(input);
+            }
+            for (auto &output : submodule->outputs()) {
+                if (set_linked_outs.find(output) != set_linked_outs.end()) continue;
+                outputs.emplace_back(output);
+            }
+        }
+
+        auto cloned_outputs = clone_graph(outputs, cloned_nodes, linked_nodes);
+
+        std::vector<Node> cloned_inputs;
+        for (auto &input : inputs) {
+            cloned_inputs.emplace_back(cloned_nodes.at(input));
+        }
+
+        auto fusion_module = std::make_shared<Module>();
+        fusion_module->load(g, cloned_outputs);
+        fusion_module->sort_inputs(cloned_inputs);
+
+        return fusion_module;
     }
 }

@@ -44,7 +44,18 @@ namespace ts {
                 N = B.size(1);
             }
 
-            TS_AUTO_CHECK(A_K == B_K);
+            if(A_K != B_K) {
+                TS_LOG_ERROR << "Can not gemm("
+                    << "A=" << to_string(A.sizes()) << ", "
+                    << "B=" <<  to_string(B.sizes()) << ", "
+                    << "C=" <<  to_string(C.sizes()) << ", "
+                    << "alpha=" <<  alpha << ", "
+                    << "beta=" <<  beta << ", "
+                    << std::boolalpha
+                    << "transA=" <<  transA << ", "
+                    << "transB=" <<  transB << ")"
+                    << eject;
+            }
 
             auto C_shape = C.sizes();
             if (C_shape.size() < 2) {

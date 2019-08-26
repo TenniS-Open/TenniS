@@ -8,7 +8,6 @@
 
 #include "kernels/gpu/math_gpu.h"
 #include "kernels/gpu/gpu_helper.h"
-#include "frontend/intime.h"
 
 #include <cuda_runtime.h>
 #include <cuda_fp16.h>
