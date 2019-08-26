@@ -28,19 +28,19 @@ namespace ts {
             auto output_shape = out.sizes();
             const T *input_data = x.data<T>();
             T *output_data = out.data<T>();
-            int count = out.count();
+            auto count = size_t(out.count());
             std::memcpy(output_data, input_data, count * sizeof(T));
 
             T *at = nullptr;
 
             // fot batch
-            int batch = x.size(0);
+            auto batch = x.size(0);
             count /= batch;
             auto batch_outout_data = output_data;
 
             for (int n = 0; n < batch; ++n) {
-                T mean = 0;
-                T std_dev = 0;
+                double mean = 0;
+				double std_dev = 0;
 
                 at = batch_outout_data;
                 for (size_t i = 0; i < count; ++i, ++at) mean += *at;
@@ -50,12 +50,15 @@ namespace ts {
                 for (size_t i = 0; i < count; ++i, ++at) std_dev += (*at - mean) * (*at - mean);
                 std_dev = std::sqrt(std_dev / count);
                 // std_dev = std::max<T>(std_dev, 1 / std::sqrt(count));
-                double std_dev_rec = 1 / (std_dev + epsilon);
+				double std_dev_rec = 1 / (std_dev + epsilon);
+
+				auto t_mean = T(mean);
+				auto t_std_dev_rec = T(std_dev_rec);
 
                 at = batch_outout_data;
                 for (size_t i = 0; i < count; ++i, ++at) {
-                    *at -= mean;
-                    *at *= std_dev_rec;
+                    *at -= t_mean;
+                    *at *= t_std_dev_rec;
                 }
 
                 batch_outout_data += count;
