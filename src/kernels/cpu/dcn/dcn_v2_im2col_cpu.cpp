@@ -13,8 +13,8 @@
 
 static float dmcn_im2col_bilinear(const float *bottom_data, const int data_width,
                            const int height, const int width, float h, float w) {
-    int h_low = floor(h);
-    int w_low = floor(w);
+    int h_low = int(floor(h));
+    int w_low = int(floor(w));
     int h_high = h_low + 1;
     int w_high = w_low + 1;
 

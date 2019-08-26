@@ -16,23 +16,23 @@ namespace ts {
         static inline int8_t to_int8(const T src) {
             if (src > 127) return 127;
             if (src < -128) return -128;
-            return (int8_t)src;
+            return static_cast<int8_t>(src);
         }
 
         template<>
         inline int8_t to_int8<float>(const float src) {
-            int32_t int32_temp = round(src);
+            auto int32_temp = int32_t(round(src));
             if (int32_temp > 127) return 127;
             if (int32_temp < -128) return -128;
-            return (int8_t)int32_temp;
+            return static_cast<int8_t>(int32_temp);
         }
 
         template<>
         inline int8_t to_int8<double>(const double src) {
-            int32_t int32_temp = round(src);
+            auto int32_temp = int32_t(round(src));
             if (int32_temp > 127) return 127;
             if (int32_temp < -128) return -128;
-            return (int8_t)int32_temp;
+            return static_cast<int8_t>(int32_temp);
         }
 
         template<typename T>
@@ -40,7 +40,7 @@ namespace ts {
             const T *input_data = x.data<T>();
             int8_t *output_data = out.data<dtype<INT8>::declare>();
             int count = out.count();
-            int quantize_group = quantize_scales.size();
+            auto quantize_group = quantize_scales.size();
             float quantize_scale;
             if (quantize_group == 1) {
                 quantize_scale = quantize_scales[0];
@@ -52,9 +52,9 @@ namespace ts {
                 }
             }
             else {
-                int loop_count = std::ceil(static_cast<float>(count) / quantize_group);
+                auto loop_count = int(std::ceil(static_cast<float>(count) / quantize_group));
                 int index = 0;
-                for (int n = 0; n < quantize_group; n++){
+                for (size_t n = 0; n < quantize_group; n++){
                     quantize_scale = quantize_scales[n];
                     int loop_count_temp = loop_count;
                     while (index < count && loop_count_temp) {
@@ -71,7 +71,7 @@ namespace ts {
             const float *input_data = x.data<float>();
             int8_t *output_data = out.data<dtype<INT8>::declare>();
             int count = out.count();
-            int quantize_group = quantize_scales.size();
+            auto quantize_group = quantize_scales.size();
             float quantize_scale;
             if (quantize_group == 1) {
                 quantize_scale = quantize_scales[0];
@@ -110,9 +110,9 @@ namespace ts {
                 }
             }
             else {
-                int loop_count = std::ceil(static_cast<float>(count) / quantize_group);
+                auto loop_count = int(std::ceil(static_cast<float>(count) / quantize_group));
                 int index = 0;
-                for (int n = 0; n < quantize_group; n++) {
+                for (size_t n = 0; n < quantize_group; n++) {
                     quantize_scale = quantize_scales[n];
                     int loop_count_temp = loop_count;
                     while (index < count && loop_count_temp) {

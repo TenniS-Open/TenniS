@@ -18,7 +18,7 @@ namespace ts {
     namespace intime {
         Tensor run(Workbench &bench, const Bubble &bubble, const std::vector<Tensor> &inputs) {
             auto &stack = bench.stack();
-            stack.push_base(stack.size());
+            stack.push_base(int(stack.size()));
             need pop_base(&Stack::pop_base, &stack);
             need clear_stack(&Stack::clear, &stack);
 

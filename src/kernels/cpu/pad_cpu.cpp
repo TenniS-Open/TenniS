@@ -130,7 +130,7 @@ namespace ts {
 
             const T* src_data = x.data<T>();
             T* dst_data = out.data<T>();
-            T value = padding_value;
+            T value = T(padding_value);
             auto out_device = out.device();
             auto x_device = x.device();
 

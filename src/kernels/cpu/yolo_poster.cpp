@@ -28,7 +28,7 @@ namespace ts {
                 supper::init();
 
                 m_thresh = tensor::to_float(get("thresh"));
-                m_nms = tensor::to_int(get("nms"));
+                m_nms = tensor::to_float(get("nms"));
             }
 
             struct layer {
@@ -299,7 +299,7 @@ namespace ts {
                 BindingBox(float x, float y, float w, float h, float score, float label)
                         : x(x), y(y), w(w), h(h), score(score), label(label) {}
                 BindingBox(float x, float y, float w, float h, float score, int label)
-                        : x(x), y(y), w(w), h(h), score(score), label(label) {}
+                        : x(x), y(y), w(w), h(h), score(score), label(float(label)) {}
 
                 float x;
                 float y;
@@ -358,7 +358,7 @@ namespace ts {
                     }
 
                     // do nms
-                    do_nms_sort(dets, dets.size(), out_classes, m_nms);
+                    do_nms_sort(dets, int(dets.size()), out_classes, m_nms);
 
                     // convert showing mode
                     std::vector<BindingBox> boxes;
@@ -388,8 +388,8 @@ namespace ts {
             }
 
         private:
-            float m_thresh = 0.5;
-            float m_nms = 0.45;
+            float m_thresh = 0.5f;
+            float m_nms = 0.45f;
         };
     }
 }
