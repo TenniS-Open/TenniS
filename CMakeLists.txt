@@ -14,41 +14,72 @@ add_definitions(-DTS_DISABLE_PARALLEL)
 list(APPEND CMAKE_MODULE_PATH ${SOLUTION_DIR}/cmake)
 list(APPEND CMAKE_PREFIX_PATH ${SOLUTION_DIR}/cmake)
 
-# option for platform
+#------------------------------------------------------------------------------#
+# ============================= Options start ================================ #
+#------------------------------------------------------------------------------#
+# Install path
+set(CMAKE_INSTALL_PREFIX ${PROJECT_BINARY_DIR}/build
+    CACHE STRING "set install prefix" FORCE)
+
+# Option for platform
 set(PLATFORM "auto" CACHE STRING "auto, x86 or x64")
+# Build type, configuration
 set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Debug or Release")
-set(CONFIGURATION ${CMAKE_BUILD_TYPE})
 
-option(TS_BUILD_TEST "[Optional] Build test" ON)
-option(TS_BUILD_TOOLS "[Optional] Build tools" ON)
-
-option(TS_USE_OPENMP "[Optional] Use OpenMP" ON)
+# If build test cases
+option(TS_BUILD_TEST "[Optional] Build test" OFF)
+# If build tool cases
+option(TS_BUILD_TOOLS "[Optional] Build tools" OFF)
+# If build with OpenCV, must set on if TS_BUILD_TEST=ON
 option(TS_USE_OPENCV "[Optional] Use OpenCV" OFF)
+# If build with debug API, must set on if TS_BUILD_TEST=ON
+option(TS_USE_DEBUG_API "[Optional] Use Debug API" OFF)
 
+# if use 
 option(TS_USE_CUDA "[Optional] Use CUDA" OFF)
-option(TS_USE_CBLAS "[Optional] Use CBLAS" OFF)
 option(TS_USE_CUBLAS "[Optional] Use CUBLAS" OFF)
 set(TS_CUDA_ARCH "" CACHE STRING "List arch, like: 60,61,62. Empty for all arch.")
 
-option(TS_USE_PROFILER "[Optional] Use Profiler" ON)
-if (TS_USE_PROFILER)
-    add_definitions(-DTS_USE_PROFILER)
-endif()
-option(TS_USE_HOOK "[Optional] Use Hook" ON)
-if (TS_USE_HOOK)
-    add_definitions(-DTS_USE_HOOK)
-endif()
-
-option(TS_USE_DEBUG_API "[Optional] Use Debug API" OFF)
-if (TS_USE_DEBUG_API)
-    add_definitions(-DTS_USE_DEBUG_API)
-endif()
-
+# Options of optimizations
+option(TS_USE_CBLAS "[Optional] Use CBLAS" OFF) # [discarded]
+option(TS_USE_OPENMP "[Optional] Use OpenMP" ON)
 option(TS_USE_SIMD "[Optional] Use SIMD" ON)
 option(TS_USE_AVX "[Optional] Use AVX" OFF)
 option(TS_USE_SSE "[Optional] Use SSE" OFF)
 option(TS_USE_NEON "[Optional] Use NEON" OFF)
 option(TS_USE_FAST_MATH "[Optional] Use fast math (-ffast-math)" OFF)
+option(TS_USE_WINOGRAD "[Optional] Use Winograd" OFF)
+# Special for armv7
+option(TS_ON_ARMV7 "[Optional] Target is arm-v7a" OFF)
+
+# Not change for now version
+option(TS_USE_PROFILER "[Optional] Use Profiler" ON)
+option(TS_USE_HOOK "[Optional] Use Hook" ON)
+
+# Hidden options (do not uncomment, it already defined later)
+# None
+
+#------------------------------------------------------------------------------#
+# ============================= Options end ================================== #
+#------------------------------------------------------------------------------#
+
+if ("${CMAKE_BUILD_TYPE}" STREQUAL "")
+    set(CONFIGURATION "Release")
+else ()
+    set(CONFIGURATION ${CMAKE_BUILD_TYPE})
+endif ()
+
+if (TS_USE_PROFILER)
+    add_definitions(-DTS_USE_PROFILER)
+endif()
+if (TS_USE_HOOK)
+    add_definitions(-DTS_USE_HOOK)
+endif()
+
+if (TS_USE_DEBUG_API)
+    add_definitions(-DTS_USE_DEBUG_API)
+endif()
+
 if (TS_USE_SIMD)
 	message(STATUS "[Optional] Use SIMD: [ON]")
 	add_definitions(-DTS_USE_SIMD)
@@ -71,7 +102,6 @@ if (TS_USE_SIMD)
 endif()
 
 # set winograd support
-option(TS_USE_WINOGRAD "[Optional] Use Winograd" OFF)
 if (TS_USE_WINOGRAD)
     add_definitions(-DTS_USE_WINOGRAD)
     message(STATUS "[Optional] Use Winograd: [ON]")
@@ -79,12 +109,16 @@ else (TS_USE_WINOGRAD)
     message(STATUS "[Optional] Use Winograd: [OFF]")
 endif()
 
+# if target is target
+if (TS_ON_ARMV7)
+    add_definitions(-DTS_ON_ARMV7)
+endif()
+
 # set common compiler flags
 include(LOCAL_FLAGS)
 include(LOCAL_ENV)
 include(tools)
 
-set(CMAKE_INSTALL_PREFIX ${PROJECT_BINARY_DIR}/build CACHE STRING "set install prefix" FORCE)
 install(CODE "MESSAGE(\"Installing into ${CMAKE_INSTALL_PREFIX}\")")
 
 set(LOCAL_OUTPUT_DIR ${PROJECT_SOURCE_DIR})
