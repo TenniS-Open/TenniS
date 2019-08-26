@@ -347,6 +347,13 @@ install(DIRECTORY ${SOLUTION_DIR}/include/api
         DESTINATION ${ENV_HEADER_DIR}
         )
 
+install(FILES ${SOLUTION_DIR}/cmake/FindTensorStack.cmake
+        DESTINATION cmake)
+
+install(FILES ${SOLUTION_DIR}/cmake/FindTensorStack.cmake
+        DESTINATION cmake
+        RENAME TensorStackConfig.cmake)
+
 # project files for clion
 FILE(GLOB_RECURSE TEST_FILES ${PROJECT_SOURCE_DIR}/test/*.cpp)
 FILE(GLOB_RECURSE TOOL_FILES ${PROJECT_SOURCE_DIR}/tools/*.cpp)
