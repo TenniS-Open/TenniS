@@ -35,7 +35,7 @@ namespace ts {
         auto false_it = m_false_arg_names.find(arg);
         if (false_it != m_false_arg_names.end()) {
             // m_arg_value.erase(false_it->second);
-            m_arg_value[true_it->second] = false;
+            m_arg_value[false_it->second] = false;
             return true;
         }
         return false;
