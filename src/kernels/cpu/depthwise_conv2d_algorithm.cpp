@@ -133,7 +133,11 @@ namespace ts {
 
             for (int n = 0; n < input_shape[0]; n++){
 #ifdef TS_USE_OPENMP
+//Note:Using both openmp and neon on armv7 could cause crashes.
+#ifdef TS_ON_ARMV7
+#else
 #pragma omp parallel for num_threads(openmp_threads())
+#endif
 #endif
                 for (int c = 0; c < output_shape[1]; c++){
                     const float* input_at = pinput + n * input_num_offset + c * input_channel_offset;
@@ -307,7 +311,10 @@ namespace ts {
 
             for (int n = 0; n < input_shape[0]; n++) {
 #ifdef TS_USE_OPENMP
+#ifdef TS_ON_ARMV7
+#else
 #pragma omp parallel for num_threads(openmp_threads()) 
+#endif
 #endif
                 for (int c = 0; c < output_shape[1]; c++) {
                     const float* input_at = pinput + n * input_num_offset + c * input_channel_offset;
@@ -427,7 +434,10 @@ namespace ts {
 
             for (int n = 0; n < input_shape[0]; n++) {
 #ifdef TS_USE_OPENMP
+#ifdef TS_ON_ARMV7
+#else
 #pragma omp parallel for num_threads(openmp_threads()) 
+#endif
 #endif
                 for (int c = 0; c < output_shape[1]; c++) {
                     const float* input_at = pinput + n * input_num_offset + c * input_channel_offset;
