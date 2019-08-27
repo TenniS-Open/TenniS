@@ -31,6 +31,7 @@ namespace ts{
         case ts::FMA: return "FMA";
         default:break;
         }
+        return "Unknown";
     }
 
     bool TS_DEBUG_API check_cpu_feature(CPUFeature feature);

@@ -36,8 +36,6 @@ if (TS_USE_FAST_MATH)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffast-math")
 endif()
 
-message(STATUS "Platform: ${PLATFORM}")
-
 if ("${PLATFORM}" STREQUAL "x86")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m32")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32")
@@ -45,8 +43,6 @@ elseif (${PLATFORM} STREQUAL "x64")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m64")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64")
 endif()
-
-message(STATUS "Configuration: ${CONFIGURATION}")
 
 if ("${CONFIGURATION}" STREQUAL "Debug")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -g -ggdb")
