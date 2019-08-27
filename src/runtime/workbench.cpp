@@ -26,6 +26,7 @@
 #include "runtime/operator.h"
 
 #include "utils/ctxmgr_lite_support.h"
+#include "utils/cpu_info.h"
 
 namespace ts {
     class BindWorkbenchRuntime {
@@ -102,6 +103,24 @@ namespace ts {
     }
 
     void Workbench::run() {
+        //TestCPUFeature
+        std::vector<CPUFeature> features;
+#if defined(TS_USE_FMA)
+        features.emplace_back(FMA);
+#endif
+#if defined(TS_USE_AVX)
+        features.emplace_back(AVX);
+#elif defined(TS_USE_SSE)
+        features.emplace_back(SSE);
+        features.emplace_back(SSE2);
+#endif
+        for (auto &fea : features) {
+            auto flag = check_cpu_feature(fea);
+            if (!flag) {
+                TS_LOG_ERROR << "The processor does not support the current instruction set: " << cpu_feauture_str(fea) << eject;
+            }
+        }
+
         if (m_desktop == nullptr) {
             TS_LOG_ERROR << "Can not run workbench with no program setup" << eject;
         }
