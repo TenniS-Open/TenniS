@@ -43,7 +43,7 @@ namespace ts {
                              << output_dims << ")" << eject;
             }
 
-            shape.insert(shape.begin() + fixed_axis, stack.size());
+            shape.insert(shape.begin() + fixed_axis, int(stack.size()));
 
             output.resize(1);
             output[0] = Tensor::Prototype(x.dtype(), shape);

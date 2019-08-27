@@ -116,8 +116,8 @@ namespace ts {
 
             auto &shape = x.sizes();
 
-            m_sample_size.data<int32_t>(0) = shape[fixed_dim] * m_scale;
-            m_sample_size.data<int32_t>(1) = shape[fixed_dim + 1] * m_scale;
+            m_sample_size.data<int32_t>(0) = int32_t(shape[fixed_dim] * m_scale);
+            m_sample_size.data<int32_t>(1) = int32_t(shape[fixed_dim + 1] * m_scale);
 
             stack.push(m_sample_size);
             stack.push(m_sample_affine);

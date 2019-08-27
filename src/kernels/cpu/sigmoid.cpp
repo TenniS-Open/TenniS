@@ -18,7 +18,7 @@ namespace ts {
 
             for (int i = 0; i < count; i++) {
                 T val = *output_data;
-                *output_data = 1. / (1. + exp(-(val)));
+                *output_data = T(1. / (1. + exp(-(val))));
                 output_data++;
             }
         }

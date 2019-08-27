@@ -84,7 +84,7 @@ namespace ts {
             template<typename T>
             static void activate_array(T *x, const int n) {
                 for (int i = 0; i < n; ++i, ++x) {
-                    *x = 1. / (1. + std::exp(-*x));
+                    *x = T(1. / (1. + std::exp(-*x)));
                 }
             }
 

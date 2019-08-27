@@ -209,3 +209,10 @@ const char *ts_Workbench_summary(ts_Workbench *workbench) {
         auto summary = (*workbench)->summary().c_str();
     RETURN_OR_CATCH(summary, nullptr)
 }
+
+ts_bool ts_Workbench_set_cpu_mode(ts_Workbench *workbench, ts_CpuPowerMode mode) {
+    TRY_HEAD
+        if (!workbench) throw Exception("NullPointerException: @param: 1");
+        auto set = (*workbench)->set_cpu_power_mode(CpuEnable::CpuPowerMode(mode));
+    RETURN_OR_CATCH(ts_bool(set), ts_false)
+}

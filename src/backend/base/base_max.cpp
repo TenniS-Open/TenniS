@@ -26,10 +26,10 @@ namespace ts {
         static Tensor::Prototype infer_max(const Tensor &x, int dim, int keep_dims) {
             Shape x_shape = x.sizes();
             if(dim < 0) {
-               dim += x_shape.size();
+               dim += int(x_shape.size());
             }
 
-            TS_AUTO_CHECK((dim >= 0) && (dim < x_shape.size()));
+            TS_AUTO_CHECK((dim >= 0) && (dim < int(x_shape.size())));
 
             if(keep_dims == 1) {
                 x_shape[dim] = 1;
