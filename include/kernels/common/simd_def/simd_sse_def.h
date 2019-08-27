@@ -118,13 +118,19 @@ inline void _simd_f32x4_transpose4x4(_simd_f32x4& q0, _simd_f32x4& q1, _simd_f32
 }
 
 inline _simd_f32x4 _simd_f32x4_fmadd(const _simd_f32x4& q0, const _simd_f32x4& q1, const _simd_f32x4& q2) {
+#ifdef TS_USE_FMA
     return _mm_fmadd_ps(q0, q1, q2);
+#else
+    return _mm_add_ps(q2, _mm_mul_ps(q0, q1));
+#endif
 }
 
 inline _simd_f32x4 _simd_f32x4_fmadd(const _simd_f32x4& q0, const _simd_f32x4& q1, const _simd_f32x4& q2, const int index) {
-    if (index >= 0 && index <= 3) {
-        return _mm_fmadd_ps(q0, _mm_set1_ps(*((float*)&q1 + index)), q2);
-    }
+#ifdef TS_USE_FMA
+    return _mm_fmadd_ps(q0, _mm_set1_ps(*((float*)&q1 + index)), q2);
+#else
+    return _mm_add_ps(q2, _mm_mul_ps(q0, _mm_set1_ps(*((float*)&q1 + index))));
+#endif
 }
 
 inline _simd_f32x4 _simd_broadcast2float32x4(const _simd_f32* src) {
@@ -203,8 +209,13 @@ inline _simd_f32x4x2 _simd_f32x4x2_div(_simd_f32x4x2 lhs, _simd_f32x4x2 rhs) {
 
 inline _simd_f32x4x2 _simd_f32x4x2_fmadd(_simd_f32x4x2 q0, _simd_f32x4x2 q1, _simd_f32x4x2 q2) {
     _simd_f32x4x2 res;
+#ifdef TS_USE_FMA
     res.val[0] = _mm_fmadd_ps(q0.val[0], q1.val[0], q2.val[0]);
     res.val[1] = _mm_fmadd_ps(q0.val[1], q1.val[1], q2.val[1]);
+#else
+    res.val[0] = _mm_add_ps(q2.val[0], _mm_mul_ps(q0.val[0], q1.val[0]));
+    res.val[1] = _mm_add_ps(q2.val[1], _mm_mul_ps(q0.val[1], q1.val[1]));
+#endif
     return res;
 }
 
