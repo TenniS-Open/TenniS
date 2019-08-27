@@ -123,4 +123,9 @@
 #   define TS_PLATFORM_CC_GCC   0
 #endif
 
+#if defined(__x86_64__) || defined(__amd64__) || defined(_M_IX86) || \
+    defined(_M_X64)
+#define TS_PLATFORM_IS_X86
+#endif
+
 #endif //TENSORSTACK_UTILS_PLATFORM_H
