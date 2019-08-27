@@ -10,6 +10,7 @@
 #include "except.h"
 #include "device.h"
 #include "tensor.h"
+#include "module.h"
 
 #include <string>
 #include <vector>
@@ -186,6 +187,12 @@ namespace ts {
 
             void norm_image(float epsilon) {
                 TS_API_AUTO_CHECK(ts_ImageFilter_norm_image(m_impl.get(), epsilon));
+            }
+
+            Module module() const {
+                auto obj = Module::NewRef(ts_ImageFilter_module(m_impl.get()));
+                TS_API_AUTO_CHECK(obj != nullptr);
+                return std::move(obj);
             }
 
         private:

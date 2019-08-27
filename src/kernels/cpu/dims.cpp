@@ -12,7 +12,7 @@ namespace ts {
             int run(Stack &stack) final {
                 TS_AUTO_CHECK(stack.size() == 1);
                 auto &dims = *stack.push(INT32, {}, MemoryDevice(CPU));
-                dims.data<int32_t>(1) = stack[0].dims();
+                dims.data<int32_t>(1) = int(stack[0].dims());
                 return 1;
             }
 

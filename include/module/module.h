@@ -27,6 +27,14 @@ namespace ts {
 
         const std::vector<Node> &outputs() const { return m_outputs; }
 
+        const Node &input(int i) const { return m_inputs[i]; }
+
+        const Node &output(int i) const { return m_outputs[i]; }
+
+        const Node &input(size_t i) const { return m_inputs[i]; }
+
+        const Node &output(size_t i) const { return m_outputs[i]; }
+
         void clear();
 
         void sort_inputs(const std::vector<Node> &inputs);
@@ -61,6 +69,22 @@ namespace ts {
         static shared Load(Graph g, const std::vector<std::string> &outputs);
 
         static shared Translate(shared module, const ComputingDevice &device, const std::string &options);
+
+        class Route {
+        public:
+            Route(int32_t in, int32_t in_out_slot, int32_t out, int32_t out_in_slot)
+                    : in(in), in_out_slot(in_out_slot), out(out), out_in_slot() {
+            }
+
+            Route() = default;
+
+            int32_t in = -1;            ///< input module index
+            int32_t in_out_slot = -1;   ///< input module's output slot
+            int32_t out = -1;           ///< output module index
+            int32_t out_in_slot = -1;   ///< output module's input slot
+        };
+
+        static shared Fusion(const std::vector<shared> &submodules, const std::vector<Route> &routes);
 
     private:
         /**

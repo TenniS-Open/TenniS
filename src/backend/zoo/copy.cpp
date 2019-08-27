@@ -20,18 +20,18 @@ namespace ts {
 
         int Copy::infer(Stack &stack, std::vector<Tensor::Prototype> &output) {
             // TS_AUTO_CHECK(stack.size() == 1);
-            TS_AUTO_CHECK(stack.size() == m_output_count);
+            TS_AUTO_CHECK(int(stack.size()) == m_output_count);
             output.resize(stack.size());
-            for (int i = 0; i < stack.size(); ++i) {
+            for (size_t i = 0; i < stack.size(); ++i) {
                 output[i] = stack[i].proto();
             }
-            return stack.size();
+            return int(stack.size());
         }
 
         int Copy::run(Stack &stack) {
             // TS_AUTO_CHECK(stack.size() == 1);
-            TS_AUTO_CHECK(stack.size() == m_output_count);
-            return stack.size();
+            TS_AUTO_CHECK(int(stack.size()) == m_output_count);
+            return int(stack.size());
         }
     }
 }

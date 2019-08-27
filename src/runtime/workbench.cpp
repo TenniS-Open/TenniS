@@ -260,7 +260,7 @@ namespace ts {
 
     void Workbench::offline_run(Operator::shared op, const std::vector<Tensor> &input, std::vector<Tensor> &output) {
         // Stack stack(m_device_context.memory_device, m_dynamic_memory);
-        m_stack->push_base(m_stack->size()); // empty base
+        m_stack->push_base(int(m_stack->size())); // empty base
         need pop_base(&Stack::pop_base, m_stack.get());
         need clear_stack(&Stack::clear, m_stack.get());
         auto &stack = *m_stack;
@@ -285,7 +285,7 @@ namespace ts {
     void Workbench::offline_infer(Operator::shared op, const std::vector<Tensor> &input,
                                   std::vector<Tensor::Prototype> &output) {
         // Stack stack(m_device_context.memory_device, m_dynamic_memory);
-        m_stack->push_base(m_stack->size()); // empty base
+        m_stack->push_base(int(m_stack->size())); // empty base
         need pop_base(&Stack::pop_base, m_stack.get());
         need clear_stack(&Stack::clear, m_stack.get());
         auto &stack = *m_stack;
@@ -333,7 +333,7 @@ namespace ts {
         for (auto &tensor : input) {
             m_stack->push(tensor);
         }
-        return online_run(op, stack().size());
+        return online_run(op, int(stack().size()));
     }
 
     int Workbench::online_run(Operator::shared op, int argc) {
@@ -463,7 +463,7 @@ namespace ts {
                          << this->m_stack->size() << " given." << eject;
         }
 
-        return this->m_stack->size();
+        return int(this->m_stack->size());
     }
 
     void Workbench::setup(Program::shared program) {
@@ -482,7 +482,7 @@ namespace ts {
         /**
          * save stack
          */
-        this->m_stack->push_base(this->m_stack->size());
+        this->m_stack->push_base(int(this->m_stack->size()));
         ts::need pop_base(&Stack::pop_base, this->m_stack.get());
         ts::need clear_stack(&Stack::clear, this->m_stack.get());
 

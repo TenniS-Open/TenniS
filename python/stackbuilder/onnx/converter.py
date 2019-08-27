@@ -1269,3 +1269,51 @@ def convert_dropout_layer(node, input_nodes, output_names):
 
 
 register_layer_converter("Dropout", convert_dropout_layer)
+
+
+def convert_tanh_layer(node, input_nodes, output_names):
+    # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} -> {} ]=-".format(node.op_type, [n.name for n in input_nodes], output_names))
+
+    attribute = node.attribute
+    attr_dict = {}
+    for attr in attribute:
+        attr_dict[str(attr.name)] = topy(attr)
+
+    assert len(input_nodes) == 1
+    assert len(output_names) == 1
+
+    node_name = output_names[0]
+
+    x = input_nodes[0]
+
+    ts_node = ts.zoo.tanh(node_name, x=x)
+
+    return ts_node,
+
+
+register_layer_converter("Tanh", convert_tanh_layer)
+
+
+def convert_abs_layer(node, input_nodes, output_names):
+    # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} -> {} ]=-".format(node.op_type, [n.name for n in input_nodes], output_names))
+
+    attribute = node.attribute
+    attr_dict = {}
+    for attr in attribute:
+        attr_dict[str(attr.name)] = topy(attr)
+
+    assert len(input_nodes) == 1
+    assert len(output_names) == 1
+
+    node_name = output_names[0]
+
+    x = input_nodes[0]
+
+    ts_node = ts.zoo.abs(node_name, x=x)
+
+    return ts_node,
+
+
+register_layer_converter("Abs", convert_abs_layer)

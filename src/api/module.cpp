@@ -57,3 +57,13 @@ ts_Module *ts_Module_translate(const ts_Module *module, const ts_Device *device,
                 ));
     RETURN_OR_CATCH(translated_module.release(), nullptr)
 }
+
+ts_Module *ts_Module_Fusion(const ts_Module *in, int32_t in_out_slot, const ts_Module *out, int32_t out_in_slot) {
+    TRY_HEAD
+        if (!in) throw Exception("NullPointerException: @param: 1");
+        if (!out) throw Exception("NullPointerException: @param: 2");
+        std::unique_ptr<ts_Module> module(new ts_Module(
+                Module::Fusion({(*in).pointer, (*out).pointer}, {{0, in_out_slot, 1, out_in_slot}})
+        ));
+    RETURN_OR_CATCH(module.release(), nullptr)
+}

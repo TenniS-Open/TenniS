@@ -18,7 +18,7 @@ namespace ts {
     namespace intime {
         Tensor run(Workbench &bench, const Bubble &bubble, const std::vector<Tensor> &inputs) {
             auto &stack = bench.stack();
-            stack.push_base(stack.size());
+            stack.push_base(int(stack.size()));
             need pop_base(&Stack::pop_base, &stack);
             need clear_stack(&Stack::clear, &stack);
 
@@ -165,6 +165,21 @@ namespace ts {
                                       tensor::build(INT32, Shape({2,}), &size[0]),
                                       tensor::build(FLOAT32, Shape({3, 3}), &affine[0]),
                                       dim, type);
+        }
+
+        int64_t memcpy(
+                Tensor &dst_desc, void *dst_data, int64_t dst_shift,
+                const Tensor &src_desc, const void *src_data, int64_t src_shift,
+                int64_t size) {
+            if (dst_data == nullptr) dst_data = dst_desc.data();
+            if (src_data == nullptr) src_data = src_desc.data();
+            auto copied = memcpy(reinterpret_cast<char *>(dst_data) + dst_shift, dst_desc.device(), size_t(size),
+                                 reinterpret_cast<const char *>(src_data) + src_shift, src_desc.device(), size_t(size));
+            return int64_t(copied);
+        }
+
+        Tensor matmul(const Tensor &A, const Tensor &B, bool transpose) {
+            return run(desc::matmul(transpose), {A, B});
         }
     }
 }

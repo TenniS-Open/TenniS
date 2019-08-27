@@ -67,7 +67,7 @@ namespace ts {
 
             for (int j = 0; j < dst_height; ++j) {
                 double fy = (double) ((j + 0.5) * scale_y - 0.5);
-                int sy = floor(fy);
+                int sy = int(floor(fy));
                 fy -= sy;
                 //sy = std::min(sy, src_height - 3);
                 //sy = std::max(1, sy);
@@ -90,7 +90,7 @@ namespace ts {
 
                 for (int i = 0; i < dst_width; ++i) {
                     double fx = (double) ((i + 0.5) * scale_x - 0.5);
-                    int sx = floor(fx);
+                    int sx = int(floor(fx));
                     fx -= sx;
 
                     if (sx < 1) {

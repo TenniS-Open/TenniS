@@ -102,15 +102,21 @@ namespace ts {
             void CBlas_SgemmBatched(blas::Transpose transa, blas::Transpose transb, int64_t m, int64_t n, int64_t k,
                                     float alpha, const float *a[], int64_t lda, const float *b[], int64_t ldb,
                                     float beta, float *c[], int64_t ldc, int64_t batchCount) {
-                for (int i = 0; i < batchCount; ++i) {
+				for (int i = 0; i < batchCount; ++i) {
 #ifdef TS_USE_CBLAS
-                    cblas::math<float>::gemm(blas::ColMajor, transa, transb, m, n, k, alpha, a[i], lda, b[i], ldb, beta,
-                                             c[i], ldc);
+					cblas::math<float>::gemm(blas::ColMajor, transa, transb,
+						int(m), int(n), int(k),
+						alpha, a[i], int(lda),
+						b[i], int(ldb),
+						beta, c[i], int(ldc));
 #else
-                    ts::cpu::math<float, float>::gemm(blas::ColMajor, transa, transb, m, n, k, alpha, a[i], lda, b[i], ldb, beta,
-                                               c[i], ldc);
+					ts::cpu::math<float, float>::gemm(blas::ColMajor, transa, transb,
+						int(m), int(n), int(k),
+						alpha, a[i], int(lda),
+						b[i], int(ldb),
+						beta, c[i], int(ldc));
 #endif
-                }
+				}
             }
 
             static void CBlas_SgemmBatched(char transa, char transb, int64_t m, int64_t n, int64_t k,

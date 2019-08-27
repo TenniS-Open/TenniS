@@ -28,9 +28,9 @@ public:
 class APIPluginStack {
 public:
     APIPluginStack(ts::Stack &stack) {
-        int argc = stack.size();
+        auto argc = stack.size();
         try {
-            for (int i = 0; i < argc; ++i) {
+            for (size_t i = 0; i < argc; ++i) {
                 auto &tensor = stack[i];
                 args.emplace_back(new ts_Tensor(tensor));
             }

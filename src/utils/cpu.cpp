@@ -192,14 +192,14 @@ namespace ts{
     int CpuEnable::get_cpu_big_num()
     {
         if (g_set_cpu_set_power_mode_flag)
-            return cpu_big_ids.size();
+            return int(cpu_big_ids.size());
         return -1;
     }
 
     int CpuEnable::get_cpu_little_num()
     {
         if (g_set_cpu_set_power_mode_flag)
-            return cpu_little_ids.size();
+            return int(cpu_little_ids.size());
         return -1;
     }
 

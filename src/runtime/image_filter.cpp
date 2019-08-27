@@ -38,11 +38,12 @@ namespace ts {
         m_impl->m_program.reset();
         m_impl->m_graph = std::make_shared<Graph>();
         ctx::bind<Graph> _bind_graph(m_impl->m_graph.get());
-        bubble::param(serial_name(), {-1, -1, -1});    // add input param to graph
+        bubble::param(serial_name(), UINT8, {-1, -1, -1});    // add input param to graph
         m_impl->m_compiled = false;
     }
 
     void ImageFilter::compile() {
+        if (m_impl->m_compiled) return;
         if (m_impl->m_graph->nodes().size() > 1) {
             Module::shared module = std::make_shared<Module>();
             module->load(*m_impl->m_graph);
@@ -224,6 +225,12 @@ namespace ts {
         auto x = m_impl->m_graph->nodes().back();
         auto node = bubble::op(serial_name(), name::layer::prewhiten(), {x});
         m_impl->m_compiled = false;
+    }
+
+    Module::shared ImageFilter::module() const {
+        Module::shared module = std::make_shared<Module>();
+        module->load(*m_impl->m_graph);
+        return module;
     }
 
     Program::shared ImageFilter::program() const {

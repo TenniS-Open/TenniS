@@ -13,8 +13,6 @@
 
 #include "kernels/gpu/gpu_helper.h"
 
-#include "frontend/intime.h"
-
 namespace ts {
     namespace gpu {
 

@@ -107,6 +107,13 @@ namespace ts {
                                                const std::array<int32_t, 2> &size, const std::array<float, 9> &affine,
                                                int32_t dim = -1,
                                                desc::ResizeType type = desc::ResizeType::LINEAR);
+
+        TS_DEBUG_API int64_t memcpy(
+                Tensor &dst_desc, void *dst_data, int64_t dst_shift,
+                const Tensor &src_desc, const void *src_data, int64_t src_shift,
+                int64_t size);
+
+        TS_DEBUG_API Tensor matmul(const Tensor &A, const Tensor &B, bool transpose = false);
     }
 }
 
