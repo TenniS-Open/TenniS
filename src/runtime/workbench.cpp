@@ -117,7 +117,7 @@ namespace ts {
         for (auto &fea : features) {
             auto flag = check_cpu_feature(fea);
             if (!flag) {
-                TS_LOG_ERROR << "The processor does not support the current instruction set: " << cpu_feauture_str(fea) << eject;
+                TS_LOG_ERROR << "The processor does not support the current instruction set: " << cpu_feature_str(fea) << eject;
             }
         }
 
