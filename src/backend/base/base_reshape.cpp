@@ -34,7 +34,7 @@ namespace ts {
             m_count_without_dim = 1;
 
             for (size_t i = 0; i < count; ++i) {
-                if (m_shape[i] == 0) TS_LOG_ERROR << "Can not reshape tensor to " << to_string(m_shape) << eject;
+                // if (m_shape[i] == 0) TS_LOG_ERROR << "Can not reshape tensor to " << to_string(m_shape) << eject;
                 if (m_shape[i] > 0) {
                     m_count_without_dim *= m_shape[i];
                     continue;
@@ -48,6 +48,15 @@ namespace ts {
             auto x_count = x.count();
 
             auto shape = m_shape;
+            for (size_t i = 0; i < shape.size(); ++i) {
+                if (shape[i] == 0) {
+                    if (i >= x.dims()) {
+                        TS_LOG_ERROR << "Can not reshape " << to_string(x.sizes()) << " to " << to_string(m_shape) << eject;
+                    }
+                    shape[i] = x.size(i);
+                }
+            }
+
             if (m_broadcast_dim >= 0) {
                 shape[m_broadcast_dim] = x_count / m_count_without_dim;
                 if (shape[m_broadcast_dim] * m_count_without_dim != x_count) {
