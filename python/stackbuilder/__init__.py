@@ -45,4 +45,4 @@ except Exception as e:
     import sys
     sys.stderr.write("import darknet failed with: {}\n".format(e))
 
-__version__ = "0.0.9"
+__version__ = "0.1.0"

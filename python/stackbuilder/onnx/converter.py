@@ -89,11 +89,12 @@ def register_layer_converter(layer, converter):
     layer2converter[layer] = converter
 
 
-def convert(input_file, output_file):
+def convert(input_file, output_file, check_graph=False):
     """
     convert onnx
     :param input_file: onnx.ModelProto or param can parse into onnx.load(param)
     :param output_file: str of path to file
+    :param check_graph: if call onnx.checker.check_graph
     :return: ts.Module
     """
     onnx_model = None
@@ -105,7 +106,8 @@ def convert(input_file, output_file):
     if onnx_model is None:
         raise Exception("Can not load {}:{} to onnx model".format(type(input_file), input_file))
 
-    onnx.checker.check_graph(onnx_model.graph)
+    if check_graph:
+        onnx.checker.check_graph(onnx_model.graph)
     onnx_model = optimizer.optimize(onnx_model, get_tensor_stack_passes())
 
     onnx_graph = onnx_model.graph
@@ -161,15 +163,18 @@ def convert(input_file, output_file):
 
     # set all initialized node
     name2node = {}  # str -> ts.Node
+    # get ts_inputs
+    ts_inputs = []
     # no loop in graph
     for name in input.keys():
         value = input[name]
         elem_type = value[0]
         shape = value[1]
         ts_dtype = dtype.from_onnx(elem_type)
-        ts_node = ts.menu.param("_input_" + name, shape=shape)
-        ts_node = ts.zoo.cast(name, x=ts_node, dtype=ts_dtype)
+        ts_input_node = ts.menu.param("_input_" + name, shape=shape)
+        ts_node = ts.zoo.cast(name, x=ts_input_node, dtype=ts_dtype)
         name2node[name] = ts_node
+        ts_inputs.append(ts_input_node)
 
     for name in initialized.keys():
         value = initialized[name]
@@ -210,7 +215,7 @@ def convert(input_file, output_file):
 
         # convert layer
         if op_type not in layer_converters:
-            raise Exception("Not supported Layer {}".format(op_type))
+            raise Exception("Not supported ONNX Layer {}".format(op_type))
         ts_converter = layer_converters[op_type]
 
         input_ts_nodes = []
@@ -245,7 +250,8 @@ def convert(input_file, output_file):
     module.load(ts_outputs)
 
     # sort inputs
-    assert len(module.inputs) == 1
+    print(ts_inputs)
+    module.sort_inputs(ts_inputs)
 
     with open(output_file, "wb") as fo:
         ts.Module.Save(stream=fo, module=module)
@@ -1317,3 +1323,236 @@ def convert_abs_layer(node, input_nodes, output_names):
 
 
 register_layer_converter("Abs", convert_abs_layer)
+
+
+aten_layer2converter = {
+}
+
+
+def register_aten_layer_converter(layer, converter):
+    aten_layer2converter[layer] = converter
+
+
+def convert_aten_layer(node, input_nodes, output_names):
+    # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} -> {} ]=-".format(node.op_type, [n.name for n in input_nodes], output_names))
+
+    attribute = node.attribute
+    attr_dict = {}
+    for attr in attribute:
+        attr_dict[str(attr.name)] = topy(attr)
+
+    op_type = attr_dict["op_type"]
+
+    if op_type not in aten_layer2converter:
+        raise Exception("Not supported ATen Layer {}".format(op_type))
+    ts_converter = aten_layer2converter[op_type]
+
+    return ts_converter(node, input_nodes, output_names)
+
+
+register_layer_converter("ATen", convert_aten_layer)
+
+
+def convert_image_data_layer(node, input_nodes, output_names):
+    # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} -> {} ]=-".format(node.op_type, [n.name for n in input_nodes], output_names))
+
+    attribute = node.attribute
+    attr_dict = {}
+    for attr in attribute:
+        attr_dict[str(attr.name)] = topy(attr)
+
+    assert len(input_nodes) == 1
+    assert len(output_names) == 1
+
+    node_name = output_names[0]
+
+    x = input_nodes[0]
+    x = ts.zoo.to_float(node_name + "_float", x)
+
+    if "mean_values" in attr_dict:
+        mean_values = attr_dict["mean_values"]
+        mean_values = numpy.reshape(numpy.asarray(mean_values, dtype=numpy.float32), (1, 1, 1, -1))
+        x = ts.zoo.sub(node_name + "_sub_mean", x, mean_values, dtype=numpy.float32)
+
+    if "std_values" in attr_dict:
+        std_values = attr_dict["std_values"]
+        std_values = numpy.reshape(numpy.asarray(std_values, dtype=numpy.float32), (1, 1, 1, -1))
+        std_values = 1. / std_values
+        x = ts.zoo.mul(node_name + "_div_std", x, std_values, dtype=numpy.float32)
+
+    data_format = attr_dict["data_format"]
+    if data_format == "NCHW":
+        x = ts.zoo.transpose(node_name + "_nchw", x, (0, 3, 1, 2))
+    elif data_format == "NHWC":
+        pass
+    else:
+        raise NotImplementedError("data_format={}".format(data_format))
+
+    node = x
+    node.name = node_name
+
+    return node,
+
+
+register_aten_layer_converter("ImageData", convert_image_data_layer)
+
+
+def convert_affine_layer(node, input_nodes, output_names):
+    # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} -> {} ]=-".format(node.op_type, [n.name for n in input_nodes], output_names))
+
+    attribute = node.attribute
+    attr_dict = {}
+    for attr in attribute:
+        attr_dict[str(attr.name)] = topy(attr)
+
+    assert len(input_nodes) == 3
+    assert len(output_names) == 1
+
+    node_name = output_names[0]
+
+    x = input_nodes[0]
+    A = input_nodes[1]
+    b = input_nodes[2]
+
+    axis = attr_dict["axis"]
+    num_axes = attr_dict["num_axes"]
+
+    node = None
+    if num_axes == 1:
+        node = ts.zoo.batch_scale(node_name, x=x, scale=A, bias=b, dim=axis)
+    else:
+        A_value = ts.zoo.to_const(A, "A")
+        b_value = ts.zoo.to_const(b, "b")
+        param_shape = list(A_value.shape)
+
+        if len(param_shape) != num_axes:
+            raise NotImplementedError("num_axes={}, A.shape={}, b.shape={}".
+                                      format(num_axes, A_value.shape, b_value.shape))
+
+        for i in range(int(axis)):
+            param_shape.insert(0, 1)
+        while len(param_shape) < 4:
+            param_shape.append(1)
+        if len(param_shape) > 4:
+            raise NotImplementedError("num_axes={}, A.shape={}, b.shape={}".
+                                      format(num_axes, A_value.shape, b_value.shape))
+        broadcast_A = numpy.reshape(A_value, param_shape)
+        broadcast_b = numpy.reshape(b_value, param_shape)
+
+        broadcast_A = ts.menu.data(A.name + "_broadcast", broadcast_A)
+        broadcast_b = ts.menu.data(b.name + "_broadcast", broadcast_b)
+
+        Ax = ts.zoo.mul(name=node_name + "Ax", lhs=x, rhs=broadcast_A, dtype=numpy.float32)
+        Ax_b = ts.zoo.add(name=node_name + "Ax_b", lhs=Ax, rhs=broadcast_b, dtype=numpy.float32)
+
+        node = Ax_b
+        node.name = node_name
+
+    return node,
+
+
+register_aten_layer_converter("Affine", convert_affine_layer)
+
+
+def convert_upsample_layer(node, input_nodes, output_names):
+    # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} -> {} ]=-".format(node.op_type, [n.name for n in input_nodes], output_names))
+
+    attribute = node.attribute
+    attr_dict = {}
+    for attr in attribute:
+        attr_dict[str(attr.name)] = topy(attr)
+
+    assert len(input_nodes) == 2
+    assert len(output_names) == 1
+
+    node_name = output_names[0]
+
+    x = input_nodes[0]
+    scales = input_nodes[1]
+
+    scale = ts.zoo.to_const(scales, "scales")
+
+    mode = attr_dict["mode"]
+    mode2type = {
+        "nearest": ts.zoo.Type.resize2d_type.nearest,
+        "bilinear": ts.zoo.Type.resize2d_type.linear,
+    }
+    if mode not in mode2type:
+        raise NotImplementedError("mode={}".format(mode))
+    type = mode2type[mode]
+
+    ts_node = ts.zoo.sample2d(name=node_name, x=x, scale=scale, type=type)
+
+    return ts_node,
+
+
+register_layer_converter("Upsample", convert_upsample_layer)
+
+
+def convert_proposal_layer(node, input_nodes, output_names):
+    # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} -> {} ]=-".format(node.op_type, [n.name for n in input_nodes], output_names))
+
+    attribute = node.attribute
+    attr_dict = {}
+    for attr in attribute:
+        attr_dict[str(attr.name)] = topy(attr)
+
+    assert len(input_nodes) >= 3
+    assert len(output_names) >= 1
+
+    inputs = input_nodes
+
+    proposals = ts.frontend.dragon.proposal(
+        output_names=output_names,
+        inputs=inputs,
+        strides=attr_dict["strides"],
+        ratios=attr_dict["ratios"],
+        scales=attr_dict["scales"],
+        pre_nms_top_n=attr_dict["pre_nms_top_n"],
+        post_nms_top_n=attr_dict["post_nms_top_n"],
+        nms_thresh=attr_dict["nms_thresh"],
+        min_size=attr_dict["min_size"],
+        min_level=attr_dict["min_level"],
+        max_level=attr_dict["max_level"],
+        canonical_scale=attr_dict["canonical_scale"],
+        canonical_level=attr_dict["canonical_level"],
+    )
+
+    return proposals
+
+
+register_aten_layer_converter("Proposal", convert_proposal_layer)
+
+
+def convert_roi_align_layer(node, input_nodes, output_names):
+    # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} -> {} ]=-".format(node.op_type, [n.name for n in input_nodes], output_names))
+
+    attribute = node.attribute
+    attr_dict = {}
+    for attr in attribute:
+        attr_dict[str(attr.name)] = topy(attr)
+
+    assert len(input_nodes) == 2
+    assert len(output_names) == 1
+
+    inputs = input_nodes
+
+    regions = ts.frontend.dragon.roi_align(
+        output_names=output_names,
+        inputs=inputs,
+        pool_h=attr_dict["pool_h"],
+        pool_w=attr_dict["pool_w"],
+        spatial_scale=attr_dict["spatial_scale"],
+        sampling_ratio=attr_dict["sampling_ratio"],
+    )
+
+    return regions
+
+
+register_aten_layer_converter("ROIAlign", convert_roi_align_layer)
