@@ -5,8 +5,14 @@
 #include <immintrin.h>
 #include <emmintrin.h>
 
+typedef struct __m128x3
+{
+    __m128 val[3];
+}__m128x3;
+
 using _simd_f32x4 = __m128;
 using _simd_f32x4x2 = __m256;
+using _simd_f32x4x3 = __m128x3;
 using _simd_f32 = float;
 using _simd_int32x4 = __m128i;
 using _simd_int32 = int32_t;
@@ -129,7 +135,7 @@ inline _simd_f32x4 _simd_f32x4_concat(const _simd_f32x4& q0, const _simd_f32x4& 
     return _mm_loadu_ps(res);
 }
 
-inline _simd_f32x4 _simd_f32x4x2_interval_load(const _simd_f32* p, const int inc) {
+inline _simd_f32x4 _simd_f32x4_interval_load(const _simd_f32* p, const int inc) {
     const _simd_f32* a = p;
     const _simd_f32* b = a + inc;
     const _simd_f32* c = b + inc;
@@ -174,6 +180,47 @@ inline _simd_f32x4x2 _simd_f32x4x2_fmadd(_simd_f32x4x2 q0, _simd_f32x4x2 q1, _si
     return _mm256_add_ps(q2, _mm256_mul_ps(q0, q1));
 #endif
 }
+
+inline _simd_f32x4x3 _simd_f32x4x3_load(const _simd_f32 *p) {
+    _simd_f32x4x3 res;
+    res.val[0] = _mm_loadu_ps(p);
+    res.val[1] = _mm_loadu_ps(p + 4);
+    res.val[2] = _mm_loadu_ps(p + 8);
+    return res;
+}
+
+inline _simd_f32x4x3 _simd_f32x4x3_set(_simd_f32 a, _simd_f32 b, _simd_f32 c, _simd_f32 d,
+                                       _simd_f32 e, _simd_f32 f, _simd_f32 g, _simd_f32 h,
+                                       _simd_f32 i, _simd_f32 j, _simd_f32 k, _simd_f32 l){
+    _simd_f32x4x3 res;
+    res.val[0] = _mm_set_ps(d, c, b, a);
+    res.val[1] = _mm_set_ps(h, g, f, e);
+    res.val[2] = _mm_set_ps(i, j, k, l);
+    return res;
+}
+
+inline void _simd_f32x4x3_store(_simd_f32 *p, _simd_f32x4x3 m) {
+    _mm_storeu_ps(p, m.val[0]);
+    _mm_storeu_ps(p + 4, m.val[1]);
+    _mm_storeu_ps(p + 8, m.val[2]);
+}
+
+inline void _simd_f32x4x3_store(_simd_f32 *p, _simd_f32x4x3 m, int index) {
+    _mm_storeu_ps(p, m.val[index]);
+}
+
+inline _simd_f32x4x3 _simd_f32x4x3_interval_load(const float *p, int inc){
+    _simd_f32x4x3 res;
+    const _simd_f32* a0 = p;const _simd_f32* b0 = p+1;const _simd_f32* c0 = p+2;
+    const _simd_f32* a1 = a0 + inc; const _simd_f32* b1 = b0 + inc; const _simd_f32* c1 = c0 + inc;
+    const _simd_f32* a2 = a1 + inc; const _simd_f32* b2 = b1 + inc; const _simd_f32* c2 = c1 + inc;
+    const _simd_f32* a3 = a2 + inc; const _simd_f32* b3 = b2 + inc; const _simd_f32* c3 = c2 + inc;
+    res.val[0] = _mm_set_ps(*a3, *a2, *a1, *a0);
+    res.val[1] = _mm_set_ps(*b3, *b2, *b1, *b0);
+    res.val[2] = _mm_set_ps(*c3, *c2, *c1, *c0);
+    return res;
+}
+
 
 //cast
 inline _simd_int32x4x2 _simd_floatx4x2_to_int32x4x2(_simd_f32x4x2 src) {

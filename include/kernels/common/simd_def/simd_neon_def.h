@@ -7,6 +7,7 @@
 
 using _simd_f32x4 = float32x4_t;
 using _simd_f32x4x2 = float32x4x2_t;
+using _simd_f32x4x3 = float32x4x3_t;
 using _simd_f32x2 = float32x2_t;
 using _simd_f32 = float;
 using _simd_int32x4 = int32x4_t;
@@ -189,7 +190,7 @@ inline _simd_f32x4 _simd_f32x4_concat(const _simd_f32x4& q0, const _simd_f32x4& 
     }
 }
 
-inline _simd_f32x4 _simd_f32x4x2_interval_load(const _simd_f32* p, const int inc) {
+inline _simd_f32x4 _simd_f32x4_interval_load(const _simd_f32* p, const int inc) {
     const _simd_f32* a = p;
     const _simd_f32* b = a + inc;
     const _simd_f32* c = b + inc;
@@ -263,6 +264,52 @@ inline _simd_f32x4x2 _simd_f32x4x2_fmadd(_simd_f32x4x2 q0, _simd_f32x4x2 q1, _si
     //res.val[0] = vaddq_f32(mul_tmp_0, q2.val[0]);
     //res.val[1] = vaddq_f32(mul_tmp_1, q2.val[1]);
     return std::move(res);
+}
+
+inline _simd_f32x4x3 _simd_f32x4x3_load(const _simd_f32 *p) {
+    _simd_f32x4x3 res;
+    res.val[0] = vld1q_f32(p);
+    res.val[1] = vld1q_f32(p + 4);
+    res.val[2] = vld1q_f32(p + 8);
+    return std::move(res);
+}
+
+inline _simd_f32x4x3 _simd_f32x4x3_set(_simd_f32 a, _simd_f32 b, _simd_f32 c, _simd_f32 d,
+                                       _simd_f32 e, _simd_f32 f, _simd_f32 g, _simd_f32 h,
+                                       _simd_f32 i, _simd_f32 j, _simd_f32 k, _simd_f32 l){
+    _simd_f32x4x3 res;
+    _simd_f32 array_0[4] = { a, b, c, d };
+    _simd_f32 array_1[4] = { e, f, g, h };
+    _simd_f32 array_2[4] = { i, j, k, l };
+    res.val[0] = vld1q_f32(array_0);
+    res.val[1] = vld1q_f32(array_1);
+    res.val[2] = vld1q_f32(array_2);
+    return std::move(res);
+}
+
+inline void _simd_f32x4x3_store(_simd_f32 *p, _simd_f32x4x3 m) {
+    vst1q_f32(p, m.val[0]);
+    vst1q_f32(p + 4, m.val[1]);
+    vst1q_f32(p + 8, m.val[2]);
+}
+
+inline void _simd_f32x4x3_store(_simd_f32 *p, _simd_f32x4x3 m, int index) {
+    vst1q_f32(p, m.val[index]);
+}
+
+inline _simd_f32x4x3 _simd_f32x4x3_interval_load(const float *p, int inc){
+    _simd_f32x4x3 res;
+    const _simd_f32* a0 = p;const _simd_f32* b0 = p+1;const _simd_f32* c0 = p+2;
+    const _simd_f32* a1 = a0 + inc; const _simd_f32* b1 = b0 + inc; const _simd_f32* c1 = c0 + inc;
+    const _simd_f32* a2 = a1 + inc; const _simd_f32* b2 = b1 + inc; const _simd_f32* c2 = c1 + inc;
+    const _simd_f32* a3 = a2 + inc; const _simd_f32* b3 = b2 + inc; const _simd_f32* c3 = c2 + inc;
+    _simd_f32 array_0[4] = { *a0, *a1, *a2, *a3 };
+    _simd_f32 array_1[4] = { *b0, *b1, *b2, *b3 };
+    _simd_f32 array_2[4] = { *c0, *c1, *c2, *c3 };
+    res.val[0] = vld1q_f32(array_0);
+    res.val[1] = vld1q_f32(array_1);
+    res.val[2] = vld1q_f32(array_2);
+    return res;
 }
 
 //cast
