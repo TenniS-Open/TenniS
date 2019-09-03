@@ -136,6 +136,10 @@ namespace ts {
             TS_DEBUG_API const string &reduce_mean() TS_NOEXCEPT;
             TS_DEBUG_API const string &sqrt() TS_NOEXCEPT;
             TS_DEBUG_API const string &tile() TS_NOEXCEPT;
+
+            // 2019-09-03
+            TS_DEBUG_API const string &roi_align() TS_NOEXCEPT;
+            TS_DEBUG_API const string &proposal() TS_NOEXCEPT;
         }
 
         namespace typo {
@@ -220,6 +224,8 @@ namespace ts {
 
         TS_DEBUG_API extern string dims;
         TS_DEBUG_API extern string repeats;
+
+        TS_DEBUG_API extern string transpose;
     }
 }
 
