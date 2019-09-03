@@ -1127,6 +1127,50 @@ y: Tensor
 说明：  
 `y = numpy.tile(x, repeats)`
 
+
+## dragon_proposal (inputs..device) -> proposals..device
+Description: See [Dragon proposal](http://dragon.seetatech.com/api/python/contents/operators/contrib/rcnn.html)  
+Input:  
+x: Tensor 
+
+Output:  
+y: Tensor
+
+Parameter:  
+```
+inputs (sequence of Tensor)  The inputs.
+strides (sequence of int)  The strides of anchors.
+ratios (sequence of float)  The ratios of anchors.
+scales (sequence of float)  The scales of anchors.
+pre_nms_top_n (int, optional, default=6000)  The number of anchors before nms.
+post_nms_top_n (int, optional, default=300)  The number of anchors after nms.
+nms_thresh (float, optional, default=0.7)  The threshold of nms.
+min_size (int, optional, default=16)  The min size of anchors.
+min_level (int, optional, default=2)  Finest level of the FPN pyramid.
+max_level (int, optional, default=5)  Coarsest level of the FPN pyramid.
+canonical_scale (int, optional, default=224)  The baseline scale of mapping policy.
+canonical_level (int, optional, default=4)  Heuristic level of the canonical scale.
+```
+
+
+## dragon_roi_align (inputs..device) -> region..device
+Description: See [Dragon ROIAlign](http://dragon.seetatech.com/api/python/contents/operators/vision.html#dragon.operators.vision.ROIAlign)  
+Input:  
+x: Tensor 
+
+Output:  
+y: Tensor
+
+Parameter:  
+```
+inputs (sequence of Tensor) – The inputs, represent the Feature and RoIs respectively.
+pool_h (int, optional, default=0) – The height of pooled tensor.
+pool_w (int, optional, default=0) – The width of pooled tensor.
+spatial_scale (float, optional, default=1.0) – The inverse of total down-sampling multiples on input tensor.
+sampling_ratio (int, optional, default=2) – The number of sampling grids for each RoI bin.
+```
+
+
 ## tile_v2 (x..device, repeats..host) -> y..device = delete
 
 ## 附录
