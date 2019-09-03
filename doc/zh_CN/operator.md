@@ -1128,7 +1128,7 @@ y: Tensor
 `y = numpy.tile(x, repeats)`
 
 
-## dragon_proposal (inputs..device) -> proposals..device
+## proposal (inputs..device) -> proposals..device
 Description: See [Dragon proposal](http://dragon.seetatech.com/api/python/contents/operators/contrib/rcnn.html)  
 Input:  
 x: Tensor 
@@ -1153,7 +1153,7 @@ canonical_level (int, optional, default=4)  Heuristic level of the canonical sca
 ```
 
 
-## dragon_roi_align (inputs..device) -> region..device
+## roi_align (inputs..device) -> region..device
 Description: See [Dragon ROIAlign](http://dragon.seetatech.com/api/python/contents/operators/vision.html#dragon.operators.vision.ROIAlign)  
 Input:  
 x: Tensor 

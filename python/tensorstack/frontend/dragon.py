@@ -45,7 +45,7 @@ def proposal(output_names,
     for input in inputs:
         assert isinstance(input, Node)
 
-    node = menu.op(name=output_names[0] + "_proposal", op_name="dragon_proposal", inputs=inputs)
+    node = menu.op(name=output_names[0] + "_proposal", op_name="proposal", inputs=inputs)
     node.set("strides", strides, dtype=numpy.int32)
     node.set("ratios", ratios, dtype=numpy.float32)
     node.set("scales", scales, dtype=numpy.float32)
@@ -81,7 +81,7 @@ def roi_align(output_names,
     for input in inputs:
         assert isinstance(input, Node)
 
-    node = menu.op(name=output_names[0] + "_roi_align", op_name="dragon_roi_align", inputs=inputs)
+    node = menu.op(name=output_names[0] + "_roi_align", op_name="roi_align", inputs=inputs)
     node.set("pool_h", pool_h, dtype=numpy.int32)
     node.set("pool_w", pool_w, dtype=numpy.int32)
 
