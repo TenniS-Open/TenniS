@@ -22,18 +22,21 @@ namespace ts {
 
             for (size_t i = 0; i < count; ++i) {
                 m_shape[i] = shape_tensor.data<int32_t>(i);
+                if (m_shape[i] == 0 && i < x.dims()) {
+                    m_shape[i] = x.size(i);
+                }
             }
 
             int m_broadcast_dim = -1;
             int m_count_without_dim = 1;
 
             for (size_t i = 0; i < count; ++i) {
-                if (m_shape[i] == 0) TS_LOG_ERROR << "Can not reshape tensor to " << to_string(m_shape) << eject;
+                if (m_shape[i] == 0)  TS_LOG_ERROR << "Can not reshape " << to_string(x.sizes()) << " to " << to_string(m_shape) << eject;
                 if (m_shape[i] > 0) {
                     m_count_without_dim *= m_shape[i];
                     continue;
                 }
-                if (m_broadcast_dim >= 0) TS_LOG_ERROR << "Can not reshape tensor to " << to_string(m_shape) << eject;
+                if (m_broadcast_dim >= 0)  TS_LOG_ERROR << "Can not reshape " << to_string(x.sizes()) << " to " << to_string(m_shape) << eject;
                 m_broadcast_dim = int(i);
             }
 
