@@ -37,6 +37,7 @@ namespace ts {
 
     using float32x4 = simd<float, 4>;
     using float32x4x2 = simd<float, 8>;
+    using float32x4x3 = simd<float, 12>;
 
     using int32x4 = simd<int32_t, 4>;
     using int32x4x2 = simd<int32_t, 8>;
@@ -148,9 +149,10 @@ namespace ts {
 
     //load by inc.
     inline simd<float, 4> inc_load(const float *p, int inc) {
-        return _simd_f32x4x2_interval_load(p, inc);
+        return _simd_f32x4_interval_load(p, inc);
     }
 
+    //TODO: add inc_load support
     template<>
     class simd<float, 8> : public simd_base<float, 8> {
     public:
@@ -192,6 +194,40 @@ namespace ts {
 
     inline simd<float, 8> fmadd(const simd<float, 8> &q0, const simd<float, 8> &q1, const simd<float, 8> &q2) {
         return _simd_f32x4x2_fmadd(q0.value, q1.value, q2.value);
+    }
+
+    template<>
+    class simd<float, 12> : public simd_base<float, 12> {
+    public:
+        using self = simd;
+        using type = _simd_f32x4x3;
+
+        type value;
+
+        simd() = default;
+
+        simd(type value) : value(value) {}
+
+        simd(base a) : simd(a, a, a, a, a, a, a, a, a, a, a, a) {}
+
+        simd(int a) : simd(base(a)) {}
+
+        simd(const base *p) : value(_simd_f32x4x3_load(p)) {}
+
+        simd(base a, base b, base c, base d,base e, base f, base g, base h,base i, base j, base k, base l) :
+            value(_simd_f32x4x3_set(a, b, c, d, e, f, g, h, i, j, k, l)) {}
+
+        void store(base *p) const { _simd_f32x4x3_store(p, value); }
+
+        void store(base *p, int index) {
+            if(index >= 0 && index <= 2)
+                _simd_f32x4x3_store(p, value, index);
+        }
+    };
+
+    //load by inc.
+    inline simd<float, 12> incx4x3_load(const float *p, int inc) {
+        return _simd_f32x4x3_interval_load(p, inc);
     }
 
     template<>

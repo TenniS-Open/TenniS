@@ -7,6 +7,7 @@
 using _simd_f32 = float;
 using _simd_f32x4 = std::array<_simd_f32, 4>;
 using _simd_f32x4x2 = std::array<_simd_f32, 8>;
+using _simd_f32x4x3 = std::array<_simd_f32, 12>;
 using _simd_int32 = int32_t;
 using _simd_int32x4 = std::array<_simd_int32, 4>;
 using _simd_int32x4x2 = std::array<_simd_int32, 8>;
@@ -144,7 +145,7 @@ inline _simd_f32x4 _simd_f32x4_concat(const _simd_f32x4& q0, const _simd_f32x4& 
     return res;
 }
 
-inline _simd_f32x4 _simd_f32x4x2_interval_load(const _simd_f32* p, int inc) {
+inline _simd_f32x4 _simd_f32x4_interval_load(const _simd_f32* p, int inc) {
     const _simd_f32* a = p;
     const _simd_f32* b = a + inc;
     const _simd_f32* c = b + inc;
@@ -187,6 +188,38 @@ inline _simd_f32x4x2 _simd_f32x4x2_div(_simd_f32x4x2 lhs, _simd_f32x4x2 rhs) {
 
 inline _simd_f32x4x2 _simd_f32x4x2_fmadd(_simd_f32x4x2 q0, _simd_f32x4x2 q1, _simd_f32x4x2 q2) {
     return {q0[0] * q1[0] + q2[0], q0[1] * q1[1] + q2[1], q0[2] * q1[2] + q2[2], q0[3] * q1[3] + q2[3], q0[4] * q1[4] + q2[4], q0[5] * q1[5] + q2[5], q0[6] * q1[6] + q2[6], q0[7] * q1[7] + q2[7]};
+}
+
+inline _simd_f32x4x3 _simd_f32x4x3_load(const _simd_f32 *p) {
+    return { p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9], p[10], p[11] };
+}
+
+inline _simd_f32x4x3 _simd_f32x4x3_set(_simd_f32 a, _simd_f32 b, _simd_f32 c, _simd_f32 d,
+                                       _simd_f32 e, _simd_f32 f, _simd_f32 g, _simd_f32 h,
+                                       _simd_f32 i, _simd_f32 j, _simd_f32 k, _simd_f32 l){
+    return {a, b, c, d, e, f, g, h, i, j, k, l};
+}
+
+inline void _simd_f32x4x3_store(_simd_f32 *p, _simd_f32x4x3 m) {
+    p[0] = m[0];p[1] = m[1];
+    p[2] = m[2];p[3] = m[3];
+    p[4] = m[4];p[5] = m[5];
+    p[6] = m[6];p[7] = m[7];
+    p[8] = m[8];p[9] = m[9];
+    p[10] = m[10];p[11] = m[11];
+}
+
+inline void _simd_f32x4x3_store(_simd_f32 *p, _simd_f32x4x3 m, int index) {
+    p[0] = m[4 * index];p[1] = m[4 * index + 1];
+    p[2] = m[4 * index + 2];p[3] = m[4 * index + 3];
+}
+
+inline _simd_f32x4x3 _simd_f32x4x3_interval_load(const float *p, int inc){
+    const _simd_f32* a0 = p;const _simd_f32* b0 = p+1;const _simd_f32* c0 = p+2;
+    const _simd_f32* a1 = a0 + inc; const _simd_f32* b1 = b0 + inc; const _simd_f32* c1 = c0 + inc;
+    const _simd_f32* a2 = a1 + inc; const _simd_f32* b2 = b1 + inc; const _simd_f32* c2 = c1 + inc;
+    const _simd_f32* a3 = a2 + inc; const _simd_f32* b3 = b2 + inc; const _simd_f32* c3 = c2 + inc;
+    return {*a0, *a1, *a2, *a3, *b0, *b1, *b2, *b3, *c0, *c1, *c2, *c3};
 }
 
 //cast
