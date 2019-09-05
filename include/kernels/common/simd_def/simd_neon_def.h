@@ -312,6 +312,10 @@ inline _simd_f32x4x3 _simd_f32x4x3_interval_load(const float *p, int inc){
     return res;
 }
 
+inline void _simd_f32x4x3_interval_save(_simd_f32 *p, _simd_f32x4x3 m){
+    vst3q_f32(p, m);
+}
+
 //cast
 inline _simd_int32x4x2 _simd_floatx4x2_to_int32x4x2(_simd_f32x4x2 src) {
     _simd_int32x4x2 res;
@@ -333,6 +337,11 @@ inline _simd_f32x4x2 _simd_broadcast2float32x4x2(const _simd_f32* src) {
     res.val[0] = vdupq_n_f32(*src);
     res.val[1] = vdupq_n_f32(*src);
     return std::move(res);
+}
+
+//concat
+inline _simd_f32x4x3 _simd_concat(const _simd_f32x4& q0, const _simd_f32x4& q1, const _simd_f32x4& q2){
+    return {{q0, q1, q2}};
 }
 
 #endif
