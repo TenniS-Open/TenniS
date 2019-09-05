@@ -42,6 +42,62 @@ namespace ts {
         }
 
         template<typename T>
+        static inline void NC3HWToNHWC3(const T *psrc, T *pdst, const Shape &input_shape){
+            int height = input_shape[2],width = input_shape[3],channel = input_shape[1];
+            int channel_offset = height * width;
+            int num_offset = channel * channel_offset;
+            for (int n = 0; n < input_shape[0]; ++n) {
+                const T* src_at = psrc + n * num_offset;
+                T* dst_at = pdst + n * num_offset;
+#ifdef TS_USE_OPENMP
+#pragma omp parallel for num_threads(openmp_threads())
+#endif
+                for (int h = 0; h < height; ++h) {
+                    auto src_tmp = src_at + h * width;
+                    auto dst_tmp = dst_at + h * channel * width;
+                    for (int w = 0; w < width; ++w) {
+                        for (int c = 0; c < channel; ++c) {
+                            dst_tmp[w * channel + c] = src_tmp[c * channel_offset + w];
+                        }
+                    }
+                }
+            }
+        }
+
+        template<>
+        inline void NC3HWToNHWC3<float>(const float *psrc, float *pdst, const Shape &input_shape){
+            int height = input_shape[2],width = input_shape[3],channel = input_shape[1];
+            int channel_offset = height * width;
+            int out_h_offset = width * channel;
+            int num_offset = channel * channel_offset;
+            for (int n = 0; n < input_shape[0]; ++n) {
+                const float *src_at = psrc + n * num_offset;
+                float *dst_at = pdst + n * num_offset;
+#ifdef TS_USE_OPENMP
+#pragma omp parallel for num_threads(openmp_threads())
+#endif
+                for (int h = 0; h < height; ++h) {
+                    auto src_tmp = src_at + h * width;
+                    auto dst_tmp = dst_at + h * out_h_offset;
+                    int w = 0;
+                    for ( ; w + 3 < width; w += 4) {
+                        float32x4 i0(src_tmp),i1(src_tmp + channel_offset),i2(src_tmp + 2 * channel_offset);
+                        float32x4x3 ix4x3(i0, i1, i2);
+                        incx4x3_save(dst_tmp, ix4x3);
+
+                        src_tmp += 4;
+                        dst_tmp += 12;
+                    }
+                    for ( ; w < width; ++w) {
+                        for (int c = 0; c < channel; ++c) {
+                            dst_at[h * out_h_offset + w * channel + c] = src_at[h * width + c * channel_offset + w];
+                        }
+                    }
+                }
+            }
+        }
+
+        template<typename T>
         static inline void NHWC3ToNC3HW(const T *psrc, T *pdst, const Shape &input_shape){
             int height = input_shape[1],width = input_shape[2],channel = input_shape[3];
             int h_offset = width * channel;
@@ -106,8 +162,12 @@ namespace ts {
             //TODO: optimize NHWC(C==4)->NCHW.
             auto input_shape = x.sizes();
             std::vector<int> NHWC3ToNC3HW_order{0, 3, 1, 2};
+            std::vector<int> NCHW3ToNHWC3_order{0 ,2, 3, 1};
             if(permute == NHWC3ToNC3HW_order && input_shape[3] == 3)
                 NHWC3ToNC3HW(x.data<T>(), out.data<T>(), x.sizes());
+            else if(permute == NCHW3ToNHWC3_order && input_shape[1] == 3){
+                NC3HWToNHWC3(x.data<T>(), out.data<T>(), x.sizes());
+            }
             else
                 Transpose_transpose_run(x.data<T>(), out.data<T>(), x.count(), permute, x.sizes(), out.sizes());
         }

@@ -152,6 +152,10 @@ namespace ts {
         return _simd_f32x4_interval_load(p, inc);
     }
 
+//    inline simd<float, 4> exp(const simd<float, 4> &src){
+//        return _simd_f32x4_exp(src.value);
+//    }
+
     //TODO: add inc_load support
     template<>
     class simd<float, 8> : public simd_base<float, 8> {
@@ -214,6 +218,8 @@ namespace ts {
 
         simd(const base *p) : value(_simd_f32x4x3_load(p)) {}
 
+        simd(const float32x4& q0, const float32x4& q1, const float32x4& q2) : value(_simd_concat(q0.value, q1.value, q2.value)) {}
+
         simd(base a, base b, base c, base d,base e, base f, base g, base h,base i, base j, base k, base l) :
             value(_simd_f32x4x3_set(a, b, c, d, e, f, g, h, i, j, k, l)) {}
 
@@ -228,6 +234,10 @@ namespace ts {
     //load by inc.
     inline simd<float, 12> incx4x3_load(const float *p, int inc) {
         return _simd_f32x4x3_interval_load(p, inc);
+    }
+
+    inline void incx4x3_save(float *p, const simd<float, 12>& src){
+        _simd_f32x4x3_interval_save(p, src.value);
     }
 
     template<>
