@@ -6,6 +6,9 @@
 #include <core/device.h>
 
 #include "kernels/common/simd.h"
+#ifdef TS_USE_OPENMP
+#include <kernels/common/openmp.h>
+#endif
 
 /////////////////////////////////////////////////
 namespace ts {
@@ -64,6 +67,9 @@ namespace ts {
         int stridedims = back_dims * shape[dim];
         int offset = 0;
         for (int i = 0; i < pre_dims; i++) {
+#ifdef TS_USE_OPENMP
+#pragma omp parallel for num_threads(openmp_threads())
+#endif
             for (int k = 0; k < shape[dim]; k++) {
                 float32x4 bias_x4(pbias[k]);
                 offset = i * stridedims + k * back_dims;

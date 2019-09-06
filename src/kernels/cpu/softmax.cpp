@@ -6,6 +6,9 @@
 #include <math.h>
 
 #include <kernels/common/simd.h>
+#ifdef TS_USE_OPENMP
+#include <kernels/common/openmp.h>
+#endif
 
 namespace ts {
 	namespace cpu {
@@ -39,6 +42,9 @@ namespace ts {
 
             // as NCW format
             for (int n = 0; n < head_num; ++n) {
+#ifdef TS_USE_OPENMP
+#pragma omp parallel for num_threads(openmp_threads())
+#endif
                 for (int w = 0; w < tail_num; ++w) {
                     auto channel_index = hype.to_index(n, 0, w);
                     const T *input_channel_data = &input_data[channel_index];
@@ -96,6 +102,9 @@ namespace ts {
 
             // as NCW format
             for (int n = 0; n < head_num; ++n) {
+#ifdef TS_USE_OPENMP
+#pragma omp parallel for num_threads(openmp_threads())
+#endif
                 for (int w = 0; w < tail_num; ++w) {
                     auto channel_index = hype.to_index(n, 0, w);
                     const T *input_channel_data = &input_data[channel_index];

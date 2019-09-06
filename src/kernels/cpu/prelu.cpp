@@ -7,6 +7,9 @@
 #include <algorithm>
 
 #include "kernels/common/simd.h"
+#ifdef TS_USE_OPENMP
+#include <kernels/common/openmp.h>
+#endif
 
 namespace ts {
 	namespace cpu {
@@ -63,6 +66,9 @@ namespace ts {
             }
 
             for (int i = 0; i < pre_dims; i++) {
+#ifdef TS_USE_OPENMP
+#pragma omp parallel for num_threads(openmp_threads())
+#endif
                 for (int j = 0; j < output_shape[dim]; j++) {
                     int offset = i * output_shape[dim] * last_dims + j * last_dims;
                     float val = slope_data[j];

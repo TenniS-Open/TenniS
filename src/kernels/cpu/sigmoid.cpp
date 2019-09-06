@@ -5,6 +5,9 @@
 #include "global/operator_factory.h"
 
 #include "kernels/common/simd.h"
+#ifdef TS_USE_OPENMP
+#include <kernels/common/openmp.h>
+#endif
 
 namespace ts {
     namespace cpu {
@@ -14,12 +17,12 @@ namespace ts {
             T *output_data = out.data<T>();
             int count = out.count();
 
-            std::memcpy(output_data, input_data, count * sizeof(T));
-
+            //std::memcpy(output_data, input_data, count * sizeof(T));
+#ifdef TS_USE_OPENMP
+#pragma omp parallel for num_threads(openmp_threads())
+#endif
             for (int i = 0; i < count; i++) {
-                T val = *output_data;
-                *output_data = 1. / (1. + exp(-(val)));
-                output_data++;
+                output_data[i] = 1. / (1. + exp(-(input_data[i])));
             }
         }
 

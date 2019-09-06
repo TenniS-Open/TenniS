@@ -5,6 +5,9 @@
 #include "global/operator_factory.h"
 
 #include "kernels/common/simd.h"
+#ifdef TS_USE_OPENMP
+#include <kernels/common/openmp.h>
+#endif
 
 namespace ts {
 	namespace cpu {
@@ -30,23 +33,26 @@ namespace ts {
             const float *input_data = x.data<float>();
             float *output_data = out.data<float>();
             int count = out.count();
+            int count_4 = count / 4;
             //std::memcpy(output_data, input_data, count * sizeof(float));
 
             float casted_max = float(max);
             float32x4 casted_max_x4(casted_max);
             int counts = out.count();
             float32x4 const_num_x4(float(0.0));
-            for (int i = 0; i < counts - 3; i+=4) {
-                float32x4 val_x4(input_data);
+#ifdef TS_USE_OPENMP
+#pragma omp parallel for num_threads(openmp_threads())
+#endif
+            for (int i = 0; i < count_4; ++i) {
+                auto input_at = input_data + i * 4;
+                auto output_at = output_data + i * 4;
+                float32x4 val_x4(input_at);
                 float32x4 output_x4 = min_float32x4(max_float32x4(val_x4, const_num_x4), casted_max_x4);
-                output_x4.store(output_data);
-                input_data += 4;
-                output_data += 4;
+                output_x4.store(output_at);
             }
-            for (int i = count/4*4; i < counts; i++) {
-                float val = *input_data++;
-                *output_data = std::min(std::max(val, float(0)), casted_max);
-                output_data++;
+            for (int i = count_4 * 4; i < counts; i++) {
+                float val = input_data[i];
+                output_data[i] = std::min(std::max(val, float(0)), casted_max);
             }
         }
 
