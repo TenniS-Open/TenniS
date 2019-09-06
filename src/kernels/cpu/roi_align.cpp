@@ -11,7 +11,7 @@
 #include "backend/base/base_roi_align.h"
 
 /**
- * THis cpu implement was fork from Dragon, author Pan Ting.
+ * THis cpu implement was fork from Dragon, SeetaTech
  */
 
 namespace ts {

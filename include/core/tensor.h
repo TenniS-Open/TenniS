@@ -269,6 +269,11 @@ namespace ts {
         Tensor view(const MemoryDevice &device) const;
 
         /**
+         * tell other's, tensor data has been modified
+         */
+        void broadcast();
+
+        /**
          *
          * @param in_flow
          * @return strong view tensor
