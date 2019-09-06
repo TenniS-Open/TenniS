@@ -5,6 +5,9 @@
 #include "global/operator_factory.h"
 
 #include "kernels/common/simd.h"
+#ifdef TS_USE_OPENMP
+#include <kernels/common/openmp.h>
+#endif
 
 namespace ts {
     namespace cpu {
@@ -29,19 +32,22 @@ namespace ts {
             const float *input_data = x.data<float>();
             float *output_data = out.data<float>();
             int count = out.count();
+            int count_4 = count / 4;
             float32x4 const_mul(float(0.0));
-            for (int i = 0; i < count - 3; i += 4) {
-                float32x4 input_x4(input_data);
+#ifdef TS_USE_OPENMP
+#pragma omp parallel for num_threads(openmp_threads())
+#endif
+            for (int i = 0; i < count_4; ++i) {
+                auto input_at = input_data + i * 4;
+                auto output_at = output_data + i * 4;
+                float32x4 input_x4(input_at);
                 float32x4 output_x4 = max_float32x4(input_x4, const_mul);
-                output_x4.store(output_data);
-                input_data += 4;
-                output_data += 4;
+                output_x4.store(output_at);
             }
-            for (int i = count / 4 * 4; i < count; i++)
+            for (int i = count_4 * 4; i < count; i++)
             {
-                float val = *input_data++;
-                *output_data = std::max(val, float(0.0));
-                output_data++;
+                float val = input_data[i];
+                output_data[i] = std::max(val, float(0.0));
             }
         }
 
