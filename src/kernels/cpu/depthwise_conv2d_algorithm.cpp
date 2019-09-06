@@ -354,7 +354,7 @@ namespace ts {
                             const float* i0 = input_at + (h * stride.height - padding.top) * input_width + (w * stride.width - padding.left);
                             const float* i1 = i0 + input_width;
                             const float* i2 = i1 + input_width;
-                            const float* i3 = i2 + input_width;
+//                            const float* i3 = i2 + input_width;
 
                             //{[i0,i0+2,i0+4,i0+6],[i0+1,i0+3,i0+5,i0+7],[i0+2,i0+4,i0+6,i0+8]}
                             float32x4 i00_x4 = inc_load(i0, 2), i01_x4 = inc_load((i0 + 1), 2), i02_x4 = inc_load((i0 + 2), 2);
