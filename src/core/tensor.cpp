@@ -416,6 +416,13 @@ namespace ts {
         return view_tensor;
     }
 
+    void Tensor::broadcast()  {
+        auto fields_count = this->fields_count();
+        for (size_t i = 0; i < fields_count; ++i) {
+            this->field(i).m_memory->broadcast();
+        }
+    }
+
     Tensor Tensor::weak() const {
         Tensor weak_tensor;
         weak_tensor.m_memory = m_memory.weak();

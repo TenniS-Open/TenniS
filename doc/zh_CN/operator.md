@@ -1128,13 +1128,16 @@ y: Tensor
 `y = numpy.tile(x, repeats)`
 
 
-## proposal (inputs..device) -> proposals..device
+## proposal (list[scores]..device, prob, bbox, im_info) -> proposals..device
 Description: See [Dragon proposal](http://dragon.seetatech.com/api/python/contents/operators/contrib/rcnn.html)  
 Input:  
-x: Tensor 
+list[scores]: `List[Tensor]` list of Tensor, length like strides  
+prob: `DTypeTensor`  
+bbox: `DTypeTensor`  
+im_info: `Float[3]`  
 
 Output:  
-y: Tensor
+y: `FloatTensor`
 
 Parameter:  
 ```
@@ -1153,13 +1156,15 @@ canonical_level (int, optional, default=4)  Heuristic level of the canonical sca
 ```
 
 
-## roi_align (inputs..device) -> region..device
+## roi_align (features..device, proposal..device) -> region..device
 Description: See [Dragon ROIAlign](http://dragon.seetatech.com/api/python/contents/operators/vision.html#dragon.operators.vision.ROIAlign)  
 Input:  
-x: Tensor 
+features: `DTypeTensor`  
+proposal: `FloatTensor`  
+> features and proposal are same shape
 
 Output:  
-y: Tensor
+region: `Tensor`  
 
 Parameter:  
 ```
