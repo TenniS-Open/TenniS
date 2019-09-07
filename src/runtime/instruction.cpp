@@ -58,7 +58,10 @@ namespace ts {
 
         (void)(return_size);
 
-        TS_AUTO_CHECK(return_size == m_nresults);  // must return given sizes
+        if(return_size != m_nresults) {
+            TS_LOG_ERROR << "Operator " << op()->name() << "<" << op()->op() << "> expected "
+                << m_nresults << " outputs, got " << return_size << eject;
+        }  // must return given sizes
         TS_AUTO_CHECK(stack.size() >= static_cast<size_t>(return_size));    // must have enough returns
 
         // add base
