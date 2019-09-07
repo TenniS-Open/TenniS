@@ -20,9 +20,9 @@ namespace ts {
              float alpha, float beta, bool transA, bool transB,
              int &K,
              Tensor::Prototype &out, Shape &adjusted_C_shape) {
-            TS_AUTO_CHECK(A.dims() == 2);
-            TS_AUTO_CHECK(B.dims() == 2);
-            TS_AUTO_CHECK(C.dims() <= 2);
+            if(A.dims() != 2) TS_LOG_ERROR << "A.dims() expect equal 2, got " << A.dims() << eject;
+            if(B.dims() != 2) TS_LOG_ERROR << "A.dims() expect equal 2, got " << B.dims() << eject;
+            if(C.dims() > 2) TS_LOG_ERROR << "A.dims() expect less 2, got " << C.dims() << eject;
 
             TS_AUTO_CHECK(A.dtype() == B.dtype());
 

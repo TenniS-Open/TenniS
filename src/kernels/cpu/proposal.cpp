@@ -36,15 +36,17 @@ namespace ts {
                 for (size_t i = 0; i < stack.size(); ++i) {
                     inputs.emplace_back(stack[i]);
                 }
+                auto memory_device = this->running_memory_device();
+                for (auto &input : inputs) {
+                    input = input.view(memory_device);
+                }
                 m_dragon->bind_inputs(inputs);
                 m_dragon->bind_outputs(m_output_size);
 
                 m_dragon->RunOnDevice();
 
                 stack.push(Tensor::Pack(m_dragon->outputs()));
-
-                m_dragon->clear_inputs();
-                m_dragon->clear_outputs();
+                m_dragon->clear();
                 return 1;
             }
 
@@ -63,6 +65,7 @@ namespace ts {
                     int32_t canonical_scale,
                     int32_t canonical_level) override {
                 TS_LOG_ERROR << "What a Terrible Failure!" << eject;
+                return {};
             }
         };
     }
