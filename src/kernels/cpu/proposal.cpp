@@ -21,11 +21,14 @@ namespace ts {
         class Proposal : public OperatorOnCPU<base::Proposal> {
         public:
             std::shared_ptr<dragon::ProposalOp<dragon::CPUContext>> m_dragon;
-
+            int m_output_size;
 
             void init() override {
                 dragon::Workspace ws;
                 m_dragon = std::make_shared<dragon::ProposalOp<dragon::CPUContext>>(this, &ws);
+                auto max_level = tensor::to_int(get("max_level"));
+                auto min_level = tensor::to_int(get("min_level"));
+                m_output_size = max_level - min_level + 1;
             }
 
             int run(Stack &stack) override {
@@ -34,13 +37,15 @@ namespace ts {
                     inputs.emplace_back(stack[i]);
                 }
                 m_dragon->bind_inputs(inputs);
+                m_dragon->bind_outputs(m_output_size);
+
                 m_dragon->RunOnDevice();
-                auto outputs = m_dragon->outputs();
-                stack.clear();
-                for (auto &output : outputs) {
-                    stack.push(output);
-                }
-                return int(outputs.size());
+
+                stack.push(Tensor::Pack(m_dragon->outputs()));
+
+                m_dragon->clear_inputs();
+                m_dragon->clear_outputs();
+                return 1;
             }
 
 

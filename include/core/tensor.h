@@ -340,6 +340,7 @@ namespace ts {
         bool has_shape(int arg0, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8,
                        int arg9) const;
 
+        static Tensor Pack(const std::vector<Tensor> &fields);
     private:
         Smart<TensorMemory> m_memory;
         Prototype m_proto;
