@@ -15,11 +15,6 @@
 
 namespace ts {
     namespace dragon {
-#define CHECK_EQ TS_CHECK_EQ
-#define LOG TS_LOG
-
-        static const LogLevel FATAL = LOG_FATAL;
-
         namespace kernel {
             template<typename A, typename B, typename Context>
             inline void TypeA2B(size_t count, const A *src, B *dst, Context *ctx) {

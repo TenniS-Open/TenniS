@@ -20,6 +20,7 @@
 #include "dragon/tensor.h"
 #include "dragon/operator.h"
 #include "dragon/op_kernel.h"
+#include "dragon/logging.h"
 
 namespace ts {
     namespace dragon {

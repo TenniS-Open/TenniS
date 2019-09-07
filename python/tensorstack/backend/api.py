@@ -547,6 +547,12 @@ class Tensor(object):
         _C.ts_api_check_pointer(x)
         return Tensor(x)
 
+    def drop(self):
+        # type: () -> numpy.ndarray
+        value = self.numpy
+        self.dispose()
+        return value
+
 
 class Program(object):
     def __init__(self, obj=None, borrow=False):

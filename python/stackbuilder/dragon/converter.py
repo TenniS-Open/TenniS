@@ -6,6 +6,7 @@ import tensorstack as ts
 from ..onnx.converter import convert as convert_onnx
 from ..onnx.converter import register_layer_converter as register_onnx_layer_converter
 from ..onnx.converter import topy
+from ..onnx.converter import convert_gemm_layer as convert_onnx_gemm_layer
 
 import numpy
 
@@ -122,6 +123,22 @@ def convert_pooling2d_layer(node, input_nodes, output_names):
 
 register_specific_layer_converter("MaxPool", convert_pooling2d_layer)
 register_specific_layer_converter("AveragePool", convert_pooling2d_layer)
+
+
+def convert_gemm_layer(node, input_nodes, output_names):
+    # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
+
+    assert len(input_nodes) == 3
+
+    x = input_nodes[0]
+    w = input_nodes[1]
+    b = input_nodes[2]
+    x = ts.zoo.flatten(name=x.name + "_flatten", x=x)
+
+    return convert_onnx_gemm_layer(node, [x, w, b], output_names)
+
+
+register_specific_layer_converter("Gemm", convert_gemm_layer)
 
 
 aten_layer2converter = {

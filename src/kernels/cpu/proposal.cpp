@@ -46,6 +46,8 @@ namespace ts {
                 m_dragon->RunOnDevice();
 
                 stack.push(Tensor::Pack(m_dragon->outputs()));
+                m_dragon->clear_inputs();
+                m_dragon->clear_outputs();
                 m_dragon->clear();
                 return 1;
             }
