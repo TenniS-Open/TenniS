@@ -644,6 +644,12 @@ namespace ts {
         return Tensor(slice_memory, Tensor::Prototype(this->dtype(), slice_shape));
     }
 
+    Tensor Tensor::Pack(const std::vector<Tensor> &fields) {
+        Tensor x;
+        x.pack(fields);
+        return x;
+    }
+
 #undef FAIL_ARG
 #undef FAIL_SIZE
 

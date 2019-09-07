@@ -50,6 +50,10 @@ namespace ts {
                 m_outputs = std::vector<dragon::Tensor>(outputs.begin(), outputs.end());
             }
 
+            void clear_inputs() { m_inputs.clear(); }
+
+            void clear_outputs() { m_outputs.clear(); }
+
             Tensor Input(int i) {
                 if (i >= 0) return m_inputs[i];
                 return m_inputs[int(m_inputs.size()) + i];
