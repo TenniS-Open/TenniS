@@ -1175,6 +1175,21 @@ spatial_scale (float, optional, default=1.0) – The inverse of total down-sampl
 sampling_ratio (int, optional, default=2) – The number of sampling grids for each RoI bin.
 ```
 
+### _dragon_pooling2d_padding(x, ksize, stride) -> dynamic_padding
+描述：  
+- `x` `Tensor4D` 预计要进行 padding 的数据
+- `ksize` `Int[4]`
+在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+- `stride` `Int[4]`
+在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+- `dynamic_padding`  `Int[4, 2]`输出的padding形式，为4x2维  
+- `ceil` `Bool` if ceil when calculate output size.
+
+参数：  
+- `auto_pad` `String` 为 `SAME_UPPER`、`SAME_LOWER`、`VALID`  
+See `Dragon` for more details.
 
 ## tile_v2 (x..device, repeats..host) -> y..device = delete
 
