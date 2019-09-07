@@ -48,7 +48,7 @@ namespace ts {
             supper::init();
 
             m_scale = tensor::to_float(get(name::scale));
-            m_dim = tensor::to_int(get(name::scale));
+            m_dim = tensor::to_int(get(name::dim));
 
             if (m_scale < 1e-5) {
                 TS_LOG_ERROR << "sample scale must greater than 1e-5, got" << m_scale << eject;
@@ -81,7 +81,7 @@ namespace ts {
 
             auto &x = stack[0];
 
-            const auto max_dim = x.dims();
+            const auto max_dim = int(x.dims());
             auto fixed_dim = m_dim < 0 ? max_dim + m_dim : m_dim;
 
             if (fixed_dim < 0 || fixed_dim >= (max_dim - 1)) {
@@ -105,7 +105,7 @@ namespace ts {
 
             auto &x = stack[0];
 
-            const auto max_dim = x.dims();
+            const auto max_dim = int(x.dims());
             auto fixed_dim = m_dim < 0 ? max_dim + m_dim : m_dim;
 
             if (fixed_dim < 0 || fixed_dim >= (max_dim - 1)) {
@@ -116,8 +116,8 @@ namespace ts {
 
             auto &shape = x.sizes();
 
-            m_sample_size.data<int32_t>(0) = int32_t(shape[fixed_dim] * m_scale);
-            m_sample_size.data<int32_t>(1) = int32_t(shape[fixed_dim + 1] * m_scale);
+            m_sample_size.data<int32_t>(0) = int32_t(std::floor(shape[fixed_dim] * m_scale));
+            m_sample_size.data<int32_t>(1) = int32_t(std::floor(shape[fixed_dim + 1] * m_scale));
 
             stack.push(m_sample_size);
             stack.push(m_sample_affine);
