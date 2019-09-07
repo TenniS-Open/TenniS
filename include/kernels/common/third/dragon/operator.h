@@ -134,6 +134,8 @@ namespace ts {
         using OperatorBase::OutputSize; \
         using OperatorBase::DTypeHelper; \
         using OperatorBase::ws; \
+        using OperatorBase::clear_inputs; \
+        using OperatorBase::clear_outputs; \
         using Operator<Context>::ctx
     }
 }

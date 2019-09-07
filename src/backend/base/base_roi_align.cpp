@@ -37,9 +37,11 @@ namespace ts {
             TS_AUTO_ASSERT(stack.size() == 2);
             TS_AUTO_ASSERT(stack[0].dtype() == stack[1].dtype());
 
+            auto memory_device = this->running_memory_device();
+
             std::vector<Tensor> inputs;
             for (size_t i = 0; i < stack.size(); ++i) {
-                inputs.emplace_back(stack[i]);
+                inputs.emplace_back(stack[i].view(memory_device));
             }
 
             auto outputs = roi_align(inputs, m_pool_h, m_pool_w, m_spatial_scale, m_sampling_ratio);

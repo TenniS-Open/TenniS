@@ -54,10 +54,12 @@ namespace ts {
 
         int Proposal::run(Stack &stack) {
             TS_AUTO_ASSERT(stack.size() >= 3);
+            
+            auto memory_device = this->running_memory_device();
 
             std::vector<Tensor> inputs;
             for (size_t i = 0; i < stack.size(); ++i) {
-                inputs.emplace_back(stack[i]);
+                inputs.emplace_back(stack[i].view(memory_device));
             }
 
             auto outputs = proposal(inputs,
