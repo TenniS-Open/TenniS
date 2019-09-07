@@ -89,12 +89,13 @@ def register_layer_converter(layer, converter):
     layer2converter[layer] = converter
 
 
-def convert(input_file, output_file, check_graph=False):
+def convert(input_file, output_file, check_graph=False, specific=None):
     """
     convert onnx
     :param input_file: onnx.ModelProto or param can parse into onnx.load(param)
     :param output_file: str of path to file
     :param check_graph: if call onnx.checker.check_graph
+    :param specific: dict of converter
     :return: ts.Module
     """
     onnx_model = None
@@ -210,6 +211,10 @@ def convert(input_file, output_file, check_graph=False):
         "Softmax": convert_softmax_layer,
     }
     layer_converters.update(layer2converter)
+    if specific is not None:
+        if not isinstance(specific, dict):
+            raise Exception("specific must be dict, got {}".format(type(specific)))
+        layer_converters.update(specific)
 
     print("==================== Converting ====================")
     # convert each node
@@ -256,7 +261,6 @@ def convert(input_file, output_file, check_graph=False):
     module.load(ts_outputs)
 
     # sort inputs
-    print(ts_inputs)
     module.sort_inputs(ts_inputs)
 
     with open(output_file, "wb") as fo:

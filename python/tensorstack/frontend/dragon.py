@@ -11,6 +11,17 @@ from .. import device
 
 import numpy
 
+class Name(object):
+    class Layer(object):
+        pooling2d_padding = "_dragon_pooling2d_padding"
+
+    auto_pad = "auto_pad"
+
+    NOTSET = "NOTSET"
+    SAME_UPPER = "SAME_UPPER"
+    SAME_LOWER = "SAME_LOWER"
+    VALID = "VALID"
+
 
 def proposal(output_names,
              inputs,
@@ -89,3 +100,64 @@ def roi_align(output_names,
     node.set("sampling_ratio", sampling_ratio, dtype=numpy.int32)
 
     return [menu.field(name=output_names[i], input=node, offset=i) for i in range(len(output_names))]
+
+
+def pooling2d_padding(name, x, padding, ksize, stride, auto_pad=Name.NOTSET, ceil_mode=True):
+    assert isinstance(x, Node)
+    assert auto_pad in {Name.NOTSET, Name.SAME_LOWER, Name.SAME_UPPER, Name.VALID}
+
+    padding = zoo.adjust_padding(padding, format=zoo.Name.NCHW)
+    ksize = zoo.adjust_ksize(ksize, format=zoo.Name.NCHW)
+    stride = zoo.adjust_stride(stride, format=zoo.Name.NCHW)
+
+    if auto_pad not in {Name.NOTSET, Name.SAME_UPPER, Name.SAME_LOWER, Name.VALID}:
+        raise NotImplementedError("auto_pad = {}".format(auto_pad))
+
+    # param
+    padding = zoo.to_const(padding, "padding")
+
+    # input
+    ksize = zoo.to_node(ksize, name="_const_" + name + "_ksize", dtype=numpy.int32, device=device.CPU)
+    stride = zoo.to_node(stride, name="_const_" + name + "_stride", dtype=numpy.int32, device=device.CPU)
+
+    # operator
+    node = menu.op(name=name, op_name=Name.Layer.pooling2d_padding, inputs=[x, ksize, stride])
+    node.set(zoo.Name.padding, padding, numpy.int32)
+    node.set(Name.auto_pad, auto_pad)
+    node.set("ceil", ceil_mode, numpy.bool)
+
+    return node
+
+
+def pooling2d(name, x, ksize, stride, type=zoo.Type.pooling_type.max, format=zoo.Name.NCHW,
+              padding=None,
+              padding_type=zoo.Type.padding_type.black,
+              auto_pad=Name.VALID,
+              ceil_mode=None):
+    assert isinstance(x, Node)
+
+    if ceil_mode is None:
+        ceil_mode = True
+
+    padding = zoo.adjust_padding(padding, format=format)
+    ksize = zoo.adjust_ksize(ksize, format=format)
+    stride = zoo.adjust_stride(stride, format=format)
+
+    if format != zoo.Name.NCHW:
+        raise NotImplementedError("Dragon format = {}".format(format))
+
+    if padding is None:
+        padding = zoo.Default.padding()
+    # param
+    static_padding = zoo.to_const(padding, "padding")
+
+    # input
+    ksize = zoo.to_node(ksize, name="_const_" + name + "_ksize", dtype=numpy.int32, device=device.CPU)
+    stride = zoo.to_node(stride, name="_const_" + name + "_stride", dtype=numpy.int32, device=device.CPU)
+
+    # operator
+    dynamic_padding = pooling2d_padding(name="_op_" + name + "_dragon_padding",
+                                        x=x, padding=static_padding, ksize=ksize, stride=stride, auto_pad=auto_pad, ceil_mode=ceil_mode)
+
+    return zoo.pooling2d_v2(name=name, x=x, ksize=ksize, stride=stride,
+                            type=type, format=format, padding=dynamic_padding, padding_type=padding_type)

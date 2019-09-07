@@ -10,6 +10,14 @@ from ..onnx.converter import topy
 import numpy
 
 
+specific_layer2converter = {
+}
+
+
+def register_specific_layer_converter(layer, converter):
+    specific_layer2converter[layer] = converter
+
+
 def convert(input_file, output_file, check_graph=False):
     """
     convert onnx
@@ -18,7 +26,102 @@ def convert(input_file, output_file, check_graph=False):
     :param check_graph: if call onnx.checker.check_graph
     :return: ts.Module
     """
-    return convert_onnx(input_file, output_file, check_graph)
+    return convert_onnx(input_file, output_file, check_graph, specific_layer2converter)
+
+
+def convert_pooling2d_layer(node, input_nodes, output_names):
+    # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} -> {} ]=-".format(node.op_type, [n.name for n in input_nodes], output_names))
+
+    import tensorstack.frontend.onnx as onnx_node
+    from ..onnx.converter import Name
+
+    attribute = node.attribute
+    attr_dict = {}
+    for attr in attribute:
+        attr_dict[str(attr.name)] = topy(attr)
+
+    assert len(input_nodes) == 1
+    assert len(output_names) == 1
+
+    node_name = output_names[0]
+
+    x = input_nodes[0]
+
+    op_type = node.op_type
+    onnx_op_type_to_ts_pool_type = {
+        "MaxPool": ts.zoo.Type.pooling_type.max,
+        "AveragePool": ts.zoo.Type.pooling_type.avg,
+    }
+
+    auto_pad = None
+    if Name.Attr.auto_pad in attr_dict:
+        auto_pad = attr_dict[Name.Attr.auto_pad]
+        print("--##    AutoPad: {}".format(auto_pad))
+
+    kernel_shape = attr_dict[Name.Attr.kernel_shape]
+    print("--##    KernelShape: {}".format(kernel_shape))
+
+    pads = attr_dict[Name.Attr.pads]
+    print("--##    Pads: {}".format(pads))
+
+    storage_order = 0
+    if Name.Attr.storage_order in attr_dict:
+        storage_order = attr_dict[Name.Attr.storage_order]
+        print("--##    StorageOrder: {}".format(storage_order))
+
+    strides = attr_dict[Name.Attr.strides]
+    print("--##    Strides: {}".format(strides))
+
+    count_include_pad = False
+    if Name.Attr.count_include_pad in attr_dict:
+        count_include_pad = attr_dict[Name.Attr.count_include_pad] != 0
+    ceil_mode = None
+    if Name.Attr.ceil_mode in attr_dict:
+        ceil_mode = attr_dict[Name.Attr.ceil_mode] != 0
+
+    if ceil_mode is not None:
+        raise NotImplementedError("ceil_mode = {}".format(auto_pad))
+
+    if auto_pad is None:
+        auto_pad = Name.VALID
+    else:
+        raise NotImplementedError("auto_pad = {}".format(auto_pad))
+
+    if storage_order != 0:
+        raise NotImplementedError("storage_order = {}".format(storage_order))
+
+    if len(kernel_shape) != 2:
+        raise NotImplementedError("kernel_shape = {}".format(kernel_shape))
+
+    if len(pads) != 4:
+        raise NotImplementedError("pads = {}".format(pads))
+
+    if len(strides) != 2:
+        raise NotImplementedError("strides = {}".format(strides))
+
+    if op_type not in onnx_op_type_to_ts_pool_type:
+        raise NotImplementedError("pooling type = {}".format(op_type))
+    pool_type = onnx_op_type_to_ts_pool_type[op_type]
+
+    ts_padding_type = ts.zoo.Type.padding_type.black
+    if count_include_pad:
+        ts_padding_type = ts.zoo.Type.padding_type.white
+
+    ts_node = ts.frontend.dragon.pooling2d(node_name, x=x,
+                                           ksize=[1, 1, kernel_shape[0], kernel_shape[1]],
+                                           stride=[1, 1, strides[0], strides[1]],
+                                           type=pool_type,
+                                           format=ts.zoo.Name.NCHW,
+                                           padding=[[0, 0], [0, 0], [pads[0], pads[2]], [pads[1], pads[3]]],
+                                           padding_type=ts_padding_type,
+                                           auto_pad=auto_pad,
+                                           ceil_mode=ceil_mode)
+    return ts_node,
+
+
+register_specific_layer_converter("MaxPool", convert_pooling2d_layer)
+register_specific_layer_converter("AveragePool", convert_pooling2d_layer)
 
 
 aten_layer2converter = {
