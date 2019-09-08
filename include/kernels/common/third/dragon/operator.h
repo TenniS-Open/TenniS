@@ -107,12 +107,32 @@ namespace ts {
 
             const std::string &type() const { return m_type; }
 
+            void temp(dragon::Tensor *tmp) { m_temp.insert(tmp); }
+
+            void temp(dragon::Tensor &tmp) { return temp(&tmp); }
+
+            void erase_temp(dragon::Tensor *tmp) { m_temp.erase(tmp); }
+
+            void erase_temp(dragon::Tensor &tmp) { erase_temp(&tmp); }
+
+            void clear_temp() { m_temp.clear(); }
+
+            void clean() {
+                m_inputs.clear();
+                m_outputs.clear();
+                for (auto &tmp : m_temp) {
+                    tmp->dispose();
+                }
+            }
+
         private:
             OperatorDef m_def;
             Workspace *m_ws;
             std::vector<Tensor> m_inputs;
             std::vector<Tensor> m_outputs;
             std::string m_type;
+
+            std::set<dragon::Tensor*> m_temp;
         };
 
         template<typename Context>
@@ -136,6 +156,7 @@ namespace ts {
         using OperatorBase::ws; \
         using OperatorBase::clear_inputs; \
         using OperatorBase::clear_outputs; \
+        using OperatorBase::temp; \
         using Operator<Context>::ctx
     }
 }

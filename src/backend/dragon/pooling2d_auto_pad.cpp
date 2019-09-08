@@ -4,6 +4,8 @@
 
 #include "backend/dragon/pooling2d_auto_pad.h"
 
+#include <array>
+
 #include "backend/name.h"
 #include "core/tensor_builder.h"
 #include "utils/assert.h"
