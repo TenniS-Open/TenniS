@@ -34,23 +34,18 @@ class ProposalOp final : public Operator<Context> {
           min_level(OperatorBase::Arg<int64_t>("min_level", 2)),
           max_level(OperatorBase::Arg<int64_t>("max_level", 5)),
           canonical_level(OperatorBase::Arg<int64_t>("canonical_level", 4)),
-          canonical_scale(OperatorBase::Arg<int64_t>("canonical_scale", 224)) {}
+          canonical_scale(OperatorBase::Arg<int64_t>("canonical_scale", 224)) {
+        temp(anchors_);
+        temp(proposals_);
+        temp(roi_indices_);
+        temp(nms_mask_);
+    }
     USE_OPERATOR_FUNCTIONS;
 
     void RunOnDevice() override;
 
     template <typename T> void RunWithType(
         const T* scores, const T* bbox_deltas);
-
-    void clear() {
-        clear_inputs();
-        clear_outputs();
-
-        anchors_.dispose();
-        proposals_.dispose();
-        roi_indices_.dispose();
-        nms_mask_.dispose();
-    }
 
  protected:
     vector<int64_t> strides;

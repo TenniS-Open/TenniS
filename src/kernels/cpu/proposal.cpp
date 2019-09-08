@@ -32,23 +32,12 @@ namespace ts {
             }
 
             int run(Stack &stack) override {
-                std::vector<Tensor> inputs;
-                for (size_t i = 0; i < stack.size(); ++i) {
-                    inputs.emplace_back(stack[i]);
-                }
-                auto memory_device = this->running_memory_device();
-                for (auto &input : inputs) {
-                    input = input.view(memory_device);
-                }
-                m_dragon->bind_inputs(inputs);
                 m_dragon->bind_outputs(m_output_size);
 
+                m_dragon->bind_inputs(std::vector<Tensor>(stack.begin(), stack.end()));
                 m_dragon->RunOnDevice();
-
                 stack.push(Tensor::Pack(m_dragon->outputs()));
-                m_dragon->clear_inputs();
-                m_dragon->clear_outputs();
-                m_dragon->clear();
+                m_dragon->clean();
                 return 1;
             }
 

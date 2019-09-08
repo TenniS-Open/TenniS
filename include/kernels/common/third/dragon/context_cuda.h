@@ -28,7 +28,7 @@ namespace ts {
         };
 
 #else
-        class CUDAContext : public BaseContext {}
+        class CUDAContext : public BaseContext {};
 #endif
     }
 }
