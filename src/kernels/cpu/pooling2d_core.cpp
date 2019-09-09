@@ -7,9 +7,6 @@
 #include "kernels/cpu/pooling2d_core.h"
 
 #include <algorithm>
-#ifdef TS_USE_OPENMP
-#include <kernels/common/openmp.h>
-#endif
 
 namespace ts {
     namespace cpu {
@@ -27,9 +24,6 @@ namespace ts {
             int input_channel_size = input_h * input_w;
             int output_channel_size = output_h * output_w;
             for (int n = 0; n < output_shape[0]; n++) {
-#ifdef TS_USE_OPENMP
-#pragma omp parallel for num_threads(openmp_threads())
-#endif
                 for (int c = 0; c < output_shape[1]; c++) {
                     for (int oh = 0; oh < output_shape[2]; oh++) {
                         int ihStart = oh * stride.height - m_padding.top;
