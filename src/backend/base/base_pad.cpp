@@ -52,11 +52,6 @@ namespace ts {
 
             auto x = stack[0].view(memory_device);
 
-            if (x.has_shape(output[0].sizes())) {
-                stack.push(x);
-                return 1;
-            }
-
             auto padding_tensor = tensor::cast(INT32, stack[1]);
 
             bool is_zero_padding = true;
