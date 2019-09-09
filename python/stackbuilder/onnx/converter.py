@@ -141,6 +141,7 @@ def convert(input_file, output_file, check_graph=False, specific=None):
     print ("Got {} initializer.".format(len(initialized)))
 
     input = {}  # str, shape
+    graph_input_names = []
     # input
     print("==================== Input ====================")
     for value_info in onnx_graph.input:
@@ -152,6 +153,7 @@ def convert(input_file, output_file, check_graph=False, specific=None):
         shape = to_tensor_shape(tensor_type.shape)
         print("{}: {}, {}".format(name, elem_type, shape))
         input[name] = (elem_type, shape)
+        graph_input_names.append(name)
 
     output = {} # str, shape
     graph_output_names = []
@@ -173,7 +175,7 @@ def convert(input_file, output_file, check_graph=False, specific=None):
     # get ts_inputs
     ts_inputs = []
     # no loop in graph
-    for name in input.keys():
+    for name in graph_input_names:
         value = input[name]
         elem_type = value[0]
         shape = value[1]
