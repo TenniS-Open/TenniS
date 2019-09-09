@@ -65,23 +65,30 @@ namespace ts {
         }
 
         // VALID: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
-        static inline int forward_valid(int input_spatial_shape, int strides_spatial_shape) {
-            return int(std::ceil(input_spatial_shape / float(strides_spatial_shape)));
+        static inline int forward_valid(int x, int ksize, int pad_l, int pad_r, int stride, bool ceil_mode) {
+            int y;
+            if (ceil_mode) {
+                y = std::ceil((x + pad_l + pad_r - ksize) / (float) stride) + 1;
+            } else {
+                y = std::floor((x + pad_l + pad_r - ksize) / (float) stride) + 1;
+            }
+            if ((y - 1) * stride >= (x + pad_l + pad_r)) y--;
+            return y;
         }
 
-        static inline Size2D pooling2d_forward_valid(const Size2D &x, const Stride2D &stride) {
+        static inline Size2D pooling2d_forward_valid(const Size2D &x, const KSize2D &ksize, const Padding2D &padding, const Stride2D &stride, bool ceil_mode) {
             Size2D y;
-            y.height = forward_valid(x.height, stride.height);
-            y.width = forward_valid(x.width, stride.width);
+            y.height = forward_valid(x.height, ksize.height, padding.top, padding.bottom, stride.height, ceil_mode);
+            y.width = forward_valid(x.width, ksize.width, padding.left, padding.right, stride.width, ceil_mode);
             return y;
         }
 
         static inline Padding2D dynamic_padding_valid(const Size2D &input_size, const Padding2D &static_padding, const KSize2D &ksize,
-                                                       const Stride2D &stride) {
+                                                       const Stride2D &stride, bool ceil_mode) {
 
             Padding2D dynamic_padding;
 
-            Size2D expected_output_size = pooling2d_forward_valid(input_size, stride);
+            Size2D expected_output_size = pooling2d_forward_valid(input_size, ksize, static_padding, stride, ceil_mode);
             Size2D expected_input_size = pooling2d_backward(expected_output_size, static_padding, ksize, stride);
             dynamic_padding.top = static_padding.top;
             dynamic_padding.left = static_padding.left;
@@ -126,13 +133,7 @@ namespace ts {
             if (padding == Pooling2DAutoPad::AutoPadType::SAME_UPPER) { DEFINE_SAME_PADDING(pad_l, pad_r); }
             else { DEFINE_SAME_PADDING(pad_r, pad_l); }
 
-
-            if (ceil_mode) {
-                y = std::ceil((x + pad_l + pad_r - ksize) / (float) stride) + 1;
-            } else {
-                y = std::floor((x + pad_l + pad_r - ksize) / (float) stride) + 1;
-            }
-            if ((y - 1) * stride >= (x + pad_l + pad_r)) y--;
+            y = int(std::ceil(float(x) / stride));
 
             return out;
         }
@@ -192,10 +193,10 @@ namespace ts {
 
             switch (this->auto_pad) {
                 case AutoPadType::NOTSET:
-                    dynamic_padding = dynamic_padding_valid(input_size, static_padding, ksize, stride);
+                    dynamic_padding = dynamic_padding_valid(input_size, static_padding, ksize, stride, ceil_mode);
                     break;
                 case AutoPadType::VALID:
-                    dynamic_padding = dynamic_padding_valid(input_size, static_padding, ksize, stride);
+                    dynamic_padding = dynamic_padding_valid(input_size, static_padding, ksize, stride, ceil_mode);
                     break;
                 case AutoPadType::SAME_UPPER:
                     dynamic_padding = dynamic_padding_same(input_size, static_padding, ksize, stride,
