@@ -5,6 +5,8 @@ if (MINGW)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 
     set(OPENMP_LIBRARY)
+elseif (IOS)
+    message(FATAL_ERROR "IOS not supported OpenMP")
 elseif (APPLE)
     # For the libomp installed by brew
     include_directories("/usr/local/opt/libomp/include")
