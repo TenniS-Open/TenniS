@@ -7,6 +7,9 @@
 #include <core/device.h>
 #include <vector>
 #include <algorithm>
+#ifdef TS_USE_OPENMP
+#include <kernels/common/openmp.h>
+#endif
 
 
 namespace ts {
@@ -49,6 +52,9 @@ namespace ts {
             const T *src_im = x->data<T>() + x_offset;
             T *dst_im = y->data<T>() + y_offset;
 
+#ifdef TS_USE_OPENMP
+#pragma omp parallel for num_threads(openmp_threads())
+#endif
             for (int n_y_d = 0; n_y_d < dst_height; n_y_d++) {
                 for (int n_x_d = 0; n_x_d < dst_width; n_x_d++) {
                     vec3d<float> cur;
@@ -108,6 +114,9 @@ namespace ts {
             const T *src_im = x->data<T>() + x_offset;
             T *dst_im = y->data<T>() + y_offset;
 
+#ifdef TS_USE_OPENMP
+#pragma omp parallel for num_threads(openmp_threads())
+#endif
             for (int n_y_d = 0; n_y_d < dst_height; n_y_d++) {
                 for (int n_x_d = 0; n_x_d < dst_width; n_x_d++) {
 
@@ -163,6 +172,9 @@ namespace ts {
             int srcrows = x_width * channels;
             int dstrows = y_width * channels;
 
+//#ifdef TS_USE_OPENMP
+//#pragma omp parallel for num_threads(openmp_threads())
+//#endif
             for (int m = 0; m < y_height; m++) {
                 for (int n = 0; n < y_width; n++) {
                     vec3d<float> cur;
@@ -185,62 +197,61 @@ namespace ts {
                         for (int k = 0; k < channels; k++) {
                             pdst[m * dstrows + n * channels + k] = outer_value;
                         }
-                        continue;
+                        //continue;
                     }
+                    else{
+                        if (sy < 1) {
+                            fy = 0;
+                            sy = 1;
+                        }
+                        if (sy >= x_height - 3) {
+                            fy = 0;
+                            sy = x_height - 3;
+                        }
+                        if (sx < 1) {
+                            fx = 0;
+                            sx = 1;
+                        }
+                        if (sx >= x_width - 3) {
+                            fx = 0;
+                            sx = x_width - 3;
+                        }
 
-                    if (sy < 1) {
-                        fy = 0;
-                        sy = 1;
+                        coeffsY[0] = ((A * (fy + 1) - 5 * A) * (fy + 1) + 8 * A) * (fy + 1) - 4 * A;
+                        coeffsY[1] = ((A + 2) * fy - (A + 3)) * fy * fy + 1;
+                        coeffsY[2] = ((A + 2) * (1 - fy) - (A + 3)) * (1 - fy) * (1 - fy) + 1;
+                        coeffsY[3] = 1.f - coeffsY[0] - coeffsY[1] - coeffsY[2];
+
+                        coeffsX[0] = ((A * (fx + 1) - 5 * A) * (fx + 1) + 8 * A) * (fx + 1) - 4 * A;
+                        coeffsX[1] = ((A + 2) * fx - (A + 3)) * fx * fx + 1;
+                        coeffsX[2] = ((A + 2) * (1 - fx) - (A + 3)) * (1 - fx) * (1 - fx) + 1;
+                        coeffsX[3] = 1.f - coeffsX[0] - coeffsX[1] - coeffsX[2];
+
+                        for (int k = 0; k < channels; k++) {
+                            pdst[m * dstrows + n * channels + k] = clamp<T, double>(((
+                                    psrc[(sy - 1) * srcrows + (sx - 1) * channels + k] * coeffsX[0] * coeffsY[0] +
+                                    psrc[(sy) * srcrows + (sx - 1) * channels + k] * coeffsX[0] * coeffsY[1] +
+                                    psrc[(sy + 1) * srcrows + (sx - 1) * channels + k] * coeffsX[0] * coeffsY[2] +
+                                    psrc[(sy + 2) * srcrows + (sx - 1) * channels + k] * coeffsX[0] * coeffsY[3] +
+
+                                    psrc[(sy - 1) * srcrows + (sx) * channels + k] * coeffsX[1] * coeffsY[0] +
+                                    psrc[(sy) * srcrows + (sx) * channels + k] * coeffsX[1] * coeffsY[1] +
+                                    psrc[(sy + 1) * srcrows + (sx) * channels + k] * coeffsX[1] * coeffsY[2] +
+                                    psrc[(sy + 2) * srcrows + (sx) * channels + k] * coeffsX[1] * coeffsY[3] +
+
+                                    psrc[(sy - 1) * srcrows + (sx + 1) * channels + k] * coeffsX[2] * coeffsY[0] +
+                                    psrc[(sy) * srcrows + (sx + 1) * channels + k] * coeffsX[2] * coeffsY[1] +
+                                    psrc[(sy + 1) * srcrows + (sx + 1) * channels + k] * coeffsX[2] * coeffsY[2] +
+                                    psrc[(sy + 2) * srcrows + (sx + 1) * channels + k] * coeffsX[2] * coeffsY[3] +
+
+                                    psrc[(sy - 1) * srcrows + (sx + 2) * channels + k] * coeffsX[3] * coeffsY[0] +
+                                    psrc[(sy) * srcrows + (sx + 2) * channels + k] * coeffsX[3] * coeffsY[1] +
+                                    psrc[(sy + 1) * srcrows + (sx + 2) * channels + k] * coeffsX[3] * coeffsY[2] +
+                                    psrc[(sy + 2) * srcrows + (sx + 2) * channels + k] * coeffsX[3] * coeffsY[3])));
+
+                        }
                     }
-                    if (sy >= x_height - 3) {
-                        fy = 0;
-                        sy = x_height - 3;
-                    }
-                    if (sx < 1) {
-                        fx = 0;
-                        sx = 1;
-                    }
-                    if (sx >= x_width - 3) {
-                        fx = 0;
-                        sx = x_width - 3;
-                    }
-
-                    coeffsY[0] = ((A * (fy + 1) - 5 * A) * (fy + 1) + 8 * A) * (fy + 1) - 4 * A;
-                    coeffsY[1] = ((A + 2) * fy - (A + 3)) * fy * fy + 1;
-                    coeffsY[2] = ((A + 2) * (1 - fy) - (A + 3)) * (1 - fy) * (1 - fy) + 1;
-                    coeffsY[3] = 1.f - coeffsY[0] - coeffsY[1] - coeffsY[2];
-
-                    coeffsX[0] = ((A * (fx + 1) - 5 * A) * (fx + 1) + 8 * A) * (fx + 1) - 4 * A;
-                    coeffsX[1] = ((A + 2) * fx - (A + 3)) * fx * fx + 1;
-                    coeffsX[2] = ((A + 2) * (1 - fx) - (A + 3)) * (1 - fx) * (1 - fx) + 1;
-                    coeffsX[3] = 1.f - coeffsX[0] - coeffsX[1] - coeffsX[2];
-
-                    for (int k = 0; k < channels; k++) {
-                        pdst[m * dstrows + n * channels + k] = clamp<T, double>(((
-                                psrc[(sy - 1) * srcrows + (sx - 1) * channels + k] * coeffsX[0] * coeffsY[0] +
-                                psrc[(sy) * srcrows + (sx - 1) * channels + k] * coeffsX[0] * coeffsY[1] +
-                                psrc[(sy + 1) * srcrows + (sx - 1) * channels + k] * coeffsX[0] * coeffsY[2] +
-                                psrc[(sy + 2) * srcrows + (sx - 1) * channels + k] * coeffsX[0] * coeffsY[3] +
-
-                                psrc[(sy - 1) * srcrows + (sx) * channels + k] * coeffsX[1] * coeffsY[0] +
-                                psrc[(sy) * srcrows + (sx) * channels + k] * coeffsX[1] * coeffsY[1] +
-                                psrc[(sy + 1) * srcrows + (sx) * channels + k] * coeffsX[1] * coeffsY[2] +
-                                psrc[(sy + 2) * srcrows + (sx) * channels + k] * coeffsX[1] * coeffsY[3] +
-
-                                psrc[(sy - 1) * srcrows + (sx + 1) * channels + k] * coeffsX[2] * coeffsY[0] +
-                                psrc[(sy) * srcrows + (sx + 1) * channels + k] * coeffsX[2] * coeffsY[1] +
-                                psrc[(sy + 1) * srcrows + (sx + 1) * channels + k] * coeffsX[2] * coeffsY[2] +
-                                psrc[(sy + 2) * srcrows + (sx + 1) * channels + k] * coeffsX[2] * coeffsY[3] +
-
-                                psrc[(sy - 1) * srcrows + (sx + 2) * channels + k] * coeffsX[3] * coeffsY[0] +
-                                psrc[(sy) * srcrows + (sx + 2) * channels + k] * coeffsX[3] * coeffsY[1] +
-                                psrc[(sy + 1) * srcrows + (sx + 2) * channels + k] * coeffsX[3] * coeffsY[2] +
-                                psrc[(sy + 2) * srcrows + (sx + 2) * channels + k] * coeffsX[3] * coeffsY[3])));
-
-                    }
-
                 }
-
             }
         }
 
