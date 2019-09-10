@@ -19,7 +19,6 @@
 #include "kernels/common/simd.h"
 
 
-#include <omp.h>
 #include <core/dtype.h>
 #include <core/tensor.h>
 
