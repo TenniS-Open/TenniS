@@ -5,6 +5,9 @@
 #include <backend/name.h>
 #include <core/device.h>
 #include <utils/assert.h>
+#ifdef TS_USE_OPENMP
+#include <kernels/common/openmp.h>
+#endif
 
 namespace ts {
     namespace cpu {
@@ -23,6 +26,9 @@ namespace ts {
             double bias_x = lfx_scl / 2 - 0.5;
             double bias_y = lfy_scl / 2 - 0.5;
 
+#ifdef TS_USE_OPENMP
+#pragma omp parallel for num_threads(openmp_threads())
+#endif
             for (int n_y_d = 0; n_y_d < dst_height; n_y_d++) {
                 for (int n_x_d = 0; n_x_d < dst_width; n_x_d++) {
                     double lf_x_s = lfx_scl * n_x_d + bias_x;
@@ -65,6 +71,9 @@ namespace ts {
             int srcrows = src_width * channels;
             int dstrows = dst_width * channels;
 
+#ifdef TS_USE_OPENMP
+#pragma omp parallel for num_threads(openmp_threads())
+#endif
             for (int j = 0; j < dst_height; ++j) {
                 double fy = (double) ((j + 0.5) * scale_y - 0.5);
                 int sy = floor(fy);
@@ -149,6 +158,9 @@ namespace ts {
             double bias_x = lfx_scl / 2 - 0.5;
             double bias_y = lfy_scl / 2 - 0.5;
 
+#ifdef TS_USE_OPENMP
+#pragma omp parallel for num_threads(openmp_threads())
+#endif
             for (int n_y_d = 0; n_y_d < dst_height; n_y_d++) {
                 for (int n_x_d = 0; n_x_d < dst_width; n_x_d++) {
                     double lf_x_s = lfx_scl * n_x_d + bias_x;
