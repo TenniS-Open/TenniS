@@ -383,16 +383,40 @@ if (WIN32)
     set_target_properties(${PROJECT_NAME}_LIB PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${LOCAL_OUTPUT_DIR}/${ENV_RUNTIME_DIR})
 endif()
 
+if (IOS)
+    set(TS_BUILD_FRAMEWORK ON)
+else (IOS)
+    set(TS_BUILD_FRAMEWORK OFF)
+endif (IOS)
+
+if (TS_BUILD_FRAMEWORK)
+    set_target_properties(${PROJECT_NAME}_LIB PROPERTIES
+            FRAMEWORK TRUE
+            FRAMEWORK_VERSION A
+            MACOSX_FRAMEWORK_IDENTIFIER com.seetatech.sdk.TensorStack
+            # MACOSX_FRAMEWORK_INFO_PLIST Info.plist
+            # "current version" in semantic format in Mach-O binary file
+            VERSION 0.3.3
+            # "compatibility version" in semantic format in Mach-O binary file
+            SOVERSION 0.3.3
+            # PUBLIC_HEADER "${FRAMEWORK_PUBLIC_HEADER_FILES}"
+            # RESOURCE      "${RESOURCE_FILES1}"
+            XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "iPhone Developer"
+            )
+    install(DIRECTORY ${SOLUTION_DIR}/include/api
+            DESTINATION "framework/TensorStack.framework/Headers"
+            )
+else ()
+    install(DIRECTORY ${SOLUTION_DIR}/include/api
+            DESTINATION ${ENV_HEADER_DIR}
+            )
+endif (TS_BUILD_FRAMEWORK)
 
 install(TARGETS ${PROJECT_NAME}_LIB
         RUNTIME DESTINATION ${ENV_RUNTIME_DIR}
         LIBRARY DESTINATION ${ENV_LIBRARY_DIR}
         ARCHIVE DESTINATION ${ENV_ARCHIVE_DIR}
-        )
-
-# TODO: update headers install script
-install(DIRECTORY ${SOLUTION_DIR}/include/api
-        DESTINATION ${ENV_HEADER_DIR}
+        FRAMEWORK DESTINATION framework
         )
 
 install(FILES ${SOLUTION_DIR}/cmake/FindTensorStack.cmake
