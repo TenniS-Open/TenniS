@@ -100,17 +100,17 @@ namespace ts {
         }
 
         template<typename T>
-        self &operator()(const T &message) {
+        self &operator()(T &&message) {
             if (m_level == LOG_NONE) return *this;
             if (m_level >= GlobalLogLevel()) {
-                m_buffer << message;
+                m_buffer << std::forward<T>(message);
             }
             return *this;
         }
 
         template<typename T>
-        self &operator<<(const T &message) {
-            return operator()(message);
+        self &operator<<(T &&message) {
+            return operator()(std::forward<T>(message));
         }
 
         using Method = self &(self &);
