@@ -186,3 +186,6 @@ void ProposalOp<Context>::RunOnDevice() {
 }  // namespace ts
 
 template class ts::dragon::ProposalOp<ts::dragon::CPUContext>;
+#ifdef TS_USE_CUDA
+template class ts::dragon::ProposalOp<ts::dragon::CUDAContext>;
+#endif

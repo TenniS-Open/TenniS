@@ -14,6 +14,10 @@ namespace ts {
     void gpu2gpu_converter(int dst_id, void *dst, int src_id, const void *src, size_t size);
     void cpu2gpu_converter(int dst_id, void *dst, int src_id, const void *src, size_t size);
     void gpu2cpu_converter(int dst_id, void *dst, int src_id, const void *src, size_t size);
+
+    void gpu2gpu(void *dst, const void *src, size_t size);
+    void cpu2gpu(void *dst, const void *src, size_t size);
+    void gpu2cpu(void *dst, const void *src, size_t size);
 }
 
 

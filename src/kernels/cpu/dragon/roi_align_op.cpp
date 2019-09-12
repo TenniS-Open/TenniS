@@ -39,3 +39,6 @@ void ROIAlignOp<Context>::RunOnDevice() {
 }  // namespace ts
 
 template class ts::dragon::ROIAlignOp<ts::dragon::CPUContext>;
+#ifdef TS_USE_CUDA
+template class ts::dragon::ROIAlignOp<ts::dragon::CUDAContext>;
+#endif
