@@ -32,7 +32,7 @@
 输入：`size`: `IntArray` 数组的长度，要和 `a` 的维度一致。要缩放的图像的大小，包含`-1`表示扩展  
 输出：`y`: `Tensor` 缩放后的图像   
 参数：
-- `type`: `Enum[linear=0, cubic=1] Default linear` `[Optional]` 图像缩放类型  
+- `type`: `Enum[linear=0, cubic=1, nearest=2, hard=3] Default linear` `[Optional]` 图像缩放类型  
 
 举例：  
 输入: `Tensor[1, 640, 480, 3]` 和 `[-1, 300, 300, -1]`，输出 `Tensor[1, 300, 300, 3]`。
@@ -685,7 +685,7 @@ Note: 这是对应某一个实现的版本。
 输入：`affine`: `Float[3, 3]` 仿射变换矩阵
 
 参数：
-- `type`: `Enum[linear=0, cubic=1, nearest=2] Default linear`
+- `type`: `Enum[linear=0, cubic=1, nearest=2, hard=3] Default linear`
 - `dim`: `Int Default -2`
 - `outer_value`: `Optional Float Default [0]`
 
