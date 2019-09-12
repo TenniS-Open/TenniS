@@ -2,9 +2,6 @@
 #define TENSORSTACK_KERNELS_CPU_PAD2D_ALGORITHM_H
 
 #include <core/tensor.h>
-#ifdef TS_USE_OPENMP
-#include <kernels/common/openmp.h>
-#endif
 
 namespace ts{
     namespace cpu{
