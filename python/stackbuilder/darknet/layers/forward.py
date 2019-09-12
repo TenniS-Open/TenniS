@@ -176,7 +176,7 @@ def forward_upsample_layer(l, net):
     x = net.input
 
     x = ts.zoo.sample2d(name=layer_name + "_upsample", x=x, scale=l.stride,
-                        type=ts.zoo.Type.resize2d_type.nearest, dim=-2)
+                        type=ts.zoo.Type.resize2d_type.hard, dim=-2)
 
     if l.scale != 1:
         x = ts.zoo.mul(name=layer_name + "_scale", lhs=x, rhs=ts.tensor.from_any(l.scale, numpy.float32))
