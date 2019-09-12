@@ -15,7 +15,7 @@ namespace ts {
 
         static const LogLevel FATAL = LOG_FATAL;
 
-#define CPU_FP16_NOT_SUPPORTED TS_LOG_ERROR << "CPU float16 not supported."
+#define CPU_FP16_NOT_SUPPORTED TS_LOG_ERROR << "CPU float16 not supported." << ts::eject
 
     }
 }
