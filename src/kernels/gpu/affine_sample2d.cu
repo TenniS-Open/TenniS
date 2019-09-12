@@ -131,6 +131,57 @@ namespace ts {
         }
 
         template<typename T>
+        static __global__ void
+        affine_sample2d_hard_kernel(const T *psrc, T *pdst, int size, int x_height, int x_width,
+                                    int y_height, int y_width,
+                //unsigned int x_offset, unsigned int y_offset,
+                                    int channels, float rz00, float rz01, float rz02, float rz10,
+                                    float rz11, float rz12, float rz20, float rz21, float rz22,
+                                    double data_min, double data_max,
+                                    base::AffineOuterMode outer_mode, T outer_value = T(0)) {
+            int index = blockDim.x * blockIdx.x + threadIdx.x;
+            if (index >= size) {
+                return;
+            }
+
+            int ntmp = index;
+
+            int nstep = channels * y_width;
+            int n_y_d = ntmp / nstep;
+            ntmp = ntmp % nstep;
+
+            int n_x_d = ntmp / channels;
+            int c = ntmp % channels;
+
+            auto curx = rz00 * n_x_d + rz01 * n_y_d + rz02 * 1;
+            auto cury = rz10 * n_x_d + rz11 * n_y_d + rz12 * 1;
+
+            double lf_x_s = curx;
+            double lf_y_s = cury;
+
+            auto n_x_s = int(lf_x_s);
+            auto n_y_s = int(lf_y_s);
+
+            auto inner = n_x_s >= 0 && n_x_s < x_width - 1 &&
+                         n_y_s >= 0 && n_y_s < x_height - 1;
+
+            if (!inner && outer_mode == base::AffineOuterMode::VALUE) {
+                pdst[index] = outer_value;
+                return;
+            }
+
+            n_x_s = n_x_s >= 0 ? n_x_s : 0;
+            n_x_s = n_x_s < x_width - 1 ? n_x_s : x_width - 1;
+            n_y_s = n_y_s >= 0 ? n_y_s : 0;
+            n_y_s = n_y_s < x_height - 1 ? n_y_s : x_height - 1;
+
+            pdst[index] = clamp<T, double>(
+                    data_min, data_max,
+                    psrc[(n_y_s * x_width + n_x_s) * channels + c]);
+
+        }
+
+        template<typename T>
         static __global__ void affine_sample2d_cubic_kernel(const T *psrc, T *pdst, int size, int x_height, int x_width,
                                                             int y_height, int y_width,
                 //unsigned int x_offset, unsigned int y_offset,
@@ -261,6 +312,20 @@ namespace ts {
                     T *pdst = y->data<T>() + k * y_batch_step;
 
                     affine_sample2d_nearest_kernel<T> << < CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0,
+                            cuda_stream >> >
+                            (psrc, pdst, ncount, x_height, x_width, y_height, y_width, channels,
+                                    rz00, rz01, rz02, rz10, rz11, rz12, rz20, rz21, rz22,
+                                    MIN, MAX,
+                                    outer_mode, outer_value);
+                }
+            } else if (type == Affine_Sample2DType::HARD) {
+
+                for (int k = 0; k < number; k++) {
+
+                    const T *psrc = x->data<T>() + k * x_batch_step;
+                    T *pdst = y->data<T>() + k * y_batch_step;
+
+                    affine_sample2d_hard_kernel<T> << < CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0,
                             cuda_stream >> >
                             (psrc, pdst, ncount, x_height, x_width, y_height, y_width, channels,
                                     rz00, rz01, rz02, rz10, rz11, rz12, rz20, rz21, rz22,

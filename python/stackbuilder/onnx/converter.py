@@ -1370,7 +1370,7 @@ def convert_upsample_layer(node, input_nodes, output_names):
 
     mode = attr_dict["mode"]
     mode2type = {
-        "nearest": ts.zoo.Type.resize2d_type.nearest,
+        "nearest": ts.zoo.Type.resize2d_type.hard,      # nearest means hard in TS
         "bilinear": ts.zoo.Type.resize2d_type.linear,
     }
     if mode not in mode2type:

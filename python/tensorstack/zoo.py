@@ -133,6 +133,7 @@ class Type(object):
         linear = 0
         cubic = 1
         nearest = 2
+        hard = 3
 
     class padding_type(object):
         black = 0

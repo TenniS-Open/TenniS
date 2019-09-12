@@ -17,8 +17,9 @@ namespace ts {
     namespace gpu {
 
         template<typename T>
-        static __global__ void Resize2d_ResizeImageLinear_kernel(const T* src_im, int src_width, int src_height,
-                                        int channels, T *dst_im, int dst_width, int dst_height, int size ) {
+        static __global__ void Resize2d_ResizeImageLinear_kernel(const T *src_im, int src_width, int src_height,
+                                                                 int channels, T *dst_im, int dst_width, int dst_height,
+                                                                 int size) {
             int index = blockDim.x * blockIdx.x + threadIdx.x;
             if (index >= size) {
                 return;
@@ -27,9 +28,9 @@ namespace ts {
             int ntmp = index;
 
             int nstep = channels * dst_width;
-            int n_y_d = ntmp / nstep; 
+            int n_y_d = ntmp / nstep;
             ntmp = ntmp % nstep;
-  
+
             int n_x_d = ntmp / channels;
             int c = ntmp % channels;
 
@@ -37,7 +38,7 @@ namespace ts {
             double lfy_scl = double(src_height) / dst_height;
             double bias_x = lfx_scl / 2 - 0.5;
             double bias_y = lfy_scl / 2 - 0.5;
-                    
+
             double lf_x_s = lfx_scl * n_x_d + bias_x;
             double lf_y_s = lfy_scl * n_y_d + bias_y;
 
@@ -53,21 +54,23 @@ namespace ts {
             double lf_weight_y = lf_y_s - n_y_s;
 
             dst_im[index] = (T) ((1 - lf_weight_y) * (1 - lf_weight_x) *
-                             src_im[(n_y_s * src_width + n_x_s) * channels + c] +
-                             (1 - lf_weight_y) * lf_weight_x *
-                             src_im[(n_y_s * src_width + n_x_s + 1) * channels + c] +
-                             lf_weight_y * (1 - lf_weight_x) *
-                             src_im[((n_y_s + 1) * src_width + n_x_s) * channels + c] +
-                             lf_weight_y * lf_weight_x *
-                             src_im[((n_y_s + 1) * src_width + n_x_s + 1) * channels + c]);
+                                 src_im[(n_y_s * src_width + n_x_s) * channels + c] +
+                                 (1 - lf_weight_y) * lf_weight_x *
+                                 src_im[(n_y_s * src_width + n_x_s + 1) * channels + c] +
+                                 lf_weight_y * (1 - lf_weight_x) *
+                                 src_im[((n_y_s + 1) * src_width + n_x_s) * channels + c] +
+                                 lf_weight_y * lf_weight_x *
+                                 src_im[((n_y_s + 1) * src_width + n_x_s + 1) * channels + c]);
 
- 
+
         }
 
 #ifdef TS_USE_CUDA_FP16
+
         template<>
-        __global__ void Resize2d_ResizeImageLinear_kernel<half>(const half* src_im, int src_width, int src_height,
-            int channels, half *dst_im, int dst_width, int dst_height, int size) {
+        __global__ void Resize2d_ResizeImageLinear_kernel<half>(const half *src_im, int src_width, int src_height,
+                                                                int channels, half *dst_im, int dst_width,
+                                                                int dst_height, int size) {
             int index = blockDim.x * blockIdx.x + threadIdx.x;
             if (index >= size) {
                 return;
@@ -103,23 +106,25 @@ namespace ts {
 
             half half_one = half(1.f);
 
-            dst_im[index] = (half)((half_one - lf_weight_y) * (half_one - lf_weight_x) *
-                src_im[(n_y_s * src_width + n_x_s) * channels + c] +
-                (half_one - lf_weight_y) * lf_weight_x *
-                src_im[(n_y_s * src_width + n_x_s + 1) * channels + c] +
-                lf_weight_y * (half_one - lf_weight_x) *
-                src_im[((n_y_s + 1) * src_width + n_x_s) * channels + c] +
-                lf_weight_y * lf_weight_x *
-                src_im[((n_y_s + 1) * src_width + n_x_s + 1) * channels + c]);
+            dst_im[index] = (half) ((half_one - lf_weight_y) * (half_one - lf_weight_x) *
+                                    src_im[(n_y_s * src_width + n_x_s) * channels + c] +
+                                    (half_one - lf_weight_y) * lf_weight_x *
+                                    src_im[(n_y_s * src_width + n_x_s + 1) * channels + c] +
+                                    lf_weight_y * (half_one - lf_weight_x) *
+                                    src_im[((n_y_s + 1) * src_width + n_x_s) * channels + c] +
+                                    lf_weight_y * lf_weight_x *
+                                    src_im[((n_y_s + 1) * src_width + n_x_s + 1) * channels + c]);
 
 
         }
+
 #endif
 
 
         template<typename T>
-        static __global__ void Resize2d_ResizeImageCubic_kernel(const T* src_im, int src_width, int src_height,
-                                        int channels, T *dst_im, int dst_width, int dst_height, int size ) {
+        static __global__ void Resize2d_ResizeImageCubic_kernel(const T *src_im, int src_width, int src_height,
+                                                                int channels, T *dst_im, int dst_width, int dst_height,
+                                                                int size) {
             int index = blockDim.x * blockIdx.x + threadIdx.x;
             if (index >= size) {
                 return;
@@ -128,9 +133,9 @@ namespace ts {
             int ntmp = index;
 
             int nstep = channels * dst_width;
-            int j = ntmp / nstep; 
+            int j = ntmp / nstep;
             ntmp = ntmp % nstep;
-  
+
             int i = ntmp / channels;
             int k = ntmp % channels;
 
@@ -143,7 +148,7 @@ namespace ts {
             double fy = (double) ((j + 0.5) * scale_y - 0.5);
             int sy = floor(fy);
             fy -= sy;
-                
+
             if (sy < 1) {
                 fy = 0;
                 sy = 1;
@@ -179,32 +184,34 @@ namespace ts {
             coeffsX[3] = 1.f - coeffsX[0] - coeffsX[1] - coeffsX[2];
 
             dst_im[index] = (T) ((
-                                src_im[(sy - 1) * srcrows + (sx - 1) * channels + k] * coeffsX[0] * coeffsY[0] +
-                                src_im[(sy) * srcrows + (sx - 1) * channels + k] * coeffsX[0] * coeffsY[1] +
-                                src_im[(sy + 1) * srcrows + (sx - 1) * channels + k] * coeffsX[0] * coeffsY[2] +
-                                src_im[(sy + 2) * srcrows + (sx - 1) * channels + k] * coeffsX[0] * coeffsY[3] +
+                    src_im[(sy - 1) * srcrows + (sx - 1) * channels + k] * coeffsX[0] * coeffsY[0] +
+                    src_im[(sy) * srcrows + (sx - 1) * channels + k] * coeffsX[0] * coeffsY[1] +
+                    src_im[(sy + 1) * srcrows + (sx - 1) * channels + k] * coeffsX[0] * coeffsY[2] +
+                    src_im[(sy + 2) * srcrows + (sx - 1) * channels + k] * coeffsX[0] * coeffsY[3] +
 
-                                src_im[(sy - 1) * srcrows + (sx) * channels + k] * coeffsX[1] * coeffsY[0] +
-                                src_im[(sy) * srcrows + (sx) * channels + k] * coeffsX[1] * coeffsY[1] +
-                                src_im[(sy + 1) * srcrows + (sx) * channels + k] * coeffsX[1] * coeffsY[2] +
-                                src_im[(sy + 2) * srcrows + (sx) * channels + k] * coeffsX[1] * coeffsY[3] +
+                    src_im[(sy - 1) * srcrows + (sx) * channels + k] * coeffsX[1] * coeffsY[0] +
+                    src_im[(sy) * srcrows + (sx) * channels + k] * coeffsX[1] * coeffsY[1] +
+                    src_im[(sy + 1) * srcrows + (sx) * channels + k] * coeffsX[1] * coeffsY[2] +
+                    src_im[(sy + 2) * srcrows + (sx) * channels + k] * coeffsX[1] * coeffsY[3] +
 
-                                src_im[(sy - 1) * srcrows + (sx + 1) * channels + k] * coeffsX[2] * coeffsY[0] +
-                                src_im[(sy) * srcrows + (sx + 1) * channels + k] * coeffsX[2] * coeffsY[1] +
-                                src_im[(sy + 1) * srcrows + (sx + 1) * channels + k] * coeffsX[2] * coeffsY[2] +
-                                src_im[(sy + 2) * srcrows + (sx + 1) * channels + k] * coeffsX[2] * coeffsY[3] +
+                    src_im[(sy - 1) * srcrows + (sx + 1) * channels + k] * coeffsX[2] * coeffsY[0] +
+                    src_im[(sy) * srcrows + (sx + 1) * channels + k] * coeffsX[2] * coeffsY[1] +
+                    src_im[(sy + 1) * srcrows + (sx + 1) * channels + k] * coeffsX[2] * coeffsY[2] +
+                    src_im[(sy + 2) * srcrows + (sx + 1) * channels + k] * coeffsX[2] * coeffsY[3] +
 
-                                src_im[(sy - 1) * srcrows + (sx + 2) * channels + k] * coeffsX[3] * coeffsY[0] +
-                                src_im[(sy) * srcrows + (sx + 2) * channels + k] * coeffsX[3] * coeffsY[1] +
-                                src_im[(sy + 1) * srcrows + (sx + 2) * channels + k] * coeffsX[3] * coeffsY[2] +
-                                src_im[(sy + 2) * srcrows + (sx + 2) * channels + k] * coeffsX[3] * coeffsY[3]));
+                    src_im[(sy - 1) * srcrows + (sx + 2) * channels + k] * coeffsX[3] * coeffsY[0] +
+                    src_im[(sy) * srcrows + (sx + 2) * channels + k] * coeffsX[3] * coeffsY[1] +
+                    src_im[(sy + 1) * srcrows + (sx + 2) * channels + k] * coeffsX[3] * coeffsY[2] +
+                    src_im[(sy + 2) * srcrows + (sx + 2) * channels + k] * coeffsX[3] * coeffsY[3]));
 
         }
 
 #ifdef TS_USE_CUDA_FP16
+
         template<>
-        __global__ void Resize2d_ResizeImageCubic_kernel<half>(const half* src_im, int src_width, int src_height,
-            int channels, half *dst_im, int dst_width, int dst_height, int size) {
+        __global__ void Resize2d_ResizeImageCubic_kernel<half>(const half *src_im, int src_width, int src_height,
+                                                               int channels, half *dst_im, int dst_width,
+                                                               int dst_height, int size) {
             int index = blockDim.x * blockIdx.x + threadIdx.x;
             if (index >= size) {
                 return;
@@ -219,13 +226,13 @@ namespace ts {
             int i = ntmp / channels;
             int k = ntmp % channels;
 
-            double scale_x = (double)src_width / dst_width;
-            double scale_y = (double)src_height / dst_height;
+            double scale_x = (double) src_width / dst_width;
+            double scale_y = (double) src_height / dst_height;
 
             int srcrows = src_width * channels;
             // int dstrows = dst_width * channels;
 
-            double fy = (double)((j + 0.5) * scale_y - 0.5);
+            double fy = (double) ((j + 0.5) * scale_y - 0.5);
             int sy = floor(fy);
             fy -= sy;
 
@@ -246,7 +253,7 @@ namespace ts {
             coeffsY[2] = ((A + 2) * (1 - fy) - (A + 3)) * (1 - fy) * (1 - fy) + 1;
             coeffsY[3] = half(1.f) - coeffsY[0] - coeffsY[1] - coeffsY[2];
 
-            double fx = (double)((i + 0.5) * scale_x - 0.5);
+            double fx = (double) ((i + 0.5) * scale_x - 0.5);
             int sx = floor(fx);
             fx -= sx;
 
@@ -263,33 +270,35 @@ namespace ts {
             coeffsX[2] = ((A + 2) * (1 - fx) - (A + 3)) * (1 - fx) * (1 - fx) + 1;
             coeffsX[3] = half(1.f) - coeffsX[0] - coeffsX[1] - coeffsX[2];
 
-            dst_im[index] = (half)((
-                src_im[(sy - 1) * srcrows + (sx - 1) * channels + k] * coeffsX[0] * coeffsY[0] +
-                src_im[(sy)* srcrows + (sx - 1) * channels + k] * coeffsX[0] * coeffsY[1] +
-                src_im[(sy + 1) * srcrows + (sx - 1) * channels + k] * coeffsX[0] * coeffsY[2] +
-                src_im[(sy + 2) * srcrows + (sx - 1) * channels + k] * coeffsX[0] * coeffsY[3] +
+            dst_im[index] = (half) ((
+                    src_im[(sy - 1) * srcrows + (sx - 1) * channels + k] * coeffsX[0] * coeffsY[0] +
+                    src_im[(sy) * srcrows + (sx - 1) * channels + k] * coeffsX[0] * coeffsY[1] +
+                    src_im[(sy + 1) * srcrows + (sx - 1) * channels + k] * coeffsX[0] * coeffsY[2] +
+                    src_im[(sy + 2) * srcrows + (sx - 1) * channels + k] * coeffsX[0] * coeffsY[3] +
 
-                src_im[(sy - 1) * srcrows + (sx)* channels + k] * coeffsX[1] * coeffsY[0] +
-                src_im[(sy)* srcrows + (sx)* channels + k] * coeffsX[1] * coeffsY[1] +
-                src_im[(sy + 1) * srcrows + (sx)* channels + k] * coeffsX[1] * coeffsY[2] +
-                src_im[(sy + 2) * srcrows + (sx)* channels + k] * coeffsX[1] * coeffsY[3] +
+                    src_im[(sy - 1) * srcrows + (sx) * channels + k] * coeffsX[1] * coeffsY[0] +
+                    src_im[(sy) * srcrows + (sx) * channels + k] * coeffsX[1] * coeffsY[1] +
+                    src_im[(sy + 1) * srcrows + (sx) * channels + k] * coeffsX[1] * coeffsY[2] +
+                    src_im[(sy + 2) * srcrows + (sx) * channels + k] * coeffsX[1] * coeffsY[3] +
 
-                src_im[(sy - 1) * srcrows + (sx + 1) * channels + k] * coeffsX[2] * coeffsY[0] +
-                src_im[(sy)* srcrows + (sx + 1) * channels + k] * coeffsX[2] * coeffsY[1] +
-                src_im[(sy + 1) * srcrows + (sx + 1) * channels + k] * coeffsX[2] * coeffsY[2] +
-                src_im[(sy + 2) * srcrows + (sx + 1) * channels + k] * coeffsX[2] * coeffsY[3] +
+                    src_im[(sy - 1) * srcrows + (sx + 1) * channels + k] * coeffsX[2] * coeffsY[0] +
+                    src_im[(sy) * srcrows + (sx + 1) * channels + k] * coeffsX[2] * coeffsY[1] +
+                    src_im[(sy + 1) * srcrows + (sx + 1) * channels + k] * coeffsX[2] * coeffsY[2] +
+                    src_im[(sy + 2) * srcrows + (sx + 1) * channels + k] * coeffsX[2] * coeffsY[3] +
 
-                src_im[(sy - 1) * srcrows + (sx + 2) * channels + k] * coeffsX[3] * coeffsY[0] +
-                src_im[(sy)* srcrows + (sx + 2) * channels + k] * coeffsX[3] * coeffsY[1] +
-                src_im[(sy + 1) * srcrows + (sx + 2) * channels + k] * coeffsX[3] * coeffsY[2] +
-                src_im[(sy + 2) * srcrows + (sx + 2) * channels + k] * coeffsX[3] * coeffsY[3]));
+                    src_im[(sy - 1) * srcrows + (sx + 2) * channels + k] * coeffsX[3] * coeffsY[0] +
+                    src_im[(sy) * srcrows + (sx + 2) * channels + k] * coeffsX[3] * coeffsY[1] +
+                    src_im[(sy + 1) * srcrows + (sx + 2) * channels + k] * coeffsX[3] * coeffsY[2] +
+                    src_im[(sy + 2) * srcrows + (sx + 2) * channels + k] * coeffsX[3] * coeffsY[3]));
 
         }
+
 #endif
 
         template<typename T>
-        static __global__ void Resize2d_ResizeNearest_kernel(const T* src_im, int src_width, int src_height,
-                                                                 int channels, T *dst_im, int dst_width, int dst_height, int size ) {
+        static __global__ void Resize2d_ResizeNearest_kernel(const T *src_im, int src_width, int src_height,
+                                                             int channels, T *dst_im, int dst_width, int dst_height,
+                                                             int size) {
             int index = blockDim.x * blockIdx.x + threadIdx.x;
             if (index >= size) {
                 return;
@@ -324,6 +333,41 @@ namespace ts {
         }
 
         template<typename T>
+        static __global__ void Resize2d_ResizeHard_kernel(const T *src_im, int src_width, int src_height,
+                                                          int channels, T *dst_im, int dst_width, int dst_height,
+                                                          int size) {
+            int index = blockDim.x * blockIdx.x + threadIdx.x;
+            if (index >= size) {
+                return;
+            }
+
+            int ntmp = index;
+
+            int nstep = channels * dst_width;
+            int n_y_d = ntmp / nstep;
+            ntmp = ntmp % nstep;
+
+            int n_x_d = ntmp / channels;
+            int c = ntmp % channels;
+
+            float lfx_scl = float(src_width) / dst_width;
+            float lfy_scl = float(src_height) / dst_height;
+
+            float lf_x_s = lfx_scl * n_x_d;
+            float lf_y_s = lfy_scl * n_y_d;
+
+            auto n_x_s = int(lf_x_s);
+            auto n_y_s = int(lf_y_s);
+
+            n_x_s = n_x_s >= 0 ? n_x_s : 0;
+            n_x_s = n_x_s < src_width - 1 ? n_x_s : src_width - 1;
+            n_y_s = n_y_s >= 0 ? n_y_s : 0;
+            n_y_s = n_y_s < src_height - 1 ? n_y_s : src_height - 1;
+
+            dst_im[index] = (T) src_im[(n_y_s * src_width + n_x_s) * channels + c];
+        }
+
+        template<typename T>
         static inline void resize_linear(const Tensor *x, Tensor *y, int x_height, int x_width,
                                          int y_height, int y_width, unsigned int x_offset, unsigned int y_offset,
                                          int channels) {
@@ -335,8 +379,9 @@ namespace ts {
 
             auto cuda_stream = get_cuda_stream_on_context();
 
-            Resize2d_ResizeImageLinear_kernel<T> <<< CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >>>
-                                      (psrc, x_width, x_height, channels, pdst, y_width, y_height, ncount);
+            Resize2d_ResizeImageLinear_kernel<T> << < CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0,
+                    cuda_stream >> >
+                    (psrc, x_width, x_height, channels, pdst, y_width, y_height, ncount);
 
         }
 
@@ -352,15 +397,16 @@ namespace ts {
             int ncount = y_height * y_width * channels;
 
             auto cuda_stream = get_cuda_stream_on_context();
-            Resize2d_ResizeImageCubic_kernel<T> <<< CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >>> 
-                                      (psrc, x_width, x_height, channels, pdst, y_width, y_height, ncount);
+            Resize2d_ResizeImageCubic_kernel<T> << < CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0,
+                    cuda_stream >> >
+                    (psrc, x_width, x_height, channels, pdst, y_width, y_height, ncount);
         }
 
 
         template<typename T>
         static inline void resize_nearest(const Tensor *x, Tensor *y, int x_height, int x_width,
-                                        int y_height, int y_width, unsigned int x_offset, unsigned int y_offset,
-                                        int channels) {
+                                          int y_height, int y_width, unsigned int x_offset, unsigned int y_offset,
+                                          int channels) {
 
             const T *psrc = x->data<T>() + x_offset;
             T *pdst = y->data<T>() + y_offset;
@@ -368,8 +414,25 @@ namespace ts {
             int ncount = y_height * y_width * channels;
 
             auto cuda_stream = get_cuda_stream_on_context();
-            Resize2d_ResizeNearest_kernel<T> << < CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >> >
-                                                                                       (psrc, x_width, x_height, channels, pdst, y_width, y_height, ncount);
+            Resize2d_ResizeNearest_kernel<T> << < CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0,
+                    cuda_stream >> >
+                    (psrc, x_width, x_height, channels, pdst, y_width, y_height, ncount);
+        }
+
+
+        template<typename T>
+        static inline void resize_hard(const Tensor *x, Tensor *y, int x_height, int x_width,
+                                       int y_height, int y_width, unsigned int x_offset, unsigned int y_offset,
+                                       int channels) {
+
+            const T *psrc = x->data<T>() + x_offset;
+            T *pdst = y->data<T>() + y_offset;
+
+            int ncount = y_height * y_width * channels;
+
+            auto cuda_stream = get_cuda_stream_on_context();
+            Resize2d_ResizeHard_kernel<T> << < CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >> >
+                                                                                                        (psrc, x_width, x_height, channels, pdst, y_width, y_height, ncount);
         }
 
         template<typename T>
@@ -380,6 +443,17 @@ namespace ts {
             for (int k = 0; k < number; k++) {
                 resize_linear<T>(x, y, x_height, x_width, y_height, y_width,
                                  k * x_batch_step, k * y_batch_step, channels);
+            }
+        }
+
+        template<typename T>
+        static inline void batch_resize_hard(int number, const Tensor *x, Tensor *y, int x_height, int x_width,
+                                             int y_height, int y_width,
+                                             unsigned int x_batch_step, unsigned int y_batch_step,
+                                             int channels) {
+            for (int k = 0; k < number; k++) {
+                resize_hard<T>(x, y, x_height, x_width, y_height, y_width,
+                               k * x_batch_step, k * y_batch_step, channels);
             }
         }
 
@@ -396,9 +470,9 @@ namespace ts {
 
         template<typename T>
         static inline void batch_resize_nearest(int number, const Tensor *x, Tensor *y, int x_height, int x_width,
-                                              int y_height, int y_width,
-                                              unsigned int x_batch_step, unsigned int y_batch_step,
-                                              int channels) {
+                                                int y_height, int y_width,
+                                                unsigned int x_batch_step, unsigned int y_batch_step,
+                                                int channels) {
             for (int k = 0; k < number; k++) {
                 resize_nearest<T>(x, y, x_height, x_width, y_height, y_width,
                                   k * x_batch_step, k * y_batch_step, channels);
@@ -416,17 +490,21 @@ namespace ts {
                                        y_height, y_width,
                                        x_batch_step, y_batch_step, channels);
 
-            }else if (type == Resize2DType::CUBIC) {
+            } else if (type == Resize2DType::CUBIC) {
                 batch_resize_cubic<T>(number, x, y,
                                       x_height, x_width,
                                       y_height, y_width,
                                       x_batch_step, y_batch_step, channels);
+            } else if (type == Resize2DType::HARD) {
+                batch_resize_hard<T>(number, x, y,
+                                     x_height, x_width,
+                                     y_height, y_width,
+                                     x_batch_step, y_batch_step, channels);
             } else {
                 batch_resize_nearest<T>(number, x, y,
                                         x_height, x_width,
                                         y_height, y_width,
                                         x_batch_step, y_batch_step, channels);
-
             }
         }
 
@@ -478,7 +556,8 @@ namespace ts {
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
 #undef DECLARE_COMPUTE_RUN
                 default: {
-                    TS_LOG_ERROR << this->op() << " not support data type(" << dtype << "): " << type_str(dtype) << eject;
+                    TS_LOG_ERROR << this->op() << " not support data type(" << dtype << "): " << type_str(dtype)
+                                 << eject;
                     break;
                 }
             }
