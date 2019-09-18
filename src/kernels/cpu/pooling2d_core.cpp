@@ -7,9 +7,33 @@
 #include "kernels/cpu/pooling2d_core.h"
 
 #include <algorithm>
+#include <functional>
+#include <kernels/cpu/pooling_algorithm.h>
 
 namespace ts {
     namespace cpu {
+
+        using function = std::function<void(const Tensor &,Tensor &,const Padding2D &)>;
+
+        template<typename T>
+        static inline function get_pooling_kernel(const Padding2D &padding,
+                                                  const KSize2D &ksize,
+                                                  const Stride2D &stride,
+                                                  Pooling2DType pooling_type){
+            function pooling_kernel;
+
+            if(ksize.width == 3 && ksize.height == 3 &&
+              (stride.height == 2 && stride.width == 2) &&
+              (padding.top == 0 || padding.top == 1) &&
+              (padding.bottom == 0 || padding.bottom == 1) &&
+              (padding.left == 0 || padding.left == 1) &&
+              (padding.right == 0 || padding.right == 1)){
+
+                if(pooling_type == Pooling2DType::MAX)
+                pooling_kernel = PoolingAlgorithm<T>::max_pooling_k3s2;
+            }
+            return pooling_kernel;
+        }
 
         template<typename T>
         static bool cpu_max_pooling(
@@ -164,15 +188,27 @@ namespace ts {
             static const auto WHITE_MAX = ENCODE(Padding2DType::WHITE, Pooling2DType::MAX);
             static const auto WHITE_AVG = ENCODE(Padding2DType::WHITE, Pooling2DType::AVG);
 
+            auto pooling_kernel = get_pooling_kernel<T>(padding, ksize, stride, type);
+
             if (code == BLACK_MAX) {
-                cpu_max_pooling(x.data<T>(), out.data<T>(), x.sizes(), out.sizes(),
-                                ksize, stride, padding);
+                if(pooling_kernel){
+                    pooling_kernel(x, out, padding);
+                }
+                else{
+                    cpu_max_pooling(x.data<T>(), out.data<T>(), x.sizes(), out.sizes(),
+                                    ksize, stride, padding);
+                }
             } else if (code == BLACK_AVG) {
                 cpu_average_pooling(x.data<T>(), out.data<T>(), x.sizes(), out.sizes(),
                                     ksize, stride, padding);
             } else if (code == WHITE_MAX) {
-                cpu_max_pooling(x.data<T>(), out.data<T>(), x.sizes(), out.sizes(),
+                if(pooling_kernel){
+                    pooling_kernel(x, out, padding);
+                }
+                else{
+                    cpu_max_pooling(x.data<T>(), out.data<T>(), x.sizes(), out.sizes(),
                                     ksize, stride, padding);
+                }
             } else if (code == WHITE_AVG) {
                 cpu_average_pooling_white(x.data<T>(), out.data<T>(), x.sizes(), out.sizes(),
                                           ksize, stride, padding);
