@@ -16,6 +16,7 @@ namespace ts{
 
         }
 
+        //TODO: optimize simd support on arm
         template<>
         void PoolingAlgorithm<float>::max_pooling_k3s2(const Tensor &input,
                                                        Tensor &out,
@@ -74,9 +75,6 @@ namespace ts{
                         }
 
                         for (int w = 0; w < width_blocks; ++w) {
-#ifdef TS_USE_NEON
-
-#else
                             float32x4 i0_1357 = inc_load(i0, 2);
                             float32x4 i0_2468 = inc_load(i0 + 1, 2);
                             float32x4 i0_max_x4 = max_float32x4(i0_1357, i0_2468);
@@ -95,7 +93,6 @@ namespace ts{
                             i0 += 8;
                             i1 += 8;
                             out_at += 4;
-#endif
                         }
                         int remain_w_index = padding.left == 1 ? width_blocks * 4 + 1 : width_blocks * 4;
                         for (int w = remain_w_index; w < output_width; ++w) {
@@ -133,9 +130,6 @@ namespace ts{
                             out_at++;
                         }
                         for (int w = 0; w < width_blocks; ++w) {
-#ifdef TS_USE_NEON
-
-#else
                             float32x4 i0_1357 = inc_load(i0, 2);
                             float32x4 i0_2468 = inc_load(i0 + 1, 2);
                             float32x4 i0_max_x4 = max_float32x4(i0_1357, i0_2468);
@@ -159,7 +153,6 @@ namespace ts{
 
                             i0 += 8;i1 += 8;i2 += 8;
                             out_at += 4;
-#endif
                         }
                         int remain_w_index = padding.left == 1 ? width_blocks * 4 + 1 : width_blocks * 4;
                         for (int w = remain_w_index; w < output_width; ++w) {
@@ -198,9 +191,6 @@ namespace ts{
                             out_at++;
                         }
                         for (int w = 0; w < width_blocks; ++w) {
-#ifdef TS_USE_NEON
-
-#else
                             float32x4 i0_1357 = inc_load(i0, 2);
                             float32x4 i0_2468 = inc_load(i0 + 1, 2);
                             float32x4 i0_max_x4 = max_float32x4(i0_1357, i0_2468);
@@ -218,7 +208,6 @@ namespace ts{
 
                             i0 += 8;i1 += 8;
                             out_at += 4;
-#endif
                         }
                         int remain_w_index = padding.left == 1 ? width_blocks * 4 + 1 : width_blocks * 4;
                         for (int w = remain_w_index; w < output_width; ++w) {
@@ -246,9 +235,6 @@ namespace ts{
                             out_at++;
                         }
                         for (int w = 0; w < width_blocks; ++w) {
-#ifdef TS_USE_NEON
-
-#else
                             float32x4 i0_1357 = inc_load(i0, 2);
                             float32x4 i0_2468 = inc_load(i0 + 1, 2);
                             float32x4 i0_max_x4 = max_float32x4(i0_1357, i0_2468);
@@ -258,7 +244,6 @@ namespace ts{
                             i0_max_x4.store(out_at);
                             i0 += 8;
                             out_at += 4;
-#endif
                         }
                         int remain_w_index = padding.left == 1 ? width_blocks * 4 + 1 : width_blocks * 4;
                         for (int w = remain_w_index; w < output_width; ++w) {
