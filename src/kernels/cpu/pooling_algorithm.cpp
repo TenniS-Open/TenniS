@@ -111,7 +111,7 @@ namespace ts{
                         }
                         else if(real_pad_right == 2){
                             *out_at = std::max(i0[0], i1[0]);
-//                            out_at++;
+                            out_at++;
                         }
 
                         i0 += input_w_remain;
@@ -225,7 +225,7 @@ namespace ts{
                         }
                         else if(real_pad_right == 2){
                             *out_at = std::max(i0[0], i1[0]);
-//                            out_at++;
+                            out_at++;
                         }
                     }
                     else if(real_pad_bottom == 2){
@@ -258,7 +258,7 @@ namespace ts{
                         }
                         else if(real_pad_right == 2){
                             *out_at = i0[0];
-//                            out_at++;
+                            out_at++;
                         }
                     }
                 }
