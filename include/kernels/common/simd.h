@@ -178,6 +178,10 @@ namespace ts {
         simd(base a, base b, base c, base d, base e, base f, base g, base h) : value(_simd_f32x4x2_set(a, b, c, d, e, f, g, h)) {}
 
         void store(base *p) const { _simd_f32x4x2_store(p, value); }
+
+        float32x4 operator[](int index){
+            return _simd_f32x4x2_index(value, index);
+        }
     };
 
     inline simd<float, 8> operator+(const simd<float, 8> &lhs, const simd<float, 8> &rhs) {
@@ -198,6 +202,10 @@ namespace ts {
 
     inline simd<float, 8> fmadd(const simd<float, 8> &q0, const simd<float, 8> &q1, const simd<float, 8> &q2) {
         return _simd_f32x4x2_fmadd(q0.value, q1.value, q2.value);
+    }
+
+    inline simd<float, 8> incx4x2_load(const float *p, int inc) {
+        return _simd_f32x4x2_interval_load(p, inc);
     }
 
     template<>
