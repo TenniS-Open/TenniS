@@ -22,15 +22,19 @@ namespace ts {
                                                   Pooling2DType pooling_type){
             function pooling_kernel;
 
-            if(ksize.width == 3 && ksize.height == 3 &&
-              (stride.height == 2 && stride.width == 2) &&
+            if((stride.height == 2 && stride.width == 2) &&
               (padding.top == 0 || padding.top == 1) &&
               (padding.bottom == 0 || padding.bottom == 1) &&
               (padding.left == 0 || padding.left == 1) &&
               (padding.right == 0 || padding.right == 1)){
-
-                if(pooling_type == Pooling2DType::MAX)
-                pooling_kernel = PoolingAlgorithm<T>::max_pooling_k3s2;
+                if (pooling_type == Pooling2DType::MAX) {
+                    if (ksize.width == 3 && ksize.height == 3) {
+                        pooling_kernel = PoolingAlgorithm<T>::max_pooling_k3s2;
+                    }
+                    else if (ksize.width == 2 && ksize.height == 2) {
+                        pooling_kernel = PoolingAlgorithm<T>::max_pooling_k2s2;
+                    }
+                }
             }
             return pooling_kernel;
         }
