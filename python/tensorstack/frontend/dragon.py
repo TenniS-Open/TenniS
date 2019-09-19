@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 """
 Author: Kier
@@ -10,6 +11,7 @@ from .. import menu
 from .. import device
 
 import numpy
+
 
 class Name(object):
     class Layer(object):
