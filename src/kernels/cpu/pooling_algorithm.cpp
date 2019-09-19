@@ -16,7 +16,6 @@ namespace ts{
 
         }
 
-        //TODO: optimize simd support on arm
         template<>
         void PoolingAlgorithm<float>::max_pooling_k3s2(const Tensor &input,
                                                        Tensor &out,
@@ -73,8 +72,27 @@ namespace ts{
                             i0++;
                             i1++;
                         }
-
+#ifdef TS_USE_NEON
+                        float32x4x2 i0_x4x2 = incx4x2_load(i0, 2);
+                        float32x4x2 i1_x4x2 = incx4x2_load(i1, 2);
+#endif
                         for (int w = 0; w < width_blocks; ++w) {
+#ifdef TS_USE_NEON
+                            float32x4x2 i01_x4x2_temp = incx4x2_load(i0 + 8, 2);
+                            float32x4 i0_max_x4 = max_float32x4(i0_x4x2[0], i0_x4x2[1]);
+                            float32x4 i01_x4x2 = concat(i0_x4x2[0], i01_x4x2_temp[0], 1);
+                            i0_max_x4 = max_float32x4(i0_max_x4, i01_x4x2);
+
+                            float32x4x2 i11_x4x2_temp = incx4x2_load(i1 + 8, 2);
+                            float32x4 i1_max_x4 = max_float32x4(i1_x4x2[0], i1_x4x2[1]);
+                            float32x4 i11_x4x2 = concat(i1_x4x2[0], i11_x4x2_temp[0], 1);
+                            i1_max_x4 = max_float32x4(i1_max_x4, i11_x4x2);
+
+                            i0_max_x4 = max_float32x4(i0_max_x4, i1_max_x4);
+
+                            i0_x4x2 = i01_x4x2_temp;
+                            i1_x4x2 = i11_x4x2_temp;
+#else
                             float32x4 i0_1357 = inc_load(i0, 2);
                             float32x4 i0_2468 = inc_load(i0 + 1, 2);
                             float32x4 i0_max_x4 = max_float32x4(i0_1357, i0_2468);
@@ -88,8 +106,8 @@ namespace ts{
                             i1_max_x4 = max_float32x4(i1_max_x4, i1_3579);
 
                             i0_max_x4 = max_float32x4(i0_max_x4, i1_max_x4);
+#endif
                             i0_max_x4.store(out_at);
-
                             i0 += 8;
                             i1 += 8;
                             out_at += 4;
@@ -129,7 +147,34 @@ namespace ts{
                             i0++;i1++;i2++;
                             out_at++;
                         }
+#ifdef TS_USE_NEON
+                        float32x4x2 i0_x4x2 = incx4x2_load(i0, 2);
+                        float32x4x2 i1_x4x2 = incx4x2_load(i1, 2);
+                        float32x4x2 i2_x4x2 = incx4x2_load(i2, 2);
+#endif
                         for (int w = 0; w < width_blocks; ++w) {
+#ifdef TS_USE_NEON
+                            float32x4x2 i01_x4x2_temp = incx4x2_load(i0 + 8, 2);
+                            float32x4 i0_max_x4 = max_float32x4(i0_x4x2[0], i0_x4x2[1]);
+                            float32x4 i01_x4x2 = concat(i0_x4x2[0], i01_x4x2_temp[0], 1);
+                            i0_max_x4 = max_float32x4(i0_max_x4, i01_x4x2);
+
+                            float32x4x2 i11_x4x2_temp = incx4x2_load(i1 + 8, 2);
+                            float32x4 i1_max_x4 = max_float32x4(i1_x4x2[0], i1_x4x2[1]);
+                            float32x4 i11_x4x2 = concat(i1_x4x2[0], i11_x4x2_temp[0], 1);
+                            i1_max_x4 = max_float32x4(i1_max_x4, i11_x4x2);
+
+                            float32x4x2 i21_x4x2_temp = incx4x2_load(i2 + 8, 2);
+                            float32x4 i2_max_x4 = max_float32x4(i2_x4x2[0], i2_x4x2[1]);
+                            float32x4 i21_x4x2 = concat(i2_x4x2[0], i21_x4x2_temp[0], 1);
+                            i2_max_x4 = max_float32x4(i2_max_x4, i21_x4x2);
+
+                            i0_max_x4 = max_float32x4(max_float32x4(i0_max_x4, i1_max_x4), i2_max_x4);
+
+                            i0_x4x2 = i01_x4x2_temp;
+                            i1_x4x2 = i11_x4x2_temp;
+                            i2_x4x2 = i21_x4x2_temp;
+#else
                             float32x4 i0_1357 = inc_load(i0, 2);
                             float32x4 i0_2468 = inc_load(i0 + 1, 2);
                             float32x4 i0_max_x4 = max_float32x4(i0_1357, i0_2468);
@@ -149,8 +194,8 @@ namespace ts{
                             i2_max_x4 = max_float32x4(i2_max_x4, i2_3579);
 
                             i0_max_x4 = max_float32x4(max_float32x4(i0_max_x4, i1_max_x4), i2_max_x4);
+#endif
                             i0_max_x4.store(out_at);
-
                             i0 += 8;i1 += 8;i2 += 8;
                             out_at += 4;
                         }
@@ -190,7 +235,27 @@ namespace ts{
                             i0++;i1++;
                             out_at++;
                         }
+#ifdef TS_USE_NEON
+                        float32x4x2 i0_x4x2 = incx4x2_load(i0, 2);
+                        float32x4x2 i1_x4x2 = incx4x2_load(i1, 2);
+#endif
                         for (int w = 0; w < width_blocks; ++w) {
+#ifdef TS_USE_NEON
+                            float32x4x2 i01_x4x2_temp = incx4x2_load(i0 + 8, 2);
+                            float32x4 i0_max_x4 = max_float32x4(i0_x4x2[0], i0_x4x2[1]);
+                            float32x4 i01_x4x2 = concat(i0_x4x2[0], i01_x4x2_temp[0], 1);
+                            i0_max_x4 = max_float32x4(i0_max_x4, i01_x4x2);
+
+                            float32x4x2 i11_x4x2_temp = incx4x2_load(i1 + 8, 2);
+                            float32x4 i1_max_x4 = max_float32x4(i1_x4x2[0], i1_x4x2[1]);
+                            float32x4 i11_x4x2 = concat(i1_x4x2[0], i11_x4x2_temp[0], 1);
+                            i1_max_x4 = max_float32x4(i1_max_x4, i11_x4x2);
+
+                            i0_max_x4 = max_float32x4(i0_max_x4, i1_max_x4);
+
+                            i0_x4x2 = i01_x4x2_temp;
+                            i1_x4x2 = i11_x4x2_temp;
+#else
                             float32x4 i0_1357 = inc_load(i0, 2);
                             float32x4 i0_2468 = inc_load(i0 + 1, 2);
                             float32x4 i0_max_x4 = max_float32x4(i0_1357, i0_2468);
@@ -204,8 +269,8 @@ namespace ts{
                             i1_max_x4 = max_float32x4(i1_max_x4, i1_3579);
 
                             i0_max_x4 = max_float32x4(i0_max_x4, i1_max_x4);
+#endif
                             i0_max_x4.store(out_at);
-
                             i0 += 8;i1 += 8;
                             out_at += 4;
                         }
@@ -234,13 +299,24 @@ namespace ts{
                             i0++;
                             out_at++;
                         }
+#ifdef TS_USE_NEON
+                        float32x4x2 i0_x4x2 = incx4x2_load(i0, 2);
+#endif
                         for (int w = 0; w < width_blocks; ++w) {
+#ifdef TS_USE_NEON
+
+                            float32x4x2 i01_x4x2_temp = incx4x2_load(i0 + 8, 2);
+                            float32x4 i0_max_x4 = max_float32x4(i0_x4x2[0], i0_x4x2[1]);
+                            float32x4 i01_x4x2 = concat(i0_x4x2[0], i01_x4x2_temp[0], 1);
+                            i0_max_x4 = max_float32x4(i0_max_x4, i01_x4x2);
+                            i0_x4x2 = i01_x4x2_temp;
+#else
                             float32x4 i0_1357 = inc_load(i0, 2);
                             float32x4 i0_2468 = inc_load(i0 + 1, 2);
                             float32x4 i0_max_x4 = max_float32x4(i0_1357, i0_2468);
                             float32x4 i0_3579 = inc_load(i0 + 2, 2);
                             i0_max_x4 = max_float32x4(i0_max_x4, i0_3579);
-
+#endif
                             i0_max_x4.store(out_at);
                             i0 += 8;
                             out_at += 4;
