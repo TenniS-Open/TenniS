@@ -13,20 +13,8 @@ namespace ts {
         void Slice::init() {
             supper::init();
 
-            Tensor begin_tensor =  get(name::begin);
-            TS_AUTO_CHECK(begin_tensor.dtype() == INT32);
-            int * pbegin = begin_tensor.data<int>();
-            for(int i=0; i<begin_tensor.count(); i++) {
-                m_begin.push_back(pbegin[i]);
-            } 
-
-            Tensor size_tensor = get(name::size);
-            TS_AUTO_CHECK(size_tensor.dtype() == INT32);
-            int * psize = size_tensor.data<int>();
-            for(int i=0; i<size_tensor.count(); i++) {
-                m_size.push_back(psize[i]);
-            } 
-            
+            m_begin = tensor::array::to_int(get(name::begin));
+            m_size = tensor::array::to_int(get(name::size));
         }
 
         static Tensor::Prototype infer_slice(const Tensor &x, const std::vector<int> &begins, const std::vector<int> & sizes) {
