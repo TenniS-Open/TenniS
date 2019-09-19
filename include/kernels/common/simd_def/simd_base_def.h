@@ -186,8 +186,27 @@ inline _simd_f32x4x2 _simd_f32x4x2_div(_simd_f32x4x2 lhs, _simd_f32x4x2 rhs) {
     return { lhs[0] / rhs[0], lhs[1] / rhs[1], lhs[2] / rhs[2], lhs[3] / rhs[3], lhs[4] / rhs[4], lhs[5] / rhs[5], lhs[6] / rhs[6], lhs[7] / rhs[7]};
 }
 
+inline _simd_f32x4 _simd_f32x4x2_index(_simd_f32x4x2 src, const int index) {
+    switch (index)
+    {
+        case 0 : return {src[0], src[1], src[2], src[3]};
+        case 1 : return {src[4], src[5], src[6], src[7]};
+        default:
+            break;
+    }
+    return {0.f, 0.f, 0.f, 0.f};
+}
+
 inline _simd_f32x4x2 _simd_f32x4x2_fmadd(_simd_f32x4x2 q0, _simd_f32x4x2 q1, _simd_f32x4x2 q2) {
     return {q0[0] * q1[0] + q2[0], q0[1] * q1[1] + q2[1], q0[2] * q1[2] + q2[2], q0[3] * q1[3] + q2[3], q0[4] * q1[4] + q2[4], q0[5] * q1[5] + q2[5], q0[6] * q1[6] + q2[6], q0[7] * q1[7] + q2[7]};
+}
+
+inline _simd_f32x4x2 _simd_f32x4x2_interval_load(const _simd_f32* p, const int inc) {
+    const _simd_f32* a0 = p, *a1 = p + 1;
+    const _simd_f32* b0 = a0 + inc, *b1 = a1 + inc;
+    const _simd_f32* c0 = b0 + inc, *c1 = b1 + inc;
+    const _simd_f32* d0 = c0 + inc, *d1 = c1 + inc;
+    return {*a0, *b0, *c0, *d0, *a1, *b1, *c1, *d1};
 }
 
 inline _simd_f32x4x3 _simd_f32x4x3_load(const _simd_f32 *p) {

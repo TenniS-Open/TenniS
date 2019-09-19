@@ -177,6 +177,17 @@ inline _simd_f32x4x2 _simd_f32x4x2_div(_simd_f32x4x2 lhs, _simd_f32x4x2 rhs) {
     return _mm256_div_ps(lhs, rhs);
 }
 
+inline _simd_f32x4 _simd_f32x4x2_index(_simd_f32x4x2 src, const int index) {
+    switch (index)
+    {
+    case 0 : return _mm256_extractf128_ps(src, 0);
+    case 1 : return _mm256_extractf128_ps(src, 1);
+    default:
+        break;
+    }
+    return _mm_set_ps(0.f, 0.f, 0.f, 0.f);
+}
+
 inline _simd_f32x4x2 _simd_f32x4x2_fmadd(_simd_f32x4x2 q0, _simd_f32x4x2 q1, _simd_f32x4x2 q2) {
 #ifdef TS_USE_FMA
     return _mm256_fmadd_ps(q0, q1, q2);
@@ -184,6 +195,15 @@ inline _simd_f32x4x2 _simd_f32x4x2_fmadd(_simd_f32x4x2 q0, _simd_f32x4x2 q1, _si
     return _mm256_add_ps(q2, _mm256_mul_ps(q0, q1));
 #endif
 }
+
+inline _simd_f32x4x2 _simd_f32x4x2_interval_load(const _simd_f32* p, const int inc) {
+    const _simd_f32* a0 = p, *a1 = p + 1;
+    const _simd_f32* b0 = a0 + inc, *b1 = a1 + inc;
+    const _simd_f32* c0 = b0 + inc, *c1 = b1 + inc;
+    const _simd_f32* d0 = c0 + inc, *d1 = c1 + inc;
+    return _mm256_set_ps(*d1, *c1, *b1, *a1, *d0, *c0, *b0, *a0);
+}
+
 
 inline _simd_f32x4x3 _simd_f32x4x3_load(const _simd_f32 *p) {
     _simd_f32x4x3 res;
