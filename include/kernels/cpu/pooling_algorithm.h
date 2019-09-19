@@ -16,8 +16,12 @@ namespace ts {
         public:
             //NOTE: onlu support ksize=3,stride=2,pad=1or0,NCHW
             static void max_pooling_k3s2(const Tensor &input,
-                                  Tensor &out,
-                                  const Padding2D &padding);
+                                         Tensor &out,
+                                         const Padding2D &padding);
+
+            static void max_pooling_k2s2(const Tensor &input,
+                                         Tensor &out,
+                                         const Padding2D &padding);
         };
     }//cpu
 }//ts
