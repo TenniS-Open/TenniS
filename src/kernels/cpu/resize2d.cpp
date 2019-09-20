@@ -153,9 +153,12 @@ namespace ts {
                 return;
             }
 
-            float lfx_scl = float(src_width) / dst_width;
-            float lfy_scl = float(src_height) / dst_height;
+            const float lfx_scl = float(src_width) / dst_width;
+            const float lfy_scl = float(src_height) / dst_height;
 
+#ifdef TS_USE_OPENMP
+#pragma omp parallel for num_threads(openmp_threads())
+#endif
             for (int n_y_d = 0; n_y_d < dst_height; n_y_d++) {
                 for (int n_x_d = 0; n_x_d < dst_width; n_x_d++) {
                     float lf_x_s = lfx_scl * n_x_d;
