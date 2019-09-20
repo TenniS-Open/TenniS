@@ -45,12 +45,12 @@ namespace ts {
 
             template<typename T, typename Context>
             Caches<T> caches(const std::vector<int64_t> &segments) {
-                auto N = std::accumulate(segments.begin(), segments.end(), 0);
+                auto N = std::accumulate(segments.begin(), segments.end(), int64_t(0));
                 ts::Tensor binary;
                 if (TypeMeta::Id<Context>() == TypeMeta::Id<CPUContext>()) {
-                    binary = Tensor(ts::Tensor::InFlow::HOST, dtypeid<T>::id, {int(N)});
+                    binary = ts::Tensor(ts::Tensor::InFlow::HOST, dtypeid<T>::id, {int(N)});
                 } else if (TypeMeta::Id<Context>() == TypeMeta::Id<CUDAContext>()) {
-                    binary = Tensor(ts::Tensor::InFlow::DEVICE, dtypeid<T>::id, {int(N)});
+                    binary = ts::Tensor(ts::Tensor::InFlow::DEVICE, dtypeid<T>::id, {int(N)});
                 }
                 return Caches<T>(binary, segments);
             }

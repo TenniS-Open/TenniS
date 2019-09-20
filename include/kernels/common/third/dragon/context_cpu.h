@@ -30,14 +30,25 @@ namespace ts {
             }
 
             template<typename T, typename DstContext, typename SrcContext>
-            void Copy(int n, T *dst, const T *src) {
+            void Copy(int32_t n, T *dst, const T *src) {
                 if (dst == src) return;
                 if (std::is_fundamental<T>::value) {
                     Memcpy<DstContext, SrcContext>(n * sizeof(T), dst, src);
                 } else {
-                    for (int i = 0; i < n; ++i) dst[i] = src[i];
+                    for (int32_t i = 0; i < n; ++i) dst[i] = src[i];
                 }
             }
+
+			template<typename T, typename DstContext, typename SrcContext>
+			void Copy(int64_t n, T *dst, const T *src) {
+				if (dst == src) return;
+				if (std::is_fundamental<T>::value) {
+					Memcpy<DstContext, SrcContext>(n * sizeof(T), dst, src);
+				}
+				else {
+					for (int64_t i = 0; i < n; ++i) dst[i] = src[i];
+				}
+			}
         };
     }
 }

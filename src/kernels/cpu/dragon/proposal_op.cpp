@@ -33,23 +33,23 @@ void ProposalOp<Context>::RunWithType(
             anchors_.Reshape({ A, 4 });
             proposals_.Reshape({ num_proposals, 5 });
 
-            rcnn::GenerateAnchors<BT>(strides[0],
-                (int)ratios.size(), (int)scales.size(),
+            rcnn::GenerateAnchors<BT>(int(strides[0]),
+                int(ratios.size()), int(scales.size()),
                     &ratios[0], &scales[0],
                         anchors_.template mutable_data<BT, CPUContext>());
 
             rcnn::GenerateProposals<BT, Context>(
-                A, feat_height, feat_width, strides[0],
+                int(A), int(feat_height), int(feat_width), int(strides[0]),
                     im_height, im_width, min_box_h, min_box_w,
                         scores, bbox_deltas,
                 anchors_.template mutable_data<BT, Context>(),
                 proposals_.template mutable_data<BT, Context>(), ctx());
 
-            rcnn::SortProposals(0, num_proposals - 1, pre_nms_top_n,
+            rcnn::SortProposals(0, int(num_proposals - 1), int(pre_nms_top_n),
                 proposals_.template mutable_data<BT, CPUContext>());
 
             rcnn::ApplyNMS<BT, Context>(
-                pre_nms_topn, post_nms_top_n, nms_thresh,
+                int(pre_nms_topn), int(post_nms_top_n), nms_thresh,
                     proposals_.template mutable_data<BT, Context>(),
                         roi_indices_.template mutable_data<int, CPUContext>(),
                             num_rois, ctx());
@@ -81,12 +81,12 @@ void ProposalOp<Context>::RunWithType(
                 const int64_t num_proposals = K * A;
                 anchors_.Reshape({ A, 4 });
 
-                rcnn::GenerateAnchors<BT>(strides[i],
-                    (int)ratios.size(), 1, &ratios[0], &scales[0],
+                rcnn::GenerateAnchors<BT>(int(strides[i]),
+                    int(ratios.size()), 1, &ratios[0], &scales[0],
                         anchors_.template mutable_data<BT, CPUContext>());
 
                 rcnn::GenerateGridAnchors<BT>(
-                    A, feat_height, feat_width, strides[i],
+                    int(A), int(feat_height), int(feat_width), int(strides[i]),
                         anchors_.template mutable_data<BT, CPUContext>(),
                             proposals);
 
@@ -98,15 +98,15 @@ void ProposalOp<Context>::RunWithType(
                 << "\nExcepted " << total_proposals << " proposals from the network, "
                 << "but generated " << acc_proposals << " proposals." << eject;
 
-            rcnn::GenerateProposals_v2<float, Context>(total_proposals,
+            rcnn::GenerateProposals_v2<float, Context>(int(total_proposals),
                 im_height, im_width, min_box_h, min_box_w,
                     scores, bbox_deltas,
                 proposals_.template mutable_data<BT, Context>(), ctx());
 
-            rcnn::SortProposals(0, total_proposals - 1, pre_nms_top_n,
+            rcnn::SortProposals(0, int(total_proposals - 1), int(pre_nms_top_n),
                 proposals_.template mutable_data<BT, CPUContext>());
 
-            rcnn::ApplyNMS<BT, Context>(pre_nms_topn, post_nms_top_n, nms_thresh,
+            rcnn::ApplyNMS<BT, Context>(int(pre_nms_topn), int(post_nms_top_n), nms_thresh,
                 proposals_.template mutable_data<BT, Context>(),
                     roi_indices_.template mutable_data<int, CPUContext>(),
                         num_rois, ctx());
@@ -139,9 +139,9 @@ void ProposalOp<Context>::RunWithType(
             collective_rois.count(), rois,
                 Output(0)->template data<BT, CPUContext>());
 
-        rcnn::CollectRoIs<BT>(total_rois,
-            min_level, max_level,
-                canonical_level, canonical_scale,
+        rcnn::CollectRoIs<BT>(int(total_rois),
+			int(min_level), int(max_level),
+				int(canonical_level), int(canonical_scale),
                     rois, roi_bins);
 
         for (int i = 0; i < OutputSize(); i++) {
