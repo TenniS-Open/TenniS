@@ -22,6 +22,7 @@ class Name(object):
         mean = "mean"
         space_to_batch4d = "space_to_batch4d"
         batch_to_space4d = "batch_to_space4d"
+        slice = "slice"
 
     SAME = "SAME"
     VALID = "VALID"
@@ -313,5 +314,29 @@ def batch_to_space4d(name, x, block_shape, crop):
     node = menu.op(name=name, op_name=Name.Layer.batch_to_space4d, inputs=[x,])
     node.set(Name.block_shape, block_shape, numpy.int32)
     node.set(Name.crop, crop, numpy.int32)
+
+    return node
+
+
+def slice(name, x, begin, size):
+    """
+    return x in [begin, begin + size)
+    :param name:
+    :param x:
+    :param begin:
+    :param size:
+    :return:
+    """
+    assert isinstance(x, Node)
+
+    begin = zoo.to_const(begin, "begin")
+    size = zoo.to_const(size, "size")
+
+    assert len(begin) == len(size)
+
+    # operator
+    node = menu.op(name=name, op_name=Name.Layer.slice, inputs=[x, ])
+    node.set(Name.begin, begin, numpy.int32)
+    node.set(Name.size, size, numpy.int32)
 
     return node
