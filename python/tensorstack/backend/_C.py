@@ -107,6 +107,9 @@ ts_Module_LoadFromStream = __TS_IMPORT(lib, "ts_Module_LoadFromStream",
 
 ts_free_Module = __TS_IMPORT(lib, "ts_free_Module", None, POINTER(ts_Module))
 
+ts_Module_Fusion = __TS_IMPORT(lib, "ts_Module_Fusion", POINTER(ts_Module),
+                               POINTER(ts_Module), c_int32, POINTER(ts_Module), c_int32)
+
 """ ================================================================================================================ +++
 device.h
 """
@@ -292,6 +295,8 @@ ts_ImageFilter_force_gray_v2 = __TS_IMPORT(lib, "ts_ImageFilter_force_gray_v2",
 
 ts_ImageFilter_norm_image = __TS_IMPORT(lib, "ts_ImageFilter_norm_image", ts_bool, POINTER(ts_ImageFilter), c_float)
 
+ts_ImageFilter_module = __TS_IMPORT(lib, "ts_ImageFilter_module", POINTER(ts_Module), POINTER(ts_ImageFilter))
+
 
 """ ================================================================================================================ +++
 workbench.h
@@ -437,6 +442,24 @@ ts_intime_affine_on_sample2d = __TS_IMPORT(
     POINTER(ts_Tensor),     # affine
     c_int32,                # dim
     c_int32,                # method
+)
+
+ts_intime_memcpy = __TS_IMPORT(
+    lib, "ts_intime_memcpy", c_int64,
+    POINTER(ts_Tensor),     # dst_desc
+    c_void_p,               # dst_ptr
+    c_int64,                # dst_shift
+    POINTER(ts_Tensor),     # src_desc
+    c_void_p,               # src_ptr
+    c_int64,                # src_shift
+    c_int64,                # size
+)
+
+ts_intime_matmul = __TS_IMPORT(
+    lib, "ts_intime_matmul", POINTER(ts_Tensor),
+    POINTER(ts_Tensor),     # A
+    POINTER(ts_Tensor),     # B
+    ts_bool,                # transpose
 )
 
 

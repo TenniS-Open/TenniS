@@ -39,7 +39,7 @@ double InvSqrt(double number)
 
             for (int i = 0; i < count; i++) {
                 T val = *output_data;
-                *output_data = 1. / (sqrt(val));
+                *output_data = T(1. / (sqrt(val)));
                 output_data++;
             }
         }

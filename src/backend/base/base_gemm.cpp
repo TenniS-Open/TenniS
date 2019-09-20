@@ -20,9 +20,9 @@ namespace ts {
              float alpha, float beta, bool transA, bool transB,
              int &K,
              Tensor::Prototype &out, Shape &adjusted_C_shape) {
-            TS_AUTO_CHECK(A.dims() == 2);
-            TS_AUTO_CHECK(B.dims() == 2);
-            TS_AUTO_CHECK(C.dims() <= 2);
+            if(A.dims() != 2) TS_LOG_ERROR << "A.dims() expect equal 2, got " << A.dims() << eject;
+            if(B.dims() != 2) TS_LOG_ERROR << "A.dims() expect equal 2, got " << B.dims() << eject;
+            if(C.dims() > 2) TS_LOG_ERROR << "A.dims() expect less 2, got " << C.dims() << eject;
 
             TS_AUTO_CHECK(A.dtype() == B.dtype());
 
@@ -44,7 +44,18 @@ namespace ts {
                 N = B.size(1);
             }
 
-            TS_AUTO_CHECK(A_K == B_K);
+            if(A_K != B_K) {
+                TS_LOG_ERROR << "Can not gemm("
+                    << "A=" << to_string(A.sizes()) << ", "
+                    << "B=" <<  to_string(B.sizes()) << ", "
+                    << "C=" <<  to_string(C.sizes()) << ", "
+                    << "alpha=" <<  alpha << ", "
+                    << "beta=" <<  beta << ", "
+                    << std::boolalpha
+                    << "transA=" <<  transA << ", "
+                    << "transB=" <<  transB << ")"
+                    << eject;
+            }
 
             auto C_shape = C.sizes();
             if (C_shape.size() < 2) {

@@ -132,6 +132,8 @@ namespace ts {
                                              const std::array<int32_t, 2> &size, const std::array<float, 9> &affine,
                                              int32_t dim = -1,
                                              desc::ResizeType type = desc::ResizeType::LINEAR);
+
+        TS_DEBUG_API Node matmul(const std::string &name, const NodeOrTensor &A, const NodeOrTensor &B, bool transpose = false);
     }
 }
 

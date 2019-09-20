@@ -12,7 +12,7 @@ namespace ts {
         static void cpu_max_compute_run(const Tensor &x, int axis,  Tensor &out) {
             auto &x_shape = x.sizes();
             if(axis < 0) {
-                axis += x_shape.size();
+                axis += int(x_shape.size());
             }
 
             auto number = std::accumulate(x_shape.begin(), x_shape.begin() + axis, 1, std::multiplies<int>());

@@ -17,6 +17,11 @@ namespace ts {
 
         template<typename T>
         struct vec3d {
+        public:
+			vec3d() = default;
+			template <typename X, typename Y, typename Z>
+			vec3d(X x, Y y, Z z): x(T(x)), y(T(y)), z(T(z)) {}
+
             T x;
             T y;
             T z;
@@ -57,10 +62,7 @@ namespace ts {
 #endif
             for (int n_y_d = 0; n_y_d < dst_height; n_y_d++) {
                 for (int n_x_d = 0; n_x_d < dst_width; n_x_d++) {
-                    vec3d<float> cur;
-                    cur.x = n_x_d;
-                    cur.y = n_y_d;
-                    cur.z = 1;
+                    vec3d<float> cur(n_x_d, n_y_d, 1);
                     auto location = transform<float>(rz00, rz01, rz02, rz10, rz11, rz12, rz20, rz21, rz22, cur);
 
                     double lf_x_s = location.x;
@@ -120,10 +122,7 @@ namespace ts {
             for (int n_y_d = 0; n_y_d < dst_height; n_y_d++) {
                 for (int n_x_d = 0; n_x_d < dst_width; n_x_d++) {
 
-                    vec3d<float> cur;
-                    cur.x = n_x_d;
-                    cur.y = n_y_d;
-                    cur.z = 1;
+                    vec3d<float> cur(n_x_d, n_y_d, 1);
                     auto location = transform<float>(rz00, rz01, rz02, rz10, rz11, rz12, rz20, rz21, rz22, cur);
 
                     double lf_x_s = location.x;
@@ -148,8 +147,55 @@ namespace ts {
                     n_y_s = n_y_s < src_height - 1 ? n_y_s : src_height - 1;
 
                     for (int c = 0; c < channels; c++) {
-                        dst_im[(n_y_d * dst_width + n_x_d) * channels + c] = clamp<T, double>(
-                                src_im[(n_y_s * src_width + n_x_s) * channels + c]);
+                        dst_im[(n_y_d * dst_width + n_x_d) * channels + c] = 
+                                src_im[(n_y_s * src_width + n_x_s) * channels + c];
+                    }//end for c
+                }
+            }
+
+        }
+
+        template<typename T>
+        static void affine_sample2d_hard(const Tensor *x, Tensor *y, int src_height, int src_width,
+                                            int dst_height, int dst_width,
+                                            unsigned int x_offset, unsigned int y_offset,
+                                            int channels, float rz00, float rz01, float rz02, float rz10,
+                                            float rz11, float rz12, float rz20, float rz21, float rz22,
+                                            base::AffineOuterMode outer_mode = base::AffineOuterMode::NEAREST,
+                                            T outer_value = T(0)) {
+            const T *src_im = x->data<T>() + x_offset;
+            T *dst_im = y->data<T>() + y_offset;
+
+            for (int n_y_d = 0; n_y_d < dst_height; n_y_d++) {
+                for (int n_x_d = 0; n_x_d < dst_width; n_x_d++) {
+
+                    vec3d<float> cur(n_x_d, n_y_d, 1);
+                    auto location = transform<float>(rz00, rz01, rz02, rz10, rz11, rz12, rz20, rz21, rz22, cur);
+
+                    double lf_x_s = location.x;
+                    double lf_y_s = location.y;
+
+                    auto n_x_s = int(lf_x_s);
+                    auto n_y_s = int(lf_y_s);
+
+                    auto inner = n_x_s >= 0 && n_x_s < src_width - 1 &&
+                                 n_y_s >= 0 && n_y_s < src_height - 1;
+
+                    if (!inner && outer_mode == base::AffineOuterMode::VALUE) {
+                        for (int c = 0; c < channels; c++) {
+                            dst_im[(n_y_d * dst_width + n_x_d) * channels + c] = outer_value;
+                        }
+                        continue;
+                    }
+
+                    n_x_s = n_x_s >= 0 ? n_x_s : 0;
+                    n_x_s = n_x_s < src_width - 1 ? n_x_s : src_width - 1;
+                    n_y_s = n_y_s >= 0 ? n_y_s : 0;
+                    n_y_s = n_y_s < src_height - 1 ? n_y_s : src_height - 1;
+
+                    for (int c = 0; c < channels; c++) {
+                        dst_im[(n_y_d * dst_width + n_x_d) * channels + c] =
+                                src_im[(n_y_s * src_width + n_x_s) * channels + c];
                     }//end for c
                 }
             }
@@ -177,18 +223,15 @@ namespace ts {
 //#endif
             for (int m = 0; m < y_height; m++) {
                 for (int n = 0; n < y_width; n++) {
-                    vec3d<float> cur;
-                    cur.x = n;
-                    cur.y = m;
-                    cur.z = 1;
+                    vec3d<float> cur(n, m, 1);
                     auto location = transform<float>(rz00, rz01, rz02, rz10, rz11, rz12, rz20, rz21, rz22, cur);
 
                     double fy = location.y;
-                    int sy = std::floor(fy);
+                    auto sy = int(std::floor(fy));
                     fy -= sy;
 
                     double fx = location.x;
-                    int sx = std::floor(fx);
+					auto sx = int(std::floor(fx));
                     fx -= sx;
 
                     auto outter = sy < 1 || sy >= x_height - 3 || sx < 1 || sx >= x_width - 3;
@@ -269,7 +312,7 @@ namespace ts {
                     affine_sample2d_cubic<T>(x, y, x_height, x_width, y_height, y_width, k * x_batch_step,
                                              k * y_batch_step, channels,
                                              rz00, rz01, rz02, rz10, rz11, rz12, rz20, rz21, rz22, outer_mode,
-                                             outer_value);
+                                             T(outer_value));
                 }
             } else if (type == Affine_Sample2DType::NEAREST) {
 
@@ -277,14 +320,22 @@ namespace ts {
                     affine_sample2d_nearest<T>(x, y, x_height, x_width, y_height, y_width, k * x_batch_step,
                                                k * y_batch_step, channels,
                                                rz00, rz01, rz02, rz10, rz11, rz12, rz20, rz21, rz22, outer_mode,
-                                               outer_value);
+                                               T(outer_value));
+                }
+            } else if (type == Affine_Sample2DType::HARD) {
+
+                for (int k = 0; k < number; k++) {
+                    affine_sample2d_hard<T>(x, y, x_height, x_width, y_height, y_width, k * x_batch_step,
+                                            k * y_batch_step, channels,
+                                            rz00, rz01, rz02, rz10, rz11, rz12, rz20, rz21, rz22, outer_mode,
+                                            T(outer_value));
                 }
             } else { //LINEAR
                 for (int k = 0; k < number; k++) {
                     affine_sample2d_linear<T>(x, y, x_height, x_width, y_height, y_width, k * x_batch_step,
                                               k * y_batch_step, channels,
                                               rz00, rz01, rz02, rz10, rz11, rz12, rz20, rz21, rz22, outer_mode,
-                                              outer_value);
+                                              T(outer_value));
                 }
             }
         }
@@ -330,7 +381,7 @@ namespace ts {
                         x_height, x_width, \
                         y_height, y_width, \
                         x_batch_step, y_batch_step, channels, type, rz00,rz01,rz02,rz10,rz11,rz12,rz20,rz21,rz22, \
-                        outer_mode, outer_value); break; }
+                        outer_mode, TYPE(outer_value)); break; }
                 DECLARE_COMPUTE_RUN(INT8, int8_t);
                 DECLARE_COMPUTE_RUN(UINT8, uint8_t);
                 DECLARE_COMPUTE_RUN(INT16, int16_t);

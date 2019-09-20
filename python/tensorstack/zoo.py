@@ -133,6 +133,7 @@ class Type(object):
         linear = 0
         cubic = 1
         nearest = 2
+        hard = 3
 
     class padding_type(object):
         black = 0
@@ -823,7 +824,7 @@ def rsqrt(name, x):
     return node
 
 
-def sample2d(name, x, scale, type=Type.resize2d_type.nearest, dim=-2):
+def sample2d(name, x, scale, type=Type.resize2d_type.hard, dim=-2):
     assert isinstance(x, Node)
 
     node = menu.op(name=name, op_name=Name.Layer.sample2d, inputs=[x])

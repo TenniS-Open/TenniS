@@ -22,6 +22,7 @@ namespace ts {
 #pragma omp parallel for num_threads(openmp_threads())
 #endif
             for (int i = 0; i < count; i++) {
+
                 output_data[i] = 1. / (1. + exp(-(input_data[i])));
             }
         }

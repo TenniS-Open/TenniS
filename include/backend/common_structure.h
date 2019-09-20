@@ -92,12 +92,14 @@ namespace ts {
         LINEAR = 0,
         CUBIC = 1,
         NEAREST = 2,
+        HARD = 3,
     };
 
     enum class Affine_Sample2DType : int {
         LINEAR = 0,
         CUBIC = 1,
         NEAREST = 2,
+        HARD = 3,
     };
 }
 

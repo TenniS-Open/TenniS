@@ -8,6 +8,7 @@
 #include "common.h"
 #include "device.h"
 #include "tensor.h"
+#include "module.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -241,6 +242,13 @@ TENSOR_STACK_C_API ts_bool ts_ImageFilter_force_gray_v2(ts_ImageFilter *filter, 
  * @return false if failed
  */
 TENSOR_STACK_C_API ts_bool ts_ImageFilter_norm_image(ts_ImageFilter *filter, float epsilon);
+
+/**
+ * Get module
+ * @param filter the return value of ts_new_ImageFilter
+ * @return new reference of ts_Module
+ */
+TENSOR_STACK_C_API ts_Module *ts_ImageFilter_module(const ts_ImageFilter *filter);
 
 
 #ifdef __cplusplus

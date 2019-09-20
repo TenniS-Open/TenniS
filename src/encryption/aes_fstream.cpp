@@ -16,7 +16,7 @@ namespace ts {
     size_t AESFileStreamReader::read(void *buffer, size_t size) {
         if(m_master_datalen - m_master_offset >= size) {
             memcpy(buffer, m_master + m_master_offset, size);
-            m_master_offset += size;
+            m_master_offset += int(size);
             return size; 
         }
 
@@ -42,7 +42,7 @@ namespace ts {
         while(buffer_offset < size) {    
             if(m_second_datalen == 0 ) {
                 m_stream.read(reinterpret_cast<char *>(m_second), AES_BLOCKLEN);
-                m_second_datalen = m_stream.gcount();
+                m_second_datalen = int(m_stream.gcount());
                 if(m_second_datalen == 0 ) {
                     if(m_stream.eof()) {
                         break;
@@ -65,7 +65,7 @@ namespace ts {
 
             m_second_datalen = 0; 
             m_stream.read(reinterpret_cast<char *>(m_second), AES_BLOCKLEN);
-            m_second_datalen = m_stream.gcount();
+            m_second_datalen = int(m_stream.gcount());
             if(m_second_datalen == 0 ) {
                 if(m_stream.eof()) {
                     iseof = true;
@@ -88,7 +88,7 @@ namespace ts {
             
             if(buffer_offset + m_master_datalen >= size) {
                 memcpy(reinterpret_cast<char*>(buffer) + buffer_offset, m_master, size - buffer_offset);
-                m_master_offset = size - buffer_offset;
+                m_master_offset = int(size) - buffer_offset;
                 buffer_offset += m_master_offset;
                 break;
             }else {
@@ -116,7 +116,7 @@ namespace ts {
             TS_LOG_ERROR << "Using key over " << AES_KEYLEN << " will be ignored.";
         }
 
-         AES_init_ctx(&m_ctx, (uint8_t*)key.c_str(), key.length());
+         AES_init_ctx(&m_ctx, (uint8_t*)key.c_str(), uint32_t(key.length()));
     }
 
     void AESFileStreamReader::close() {
@@ -139,7 +139,7 @@ namespace ts {
         while(nwrite < size ) {
             if(AES_BLOCKLEN - m_master_datalen  >= size - nwrite) {
                 memcpy(m_master + m_master_datalen, reinterpret_cast<const char *>(buffer) + nwrite, size - nwrite);
-                m_master_datalen += size - nwrite;
+                m_master_datalen += int(size - nwrite);
                 nwrite = size;
                 return nwrite; 
             }else {
@@ -164,7 +164,7 @@ namespace ts {
              TS_LOG_ERROR << "Using key over " << AES_KEYLEN << " will be ignored.";
          }
 
-         AES_init_ctx(&m_ctx, (uint8_t*)key.c_str(), key.length());
+         AES_init_ctx(&m_ctx, (uint8_t*)key.c_str(), uint32_t(key.length()));
     }
 
     AESFileStreamWriter::~AESFileStreamWriter() {

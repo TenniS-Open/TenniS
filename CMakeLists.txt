@@ -14,42 +14,85 @@ add_definitions(-DTS_DISABLE_PARALLEL)
 list(APPEND CMAKE_MODULE_PATH ${SOLUTION_DIR}/cmake)
 list(APPEND CMAKE_PREFIX_PATH ${SOLUTION_DIR}/cmake)
 
-# option for platform
+#------------------------------------------------------------------------------#
+# ============================= Options start ================================ #
+#------------------------------------------------------------------------------#
+# Install path
+set(CMAKE_INSTALL_PREFIX ${PROJECT_BINARY_DIR}/build
+    CACHE STRING "set install prefix" FORCE)
+
+# Option for platform
 set(PLATFORM "auto" CACHE STRING "auto, x86 or x64")
+# Build type, configuration
 set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Debug or Release")
-set(CONFIGURATION ${CMAKE_BUILD_TYPE})
 
-option(TS_BUILD_TEST "[Optional] Build test" ON)
-option(TS_BUILD_TOOLS "[Optional] Build tools" ON)
-
-option(TS_USE_OPENMP "[Optional] Use OpenMP" ON)
+# If build test cases
+option(TS_BUILD_TEST "[Optional] Build test" OFF)
+# If build tool cases
+option(TS_BUILD_TOOLS "[Optional] Build tools" OFF)
+# If build with OpenCV, must set on if TS_BUILD_TEST=ON
 option(TS_USE_OPENCV "[Optional] Use OpenCV" OFF)
+# If build with debug API, must set on if TS_BUILD_TEST=ON
+option(TS_USE_DEBUG_API "[Optional] Use Debug API" OFF)
 
+# if use 
 option(TS_USE_CUDA "[Optional] Use CUDA" OFF)
-option(TS_USE_CBLAS "[Optional] Use CBLAS" OFF)
 option(TS_USE_CUBLAS "[Optional] Use CUBLAS" OFF)
 set(TS_CUDA_ARCH "" CACHE STRING "List arch, like: 60,61,62. Empty for all arch.")
 
-option(TS_USE_PROFILER "[Optional] Use Profiler" ON)
-if (TS_USE_PROFILER)
-    add_definitions(-DTS_USE_PROFILER)
-endif()
-option(TS_USE_HOOK "[Optional] Use Hook" ON)
-if (TS_USE_HOOK)
-    add_definitions(-DTS_USE_HOOK)
-endif()
-
-option(TS_USE_DEBUG_API "[Optional] Use Debug API" OFF)
-if (TS_USE_DEBUG_API)
-    add_definitions(-DTS_USE_DEBUG_API)
-endif()
-
+# Options of optimizations
+option(TS_USE_CBLAS "[Optional] Use CBLAS" OFF) # [discarded]
+option(TS_USE_OPENMP "[Optional] Use OpenMP" ON)
 option(TS_USE_SIMD "[Optional] Use SIMD" ON)
 option(TS_USE_AVX "[Optional] Use AVX" OFF)
 option(TS_USE_SSE "[Optional] Use SSE" OFF)
 option(TS_USE_FMA "[Optional] Use FMA" OFF)
 option(TS_USE_NEON "[Optional] Use NEON" OFF)
 option(TS_USE_FAST_MATH "[Optional] Use fast math (-ffast-math)" OFF)
+option(TS_USE_WINOGRAD "[Optional] Use Winograd" OFF)
+# Special for armv7
+option(TS_ON_ARMV7 "[Optional] Target is arm-v7a" OFF)
+
+# Not change for now version
+option(TS_USE_PROFILER "[Optional] Use Profiler" ON)
+option(TS_USE_HOOK "[Optional] Use Hook" ON)
+
+# Hidden options (do not uncomment, it already defined later)
+# None
+
+#------------------------------------------------------------------------------#
+# ============================= Options end ================================== #
+#------------------------------------------------------------------------------#
+
+if ("${CMAKE_BUILD_TYPE}" STREQUAL "")
+    set(CONFIGURATION "Release")
+else ()
+    set(CONFIGURATION ${CMAKE_BUILD_TYPE})
+endif ()
+
+message(STATUS "== Target: ${TARGET}")
+message(STATUS "== Platform: ${PLATFORM}")
+message(STATUS "== Configuration: ${CONFIGURATION}")
+
+# set common compiler flags
+include(LOCAL_FLAGS)
+include(LOCAL_ENV)
+include(tools)
+
+if (TS_USE_PROFILER)
+    add_definitions(-DTS_USE_PROFILER)
+endif()
+if (TS_USE_HOOK)
+    add_definitions(-DTS_USE_HOOK)
+endif()
+
+if (TS_USE_DEBUG_API)
+    message(STATUS "[Important] Use debug API: [ON]")
+    add_definitions(-DTS_USE_DEBUG_API)
+else (TS_USE_DEBUG_API)
+    message(STATUS "[Important] Use debug API: [OFF]")
+endif()
+
 if (TS_USE_SIMD)
 	message(STATUS "[Optional] Use SIMD: [ON]")
 	add_definitions(-DTS_USE_SIMD)
@@ -66,11 +109,12 @@ if (TS_USE_SIMD)
     if (TS_USE_FMA)
         message(STATUS "[Optional] Use FMA: [ON]")
         add_definitions(-DTS_USE_FMA)
+    else (TS_USE_FMA)
+        message(STATUS "[Optional] Use FMA: [OFF]")
     endif()
 endif()
 
 # set winograd support
-option(TS_USE_WINOGRAD "[Optional] Use Winograd" OFF)
 if (TS_USE_WINOGRAD)
     add_definitions(-DTS_USE_WINOGRAD)
     message(STATUS "[Optional] Use Winograd: [ON]")
@@ -78,12 +122,11 @@ else (TS_USE_WINOGRAD)
     message(STATUS "[Optional] Use Winograd: [OFF]")
 endif()
 
-# set common compiler flags
-include(LOCAL_FLAGS)
-include(LOCAL_ENV)
-include(tools)
+# if target is target
+if (TS_ON_ARMV7)
+    add_definitions(-DTS_ON_ARMV7)
+endif()
 
-set(CMAKE_INSTALL_PREFIX ${PROJECT_BINARY_DIR}/build CACHE STRING "set install prefix" FORCE)
 install(CODE "MESSAGE(\"Installing into ${CMAKE_INSTALL_PREFIX}\")")
 
 set(LOCAL_OUTPUT_DIR ${PROJECT_SOURCE_DIR})
@@ -129,10 +172,10 @@ if (TS_USE_OPENCV)
     message(STATUS "[Optional] Use OpenCV: [ON]")
 
     find_package(OpenCV REQUIRED)
-    message(STATUS "OpenCV library status:")
-    message(STATUS "    version: ${OpenCV_VERSION}")
+    message(STATUS "    OpenCV library status:")
+    message(STATUS "        version: ${OpenCV_VERSION}")
     # message(STATUS "    libraries: ${OpenCV_LIBS}")
-    message(STATUS "    include path: ${OpenCV_INCLUDE_DIRS}")
+    message(STATUS "        include path: ${OpenCV_INCLUDE_DIRS}")
 
     include_directories(${OpenCV_INCLUDE_DIRS})
     list(APPEND third_libraries ${OpenCV_LIBS})
@@ -153,67 +196,12 @@ endif ()
 if (TS_USE_CUDA)
     find_package(CUDA REQUIRED)
     message(STATUS "[Optional] Use CUDA: [ON]; Found ${CUDA_VERSION}")
-
-    # if (NOT CUDA_HAS_FP16)
-    #     message(FATAL_ERROR "CUDA: use version greater 7.5, to support float16")
-    # endif()
-
-    if (${CUDA_VERSION} VERSION_LESS "7.0")
-        message(FATAL_ERROR "CUDA: verison must greater than 7.0, found ${CUDA_VERSION}")
-    endif()
-
-    if (${CUDA_VERSION} VERSION_GREATER "8.999")
-        add_definitions(-DTS_USE_CUDA_FP16)
-        message(STATUS "CUDA: with float16 supporting.")
-    else()
-        message(STATUS "CUDA: no float16 supported.")
-    endif()
-
-    set(CUDA_ARCH)
-    if (TS_CUDA_ARCH)
-        message(STATUS "CUDA: support in ${TS_CUDA_ARCH}")
-        string(REPLACE "," ";" ARCH_LIST ${TS_CUDA_ARCH})
-
-        foreach (ARCH ${ARCH_LIST})
-            string(STRIP ${ARCH} ARCH)
-            set(CUDA_ARCH "${CUDA_ARCH} -gencode arch=compute_${ARCH},code=sm_${ARCH}")
-        endforeach ()
-    else(TS_CUDA_ARCH)
-        message(STATUS "CUDA: support Maxwell in 5.3")
-        set(CUDA_ARCH "${CUDA_ARCH} -gencode arch=compute_53,code=sm_53")
-
-        if (${CUDA_VERSION} VERSION_GREATER "7.999")
-            message(STATUS "CUDA: support Pascal in 6.0")
-            message(STATUS "CUDA: support Pascal in 6.1")
-            message(STATUS "CUDA: support Pascal in 6.2")
-            set(CUDA_ARCH "${CUDA_ARCH} -gencode arch=compute_60,code=sm_60")
-            set(CUDA_ARCH "${CUDA_ARCH} -gencode arch=compute_61,code=sm_61")
-            set(CUDA_ARCH "${CUDA_ARCH} -gencode arch=compute_62,code=sm_62")
-        endif()
-
-        if (${CUDA_VERSION} VERSION_GREATER "8.999")
-            message(STATUS "CUDA: support Volta in 7.0")
-            message(STATUS "CUDA: support Volta in 7.2")
-            set(CUDA_ARCH "${CUDA_ARCH} -gencode arch=compute_70,code=sm_70")
-            set(CUDA_ARCH "${CUDA_ARCH} -gencode arch=compute_72,code=sm_72")
-        endif()
-
-        if (${CUDA_VERSION} VERSION_GREATER "9.999")
-            message(STATUS "CUDA: support Turing in 7.5")
-            set(CUDA_ARCH "${CUDA_ARCH} -gencode arch=compute_75,code=sm_75")
-        endif()
-    endif(TS_CUDA_ARCH)
-
-    set(CUDA_PROPAGATE_HOST_FLAGS OFF)
-    set(CUDA_NVCC_FLAGS)
-    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} ${CUDA_ARCH} -std=c++11")
-    if ("${CONFIGURATION}" STREQUAL "Debug")
-        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -O0 -g ")
-    endif()
-    set(TS_USE_CUBLAS ON)
-
     list(APPEND TENSORSTACK_ACHIVES gpu)
     add_definitions(-DTS_USE_CUDA)
+
+    include(use_cuda)
+
+    set(TS_USE_CUBLAS ON)
 else()
     message(STATUS "[Optional] Use CUDA: [OFF]")
 endif()
@@ -242,41 +230,7 @@ if (TS_USE_CBLAS)
     list(APPEND TENSORSTACK_ACHIVES cblas)
     add_definitions(-DTS_USE_CBLAS)
 
-    set(CBLAS_FOUND OFF)
-
-    if (WIN32)
-        find_library(OpenBLAS REQUIRED)
-		# include_directories("D:/openblas/0.2.4/include")
-		# list(APPEND third_libraries "D:/openblas/0.2.4/lib/x64/libopenblas.lib")
-        if (OpenBLAS_FOUND)
-            set(CBLAS_FOUND ON)
-            include_directories(${OpenBLAS_INCLUDE_DIR})
-            list(APPEND third_libraries ${OpenBLAS_LIBRARY})
-        endif()
-    elseif (APPLE)
-        message(STATUS "Using Max OS X: Accelerate")
-        list(APPEND third_libraries -lcblas)
-        set(CBLAS_FOUND ON)
-    elseif (UNIX)
-        find_library(OpenBLAS REQUIRED)
-        if (OpenBLAS_FOUND)
-            set(CBLAS_FOUND ON)
-            include_directories(${OpenBLAS_INCLUDE_DIR})
-            list(APPEND third_libraries ${OpenBLAS_LIBRARY})
-        endif()
-    else ()
-        find_library(OpenBLAS REQUIRED)
-        if (OpenBLAS_FOUND)
-            set(CBLAS_FOUND ON)
-            include_directories(${OpenBLAS_INCLUDE_DIR})
-            list(APPEND third_libraries ${OpenBLAS_LIBRARY})
-        endif()
-    endif ()
-    if (NOT CBLAS_FOUND)
-		# include_directories("/opt/OpenBLAS/include")
-		# link_directories("/opt/OpenBLAS/lib")
-        list(APPEND third_libraries -lopenblas)
-    endif()
+    include(use_cblas)
 else()
     message(STATUS "[Optional] Use CBLAS: [OFF]")
 endif()
@@ -334,16 +288,40 @@ if (WIN32)
     set_target_properties(${PROJECT_NAME}_LIB PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${LOCAL_OUTPUT_DIR}/${ENV_RUNTIME_DIR})
 endif()
 
+if (IOS)
+    set(TS_BUILD_FRAMEWORK ON)
+else (IOS)
+    set(TS_BUILD_FRAMEWORK OFF)
+endif (IOS)
+
+if (TS_BUILD_FRAMEWORK)
+    set_target_properties(${PROJECT_NAME}_LIB PROPERTIES
+            FRAMEWORK TRUE
+            FRAMEWORK_VERSION A
+            MACOSX_FRAMEWORK_IDENTIFIER com.seetatech.sdk.TensorStack
+            # MACOSX_FRAMEWORK_INFO_PLIST Info.plist
+            # "current version" in semantic format in Mach-O binary file
+            VERSION 0.3.3
+            # "compatibility version" in semantic format in Mach-O binary file
+            SOVERSION 0.3.3
+            # PUBLIC_HEADER "${FRAMEWORK_PUBLIC_HEADER_FILES}"
+            # RESOURCE      "${RESOURCE_FILES1}"
+            XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "iPhone Developer"
+            )
+    install(DIRECTORY ${SOLUTION_DIR}/include/api
+            DESTINATION "framework/TensorStack.framework/Headers"
+            )
+else ()
+    install(DIRECTORY ${SOLUTION_DIR}/include/api
+            DESTINATION ${ENV_HEADER_DIR}
+            )
+endif (TS_BUILD_FRAMEWORK)
 
 install(TARGETS ${PROJECT_NAME}_LIB
         RUNTIME DESTINATION ${ENV_RUNTIME_DIR}
         LIBRARY DESTINATION ${ENV_LIBRARY_DIR}
         ARCHIVE DESTINATION ${ENV_ARCHIVE_DIR}
-        )
-
-# TODO: update headers install script
-install(DIRECTORY ${SOLUTION_DIR}/include/api
-        DESTINATION ${ENV_HEADER_DIR}
+        FRAMEWORK DESTINATION framework
         )
 
 install(FILES ${SOLUTION_DIR}/cmake/FindTensorStack.cmake
@@ -360,6 +338,7 @@ FILE(GLOB_RECURSE TOOL_FILES ${PROJECT_SOURCE_DIR}/tools/*.cpp)
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
 if (TS_BUILD_TEST)
+message(STATUS "[Important] Build test: [ON]")
 foreach (path ${TEST_FILES})
     string(REGEX MATCH "[^/]*.[(c)|(cc)|(cpp)]$" file_ext ${path})
     string(REGEX MATCH "^[^.]*" file ${file_ext})
@@ -368,9 +347,12 @@ foreach (path ${TEST_FILES})
     target_link_libraries(test_${file} ${third_libraries})
     # set_target_properties(test_${file} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${LOCAL_OUTPUT_DIR}/lib)
 endforeach ()
+else (TS_BUILD_TEST)
+    message(STATUS "[Important] Build test: [OFF]")
 endif(TS_BUILD_TEST)
 
 if (TS_BUILD_TOOLS)
+message(STATUS "[Important] Build tools: [ON]")
 foreach (path ${TOOL_FILES})
     string(REGEX MATCH "[^/]*.[(c)|(cc)|(cpp)]$" file_ext ${path})
     string(REGEX MATCH "^[^.]*" file ${file_ext})
@@ -382,5 +364,7 @@ foreach (path ${TOOL_FILES})
             RUNTIME DESTINATION ${ENV_RUNTIME_DIR}
             )
 endforeach ()
+else (TS_BUILD_TOOLS)
+    message(STATUS "[Important] Build tools: [OFF]")
 endif (TS_BUILD_TOOLS)
 

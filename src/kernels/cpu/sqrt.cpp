@@ -20,7 +20,7 @@ namespace ts {
             int count = out.count();
 
             for (int i = 0; i < count; i++) {
-                *output_data = sqrt(*input_data);
+                *output_data = T(sqrt(*input_data));
                 output_data++;
                 input_data++;
             }

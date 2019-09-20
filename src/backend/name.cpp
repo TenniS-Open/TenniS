@@ -120,6 +120,9 @@ namespace ts {
             const string &reduce_mean() TS_NOEXCEPT { static string str = "reduce_mean"; return str; }
             const string &sqrt() TS_NOEXCEPT { static string str = "sqrt"; return str; }
             const string &tile() TS_NOEXCEPT { static string str = "tile"; return str; }
+
+            const string &roi_align() TS_NOEXCEPT { static string str = "roi_align"; return str; }
+            const string &proposal() TS_NOEXCEPT { static string str = "proposal"; return str; }
         }
 
         namespace typo {
@@ -203,5 +206,7 @@ namespace ts {
 
         string dims = "dims";
         string repeats = "repeats";
+
+        string transpose = "transpose";
     }
 }

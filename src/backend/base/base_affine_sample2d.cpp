@@ -41,7 +41,7 @@ namespace ts {
                 m_outer_mode = AffineOuterMode::VALUE;
             }
 
-            TS_AUTO_CHECK((m_type >= Affine_Sample2DType::LINEAR) && (m_type <= Affine_Sample2DType::NEAREST));
+            TS_AUTO_CHECK((m_type >= Affine_Sample2DType::LINEAR) && (m_type <= Affine_Sample2DType::HARD));
 
         }
 

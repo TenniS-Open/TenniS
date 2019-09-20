@@ -97,7 +97,7 @@ namespace ts {
                 bool should_select = true;
 
                 for (int j = static_cast<int>(selected.size()) - 1; j >= 0; --j) {
-                    if (check_suppress<T>(p_xdata, next_candidate.box_index, selected[j], iou_threshold, nmode)) {
+                    if (check_suppress<T>(p_xdata, next_candidate.box_index, selected[j], T(iou_threshold), nmode)) {
                         should_select = false;
                         break;
                     }

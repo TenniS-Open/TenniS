@@ -32,7 +32,7 @@
 输入：`size`: `IntArray` 数组的长度，要和 `a` 的维度一致。要缩放的图像的大小，包含`-1`表示扩展  
 输出：`y`: `Tensor` 缩放后的图像   
 参数：
-- `type`: `Enum[linear=0, cubic=1] Default linear` `[Optional]` 图像缩放类型  
+- `type`: `Enum[linear=0, cubic=1, nearest=2, hard=3] Default linear` `[Optional]` 图像缩放类型  
 
 举例：  
 输入: `Tensor[1, 640, 480, 3]` 和 `[-1, 300, 300, -1]`，输出 `Tensor[1, 300, 300, 3]`。
@@ -685,7 +685,7 @@ Note: 这是对应某一个实现的版本。
 输入：`affine`: `Float[3, 3]` 仿射变换矩阵
 
 参数：
-- `type`: `Enum[linear=0, cubic=1, nearest=2] Default linear`
+- `type`: `Enum[linear=0, cubic=1, nearest=2, hard=3] Default linear`
 - `dim`: `Int Default -2`
 - `outer_value`: `Optional Float Default [0]`
 
@@ -1126,6 +1126,70 @@ y: Tensor
 
 说明：  
 `y = numpy.tile(x, repeats)`
+
+
+## proposal (list[scores]..device, prob, bbox, im_info) -> proposals..device
+Description: See [Dragon proposal](http://dragon.seetatech.com/api/python/contents/operators/contrib/rcnn.html)  
+Input:  
+list[scores]: `List[Tensor]` list of Tensor, length like strides  
+prob: `DTypeTensor`  
+bbox: `DTypeTensor`  
+im_info: `Float[3]`  
+
+Output:  
+y: `FloatTensor`
+
+Parameter:  
+```
+inputs (sequence of Tensor)  The inputs.
+strides (sequence of int)  The strides of anchors.
+ratios (sequence of float)  The ratios of anchors.
+scales (sequence of float)  The scales of anchors.
+pre_nms_top_n (int, optional, default=6000)  The number of anchors before nms.
+post_nms_top_n (int, optional, default=300)  The number of anchors after nms.
+nms_thresh (float, optional, default=0.7)  The threshold of nms.
+min_size (int, optional, default=16)  The min size of anchors.
+min_level (int, optional, default=2)  Finest level of the FPN pyramid.
+max_level (int, optional, default=5)  Coarsest level of the FPN pyramid.
+canonical_scale (int, optional, default=224)  The baseline scale of mapping policy.
+canonical_level (int, optional, default=4)  Heuristic level of the canonical scale.
+```
+
+
+## roi_align (features..device, proposal..device) -> region..device
+Description: See [Dragon ROIAlign](http://dragon.seetatech.com/api/python/contents/operators/vision.html#dragon.operators.vision.ROIAlign)  
+Input:  
+features: `DTypeTensor`  
+proposal: `FloatTensor`  
+> features and proposal are same shape
+
+Output:  
+region: `Tensor`  
+
+Parameter:  
+```
+inputs (sequence of Tensor) – The inputs, represent the Feature and RoIs respectively.
+pool_h (int, optional, default=0) – The height of pooled tensor.
+pool_w (int, optional, default=0) – The width of pooled tensor.
+spatial_scale (float, optional, default=1.0) – The inverse of total down-sampling multiples on input tensor.
+sampling_ratio (int, optional, default=2) – The number of sampling grids for each RoI bin.
+```
+
+### _dragon_pooling2d_padding(x, ksize, stride) -> dynamic_padding
+描述：  
+- `x` `Tensor4D` 预计要进行 padding 的数据
+- `ksize` `Int[4]`
+在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+- `stride` `Int[4]`
+在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+- `dynamic_padding`  `Int[4, 2]`输出的padding形式，为4x2维  
+- `ceil` `Bool` if ceil when calculate output size.
+
+参数：  
+- `auto_pad` `String` 为 `SAME_UPPER`、`SAME_LOWER`、`VALID`  
+See `Dragon` for more details.
 
 ## tile_v2 (x..device, repeats..host) -> y..device = delete
 

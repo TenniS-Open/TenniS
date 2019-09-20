@@ -95,7 +95,7 @@ namespace ts {
 
             void conv2d_transpose(const Tensor &x, const Padding2D &padding, float padding_value,
                                   const Tensor &w, const Stride2D &stride, const Dilation2D &dilation,
-                                  Conv2DFormat format, Tensor &out, Stack &stack) {
+                                  Conv2DFormat format, Tensor &out, Stack &stack) override {
                 this->conv2d_transpose(x, padding, padding_value, w, stride, dilation, format, out, stack, false);
             }
 

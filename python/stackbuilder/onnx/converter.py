@@ -89,11 +89,13 @@ def register_layer_converter(layer, converter):
     layer2converter[layer] = converter
 
 
-def convert(input_file, output_file):
+def convert(input_file, output_file, check_graph=False, specific=None):
     """
     convert onnx
     :param input_file: onnx.ModelProto or param can parse into onnx.load(param)
     :param output_file: str of path to file
+    :param check_graph: if call onnx.checker.check_graph
+    :param specific: dict of converter
     :return: ts.Module
     """
     onnx_model = None
@@ -105,7 +107,14 @@ def convert(input_file, output_file):
     if onnx_model is None:
         raise Exception("Can not load {}:{} to onnx model".format(type(input_file), input_file))
 
-    onnx.checker.check_graph(onnx_model.graph)
+    if check_graph:
+        onnx.checker.check_graph(onnx_model.graph)
+    else:
+        try:
+            onnx.checker.check_graph(onnx_model.graph)
+        except Exception as e:
+            import sys
+            sys.stderr.write("[WARNING]: Check graph failed with: {}\n".format(e))
     onnx_model = optimizer.optimize(onnx_model, get_tensor_stack_passes())
 
     onnx_graph = onnx_model.graph
@@ -132,6 +141,7 @@ def convert(input_file, output_file):
     print ("Got {} initializer.".format(len(initialized)))
 
     input = {}  # str, shape
+    graph_input_names = []
     # input
     print("==================== Input ====================")
     for value_info in onnx_graph.input:
@@ -143,6 +153,7 @@ def convert(input_file, output_file):
         shape = to_tensor_shape(tensor_type.shape)
         print("{}: {}, {}".format(name, elem_type, shape))
         input[name] = (elem_type, shape)
+        graph_input_names.append(name)
 
     output = {} # str, shape
     graph_output_names = []
@@ -161,15 +172,18 @@ def convert(input_file, output_file):
 
     # set all initialized node
     name2node = {}  # str -> ts.Node
+    # get ts_inputs
+    ts_inputs = []
     # no loop in graph
-    for name in input.keys():
+    for name in graph_input_names:
         value = input[name]
         elem_type = value[0]
         shape = value[1]
         ts_dtype = dtype.from_onnx(elem_type)
-        ts_node = ts.menu.param("_input_" + name, shape=shape)
-        ts_node = ts.zoo.cast(name, x=ts_node, dtype=ts_dtype)
+        ts_input_node = ts.menu.param("_input_" + name, shape=shape)
+        ts_node = ts.zoo.cast(name, x=ts_input_node, dtype=ts_dtype)
         name2node[name] = ts_node
+        ts_inputs.append(ts_input_node)
 
     for name in initialized.keys():
         value = initialized[name]
@@ -199,6 +213,10 @@ def convert(input_file, output_file):
         "Softmax": convert_softmax_layer,
     }
     layer_converters.update(layer2converter)
+    if specific is not None:
+        if not isinstance(specific, dict):
+            raise Exception("specific must be dict, got {}".format(type(specific)))
+        layer_converters.update(specific)
 
     print("==================== Converting ====================")
     # convert each node
@@ -210,7 +228,7 @@ def convert(input_file, output_file):
 
         # convert layer
         if op_type not in layer_converters:
-            raise Exception("Not supported Layer {}".format(op_type))
+            raise Exception("Not supported ONNX Layer {}".format(op_type))
         ts_converter = layer_converters[op_type]
 
         input_ts_nodes = []
@@ -245,7 +263,7 @@ def convert(input_file, output_file):
     module.load(ts_outputs)
 
     # sort inputs
-    assert len(module.inputs) == 1
+    module.sort_inputs(ts_inputs)
 
     with open(output_file, "wb") as fo:
         ts.Module.Save(stream=fo, module=module)
@@ -1269,3 +1287,99 @@ def convert_dropout_layer(node, input_nodes, output_names):
 
 
 register_layer_converter("Dropout", convert_dropout_layer)
+
+
+def convert_tanh_layer(node, input_nodes, output_names):
+    # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} -> {} ]=-".format(node.op_type, [n.name for n in input_nodes], output_names))
+
+    attribute = node.attribute
+    attr_dict = {}
+    for attr in attribute:
+        attr_dict[str(attr.name)] = topy(attr)
+
+    assert len(input_nodes) == 1
+    assert len(output_names) == 1
+
+    node_name = output_names[0]
+
+    x = input_nodes[0]
+
+    ts_node = ts.zoo.tanh(node_name, x=x)
+
+    return ts_node,
+
+
+register_layer_converter("Tanh", convert_tanh_layer)
+
+
+def convert_abs_layer(node, input_nodes, output_names):
+    # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} -> {} ]=-".format(node.op_type, [n.name for n in input_nodes], output_names))
+
+    attribute = node.attribute
+    attr_dict = {}
+    for attr in attribute:
+        attr_dict[str(attr.name)] = topy(attr)
+
+    assert len(input_nodes) == 1
+    assert len(output_names) == 1
+
+    node_name = output_names[0]
+
+    x = input_nodes[0]
+
+    ts_node = ts.zoo.abs(node_name, x=x)
+
+    return ts_node,
+
+
+register_layer_converter("Abs", convert_abs_layer)
+
+
+def convert_upsample_layer(node, input_nodes, output_names):
+    # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} -> {} ]=-".format(node.op_type, [n.name for n in input_nodes], output_names))
+
+    attribute = node.attribute
+    attr_dict = {}
+    for attr in attribute:
+        attr_dict[str(attr.name)] = topy(attr)
+
+    assert len(input_nodes) == 2
+    assert len(output_names) == 1
+
+    node_name = output_names[0]
+
+    x = input_nodes[0]
+    scales = input_nodes[1]
+
+    scales = ts.zoo.to_const(scales, "scales")
+    scales = numpy.asarray(scales)
+
+    if scales.shape != (4,):
+        raise NotImplementedError("scales={}".format(scales))
+
+    if scales[0] != 1 or scales[1] != 1:
+        raise NotImplementedError("scales={}".format(scales))
+
+    if scales[2] != scales[3]:
+        raise NotImplementedError("scales={}".format(scales))
+
+    scale = scales[3]
+
+    mode = attr_dict["mode"]
+    mode2type = {
+        "nearest": ts.zoo.Type.resize2d_type.hard,      # nearest means hard in TS
+        "bilinear": ts.zoo.Type.resize2d_type.linear,
+    }
+    if mode not in mode2type:
+        raise NotImplementedError("mode={}".format(mode))
+    type = mode2type[mode]
+
+    ts_node = ts.zoo.sample2d(name=node_name, x=x, scale=scale, type=type)
+
+    return ts_node,
+
+
+register_layer_converter("Upsample", convert_upsample_layer)

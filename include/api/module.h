@@ -56,6 +56,18 @@ TENSOR_STACK_C_API ts_Module *ts_Module_LoadFromStream(void *obj, ts_stream_read
  */
 TENSOR_STACK_C_API void ts_free_Module(const ts_Module *module);
 
+/**
+ * Fusion two modules to one.
+ * @param in input module
+ * @param in_out_slot input module's output slot
+ * @param out output module
+ * @param in_out_slot output module's input slot
+ * @return New reference. Return NULL if failed.
+ * @note call @see ts_free_Module to free ts_Module
+ * @note new module's input and output is sorted all `in` and `out` modules left input and output nodes
+ */
+TENSOR_STACK_C_API ts_Module *ts_Module_Fusion(const ts_Module *in, int32_t in_out_slot, const ts_Module *out, int32_t out_in_slot);
+
 
 #ifdef __cplusplus
 }

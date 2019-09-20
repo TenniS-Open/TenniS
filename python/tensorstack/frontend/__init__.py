@@ -9,6 +9,7 @@ from . import onnx
 from . import vvvv
 from . import tf
 from . import torch
+from . import dragon
 
 from .onnx import gather
 from .onnx import unsqueeze

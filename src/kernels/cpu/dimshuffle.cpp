@@ -19,26 +19,26 @@ namespace ts {
             const Shape &shape = x.sizes();
             // const Shape &reshape = out.sizes();
 
-            unsigned int preoffset = 1;
+            size_t preoffset = 1;
             for (int i = 0; i < dim; i++) {
                 preoffset *= shape[i];
             }
 
-            unsigned int stride = 1;
-            for (int i = dim; i < shape.size(); i++) {
+			size_t stride = 1;
+            for (size_t i = dim; i < shape.size(); i++) {
                 stride *= shape[i];
             }
 
-            unsigned int backstride = 1;
-            backstride = stride / shape[dim];
-            unsigned int newstride = backstride * shuffle.size();
+			size_t backstride = 1;
+            backstride = stride / size_t(shape[dim]);
+			size_t newstride = backstride * shuffle.size();
             int type_len = type_bytes(x.dtype());
-            int ncpy = backstride * type_len;
+            auto ncpy = backstride * size_t(type_len);
 
             const char *psrc = x.data<char>();
             char *pdst = out.data<char>();
-            for (int k = 0; k < preoffset; k++) {
-                for (int i = 0; i < shuffle.size(); i++) {
+            for (size_t k = 0; k < preoffset; k++) {
+                for (size_t i = 0; i < shuffle.size(); i++) {
                     memcpy_handler(
                             device_id, pdst + type_len * (k * newstride + i * backstride),
                             device_id, psrc + type_len * (k * stride + shuffle[i] * backstride), ncpy);

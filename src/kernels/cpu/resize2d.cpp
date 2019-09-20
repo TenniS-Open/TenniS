@@ -76,7 +76,7 @@ namespace ts {
 #endif
             for (int j = 0; j < dst_height; ++j) {
                 double fy = (double) ((j + 0.5) * scale_y - 0.5);
-                int sy = floor(fy);
+                int sy = int(floor(fy));
                 fy -= sy;
                 //sy = std::min(sy, src_height - 3);
                 //sy = std::max(1, sy);
@@ -99,7 +99,7 @@ namespace ts {
 
                 for (int i = 0; i < dst_width; ++i) {
                     double fx = (double) ((i + 0.5) * scale_x - 0.5);
-                    int sx = floor(fx);
+                    int sx = int(floor(fx));
                     fx -= sx;
 
                     if (sx < 1) {
@@ -141,6 +141,42 @@ namespace ts {
                 }
             }
         }
+
+
+        template<typename T>
+        static inline void Resize2d_ResizeHard(const T *src_im, int src_width, int src_height, int channels,
+                                               T *dst_im, int dst_width, int dst_height) {
+            if (src_width == dst_width && src_height == dst_height) {
+                std::memcpy(dst_im, src_im, src_width * src_height * channels * sizeof(T));
+                // memcpy(dst_im, MemoryDevice(CPU), src_width * src_height * channels * sizeof(T),
+                //        src_im, MemoryDevice(CPU), src_width * src_height * channels * sizeof(T));
+                return;
+            }
+
+            float lfx_scl = float(src_width) / dst_width;
+            float lfy_scl = float(src_height) / dst_height;
+
+            for (int n_y_d = 0; n_y_d < dst_height; n_y_d++) {
+                for (int n_x_d = 0; n_x_d < dst_width; n_x_d++) {
+                    float lf_x_s = lfx_scl * n_x_d;
+                    float lf_y_s = lfy_scl * n_y_d;
+
+                    auto n_x_s = int(lf_x_s);
+                    auto n_y_s = int(lf_y_s);
+
+                    n_x_s = n_x_s >= 0 ? n_x_s : 0;
+                    n_x_s = n_x_s < src_width - 1 ? n_x_s : src_width - 1;
+                    n_y_s = n_y_s >= 0 ? n_y_s : 0;
+                    n_y_s = n_y_s < src_height - 1 ? n_y_s : src_height - 1;
+
+                    for (int c = 0; c < channels; c++) {
+                        dst_im[(n_y_d * dst_width + n_x_d) * channels + c] = src_im[
+                                (n_y_s * src_width + n_x_s) * channels + c];
+                    }//end for c
+                }
+            }
+        }
+
 
 
         template<typename T>
@@ -214,6 +250,17 @@ namespace ts {
             Resize2d_ResizeNearest<T>(psrc, x_width, x_height, channels, pdst, y_width, y_height);
         }
 
+
+        template<typename T>
+        static inline void resize_hard(const Tensor *x, Tensor *y, int x_height, int x_width,
+                                       int y_height, int y_width, unsigned int x_offset, unsigned int y_offset,
+                                       int channels) {
+
+            const T *psrc = x->data<T>() + x_offset;
+            T *pdst = y->data<T>() + y_offset;
+            Resize2d_ResizeHard<T>(psrc, x_width, x_height, channels, pdst, y_width, y_height);
+        }
+
         template<typename T>
         static inline void batch_resize_linear(int number, const Tensor *x, Tensor *y, int x_height, int x_width,
                                                int y_height, int y_width,
@@ -248,6 +295,17 @@ namespace ts {
         }
 
         template<typename T>
+        static inline void batch_resize_hard(int number, const Tensor *x, Tensor *y, int x_height, int x_width,
+                                             int y_height, int y_width,
+                                             unsigned int x_batch_step, unsigned int y_batch_step,
+                                             int channels) {
+            for (int k = 0; k < number; k++) {
+                resize_hard<T>(x, y, x_height, x_width, y_height, y_width,
+                               k * x_batch_step, k * y_batch_step, channels);
+            }
+        }
+
+        template<typename T>
         static void batch_resize(int number, const Tensor *x, Tensor *y, int x_height, int x_width,
                                  int y_height, int y_width,
                                  unsigned int x_batch_step, unsigned int y_batch_step,
@@ -260,9 +318,14 @@ namespace ts {
 
             }else if (type == Resize2DType::CUBIC) {
                 batch_resize_cubic<T>(number, x, y,
-                                       x_height, x_width,
-                                       y_height, y_width,
-                                       x_batch_step, y_batch_step, channels);
+                                      x_height, x_width,
+                                      y_height, y_width,
+                                      x_batch_step, y_batch_step, channels);
+            } else if (type == Resize2DType::HARD) {
+                batch_resize_hard<T>(number, x, y,
+                                     x_height, x_width,
+                                     y_height, y_width,
+                                     x_batch_step, y_batch_step, channels);
             } else {
                 batch_resize_nearest<T>(number, x, y,
                                       x_height, x_width,

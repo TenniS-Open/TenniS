@@ -32,7 +32,8 @@ def convert(input_module, output_file, input, verbose=False):
     dummy_input = [torch.autograd.Variable(torch.randn(o)) for o in input]
     assert len(dummy_input) == 1
     dummy_input = dummy_input[0]
-    torch.onnx.export(torch_model, dummy_input, output_file, verbose=verbose)
+    torch.onnx.export(torch_model, dummy_input, output_file, verbose=verbose,
+                      operator_export_type=torch.onnx.OperatorExportTypes.ONNX)
 
     print("============ Summary ============")
     if isinstance(input_module, str):

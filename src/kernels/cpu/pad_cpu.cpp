@@ -37,7 +37,6 @@ namespace ts {
             }
             return true;
         }
-
         template <typename T>
         static inline void cpu_pad_compute_run(const Tensor &x, const std::vector<std::array<int, 2>> &padding, float padding_value, Tensor &out) {
             int left = 0;
@@ -56,7 +55,6 @@ namespace ts {
                 if (padding[right][0] != 0 || padding[right][1] != 0) break;
                 --right;
             }
-
             if(padding.size() == 4){
                 PadAlgorithm<T>::pad_nchw_nhwc(x, padding, padding_value, out);
                 return;
