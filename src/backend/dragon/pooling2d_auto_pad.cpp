@@ -68,9 +68,9 @@ namespace ts {
         static inline int forward_valid(int x, int ksize, int pad_l, int pad_r, int stride, bool ceil_mode) {
             int y;
             if (ceil_mode) {
-                y = std::ceil((x + pad_l + pad_r - ksize) / (float) stride) + 1;
+                y = int(std::ceil((x + pad_l + pad_r - ksize) / (float) stride) + 1);
             } else {
-                y = std::floor((x + pad_l + pad_r - ksize) / (float) stride) + 1;
+                y = int(std::floor((x + pad_l + pad_r - ksize) / (float) stride) + 1);
             }
             if ((y - 1) * stride >= (x + pad_l + pad_r)) y--;
             return y;
@@ -123,7 +123,7 @@ namespace ts {
             _out_pad out;
 
             auto idm = x;
-            auto odm = (idm + stride - 1) / float(stride);
+            auto odm = int((idm + stride - 1) / float(stride));
             auto padding_needed = std::max<int>(0, (odm - 1) * stride + ksize - idm);
 
             auto &y = out.out;
