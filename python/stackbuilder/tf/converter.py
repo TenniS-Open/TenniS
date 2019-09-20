@@ -194,7 +194,7 @@ def convert_identity(tf_node, inputs):
     # type: (tf.Tensor, List[ts.Node]) -> ts.Node
 
     assert len(inputs) == 1
-    return inputs[0]
+    return ts.zoo.copy(tf_node.op.name, inputs[0])
 
 
 def node_def_attr_dict(tf_node):
@@ -728,33 +728,17 @@ def convert_mean(tf_node, inputs):
     node_name = tf_node.op.name
 
     x = inputs[0]
+    dims = inputs[1]
+    try:
+        dims = ts.zoo.to_const(dims)
+    except:
+        raise NotImplementedError("The parma 1 must be const")
 
-    keep_dims = attr_dict["keep_dims"]
-    reduction_indices = ts.zoo.to_const(inputs[1], "inputs[1]")
-    reduction_indices = ts.tensor.from_any(reduction_indices, dtype=numpy.int32)
+    keep_dims = False
+    if "keep_dims" in attr_dict:
+        keep_dims = attr_dict["keep_dims"]
 
-    if keep_dims is False:
-        raise NotImplementedError("Mean keep_dims: %s" % str(keep_dims))
-
-    if len(reduction_indices) != 2 or reduction_indices[0] != 1 or reduction_indices[1] != 2:
-        raise NotImplementedError("Mean reduction_indices: %s" % str(reduction_indices))
-
-    # now mean is global avg pooling with NHWC format
-    data_fromat = 'NHWC'
-
-    if data_fromat == 'NHWC':
-        x = zipper.nhwc2nchw(x, name=x.name + "_nchw")
-
-    node = ts.zoo.global_pooling2d(name=node_name + "_nchw",
-                                   x=x, type=ts.zoo.Type.pooling_type.avg,
-                                   format=ts.zoo.Name.NCHW)
-
-    if data_fromat == 'NHWC':
-        node = zipper.nchw2nhwc(x=node, name=node_name)
-    else:
-        node.name = node_name
-
-    return node
+    return ts.zoo.reduce_mean(name=node_name, x=x, reduce_dims=dims, keep_dims=keep_dims)
 
 
 def convert_fused_batch_norm(tf_node, inputs):
