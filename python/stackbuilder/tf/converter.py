@@ -45,7 +45,7 @@ def convert(graph, inputs, outputs, output_file):
     # function format(node, inputs)
     map_converter = {
         # add layer converter here
-        "Identity": convert_identity,
+        # "Identity": convert_identity,
         "ConcatV2": convert_concat_v2,
         "Reshape": convert_reshape,
         "Sub": convert_sub,
@@ -104,6 +104,13 @@ def convert(graph, inputs, outputs, output_file):
             return map_tf_node_ts_node[tf_node]
         node_op = tf_node.op
         node_op_type = node_op.type
+
+        if node_op_type == "Identity":
+            ts_node = convert_node(node_op.inputs[0])
+            ts_node.name = node_op.name
+            map_tf_node_ts_node[tf_node] = ts_node
+            return ts_node
+
         if node_op_type not in map_converter:
             raise Exception("Not supported Layer: {}".format(node_op_type))
         converter = map_converter[node_op_type]

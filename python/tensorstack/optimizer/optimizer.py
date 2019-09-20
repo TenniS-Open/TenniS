@@ -37,6 +37,7 @@ def __fused_conv_bn(name, conv2d, add_bias=None, fused_batch_norm=None, batch_no
     w = None
     w_shape = None
     w_input_index = 1
+    V2 = False
     if conv2d.op == zoo.Name.Layer.conv2d:
         w = conv2d.inputs[1]
         if w.op != Node.Const:
@@ -59,6 +60,7 @@ def __fused_conv_bn(name, conv2d, add_bias=None, fused_batch_norm=None, batch_no
         channels = w.shape[0]
         w_shape = (w.shape[0], 1, 1, 1)
         w_input_index = 2
+        V2 = True
     elif conv2d.op == zoo.Name.Layer.depthwise_conv2d_v2:
         w = conv2d.inputs[2]
         if w.op != Node.Const:
@@ -67,6 +69,7 @@ def __fused_conv_bn(name, conv2d, add_bias=None, fused_batch_norm=None, batch_no
         channels = w.shape[0] * w.shape[1]
         w_shape = (w.shape[0], w.shape[1], 1, 1)
         w_input_index = 2
+        V2 = True
     else:
         raise NotImplementedError("Not supported op: {}".format(conv2d.op))
 
@@ -123,12 +126,28 @@ def __fused_conv_bn(name, conv2d, add_bias=None, fused_batch_norm=None, batch_no
     new_bias = copy.copy(add_bias)
     new_conv2d_inputs = [i for i in new_conv2d.inputs]
     new_bias_inputs = [i for i in new_bias.inputs]
-    new_conv2d_inputs[0] = x
-    new_conv2d_inputs[w_input_index] = menu.data(name=name + "_weights", value=w)
-    new_bias_inputs[0] = new_conv2d
-    new_bias_inputs[1] = menu.data(name=name + "_bias", value=b)
-    Node.Link(new_conv2d, new_conv2d_inputs)
-    Node.Link(new_bias, new_bias_inputs)
+
+    import re
+    if V2 and re.match(".*_conv2d_padding", new_conv2d_inputs[1].op):
+        new_dynamic_padding = copy.copy(new_conv2d_inputs[1])
+        new_dynamic_padding_inputs = [i for i in new_dynamic_padding.inputs]
+        new_conv2d_weights = menu.data(name=name + "_weights", value=w)
+        new_dynamic_padding_inputs[1] = new_conv2d_weights
+        new_conv2d_inputs[0] = x
+        new_conv2d_inputs[1] = new_dynamic_padding
+        new_conv2d_inputs[2] = new_conv2d_weights
+        new_bias_inputs[0] = new_conv2d
+        new_bias_inputs[1] = menu.data(name=name + "_bias", value=b)
+        Node.Link(new_dynamic_padding, new_dynamic_padding_inputs)
+        Node.Link(new_conv2d, new_conv2d_inputs)
+        Node.Link(new_bias, new_bias_inputs)
+    else:
+        new_conv2d_inputs[0] = x
+        new_conv2d_inputs[w_input_index] = menu.data(name=name + "_weights", value=w)
+        new_bias_inputs[0] = new_conv2d
+        new_bias_inputs[1] = menu.data(name=name + "_bias", value=b)
+        Node.Link(new_conv2d, new_conv2d_inputs)
+        Node.Link(new_bias, new_bias_inputs)
 
     new_conv2d.name = conv2d.name + "_with_bn"
     new_bias.name = name
