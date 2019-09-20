@@ -460,7 +460,15 @@ def convert_relu_layer(layer, input_nodes, output_names):
     x = input_nodes[0]
     node_name = output_names[0]
 
-    node = ts.zoo.relu(node_name, x=x)
+    param = layer.relu_param
+
+    node = None
+    if param.HasField("max"):
+        max = param.max
+        print("--##    max: {}".format(max))
+        node = ts.zoo.relu_max(node_name, x=x, max=max)
+    else:
+        node = ts.zoo.relu(node_name, x=x)
 
     return node,
 
