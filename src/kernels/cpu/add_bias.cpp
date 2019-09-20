@@ -64,15 +64,14 @@ namespace ts {
         // only used in CPU
         //std::memcpy(pdst, psrc, out.count() * sizeof(float));
 
-        int stridedims = back_dims * shape[dim];
-        int offset = 0;
+        const int stridedims = back_dims * shape[dim];
         for (int i = 0; i < pre_dims; i++) {
 #ifdef TS_USE_OPENMP
 #pragma omp parallel for num_threads(openmp_threads())
 #endif
             for (int k = 0; k < shape[dim]; k++) {
                 float32x4 bias_x4(pbias[k]);
-                offset = i * stridedims + k * back_dims;
+                auto offset = i * stridedims + k * back_dims;
                 for (int m = 0; m < back_dims - 3; m += 4) {
                     float32x4 src_x4(&psrc[offset + m]);
                     float32x4 dst_x4 = src_x4 + bias_x4;
