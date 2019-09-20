@@ -135,6 +135,11 @@ bool ts::PackTranslatorOption::translate(const ComputingDevice &device, const No
         kernel_node = inputs[2];
     }
 
+    if (kernel_node->op() != Bubble::Const) {
+        Node::Link(translated_node, node.inputs());
+        return true;
+    }
+
     auto kernel_tensor = kernel_node.bubble().get(name::value);
     auto kernel_shape = kernel_tensor.sizes();
     auto kernel_type = kernel_tensor.dtype();
