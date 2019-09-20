@@ -22,7 +22,7 @@ namespace ts{
         FMA = 15,
     };
 
-    inline const char *cpu_feauture_str(CPUFeature feature) {
+    inline const char *cpu_feature_str(CPUFeature feature) {
         switch (feature) {
         case ts::SSE: return "SSE";
         case ts::SSE2: return "SSE2";
@@ -31,6 +31,7 @@ namespace ts{
         case ts::FMA: return "FMA";
         default:break;
         }
+        return "Unknown";
     }
 
     bool TS_DEBUG_API check_cpu_feature(CPUFeature feature);

@@ -38,8 +38,8 @@ namespace ts {
             int offset = 0;
 
             std::vector<T> vec(variance.count());
-            for (int i = 0; i < vec.size(); i++) {
-                vec[i] = T(1) / sqrt(pvariance[i] + T(epsilon));
+            for (size_t i = 0; i < vec.size(); i++) {
+                vec[i] = T(T(1) / sqrt(pvariance[i] + T(epsilon)));
             }
 
             for (int i = 0; i < predims; i++) {
@@ -82,7 +82,7 @@ namespace ts {
             int offset = 0;
 
             std::vector<float> vec(variance.count());
-            for (int i = 0; i < vec.size(); i++) {
+            for (size_t i = 0; i < vec.size(); i++) {
                 vec[i] = float(1) / sqrt(pvariance[i] + float(epsilon));
             }
 

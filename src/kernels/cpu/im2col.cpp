@@ -40,11 +40,11 @@ void im2col_cpu(const Dtype* data_im, const int channels,
     const int stride_h, const int stride_w,
     const int dilation_h, const int dilation_w,
     Dtype* data_col, const Dtype padding_value) {
-    const int output_h = std::floor((height + pad_h_top + pad_h_bottom -
-                                     (dilation_h * (kernel_h - 1) + 1)) / stride_h + 1);
+    const int output_h = int(std::floor((height + pad_h_top + pad_h_bottom -
+                                     (dilation_h * (kernel_h - 1) + 1)) / stride_h + 1));
 
-    const int output_w = std::floor((width + pad_w_left + pad_w_right -
-                                     (dilation_w * (kernel_w - 1) + 1)) / stride_w + 1);
+    const int output_w = int(std::floor((width + pad_w_left + pad_w_right -
+                                     (dilation_w * (kernel_w - 1) + 1)) / stride_w + 1));
     const int channel_size = height * width;
 
 #ifndef TS_USE_OPENMP
@@ -134,11 +134,11 @@ void col2im_cpu(const Dtype* data_col, const int channels,
 
   tensorstack_set(height * width * channels, Dtype(0), data_im);
   const int channel_size = height * width;
-  const int output_h = std::floor((height +  pad_h_top + pad_h_bottom -
-    (dilation_h * (kernel_h - 1) + 1)) / stride_h + 1);
+  const int output_h = int(std::floor((height +  pad_h_top + pad_h_bottom -
+    (dilation_h * (kernel_h - 1) + 1)) / stride_h + 1));
 
-  const int output_w = std::floor((width +  pad_w_left + pad_w_right -
-    (dilation_w * (kernel_w - 1) + 1)) / stride_w + 1);
+  const int output_w = int(std::floor((width +  pad_w_left + pad_w_right -
+    (dilation_w * (kernel_w - 1) + 1)) / stride_w + 1));
   for (int channel = channels; channel--; data_im += channel_size) {
 	  for (int kernel_row = 0; kernel_row < kernel_h; kernel_row++) {
 		  for (int kernel_col = 0; kernel_col < kernel_w; kernel_col++) {

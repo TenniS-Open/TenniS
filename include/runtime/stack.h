@@ -344,6 +344,22 @@ namespace ts {
          */
         HardConverter::function converter() const;
 
+        std::deque<Tensor>::const_iterator begin() const {
+            return m_stack.begin() + m_base;
+        }
+
+        std::deque<Tensor>::iterator begin() {
+            return m_stack.begin() + m_base;
+        }
+
+        std::deque<Tensor>::const_iterator end() const {
+            return m_stack.end();
+        }
+
+        std::deque<Tensor>::iterator end() {
+            return m_stack.end();
+        }
+
     private:
         // size_t relative2absolute(int i) const;
 

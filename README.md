@@ -11,6 +11,7 @@ cmake ..
 -DTS_USE_OPENMP=ON
 -DTS_USE_SIMD=ON
 -DTS_USE_AVX=ON
+-DTS_USE_FMA=ON
 -DTS_BUILD_TEST=OFF
 -DTS_BUILD_TOOLS=OFF
 -DCMAKE_BUILD_TYPE=Release
@@ -24,11 +25,14 @@ cmake ..
 -DTS_USE_OPENMP=ON
 -DTS_USE_SIMD=ON
 -DTS_USE_AVX=ON
+-DTS_USE_FMA=ON
 -DTS_BUILD_TEST=OFF
 -DTS_BUILD_TOOLS=OFF
 -DCMAKE_BUILD_TYPE=Release
 -DCMAKE_INSTALL_PREFIX=/usr/local
 ```
+
+When compilation target is `arm-v7`, **MUST** set `-DTS_ON_ARMV7=ON`.
 
 2. Do `make -j16` and waiting.
 

@@ -114,3 +114,27 @@ ts_Tensor *ts_intime_affine_on_sample2d(const ts_Tensor *x, const ts_Tensor *siz
         ));
     RETURN_OR_CATCH(dolly.release(), nullptr)
 }
+
+int64_t ts_intime_memcpy(
+        ts_Tensor *dst_desc, void *dst_ptr, int64_t dst_shift,
+        const ts_Tensor *src_desc, const void *src_ptr, int64_t src_shift,
+        int64_t size) {
+    TRY_HEAD
+        if (!dst_desc) throw Exception("NullPointerException: @param: 1");
+        if (!src_desc) throw Exception("NullPointerException: @param: 2");
+        auto copied = intime::memcpy(
+                **dst_desc, dst_ptr, dst_shift,
+                **src_desc, src_ptr, src_shift,
+                size);
+    RETURN_OR_CATCH(copied, 0);
+}
+
+ts_Tensor *ts_intime_matmul(const ts_Tensor *A, const ts_Tensor *B, ts_bool transpose) {
+    TRY_HEAD
+        if (!A) throw Exception("NullPointerException: @param: 1");
+        if (!B) throw Exception("NullPointerException: @param: 2");
+        std::unique_ptr<ts_Tensor> dolly(new ts_Tensor(
+                intime::matmul(**A, **B, bool(transpose))
+        ));
+    RETURN_OR_CATCH(dolly.release(), nullptr)
+}

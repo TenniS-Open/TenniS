@@ -93,9 +93,9 @@ namespace ts {
             return y;
         }
 
-        static inline Padding2D dynamic_conv2d_valid(const Size2D &input_size, const Padding2D &static_padding,
-                                                     const KSize2D &ksize,
-                                                     const Stride2D &stride) {
+        static inline Padding2D dynamic_pooling2d_valid(const Size2D &input_size, const Padding2D &static_padding,
+                                                        const KSize2D &ksize,
+                                                        const Stride2D &stride) {
 
             Padding2D dynamic_padding;
 
@@ -114,8 +114,8 @@ namespace ts {
             return int(std::ceil(input_spatial_shape / float(strides_spatial_shape)));
         }
 
-        static inline Size2D conv2d_forward_same(const Size2D &x, const Padding2D &padding, const KSize2D &ksize,
-                                                 const Stride2D &stride) {
+        static inline Size2D pooling2d_forward_same(const Size2D &x, const Padding2D &padding, const KSize2D &ksize,
+                                                    const Stride2D &stride) {
             Size2D y;
             y.height = forward_same(x.height + padding.top + padding.bottom, ksize.height, stride.height);
             y.width = forward_same(x.width + padding.left + padding.right, ksize.width, stride.width);
@@ -127,7 +127,7 @@ namespace ts {
 
             Padding2D dynamic_padding;
 
-            Size2D expected_output_size = conv2d_forward_same(input_size, static_padding, ksize, stride);
+            Size2D expected_output_size = pooling2d_forward_same(input_size, static_padding, ksize, stride);
             Size2D expected_input_size = pooling2d_backward(expected_output_size, static_padding, ksize, stride);
             dynamic_padding.top = static_padding.top;
             dynamic_padding.left = static_padding.left;
@@ -175,7 +175,7 @@ namespace ts {
                     dynamic_padding = dynamic_padding_same(input_size, m_static_padding, ksize, stride);
                     break;
                 case PaddingMethod::VALID:
-                    dynamic_padding = dynamic_conv2d_valid(input_size, m_static_padding, ksize, stride);
+                    dynamic_padding = dynamic_pooling2d_valid(input_size, m_static_padding, ksize, stride);
                     break;
             }
 

@@ -86,5 +86,11 @@ namespace ts {
             bubble.set(name::type, tensor::from(int32_t(type)));
             return std::move(bubble);
         }
+
+        Bubble matmul(bool transpose) {
+            Bubble bubble(name::layer::inner_prod(), name::layer::inner_prod());
+            bubble.set("transpose", tensor::from<bool>(transpose));
+            return std::move(bubble);
+        }
     }
 }

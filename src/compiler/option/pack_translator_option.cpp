@@ -122,6 +122,7 @@ bool ts::PackTranslatorOption::translate(const ComputingDevice &device, const No
                 translated_node = add_node;
             }
         }
+        translated_node->name(name);
         return true;
     }
 

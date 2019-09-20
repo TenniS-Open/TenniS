@@ -123,7 +123,9 @@ namespace ts {
 
             TS_AUTO_CHECK(x_tensor.dtype() == w_tensor.dtype());
 
-            TS_AUTO_CHECK(w_tensor.size(1) == x_tensor.size(1));
+            if(w_tensor.size(1) != x_tensor.size(1)) {
+                TS_LOG_ERROR << "Conv2d assert failed when x=" << x_tensor.proto() << ", w=" << w_tensor.proto() << eject;
+            }
 
             Size2D x;
             Size2D ksize;

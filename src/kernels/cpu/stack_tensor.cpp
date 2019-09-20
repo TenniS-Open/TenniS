@@ -27,7 +27,7 @@ namespace ts {
                              << output_dims << ")" << eject;
             }
 
-            int nargs = stack.size();
+            int nargs = int(stack.size());
             for (int i = 0; i < nargs; ++i) {
                 auto &x = stack[i];
                 auto shape = x.sizes();

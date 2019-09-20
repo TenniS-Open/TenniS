@@ -416,6 +416,13 @@ namespace ts {
         return view_tensor;
     }
 
+    void Tensor::broadcast()  {
+        auto fields_count = this->fields_count();
+        for (size_t i = 0; i < fields_count; ++i) {
+            this->field(i).m_memory->broadcast();
+        }
+    }
+
     Tensor Tensor::weak() const {
         Tensor weak_tensor;
         weak_tensor.m_memory = m_memory.weak();
@@ -635,6 +642,12 @@ namespace ts {
         slice_shape[0] = batch;
         Memory slice_memory(this->device(), this->data<char>() + beg * width, batch * width);
         return Tensor(slice_memory, Tensor::Prototype(this->dtype(), slice_shape));
+    }
+
+    Tensor Tensor::Pack(const std::vector<Tensor> &fields) {
+        Tensor x;
+        x.pack(fields);
+        return x;
     }
 
 #undef FAIL_ARG

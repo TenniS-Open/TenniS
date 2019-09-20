@@ -20,10 +20,10 @@ namespace ts {
         static Tensor::Prototype infer_argmax(const Tensor &x, int dim) {
             Shape x_shape = x.sizes();
             if(dim < 0) {
-               dim += x_shape.size();
+               dim += int(x_shape.size());
             }
 
-            TS_AUTO_CHECK((dim >= 0) && (dim < x_shape.size()));
+            TS_AUTO_CHECK((dim >= 0) && (dim < int(x_shape.size())));
 
             x_shape[dim] = 1;
 
