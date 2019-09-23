@@ -77,12 +77,12 @@ def convert_pooling2d_layer(node, input_nodes, output_names):
     count_include_pad = False
     if Name.Attr.count_include_pad in attr_dict:
         count_include_pad = attr_dict[Name.Attr.count_include_pad] != 0
-    ceil_mode = None
+    ceil_mode = True    # dragon default ceil_mode = True
     if Name.Attr.ceil_mode in attr_dict:
         ceil_mode = attr_dict[Name.Attr.ceil_mode] != 0
 
-    if ceil_mode is not None:
-        raise NotImplementedError("ceil_mode = {}".format(auto_pad))
+    # if ceil_mode is not None:
+    #     raise NotImplementedError("ceil_mode = {}".format(ceil_mode))
 
     if auto_pad is None:
         auto_pad = Name.VALID

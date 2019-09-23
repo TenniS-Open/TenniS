@@ -162,6 +162,7 @@ def to_const(value, name=None):
 
 def to_node(value, name=None, device=None, dtype=None):
     if isinstance(value, Node):
+        """
         if value.op == Node.Const:
             data = value.get(Name.value)
             name = value.name
@@ -170,6 +171,8 @@ def to_node(value, name=None, device=None, dtype=None):
             value = data
         else:
             return value
+        """
+        return value
     if dtype is not None:
         value = tensor.from_any(value, dtype=dtype)
     return menu.data(name=name, value=value, device=device)

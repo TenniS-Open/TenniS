@@ -52,7 +52,7 @@ def map_fused_batch_norm_to_nchw(x):
     if x.get("dim") != 3:
         return None
 
-    x.set("dim", 1);
+    x.set("dim", 1)
 
     return x
 
@@ -188,7 +188,12 @@ def plot_graph(node, plot=None):
         assert isinstance(x, ts.Node)
         if x in plot:
             continue
-        print("{}: {} -> {}".format(x.op, [i.name for i in x.inputs], x.name))
+        if x.op == ts.Node.Const:
+            data = x.get("value")
+            data = numpy.asarray(data)
+            print("{}: {} = {}".format(x.op, x.name, data.shape))
+        else:
+            print("{}: {} -> {}".format(x.op, [i.name for i in x.inputs], x.name))
         plot.add(x)
 
 
