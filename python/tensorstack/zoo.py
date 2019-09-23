@@ -860,10 +860,20 @@ def dims(name, x):
     return node
 
 
-def expand(name, x, dims):
+def expand(name, x, dims, front=None, end=None, inverse=None):
     assert isinstance(x, Node)
-    dims = to_node(dims, name=name + "_dims", device=device.CPU, dtype=numpy.int32);
+    dims = to_node(dims, name=name + "_dims", device=device.CPU, dtype=numpy.int32)
     node = menu.op(name=name, op_name=Name.Layer.expand, inputs=[x, dims])
+    if front is not None:
+        front = to_const(front, "front")
+        node.set("front", front, numpy.int32)
+    if end is not None:
+        end = to_const(end, "end")
+        node.set("end", end, numpy.int32)
+    if inverse is not None:
+        inverse = to_const(inverse, "inverse")
+        node.set("inverse", inverse, numpy.bool)
+
     return node
 
 

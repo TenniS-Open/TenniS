@@ -1051,6 +1051,12 @@ Return x.dims()
 
 ### _expand(x..device, dims..host) -> y..device
 Return x if dims <= x.dims(), else expanded x shape to has dims
+first insert front of shape if `inverse` if False.
+
+param:
+- `front` `Int` `Optional` max dim can be add in front.  
+- `end` `Int` `Optional` max dim can be add in end.  
+- `inverse` `Boolean` `Optional` inverse is False first add in front, else inverse.  
 
 ### tanh(x..device) -> y..device
 Return `\frac{exp(x)-exp(-x)}{exp(x)+exp(-x)}`, equals `2 * sigmoid(2 * x) - 1`.

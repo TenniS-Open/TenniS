@@ -28,6 +28,14 @@ def blob2numpy(blob):
     return data.reshape(shape)
 
 
+layer2converter = {
+}
+
+
+def register_layer_converter(layer, converter):
+    layer2converter[layer] = converter
+
+
 def convert(prototxt, caffemodel, output_file,
             input_layer_names=None, output_blob_names=None,
             include=None, exclude=None):
@@ -94,6 +102,7 @@ def convert(prototxt, caffemodel, output_file,
         # add layer converter here
         "ReLU": convert_relu_layer,
         "ImageData": may_input_layer(convert_image_data_layer),
+        "Data": may_input_layer(convert_data_layer),
         "Convolution": convert_convolution_layer,
         "BatchNorm": convert_batch_norm,
         "Scale": convert_scale,
@@ -102,6 +111,7 @@ def convert(prototxt, caffemodel, output_file,
         "Eltwise": convert_eltwise,
         "Softmax": convert_softmax,
     }
+    layer_converters.update(layer2converter)
 
     blob2nodes = {}
     # save blob used in top
@@ -133,7 +143,7 @@ def convert(prototxt, caffemodel, output_file,
         else:
             blob2count[top] -= 1
             node_name = "{}_hide_{}".format(top, blob2count[top])
-        input_node = ts.menu.param("_origin_" + node_name, shape)
+        input_node = ts.menu.param("_input_" + node_name, shape)
         node = ts.zoo.to_float(node_name, input_node)
         blob2nodes[top] = node
 
@@ -301,7 +311,7 @@ def convert_image_data_layer(layer, params, input_nodes, output_names, input_nam
     assert len(output_names) == 2
 
     node_name = output_names[0]
-    input_node = ts.menu.param("_origin_" + node_name)
+    input_node = ts.menu.param("_input_" + node_name)
     node = input_node
 
     layer_param = layer.image_data_param
@@ -316,6 +326,37 @@ def convert_image_data_layer(layer, params, input_nodes, output_names, input_nam
 
     if new_width > 0 and new_height > 0:
         node = ts.zoo.resize2d("_resize2d_" + node_name, node, [-1, new_height, new_width, -1])
+
+    node = ts.zoo.transpose("_nchw_" + node_name, node, permute=[0, 3, 1, 2])
+    node = ts.zoo.to_float("_float_" + node_name, node)
+
+    # transform param
+    if layer.HasField("transform_param"):
+        node = apply_transform(layer.transform_param, node, node_name)
+
+    node.name = node_name
+
+    label_name = output_names[1]
+    label = ts.menu.data(label_name, 1, ts.device.CPU)
+
+    # set input node
+    input_name_node_map[layer.name] = input_node
+
+    return node, label
+
+
+def convert_data_layer(layer, params, input_nodes, output_names, input_name_node_map):
+    # type: (caffe.LayerParameter, List[ts.Node], List[caffe.BlobProto], List[str], Map[str, ts.Node]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer({}): {} ]=-".format(layer.type, layer.name, output_names))
+
+    assert len(input_nodes) == 0
+    assert len(output_names) == 2
+
+    node_name = output_names[0]
+    input_node = ts.menu.param("_input_" + node_name)
+    node = input_node
+
+    # layer_param = layer.data_param
 
     node = ts.zoo.transpose("_nchw_" + node_name, node, permute=[0, 3, 1, 2])
     node = ts.zoo.to_float("_float_" + node_name, node)
@@ -522,7 +563,7 @@ def convert_scale(layer, params, input_nodes, output_names):
     print("--# -=[ Converting {} layer({}): {} ]=-".format(layer.type, layer.name, output_names))
 
     assert len(input_nodes) == 1 or len(input_nodes) == 2
-    assert len(params) == 1 or len(params) == 2
+    assert len(params) == 0 or len(params) == 1 or len(params) == 2
     assert len(output_names) == 1
 
     x = input_nodes[0]
@@ -553,22 +594,35 @@ def convert_scale(layer, params, input_nodes, output_names):
     print("--##    num_axes: {}".format(num_axes))
 
     node = None
-    if axis == 1 and num_axes == 1:
-        if bias is None:
-            if not isinstance(scale, numpy.ndarray):
-                raise NotImplementedError(layer)
-            assert len(scale.shape) == 1
-            scale = numpy.reshape(scale, newshape=[1, scale.shape[0], 1, 1])
-            node = ts.zoo.mul(node_name, x, scale)
+    if len(input_nodes) == 1:
+        if num_axes == 1:
+            if bias is None:
+                if not isinstance(scale, numpy.ndarray):
+                    raise NotImplementedError(layer)
+                assert len(scale.shape) == 1
+                scale = numpy.reshape(scale, newshape=[1, scale.shape[0], 1, 1])
+                node = ts.zoo.mul(node_name, x, scale)
+            else:
+                node = ts.zoo.batch_scale(node_name, x, scale, bias, dim=1)
         else:
-            node = ts.zoo.batch_scale(node_name, x, scale, bias, dim=1)
+            print("WARNING: reach not fully supported setting.")
+            if bias is None:
+                dims = ts.zoo.dims(node_name + "_dims", x=x)
+                scale = ts.zoo.expand(node_name + "_rhs", x=scale, dims=dims, front=1)
+
+                node = ts.zoo.mul(node_name, x, scale)
+            else:
+                dims = ts.zoo.dims(node_name + "_dims", x=x)
+                scale = ts.zoo.expand(node_name + "_nd", x=scale, dims=dims, front=1)
+                bias = ts.zoo.expand(node_name + "_nd", x=bias, dims=dims, front=1)
+
+                scale_node = ts.zoo.mul("_scale_" + node_name, x, scale)
+                node = ts.zoo.add(node_name, scale_node, bias)
     else:
-        print("WARNING: reach not fully supported setting.")
-        if bias is None:
-            node = ts.zoo.mul(node_name, x, scale)
-        else:
-            scale_node = ts.zoo.mul("_scale_" + node_name, x, scale)
-            node = ts.zoo.add(node_name, scale_node, bias)
+        assert bias is None
+        dims = ts.zoo.dims(node_name + "_dims", x=x)
+        scale = ts.zoo.expand(node_name + "_nd", x=scale, dims=dims, front=axis)
+        node = ts.zoo.mul(node_name, x, scale)
 
     if node is None:
         raise NotImplementedError(layer)
@@ -734,3 +788,91 @@ def convert_eltwise(layer, params, input_nodes, output_names):
         raise NotImplementedError(layer)
 
     return node,
+
+
+def convert_concat_layer(layer, params, input_nodes, output_names):
+    # type: (caffe.LayerParameter, List[ts.Node], List[caffe.BlobProto], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer({}): {} ]=-".format(layer.type, layer.name, output_names))
+
+    assert len(input_nodes) > 0
+    assert len(params) == 0
+    assert len(output_names) == 1
+
+    inputs = input_nodes
+    node_name = output_names[0]
+
+    node = ts.zoo.concat(node_name, inputs=inputs, dim=1)
+
+    return node,
+
+
+register_layer_converter("Concat", convert_concat_layer)
+
+
+def convert_sigmoid_layer(layer, params, input_nodes, output_names):
+    # type: (caffe.LayerParameter, List[ts.Node], List[caffe.BlobProto], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer({}): {} ]=-".format(layer.type, layer.name, output_names))
+
+    assert len(input_nodes) == 1
+    assert len(params) == 0
+    assert len(output_names) == 1
+
+    x = input_nodes[0]
+    node_name = output_names[0]
+
+    node = ts.zoo.sigmoid(node_name, x=x)
+
+    return node,
+
+
+register_layer_converter("Sigmoid", convert_sigmoid_layer)
+
+
+def convert_reshape_layer(layer, params, input_nodes, output_names):
+    # type: (caffe.LayerParameter, List[ts.Node], List[caffe.BlobProto], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer({}): {} ]=-".format(layer.type, layer.name, output_names))
+
+    assert len(input_nodes) == 1
+    assert len(params) == 0
+    assert len(output_names) == 1
+
+    x = input_nodes[0]
+    node_name = output_names[0]
+
+    layer_param = layer.reshape_param
+
+    shape = []
+    for dim in layer_param.shape.dim:
+        shape.append(dim)
+
+    axis = message_getattr(layer_param, "axis", 0)
+    num_axes = message_getattr(layer_param, "num_axes", -1)
+
+    assert axis == 0
+    assert num_axes == -1
+
+    node = ts.zoo.reshape(node_name, x=x, shape=shape)
+
+    return node,
+
+
+register_layer_converter("Reshape", convert_reshape_layer)
+
+
+def convert_softmax_layer(layer, params, input_nodes, output_names):
+    # type: (caffe.LayerParameter, List[ts.Node], List[caffe.BlobProto], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer({}): {} ]=-".format(layer.type, layer.name, output_names))
+
+    assert len(input_nodes) == 1
+    assert len(params) == 0
+    assert len(output_names) == 1
+
+    x = input_nodes[0]
+    node_name = output_names[0]
+
+    node = ts.zoo.softmax(node_name, x=x, dim=1)
+
+    return node,
+
+
+register_layer_converter("Softmax", convert_softmax_layer)
