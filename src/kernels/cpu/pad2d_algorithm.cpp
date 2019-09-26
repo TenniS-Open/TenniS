@@ -51,7 +51,7 @@ namespace ts{
             output_padding[2] = padding[2][0] < 0 ? 0 : padding[2][0];
             output_padding[3] = padding[3][0] < 0 ? 0 : padding[3][0];
 
-            T value = padding_value;
+            T value = T(padding_value);
             std::fill(out_ptr, out_ptr + out.count(), value);
 
             for (int n = 0; n < num; ++n) {
@@ -117,7 +117,7 @@ namespace ts{
 
             const T* src_data = x.data<T>();
             T* dst_data = out.data<T>();
-            T value = padding_value;
+            T value = T(padding_value);
             auto out_device = out.device();
             auto x_device = x.device();
 

@@ -57,7 +57,7 @@ namespace ts {
 
 #if TS_PLATFORM_OS_WINDOWS
     // Visual Studio defines a builtin function, so use that if possible.
-    int GetXCR0EAX() { return _xgetbv(0); }
+    int GetXCR0EAX() { return int(_xgetbv(0)); }
 #else
 
     int GetXCR0EAX() {

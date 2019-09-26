@@ -45,7 +45,7 @@ def convert(graph, inputs, outputs, output_file):
     # function format(node, inputs)
     map_converter = {
         # add layer converter here
-        "Identity": convert_identity,
+        # "Identity": convert_identity,
         "ConcatV2": convert_concat_v2,
         "Reshape": convert_reshape,
         "Sub": convert_sub,
@@ -104,6 +104,13 @@ def convert(graph, inputs, outputs, output_file):
             return map_tf_node_ts_node[tf_node]
         node_op = tf_node.op
         node_op_type = node_op.type
+
+        if node_op_type == "Identity":
+            ts_node = convert_node(node_op.inputs[0])
+            ts_node.name = node_op.name
+            map_tf_node_ts_node[tf_node] = ts_node
+            return ts_node
+
         if node_op_type not in map_converter:
             raise Exception("Not supported Layer: {}".format(node_op_type))
         converter = map_converter[node_op_type]
@@ -194,7 +201,7 @@ def convert_identity(tf_node, inputs):
     # type: (tf.Tensor, List[ts.Node]) -> ts.Node
 
     assert len(inputs) == 1
-    return inputs[0]
+    return ts.zoo.copy(tf_node.op.name, inputs[0])
 
 
 def node_def_attr_dict(tf_node):
@@ -728,33 +735,17 @@ def convert_mean(tf_node, inputs):
     node_name = tf_node.op.name
 
     x = inputs[0]
+    dims = inputs[1]
+    try:
+        dims = ts.zoo.to_const(dims)
+    except:
+        raise NotImplementedError("The parma 1 must be const")
 
-    keep_dims = attr_dict["keep_dims"]
-    reduction_indices = ts.zoo.to_const(inputs[1], "inputs[1]")
-    reduction_indices = ts.tensor.from_any(reduction_indices, dtype=numpy.int32)
+    keep_dims = False
+    if "keep_dims" in attr_dict:
+        keep_dims = attr_dict["keep_dims"]
 
-    if keep_dims is False:
-        raise NotImplementedError("Mean keep_dims: %s" % str(keep_dims))
-
-    if len(reduction_indices) != 2 or reduction_indices[0] != 1 or reduction_indices[1] != 2:
-        raise NotImplementedError("Mean reduction_indices: %s" % str(reduction_indices))
-
-    # now mean is global avg pooling with NHWC format
-    data_fromat = 'NHWC'
-
-    if data_fromat == 'NHWC':
-        x = zipper.nhwc2nchw(x, name=x.name + "_nchw")
-
-    node = ts.zoo.global_pooling2d(name=node_name + "_nchw",
-                                   x=x, type=ts.zoo.Type.pooling_type.avg,
-                                   format=ts.zoo.Name.NCHW)
-
-    if data_fromat == 'NHWC':
-        node = zipper.nchw2nhwc(x=node, name=node_name)
-    else:
-        node.name = node_name
-
-    return node
+    return ts.zoo.reduce_mean(name=node_name, x=x, reduce_dims=dims, keep_dims=keep_dims)
 
 
 def convert_fused_batch_norm(tf_node, inputs):
@@ -1037,6 +1028,210 @@ def convert_stirded_slice(tf_node, inputs):
 
 
 register_layer_converter("StridedSlice", convert_stirded_slice)
+
+
+def convert_resize_nearest(tf_node, inputs):
+    # type: (tf.Tensor, List[ts.Node]) -> ts.Node
+
+    assert len(inputs) == 2
+    attr_dict = node_def_attr_dict(tf_node)
+    print("--##    attr: {}".format(attr_dict))
+    node_name = tf_node.op.name
+
+    half_pixel_centers = False
+    if 'half_pixel_centers' in attr_dict:
+        half_pixel_centers = attr_dict['half_pixel_centers']
+    align_corners = False
+    if 'align_corners' in attr_dict:
+        align_corners = attr_dict['align_corners']
+
+    if half_pixel_centers:
+        raise NotImplementedError("half_pixel_centers = {}".format(half_pixel_centers))
+
+    if align_corners:
+        raise NotImplementedError("align_corners = {}".format(align_corners))
+
+    x = inputs[0]
+    size = inputs[1]
+
+    size = ts.zoo.to_const(size, 'size')
+
+    return ts.zoo.resize2d(node_name, x, size=[-1, size[0], size[1], -1], type=ts.zoo.Type.resize2d_type.hard)
+
+
+register_layer_converter("ResizeNearestNeighbor", convert_resize_nearest)
+
+
+def convert_square(tf_node, inputs):
+    # type: (tf.Tensor, List[ts.Node]) -> ts.Node
+
+    assert len(inputs) == 1
+    # attr_dict = node_def_attr_dict(tf_node)
+    # print("--##    attr: {}".format(attr_dict))
+    node_name = tf_node.op.name
+
+    x = inputs[0]
+
+    return ts.zoo.square(node_name, x)
+
+
+register_layer_converter("Square", convert_square)
+
+
+def convert_range(tf_node, inputs):
+    # type: (tf.Tensor, List[ts.Node]) -> ts.Node
+
+    assert len(inputs) == 3
+    # attr_dict = node_def_attr_dict(tf_node)
+    # print("--##    attr: {}".format(attr_dict))
+    node_name = tf_node.op.name
+
+    start = inputs[0]
+    limit = inputs[1]
+    delta = inputs[2]
+
+    return ts.zoo.range(node_name, start, limit, delta)
+
+
+register_layer_converter("Range", convert_range)
+
+
+def convert_reduce_sum(tf_node, inputs):
+    # type: (tf.Tensor, List[ts.Node]) -> ts.Node
+
+    assert len(inputs) == 2
+    attr_dict = node_def_attr_dict(tf_node)
+    print("--##    attr: {}".format(attr_dict))
+    node_name = tf_node.op.name
+
+    x = inputs[0]
+    dims = inputs[1]
+    try:
+        dims = ts.zoo.to_const(dims)
+    except:
+        raise NotImplementedError("The parma 1 must be const")
+
+    keep_dims = False
+    if "keep_dims" in attr_dict:
+        keep_dims = attr_dict["keep_dims"]
+
+    return ts.zoo.reduce_sum(name=node_name, x=x, reduce_dims=dims, keep_dims=keep_dims)
+
+
+register_layer_converter("Sum", convert_reduce_sum)
+
+
+def convert_maximum(tf_node, inputs):
+    # type: (tf.Tensor, List[ts.Node]) -> ts.Node
+
+    assert len(inputs) == 2
+    attr_dict = node_def_attr_dict(tf_node)
+    print("--##    attr: {}".format(attr_dict))
+    node_name = tf_node.op.name
+
+    x = inputs[0]
+    dims = inputs[1]
+    try:
+        dims = ts.zoo.to_const(dims)
+    except:
+        raise NotImplementedError("The parma 1 must be const")
+
+    keep_dims = False
+    if "keep_dims" in attr_dict:
+        keep_dims = attr_dict["keep_dims"]
+
+    return ts.zoo.reduce_sum(name=node_name, x=x, reduce_dims=dims, keep_dims=keep_dims)
+
+
+register_layer_converter("Maximum", convert_maximum)
+
+
+def convert_exp(tf_node, inputs):
+    # type: (tf.Tensor, List[ts.Node]) -> ts.Node
+
+    assert len(inputs) == 1
+    # attr_dict = node_def_attr_dict(tf_node)
+    # print("--##    attr: {}".format(attr_dict))
+    node_name = tf_node.op.name
+
+    x = inputs[0]
+
+    return ts.zoo.exp(node_name, x)
+
+
+register_layer_converter("Exp", convert_exp)
+
+
+def convert_pack(tf_node, inputs):
+    # type: (tf.Tensor, List[ts.Node]) -> ts.Node
+
+    assert len(inputs) >= 1
+    attr_dict = node_def_attr_dict(tf_node)
+    print("--##    attr: {}".format(attr_dict))
+    node_name = tf_node.op.name
+
+    N = attr_dict['N']
+    if N != len(inputs):
+        raise NotImplementedError("Pack N={} with {} inputs".format(N, len(inputs) - 1))
+
+    axis = attr_dict['axis']
+
+    return ts.frontend.tf.stack(name=node_name, tensors=inputs, axis=axis)
+
+
+register_layer_converter("Pack", convert_pack)
+
+
+def convert_cast(tf_node, inputs):
+    # type: (tf.Tensor, List[ts.Node]) -> ts.Node
+
+    assert len(inputs) == 1
+    attr_dict = node_def_attr_dict(tf_node)
+    print("--##    attr: {}".format(attr_dict))
+    node_name = tf_node.op.name
+
+    DstT = attr_dict['DstT']
+    dtype2dtype = {
+        tf.int8: numpy.int8,
+        tf.int16: numpy.int16,
+        tf.int32: numpy.int32,
+        tf.int64: numpy.int64,
+        tf.uint8: numpy.uint8,
+        tf.uint16: numpy.uint16,
+        tf.float16: numpy.float16,
+        tf.float32: numpy.float32,
+        tf.float64: numpy.float64,
+        tf.bool: numpy.bool,
+    }
+
+    if DstT not in dtype2dtype:
+        raise NotImplementedError("DstT={}".format(DstT))
+
+    dtype = dtype2dtype[DstT]
+
+    return ts.zoo.cast(name=node_name, x=inputs[0], dtype=dtype)
+
+
+register_layer_converter("Cast", convert_cast)
+
+
+def convert_slice(tf_node, inputs):
+    # type: (tf.Tensor, List[ts.Node]) -> ts.Node
+
+    assert len(inputs) == 3
+    attr_dict = node_def_attr_dict(tf_node)
+    print("--##    attr: {}".format(attr_dict))
+    node_name = tf_node.op.name
+
+    x = inputs[0]
+    begin = inputs[1]
+    size = inputs[2]
+
+    raise NotImplementedError("{}".format(tf_node))
+
+
+register_layer_converter("Slice", convert_slice)
+
 
 
 

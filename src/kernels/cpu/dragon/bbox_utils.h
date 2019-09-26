@@ -201,8 +201,8 @@ inline int roi_level(
     T w = roi[3] - roi[1] + 1;
     T h = roi[4] - roi[2] + 1;
     // Refer the settings of paper
-    int level = canonical_level + std::log2(
-            std::max(std::sqrt(w * h), (T)1) / (T)canonical_scale);
+    int level = int(canonical_level + std::log2(
+            std::max(std::sqrt(w * h), (T)1) / (T)canonical_scale));
     return std::min(max_level, std::max(min_level, level));
 }
 

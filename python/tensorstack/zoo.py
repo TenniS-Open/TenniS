@@ -75,6 +75,10 @@ class Name(object):
         reduce_mean = "reduce_mean"
         sqrt = "sqrt"
         tile = "tile"
+        square = "square"
+        range = "range"
+        maximum = "maximum"
+        exp = "exp"
 
     dim = "dim"
     shuffle = "shuffle"
@@ -158,6 +162,16 @@ def to_const(value, name=None):
 
 def to_node(value, name=None, device=None, dtype=None):
     if isinstance(value, Node):
+        """
+        if value.op == Node.Const:
+            data = value.get(Name.value)
+            name = value.name
+            if device is None and value.has(Name.device):
+                device = value.get(Name.device)
+            value = data
+        else:
+            return value
+        """
         return value
     if dtype is not None:
         value = tensor.from_any(value, dtype=dtype)
@@ -849,10 +863,20 @@ def dims(name, x):
     return node
 
 
-def expand(name, x, dims):
+def expand(name, x, dims, front=None, end=None, inverse=None):
     assert isinstance(x, Node)
-    dims = to_node(dims, name=name + "_dims", device=device.CPU, dtype=numpy.int32);
+    dims = to_node(dims, name=name + "_dims", device=device.CPU, dtype=numpy.int32)
     node = menu.op(name=name, op_name=Name.Layer.expand, inputs=[x, dims])
+    if front is not None:
+        front = to_const(front, "front")
+        node.set("front", front, numpy.int32)
+    if end is not None:
+        end = to_const(end, "end")
+        node.set("end", end, numpy.int32)
+    if inverse is not None:
+        inverse = to_const(inverse, "inverse")
+        node.set("inverse", inverse, numpy.bool)
+
     return node
 
 
@@ -900,5 +924,69 @@ def tile(name, x, repeats):
 
     node = menu.op(name=name, op_name=Name.Layer.tile, inputs=[x, ])
     node.set(Name.repeats, repeats, numpy.int32)
+
+    return node
+
+
+def square(name, x):
+    assert isinstance(x, Node)
+
+    # operator
+    node = menu.op(name=name, op_name=Name.Layer.square, inputs=[x, ])
+
+    return node
+
+
+py_range = range
+
+
+def range(name, start, limit, delta):
+    def to_device(x, t=None):
+        if t is None:
+            t = 'x'
+        try:
+            x_value = to_const(x, t)
+            if isinstance(x, Node):
+                x_name = x.name
+            else:
+                x_name = t
+            x = menu.data(x_name, x_value, device=device.CPU)
+            return x, True
+        except:
+            x = to_node(x, name=t, device=device.CPU, dtype=numpy.int32)
+            return x, False
+
+    start, s = to_device(start, name + "_start")
+    limit, l = to_device(limit, name + "_limit")
+    delta, d = to_device(delta, name + "_delta")
+
+    if s and l and d:
+        # all inputs are const, so output const range value
+        start = to_const(start)
+        limit = to_const(limit)
+        delta = to_const(delta)
+        a = py_range(int(start), int(limit), int(delta))
+        return menu.data(name, a, device=device.CPU)
+
+    # operator
+    node = menu.op(name=name, op_name=Name.Layer.range, inputs=[start, limit, delta])
+
+    return node
+
+
+def maximum(name, lhs, rhs, dtype=None):
+    lhs = to_node(lhs, name="_const_" + name + "_lhs", dtype=dtype)
+    rhs = to_node(rhs, name="_const_" + name + "_rhs", dtype=dtype)
+
+    node = menu.op(name=name, op_name=Name.Layer.maximum, inputs=[lhs, rhs])
+
+    return node
+
+
+def exp(name, x):
+    assert isinstance(x, Node)
+
+    # operator
+    node = menu.op(name=name, op_name=Name.Layer.exp, inputs=[x, ])
 
     return node

@@ -46,14 +46,14 @@ def convert(model_prefix, epoch, output_file,
         input_nodes = {}
     if input_shapes is None:
         input_shapes = {}
-    for name, input_shape in input_shapes.iteritems():
+    for name, input_shape in input_shapes.items():
         if isinstance(input_shape, ts.Node):
             input_nodes[name] = input_shape
         else:
             input_nodes[name] = ts.menu.param(name, input_shape)
 
     # make sure all input are nodes
-    for name in input_nodes.iterkeys():
+    for name in input_nodes.keys():
         input_node = input_nodes[name]
         if isinstance(input_node, ts.Node):
             continue
@@ -193,12 +193,12 @@ def convert_batch_norm(node, inputs):
     attrs = node["attrs"]
 
     eps = 1e-5
-    if attrs.has_key("eps"):
+    if "eps" in attrs:
         eps = float(attrs["eps"])
         print("--##    eps: {}".format(eps))
 
     fix_gamma = True
-    if attrs.has_key("fix_gamma"):
+    if "fix_gamma" in attrs:
         fix_gamma = attrs["fix_gamma"] == "True"
         print("--##    fix_gamma: {}".format(fix_gamma))
 
@@ -233,7 +233,7 @@ def convert_convolution(node, inputs):
     attrs = node["attrs"]
 
     no_bias = False
-    if attrs.has_key("no_bias"):
+    if "no_bias" in attrs:
         no_bias = attrs["no_bias"] == "True"
         print("--##    no_bias: {}".format(no_bias))
 
@@ -248,18 +248,18 @@ def convert_convolution(node, inputs):
     num_filter = int(attrs["num_filter"])
 
     num_group = 1
-    if attrs.has_key('num_group'):
+    if "num_group" in attrs:
         num_group = int(attrs['num_group'])
 
     padding = (0, 0)
-    if attrs.has_key('pad'):
+    if "pad" in attrs:
         padding = parse_tuple(attrs['pad'])
 
     kernel = parse_tuple(attrs['kernel'])
     stride = parse_tuple(attrs['stride'])
 
     dilation = (1, 1)
-    if attrs.has_key('dilation'):
+    if "dilation" in attrs:
         dilation = parse_tuple(attrs['dilation'])
 
     print("--##    dilation: {}".format(dilation))
@@ -268,7 +268,7 @@ def convert_convolution(node, inputs):
     print("--##    kernel: {}".format(kernel))
 
     activation = None
-    if attrs.has_key('activation'):
+    if "activation" in attrs:
         activation = attrs['activation']
 
     if activation is not None:
@@ -364,7 +364,7 @@ def convert_pooling(node, inputs):
         raise NotImplementedError("pool_type = {}".format(pool_type))
 
     global_pool = False
-    if attrs.has_key('global_pool'):
+    if "global_pool" in attrs:
         global_pool = attrs['global_pool'] == 'True'
 
     if global_pool:
@@ -372,13 +372,13 @@ def convert_pooling(node, inputs):
         return node
 
     padding = (0, 0)
-    if attrs.has_key('pad'):
+    if "pad" in attrs:
         padding = parse_tuple(attrs['pad'])
 
     kernel = parse_tuple(attrs['kernel'])
 
     stride = (1, 1)
-    if attrs.has_key('stride'):
+    if "stride" in attrs:
         stride = parse_tuple(attrs['stride'])
 
     print("--##    pad: {}".format(padding))
@@ -386,7 +386,7 @@ def convert_pooling(node, inputs):
     print("--##    kernel: {}".format(kernel))
 
     valid = True
-    if attrs.has_key('valid'):
+    if "valid" in attrs:
         valid = attrs['valid'] == 'True'
 
     node = ts.frontend.mxnet.pooling2d(name=node_name, x=x,
@@ -442,7 +442,7 @@ def convert_fully_connected(node, inputs):
     attrs = node['attrs']
 
     no_bias = False
-    if attrs.has_key("no_bias"):
+    if "no_bias" in attrs:
         no_bias = attrs["no_bias"] == "True"
         print("--##    no_bias: {}".format(no_bias))
 
