@@ -149,7 +149,7 @@ namespace ts {
                     }
                     for (; w < width; ++w) {
                         for (int c = 0; c < channel; ++c) {
-                            dst_at[h * h_offset + c * channel_offset + w] = src_at[h * width + w * channel + c];
+                            dst_at[h * width + c * channel_offset + w] = src_at[h * h_offset + w * channel + c];
                         }
                     }
                 }
