@@ -14,6 +14,13 @@
 namespace ts {
     namespace dragon {
 
+		template <typename T, typename F>
+		inline std::vector<T> cast_tensor(const std::vector<F> &vec) {
+			std::vector<T> to_vec(vec.size());
+			std::transform(vec.begin(), vec.end(), to_vec.begin(), [](const F &a) { return T(a); });
+			return std::move(to_vec);
+		}
+
         class TensorV0 {
         public:
             using self = TensorV0;
@@ -27,8 +34,8 @@ namespace ts {
             int64_t dim(int64_t i) const { return int64_t(m_tst.size(int(i))); }
 
             self *Reshape(DTYPE dtype, const std::vector<int64_t> &shape) {
-                auto ts_shape = std::vector<int>(shape.begin(), shape.end());
-                auto count = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int>());
+				auto ts_shape = cast_tensor<int>(shape);
+                auto count = std::accumulate(ts_shape.begin(), ts_shape.end(), 1, std::multiplies<int>());
                 if (m_tst.dtype() == dtype && m_tst.count() == count) {
                     m_tst.reshape(ts_shape);
                     return this;
@@ -131,7 +138,7 @@ namespace ts {
 
             bool updated() const { return m_shape_updated; }
 
-            Tensor t() const { return m_tst; }
+            ts::Tensor t() const { return m_tst; }
 
             const std::vector<int64_t> &shape() const { return m_shape; }
 
@@ -181,7 +188,7 @@ namespace ts {
             }
 
             void newdata(DTYPE dtype, const MemoryDevice &device, SyncMemoryController::shared flow) const {
-                m_tst = Tensor(flow, dtype, std::vector<int32_t>(m_shape.begin(), m_shape.end()), MemoryDevice(CPU));
+                m_tst = ts::Tensor(flow, dtype, cast_tensor<int32_t>(m_shape), MemoryDevice(CPU));
             }
 
             void newdata(DTYPE dtype, const MemoryDevice &device) const {

@@ -8,6 +8,7 @@
 #include "global/operator_factory.h"
 #include "runtime/stack.h"
 #include "backend/common_function.h"
+#include <array>
 
 namespace ts {
     namespace dragon {
@@ -135,7 +136,7 @@ namespace ts {
 
             auto idm = x;
             const int dk = dilation * (ksize - 1) + 1;
-            int odm = (idm + stride - 1) / (float) stride;
+            int odm = int((idm + stride - 1) / float(stride));
             int padding_needed = std::max<int>(0, (odm - 1) * stride + dk - idm);
 
             auto &y = out.out;

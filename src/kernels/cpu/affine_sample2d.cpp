@@ -166,6 +166,9 @@ namespace ts {
             const T *src_im = x->data<T>() + x_offset;
             T *dst_im = y->data<T>() + y_offset;
 
+#ifdef TS_USE_OPENMP
+#pragma omp parallel for num_threads(openmp_threads())
+#endif
             for (int n_y_d = 0; n_y_d < dst_height; n_y_d++) {
                 for (int n_x_d = 0; n_x_d < dst_width; n_x_d++) {
 
@@ -213,15 +216,15 @@ namespace ts {
             const T *psrc = x->data<T>() + x_offset;
             T *pdst = y->data<T>() + y_offset;
             const double A = -0.75f;
-            double coeffsY[4];
-            double coeffsX[4];
-            int srcrows = x_width * channels;
-            int dstrows = y_width * channels;
+            const int srcrows = x_width * channels;
+            const int dstrows = y_width * channels;
 
-//#ifdef TS_USE_OPENMP
-//#pragma omp parallel for num_threads(openmp_threads())
-//#endif
+#ifdef TS_USE_OPENMP
+#pragma omp parallel for num_threads(openmp_threads())
+#endif
             for (int m = 0; m < y_height; m++) {
+                double coeffsY[4];
+                double coeffsX[4];
                 for (int n = 0; n < y_width; n++) {
                     vec3d<float> cur(n, m, 1);
                     auto location = transform<float>(rz00, rz01, rz02, rz10, rz11, rz12, rz20, rz21, rz22, cur);

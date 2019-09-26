@@ -14,8 +14,8 @@ void ROIAlignOp<Context>::RunWithType() {
     auto* Ydata = Output(0)->template mutable_data<T, Context>();
 
     kernel::ROIAlign(
-        Input(0).dim(1), Input(0).dim(2), Input(0).dim(3),
-            pool_h, pool_w, Input(1).dim(0),
+        int(Input(0).dim(1)), int(Input(0).dim(2)), int(Input(0).dim(3)),
+            pool_h, pool_w, int(Input(1).dim(0)),
                 spatial_scale, sampling_ratio,
                     Xdata, Rdata, Ydata, ctx());
 }
@@ -25,8 +25,8 @@ void ROIAlignOp<Context>::RunOnDevice() {
     Output(0)->Reshape({
         Input(1).dim(0),    /*!   Number of RoIs  */
         Input(0).dim(1),    /*!   Channels        */
-        pool_h,             /*!   Pooled height   */
-        pool_w              /*!   Pooled width    */
+        int64_t(pool_h),    /*!   Pooled height   */
+        int64_t(pool_w)     /*!   Pooled width    */
     });
 
     if (XIsType(Input(0), float)) RunWithType<float>();
