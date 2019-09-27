@@ -7,6 +7,8 @@
 #include "global/operator_factory.h"
 #include "core/tensor_builder.h"
 
+#include <algorithm>
+
 namespace ts {
     namespace cpu {
         class Expand : public Operator {
