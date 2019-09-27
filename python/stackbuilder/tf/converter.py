@@ -50,6 +50,7 @@ def convert(graph, inputs, outputs, output_file):
         "Reshape": convert_reshape,
         "Sub": convert_sub,
         "Const": convert_const,
+        "VariableV2": convert_const,
         "Placeholder": convert_placeholder,
         "RealDiv": convert_real_div,
 
@@ -745,7 +746,17 @@ def convert_mean(tf_node, inputs):
     if "keep_dims" in attr_dict:
         keep_dims = attr_dict["keep_dims"]
 
-    return ts.zoo.reduce_mean(name=node_name, x=x, reduce_dims=dims, keep_dims=keep_dims)
+    if len(dims) == 1:
+        return ts.zoo.reduce_mean(name=node_name, x=x, reduce_dims=dims, keep_dims=keep_dims)
+
+    if numpy.asarray(dims).shape == (2, ) and dims[0] == 1 and dims[1] == 2:
+        x = zipper.nhwc2nchw(x, name=x.name + "_nchw")
+        node = ts.zoo.global_pooling2d(name=node_name + "_nchw", x=x,
+                                       type=ts.zoo.Type.pooling_type.avg, format=ts.zoo.Name.NCHW)
+        node = zipper.nchw2nhwc(x=node, name=node_name)
+        return node
+
+    raise NotImplementedError("dims={}".format(dims))
 
 
 def convert_fused_batch_norm(tf_node, inputs):
@@ -1115,6 +1126,9 @@ def convert_reduce_sum(tf_node, inputs):
     if "keep_dims" in attr_dict:
         keep_dims = attr_dict["keep_dims"]
 
+    if len(dims) != 1:
+        raise NotImplementedError("dims={}".format(dims))
+
     return ts.zoo.reduce_sum(name=node_name, x=x, reduce_dims=dims, keep_dims=keep_dims)
 
 
@@ -1129,18 +1143,10 @@ def convert_maximum(tf_node, inputs):
     print("--##    attr: {}".format(attr_dict))
     node_name = tf_node.op.name
 
-    x = inputs[0]
-    dims = inputs[1]
-    try:
-        dims = ts.zoo.to_const(dims)
-    except:
-        raise NotImplementedError("The parma 1 must be const")
+    lhs = inputs[0]
+    rhs = inputs[1]
 
-    keep_dims = False
-    if "keep_dims" in attr_dict:
-        keep_dims = attr_dict["keep_dims"]
-
-    return ts.zoo.reduce_sum(name=node_name, x=x, reduce_dims=dims, keep_dims=keep_dims)
+    return ts.zoo.maximum(name=node_name, lhs=lhs, rhs=rhs)
 
 
 register_layer_converter("Maximum", convert_maximum)

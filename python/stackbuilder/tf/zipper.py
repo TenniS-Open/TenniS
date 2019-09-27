@@ -57,6 +57,30 @@ def map_fused_batch_norm_to_nchw(x):
     return x
 
 
+def map_reduce_mean(x):
+    # type: (ts.Node) -> ts.Node
+    assert x.op == "reduce_mean"
+    keep_dims = x.try_get("keep_dims", True)
+    if not keep_dims:
+        return None
+    dims = x.get("dims")
+    for dim in dims:
+        if dim > 3 or dim < 0:
+            return None
+
+    chw_input = list(x.inputs)
+    chw_input[0] = nhwc2nchw(chw_input[0], name=chw_input[0].name + "_nchw")
+    x = copy.copy(x)
+    ts.Node.Link(x, chw_input)
+    x.name = x.name + "_nchw"
+
+    map_dims_nhwc2nchw = [0, 2, 3, 1]
+    dims = [map_dims_nhwc2nchw[i] for i in dims]
+    x.set("dims", dims)
+
+    return x
+
+
 supported_map = {
     Name.Layer.nchw2nhwc: map_nchw2nchw_to_nchw,
     "_copy": map_copy_to_nchw,
@@ -67,6 +91,7 @@ supported_map = {
     "relu": map_copy_to_nchw,
     "relu_max": map_copy_to_nchw,
     "fused_batch_norm": map_fused_batch_norm_to_nchw,
+    "reduce_mean": map_reduce_mean,
 }
 
 unsupported_set = {
