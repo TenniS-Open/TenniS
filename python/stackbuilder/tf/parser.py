@@ -54,12 +54,27 @@ def load_graph(path):
     return graph
 
 
-def load_ckpt(root, prefix=None):
+def session_load_graph_def(sess, path):
+    """
+    load graph from pb or tflite model
+    :param sess: tf.Session
+    :param path: path to pb file
+    :return: tf.Graph
+    """
+    od_graph_def = tf.GraphDef()
+    with tf.gfile.GFile(path, 'rb') as fid:
+        serialized_graph = fid.read()
+        od_graph_def.ParseFromString(serialized_graph)
+        tf.import_graph_def(od_graph_def, name='')
+
+
+def session_load_ckpt(sess, root, prefix=None):
     """
     load graph from ckpt files
+    :param sess: tf.Session
     :param root: root to ckpt file and meta file
     :param prefix: prefix of meta file, exclude ".meta"
-    :return: tf.Graph
+    :return: None
     """
     import os, re
     if prefix is None:
@@ -90,11 +105,7 @@ def load_ckpt(root, prefix=None):
         if ckpt_file is None:
             raise ValueError('No ckpt file found in the model directory (%s)' % root)
 
-    graph = tf.Graph()
-    with graph.as_default():
-        with Session() as sess:
-            print("[INFO] import graph from: {}".format(os.path.join(root, meta_file)))
-            saver = import_meta_graph(os.path.join(root, meta_file))
-            print("[INFO] restore graph from: {}".format(os.path.join(root, ckpt_file)))
-            saver.restore(sess, os.path.join(root, ckpt_file))
-    return graph
+    print("[INFO] import graph from: {}".format(os.path.join(root, meta_file)))
+    saver = import_meta_graph(os.path.join(root, meta_file))
+    print("[INFO] restore graph from: {}".format(os.path.join(root, ckpt_file)))
+    saver.restore(sess, os.path.join(root, ckpt_file))
