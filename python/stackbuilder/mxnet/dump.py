@@ -46,6 +46,9 @@ def dump_image(model_prefix, epoch, data, output_root, inputs=None, outputs=None
     model_params = find_epoch_params(model_prefix, epoch)
     model_json = '%s-symbol.json' % (model_prefix, )
 
+    print("[INFO] Loading params: {}".format(model_params))
+    print("[INFO] Loading json: {}".format(model_json))
+
     # set parameter
     if inputs is None:
         inputs = 'data'
@@ -58,7 +61,10 @@ def dump_image(model_prefix, epoch, data, output_root, inputs=None, outputs=None
     data = ts.tensor.compatible_string(data)
     if isinstance(data, str):
         import cv2
-        data = cv2.imread(data)
+        image_path = data
+        data = cv2.imread(image_path)
+        if data is None:
+            raise ValueError("Can not open or access image: {}".format(image_path))
         data = data[:, :, [2, 1, 0]]                        # to rgb
         data = numpy.asarray(data, dtype=numpy.float32)     # to float
         data /= 1.0 / 255                                   # div std
@@ -67,6 +73,8 @@ def dump_image(model_prefix, epoch, data, output_root, inputs=None, outputs=None
 
     # load graph
     sym, arg_params, aux_params = load_params(model_params, model_json)
+
+    print("[INFO] Graph loaded.")
 
     # load data
     batch_size = data.shape[0]
@@ -92,23 +100,35 @@ def dump_image(model_prefix, epoch, data, output_root, inputs=None, outputs=None
             temp_outputs.append(name)
         outputs = temp_outputs
 
-    # compute each outputs
+    # filter outputs
+    temp_outputs = []
     for name in outputs:
         if name != inputs and not name.endswith('_output'):
             continue
+        temp_outputs.append(name)
+    outputs = temp_outputs
 
-        output = sym_internals[name]
+    # got outputs group
+    output_group = mxnet.symbol.Group([sym_internals[name] for name in outputs])
 
-        context = mxnet.cpu()
-        module = mxnet.mod.Module(symbol=output, context=context)
-        module.bind(for_training=False, data_shapes=[(inputs, data_shape)])
-        module.set_params(arg_params=arg_params, aux_params=aux_params)
+    context = mxnet.cpu()
+    module = mxnet.mod.Module(symbol=output_group, context=context)
+    module.bind(for_training=False, data_shapes=[(inputs, data_shape)])
+    module.set_params(arg_params=arg_params, aux_params=aux_params)
 
-        data_iter.reset()
-        this_data = data_iter.next()
-        module.forward(this_data)
+    print("[INFO] Graph setup.")
+    print("[INFO] Graph forwarding...")
 
-        output_feature = module.get_outputs()[0].asnumpy()
+    data_iter.reset()
+    this_data = data_iter.next()
+    module.forward(this_data)
+
+    output_features = module.get_outputs()
+
+    print("[INFO] ====== Saving outputs ======")
+    for i in range(len(outputs)):
+        name = outputs[i]
+        output_feature = output_features[i].asnumpy()
 
         tag_name = name
         if tag_name.endswith('_output'):
