@@ -100,7 +100,7 @@ def dump_image(model_prefix, epoch, data, output_root, inputs=None, outputs=None
         output = sym_internals[name]
 
         context = mxnet.cpu()
-        module = mxnet.mod.Module(symbol=output)
+        module = mxnet.mod.Module(symbol=output, context=context)
         module.bind(for_training=False, data_shapes=[(inputs, data_shape)])
         module.set_params(arg_params=arg_params, aux_params=aux_params)
 
