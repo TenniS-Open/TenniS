@@ -30,8 +30,12 @@ void ROIAlignOp<Context>::RunOnDevice() {
     });
 
     if (XIsType(Input(0), float)) RunWithType<float>();
+#ifdef TS_USE_CUDA_FP16
     else if (XIsType(Input(0), float16)) RunWithType<float16>();
     else LOG(FATAL) << DTypeHelper(Input(0), { "float32", "float16" }) << eject;
+#else
+    else LOG(FATAL) << DTypeHelper(Input(0), { "float32", }) << eject;
+#endif
 }
 
 }  // namespace dragon
