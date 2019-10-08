@@ -214,6 +214,9 @@ TENSOR_STACK_C_API ts_Workbench *ts_Workbench_Load_v2(const ts_Module *module, c
  * Option can have:
  * 1. "--float16" using float16 operator
  * 2. "--winograd" using winograd conv2d
+ * Reservation options:
+ * 1. "--pack" Default ON, pack weights
+ * 2. "--filter" Default ON, filter const values, set values to zero which smaller than FLT_EPSILON
  */
 TENSOR_STACK_C_API ts_Program *ts_Workbench_compile_v2(ts_Workbench *workbench, const ts_Module *module,
         const char *options);
