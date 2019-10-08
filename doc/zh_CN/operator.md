@@ -769,7 +769,7 @@ Waitting for sure
 
 ### reduce_mean(x..device) -> y..device
 参数：  
-- `dims` `Int` 要进行求和的维度  
+- `dims` `Int` 或 `IntArray` 要进行求和的维度，如果为 `IntArray` 则要求维度是连续的  
 - `keep_dims` `Boolean` `Default 1` 是否保留求和后的位置  
 
 说明：  
