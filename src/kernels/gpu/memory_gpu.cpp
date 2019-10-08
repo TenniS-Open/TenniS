@@ -27,7 +27,7 @@ namespace ts {
     private:
         static std::string CUDAExceptionMessage(const std::string &api, cudaError_t cuda_error) {
             std::ostringstream oss;
-            oss << "Call " << api << " failed. ERROR(" <<  cuda_error << "):" << cudaGetErrorString(cuda_error) << eject;
+            oss << "Call " << api << " failed. Error(" <<  cuda_error << "):" << cudaGetErrorString(cuda_error) << eject;
             return oss.str();
         }
         cudaError_t m_cudaError = cudaSuccess;
@@ -36,7 +36,7 @@ namespace ts {
     void *gpu_allocator(int id, size_t new_size, void *mem, size_t mem_size) {
         auto cuda_error = cudaSetDevice(id);
         if (cuda_error != cudaSuccess) {
-            TS_LOG_ERROR << "cudaSetDevice(" << id << ") failed. ERROR(" <<  cuda_error << "):" << cudaGetErrorString(cuda_error) << eject;
+            TS_LOG_ERROR << "cudaSetDevice(" << id << ") failed. Error(" <<  cuda_error << "):" << cudaGetErrorString(cuda_error) << eject;
         }
         void *new_mem = nullptr;
         if (new_size == 0) {
@@ -53,7 +53,7 @@ namespace ts {
         }
         if (new_mem == nullptr) throw OutOfMemoryException(MemoryDevice(CPU, id), new_size);
         if (cuda_error != cudaSuccess) {
-            TS_LOG_ERROR << "cudaMalloc(" << &new_mem << " " << new_size << ") failed. ERROR(" <<  cuda_error << "):" << cudaGetErrorString(cuda_error) << eject;
+            TS_LOG_ERROR << "cudaMalloc(" << &new_mem << " " << new_size << ") failed. Error(" <<  cuda_error << "):" << cudaGetErrorString(cuda_error) << eject;
         }
         return new_mem;
     }
@@ -74,7 +74,7 @@ namespace ts {
     void cpu2gpu_converter(int dst_id, void *dst, int src_id, const void *src, size_t size) {
         auto cuda_error = cudaSetDevice(dst_id);
         if (cuda_error != cudaSuccess) {
-            TS_LOG_ERROR << "cudaSetDevice(" << dst_id << ") failed. ERROR(" <<  cuda_error << "):" << cudaGetErrorString(cuda_error) << eject;
+            TS_LOG_ERROR << "cudaSetDevice(" << dst_id << ") failed. Error(" <<  cuda_error << "):" << cudaGetErrorString(cuda_error) << eject;
         }
 
         cudaStream_t cuda_stream = cudaStreamPerThread;
@@ -93,7 +93,7 @@ namespace ts {
     void gpu2cpu_converter(int dst_id, void *dst, int src_id, const void *src, size_t size) {
         auto cuda_error = cudaSetDevice(src_id);
         if (cuda_error != cudaSuccess) {
-            TS_LOG_ERROR << "cudaSetDevice(" << src_id << ") failed. ERROR(" <<  cuda_error << "):" << cudaGetErrorString(cuda_error) << eject;
+            TS_LOG_ERROR << "cudaSetDevice(" << src_id << ") failed. Error(" <<  cuda_error << "):" << cudaGetErrorString(cuda_error) << eject;
         }
 
         cudaStream_t cuda_stream = cudaStreamPerThread;
