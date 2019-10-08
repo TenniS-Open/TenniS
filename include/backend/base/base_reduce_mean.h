@@ -32,10 +32,11 @@ namespace ts {
              * @param dim reduce dim
              * @param out output tensor with kept dim
              */
-            virtual void reduce(const Tensor &x, int dim, Tensor &out) = 0;
+            virtual void reduce(const Tensor &x, std::vector<int> dims, Tensor &out) = 0;
 
         private:
-            int m_dim = -1;
+//            int m_dim = -1;
+            std::vector<int> m_dims;
             bool m_keep_dim = true;
         };
     }
