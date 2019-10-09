@@ -81,7 +81,7 @@ namespace ts {
         }
 
         ArgParser parser;
-        parser.add({"--filter", "-flt"}, {"--no-filter", "-no-flt"}, true);
+        parser.add({"--filter", "-flt"}, {"--no-filter", "-no-flt"}, false);
         parser.parse(options);
         auto do_filter = parser.get("--filter");
 
