@@ -74,7 +74,7 @@ TENSOR_STACK_C_API int32_t ts_Program_output_count(ts_Program *program);
  * 2. "--winograd" using winograd conv2d
  * Reservation options:
  * 1. "--pack" Default ON, pack weights
- * 2. "--filter" Default ON, filter const values, set values to zero which smaller than FLT_EPSILON
+ * 2. "--filter" Default OFF, filter const values, set values to zero which smaller than FLT_EPSILON
  */
 TENSOR_STACK_C_API ts_Program *ts_Program_Compile_v2(const ts_Module *module, const ts_Device *device,
         const char *options);
