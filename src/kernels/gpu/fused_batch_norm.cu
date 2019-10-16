@@ -37,7 +37,7 @@ namespace ts {
         static __global__ void inner_vec_kernel(const int N, float epsilon, const T* input, T* output) {
             int index = blockDim.x * blockIdx.x + threadIdx.x;
 
-            for (; index < N; index += blockDim.x * gridDim.x) {
+            if (index < N) {
                 output[index] = T(1) / T(sqrt(input[index] + T(epsilon)));
             }
         }
@@ -81,14 +81,12 @@ namespace ts {
             Tensor vec_tensor(RuntimeContext::FlowMemory(), variance.dtype(), vec_shape, variance.device());
             T* vec_data = vec_tensor.data<T>();
             int vec_len = vec_tensor.count();
-            dim3 block_size(CUDA_THREAD_NUM);
-            dim3 grid_size(CUDA_BLOCK(vec_len, block_size.x));
 
             auto &context = ctx::ref<DeviceContext>();
             CUDAContextHandle* handle = reinterpret_cast<CUDAContextHandle*>(context.handle);
             auto cuda_stream = handle->stream();
 
-            inner_vec_kernel<T> << < grid_size, block_size, 0, cuda_stream >> > (vec_len,epsilon,pvariance, vec_data);
+            inner_vec_kernel<T> << < CUDA_BLOCK(vec_len, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >> > (vec_len,epsilon,pvariance, vec_data);
 
             gpu_fused_batch_norm_compute_kernel<T> << < CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >> > (psrc, pdst, out.count(), backdims, shape[dim], pmean, vec_data, pscale, pbias);
 
