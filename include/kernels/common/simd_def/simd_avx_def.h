@@ -223,13 +223,13 @@ inline _simd_f32x4x3 _simd_f32x4x3_set(_simd_f32 a, _simd_f32 b, _simd_f32 c, _s
     return res;
 }
 
-inline void _simd_f32x4x3_store(_simd_f32 *p, _simd_f32x4x3 m) {
+inline void _simd_f32x4x3_store(_simd_f32 *p, const _simd_f32x4x3& m) {
     _mm_storeu_ps(p, m.val[0]);
     _mm_storeu_ps(p + 4, m.val[1]);
     _mm_storeu_ps(p + 8, m.val[2]);
 }
 
-inline void _simd_f32x4x3_store(_simd_f32 *p, _simd_f32x4x3 m, int index) {
+inline void _simd_f32x4x3_store(_simd_f32 *p, const _simd_f32x4x3& m, int index) {
     _mm_storeu_ps(p, m.val[index]);
 }
 
@@ -247,7 +247,7 @@ inline _simd_f32x4x3 _simd_f32x4x3_interval_load(const _simd_f32 *p, int inc){
 }
 
 //TODO: optimize this fuc,just like vstnq_f32
-inline void _simd_f32x4x3_interval_save(_simd_f32 *p, _simd_f32x4x3 m){
+inline void _simd_f32x4x3_interval_save(_simd_f32 *p, const _simd_f32x4x3& m){
     float* i0 = (float*)&(m.val[0]);
     float* i1 = (float*)&(m.val[1]);
     float* i2 = (float*)&(m.val[2]);
