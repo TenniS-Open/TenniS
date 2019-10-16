@@ -861,7 +861,7 @@ class Workbench(object):
         return self.clone()
 
     def input(self, slot, tensor):
-        # type: (Union[int, str], Tensor) -> None
+        # type: (Union[int, str], Union[Tensor, numpy.ndarray]) -> None
         tensor = Tensor(tensor)
         if isinstance(slot, int):
             _C.ts_api_check_bool(_C.ts_Workbench_input(self, slot, tensor))

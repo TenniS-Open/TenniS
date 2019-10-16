@@ -57,6 +57,91 @@ def map_fused_batch_norm_to_nchw(x):
     return x
 
 
+def map_reduce_mean(x):
+    # type: (ts.Node) -> ts.Node
+    assert x.op == "reduce_mean"
+    keep_dims = x.try_get("keep_dims", True)
+    if not keep_dims:
+        return None
+    dims = x.get("dims")
+    for dim in dims:
+        if dim > 3 or dim < 0:
+            return None
+
+    chw_input = list(x.inputs)
+    chw_input[0] = nhwc2nchw(chw_input[0], name=chw_input[0].name + "_nchw")
+    x = copy.copy(x)
+    ts.Node.Link(x, chw_input)
+    x.name = x.name + "_nchw"
+
+    map_dims_nhwc2nchw = [0, 2, 3, 1]
+    dims = [map_dims_nhwc2nchw[i] for i in dims]
+    x.set("dims", dims)
+
+    return x
+
+
+def map_concat(x):
+    # type: (ts.Node) -> ts.Node
+    assert x.op == "concat"
+
+    dim = x.get("dim")
+    if dim < 0 or dim > 3:
+        return None
+
+    chw_input = list(x.inputs)
+    chw_input[0] = nhwc2nchw(chw_input[0], name=chw_input[0].name + "_nchw")
+    x = copy.copy(x)
+    ts.Node.Link(x, chw_input)
+    x.name = x.name + "_nchw"
+
+    map_dims_nhwc2nchw = [0, 2, 3, 1]
+    dim = map_dims_nhwc2nchw[dim]
+    x.set("dim", dim)
+
+    return x
+
+
+def map_reduce_sum(x):
+    # type: (ts.Node) -> ts.Node
+    assert x.op == "reduce_sum"
+    keep_dims = x.try_get("keep_dims", True)
+    if not keep_dims:
+        return None
+    dims = x.get("dims")
+    for dim in dims:
+        if dim > 3 or dim < 0:
+            return None
+
+    chw_input = list(x.inputs)
+    chw_input[0] = nhwc2nchw(chw_input[0], name=chw_input[0].name + "_nchw")
+    x = copy.copy(x)
+    ts.Node.Link(x, chw_input)
+    x.name = x.name + "_nchw"
+
+    map_dims_nhwc2nchw = [0, 2, 3, 1]
+    dims = [map_dims_nhwc2nchw[i] for i in dims]
+    x.set("dims", dims)
+
+    return x
+
+
+def map_transpose(x):
+    # type: (ts.Node) -> ts.Node
+    assert x.op == "_transpose"
+
+    permute = x.get("permute")
+    permute = tuple(permute)
+
+    if permute == (0, 3, 1, 2):
+        return None
+
+    if permute == (0, 2, 3, 1):
+        return x.inputs[0]
+
+    return None
+
+
 supported_map = {
     Name.Layer.nchw2nhwc: map_nchw2nchw_to_nchw,
     "_copy": map_copy_to_nchw,
@@ -66,13 +151,22 @@ supported_map = {
     "div": map_copy_to_nchw,
     "relu": map_copy_to_nchw,
     "relu_max": map_copy_to_nchw,
+    "rsqrt": map_copy_to_nchw,
+    "maximum": map_copy_to_nchw,
+    "square": map_copy_to_nchw,
     "fused_batch_norm": map_fused_batch_norm_to_nchw,
+    "reduce_mean": map_reduce_mean,
+    "concat": map_concat,
+    "reduce_sum": map_reduce_sum,
+    "_transpose": map_transpose,
 }
 
 unsupported_set = {
     Name.Layer.nhwc2nchw,
     ts.Node.Parameter,
     ts.Node.Const,
+    "_resize2d",
+    "_transpose",
 }
 
 

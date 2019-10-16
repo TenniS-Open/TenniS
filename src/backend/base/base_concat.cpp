@@ -22,6 +22,18 @@ namespace ts {
             // TS_AUTO_CHECK(m_dim >= 0);
         }
 
+        static void throw_error_message(const std::string &title, Stack &stack, int dim) {
+            auto N = int(stack.size());
+            std::ostringstream oss;
+            oss << "{";
+            for (int j = 0; j < N; ++j) {
+                if (j) oss << ", ";
+                oss << stack[j].proto();
+            }
+            oss << "}";
+            TS_LOG_ERROR << title << "Can not concat " << oss.str() << " at dim=" << dim << ts::eject;
+        }
+
         int Concat::infer(Stack &stack, std::vector<Tensor::Prototype> &output) {
             auto input_num = stack.size();
 
@@ -67,13 +79,17 @@ namespace ts {
             for (size_t i = 1; i < input_num; i++)
             {
                 auto shape = stack.index(int(i))->sizes();
-                TS_CHECK(shape.size() == num_dims) << "All inputs must have the same dims!" << ts::eject;
+                if(shape.size() != num_dims) {
+                    throw_error_message("", stack, m_dim);
+                }
 
                 for (int j = 0; j < shape.size(); j++)
                 {
                     if (j == fixed_dim)
                         continue;
-                    TS_CHECK(shape[j] == output_shape[j]) << "All inputs must have the same shape, except at concat_axis!" << ts::eject;
+                    if(shape[j] != output_shape[j]) {
+                        throw_error_message("", stack, m_dim);
+                    }
                 }
                 concat_dim_output_num += shape[fixed_dim];
             }

@@ -50,6 +50,7 @@ def convert(graph, inputs, outputs, output_file):
         "Reshape": convert_reshape,
         "Sub": convert_sub,
         "Const": convert_const,
+        "VariableV2": convert_const,
         "Placeholder": convert_placeholder,
         "RealDiv": convert_real_div,
 
@@ -95,28 +96,41 @@ def convert(graph, inputs, outputs, output_file):
 
     # set_no_log_converter = set(map_converter.keys())
 
-    map_tf_node_ts_node = {}
+    # (tf.Operation, index) => ts.Node
+    map_tf_operation_index_ts_node = {}
+    # # tf.Operation => ts.Node
+    # map_tf_operation_ts_node = {}
+
+    def insert_map_operation(tf_node, ts_nodes):
+        if isinstance(ts_nodes, ts.Node):
+            ts_nodes = (ts_nodes, )
+        operation = tf_node.op
+        for index in range(len(ts_nodes)):
+            operation_index = (operation, index)
+            map_tf_operation_index_ts_node[operation_index] = ts_nodes[index]
 
     output_ts_nodes = []
 
     def convert_node(tf_node):
-        if tf_node in map_tf_node_ts_node:
-            return map_tf_node_ts_node[tf_node]
-        node_op = tf_node.op
-        node_op_type = node_op.type
+        assert isinstance(tf_node, tf.Tensor)
+        operation_index = (tf_node.op, tf_node.value_index)
+        operation = tf_node.op
+        if operation_index in map_tf_operation_index_ts_node:
+            return map_tf_operation_index_ts_node[operation_index]
+        operation_type = operation.type
 
-        if node_op_type == "Identity":
-            ts_node = convert_node(node_op.inputs[0])
-            ts_node.name = node_op.name
-            map_tf_node_ts_node[tf_node] = ts_node
+        if operation_type == "Identity":
+            ts_node = convert_node(operation.inputs[0])
+            ts_node.name = operation.name
+            insert_map_operation(tf_node, ts_node)
             return ts_node
 
-        if node_op_type not in map_converter:
-            raise Exception("Not supported Layer: {}".format(node_op_type))
-        converter = map_converter[node_op_type]
+        if operation_type not in map_converter:
+            raise Exception("Not supported Layer: {}".format(operation_type))
+        converter = map_converter[operation_type]
 
         input_ts_nodes = []
-        for input in node_op.inputs:
+        for input in operation.inputs:
             assert input != tf_node
             # TODO: checking loop
             ts_input_node = convert_node(input)
@@ -130,13 +144,11 @@ def convert(graph, inputs, outputs, output_file):
         #     return ts.menu.param("")
 
         ts_node = converter(tf_node, input_ts_nodes)
-        if isinstance(ts_node, (tuple, list)):
-            assert len(ts_node) == 1
-            ts_node = ts_node[0]
+        assert isinstance(ts_node, (tuple, list, ts.Node))
 
-        map_tf_node_ts_node[tf_node] = ts_node
+        insert_map_operation(tf_node, ts_node)
 
-        return ts_node
+        return map_tf_operation_index_ts_node[operation_index]
 
     for output in outputs:
         output_ts_nodes.append(convert_node(output))
@@ -146,9 +158,10 @@ def convert(graph, inputs, outputs, output_file):
     # checking inputs
     input_ts_nodes = []
     for input in inputs:
-        if input not in map_tf_node_ts_node:
+        operation_index = (input.op, input.value_index)
+        if operation_index not in map_tf_operation_index_ts_node:
             raise Exception("Node {} not in graph".format(input.op.name))
-        input_ts_nodes.append(map_tf_node_ts_node[input])
+        input_ts_nodes.append(map_tf_operation_index_ts_node[operation_index])
 
     # print input_ts_nodes
 
@@ -745,7 +758,17 @@ def convert_mean(tf_node, inputs):
     if "keep_dims" in attr_dict:
         keep_dims = attr_dict["keep_dims"]
 
-    return ts.zoo.reduce_mean(name=node_name, x=x, reduce_dims=dims, keep_dims=keep_dims)
+    if len(dims) == 1:
+        return ts.zoo.reduce_mean(name=node_name, x=x, reduce_dims=dims, keep_dims=keep_dims)
+
+    if numpy.asarray(dims).shape == (2, ) and dims[0] == 1 and dims[1] == 2:
+        x = zipper.nhwc2nchw(x, name=x.name + "_nchw")
+        node = ts.zoo.global_pooling2d(name=node_name + "_nchw", x=x,
+                                       type=ts.zoo.Type.pooling_type.avg, format=ts.zoo.Name.NCHW)
+        node = zipper.nchw2nhwc(x=node, name=node_name)
+        return node
+
+    raise NotImplementedError("dims={}".format(dims))
 
 
 def convert_fused_batch_norm(tf_node, inputs):
@@ -1115,6 +1138,9 @@ def convert_reduce_sum(tf_node, inputs):
     if "keep_dims" in attr_dict:
         keep_dims = attr_dict["keep_dims"]
 
+    if len(dims) != 1:
+        raise NotImplementedError("dims={}".format(dims))
+
     return ts.zoo.reduce_sum(name=node_name, x=x, reduce_dims=dims, keep_dims=keep_dims)
 
 
@@ -1129,18 +1155,10 @@ def convert_maximum(tf_node, inputs):
     print("--##    attr: {}".format(attr_dict))
     node_name = tf_node.op.name
 
-    x = inputs[0]
-    dims = inputs[1]
-    try:
-        dims = ts.zoo.to_const(dims)
-    except:
-        raise NotImplementedError("The parma 1 must be const")
+    lhs = inputs[0]
+    rhs = inputs[1]
 
-    keep_dims = False
-    if "keep_dims" in attr_dict:
-        keep_dims = attr_dict["keep_dims"]
-
-    return ts.zoo.reduce_sum(name=node_name, x=x, reduce_dims=dims, keep_dims=keep_dims)
+    return ts.zoo.maximum(name=node_name, lhs=lhs, rhs=rhs)
 
 
 register_layer_converter("Maximum", convert_maximum)
@@ -1227,12 +1245,182 @@ def convert_slice(tf_node, inputs):
     begin = inputs[1]
     size = inputs[2]
 
-    raise NotImplementedError("{}".format(tf_node))
+    return ts.frontend.tf.slice_v2(name=node_name, x=x, begin=begin, size=size)
 
 
 register_layer_converter("Slice", convert_slice)
 
 
+def convert_softmax(tf_node, inputs):
+    # type: (tf.Tensor, List[ts.Node]) -> ts.Node
+
+    assert len(inputs) == 1
+    attr_dict = node_def_attr_dict(tf_node)
+    print("--##    attr: {}".format(attr_dict))
+    node_name = tf_node.op.name
+
+    x = inputs[0]
+
+    axis = -1
+    if 'axis' in attr_dict:
+        axis = attr_dict['axis']
+
+    return ts.zoo.softmax(node_name, x, dim=axis)
+
+
+register_layer_converter("Softmax", convert_softmax)
+
+
+def convert_max(tf_node, inputs):
+    # type: (tf.Tensor, List[ts.Node]) -> ts.Node
+
+    assert len(inputs) == 2
+    attr_dict = node_def_attr_dict(tf_node)
+    print("--##    attr: {}".format(attr_dict))
+    node_name = tf_node.op.name
+
+    x = inputs[0]
+    dims = inputs[1]
+    try:
+        dims = ts.zoo.to_const(dims)
+    except:
+        raise NotImplementedError("The parma 1 must be const")
+
+    keep_dims = False
+    if "keep_dims" in attr_dict:
+        keep_dims = attr_dict["keep_dims"]
+
+    if dims.shape == ():
+        return ts.frontend.tf.max(name=node_name, x=x, reduce_dims=dims, keep_dims=keep_dims)
+    elif len(dims) == 1:
+        return ts.frontend.tf.max(name=node_name, x=x, reduce_dims=dims, keep_dims=keep_dims)
+
+    if numpy.asarray(dims).shape == (2, ) and dims[0] == 1 and dims[1] == 2:
+        x = zipper.nhwc2nchw(x, name=x.name + "_nchw")
+        node = ts.zoo.global_pooling2d(name=node_name + "_nchw", x=x,
+                                       type=ts.zoo.Type.pooling_type.max, format=ts.zoo.Name.NCHW)
+        node = zipper.nchw2nhwc(x=node, name=node_name)
+        return node
+
+    raise NotImplementedError("dims={}".format(dims))
+
+
+register_layer_converter("Max", convert_max)
+
+
+def convert_topk_v2(tf_node, inputs):
+    # type: (tf.Tensor, List[ts.Node]) -> ts.Node
+
+    assert len(inputs) == 2
+    attr_dict = node_def_attr_dict(tf_node)
+    print("--##    attr: {}".format(attr_dict))
+    node_name = tf_node.op.name
+
+    x = inputs[0]
+    number = inputs[1]
+
+    sorted = True
+    if "sorted" in attr_dict:
+        sorted = attr_dict["sorted"]
+
+    return ts.frontend.tf.topk_v2(name=node_name, x=x, number=number, sorted=sorted)
+
+
+register_layer_converter("TopKV2", convert_topk_v2)
+
+
+def convert_gather_v2(tf_node, inputs):
+    # type: (tf.Tensor, List[ts.Node]) -> ts.Node
+
+    assert len(inputs) == 2 or len(inputs) == 3
+    attr_dict = node_def_attr_dict(tf_node)
+    print("--##    attr: {}".format(attr_dict))
+    node_name = tf_node.op.name
+
+    if len(inputs) == 2:
+        x = inputs[0]
+        indices = inputs[1]
+
+        batch_dims = 0
+        if "batch_dims" in attr_dict:
+            batch_dims = attr_dict["batch_dims"]
+
+        return ts.frontend.tf.gather_v2(name=node_name, x=x, indices=indices, batch_dims=batch_dims)
+
+    if len(inputs) == 3:
+        x = inputs[0]
+        indices = inputs[1]
+        axis = inputs[2]
+
+        batch_dims = 0
+        if "batch_dims" in attr_dict:
+            batch_dims = attr_dict["batch_dims"]
+        assert batch_dims == 0
+
+        return ts.frontend.onnx.gather(name=node_name, x=x, indices=indices, axis=axis)
+
+
+register_layer_converter("GatherV2", convert_gather_v2)
+
+
+def convert_NMS_V3(tf_node, inputs):
+    # type: (tf.Tensor, List[ts.Node]) -> ts.Node
+
+    assert len(inputs) == 5
+    attr_dict = node_def_attr_dict(tf_node)
+    print("--##    attr: {}".format(attr_dict))
+    node_name = tf_node.op.name
+
+    box = inputs[0]
+    scores = inputs[1]
+
+    max_output_size = inputs[2]
+    iou_threshold = inputs[3]
+    score_threshold = inputs[4]
+
+    node = ts.frontend.tf.non_max_suppression_v3(node_name, box=box, scores=scores,
+                                                 max_output_size=max_output_size,
+                                                 iou_threshold=iou_threshold,
+                                                 score_threshold=score_threshold)
+
+    return node
+
+
+register_layer_converter("NonMaxSuppressionV3", convert_NMS_V3)
+
+
+def convert_argmax(tf_node, inputs):
+    # type: (tf.Tensor, List[ts.Node]) -> ts.Node
+
+    assert len(inputs) == 2
+    attr_dict = node_def_attr_dict(tf_node)
+    print("--##    attr: {}".format(attr_dict))
+    node_name = tf_node.op.name
+
+    x = inputs[0]
+    dim = inputs[1]
+
+    return ts.frontend.tf.argmax(name=node_name, x=x, dim=dim)
+
+
+register_layer_converter("ArgMax", convert_argmax)
+
+
+def convert_expand_dims(tf_node, inputs):
+    # type: (tf.Tensor, List[ts.Node]) -> ts.Node
+
+    assert len(inputs) == 2
+    attr_dict = node_def_attr_dict(tf_node)
+    print("--##    attr: {}".format(attr_dict))
+    node_name = tf_node.op.name
+
+    x = inputs[0]
+    dim = inputs[1]
+
+    return ts.frontend.unsqueeze(name=node_name, x=x, axes=dim)
+
+
+register_layer_converter("ExpandDims", convert_expand_dims)
 
 
 

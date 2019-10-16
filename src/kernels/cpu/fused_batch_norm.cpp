@@ -37,9 +37,6 @@ namespace ts {
             const T *pbias = bias.data<T>();
             T *pdst = out.data<T>();
 
-            // only used in CPU
-            std::memcpy(pdst, psrc, out.count() * sizeof(T));
-
             int stridedims = backdims * shape[dim];
             int offset = 0;
 
@@ -56,9 +53,11 @@ namespace ts {
                     T scale_val = pscale[k];
                     T bias_val = pbias[k];
                     T *pdst_temp = pdst + offset;
+                    const T *psrc_temp = psrc + offset;
                     for (int m = 0; m < backdims; m++) {
-                        *pdst_temp = (*pdst_temp - mean_val) * vec_val * scale_val + bias_val;
+                        *pdst_temp = (*psrc_temp - mean_val) * vec_val * scale_val + bias_val;
                         pdst_temp++;
+                        psrc_temp++;
                     }
                 }
             }
