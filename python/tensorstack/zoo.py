@@ -156,7 +156,7 @@ def to_const(value, name=None):
         if value.op == Node.Const:
             value = value.get(Name.value)
         else:
-            raise Exception("Param %s not support dynamic Node".format(name))
+            raise Exception("Param \"{}\" not support dynamic Node".format(name))
     return value
 
 
