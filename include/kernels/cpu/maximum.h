@@ -1,5 +1,5 @@
-#ifndef TENSORSTACK_KERNELS_CPU_MAXINUM_H
-#define TENSORSTACK_KERNELS_CPU_MAXINUM_H
+#ifndef TENSORSTACK_KERNELS_CPU_MAXIMUM_H
+#define TENSORSTACK_KERNELS_CPU_MAXIMUM_H
 
 #include <core/tensor.h>
 #include <runtime/stack.h>
@@ -8,9 +8,9 @@
 
 namespace ts {
     namespace cpu {
-        class Maxinum : public OperatorOnCPU<ElementWiseReduce> {
+        class Maximum : public OperatorOnCPU<ElementWiseReduce> {
         public:
-            using self = Maxinum;
+            using self = Maximum;
             using supper = OperatorOnCPU<ElementWiseReduce>;
 
             void reduce_with_broadcast(const Tensor &lhs, const Tensor &rhs, Tensor &out) override;

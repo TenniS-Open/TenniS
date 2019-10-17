@@ -221,7 +221,13 @@ def depthwise_conv2d(name, x, w,
                                 stride=stride, dilation=dilation)
 
 
-def strided_slice(name, x, begin, end, stride=None):
+def strided_slice(name, x, begin, end, stride=None,
+                  begin_mask=0,
+                  end_mask=0,
+                  ellipsis_mask=0,
+                  new_axis_mask=0,
+                  shrink_axis_mask=0,
+                  ):
     """
     return x in [begin, end) with stride
     :param name:
@@ -248,6 +254,12 @@ def strided_slice(name, x, begin, end, stride=None):
     node.set(Name.begin, begin, numpy.int32)
     node.set(Name.end, end, numpy.int32)
     node.set(Name.stride, stride, numpy.int32)
+
+    node.set("begin_mask", begin_mask, numpy.int32)
+    node.set("end_mask", end_mask, numpy.int32)
+    node.set("ellipsis_mask", ellipsis_mask, numpy.int32)
+    node.set("new_axis_mask", new_axis_mask, numpy.int32)
+    node.set("shrink_axis_mask", shrink_axis_mask, numpy.int32)
 
     return node
 
@@ -385,7 +397,7 @@ def topk_v2(name, x, number, sorted=True):
     # operator
     node = menu.op(name=name, op_name=Name.Layer.topkv2, inputs=[x, ])
     node.set(Name.number, number, numpy.int32)
-    node.set(Name.sorted, sorted, numpy.bool)
+    node.set(Name.sorted, sorted, numpy.int32)
 
     return [menu.field(name="{}:{}".format(name, i), input=node, offset=i) for i in range(3)]
 

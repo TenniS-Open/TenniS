@@ -1038,16 +1038,32 @@ def convert_stirded_slice(tf_node, inputs):
     # type: (tf.Tensor, List[ts.Node]) -> ts.Node
 
     assert len(inputs) == 4
-    # attr_dict = node_def_attr_dict(tf_node)
-    # print("--##    attr: {}".format(attr_dict))
+    attr_dict = node_def_attr_dict(tf_node)
+    print("--##    attr: {}".format(attr_dict))
     node_name = tf_node.op.name
+
+    def get_attr(attr_name, default=None):
+        if attr_name in attr_dict:
+            return attr_dict[attr_name]
+        return default
 
     x = inputs[0]
     begin = inputs[1]
     end = inputs[2]
     stride = inputs[3]
 
-    return ts.frontend.tf.strided_slice(name=node_name, x=x, begin=begin, end=end, stride=stride)
+    begin_mask = get_attr('begin_mask', 0)
+    end_mask = get_attr('end_mask', 0)
+    ellipsis_mask = get_attr('ellipsis_mask', 0)
+    new_axis_mask = get_attr('new_axis_mask', 0)
+    shrink_axis_mask = get_attr('shrink_axis_mask', 0)
+
+    return ts.frontend.tf.strided_slice(name=node_name, x=x, begin=begin, end=end, stride=stride,
+                                        begin_mask=begin_mask,
+                                        end_mask=end_mask,
+                                        ellipsis_mask=ellipsis_mask,
+                                        new_axis_mask=new_axis_mask,
+                                        shrink_axis_mask=shrink_axis_mask)
 
 
 register_layer_converter("StridedSlice", convert_stirded_slice)

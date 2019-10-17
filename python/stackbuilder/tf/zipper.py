@@ -89,10 +89,10 @@ def map_concat(x):
     if dim < 0 or dim > 3:
         return None
 
-    chw_input = list(x.inputs)
-    chw_input[0] = nhwc2nchw(chw_input[0], name=chw_input[0].name + "_nchw")
+    chw_inputs = list(x.inputs)
+    chw_inputs = [nhwc2nchw(chw_input, name=chw_input.name + "_nchw") for chw_input in chw_inputs]
     x = copy.copy(x)
-    ts.Node.Link(x, chw_input)
+    ts.Node.Link(x, chw_inputs)
     x.name = x.name + "_nchw"
 
     map_dims_nhwc2nchw = [0, 2, 3, 1]
