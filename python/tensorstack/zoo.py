@@ -990,3 +990,12 @@ def exp(name, x):
     node = menu.op(name=name, op_name=Name.Layer.exp, inputs=[x, ])
 
     return node
+
+
+def broadcast(name, x, shape):
+    assert isinstance(x, Node)
+
+    shape = to_node(shape, name=name + "_shape", device=device.CPU, dtype=numpy.int32)
+    node = menu.op(name=name, op_name="broadcast", inputs=[x, shape])
+
+    return node

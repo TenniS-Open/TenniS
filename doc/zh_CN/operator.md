@@ -1134,6 +1134,10 @@ y: Tensor
 `y = numpy.tile(x, repeats)`
 
 
+## broadcast (x..device, shape..host) -> y..device
+Description: Same as x * numpy.ones(shape)
+
+
 ## proposal (list[scores]..device, prob, bbox, im_info) -> proposals..device
 Description: See [Dragon proposal](http://dragon.seetatech.com/api/python/contents/operators/contrib/rcnn.html)  
 Input:  

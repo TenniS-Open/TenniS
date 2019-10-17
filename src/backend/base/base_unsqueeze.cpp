@@ -34,7 +34,7 @@ namespace ts {
 
             for (auto axis : m_axes) {
                 auto max_axis = int32_t(shape.size());
-                if (axis >= max_axis || axis < -max_axis) {
+                if (axis > max_axis || axis < -max_axis) {
                     TS_LOG_ERROR << op() << " do not support unsqueeze shape=" << to_string(x.sizes())
                                  << " with axes=" << to_string(m_axes) << eject;
                 }
