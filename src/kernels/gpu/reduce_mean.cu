@@ -26,7 +26,7 @@ namespace ts {
             using self = ReduceMean;
             using supper = OperatorOnGPU<base::ReduceMean>;
 
-            void reduce(const Tensor &x, int dim, Tensor &out) override;
+            void reduce(const Tensor &x, std::vector<int> dims, Tensor &out) override;
         };
     }
 }
@@ -139,11 +139,15 @@ namespace ts {
 #endif
 
         template<typename T>
-        void gpu_reduce_mean_compute_run(const Tensor &x, int dim, Tensor &out) {
+        void gpu_reduce_mean_compute_run(const Tensor &x, std::vector<int> dims, Tensor &out) {
+            int dims_size = dims.size();
             auto &size = x.sizes();
-            auto number = std::accumulate(size.begin(), size.begin() + dim, 1, std::multiplies<int32_t>());
-            auto channels = size[dim];
-            auto width = std::accumulate(size.begin() + dim + 1, size.end(), 1, std::multiplies<int32_t>());
+            auto number = std::accumulate(size.begin(), size.begin() + dims[0], 1, std::multiplies<int32_t>());
+            int channels = 1;
+            for (int i = 0; i < dims_size; i++){
+                channels *= size[dims[i]];
+            }
+            auto width = std::accumulate(size.begin() + dims[dims_size - 1] + 1, size.end(), 1, std::multiplies<int32_t>());
 
             auto input_data = x.data<T>();
             auto output_data = out.data<T>();
@@ -159,12 +163,12 @@ namespace ts {
                                 channels * width, cuda_stream);
         }
 
-        void ReduceMean::reduce(const Tensor &x, int dim, Tensor &out) {
+        void ReduceMean::reduce(const Tensor &x, std::vector<int> dims, Tensor &out) {
             // Notice: the all tensor' memory device are CPU, as given in running_memory_device
             DTYPE dtype = out.dtype();
             switch (dtype) {
 #define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
-        case DTYPE: { gpu_reduce_mean_compute_run<TYPE>(x, dim, out); break; }
+        case DTYPE: { gpu_reduce_mean_compute_run<TYPE>(x, dims, out); break; }
                 DECLARE_COMPUTE_RUN(INT8, int8_t);
                 DECLARE_COMPUTE_RUN(UINT8, uint8_t);
                 DECLARE_COMPUTE_RUN(INT16, int16_t);
