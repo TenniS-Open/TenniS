@@ -267,10 +267,6 @@ namespace ts {
             auto stride = m_stride;
             std::vector<int32_t> y, in, out;
 
-            if (this->name() == "strided_slice_8") {
-                std::cout << "Hook" << std::endl;
-            }
-
             auto succeed = infer_output(x.sizes(), y, begin, end, stride, m_begin_mask, m_end_mask, m_ellipsis_mask, m_new_axis_mask, m_shrink_axis_mask, in, out);
 
             if (!succeed) {
