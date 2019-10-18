@@ -23,7 +23,7 @@ namespace ts {
         }
 
         template<typename T>
-        void gpu_compute_strided_slice(const ts::Tensor &x, const std::vector<int> &begin,
+        static void cpu_compute_strided_slice(const ts::Tensor &x, const std::vector<int> &begin,
                                        const std::vector<int> &end, const std::vector<int> &stride,
                                        ts::Tensor &out) {
             auto &x_shape = x.sizes();
@@ -65,7 +65,7 @@ namespace ts {
             auto type_bytes = out.proto().type_bytes();
             switch (type_bytes) {
 #define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
-        case DTYPE: { gpu_compute_strided_slice<TYPE>(x, begin, end, stride, out); break; }
+        case DTYPE: { cpu_compute_strided_slice<TYPE>(x, begin, end, stride, out); break; }
                 DECLARE_COMPUTE_RUN(1, uint8_t)
                 DECLARE_COMPUTE_RUN(2, uint16_t)
                 DECLARE_COMPUTE_RUN(4, uint32_t)
