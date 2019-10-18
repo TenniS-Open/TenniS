@@ -67,7 +67,7 @@ namespace ts {
             } else {
                 if (stride > 0) {
                     if (end <= -x) return 0;     // no elements
-                    else if (end > x) begin = x;
+                    else if (end > x) end = x;
                     else if (end < 0) end += x;
                 } else {
                     if (end > x) return 0;     // no elements
@@ -79,7 +79,7 @@ namespace ts {
             if (stride > 0) {
                 return begin < end ? (end - begin - 1) / stride + 1 : 0;
             } else if (stride < 0) {
-                return begin > end ? (begin - end - 1) / stride + 1 : 0;
+                return begin > end ? (begin - end - 1) / -stride + 1 : 0;
             } else {
                 TS_LOG_ERROR << "slice step cant not be zero";
                 return 0;
@@ -138,7 +138,7 @@ namespace ts {
             auto ellipsis_ones = bit_ones(ellipsis_mask);
             if (ellipsis_ones > 1) return false;
 
-            size_t ellipsis_index;
+            size_t ellipsis_index = 0;
             std::vector<int> ellipsis_shape;
 
             // deal ellipsis
@@ -221,7 +221,7 @@ namespace ts {
             // shrink output, and expand ellipsis_shape
             {
                 for (int i = int(slice_size) - 1; i >= 0; --i) {
-                    if (!ellipsis_shape.empty() && i == ellipsis_index) {
+                    if (!ellipsis_shape.empty() && (i == ellipsis_index)) {
                         // expand ellipsis_index
                         out.erase(out.begin() + i);
                         out.insert(out.begin() + i, ellipsis_shape.begin(), ellipsis_shape.end());
@@ -237,6 +237,41 @@ namespace ts {
             return true;
         }
 
+        static std::string slice_string(
+                const std::vector<int> &begin,
+                const std::vector<int> &end,
+                const std::vector<int> &stride,
+                int begin_mask,
+                int end_mask,
+                int ellipsis_mask,
+                int new_axis_mask,
+                int shrink_axis_mask) {
+            std::ostringstream oss;
+            auto slice_size = std::min(std::min(begin.size(), end.size()), stride.size());
+            oss << "[";
+            for (size_t i = 0; i < slice_size; ++i) {
+                if (i) oss << ", ";
+                if (ellipsis_mask & (1 << i)) {
+                    oss << "...";
+                } else if (new_axis_mask & (1 << i)) {
+                    oss << "None";
+                } else if (shrink_axis_mask & (1 << i)) {
+                    oss << begin[i];
+                } else {
+                    std::string begin_content = (begin_mask & (1 << i)) ? "" : std::to_string(begin[i]);
+                    std::string end_content = (end_mask & (1 << i)) ? "" : std::to_string(end[i]);
+                    std::string stride_content = stride[i] == 1 ? "" : std::to_string(stride[i]);
+                    if (stride_content.empty()) {
+                        oss << begin_content << ":" << end_content;
+                    } else {
+                        oss << begin_content << ":" << end_content << ":" << stride_content;
+                    }
+                }
+            }
+            oss << "]";
+            return oss.str();
+        }
+
         int StridedSlice::infer(Stack &stack, std::vector<Tensor::Prototype> &output) {
             TS_AUTO_CHECK(stack.size() == 1);
             auto &x = stack[0];
@@ -247,10 +282,10 @@ namespace ts {
             auto succeed = infer_output(x.sizes(), y, begin, end, stride, m_begin_mask, m_end_mask, m_ellipsis_mask, m_new_axis_mask, m_shrink_axis_mask, in, out);
 
             if (!succeed) {
-                TS_LOG_ERROR << "Can not stride slice on x=" << x.proto()
-                << ", begin=" << to_string(begin)
-                << ", end=" << to_string(end)
-                << ", stride=" << to_string(stride) << eject;
+                TS_LOG_ERROR << "Can not stride slice on x=" << x.proto() << ", slice="
+                             << slice_string(m_begin, m_end, m_stride,
+                                             m_begin_mask, m_end_mask, m_ellipsis_mask, m_new_axis_mask,
+                                             m_shrink_axis_mask) << eject;
             }
 
             output.resize(1);
@@ -270,10 +305,10 @@ namespace ts {
             auto succeed = infer_output(x.sizes(), y, begin, end, stride, m_begin_mask, m_end_mask, m_ellipsis_mask, m_new_axis_mask, m_shrink_axis_mask, in, out);
 
             if (!succeed) {
-                TS_LOG_ERROR << "Can not stride slice on x=" << x.proto()
-                             << ", begin=" << to_string(begin)
-                             << ", end=" << to_string(end)
-                             << ", stride=" << to_string(stride) << eject;
+                TS_LOG_ERROR << "Can not stride slice on x=" << x.proto() << ", slice="
+                             << slice_string(m_begin, m_end, m_stride,
+                                             m_begin_mask, m_end_mask, m_ellipsis_mask, m_new_axis_mask,
+                                             m_shrink_axis_mask) << eject;
             }
 
             auto memory_device = running_memory_device();
