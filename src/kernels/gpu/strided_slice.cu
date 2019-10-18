@@ -82,7 +82,6 @@ namespace ts {
             auto out_weight_it = out_shape.weights + 1;
             auto in_weight_it = x_shape.weights + 1;
             /* ============================================ */
-            auto out_shape_it = out_shape.shape;
             auto stride_it = slice.stride;
             auto begin_it = slice.begin;
             /* ============================================ */
@@ -91,7 +90,6 @@ namespace ts {
                 auto coord = index / *out_weight_it;
                 /* ============================================ */
                 coord = coord * *stride_it + *begin_it;
-                ++out_shape_it;
                 ++stride_it;
                 ++begin_it;
                 /* ============================================ */
