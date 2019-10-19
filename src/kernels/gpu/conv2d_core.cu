@@ -28,7 +28,8 @@ namespace ts {
             const int dilation_h, const int dilation_w,
             const int height_col, const int width_col,
             T* data_col, T padding_value) {
-            for(int index = blockIdx.x * blockDim.x + threadIdx.x; index < n; index += blockDim.x * gridDim.x) {
+            int index = blockIdx.x * blockDim.x + threadIdx.x;
+            if (index < n) {
                 const int h_index = index / width_col;
                 const int h_col = h_index % height_col;
                 const int w_col = index % width_col;

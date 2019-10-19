@@ -1422,3 +1422,54 @@ def convert_reduce_mean_layer(node, input_nodes, output_names):
 
 
 register_layer_converter("ReduceMean", convert_reduce_mean_layer)
+
+
+def convert_matmul(node, input_nodes, output_names):
+    # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} -> {} ]=-".format(node.op_type, [n.name for n in input_nodes], output_names))
+
+    attribute = node.attribute
+    attr_dict = {}
+    for attr in attribute:
+        attr_dict[str(attr.name)] = topy(attr)
+
+    assert len(input_nodes) == 2
+    assert len(output_names) == 1
+
+    node_name = output_names[0]
+
+    A = input_nodes[0]
+    B = input_nodes[1]
+
+    ts_node = ts.zoo.inner_prod(name=node_name, lhs=A, rhs=B)
+
+    return ts_node,
+
+
+register_layer_converter("MatMul", convert_matmul)
+
+
+def convert_expand(node, input_nodes, output_names):
+    # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} -> {} ]=-".format(node.op_type, [n.name for n in input_nodes], output_names))
+
+    attribute = node.attribute
+    attr_dict = {}
+    for attr in attribute:
+        attr_dict[str(attr.name)] = topy(attr)
+
+    assert len(input_nodes) == 2
+    assert len(output_names) == 1
+
+    node_name = output_names[0]
+
+    x = input_nodes[0]
+    shape = input_nodes[1]
+
+    ts_node = ts.zoo.broadcast(name=node_name, x=x, shape=shape)
+
+    return ts_node,
+
+
+register_layer_converter("Expand", convert_expand)
+
