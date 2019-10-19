@@ -12,7 +12,9 @@
 #include <cstring>
 #include <cstdlib>
 
+#ifdef _MSC_VER
 #pragma warning(disable:4200)
+#endif
 
 namespace ts {
     namespace cpu {
