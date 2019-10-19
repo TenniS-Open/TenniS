@@ -386,7 +386,7 @@ namespace ts {
                         x_height, x_width, \
                         y_height, y_width, \
                         x_batch_step, y_batch_step, channels, type, rz00,rz01,rz02,rz10,rz11,rz12,rz20,rz21,rz22, \
-                        outer_mode, outer_value); break; }
+                        outer_mode, TYPE(outer_value)); break; }
                 DECLARE_COMPUTE_RUN(INT8, int8_t);
                 DECLARE_COMPUTE_RUN(UINT8, uint8_t);
                 DECLARE_COMPUTE_RUN(INT16, int16_t);

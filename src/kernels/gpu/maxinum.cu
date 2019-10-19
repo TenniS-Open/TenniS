@@ -113,23 +113,23 @@ namespace ts {
             /////////////////////////////////////
             Shape tmpshape;
             tmpshape.resize(1);
-            tmpshape[0] = lhs.sizes().size();
+            tmpshape[0] = int32_t(lhs.sizes().size());
             Tensor lhs_tensor(out.device(), INT32, tmpshape);
             lhsshape = lhs_tensor.data<int32_t>();
 
-            tmpshape[0] = rhs.sizes().size();
+            tmpshape[0] = int32_t(rhs.sizes().size());
             Tensor rhs_tensor(out.device(), INT32, tmpshape);
             rhsshape = rhs_tensor.data<int32_t>();
 
-            tmpshape[0] = lhs.sizes().size();
+            tmpshape[0] = int32_t(lhs.sizes().size());
             Tensor lhs_weight_tensor(out.device(), INT32, tmpshape);
             lhsweight = lhs_weight_tensor.data<int32_t>();
 
-            tmpshape[0] = rhs.sizes().size();
+            tmpshape[0] = int32_t(rhs.sizes().size());
             Tensor rhs_weight_tensor(out.device(), INT32, tmpshape);
             rhsweight = rhs_weight_tensor.data<int32_t>();
 
-            tmpshape[0] = out.sizes().size();
+            tmpshape[0] = int32_t(out.sizes().size());
             Tensor out_weight_tensor(out.device(), INT32, tmpshape);
             outweight = out_weight_tensor.data<int32_t>();
 
@@ -151,7 +151,7 @@ namespace ts {
             auto cuda_stream = get_cuda_stream_on_context();
 
             reduce_operator_kernel <<< CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream>>> (pout, ncount,
-                        plhs, prhs, lhsshape, lhsweight, rhsshape, rhsweight, outweight, out.sizes().size());
+                        plhs, prhs, lhsshape, lhsweight, rhsshape, rhsweight, outweight, int(out.sizes().size()));
 
 
         }
