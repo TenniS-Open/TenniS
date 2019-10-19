@@ -71,6 +71,12 @@ class Name(object):
         output_padding = "output_padding"
         output_shape = "output_shape"
 
+        max = "max"
+        min = "min"
+
+        axes = "axes"
+        keepdims = "keepdims"
+
     NOTSET = "NOTSET"
     SAME_UPPER = "SAME_UPPER"
     SAME_LOWER = "SAME_LOWER"
@@ -480,7 +486,9 @@ def convert_pooling2d_layer(node, input_nodes, output_names):
     kernel_shape = attr_dict[Name.Attr.kernel_shape]
     print("--##    KernelShape: {}".format(kernel_shape))
 
-    pads = attr_dict[Name.Attr.pads]
+    pads = [0, 0, 0, 0]
+    if Name.Attr.pads in attr_dict:
+        pads = attr_dict[Name.Attr.pads]
     print("--##    Pads: {}".format(pads))
 
     storage_order = 0
@@ -1383,3 +1391,34 @@ def convert_upsample_layer(node, input_nodes, output_names):
 
 
 register_layer_converter("Upsample", convert_upsample_layer)
+
+
+def convert_reduce_mean_layer(node, input_nodes, output_names):
+    # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} -> {} ]=-".format(node.op_type, [n.name for n in input_nodes], output_names))
+
+    attribute = node.attribute
+    attr_dict = {}
+    for attr in attribute:
+        attr_dict[str(attr.name)] = topy(attr)
+
+    assert len(input_nodes) == 1
+    assert len(output_names) == 1
+
+    node_name = output_names[0]
+
+    x = input_nodes[0]
+
+    reduce_dims = attr_dict[Name.Attr.axes]
+    print("--##    reduce_dims: {}".format(reduce_dims))
+    keepdims = attr_dict[Name.Attr.keepdims]
+    print("--##    keep_dims: {}".format(keepdims))
+
+    keepdims = True if keepdims == 1 else False
+
+    ts_node = ts.zoo.reduce_mean(node_name, x=x, reduce_dims=reduce_dims, keep_dims=keepdims)
+
+    return ts_node
+
+
+register_layer_converter("ReduceMean", convert_reduce_mean_layer)

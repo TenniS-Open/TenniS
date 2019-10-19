@@ -903,6 +903,7 @@ def reduce_sum(name, x, reduce_dims, keep_dims=True):
 def reduce_mean(name, x, reduce_dims, keep_dims=True):
     assert isinstance(x, Node)
     node = menu.op(name=name, op_name=Name.Layer.reduce_mean, inputs=[x, ])
+    reduce_dims = to_const(reduce_dims, "dims")
     node.set(Name.dims, reduce_dims, numpy.int32)
     node.set(Name.keep_dims, keep_dims, numpy.bool)
     return node
