@@ -77,7 +77,7 @@ namespace ts {
             const string &gatherv2() TS_NOEXCEPT { static string str = "gatherv2"; return str; }
             const string &resize_nearest_neighbor() TS_NOEXCEPT { static string str = "resize_nearest_neighbor"; return str; }
             const string &rsqrt() TS_NOEXCEPT { static string str = "rsqrt"; return str; }
-            const string &maxinum() TS_NOEXCEPT { static string str = "maxinum"; return str; }
+            const string &maximum() TS_NOEXCEPT { static string str = "maximum"; return str; }
             const string &max() TS_NOEXCEPT { static string str = "max"; return str; }
             const string &square() TS_NOEXCEPT { static string str = "square"; return str; }
 

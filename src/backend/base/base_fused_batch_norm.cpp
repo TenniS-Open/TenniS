@@ -40,17 +40,23 @@ namespace ts {
             auto &scale = stack[3];
             auto &bias = stack[4];
 
-            TS_AUTO_CHECK(m_dim < x.dims());
-
-            TS_AUTO_CHECK(mean.has_shape({x.size(m_dim)}));
-            TS_AUTO_CHECK(variance.has_shape({x.size(m_dim)}));
-            TS_AUTO_CHECK(scale.has_shape({x.size(m_dim)}));
-            TS_AUTO_CHECK(bias.has_shape({x.size(m_dim)}));
-
-            TS_AUTO_CHECK(x.dtype() == mean.dtype());
-            TS_AUTO_CHECK(x.dtype() == variance.dtype());
-            TS_AUTO_CHECK(x.dtype() == scale.dtype());
-            TS_AUTO_CHECK(x.dtype() == bias.dtype());
+            if (!(m_dim < x.dims()) ||
+                !(mean.has_shape({x.size(m_dim)})) ||
+                !(variance.has_shape({x.size(m_dim)})) ||
+                !(scale.has_shape({x.size(m_dim)})) ||
+                !(bias.has_shape({x.size(m_dim)})) ||
+                !(x.dtype() == mean.dtype()) ||
+                !(x.dtype() == variance.dtype()) ||
+                !(x.dtype() == scale.dtype()) ||
+                !(x.dtype() == bias.dtype())) {
+                TS_LOG_ERROR << "FusedBatchNorm failed: x=" << x.proto()
+                             << ", mean=" << mean.proto()
+                             << ", variance=" << mean.proto()
+                             << ", scale=" << mean.proto()
+                             << ", bias=" << mean.proto()
+                             << ", dim=" << m_dim
+                             << "." << eject;
+            }
 
             return true;
         }
