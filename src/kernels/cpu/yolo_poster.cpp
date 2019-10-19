@@ -12,6 +12,8 @@
 #include <cstring>
 #include <cstdlib>
 
+#pragma warning(disable:4200)
+
 namespace ts {
     namespace cpu {
         class YoloPoster : public Operator {

@@ -204,7 +204,7 @@ namespace ts {
             out.resize(slice_size, 0);
             {
                 for (size_t i = 0; i < slice_size; ++i) {
-                    out[i] = infer_output(in[i], begin[i], end[i], stride[i], begin_mask & (1 << i), end_mask & (1 << i));
+                    out[i] = infer_output(in[i], begin[i], end[i], stride[i], bool(begin_mask & (1 << i)), bool(end_mask & (1 << i)));
                 }
             }
             y = out;

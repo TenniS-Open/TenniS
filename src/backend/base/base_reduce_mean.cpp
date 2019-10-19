@@ -23,7 +23,7 @@ namespace ts {
 
             m_dims.clear();
             auto dims_tensor = this->get("dims");
-            int dims_dim = dims_tensor.dims();
+            int dims_dim = int(dims_tensor.dims());
             size_t dims_count = dims_dim == 0 ? 1 : (size_t)dims_tensor.size(0);
             m_dims.resize(dims_count);
             auto dims_data = dims_tensor.data<int>();
