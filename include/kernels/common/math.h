@@ -62,6 +62,12 @@ namespace ts {
     inline double abs(double value) {
         return std::fabs(value);
     }
+
+    template <typename T>
+    inline T round_up(T i, T factor) {
+        return (i + factor - 1) / factor * factor;
+    }
+
 }
 
 
