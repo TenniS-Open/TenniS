@@ -40,9 +40,24 @@ else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /O2")
 endif()
 
+# Use DLL multi-threads
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MD")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MD")
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /wd4819")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4819")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /wd4800")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4800")
+
 if (TS_USE_DEBUG_API)
-add_compile_options(/wd4251)
-add_compile_options(/wd4275)
-add_compile_options(/wd4910)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /wd4251 /wd4275 /wd4910")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4251 /wd4275 /wd4910")
 endif ()
-add_compile_options(/wd4819)
+
+# deal with warning C4530 and C4577
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /EHsc")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHsc")
+
+# compile with multi-processor
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")

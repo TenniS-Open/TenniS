@@ -1,4 +1,4 @@
-#include <kernels/cpu/maxinum.h>
+#include <kernels/cpu/maximum.h>
 #include <core/tensor_builder.h>
 #include <backend/name.h>
 #include <utils/assert.h>
@@ -164,7 +164,7 @@ namespace ts {
         }
 
 
-        void Maxinum::reduce_with_broadcast(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
+        void Maximum::reduce_with_broadcast(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
             // Notice: the all tensor' memory device are CPU, as given in running_memory_device
             DTYPE dtype = out.dtype();
             switch(dtype) {
@@ -188,7 +188,7 @@ namespace ts {
             }
         }
 
-        void Maxinum::reduce_with_scalar(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
+        void Maximum::reduce_with_scalar(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
             // Notice: the all tensor' memory device are CPU, as given in running_memory_device
             DTYPE dtype = out.dtype();
             switch(dtype) {
@@ -212,7 +212,7 @@ namespace ts {
             }
         }
 
-        void Maxinum::reduce_with_bias(const Tensor &lhs, const Tensor &rhs, Tensor &out, int dim) {
+        void Maximum::reduce_with_bias(const Tensor &lhs, const Tensor &rhs, Tensor &out, int dim) {
             // Notice: the all tensor' memory device are CPU, as given in running_memory_device
             DTYPE dtype = out.dtype();
             switch(dtype) {
@@ -236,7 +236,7 @@ namespace ts {
             }
         }
 
-        void Maxinum::reduce_with_same_shape(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
+        void Maximum::reduce_with_same_shape(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
             // Notice: the all tensor' memory device are CPU, as given in running_memory_device
             DTYPE dtype = out.dtype();
             switch(dtype) {
@@ -264,5 +264,5 @@ namespace ts {
 
 using namespace ts;
 using namespace cpu;
-TS_REGISTER_OPERATOR(Maxinum, CPU, name::layer::maxinum())
+TS_REGISTER_OPERATOR(Maximum, CPU, name::layer::maximum())
 

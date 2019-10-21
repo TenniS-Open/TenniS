@@ -55,7 +55,7 @@ namespace ts {
 
             Shape tmpshape;
             tmpshape.resize(1);
-            tmpshape[0] = begins.size();
+            tmpshape[0] = int(begins.size());
             Tensor tmp_tensor(out.device(), INT32, tmpshape);
             int * p_bdata = tmp_tensor.data<int32_t>();
 
@@ -68,9 +68,9 @@ namespace ts {
             dim3 gridSize(CUDA_BLOCK(number, blockSize.x));
             auto cuda_stream = get_cuda_stream_on_context();
 
-            int dims = x_shape.size();
+            int dims = int(x_shape.size());
             gpu_slice_kernel<T> << <gridSize, blockSize, 0, cuda_stream>> >
-                     (p_xdata, p_bdata, p_outdata, number, x_shape.size(),x_hype_shape, out_hype_shape);
+                     (p_xdata, p_bdata, p_outdata, number, int(x_shape.size()), x_hype_shape, out_hype_shape);
 
         }
 
