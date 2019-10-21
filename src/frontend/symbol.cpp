@@ -101,5 +101,11 @@ namespace ts {
             Node::Link(node, {A, B});
             return node;
         }
+
+        Node broadcast(const std::string &name, const Node &x, const Node &shape) {
+            Node node = bubble::bubble(desc::matmul(), name);
+            Node::Link(node, {x, shape});
+            return node;
+        }
     }
 }
