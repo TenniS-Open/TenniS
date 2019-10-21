@@ -86,7 +86,7 @@ namespace ts{
         };
 
         template<typename T>
-        void PadAlgorithm<T>::pad2d_Superseded(const Tensor &x,
+        void PadAlgorithm<T>::pad2d(const Tensor &x,
                                      const std::array<int, 2> &padding_h,
                                      const std::array<int, 2> &padding_w,
                                      float padding_value,
@@ -179,7 +179,7 @@ namespace ts{
         }
 
         template<typename T>
-        void PadAlgorithm<T>::cut2d_Superseded(const Tensor &x,
+        void PadAlgorithm<T>::cut2d(const Tensor &x,
                                      const std::array<int, 2> &padding_h,
                                      const std::array<int, 2> &padding_w,
                                      float padding_value,

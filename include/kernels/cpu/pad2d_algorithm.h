@@ -16,16 +16,15 @@ namespace ts{
                                  float padding_value,
                                  Tensor &out);
 
-            //TODO: Delete these superseded function
             //NOTE:pad2d_Superseded and cut2d_Superseded only support NCHW pad on [H,W] now.
             //pad2d don't support negative pad,cut2d support negative pad only.
-            static void pad2d_Superseded(const Tensor &x,
+            static void pad2d(const Tensor &x,
                                          const std::array<int, 2> &padding_h,
                                          const std::array<int, 2> &padding_w,
                                          float padding_value,
                                          Tensor &out);
 
-            static void cut2d_Superseded(const Tensor &x,
+            static void cut2d(const Tensor &x,
                                          const std::array<int, 2> &padding_h,
                                          const std::array<int, 2> &padding_w,
                                          float padding_value,
