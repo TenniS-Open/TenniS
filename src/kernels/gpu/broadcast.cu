@@ -112,7 +112,7 @@ namespace ts {
 
 using namespace ts;
 using namespace gpu;
-TS_REGISTER_OPERATOR(Broadcast, GPU, "broadcast")
+// TS_REGISTER_OPERATOR(Broadcast, GPU, "broadcast")
 #ifdef TS_USE_CUDA_FP16
-TS_REGISTER_FP16_OPERATOR(Broadcast, GPU, "broadcast")
+// TS_REGISTER_FP16_OPERATOR(Broadcast, GPU, "broadcast")
 #endif
