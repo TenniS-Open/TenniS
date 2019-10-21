@@ -77,4 +77,4 @@ namespace ts {
 
 using namespace ts;
 using namespace cpu;
-TS_REGISTER_OPERATOR(Broadcast, CPU, "broadcast")
+// TS_REGISTER_OPERATOR(Broadcast, CPU, "broadcast")
