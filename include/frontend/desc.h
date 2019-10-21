@@ -53,6 +53,8 @@ namespace ts {
                                                desc::ResizeType type = desc::ResizeType::LINEAR);
 
         TS_DEBUG_API Bubble matmul(bool transpose = false);
+
+        TS_DEBUG_API Bubble broadcast();
     }
 }
 

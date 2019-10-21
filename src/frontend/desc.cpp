@@ -92,5 +92,9 @@ namespace ts {
             bubble.set("transpose", tensor::from<bool>(transpose));
             return std::move(bubble);
         }
+
+        Bubble broadcast() {
+            return Bubble("broadcast", "broadcast");
+        }
     }
 }
