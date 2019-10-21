@@ -75,7 +75,11 @@ void im2col_cpu(const Dtype* data_im, const int channels,
     }
 #else
     auto col_size = kernel_h * kernel_w * output_h * output_w;
-    #pragma omp parallel for num_threads(openmp_threads())
+    //Note:Using both openmp and neon on armv7 could cause crashes.
+#ifdef TS_ON_ARMV7
+#else
+#pragma omp parallel for num_threads(openmp_threads())
+#endif
     for (int channel = 0; channel < channels; ++channel) {
         auto local_data_im = data_im + channel * channel_size;
         auto local_data_col = data_col + channel * col_size;

@@ -58,7 +58,11 @@ namespace ts {
             T *dst_im = y->data<T>() + y_offset;
 
 #ifdef TS_USE_OPENMP
+//Note:Using both openmp and neon on armv7 could cause crashes.
+#ifdef TS_ON_ARMV7
+#else
 #pragma omp parallel for num_threads(openmp_threads())
+#endif
 #endif
             for (int n_y_d = 0; n_y_d < dst_height; n_y_d++) {
                 for (int n_x_d = 0; n_x_d < dst_width; n_x_d++) {
@@ -117,7 +121,11 @@ namespace ts {
             T *dst_im = y->data<T>() + y_offset;
 
 #ifdef TS_USE_OPENMP
+//Note:Using both openmp and neon on armv7 could cause crashes.
+#ifdef TS_ON_ARMV7
+#else
 #pragma omp parallel for num_threads(openmp_threads())
+#endif
 #endif
             for (int n_y_d = 0; n_y_d < dst_height; n_y_d++) {
                 for (int n_x_d = 0; n_x_d < dst_width; n_x_d++) {
@@ -167,7 +175,11 @@ namespace ts {
             T *dst_im = y->data<T>() + y_offset;
 
 #ifdef TS_USE_OPENMP
+//Note:Using both openmp and neon on armv7 could cause crashes.
+#ifdef TS_ON_ARMV7
+#else
 #pragma omp parallel for num_threads(openmp_threads())
+#endif
 #endif
             for (int n_y_d = 0; n_y_d < dst_height; n_y_d++) {
                 for (int n_x_d = 0; n_x_d < dst_width; n_x_d++) {
@@ -220,7 +232,11 @@ namespace ts {
             const int dstrows = y_width * channels;
 
 #ifdef TS_USE_OPENMP
+//Note:Using both openmp and neon on armv7 could cause crashes.
+#ifdef TS_ON_ARMV7
+#else
 #pragma omp parallel for num_threads(openmp_threads())
+#endif
 #endif
             for (int m = 0; m < y_height; m++) {
                 double coeffsY[4];
