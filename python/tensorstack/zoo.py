@@ -156,7 +156,7 @@ def to_const(value, name=None):
         if value.op == Node.Const:
             value = value.get(Name.value)
         else:
-            raise Exception("Param %s not support dynamic Node".format(name))
+            raise Exception("Param \"{}\" not support dynamic Node".format(name))
     return value
 
 
@@ -989,5 +989,14 @@ def exp(name, x):
 
     # operator
     node = menu.op(name=name, op_name=Name.Layer.exp, inputs=[x, ])
+
+    return node
+
+
+def broadcast(name, x, shape):
+    assert isinstance(x, Node)
+
+    shape = to_node(shape, name=name + "_shape", device=device.CPU, dtype=numpy.int32)
+    node = menu.op(name=name, op_name="broadcast", inputs=[x, shape])
 
     return node

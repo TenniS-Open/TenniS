@@ -100,7 +100,8 @@ namespace ts {
                     input_size.width = shape[2];
                 }
 
-                TS_UNUSED(valid_pooling2d_forward);
+                auto t = (valid_pooling2d_forward);
+				TS_UNUSED(t);
 
                 /* Heavy version
                 Size2D expected_output_size = valid_pooling2d_forward(input_size, static_padding, ksize, stride);

@@ -54,7 +54,7 @@ namespace ts {
         static void gpu_dimshuffle_comput_run(const Tensor &x, int dim, const std::vector<int> &shuffle, Tensor &out) {
             int *gpu_shuffle = nullptr;
             auto gpu_memory = MakeGPUHypeShape(out.device(), {x.sizes(), out.sizes()},
-                                               {{(void *) (shuffle.data()), sizeof(int) * int(shuffle.size())}},
+                                               {{(void *) (shuffle.data()), int(sizeof(int) * shuffle.size())}},
                                                {(void **) (&gpu_shuffle)});
             auto &gpu_in_shape = gpu_memory.second[0];
             auto &gpu_out_shape = gpu_memory.second[1];

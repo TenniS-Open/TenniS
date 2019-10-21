@@ -70,7 +70,8 @@ namespace ts {
 
             Padding2D dynamic_padding;
 
-            TS_UNUSED(pooling2d_forward_notset);
+			auto t = (pooling2d_forward_notset);
+			TS_UNUSED(t);
 
             /*
             Size2D expected_output_size = pooling2d_forward_notset(input_size, static_padding, ksize, stride);

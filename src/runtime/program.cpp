@@ -3,6 +3,7 @@
 //
 
 #include <climits>
+#include <compiler/argparse.h>
 
 #include "runtime/program.h"
 #include "compiler/compiler.h"
@@ -78,6 +79,12 @@ namespace ts {
             if (data_sagment_inst == nullptr) continue;
             inst = std::make_shared<DataSagmentInstruction>(data_sagment_inst->data_index() + data_sagment_base);
         }
+
+        ArgParser parser;
+        parser.add({"--filter", "-flt"}, {"--no-filter", "-no-flt"}, false);
+        parser.parse(options);
+        auto do_filter = parser.get("--filter");
+
         for (auto &data : block.data_sagment) {
             Tensor *value = nullptr;
             if (data.device.empty()) {
@@ -87,7 +94,7 @@ namespace ts {
             }
 
             // filter value
-            if (value->device().type() == CPU) {
+            if (do_filter && value->device().type() == CPU) {
                 if (value->dtype() == FLOAT32) {
                     filter_values(value->data<float>(), size_t(value->count()));
                 } else if (value->dtype() == FLOAT64) {
