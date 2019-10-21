@@ -91,7 +91,7 @@ namespace arm {
 
     }
 
-    template<>
+    template <>
     void Conv2d3x3<float>::conv2d_3x3_s1(const Tensor &x,
                                          const Padding2D &padding,
                                          float padding_value,
