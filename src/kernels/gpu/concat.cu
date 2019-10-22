@@ -73,7 +73,7 @@ namespace ts {
             slice = slice_size[i];
             s = s - slice_shift[i];
 
-            int in_index = n * slice * width + s * width + w;
+            int in_index = (n * slice + s) * width + w;
 
             out[out_index] = in[in_index];
         }

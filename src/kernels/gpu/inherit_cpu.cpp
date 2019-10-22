@@ -35,4 +35,3 @@ using namespace cpu;
 TS_REGISTER_OPERATOR(Conv2DV2, GPU, name::layer::conv2d_v2())
 TS_REGISTER_OPERATOR(Pooling2DV2, GPU, name::layer::pooling2d_v2())
 TS_REGISTER_OPERATOR(DepthwiseConv2DV2, GPU, name::layer::depthwise_conv2d_v2())
-TS_REGISTER_OPERATOR(Gather, GPU, name::layer::gather())
