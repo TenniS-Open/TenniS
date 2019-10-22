@@ -1,0 +1,86 @@
+//
+// Created by yang on 2019/10/22.
+//
+
+#include "kernels/common/function.h"
+#include "kernels/common/math.h"
+#include "kernels/cpu/pad2d_algorithm.h"
+#include <algorithm>
+#include <array>
+
+namespace ts{
+
+    template <typename T>
+    void KernelCommonFunc<T>::in_out_pad_and_fix_size(const Tensor &input,
+                                 const Shape &kernel_shape,
+                                 const Tensor &out,
+                                 int out_h_tile,
+                                 int out_w_tile,
+                                 const Padding2D &padding,
+                                 float padding_value,
+                                 const Stride2D &stride,
+                                 const KSize2D &ksize,
+                                 Tensor &input_padded,
+                                 Tensor &out_padded,
+                                 bool &out_padded_flag) {
+
+        auto input_shape = input.sizes();
+        auto out_shape = out.sizes();
+
+        int num = input_shape[0];
+        int input_channel = input_shape[1];
+        int input_height = input_shape[2];
+        int input_width = input_shape[3];
+
+        int out_channel = out_shape[1];
+        int out_height = out_shape[2];
+        int out_width = out_shape[3];
+
+        int input_padded_height = input_height + padding.top + padding.bottom;
+        int input_padded_width = input_width + padding.left + padding.right;
+
+        int out_padded_height = round_up<int>(out_height, out_h_tile);
+        int out_padded_width = round_up<int>(out_width, out_w_tile);
+
+        //input_padded_heigh = std::max(input_padded_heigh, (out_padded_height - 1) * stride.h + (ksize.height - 1) * dilation.h + 1);
+        input_padded_height = std::max(input_padded_height, (out_padded_height - 1) * stride.height + ksize.height);
+        input_padded_width = std::max(input_padded_width, (out_padded_width - 1) * stride.width + ksize.width);
+        //input_padded_height = std::max(input_padded_height, out_padded_height + 2);
+        //input_padded_width = std::max(input_padded_width, out_padded_width + 2);
+
+        Padding2D fixed_input_pad;
+        //fixed_input_pad.top = (input_padded_height - input_height) >> 1;
+        fixed_input_pad.top = padding.top;
+        fixed_input_pad.bottom = input_padded_height - input_height - fixed_input_pad.top;
+        //fixed_input_pad.left = (input_padded_width - input_width) >> 1;
+        fixed_input_pad.left = padding.left;
+        fixed_input_pad.right = input_padded_width - input_width - fixed_input_pad.left;
+
+        bool in_need_pad = input_padded_height != input_height || input_padded_width != input_width;
+        bool out_need_pad = out_padded_height != out_height || out_padded_width != out_width;
+        if (in_need_pad) {
+            Tensor padded_input(Tensor::InFlow::HOST, input.dtype(),
+                                {num, input_channel, input_padded_height, input_padded_width});
+            std::array<int, 2> input_pad_h = {fixed_input_pad.top, fixed_input_pad.bottom};
+            std::array<int, 2> input_pad_w = {fixed_input_pad.left, fixed_input_pad.right};
+            cpu::PadAlgorithm<T>::pad2d(input, input_pad_h, input_pad_w, (float) padding_value, padded_input);
+            input_padded = std::move(padded_input);
+        }
+        if (out_need_pad) {
+            Tensor padded_out(Tensor::InFlow::HOST, out.dtype(),
+                              {num, out_channel, out_padded_height, out_padded_width});
+            std::array<int, 2> out_pad_h = {0, out_padded_height - out_height};
+            std::array<int, 2> out_pad_w = {0, out_padded_width - out_width};
+            cpu::PadAlgorithm<T>::pad2d(out, out_pad_h, out_pad_w, (float) padding_value, padded_out);
+            out_padded = std::move(padded_out);
+        }
+        out_padded_flag = out_need_pad;
+    }
+
+} //ts
+
+template class ts::KernelCommonFunc<ts::dtype<ts::FLOAT32>::declare>;
+template class ts::KernelCommonFunc<ts::dtype<ts::FLOAT64>::declare>;
+
+
+

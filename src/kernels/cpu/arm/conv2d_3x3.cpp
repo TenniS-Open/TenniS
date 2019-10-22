@@ -4,83 +4,17 @@
 
 #include "kernels/cpu/arm/conv2d_3x3.h"
 #include "kernels/cpu/pad2d_algorithm.h"
-#include "kernels/common/math.h"
 #include "kernels/common/simd.h"
+#include "kernels/common/function.h"
 #ifdef TS_USE_OPENMP
 #include "kernels/common/openmp.h"
 #endif
-#include <algorithm>
 #include <array>
 
 namespace ts{
 namespace cpu{
 namespace arm {
 
-    template<typename T>
-    static void in_out_pad_and_fix_size(const Tensor &input,
-                                        const Shape &kernel_shape,
-                                        const Tensor &out,
-                                        int out_h_tile,
-                                        int out_w_tile,
-                                        const Padding2D &padding,
-                                        T padding_value,
-                                        const Stride2D &stride,
-                                        const KSize2D &ksize,
-                                        Tensor &input_padded,
-                                        Tensor &out_padded,
-                                        bool &out_padded_flag) {
-        auto input_shape = input.sizes();
-        auto out_shape = out.sizes();
-
-        int num = input_shape[0];
-        int input_channel = input_shape[1];
-        int input_height = input_shape[2];
-        int input_width = input_shape[3];
-
-        int out_channel = out_shape[1];
-        int out_height = out_shape[2];
-        int out_width = out_shape[3];
-
-        int input_padded_height = input_height + padding.top + padding.bottom;
-        int input_padded_width = input_width + padding.left + padding.right;
-
-        int out_padded_height = round_up<int>(out_height, out_h_tile);
-        int out_padded_width = round_up<int>(out_width, out_w_tile);
-
-//            input_padded_heigh = std::max(input_padded_heigh, (out_padded_height - 1) * stride.h + (ksize.height - 1) * dilation.h + 1);
-        input_padded_height = std::max(input_padded_height, (out_padded_height - 1) * stride.height + ksize.height);
-        input_padded_width = std::max(input_padded_width, (out_padded_width - 1) * stride.width + ksize.width);
-//            input_padded_height = std::max(input_padded_height, out_padded_height + 2);
-//            input_padded_width = std::max(input_padded_width, out_padded_width + 2);
-
-        Padding2D fixed_input_pad;
-        //fixed_input_pad.top = (input_padded_height - input_height) >> 1;
-        fixed_input_pad.top = padding.top;
-        fixed_input_pad.bottom = input_padded_height - input_height - fixed_input_pad.top;
-        //fixed_input_pad.left = (input_padded_width - input_width) >> 1;
-        fixed_input_pad.left = padding.left;
-        fixed_input_pad.right = input_padded_width - input_width - fixed_input_pad.left;
-
-        bool in_need_pad = input_padded_height != input_height || input_padded_width != input_width;
-        bool out_need_pad = out_padded_height != out_height || out_padded_width != out_width;
-        if (in_need_pad) {
-            Tensor padded_input(Tensor::InFlow::HOST, input.dtype(),
-                                {num, input_channel, input_padded_height, input_padded_width});
-            std::array<int, 2> input_pad_h = {fixed_input_pad.top, fixed_input_pad.bottom};
-            std::array<int, 2> input_pad_w = {fixed_input_pad.left, fixed_input_pad.right};
-            PadAlgorithm<T>::pad2d(input, input_pad_h, input_pad_w, (float) padding_value, padded_input);
-            input_padded = std::move(padded_input);
-        }
-        if (out_need_pad) {
-            Tensor padded_out(Tensor::InFlow::HOST, out.dtype(),
-                              {num, out_channel, out_padded_height, out_padded_width});
-            std::array<int, 2> out_pad_h = {0, out_padded_height - out_height};
-            std::array<int, 2> out_pad_w = {0, out_padded_width - out_width};
-            PadAlgorithm<T>::pad2d(out, out_pad_h, out_pad_w, (float) padding_value, padded_out);
-            out_padded = std::move(padded_out);
-        }
-        out_padded_flag = out_need_pad;
-    }
 
     template<typename T>
     void Conv2d3x3<T>::conv2d_3x3_s1(const Tensor &x,
@@ -105,7 +39,7 @@ namespace arm {
         bool out_padded_flag = false;
         Stride2D stride(1, 1);
         KSize2D ksize(3, 3);
-        in_out_pad_and_fix_size<float>(x,
+        KernelCommonFunc<float>::in_out_pad_and_fix_size(x,
                                        kernel_shape,
                                        out,
                                        2,
@@ -382,7 +316,7 @@ namespace arm {
         bool out_padded_flag = false;
         Stride2D stride(2, 2);
         KSize2D ksize(3, 3);
-        in_out_pad_and_fix_size<float>(x,
+        KernelCommonFunc<float>::in_out_pad_and_fix_size(x,
                                        kernel_shape,
                                        out,
                                        1,
