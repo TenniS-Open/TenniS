@@ -3,6 +3,7 @@
 #include "backend/name.h"
 
 #include <numeric>
+#include <algorithm>
 
 namespace ts {
     namespace cpu {
@@ -49,58 +50,43 @@ namespace ts {
             }
         }
 
-
         template <typename T>
-        static void cpu_topkv2_compute_run(const Tensor &x, const int m_number, const int m_sorted, Tensor &out) {
-            auto &x_shape = x.sizes();
-
-            T * p_outdata = out.data<T>();
-            const T* p_xdata  = x.data<T>();
-
-            Shape out_shape = out.sizes();
-            
-            Tensor sort_tensor(out.device(), INT32, out_shape);
-         
-            int * psort = sort_tensor.data<int>(); 
-            int number = out.count();
-            int steps = number / out_shape[out_shape.size() - 1];
-            int out_stride = out_shape[out_shape.size() - 1];
-            int x_stride = x_shape[x_shape.size() - 1];
-
-            for(int k=0; k< steps; k++) {
-                ::memcpy(p_outdata + k * out_stride, p_xdata + k * x_stride, out_stride * sizeof(T));
-                for(int i=0; i<out_stride; i++) {
-                    psort[i + k * out_stride] = i;
-                } 
-
-                sort_heap<T>(p_outdata + k * out_stride, out_stride, psort + k * out_stride);
-                
-                for(int i=out_stride; i<x_stride; i++) {
-                    if(p_xdata[i + k * x_stride ] < p_outdata[ k * out_stride]) {
-                        continue;
-                    }
-
-                    p_outdata[k * out_stride] = p_xdata[i + k * x_stride];
-                    psort[k * out_stride] = i;
-                    sort_heap<T>(p_outdata + k * out_stride, out_stride, psort + k * out_stride); 
+        static void cpu_topkv2_sorted_compute_run(const Tensor &x, int K, Tensor &values, Tensor &indices) {
+            auto N = std::accumulate(x.sizes().begin(), x.sizes().end() - 1, 1, std::multiplies<int32_t>());
+            auto W = x.sizes().back();
+            std::vector<int32_t> indices_temp(W);
+            for (int n = 0; n < N; ++n) {
+                auto data = x.data<T>() + n * W;
+                for (int w = 0; w < W; ++w) indices_temp[w] = w;
+                std::partial_sort(indices_temp.begin(), indices_temp.begin() + K, indices_temp.end(),
+                                  [data](int32_t a, int32_t b) { return data[a] > data[b]; });
+                auto values_data = values.data<T>() + n * K;
+                auto indices_data = indices.data<int32_t>() + n * K;
+                std::memcpy(indices_data, indices_temp.data(), K * sizeof(int32_t));
+                for (int k = 0; k < K; ++k) {
+                    *values_data = data[indices_data[k]];
+                    ++values_data;
                 }
-                     
             }
-
-            std::vector<Tensor> fields;
-            fields.push_back(out);
-            fields.push_back(sort_tensor); 
-            out.pack(fields);
-
         }
 
 
-        void Topkv2::topkv2(const Tensor &x, Tensor &out) {
-            DTYPE dtype = out.dtype();
+        template <typename T>
+        static void cpu_topkv2_compute_run(const Tensor &x, int K, bool sorted, Tensor &values, Tensor &indices) {
+            if (sorted) {
+                cpu_topkv2_sorted_compute_run<T>(x, K, values, indices);
+            } else {
+                cpu_topkv2_sorted_compute_run<T>(x, K, values, indices);
+            }
+        }
+
+
+        void Topkv2::topkv2(const Tensor &x, int K, bool sorted, Tensor &values, Tensor &indices) {
+            DTYPE dtype = x.dtype();
            
             switch (dtype) {
 #define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
-        case DTYPE: { cpu_topkv2_compute_run<TYPE>(x, m_number, m_sorted, out); break; }
+        case DTYPE: { cpu_topkv2_compute_run<TYPE>(x, K, sorted, values, indices); break; }
                 DECLARE_COMPUTE_RUN(INT8, int8_t);
                 DECLARE_COMPUTE_RUN(UINT8, uint8_t);
                 DECLARE_COMPUTE_RUN(INT16, int16_t);

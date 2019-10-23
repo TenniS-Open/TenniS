@@ -23,7 +23,7 @@ namespace ts {
              * @param x input tensor
              * @param out
              */
-            virtual void topkv2(const Tensor &x, Tensor &out) = 0;
+            virtual void topkv2(const Tensor &x, int K, bool sorted, Tensor &values, Tensor &indices) = 0;
 
         protected:
             int m_number;

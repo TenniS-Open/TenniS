@@ -86,6 +86,16 @@ namespace ts {
         static bool reduce(Shape &lhs_shape, Shape &rhs_shape, Shape &out_shape, bool broadcast = true);
 
         /**
+         *
+         * @param [in/out] lhs lhs' shape
+         * @param [in/out] rhs rhs' shape
+         * @param [out] out output shape
+         * @return if reduced
+         */
+        static bool reduce_shape(Shape &lhs, Shape &rhs, Shape &out);
+
+
+        /**
          * return if is an scalar, also seen as count == 1
          * @param shape
          * @return
