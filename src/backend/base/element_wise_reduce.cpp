@@ -132,6 +132,12 @@ namespace ts {
         rhs = rhs.view(memory_device).reshape(rhs_shape);
         auto out = *stack.push(out_proto, memory_device);
 
+        if (reduce_shape(lhs_shape, rhs_shape, out_shape)) {
+            lhs = lhs.reshape(lhs_shape);
+            rhs = rhs.reshape(rhs_shape);
+            out = out.reshape(out_shape);
+        }
+
         int dim;
         if (!do_broadcast) {
             reduce_with_same_shape(lhs, rhs, out);
@@ -168,5 +174,49 @@ namespace ts {
 
     void ElementWiseReduce::reduce_with_scalar_cross(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
         this->reduce_with_broadcast(lhs, rhs, out);
+    }
+
+    bool ElementWiseReduce::reduce_shape(Shape &lhs, Shape &rhs, Shape &out) {
+        bool reduced = false;
+        bool lhs_ones = false;
+        bool rhs_ones = false;
+        bool lhs_equal_rhs = false;
+        for (size_t i = 0; i < out.size(); ) {
+            lhs_ones = lhs[i] == 1;
+            rhs_ones = rhs[i] == 1;
+            lhs_equal_rhs = lhs[i] == rhs[i];
+            if (!(lhs_ones || rhs_ones || lhs_equal_rhs)) {
+                ++i;
+                continue;
+            }
+            auto j = i + 1;
+            for (; j < out.size(); ++j) {
+                if (lhs_ones) lhs_ones = lhs[j] == 1;
+                if (rhs_ones) rhs_ones = rhs[j] == 1;
+                if (lhs_equal_rhs) lhs_equal_rhs = lhs[j] == rhs[j];
+                if (!(lhs_ones || rhs_ones || lhs_equal_rhs)) break;
+            }
+            if (j - i > 1) {
+                auto a = std::accumulate(lhs.begin() + i, lhs.begin() + j, 1, std::multiplies<int32_t>());
+                auto b = std::accumulate(rhs.begin() + i, rhs.begin() + j, 1, std::multiplies<int32_t>());
+                auto c = std::accumulate(out.begin() + i, out.begin() + j, 1, std::multiplies<int32_t>());
+
+                lhs.erase(lhs.begin() + i, lhs.begin() + j);
+                rhs.erase(rhs.begin() + i, rhs.begin() + j);
+                out.erase(out.begin() + i, out.begin() + j);
+
+                lhs.insert(lhs.begin() + i, a);
+                rhs.insert(rhs.begin() + i, b);
+                out.insert(out.begin() + i, c);
+
+                reduced = true;
+                ++i;
+                continue;
+            } else {
+                i = j + 1;
+                continue;
+            }
+        }
+        return reduced;
     }
 }
