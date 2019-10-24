@@ -29,13 +29,15 @@ namespace ts{
          * ===============================>
          * U = G(kernel)Gt
          * ===============================>
-         * kernel_tm = pack U:OcIcHW->TOcIc(T for tile count)
+         * kernel_trans = pack U:OcIcHW->TOcIc(T for tile count)
          * [                          |
          *     [U0[C_0,C_1,.....C_M], |
          *     [U1[C_0,C_1,.....C_M], |
          *                     ...    |  x 16
          *     [UN[C_0,C_1,.....C_M]  |
          * ]                          |
+         * ===============================>
+         * kernel_tm = gemm pack A(kernel_trans)
          *
          * BT =
          * [
@@ -47,61 +49,76 @@ namespace ts{
          *
          */
         template <typename T>
-        void Conv2dWinograd<T>::winograd_f23_transform_and_pack_kernel(const Tensor& kernel, Tensor &kernel_tm){
+        void Conv2dWinograd<T>::winograd_f23_transform_and_pack_kernel(const Tensor& kernel, int in_tile_size, Tensor &kernel_tm){
 
         }
 
         template <>
-        void Conv2dWinograd<float>::winograd_f23_transform_and_pack_kernel(const Tensor& kernel, Tensor &kernel_tm){
-                auto kernel_shape = kernel.sizes();
-                int out_channel = kernel_shape[0];
-                int input_channel = kernel_shape[1];
-                int stride = out_channel * input_channel;
+        void Conv2dWinograd<float>::winograd_f23_transform_and_pack_kernel(const Tensor& kernel, int in_tile_size, Tensor &kernel_tm){
+            auto kernel_shape = kernel.sizes();
+            int out_channel = kernel_shape[0];
+            int input_channel = kernel_shape[1];
+            int stride = out_channel * input_channel;
 
-                const float *p_kernel = kernel.data<float>();
-                int kernel_num_offset = input_channel * 9;
-                float *p_kernel_tm = kernel_tm.data<float>();
+            Tensor kernel_trans(Tensor::InFlow::HOST, kernel_tm.dtype(), kernel_tm.sizes());
 
-                const float G[4][3] = {
-                    { 1.f,     0.f,     0.f },
-                    { 1.f / 2,   1.f / 2,   1.f / 2 },
-                    { 1.f / 2,   -1.f / 2,   1.f / 2 },
-                    { 0.f,     0.f,     1.f }
-                };
+            const float *p_kernel = kernel.data<float>();
+            int kernel_num_offset = input_channel * 9;
+            float *p_kernel_trans = kernel_trans.data<float>();
 
-                for (int p = 0; p < out_channel; p++)
-                {
+            const float G[4][3] = {
+                { 1.f,     0.f,     0.f },
+                { 1.f / 2,   1.f / 2,   1.f / 2 },
+                { 1.f / 2,   -1.f / 2,   1.f / 2 },
+                { 0.f,     0.f,     1.f }
+            };
+
+            for (int p = 0; p < out_channel; p++)
+            {
 #ifdef TS_USE_OPENMP
 #pragma omp parallel for num_threads(openmp_threads())
 #endif
-                    for (int q = 0; q < input_channel; q++)
+                for (int q = 0; q < input_channel; q++)
+                {
+                    const float *kernel_at = p_kernel + p * kernel_num_offset + q * 9;
+                    float *kernel_trans_at = p_kernel_trans + p * input_channel + q;
+
+                    // transform kernel
+                    const float *k0 = kernel_at;
+                    const float *k1 = kernel_at + 3;
+                    const float *k2 = kernel_at + 6;
+
+                    float tmp[3][4];
+                    for (int i = 0; i < 4; i++)
                     {
-                        const float *kernel_at = p_kernel + p * kernel_num_offset + q * 9;
-                        float *kernel_tm_at = p_kernel_tm + p * input_channel + q;
+                        tmp[0][i] = k0[0] * G[i][0] + k0[1] * G[i][1] + k0[2] * G[i][2];
+                        tmp[1][i] = k1[0] * G[i][0] + k1[1] * G[i][1] + k1[2] * G[i][2];
+                        tmp[2][i] = k2[0] * G[i][0] + k2[1] * G[i][1] + k2[2] * G[i][2];
+                    }
 
-                        // transform kernel
-                        const float *k0 = kernel_at;
-                        const float *k1 = kernel_at + 3;
-                        const float *k2 = kernel_at + 6;
-
-                        float tmp[3][4];
-                        for (int i = 0; i < 4; i++)
+                    // U,pack:OcIcHW->TOcIc(T for tile count)
+                    for (int i = 0; i < 4; i++)
+                    {
+                        for (int j = 0; j < 4; j++)
                         {
-                            tmp[0][i] = k0[0] * G[i][0] + k0[1] * G[i][1] + k0[2] * G[i][2];
-                            tmp[1][i] = k1[0] * G[i][0] + k1[1] * G[i][1] + k1[2] * G[i][2];
-                            tmp[2][i] = k2[0] * G[i][0] + k2[1] * G[i][1] + k2[2] * G[i][2];
-                        }
-
-                        // U,pack:OcIcHW->TOcIc(T for tile count)
-                        for (int i = 0; i < 4; i++)
-                        {
-                            for (int j = 0; j < 4; j++)
-                            {
-                                kernel_tm_at[(i * 4 + j) * stride] = tmp[0][j] * G[i][0] + tmp[1][j] * G[i][1] + tmp[2][j] * G[i][2];
-                            }
+                            kernel_trans_at[(i * 4 + j) * stride] = tmp[0][j] * G[i][0] + tmp[1][j] * G[i][1] + tmp[2][j] * G[i][2];
                         }
                     }
                 }
+            }
+
+            //gemm pack A
+            float *kernel_tm_ptr = kernel_tm.data<float>();
+            const float* from = p_kernel_trans;
+            float *to = kernel_tm_ptr;
+            int transform_kernel_tile_offset = out_channel * input_channel;
+            for (int i = 0; i < in_tile_size; ++i) {
+                math<float,float>::pack8_A(out_channel, input_channel, from, input_channel, to);
+                from += transform_kernel_tile_offset;
+                to += transform_kernel_tile_offset;
+            }
+
+
         };
 
         /*
@@ -387,7 +404,7 @@ namespace ts{
                 Shape kernel_tm_shape = {in_tile_size, kernel_shape[0], kernel_shape[1]};
                 Tensor kernel_tmp(Tensor::InFlow::HOST, kernel.dtype(), kernel_tm_shape);
 //                std::memset(kernel_tmp.data<float>(), 0, sizeof(float)*kernel_tmp.count());
-                winograd_f23_transform_and_pack_kernel(kernel, kernel_tmp);
+                winograd_f23_transform_and_pack_kernel(kernel, in_tile_size, kernel_tmp);
                 kernel_tm = kernel_tmp;
             }
             const float *kernel_ptr = kernel_tm.data<float>();
