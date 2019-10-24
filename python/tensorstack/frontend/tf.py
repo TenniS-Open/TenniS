@@ -399,7 +399,7 @@ def topk_v2(name, x, number, sorted=True):
     node.set(Name.number, number, numpy.int32)
     node.set(Name.sorted, sorted, numpy.int32)
 
-    return [menu.field(name="{}:{}".format(name, i), input=node, offset=i) for i in range(3)]
+    return [menu.field(name="{}:{}".format(name, i), input=node, offset=i) for i in range(2)]
 
 
 def gather_v2(name, x, indices, batch_dims=0):
