@@ -107,7 +107,7 @@ namespace ts{
             std::vector<float> time_vec(m_times[0].size(), 0);
             std::vector<float> avg_time_vec(m_times[0].size(), 0);
 
-            for (int i = 0; i < m_times.size(); i++){
+            for (int i = 1; i < m_times.size(); i++){
                 auto data_vec = m_times[i];
                 for (int j = 0; j < data_vec.size(); j++){
                     time_vec[j] += data_vec[j].pass_time;
@@ -116,7 +116,7 @@ namespace ts{
                 }
             }
             for (int i = 0; i < time_vec.size(); i++){
-                auto avg_time = time_vec[i] / m_count_num;
+                auto avg_time = time_vec[i] / (m_count_num - 1);
                 m_avg_pass_time += avg_time;
                 avg_time_vec[i] = avg_time;
                 auto name = names[i];
@@ -206,7 +206,7 @@ namespace ts{
 
         void benchmark(const std::string name, const std::string path, const std::initializer_list<int>& input_shape){
             srand(time(NULL));
-            DataBase* db = new DataBase(option.loop_counts);
+            DataBase* db = new DataBase(option.loop_counts + 1);
 
             std::shared_ptr<Module> m = std::make_shared<Module>();
             m = Module::Load(path);
@@ -242,6 +242,10 @@ namespace ts{
                 input_param.data<float>()[i] = rand() % 100 + 100;
             }
             bench->input(m->inputs()[0].bubble().name(), input_param);
+
+            //warm up
+            bench->run();
+            db->index_inch();
 
             float count_time = 0.f;
             float max_time = 0.f,min_time = FLT_MAX;
