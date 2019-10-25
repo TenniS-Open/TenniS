@@ -12,12 +12,11 @@ import tensorflow as tf
 
 
 def test():
-    graph = parser.loat_graph("tf/tensorflow.pb")
-    print [n.name for n in graph.as_graph_def().node]
-
-    with graph.as_default():
+    with tf.Graph().as_default():
         with tf.Session() as sess:
-            sess.run(tf.global_variables_initializer())
+            parser.session_load_graph_def(sess, "tf/tensorflow.pb")
+            graph = sess.graph
+            print([n.name for n in graph.as_graph_def().node])
 
             inputs = sess.graph.get_tensor_by_name("inputs_image:0")
             outputs = sess.graph.get_tensor_by_name("outputs:0")
