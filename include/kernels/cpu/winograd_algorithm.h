@@ -25,9 +25,9 @@ namespace  ts{
                                      Tensor &out,
                                      bool kernel_transformed = true);
 
-            static void winograd_f63_transform_kernel(const Tensor& kernel, Tensor &kernel_tm);
+            static void winograd_f63_transform_and_pack_kernel(const Tensor& kernel, int in_tile_size, Tensor &kernel_tm);
 
-            static void winograd_f63_transform_inpu(const Tensor& x, Tensor &x_tm);
+            static void winograd_f63_transform_and_pack_input(const Tensor& x, int tile_count, Tensor &x_tm);
 
             static void winograd_f63(const Tensor &x,
                                      const Padding2D &padding,
