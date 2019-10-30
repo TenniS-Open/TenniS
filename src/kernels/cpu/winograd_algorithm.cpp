@@ -458,9 +458,100 @@ namespace ts{
             }
         }
 
+        /*
+         * kernel =
+         * [
+         *     [K0c_0[0,.....9]],
+         *     [K0c_1[0,.....9]],
+         *          ...
+         *     [K0c_M[0,.....9]],
+         *          ...
+         *     [KNc_M[0,.....9]],
+         *
+         * ],N for kernel num
+         * ===============================>
+         * U = G(kernel)Gt
+         * ===============================>
+         * kernel_trans = pack U:OcIcHW->TOcIc(T for tile count)
+         * [                          |
+         *     [U0[C_0,C_1,.....C_M], |
+         *     [U1[C_0,C_1,.....C_M], |
+         *              ...           |  x 16
+         *     [UN[C_0,C_1,.....C_M]  |
+         * ]                          |
+         * ===============================>
+         * kernel_tm = gemm pack A(kernel_trans)
+         *
+         * G =
+         * [
+         *     [1.0f,  0.0f,  0.0f],
+         *     [-2/9f, -2/9f, -2/9f],
+         *     [-2/9f, 2/9f,  -2/9f],
+         *     [1/90f, 1/45f, 2/45f],
+         *     [1/90f, -1/45f,2/45f],
+         *     [1/45f, 1/90f, 1/180f],
+         *     [1/45f, -1/90f,1/180f],
+         *     [0.0f,  0.0f,  1.0f]
+         * ]
+         *
+         */
         template <typename T>
         void Conv2dWinograd<T>::winograd_f63_transform_and_pack_kernel(const Tensor& kernel, int in_tile_size, Tensor &kernel_tm){
 
+        }
+
+        template <>
+        void Conv2dWinograd<float>::winograd_f63_transform_and_pack_kernel(const Tensor& kernel, int in_tile_size, Tensor &kernel_tm){
+            Shape kernel_shape = kernel.sizes();
+            int out_channel = kernel_shape[0];
+            int input_channel = kernel_shape[1];
+            int stride = out_channel * input_channel;
+
+            Tensor kernel_trans(Tensor::InFlow::HOST, kernel_tm.dtype(), kernel_tm.sizes());
+
+            const float *p_kernel = kernel.data<float>();
+            int kernel_num_offset = input_channel * 9;
+            float *p_kernel_trans = kernel_trans.data<float>();
+
+            const float G[8][3] = {
+               {1.0f,  0.0f,  0.0f},
+               {-2/9.f, -2/9.f, -2/9.f},
+               {-2/9.f, 2/9.f,  -2/9.f},
+               {1/90.f, 1/45.f, 2/45.f},
+               {1/90.f, -1/45.f,2/45.f},
+               {1/45.f, 1/90.f, 1/180.f},
+               {1/45.f, -1/90.f,1/180.f},
+               {0.0f,  0.0f,  1.0f}
+            };
+
+            for (int p = 0; p < out_channel; ++p) {
+#ifdef TS_USE_OPENMP
+#pragma omp parallel for num_threads(openmp_threads())
+#endif
+                for (int q = 0; q < input_channel; ++q) {
+                    const float *kernel_at = p_kernel + p * kernel_num_offset + q * 9;
+                    float *kernel_trans_at = p_kernel_trans + p * input_channel + q;
+
+                    // transform kernel
+                    const float *k0 = kernel_at;
+                    const float *k1 = kernel_at + 3;
+                    const float *k2 = kernel_at + 6;
+
+                    float tmp[3][8];
+                    for (int i = 0; i < 8; ++i) {
+                        tmp[0][i] = k0[0] * G[i][0] + k0[1] * G[i][1] + k0[2] * G[i][2];
+                        tmp[1][i] = k1[0] * G[i][0] + k1[1] * G[i][1] + k1[2] * G[i][2];
+                        tmp[2][i] = k2[0] * G[i][0] + k2[1] * G[i][1] + k2[2] * G[i][2];
+                    }
+
+                    // U,pack:OcIcHW->TOcIc(T for tile count)
+                    for (int i = 0; i < 8; ++i) {
+                        for (int j = 0; j < 8; ++j) {
+                            kernel_trans_at[(i * 8 + j) * stride] = tmp[0][j] * G[i][0] + tmp[1][j] * G[i][1] + tmp[2][j] * G[i][2];
+                        }
+                    }
+                }
+            }
         }
 
         template <typename T>
