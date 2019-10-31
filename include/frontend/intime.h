@@ -114,6 +114,10 @@ namespace ts {
                 int64_t size);
 
         TS_DEBUG_API Tensor matmul(const Tensor &A, const Tensor &B, bool transpose = false);
+
+        TS_DEBUG_API Tensor broadcast(const Tensor &x, const Tensor &shape);
+
+        TS_DEBUG_API Tensor broadcast(const Tensor &x, const std::vector<int32_t> &shape);
     }
 }
 

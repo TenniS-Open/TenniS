@@ -76,8 +76,8 @@ namespace ts {
 
             auto gpu_memory = MakeGPUHypeShape(out.device(), {out.sizes(), },
             {
-                {(void*)(permute.data()), sizeof(int) * int(permute.size())},
-                {(void*)(cpu_in_dim_weights.data()), sizeof(int) * int(cpu_in_dim_weights.size())},
+                {(void*)(permute.data()), int(sizeof(int) * permute.size())},
+                {(void*)(cpu_in_dim_weights.data()), int(sizeof(int) * cpu_in_dim_weights.size())},
             }, {
                 (void **)(&gpu_permute),
                 (void **)(&gpu_in_dim_weights),

@@ -64,7 +64,7 @@ namespace ts {
         static inline void pad_gpu_compute_run(const Tensor &x, const std::vector<std::array<int, 2>> &padding, float padding_value, Tensor &out) {
             int *gpu_padding = nullptr;
             auto gpu_memory = MakeGPUHypeShape(out.device(), {x.sizes(), out.sizes()},
-                                               {{(void *) (padding.data()), sizeof(int) * int(padding.size()) * 2}},
+                                               {{(void *) (padding.data()), int(sizeof(int) * padding.size()) * 2}},
                                                {(void **) (&gpu_padding)});
             auto &gpu_in_shape = gpu_memory.second[0];
             auto &gpu_out_shape = gpu_memory.second[1];

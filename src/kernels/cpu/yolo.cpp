@@ -10,6 +10,14 @@
 
 namespace ts {
     namespace cpu {
+		template <typename T>
+		static T neg(T a) { return -a; }
+
+		template <> uint8_t neg(uint8_t a) { return a; }
+		template <> uint16_t neg(uint16_t a) { return a; }
+		template <> uint32_t neg(uint32_t a) { return a; }
+		template <> uint64_t neg(uint64_t a) { return a; }
+
         class Yolo : public Operator {
         public:
             using self = Yolo;
@@ -84,7 +92,7 @@ namespace ts {
             template<typename T>
             static void activate_array(T *x, const int n) {
                 for (int i = 0; i < n; ++i, ++x) {
-                    *x = T(1. / (1. + std::exp(-*x)));
+                    *x = T(1. / (1. + std::exp(neg(*x))));
                 }
             }
 

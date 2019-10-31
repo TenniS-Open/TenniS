@@ -158,5 +158,14 @@ namespace ts {
         Node matmul(const std::string &name, const NodeOrTensor &A, const NodeOrTensor &B, bool transpose) {
             return symbol::matmul(name, A, B, transpose);
         }
+
+        Node broadcast(const std::string &name, const NodeOrTensor &x, const NodeOrTensor &shape) {
+            return symbol::broadcast(name, x, shape);
+        }
+
+        Node broadcast(const std::string &name, const NodeOrTensor &x, const std::vector<int32_t> &shape) {
+            auto shape_tensor = tensor::build(INT32, shape.size(), shape.data());
+            return broadcast(name, x, {shape_tensor, CPU});
+        }
     }
 }

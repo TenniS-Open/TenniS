@@ -24,8 +24,13 @@ namespace ts{
 
     inline const char *cpu_feature_str(CPUFeature feature) {
         switch (feature) {
+        case ts::MMX: return "MMX";
         case ts::SSE: return "SSE";
         case ts::SSE2: return "SSE2";
+        case ts::SSE3: return "SSE3";
+        case ts::SSSE3: return "SSSE3";
+        case ts::SSE4_1: return "SSE4_1";
+        case ts::SSE4_2: return "SSE4_2";
         case ts::AVX: return "AVX";
         case ts::AVX2: return "AVX2";
         case ts::FMA: return "FMA";

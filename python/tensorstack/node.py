@@ -93,6 +93,11 @@ class Node(object):
     def get(self, param):
         return self.__params[param]
 
+    def try_get(self, param, value):
+        if param in self.__params:
+            return self.params[param]
+        return value
+
     def clear(self, param):
         del self.__params[param]
 

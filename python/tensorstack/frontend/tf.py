@@ -23,6 +23,9 @@ class Name(object):
         space_to_batch4d = "space_to_batch4d"
         batch_to_space4d = "batch_to_space4d"
         slice = "slice"
+        slice_v2 = "slice_v2"
+        topkv2 = "topkv2"
+        gather_v2 = "gatherv2"
 
     SAME = "SAME"
     VALID = "VALID"
@@ -36,6 +39,12 @@ class Name(object):
 
     block_shape = "block_shape"
     crop = "crop"
+
+    size = "size"
+    sorted = "sorted"
+    number = "number"
+    keep_dims = "keep_dims"
+    dim = "dim"
 
 
 def pooling2d_padding(name, x, padding, ksize, stride, format=zoo.Name.NCHW, padding_method=Name.SAME):
@@ -212,7 +221,13 @@ def depthwise_conv2d(name, x, w,
                                 stride=stride, dilation=dilation)
 
 
-def strided_slice(name, x, begin, end, stride=None):
+def strided_slice(name, x, begin, end, stride=None,
+                  begin_mask=0,
+                  end_mask=0,
+                  ellipsis_mask=0,
+                  new_axis_mask=0,
+                  shrink_axis_mask=0,
+                  ):
     """
     return x in [begin, end) with stride
     :param name:
@@ -239,6 +254,12 @@ def strided_slice(name, x, begin, end, stride=None):
     node.set(Name.begin, begin, numpy.int32)
     node.set(Name.end, end, numpy.int32)
     node.set(Name.stride, stride, numpy.int32)
+
+    node.set("begin_mask", begin_mask, numpy.int32)
+    node.set("end_mask", end_mask, numpy.int32)
+    node.set("ellipsis_mask", ellipsis_mask, numpy.int32)
+    node.set("new_axis_mask", new_axis_mask, numpy.int32)
+    node.set("shrink_axis_mask", shrink_axis_mask, numpy.int32)
 
     return node
 
@@ -338,5 +359,96 @@ def slice(name, x, begin, size):
     node = menu.op(name=name, op_name=Name.Layer.slice, inputs=[x, ])
     node.set(Name.begin, begin, numpy.int32)
     node.set(Name.size, size, numpy.int32)
+
+    return node
+
+
+def slice_v2(name, x, begin, size):
+    """
+    return x in [begin, begin + size)
+    :param name:
+    :param x:
+    :param begin:
+    :param size:
+    :return:
+    """
+    assert isinstance(x, Node)
+
+    try:
+        begin = zoo.to_const(begin, "begin")
+        size = zoo.to_const(size, "size")
+
+        return slice(name, x, begin, size)
+    except:
+        pass
+
+    # operator
+    node = menu.op(name=name, op_name=Name.Layer.slice_v2, inputs=[x, begin, size])
+
+    return node
+
+
+def topk_v2(name, x, number, sorted=True):
+    assert isinstance(x, Node)
+
+    number = zoo.to_const(number, "number")
+    sorted = zoo.to_const(sorted, "sorted")
+
+    # operator
+    node = menu.op(name=name, op_name=Name.Layer.topkv2, inputs=[x, ])
+    node.set(Name.number, number, numpy.int32)
+    node.set(Name.sorted, sorted, numpy.int32)
+
+    return [menu.field(name="{}:{}".format(name, i), input=node, offset=i) for i in range(2)]
+
+
+def gather_v2(name, x, indices, batch_dims=0):
+    assert isinstance(x, Node)
+    assert batch_dims == 0
+
+    indices = zoo.to_node(indices, name=name + "_indices", dtype=numpy.int32)
+
+    node = menu.op(name=name, op_name=Name.Layer.gather_v2, inputs=[x, indices])
+
+    return node
+
+
+def max(name, x, reduce_dims, keep_dims=True):
+    assert isinstance(x, Node)
+
+    reduce_dims = zoo.to_const(reduce_dims, "reduce_dims")
+    keep_dims = zoo.to_const(keep_dims, "reduce_dims")
+
+    node = menu.op(name=name, op_name="max", inputs=[x, ])
+    node.set(Name.dim, reduce_dims, numpy.int32)
+    node.set(Name.keep_dims, keep_dims, numpy.bool)
+    return node
+
+
+def non_max_suppression_v3(name, box, scores,
+                           max_output_size=1000, iou_threshold=0.3, score_threshold=0.1, mode="xyxy"):
+    assert isinstance(box, Node)
+    assert isinstance(scores, Node)
+
+    max_output_size = zoo.to_const(max_output_size, "max_output_size")
+    iou_threshold = zoo.to_const(iou_threshold, "iou_threshold")
+    score_threshold = zoo.to_const(score_threshold, "score_threshold")
+
+    node = menu.op(name=name, op_name="non_max_suppression_v3", inputs=[box, scores])
+    node.set("max_output_size", max_output_size, numpy.int32)
+    node.set("iou_threshold", iou_threshold, numpy.float32)
+    node.set("score_threshold", score_threshold, numpy.float32)
+    node.set("mode", mode)
+
+    return node
+
+
+def argmax(name, x, dim):
+    assert isinstance(x, Node)
+
+    dim = zoo.to_const(dim, "dim")
+
+    node = menu.op(name=name, op_name="argmax", inputs=[x])
+    node.set("dim", dim, numpy.int32)
 
     return node

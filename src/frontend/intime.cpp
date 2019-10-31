@@ -181,5 +181,13 @@ namespace ts {
         Tensor matmul(const Tensor &A, const Tensor &B, bool transpose) {
             return run(desc::matmul(transpose), {A, B});
         }
+
+        Tensor broadcast(const Tensor &x, const Tensor &shape) {
+            return run(desc::broadcast(), {x, shape});
+        }
+
+        Tensor broadcast(const Tensor &x, const std::vector<int32_t> &shape) {
+            return run(desc::broadcast(), {x, tensor::from(shape)});
+        }
     }
 }

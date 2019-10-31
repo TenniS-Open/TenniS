@@ -7,22 +7,13 @@ namespace ts {
     namespace base {
         Topkv2::Topkv2() {
             field(name::number,REQUIRED);
-            field(name::sorted,OPTIONAL);
-            m_sorted = 0;
+            field(name::sorted,OPTIONAL, tensor::from<int32_t>(0));
         }
 
         void Topkv2::init() {
             supper::init();
-
-            Tensor number_tensor =  get(name::number);
-            TS_AUTO_CHECK(number_tensor.dtype() == INT32);
-            m_number = tensor::to_int(number_tensor);
-
-            if(has(name::sorted)) {
-                Tensor sorted_tensor =  get(name::sorted);
-                TS_AUTO_CHECK(sorted_tensor.dtype() == INT32);
-                m_sorted = tensor::to_int(sorted_tensor);
-            } 
+            m_number = tensor::to_int(get(name::number));
+            m_sorted = tensor::to_int(get(name::sorted));
         }
 
 
@@ -30,28 +21,48 @@ namespace ts {
             TS_AUTO_CHECK(stack.size() == 1);
              
             auto &x = stack[0];
-            Shape x_shape = x.sizes();
-            TS_AUTO_CHECK(x_shape[x_shape.size() - 1] >= m_number);
-            x_shape[x_shape.size() - 1] = m_number;
-            output.resize(1);
-            output[0] = Tensor::Prototype(x.dtype(), x_shape);
+            if (x.dims() == 0) {
+                output = {x.proto(), {INT32, x.sizes()}};
+                return 2;
+            }
 
-            return 1;
+            Shape x_shape = x.sizes();
+            auto K = std::min(x_shape.back(), m_number);
+            x_shape.back() = K;
+
+            output.resize(2);
+            output[0] = Tensor::Prototype(x.dtype(), x_shape);
+            output[1] = Tensor::Prototype(INT32, x_shape);
+
+            return 2;
         }
 
         int Topkv2::run(Stack &stack) {
             TS_AUTO_CHECK(stack.size() == 1);
 
+            auto x = stack[0];
+
+            if (x.dims() == 0) {
+                auto values = x;
+                int32_t i = 0;
+                auto indices = tensor::build(INT32, {}, &i);
+                stack.push(Tensor::Pack({values, indices}));
+                return 1;
+            }
+
             auto memory_device = running_memory_device();
-            auto x = stack[0].view(memory_device);
+            x = x.view(memory_device);
 
             Shape x_shape = x.sizes();
-            TS_AUTO_CHECK(x_shape[x_shape.size() - 1] >= m_number);
-            x_shape[x_shape.size() - 1] = m_number;
-            auto output_proto = Tensor::Prototype(x.dtype(), x_shape);
-            auto &out = *stack.push(output_proto, memory_device);
+            auto K = std::min(x_shape.back(), m_number);
+            x_shape.back() = K;
 
-            topkv2(x, out);
+            auto values = stack.make(x.dtype(), x_shape, memory_device);
+            auto indices = stack.make(INT32, x_shape, memory_device);
+
+            topkv2(x, K, m_sorted, values, indices);
+
+            stack.push(Tensor::Pack({values, indices}));
 
             return 1;
         }
