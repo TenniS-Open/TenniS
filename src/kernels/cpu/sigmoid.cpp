@@ -11,6 +11,14 @@
 
 namespace ts {
     namespace cpu {
+		template <typename T>
+		static T neg(T a) { return -a; }
+
+		template <> uint8_t neg(uint8_t a) { return a; }
+		template <> uint16_t neg(uint16_t a) { return a; }
+		template <> uint32_t neg(uint32_t a) { return a; }
+		template <> uint64_t neg(uint64_t a) { return a; }
+
         template<typename T>
         static void cpu_sigmoid_compute_run(const Tensor &x, Tensor &out) {
             const T *input_data = x.data<T>();
@@ -23,7 +31,7 @@ namespace ts {
 #endif
             for (int i = 0; i < count; i++) {
 
-                output_data[i] = T(1. / (1. + exp(-(input_data[i]))));
+                output_data[i] = T(1. / (1. + exp(neg(input_data[i]))));
             }
         }
 

@@ -134,13 +134,13 @@ namespace ts {
                             channels, number, width);
             // mean
             mean_kernel<half> <<< gridSize, blockSize, 0, stream >>> (
-                    output_data, output_count, __float2half(channels));
+                    output_data, output_count, __float2half(float(channels)));
         }
 #endif
 
         template<typename T>
         void gpu_reduce_mean_compute_run(const Tensor &x, std::vector<int> dims, Tensor &out) {
-            int dims_size = dims.size();
+            int dims_size = int(dims.size());
             auto &size = x.sizes();
             auto number = std::accumulate(size.begin(), size.begin() + dims[0], 1, std::multiplies<int32_t>());
             int channels = 1;

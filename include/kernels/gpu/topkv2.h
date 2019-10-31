@@ -12,7 +12,7 @@ namespace ts {
             using self = Topkv2;
             using supper = OperatorOnGPU<base::Topkv2>;
 
-            void topkv2(const Tensor &x, Tensor &out) override;
+            void topkv2(const Tensor &x, int K, bool sorted, Tensor &values, Tensor &indices) override;
         };
     }
 }

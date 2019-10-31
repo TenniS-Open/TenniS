@@ -57,7 +57,8 @@ namespace ts {
             TS_AUTO_CHECK(stack.size() == 2);
 
             auto memory_device = running_memory_device();
-            auto x = stack[0].view(memory_device);
+            auto box = stack[0].view(memory_device);
+            auto scores = stack[1].view(memory_device);
 
             Shape shape;
             shape.resize(1);
@@ -65,7 +66,7 @@ namespace ts {
 
             auto output_proto = Tensor::Prototype(INT32, shape);
             auto &out = *stack.push(output_proto, memory_device);
-            non_max_suppression_v3(x, stack[1], out);
+            non_max_suppression_v3(box, scores, out);
 
             return 1;
         }

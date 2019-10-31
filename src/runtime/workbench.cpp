@@ -63,7 +63,42 @@ namespace ts {
         ctx::bind<Workbench> bind_work_bench;
     };
 
+    static std::string feature_log(const std::vector<CPUFeature> &features) {
+        std::ostringstream oss;
+        oss << "{";
+        for (size_t i = 0; i < features.size(); ++i) {
+            if (i) oss << ", ";
+            auto feature = features[i];
+            oss << cpu_feature_str(feature) << "=" << (check_cpu_feature(feature) ? "ok" : "failed");
+        }
+        oss << "}";
+        return oss.str();
+    }
+
+    static void check_cpu_features() {
+        //TestCPUFeature
+        std::vector<CPUFeature> features;
+#if defined(TS_USE_FMA)
+        features.emplace_back(FMA);
+#endif
+#if defined(TS_USE_AVX)
+        features.emplace_back(AVX);
+#elif defined(TS_USE_SSE)
+        features.emplace_back(SSE);
+        features.emplace_back(SSE2);
+#endif
+        for (auto &fea : features) {
+            auto flag = check_cpu_feature(fea);
+            if (!flag) {
+                TS_LOG_ERROR << "The processor does not support the current instruction set: " << feature_log(features)
+                             << eject;
+            }
+        }
+    }
+
     Workbench::Workbench(const ComputingDevice &device) {
+        check_cpu_features();
+
         this->m_device_context.initialize(device);
         auto &memory_device = this->m_device_context.memory_device;
 
@@ -103,24 +138,6 @@ namespace ts {
     }
 
     void Workbench::run() {
-        //TestCPUFeature
-        std::vector<CPUFeature> features;
-#if defined(TS_USE_FMA)
-        features.emplace_back(FMA);
-#endif
-#if defined(TS_USE_AVX)
-        features.emplace_back(AVX);
-#elif defined(TS_USE_SSE)
-        features.emplace_back(SSE);
-        features.emplace_back(SSE2);
-#endif
-        for (auto &fea : features) {
-            auto flag = check_cpu_feature(fea);
-            if (!flag) {
-                TS_LOG_ERROR << "The processor does not support the current instruction set: " << cpu_feature_str(fea) << eject;
-            }
-        }
-
         if (m_desktop == nullptr) {
             TS_LOG_ERROR << "Can not run workbench with no program setup" << eject;
         }

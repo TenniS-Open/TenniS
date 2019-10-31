@@ -134,6 +134,10 @@ namespace ts {
                                              desc::ResizeType type = desc::ResizeType::LINEAR);
 
         TS_DEBUG_API Node matmul(const std::string &name, const NodeOrTensor &A, const NodeOrTensor &B, bool transpose = false);
+
+        TS_DEBUG_API Node broadcast(const std::string &name, const NodeOrTensor &x, const NodeOrTensor &shape);
+
+        TS_DEBUG_API Node broadcast(const std::string &name, const NodeOrTensor &x, const std::vector<int32_t> &shape);
     }
 }
 

@@ -41,6 +41,12 @@ namespace ts {
             std::vector<int32_t> m_begin;
             std::vector<int32_t> m_end;
             std::vector<int32_t> m_stride;
+
+            int32_t m_begin_mask;
+            int32_t m_end_mask;
+            int32_t m_ellipsis_mask;
+            int32_t m_new_axis_mask;
+            int32_t m_shrink_axis_mask;
         };
     }
 }

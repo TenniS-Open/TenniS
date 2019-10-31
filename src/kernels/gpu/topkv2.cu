@@ -86,8 +86,9 @@ namespace ts {
         }
 
         template <typename T>
-        static void gpu_topkv2_compute_run(const Tensor &x, const int m_number, const int m_sorted, Tensor &out) {
+        static void gpu_topkv2_compute_run(const Tensor &x, int K, bool sorted, Tensor &values, Tensor &indices) {
             auto &x_shape = x.sizes();
+            auto out = values;
 
             T * p_outdata = out.data<T>();
             const T* p_xdata  = x.data<T>();
@@ -108,22 +109,16 @@ namespace ts {
 
             gpu_topkv2_kernel<T> << <gridSize, blockSize, 0, cuda_stream>> > (p_xdata, psort, p_outdata, steps, x_stride, out_stride);
 
-
-
-            std::vector<Tensor> fields;
-            fields.push_back(out);
-            fields.push_back(sort_tensor); 
-            out.pack(fields);
-
+            indices = sort_tensor;
         }
 
 
-        void Topkv2::topkv2(const Tensor &x, Tensor &out) {
-            DTYPE dtype = out.dtype();
+        void Topkv2::topkv2(const Tensor &x, int K, bool sorted, Tensor &values, Tensor &indices) {
+            DTYPE dtype = x.dtype();
            
             switch (dtype) {
 #define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
-        case DTYPE: { gpu_topkv2_compute_run<TYPE>(x, m_number, m_sorted, out); break; }
+        case DTYPE: { gpu_topkv2_compute_run<TYPE>(x, K, sorted, values, indices); break; }
                 DECLARE_COMPUTE_RUN(INT8, int8_t);
                 DECLARE_COMPUTE_RUN(UINT8, uint8_t);
                 DECLARE_COMPUTE_RUN(INT16, int16_t);
@@ -149,9 +144,9 @@ namespace ts {
     }
 }
 
-using namespace ts;
-using namespace gpu;
-TS_REGISTER_OPERATOR(Topkv2, GPU, name::layer::topkv2())
-#ifdef TS_USE_CUDA_FP16
-TS_REGISTER_FP16_OPERATOR(Topkv2, GPU, name::layer::topkv2())
-#endif
+//using namespace ts;
+//using namespace gpu;
+//TS_REGISTER_OPERATOR(Topkv2, GPU, name::layer::topkv2())
+//#ifdef TS_USE_CUDA_FP16
+//TS_REGISTER_FP16_OPERATOR(Topkv2, GPU, name::layer::topkv2())
+//#endif

@@ -25,7 +25,7 @@ namespace ts {
 
             TS_AUTO_CHECK((dim >= 0) && (dim < int(x_shape.size())));
 
-            x_shape[dim] = 1;
+            x_shape.erase(x_shape.begin() + dim);
 
             return Tensor::Prototype(INT32, x_shape);
         }

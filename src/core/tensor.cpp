@@ -48,10 +48,11 @@ namespace ts {
         }
 
         ~EmptyMemoryKeeper() {
+			delete object;
             delete _empty_memory;
         }
 
-        static void EmptyDeleter(const SyncMemory &memory) {}
+        static void EmptyDeleter(const SyncMemory *memory) {}
 
         Smart<SyncMemory> &get() {
             return *object;

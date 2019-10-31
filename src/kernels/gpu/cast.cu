@@ -81,6 +81,7 @@ namespace ts {
                 DECLARE_COMPUTE_RUN_TEMPLATE(FLOAT32, float);
                 DECLARE_COMPUTE_RUN_TEMPLATE(FLOAT64, double);
                 DECLARE_COMPUTE_RUN_TEMPLATE(FLOAT16, half);
+                DECLARE_COMPUTE_RUN_TEMPLATE(BOOLEAN, uint8_t);
 #undef DECLARE_COMPUTE_RUN_TEMPLATE
             default: {
                 TS_LOG_ERROR << "_cast not support data type(" << to_type << "): " << type_str(to_type) << eject;
@@ -108,6 +109,7 @@ namespace ts {
                 DECLARE_COMPUTE_RUN(FLOAT32, float);
                 DECLARE_COMPUTE_RUN(FLOAT64, double);
                 DECLARE_COMPUTE_RUN(FLOAT16, half);
+                DECLARE_COMPUTE_RUN(BOOLEAN, uint8_t);
 #undef DECLARE_COMPUTE_RUN
             default: {
                 TS_LOG_ERROR << this->op() << " not support data type(" << dtype << "): " << type_str(dtype) << eject;

@@ -8,6 +8,8 @@
 #include "core/tensor_builder.h"
 #include <algorithm>
 
+#include <algorithm>
+
 namespace ts {
     namespace cpu {
         class Expand : public Operator {
