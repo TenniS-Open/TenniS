@@ -29,6 +29,8 @@ namespace  ts{
 
             static void winograd_f63_transform_and_pack_input(const Tensor& x, int tile_count, Tensor &x_tm);
 
+            static void winograd_f63_transform_output(const Tensor& out_tm, int tile_count, Tensor& out);
+
             static void winograd_f63(const Tensor &x,
                                      const Padding2D &padding,
                                      float padding_value,
