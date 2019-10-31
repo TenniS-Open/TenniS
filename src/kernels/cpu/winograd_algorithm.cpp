@@ -476,7 +476,7 @@ namespace ts{
          * [                          |
          *     [U0[C_0,C_1,.....C_M], |
          *     [U1[C_0,C_1,.....C_M], |
-         *              ...           |  x 16
+         *              ...           |  x 64
          *     [UN[C_0,C_1,.....C_M]  |
          * ]                          |
          * ===============================>
@@ -554,9 +554,271 @@ namespace ts{
             }
         }
 
+        /*
+         * x =
+         * [
+         *     [Ic_0[0,.....N]],
+         *     [Ic_1[0,.....N]],
+         *          ...
+         *     [Ic_M[0,.....N]],
+         * ]
+         * ===============================>
+         * V = BT(x)B
+         * ===============================>
+         * x_tm = pack V:NCHW->NTCB(T for tile count,B for tile indices)
+         * [                                              |
+         *     [Vc_0[tile0_0......tile(tile_count-1)_0]], |
+         *     [Vc_1[tile0_0......tile(tile_count-1)_0]], |
+         *                     ...                        |  x 64
+         *     [Vc_M[tile0_0......tile(tile_count-1)_0]]  |
+         * ]                                              |
+         *
+         * BT =
+         * [
+         *     [1.0f,  0.0f, -5.25f,  0.00f,  5.25f,  0.00f, -1.0f, 0.0f],
+         *     [0.0f,  1.0f,  1.00f, -4.25f, -4.25f,  1.00f,  1.0f, 0.0f],
+         *     [0.0f, -1.0f,  1.00f,  4.25f, -4.25f, -1.00f,  1.0f, 0.0f],
+         *     [0.0f,  0.5f,  0.25f, -2.50f, -1.25f,  2.00f,  1.0f, 0.0f],
+         *     [0.0f, -0.5f,  0.25f,  2.50f, -1.25f, -2.00f,  1.0f, 0.0f],
+         *     [0.0f,  2.0f,  4.00f, -2.50f, -5.00f,  0.50f,  1.0f, 0.0f],
+         *     [0.0f, -2.0f,  4.00f,  2.50f, -5.00f, -0.50f,  1.0f, 0.0f],
+         *     [0.0f, -1.0f,  0.00f,  5.25f,  0.00f, -5.25f,  0.0f, 1.0f]
+         * ]
+         *
+         */
         template <typename T>
         void Conv2dWinograd<T>::winograd_f63_transform_and_pack_input(const Tensor& x, int tile_count, Tensor &x_tm){
 
+        }
+
+        //TODO:maybe simd optimize
+        template <>
+        void Conv2dWinograd<float>::winograd_f63_transform_and_pack_input(const Tensor& x, int tile_count, Tensor &x_tm){
+            Shape input_shape = x.sizes();
+            int num = input_shape[0];
+            int input_channel = input_shape[1];
+            int input_height = input_shape[2];
+            int input_width = input_shape[3];
+            int input_channel_offset = input_height * input_width;
+            int input_num_offset = input_channel * input_channel_offset;
+
+            int stride = input_channel * tile_count;
+            int out_num_offset = stride * 64;
+
+            const float *input_ptr = x.data<float>();
+            float *out_ptr = x_tm.data<float>();
+
+            for (int n = 0; n < num; ++n) {
+#ifdef TS_USE_OPENMP
+#pragma omp parallel for num_threads(openmp_threads())
+#endif
+                for (int c = 0; c < input_channel; ++c) {
+                    const float *input_cur = input_ptr + n * input_num_offset + c * input_channel_offset;
+                    float *out_cur = out_ptr + n * out_num_offset + c * tile_count;
+
+                    int tile_index = 0;
+                    float dB[8][8];
+                    for (int h = 0; h + 2 < input_height ; h += 6) {
+                        for (int w = 0; w + 2 < input_width ; w += 6) {
+                            const float *input_at = input_cur + h * input_width + w;
+
+                            for (int i = 0; i < 8; ++i) {
+                                const float *i0 = input_at + i * input_width;
+
+                                dB[i][0] = i0[0] - i0[6] + (i0[4] - i0[2]) * 5.25f;
+                                dB[i][7] = i0[7] - i0[1] + (i0[3] - i0[5]) * 5.25f;
+
+                                float tmp12_a = (i0[2] + i0[6] - i0[4] * 4.25f);
+                                float tmp12_b = (i0[1] + i0[5] - i0[3] * 4.25f);
+
+                                dB[i][1] = tmp12_a + tmp12_b;
+                                dB[i][2] = tmp12_a - tmp12_b;
+
+                                float tmp34_a = (i0[6] + i0[2] * 0.25f - i0[4] * 1.25f);
+                                float tmp34_b = (i0[1] * 0.5f - i0[3] * 2.5f + i0[5] * 2.f);
+
+                                dB[i][3] = tmp34_a + tmp34_b;
+                                dB[i][4] = tmp34_a - tmp34_b;
+
+                                float tmp56_a = (i0[6] + (i0[2] - i0[4] * 1.25f) * 4.f);
+                                float tmp56_b = (i0[1] * 2.f - i0[3] * 2.5f + i0[5] * 0.5f);
+
+                                dB[i][5] = tmp56_a + tmp56_b;
+                                dB[i][6] = tmp56_a - tmp56_b;
+                            }
+
+                            float *out_at = out_cur + tile_index;
+                            for (int i = 0; i < 8; ++i) {
+                                float dB0, dB1, dB2, dB3, dB4, dB5, dB6, dB7;
+                                dB0 = dB[0][i];
+                                dB1 = dB[1][i];
+                                dB2 = dB[2][i];
+                                dB3 = dB[3][i];
+                                dB4 = dB[4][i];
+                                dB5 = dB[5][i];
+                                dB6 = dB[6][i];
+                                dB7 = dB[7][i];
+
+                                out_at[i * stride] = dB0 - dB6 + (dB4 - dB2) * 5.25f;
+                                out_at[(56 + i) * stride] = dB7 - dB1 + (dB3 - dB5) * 5.25f;
+
+                                float tmp12_a = dB2 + dB6 - dB4 * 4.25f;
+                                float tmp12_b = dB1 - dB3 * 4.25f + dB5;
+
+                                out_at[(8 + i) * stride] = tmp12_a + tmp12_b;
+                                out_at[(16 + i) * stride] = tmp12_a - tmp12_b;
+
+                                float tmp34_a = dB6 + dB2 * 0.25f - dB4 * 1.25f;
+                                float tmp34_b = dB1 * 0.5f - dB3 * 2.5f + dB5 * 2.f;
+
+                                out_at[(24 + i) * stride] = tmp34_a + tmp34_b;
+                                out_at[(32 + i) * stride] = tmp34_a - tmp34_b;
+
+                                float tmp56_a = dB6 + (dB2 - dB4 * 1.25f) * 4.f;
+                                float tmp56_b = dB1 * 2.f - dB3 * 2.5f + dB5 * 0.5f;
+
+                                out_at[(40 + i) * stride] = tmp56_a + tmp56_b;
+                                out_at[(48 + i) * stride] = tmp56_a - tmp56_b;
+                            }
+                            ++tile_index;
+                        }
+                    }
+                }
+            }
+        }
+
+        /* out_tm =
+         * [                                           |
+         *     Out_c_0[tile0_0,tile1_0,....tileN_0],   |
+         *     Out_c_1[tile0_0,tile1_0,....tileN_0],   |
+         *                  ...                        | x 64
+         *     Out_c_M[tile0_0,tile1_0,....tileN_0],   |
+         * ]                                           |
+         *     N for tile_num
+         * =======================================>
+         * tmp
+         * [
+         *     Out_c_0[tile0_0,tile0_1,....tile0_64],
+         *     Out_c_0[tile1_0,tile1_1,....tile1_64],
+         *                  ...
+         *     Out_c_0[tileN_0,tileN_1,....tileN_64],
+         *                  ...
+         *     Out_c_M[tileN_0,tileN_1,....tileN_64],
+         * ]
+         * ========================================>
+         * out = AT(tmp)A
+         * AT =
+         * [
+         *     [1.0f,  1.0f,   1.0f,   1.0f,   1.0f,  32.0f, 32.0f, 0.0f],
+         *     [0.0f,  1.0f,  -1.0f,   2.0f,  -2.0f,  16.0f,-16.0f, 0.0f],
+         *     [0.0f,  1.0f,   1.0f,   4.0f,   4.0f,   8.0f,  8.0f, 0.0f],
+         *     [0.0f,  1.0f,  -1.0f,   8.0f,  -8.0f,   4.0f, -4.0f, 0.0f],
+         *     [0.0f,  1.0f,   1.0f,  16.0f,  16.0f,   2.0f,  2.0f, 0.0f],
+         *     [0.0f,  1.0f,  -1.0f,  32.0f, -32.0f,   1.0f, -1.0f, 1.0f]
+         * ]
+         */
+        template <typename T>
+        void Conv2dWinograd<T>::winograd_f63_transform_output(const Tensor& out_tm, int tile_count, Tensor& out){
+
+        }
+
+        //TODO:maybe simd optimize
+        template <>
+        void Conv2dWinograd<float>::winograd_f63_transform_output(const Tensor& out_tm, int tile_count, Tensor& out){
+            Shape out_shape = out.sizes();
+            Shape out_tm_shape = out_tm.sizes();
+            int num = out_tm_shape[0];
+            int out_channel = out_shape[1];
+            int out_height = out_shape[2];
+            int out_width = out_shape[3];
+            int stride = out_channel * tile_count;
+            int out_tm_num_offset = 64 * stride;
+            int out_channel_offset = out_height * out_width;
+            int out_num_offset = out_channel * out_channel_offset;
+
+            const float* out_tm_ptr = out_tm.data<float>();
+            float *out_ptr = out.data<float>();
+
+            for (int n = 0; n < num; ++n) {
+#ifdef TS_USE_OPENMP
+#pragma omp parallel for num_threads(openmp_threads())
+#endif
+                for (int c = 0; c < out_channel; ++c) {
+                    float tmpA[8][6];
+                    int tile_offset = 0;
+                    const float *out_tm_cur = out_tm_ptr + n * out_tm_num_offset + c * tile_count;
+                    float *out_cur = out_ptr + n * out_num_offset + c * out_channel_offset;
+
+                    for (int h = 0; h + 5 < out_height; h += 6) {
+                        for (int w = 0; w + 5 < out_width; w += 6) {
+                            const float *out_tm_at = out_tm_cur + tile_offset;
+                            float *out_at = out_cur + h * out_width + w;
+
+                            for (int i = 0; i < 8; ++i) {
+                                float t0,t1,t2,t3,t4,t5,t6,t7;
+                                t0 = out_tm_at[0];
+                                t1 = out_tm_at[1 * stride];
+                                t2 = out_tm_at[2 * stride];
+                                t3 = out_tm_at[3 * stride];
+                                t4 = out_tm_at[4 * stride];
+                                t5 = out_tm_at[5 * stride];
+                                t6 = out_tm_at[6 * stride];
+                                t7 = out_tm_at[7 * stride];
+
+                                float re0 = t1 + t2;
+                                float re1 = t1 - t2;
+                                float re2 = t3 + t4;
+                                float re3 = t3 - t4;
+                                float re4 = t5 + t6;
+                                float re5 = t5 - t6;
+
+                                tmpA[i][0] = t0 + re0 + re2 + re4 * 32.f;
+                                tmpA[i][1] = re1 + re3 + re3 + re5 * 16.f;
+                                tmpA[i][2] = re0 + re2 * 4 + re4 * 8.f;
+                                tmpA[i][3] = re1 + re3 * 8 + re5 * 4.f;
+                                tmpA[i][4] = re0 + re2 * 16 + re4 + re4;
+                                tmpA[i][5] = re1 + re3 * 32 + re5 + t7;
+
+                                out_tm_at += 8 * stride;
+                            }
+
+                            float *out0 = out_at;
+                            float *out1 = out0 + out_width;
+                            float *out2 = out1 + out_width;
+                            float *out3 = out2 + out_width;
+                            float *out4 = out3 + out_width;
+                            float *out5 = out4 + out_width;
+
+                            for (int i = 0; i < 6; ++i) {
+                                float t0,t1,t2,t3,t4,t5,t6,t7;
+                                t0 = tmpA[0][i];
+                                t1 = tmpA[1][i];
+                                t2 = tmpA[2][i];
+                                t3 = tmpA[3][i];
+                                t4 = tmpA[4][i];
+                                t5 = tmpA[5][i];
+                                t6 = tmpA[6][i];
+                                t7 = tmpA[7][i];
+
+                                float re0 = t1 + t2;
+                                float re1 = t1 - t2;
+                                float re2 = t3 + t4;
+                                float re3 = t3 - t4;
+                                float re4 = t5 + t6;
+                                float re5 = t5 - t6;
+
+                                out0[i] = t0 + re0 + re2 + re4 * 32.f;
+                                out1[i] = re1 + re3 + re3 + re5 * 16.f;
+                                out2[i] = re0 + re2 * 4 + re4 * 8.f;
+                                out3[i] = re1 + re3 * 8 + re5 * 4.f;
+                                out4[i] = re0 + re2 * 16 + re4 + re4;
+                                out5[i] = re1 + re3 * 32 + re5 + t7;
+                            }
+                            ++tile_offset;
+                        }
+                    }
+                }
+            }
         }
 
         template <typename T>
