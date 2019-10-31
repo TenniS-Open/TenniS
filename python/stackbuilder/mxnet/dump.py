@@ -33,6 +33,13 @@ def load_params(model_params, model_json):
     return symbol, arg_params, aux_params
 
 
+def load_checkpoint(model_prefix, epoch):
+    model_params = find_epoch_params(model_prefix, epoch)
+    model_json = '%s-symbol.json' % (model_prefix, )
+
+    return load_params(model_params, model_json)
+
+
 def dump_image(model_prefix, epoch, data, output_root, inputs=None, outputs=None):
     """
     :param model_prefix:
@@ -67,7 +74,7 @@ def dump_image(model_prefix, epoch, data, output_root, inputs=None, outputs=None
             raise ValueError("Can not open or access image: {}".format(image_path))
         data = data[:, :, [2, 1, 0]]                        # to rgb
         data = numpy.asarray(data, dtype=numpy.float32)     # to float
-        data /= 1.0 / 255                                   # div std
+        data /= 255.0                                       # div std
         data = numpy.transpose(data, [2, 0, 1])             # to chw
         data = numpy.expand_dims(data, 0)                   # to 4-D
 
@@ -121,7 +128,7 @@ def dump_image(model_prefix, epoch, data, output_root, inputs=None, outputs=None
 
     data_iter.reset()
     this_data = data_iter.next()
-    module.forward(this_data)
+    module.forward(this_data, is_train=False)
 
     output_features = module.get_outputs()
 
