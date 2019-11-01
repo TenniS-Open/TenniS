@@ -2,6 +2,7 @@
 
 #include "backend/name.h"
 #include "core/tensor_builder.h"
+#include <algorithm>
 
 namespace ts {
     namespace base {
