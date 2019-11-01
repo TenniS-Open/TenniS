@@ -515,12 +515,12 @@ namespace ts{
 
             const float G[8][3] = {
                {1.0f,  0.0f,  0.0f},
-               {-2/9.f, -2/9.f, -2/9.f},
-               {-2/9.f, 2/9.f,  -2/9.f},
-               {1/90.f, 1/45.f, 2/45.f},
-               {1/90.f, -1/45.f,2/45.f},
-               {1/45.f, 1/90.f, 1/180.f},
-               {1/45.f, -1/90.f,1/180.f},
+               {-2.f/9, -2.f/9, -2.f/9},
+               {-2.f/9, 2.f/9,  -2.f/9},
+               {1.f/90, 1.f/45, 2.f/45},
+               {1.f/90, -1.f/45,2.f/45},
+               {1.f/45, 1.f/90, 1.f/180},
+               {1.f/45, -1.f/90,1.f/180},
                {0.0f,  0.0f,  1.0f}
             };
 
@@ -551,6 +551,17 @@ namespace ts{
                         }
                     }
                 }
+            }
+
+            //gemm pack A
+            float *kernel_tm_ptr = kernel_tm.data<float>();
+            const float* from = p_kernel_trans;
+            float *to = kernel_tm_ptr;
+            int transform_kernel_tile_offset = out_channel * input_channel;
+            for (int i = 0; i < in_tile_size; ++i) {
+                math<float,float>::pack8_A(out_channel, input_channel, from, input_channel, to);
+                from += transform_kernel_tile_offset;
+                to += transform_kernel_tile_offset;
             }
         }
 
@@ -829,6 +840,110 @@ namespace ts{
                                              Tensor &out,
                                              bool kernel_transformed){
 
+        }
+
+        template <>
+        void Conv2dWinograd<float>::winograd_f63(const Tensor &x,
+                                             const Padding2D &padding,
+                                             float padding_value,
+                                             const Tensor &kernel,
+                                             Tensor &out,
+                                             bool kernel_transformed){
+            int tile_width = 6;
+            int tile_height = 6;
+
+            Shape kernel_shape = kernel.sizes();
+            Tensor input_padded = x;
+            Tensor out_padded = out;
+            bool out_padded_flag = false;
+            Stride2D stride(1, 1);
+            KSize2D ksize(3, 3);
+            KernelCommonFunc<float>::in_out_pad_and_fix_size(x,
+                                                             kernel_shape,
+                                                             out,
+                                                             tile_height,
+                                                             tile_width,
+                                                             padding,
+                                                             padding_value,
+                                                             stride,
+                                                             ksize,
+                                                             input_padded,
+                                                             out_padded,
+                                                             out_padded_flag);
+
+            auto output_shape = out_padded.sizes();
+            auto input_shape = input_padded.sizes();
+            auto src_output_shape = out.sizes();
+
+            int num = input_shape[0];
+            int input_channel = input_shape[1];
+            int out_channel = output_shape[1];
+            int out_height = output_shape[2];
+            int out_width = output_shape[3];
+
+            int tile_block_height = out_height / tile_height;
+            int tile_block_width = out_width / tile_width;
+            int tile_block_num = tile_block_height * tile_block_width;
+            int in_tile_size = (tile_width + 2) * (tile_height + 2);
+
+            //transform kernel
+            Tensor kernel_tm = kernel;
+            if(!kernel_transformed){
+                Shape kernel_tm_shape = {in_tile_size, kernel_shape[0], kernel_shape[1]};
+                Tensor kernel_tmp(Tensor::InFlow::HOST, kernel.dtype(), kernel_tm_shape);
+//                std::memset(kernel_tmp.data<float>(), 0, sizeof(float)*kernel_tmp.count());
+                winograd_f63_transform_and_pack_kernel(kernel, in_tile_size, kernel_tmp);
+                kernel_tm = kernel_tmp;
+            }
+            const float *kernel_ptr = kernel_tm.data<float>();
+
+            //transform input
+            Shape input_tm_shape = {num, in_tile_size, input_channel, tile_block_num};
+            Tensor input_tm(Tensor::InFlow::HOST, input_padded.dtype(), input_tm_shape);
+            winograd_f63_transform_and_pack_input(input_padded, tile_block_num, input_tm);
+            const float *trans_input_ptr = input_tm.data<float>();
+
+            //eltwise_gemm->gemm(O = U*V)
+            Shape transform_out_shape = {num, in_tile_size, out_channel, tile_block_num};
+            Tensor transform_out(Tensor::InFlow::HOST, out.dtype(), transform_out_shape);
+            float *trans_out_ptr = transform_out.data<float>();
+
+            int transform_kernel_tile_offset = out_channel * input_channel;
+            int transform_input_tile_offset = input_channel * tile_block_num;
+            int transform_input_num_offset = in_tile_size * transform_input_tile_offset;
+            int transform_out_tile_offset = out_channel * tile_block_num;
+            int transform_out_num_offset = in_tile_size * transform_out_tile_offset;
+
+            for (int n = 0; n < num; ++n) {
+                const float *trans_input_cur = trans_input_ptr + n * transform_input_num_offset;
+                float *trans_out_cur = trans_out_ptr + n * transform_out_num_offset;
+
+                for (int i = 0; i < in_tile_size; ++i) {
+                    const float *trans_kernel_at = kernel_ptr + i * transform_kernel_tile_offset;
+                    const float *trans_input_at = trans_input_cur + i * transform_input_tile_offset;
+                    float *trans_out_at = trans_out_cur + i * transform_out_tile_offset;
+                    math<float, float>::gemm(out_channel,
+                                             tile_block_num,
+                                             input_channel,
+                                             1.f,
+                                             trans_kernel_at,
+                                             trans_input_at,
+                                             0.f,
+                                             trans_out_at,
+                                             false,
+                                             true);
+                }
+            }
+
+            //transform output
+            winograd_f63_transform_output(transform_out, tile_block_num, out_padded);
+
+            //cut output
+            if (out_padded_flag) {
+                std::array<int, 2> pad_h = {0, src_output_shape[2] - out_height};
+                std::array<int, 2> pad_w = {0, src_output_shape[3] - out_width};
+                PadAlgorithm<float>::cut2d(out_padded, pad_h, pad_w, 0.f, out);
+            }
         }
     } //cpu
 } //ts
