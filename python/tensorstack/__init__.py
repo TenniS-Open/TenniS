@@ -17,5 +17,8 @@ from . import dtype
 
 from . import orz
 from . import optimizer
+from . import inferer
+
+from .dtype import *
 
 __version__ = "0.0.9"

@@ -74,6 +74,11 @@ class Node(object):
     def shape(self):
         return self.__shape
 
+    @shape.setter
+    def shape(self, value):
+        self.__params[self.RetentionParam.shape] = value
+        self.__shape = value
+
     @property
     def params(self):
         return self.__params
@@ -83,6 +88,11 @@ class Node(object):
         if self.RetentionParam.dtype in self.__params:
             return int(self.__params[self.RetentionParam.dtype])
         return VOID
+
+    @dtype.setter
+    def dtype(self, value):
+        self.__params[self.RetentionParam.dtype] = value
+        self.__dtype = value
 
     def has(self, param):
         return param in self.__params
