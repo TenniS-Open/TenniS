@@ -17,6 +17,7 @@ from .tensor import to_str
 from .dtype import VOID
 
 import numpy
+from typing import List, Tuple, Union
 
 
 class Node(object):
@@ -76,7 +77,7 @@ class Node(object):
 
     @shape.setter
     def shape(self, value):
-        self.__params[self.RetentionParam.shape] = value
+        self.__params[self.RetentionParam.shape] = from_any(value, dtype=numpy.int32)
         self.__shape = value
 
     @property
@@ -91,7 +92,7 @@ class Node(object):
 
     @dtype.setter
     def dtype(self, value):
-        self.__params[self.RetentionParam.dtype] = value
+        self.__params[self.RetentionParam.dtype] = from_any(value, dtype=numpy.int32)
         self.__dtype = value
 
     def has(self, param):
@@ -116,12 +117,12 @@ class Node(object):
 
     @property
     def inputs(self):
-        # type: () -> list[Node]
+        # type: () -> List[Node]
         return self.__inputs
 
     @property
     def outputs(self):
-        # type: () -> list[Node]
+        # type: () -> List[Node]
         return self.__outputs
 
     @staticmethod
