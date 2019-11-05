@@ -24,6 +24,15 @@ namespace ts{
                                             Tensor &input_padded,
                                             Tensor &out_padded,
                                             bool &out_padded_flag);
+
+        static bool winograd_check(const Shape &ksize,
+                                   const Stride2D &stride,
+                                   const Dilation2D &dilation,
+                                   const Shape &input_shape,
+                                   const Shape &out_shape,
+                                   WinogradConv2DMode& winograd_model
+                                   );
+
     };
 }
 
