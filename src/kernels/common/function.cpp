@@ -77,6 +77,70 @@ namespace ts{
         out_padded_flag = out_need_pad;
     }
 
+    template <typename T>
+    bool KernelCommonFunc<T>::winograd_check(const Shape &ksize,
+                                             const Stride2D &stride,
+                                             const Dilation2D &dilation,
+                                             const Shape &input_shape,
+                                             const Shape &out_shape,
+                                             WinogradConv2DMode& winograd_model){
+        int input_channels = input_shape[1];
+        int input_height = input_shape[2];
+        int input_width = input_shape[3];
+        int out_channels = out_shape[1];
+        int kernel_height = ksize[2];
+        int kernel_width = ksize[3];
+
+        if(kernel_height == 3 && kernel_width == 3 && stride.width == 1 && stride.height == 1 && dilation.height == 1 && dilation.width == 1){
+            if(input_channels >= 16 && out_channels >= 16){
+                if(input_channels <= 64 && out_channels <= 64){
+                    if(input_height >= 50 && input_width >= 50){
+                        winograd_model = F2X2_3X3;
+                        return true;
+                    }
+                }
+                else if(input_channels <= 128 && out_channels <= 128){
+                    if(input_height <= 32 && input_width <= 32){
+                        return false;
+                    }
+                    else if(input_height <= 50 && input_width <= 50){
+                        winograd_model = F2X2_3X3;
+                        return true;
+                    }
+                    else{
+                        winograd_model = F6X6_3X3;
+                        return true;
+                    }
+                }
+                else if(input_channels < 256 && out_channels < 256){
+                    if(input_height > 26 && input_width > 26){
+                        if(input_height <= 60 && input_width <= 60){
+                            winograd_model = F2X2_3X3;
+                            return true;
+                        }
+                        else{
+                            winograd_model = F6X6_3X3;
+                            return true;
+                        }
+                    }
+                }
+                else{
+                    if(input_height <= 26 && input_width <= 26){
+                        winograd_model = F2X2_3X3;
+                        return true;
+                    }
+                    else{
+                        winograd_model = F6X6_3X3;
+                        return true;
+                    }
+
+                }
+            }
+        }
+        return false;
+    }
+
+
 } //ts
 
 template class ts::KernelCommonFunc<ts::dtype<ts::FLOAT32>::declare>;
