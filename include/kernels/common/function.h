@@ -33,6 +33,14 @@ namespace ts{
                                    WinogradConv2DMode& winograd_model
                                    );
 
+        static bool winograd_check_arm(const Shape &ksize,
+                                   const Stride2D &stride,
+                                   const Dilation2D &dilation,
+                                   const Shape &input_shape,
+                                   const Shape &out_shape,
+                                   WinogradConv2DMode& winograd_model
+        );
+
     };
 }
 
