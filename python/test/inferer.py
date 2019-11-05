@@ -9,11 +9,20 @@ from typing import Union, List, Dict
 import tensorstack as ts
 
 if __name__ == "__main__":
-    a = ts.menu.param("a", [3], ts.FLOAT32)
-    b = ts.menu.param("b", [3], ts.FLOAT32)
-    c = ts.menu.op("c", "add", [a, b])
-    d = ts.menu.op("d", "add", [a, c])
+    model = "/home/kier/git/TensorStack/python/test/caffe.tsm"
 
-    print(d)
-    print(ts.inferer.infer(d))
-    print(d)
+    with open(model, "rb") as f:
+        module = ts.module.Module.Load(f)
+
+    outputs = module.outputs
+
+    for i in module.inputs:
+        if not ts.inferer.has_infered(i):
+            if not i.has(ts.Node.RetentionParam.dtype):
+                i.dtype = ts.FLOAT32
+            if not i.has(ts.Node.RetentionParam.shape):
+                i.shape = [-1, 3, 256, 256]
+
+    print(outputs[0])
+    print(ts.inferer.infer(outputs[0]))
+    print(outputs[0])

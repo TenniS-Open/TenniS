@@ -28,6 +28,8 @@ class NodeShape(object):
                 raise Exception("Param 1 Node {}:{}'s shape must be set.".format(obj.op, obj.name))
         elif isinstance(obj, (list, tuple)):
             shape = obj
+        elif isinstance(obj, numpy.ndarray):
+            shape = list(obj)
         else:
             raise Exception("Param 1:obj must be Node, List[int] or List[tuple]")
         if dtype is None:
@@ -143,6 +145,8 @@ def infer(node, cache=None):
         node.shape = [-1]
         cache[node] = []
         return []
+
+    # sys.stderr.write("Infered shape of {}:{} = {}\n".format(node.op, node.name, shape))
 
     node.shape = shape[0].shape
     node.dtype = shape[0].dtype
@@ -394,6 +398,10 @@ def infer_reshape(node, inputs):
     x = inputs[0]
     y = list(node.get("shape"))
 
+    for i in range(len(y)):
+        if y[i] == 0:
+            y[i] = x.shape[i]
+
     if _valid_dims(x):
         tmp = numpy.zeros(x.shape).reshape(y)
         return NodeShape(tmp.shape, x.dtype)
@@ -425,6 +433,8 @@ def infer_inner_prod(node, inputs):
 
     b = w.shape
 
+    # print("{}x{}".format(a, b))
+
     y = ()
     if transpose:
         y = (a[0], b[0])
@@ -435,6 +445,183 @@ def infer_inner_prod(node, inputs):
 
 
 _register_shape_inferer("inner_prod", infer_inner_prod)
+
+
+_register_shape_inferer("batch_norm", infer_copy_0)
+_register_shape_inferer("batch_scale", infer_copy_0)
+
+
+def infer_concat(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) > 1
+
+    dim = int(node.get("dim"))
+
+    shape = list(inputs[0].shape)
+    for i in range(1, len(inputs)):
+        shape[dim] += inputs[i].shape[dim]
+
+    return NodeShape(shape, inputs[0].dtype)
+
+
+_register_shape_inferer("concat", infer_concat)
+
+
+def infer_global_pooling2d(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 1
+    x = inputs[0]
+
+    type = str(node.get("format"))
+
+    y = list(x.shape)
+    plant = ()
+    if type == "NCHW":
+        plant = (2, 3)
+    elif type == "NHWC":
+        plant = (1, 2)
+    else:
+        return None
+
+    for p in range(len(plant)):
+        i = plant[p]
+        y[i] = 1
+
+    return NodeShape(y, x.dtype)
+
+
+_register_shape_inferer("global_pooling2d", infer_global_pooling2d)
+
+
+_register_shape_inferer("sigmoid", infer_copy_0)
+
+
+def infer_dims(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 1
+    return NodeShape([], ts_dtype.INT32)
+
+
+_register_shape_inferer("_dims", infer_dims)
+
+
+def infer_expand(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 2
+
+    x = inputs[0]
+    dims = node.inputs[1]
+
+    assert isinstance(dims, Node)
+
+    if dims.op == Node.Const:
+        dims = int(dims.get("value"))
+    elif dims.op == "_dims":
+        y = dims.inputs[0]
+        assert isinstance(y, Node)
+        if not has_infered(y):
+            return None
+        dims = len(y.shape)
+    else:
+        return None
+
+    front = node.try_get("front", dims)
+    end = node.try_get("end", dims)
+    inverse = node.try_get("inverse", False)
+    y = list(x.shape)
+
+    if not inverse:
+        while len(y) < dims and front > 0:
+            y.insert(0, 1)
+        while len(y) < dims and end > 0:
+            y.append(1)
+    else:
+        while len(y) < dims and end > 0:
+            y.append(1)
+        while len(y) < dims and front > 0:
+            y.insert(0, 1)
+
+    return NodeShape(y, x.dtype)
+
+
+_register_shape_inferer("_expand", infer_expand)
+
+
+def infer_limit(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 1
+    x = inputs[0]
+    shape = list(node.get("shape"))
+
+    while len(shape) < len(x.shape):
+        shape.insert(0, -1)
+
+    y = copy.copy(shape)
+    for i in range(len(y)):
+        if y[i] < 0:
+            y[i] = x.shape[i]
+        elif x.shape[i] < 0:
+            y[i] = shape[i]
+        else:
+            y[i] = min(y[i], x.shape[i])
+
+    return NodeShape(y, x.dtype)
+
+
+_register_shape_inferer("_limit", infer_limit)
+
+
+_register_shape_inferer("_copy", infer_copy_0)
+_register_shape_inferer("prelu", infer_copy_0)
+
+
+def transpose_conv2d_forward(x, padding, dilation, kernel, stride):
+    return (x - 1) * stride + (dilation * (kernel - 1) + 1) - padding
+
+
+def infer_transpose_conv2d(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 2
+    x = inputs[0]
+
+    w = node.inputs[1]
+    if w.op != Node.Const:
+        return None
+    w = w.get("value")
+    w = tensor.from_any(w)
+
+    padding = node.get("padding")
+    type = str(node.get("format"))
+    stride = node.get("stride")
+    dilation = node.get("dilation")
+    kernel = w.shape[-2:]
+
+    padding = numpy.asarray(padding)
+
+    y = list(x.shape)
+    plant = ()
+    channel = 0
+    if type == "NCHW":
+        plant = (2, 3)
+        channel = 1
+    elif type == "NHWC":
+        plant = (1, 2)
+        channel = 3
+    else:
+        return None
+
+    for p in range(len(plant)):
+        i = plant[p]
+        if x.shape[i] < 0:
+            y[i] = -1
+            continue
+        y[i] = transpose_conv2d_forward(x.shape[i], padding[i, 0] + padding[i, 1], dilation[i], kernel[p], stride[i])
+    y[channel] = w.shape[1]
+
+    return NodeShape(y, x.dtype)
+
+
+_register_shape_inferer("transpose_conv2d", infer_transpose_conv2d)
 
 
 if __name__ == "__main__":
