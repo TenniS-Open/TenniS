@@ -274,6 +274,7 @@ namespace ts{
             }
 
             std::cout << "Net: " << name
+            << " ,input:[ " << shape[0] << "," << shape[1] << "," <<  shape[2] << "," << shape[3] << "]"
             << " ,max: " << max_time << "ms"
             << " ,min: " << min_time << "ms"
             " ,avg: " << count_time / option.loop_counts << "ms"
