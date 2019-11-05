@@ -4,7 +4,7 @@
 :author Kier
 """
 
-from typing import Union, List, Tuple, Dict
+from typing import Union, List, Tuple, Dict, Set
 
 from .node import Node
 from . import dtype as ts_dtype
@@ -104,22 +104,31 @@ def _valid_dims(shape, *dims):
     return True
 
 
-def infer(node, cache=None):
-    # type: (Union[Node, List[Node]], Dict[Node, List[NodeShape]]) -> Union[List[NodeShape], List[List[NodeShape]]]
+def infer(node, endpoints=None, cache=None):
+    # type: (Union[Node, List[Node]], List[Node], Dict[Node, List[NodeShape]]) -> Union[List[NodeShape], List[List[NodeShape]]]
     """
-    :param node:
-    :return: shape
+    For more information, the #padding attr will be set in conv2d_v2 and pooling2d_v2,
+        #value will be set in the node can be compute in static.
+    :param node: node want to be infer
+    :param endpoints: end points about graph, so not infer
+    :param cache: infered nodes
+    :return: list of NodeShape
     """
     if cache is None:
         cache = {}
 
     if isinstance(node, (list, tuple)):
-        return [infer(n, cache) for n in node]
+        return [infer(n, cache=cache) for n in node]
 
     if node in cache:
         return cache[node]
 
-    inputs = [infer(i, cache) for i in node.inputs]
+    if endpoints is not None and node in endpoints:
+        if not has_infered(node):
+            raise Exception("Node {}:{} must be set shape and dtype".format(node.op, node.name))
+        return [NodeShape(node)]
+
+    inputs = [infer(i, cache=cache) for i in node.inputs]
     if node.op not in _shape_inferer:
         sys.stderr.write("Failed infer shape of {}:{}\n".format(node.op, node.name))
         node.dtype = VOID
@@ -800,6 +809,58 @@ _register_shape_inferer("gemm", infer_gemm)
 
 
 _register_shape_inferer("abs", infer_copy_0)
+
+
+def infer_shape(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 1
+
+    x = inputs[0]
+    return NodeShape((len(x.shape),), x.dtype)
+
+
+_register_shape_inferer("_shape", infer_shape)
+
+
+def infer_gather(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 2
+
+    axis = int(node.get("axis"))
+    x = inputs[0]
+    indices = node.inputs[1]
+
+    if indices.op != Node.Const:
+        return None
+
+    indices = indices.get("value")
+    indices = numpy.asarray(indices)
+    indices_shape = indices.shape
+
+    if axis < 0:
+        axis = len(x) + axis
+
+    y = list(x.shape)
+    del y[axis]
+
+    for i in indices_shape:
+        y.insert(axis, i)
+        axis += 1
+
+    return NodeShape(y, x.dtype)
+
+
+_register_shape_inferer("gather", infer_gather)
+
+
+def infer_reshape_v2(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 2
+
+    raise NotImplementedError
+
+
+# _register_shape_inferer("_reshape_v2", infer_reshape_v2)
 
 
 if __name__ == "__main__":
