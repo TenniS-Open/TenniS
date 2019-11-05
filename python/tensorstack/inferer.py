@@ -11,6 +11,7 @@ from . import dtype as ts_dtype
 from .dtype import VOID, FLOAT32
 from . import tensor
 from . import menu
+from . import _inferer_
 
 import sys
 import copy
@@ -179,7 +180,7 @@ def infer_eltwise(node, inputs):
     b = inputs[1]
     if _valid_dims(a) and _valid_dims(b):
         c = numpy.zeros(a.shape) + numpy.zeros(b.shape)
-        return NodeShape(c.shape, c.dtype)
+        return NodeShape(c.shape, a.dtype)
     dtype = a.dtype
     a = a.shape
     b = b.shape
@@ -288,7 +289,7 @@ def infer_conv2d(node, inputs):
     w = tensor.from_any(w)
 
     padding = node.get("padding")
-    type = str(node.get("format"))
+    fmt = str(node.get("format"))
     stride = node.get("stride")
     dilation = node.get("dilation")
     kernel = w.shape[-2:]
@@ -298,10 +299,10 @@ def infer_conv2d(node, inputs):
     y = list(x.shape)
     plant = ()
     channel = 0
-    if type == "NCHW":
+    if fmt == "NCHW":
         plant = (2, 3)
         channel = 1
-    elif type == "NHWC":
+    elif fmt == "NHWC":
         plant = (1, 2)
         channel = 3
     else:
@@ -344,7 +345,7 @@ def infer_pooling2d(node, inputs):
     x = inputs[0]
 
     padding = node.get("padding")
-    type = str(node.get("format"))
+    fmt = str(node.get("format"))
     stride = node.get("stride")
     kernel = node.get("ksize")
 
@@ -352,9 +353,9 @@ def infer_pooling2d(node, inputs):
 
     y = list(x.shape)
     plant = ()
-    if type == "NCHW":
+    if fmt == "NCHW":
         plant = (2, 3)
-    elif type == "NHWC":
+    elif fmt == "NHWC":
         plant = (1, 2)
     else:
         return None
@@ -472,13 +473,13 @@ def infer_global_pooling2d(node, inputs):
     assert len(inputs) == 1
     x = inputs[0]
 
-    type = str(node.get("format"))
+    fmt = str(node.get("format"))
 
     y = list(x.shape)
     plant = ()
-    if type == "NCHW":
+    if fmt == "NCHW":
         plant = (2, 3)
-    elif type == "NHWC":
+    elif fmt == "NHWC":
         plant = (1, 2)
     else:
         return None
@@ -575,8 +576,8 @@ _register_shape_inferer("_copy", infer_copy_0)
 _register_shape_inferer("prelu", infer_copy_0)
 
 
-def transpose_conv2d_forward(x, padding, dilation, kernel, stride):
-    return (x - 1) * stride + (dilation * (kernel - 1) + 1) - padding
+def conv2d_backward(y, padding, dilation, kernel, stride):
+    return (y - 1) * stride + (dilation * (kernel - 1) + 1) - padding
 
 
 def infer_transpose_conv2d(node, inputs):
@@ -591,7 +592,7 @@ def infer_transpose_conv2d(node, inputs):
     w = tensor.from_any(w)
 
     padding = node.get("padding")
-    type = str(node.get("format"))
+    fmt = str(node.get("format"))
     stride = node.get("stride")
     dilation = node.get("dilation")
     kernel = w.shape[-2:]
@@ -601,10 +602,10 @@ def infer_transpose_conv2d(node, inputs):
     y = list(x.shape)
     plant = ()
     channel = 0
-    if type == "NCHW":
+    if fmt == "NCHW":
         plant = (2, 3)
         channel = 1
-    elif type == "NHWC":
+    elif fmt == "NHWC":
         plant = (1, 2)
         channel = 3
     else:
@@ -615,13 +616,190 @@ def infer_transpose_conv2d(node, inputs):
         if x.shape[i] < 0:
             y[i] = -1
             continue
-        y[i] = transpose_conv2d_forward(x.shape[i], padding[i, 0] + padding[i, 1], dilation[i], kernel[p], stride[i])
+        y[i] = conv2d_backward(x.shape[i], padding[i, 0] + padding[i, 1], dilation[i], kernel[p], stride[i])
     y[channel] = w.shape[1]
 
     return NodeShape(y, x.dtype)
 
 
 _register_shape_inferer("transpose_conv2d", infer_transpose_conv2d)
+
+
+def infer_shape_index_patch(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 2
+    x = inputs[0]
+    pos = inputs[1]
+
+    number, channels, height, width = x.shape
+    number2, landmark = pos.shape[:2]
+
+    assert number == number2
+
+    origin_patch = list(node.get("origin_patch"))
+    origin = list(node.get("origin"))
+
+    x_patch_h = int(origin_patch[0] * height / origin[0] + 0.5)
+    x_patch_w = int(origin_patch[1] * width / origin[1] + 0.5)
+
+    return NodeShape((number, channels, x_patch_h, landmark // 2, x_patch_w), x.dtype)
+
+
+_register_shape_inferer("shape_index_patch", infer_shape_index_patch)
+
+
+def infer_cast(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 1
+    x = inputs[0]
+
+    dtype = int(node.get("dtype"))
+
+    return NodeShape(x.shape, dtype)
+
+
+_register_shape_inferer("_cast", infer_cast)
+
+
+def infer_depthwise_conv2d(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 2
+    x = inputs[0]
+
+    w = node.inputs[1]
+    if w.op != Node.Const:
+        return None
+    w = w.get("value")
+    w = tensor.from_any(w)
+
+    padding = node.get("padding")
+    fmt = str(node.get("format"))
+    stride = node.get("stride")
+    dilation = node.get("dilation")
+    kernel = w.shape[-2:]
+
+    padding = numpy.asarray(padding)
+
+    y = list(x.shape)
+    plant = ()
+    channel = 0
+    if fmt == "NCHW":
+        plant = (2, 3)
+        channel = 1
+    elif fmt == "NHWC":
+        plant = (1, 2)
+        channel = 3
+    else:
+        return None
+
+    for p in range(len(plant)):
+        i = plant[p]
+        if x.shape[i] < 0:
+            y[i] = -1
+            continue
+        y[i] = conv2d_forward(x.shape[i], padding[i, 0] + padding[i, 1], dilation[i], kernel[p], stride[i])
+    y[channel] = w.shape[0] * x.shape[channel]
+
+    return NodeShape(y, x.dtype)
+
+
+_register_shape_inferer("depthwise_conv2d", infer_depthwise_conv2d)
+
+
+def infer_dynamic_padding(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    return NodeShape([4, 2], ts_dtype.INT32)
+
+
+_register_shape_inferer("_onnx_pooling2d_padding", infer_dynamic_padding)
+
+
+_dynamic_padding_factory = {
+    "_onnx_pooling2d_padding": _inferer_.onnx_pooling2d_padding
+}
+
+
+def _register_dynamic_padding(op, padding):
+    _dynamic_padding_factory[op] = padding
+
+
+def infer_pooling2d_v2(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 4
+    x = inputs[0]
+
+    # == calculate dynamic padding
+    padding_node = node.inputs[1]
+    assert isinstance(padding_node, Node)
+    padding_op = padding_node.op
+    if padding_op not in _dynamic_padding_factory:
+        return None
+    padding = _dynamic_padding_factory[padding_op](padding_node)
+    if padding is None:
+        return None
+    # == end
+    padding = numpy.asarray(padding)
+
+    # == get stride
+    ksize_node = node.inputs[2]
+    if ksize_node.op != Node.Const:
+        return None
+
+    # == get ksize
+    stride_node = node.inputs[3]
+    if stride_node.op != Node.Const:
+        return None
+
+    stride = stride_node.get("value")
+    kernel = ksize_node.get("value")
+
+    fmt = str(node.get("format"))
+    y = list(x.shape)
+    plant = ()
+    if fmt == "NCHW":
+        plant = (2, 3)
+    elif fmt == "NHWC":
+        plant = (1, 2)
+    else:
+        return None
+
+    for p in range(len(plant)):
+        i = plant[p]
+        if x.shape[i] < 0:
+            y[i] = -1
+            continue
+        y[i] = pooling2d_forward(x.shape[i], padding[i, 0] + padding[i, 1], kernel[i], stride[i])
+
+    node.set("#padding", padding, dtype=numpy.int32)
+
+    return NodeShape(y, x.dtype)
+
+
+_register_shape_inferer("pooling2d_v2", infer_pooling2d_v2)
+
+
+def infer_gemm(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 3
+
+    A = inputs[0]
+    B = inputs[1]
+
+    # print("{}x{}".format(A.shape, B.shape))
+
+    transA = node.get("transA")
+    transB = node.get("transB")
+
+    M = A.shape[0] if not transA else A.shape[1]
+    N = B.shape[1] if not transB else B.shape[0]
+
+    return NodeShape((M, N), A.dtype)
+
+
+_register_shape_inferer("gemm", infer_gemm)
+
+
+_register_shape_inferer("abs", infer_copy_0)
 
 
 if __name__ == "__main__":
