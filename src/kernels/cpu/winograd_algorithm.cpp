@@ -49,12 +49,12 @@ namespace ts{
          *
          */
         template <typename T>
-        void Conv2dWinograd<T>::winograd_f23_transform_and_pack_kernel(const Tensor& kernel, int in_tile_size, Tensor &kernel_tm){
+        void Conv2dWinogradAlgorithm<T>::winograd_f23_transform_and_pack_kernel(const Tensor& kernel, int in_tile_size, Tensor &kernel_tm){
 
         }
 
         template <>
-        void Conv2dWinograd<float>::winograd_f23_transform_and_pack_kernel(const Tensor& kernel, int in_tile_size, Tensor &kernel_tm){
+        void Conv2dWinogradAlgorithm<float>::winograd_f23_transform_and_pack_kernel(const Tensor& kernel, int in_tile_size, Tensor &kernel_tm){
             auto kernel_shape = kernel.sizes();
             int out_channel = kernel_shape[0];
             int input_channel = kernel_shape[1];
@@ -150,12 +150,12 @@ namespace ts{
          *
          */
         template <typename T>
-        void Conv2dWinograd<T>::winograd_f23_transform_and_pack_input(const Tensor& x, int tile_count, Tensor &x_tm){
+        void Conv2dWinogradAlgorithm<T>::winograd_f23_transform_and_pack_input(const Tensor& x, int tile_count, Tensor &x_tm){
 
         }
 
         template <>
-        void Conv2dWinograd<float>::winograd_f23_transform_and_pack_input(const Tensor& x, int tile_count, Tensor &x_tm){
+        void Conv2dWinogradAlgorithm<float>::winograd_f23_transform_and_pack_input(const Tensor& x, int tile_count, Tensor &x_tm){
             Shape input_shape = x.sizes();
             int num = input_shape[0];
             int input_channel = input_shape[1];
@@ -270,12 +270,12 @@ namespace ts{
          * ]
          */
         template <typename T>
-        void Conv2dWinograd<T>::winograd_f23_transform_output(const Tensor& out_tm, int tile_count, Tensor& out){
+        void Conv2dWinogradAlgorithm<T>::winograd_f23_transform_output(const Tensor& out_tm, int tile_count, Tensor& out){
 
         }
 
         template <>
-        void Conv2dWinograd<float>::winograd_f23_transform_output(const Tensor& out_tm, int tile_count, Tensor& out){
+        void Conv2dWinogradAlgorithm<float>::winograd_f23_transform_output(const Tensor& out_tm, int tile_count, Tensor& out){
             Shape out_shape = out.sizes();
             Shape out_tm_shape = out_tm.sizes();
             int num = out_tm_shape[0];
@@ -344,7 +344,7 @@ namespace ts{
         }
 
         template <typename T>
-        void Conv2dWinograd<T>::winograd_f23(const Tensor &x,
+        void Conv2dWinogradAlgorithm<T>::winograd_f23(const Tensor &x,
                                              const Padding2D &padding,
                                              float padding_value,
                                              const Tensor &kernel,
@@ -354,7 +354,7 @@ namespace ts{
         }
 
         template <>
-        void Conv2dWinograd<float>::winograd_f23(const Tensor &x,
+        void Conv2dWinogradAlgorithm<float>::winograd_f23(const Tensor &x,
                                                  const Padding2D &padding,
                                                  float padding_value,
                                                  const Tensor &kernel,
@@ -496,12 +496,12 @@ namespace ts{
          *
          */
         template <typename T>
-        void Conv2dWinograd<T>::winograd_f63_transform_and_pack_kernel(const Tensor& kernel, int in_tile_size, Tensor &kernel_tm){
+        void Conv2dWinogradAlgorithm<T>::winograd_f63_transform_and_pack_kernel(const Tensor& kernel, int in_tile_size, Tensor &kernel_tm){
 
         }
 
         template <>
-        void Conv2dWinograd<float>::winograd_f63_transform_and_pack_kernel(const Tensor& kernel, int in_tile_size, Tensor &kernel_tm){
+        void Conv2dWinogradAlgorithm<float>::winograd_f63_transform_and_pack_kernel(const Tensor& kernel, int in_tile_size, Tensor &kernel_tm){
             Shape kernel_shape = kernel.sizes();
             int out_channel = kernel_shape[0];
             int input_channel = kernel_shape[1];
@@ -598,13 +598,13 @@ namespace ts{
          *
          */
         template <typename T>
-        void Conv2dWinograd<T>::winograd_f63_transform_and_pack_input(const Tensor& x, int tile_count, Tensor &x_tm){
+        void Conv2dWinogradAlgorithm<T>::winograd_f63_transform_and_pack_input(const Tensor& x, int tile_count, Tensor &x_tm){
 
         }
 
         //TODO:maybe simd optimize
         template <>
-        void Conv2dWinograd<float>::winograd_f63_transform_and_pack_input(const Tensor& x, int tile_count, Tensor &x_tm){
+        void Conv2dWinogradAlgorithm<float>::winograd_f63_transform_and_pack_input(const Tensor& x, int tile_count, Tensor &x_tm){
             Shape input_shape = x.sizes();
             int num = input_shape[0];
             int input_channel = input_shape[1];
@@ -729,13 +729,13 @@ namespace ts{
          * ]
          */
         template <typename T>
-        void Conv2dWinograd<T>::winograd_f63_transform_output(const Tensor& out_tm, int tile_count, Tensor& out){
+        void Conv2dWinogradAlgorithm<T>::winograd_f63_transform_output(const Tensor& out_tm, int tile_count, Tensor& out){
 
         }
 
         //TODO:maybe simd optimize
         template <>
-        void Conv2dWinograd<float>::winograd_f63_transform_output(const Tensor& out_tm, int tile_count, Tensor& out){
+        void Conv2dWinogradAlgorithm<float>::winograd_f63_transform_output(const Tensor& out_tm, int tile_count, Tensor& out){
             Shape out_shape = out.sizes();
             Shape out_tm_shape = out_tm.sizes();
             int num = out_tm_shape[0];
@@ -833,7 +833,7 @@ namespace ts{
         }
 
         template <typename T>
-        void Conv2dWinograd<T>::winograd_f63(const Tensor &x,
+        void Conv2dWinogradAlgorithm<T>::winograd_f63(const Tensor &x,
                                              const Padding2D &padding,
                                              float padding_value,
                                              const Tensor &kernel,
@@ -843,7 +843,7 @@ namespace ts{
         }
 
         template <>
-        void Conv2dWinograd<float>::winograd_f63(const Tensor &x,
+        void Conv2dWinogradAlgorithm<float>::winograd_f63(const Tensor &x,
                                              const Padding2D &padding,
                                              float padding_value,
                                              const Tensor &kernel,

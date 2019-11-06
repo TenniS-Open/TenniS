@@ -10,7 +10,7 @@
 namespace  ts{
     namespace cpu{
         template <typename T>
-        class TS_DEBUG_API Conv2dWinograd{
+        class TS_DEBUG_API Conv2dWinogradAlgorithm{
         public:
             static void winograd_f23_transform_and_pack_kernel(const Tensor& kernel, int in_tile_size, Tensor &kernel_tm);
 
