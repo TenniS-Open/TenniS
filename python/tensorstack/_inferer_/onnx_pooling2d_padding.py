@@ -161,11 +161,11 @@ def onnx_pooling2d_padding(node):
     if auto_pad == "NOTSET":
         dynamic_padding = dynamic_padding_notset(input_size, static_padding, ksize, stride)
     elif auto_pad == "VALID":
-        dynamic_padding = dynamic_padding_notset(input_size, static_padding, ksize, stride)
+        dynamic_padding = dynamic_padding_valid(input_size, static_padding, ksize, stride)
     elif auto_pad == "SAME_LOWER":
-        dynamic_padding = dynamic_padding_notset(input_size, static_padding, ksize, stride)
+        dynamic_padding = dynamic_padding_same_lower(input_size, static_padding, ksize, stride)
     elif auto_pad == "SAME_UPPER":
-        dynamic_padding = dynamic_padding_notset(input_size, static_padding, ksize, stride)
+        dynamic_padding = dynamic_padding_same_upper(input_size, static_padding, ksize, stride)
     else:
         return None
 

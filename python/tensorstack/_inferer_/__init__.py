@@ -1,1 +1,3 @@
-from .onnx_padding import onnx_pooling2d_padding
+from .onnx_pooling2d_padding import onnx_pooling2d_padding
+from .dragon_pooling2d_padding import dragon_pooling2d_padding
+from .mx_pooling2d_padding import mx_pooling2d_padding

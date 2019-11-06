@@ -782,10 +782,14 @@ def infer_dynamic_padding(node, inputs):
 
 
 _register_shape_inferer("_onnx_pooling2d_padding", infer_dynamic_padding)
+_register_shape_inferer("_dragon_pooling2d_padding", infer_dynamic_padding)
+_register_shape_inferer("_mx_pooling2d_padding", infer_dynamic_padding)
 
 
 _dynamic_padding_factory = {
-    "_onnx_pooling2d_padding": _inferer_.onnx_pooling2d_padding
+    "_onnx_pooling2d_padding": _inferer_.onnx_pooling2d_padding,
+    "_dragon_pooling2d_padding": _inferer_.dragon_pooling2d_padding,
+    "_mx_pooling2d_padding": _inferer_.mx_pooling2d_padding,
 }
 
 
@@ -998,6 +1002,37 @@ def infer_stack(node, inputs):
 
 
 _register_shape_inferer("stack", infer_stack)
+
+
+_register_shape_inferer("fused_batch_norm", infer_copy_0)
+_register_shape_inferer("l2_norm", infer_copy_0)
+
+
+def infer_dimshuffle(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 1
+
+    dim = int(node.get("dim"))
+    x = inputs[0]
+    shuffle = node.get("shuffle")
+
+    shuffle = numpy.asarray(shuffle).reshape([-1])
+
+    if dim < 0:
+        dim = len(x) + dim
+
+    y = list(x.shape)
+    y[dim] = len(shuffle)
+
+    # == infer value
+    a = _infer_value(node.inputs[0])
+    if a is not None:
+        node.set("#value", numpy.take(a, shuffle, axis=dim))
+
+    return NodeShape(y, x.dtype)
+
+
+_register_shape_inferer("_dimshuffle", infer_dimshuffle)
 
 
 if __name__ == "__main__":
