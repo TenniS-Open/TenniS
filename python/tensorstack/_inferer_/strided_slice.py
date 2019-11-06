@@ -214,9 +214,6 @@ def infer_stride_slice(x, shape, begin, end, stride, begin_mask, end_mask, ellip
     _in = []
     _out = []
 
-    if len(shape) == 4:
-        print(shape)
-
     succeed = infer_output_list(shape, y, begin, end, stride,
                                 begin_mask, end_mask, ellipsis_mask, new_axis_mask, shrink_axis_mask,
                                 _in, _out)

@@ -28,7 +28,7 @@ namespace ts {
             m_ratios = tensor::array::to_float(get("ratios"));
             m_scales = tensor::array::to_float(get("scales"));
             m_pre_nms_top_n = tensor::to_int(get("pre_nms_top_n"));
-            m_post_nms_top_n = tensor::to_int(get("pose_nms_top_n"));
+            m_post_nms_top_n = tensor::to_int(get("post_nms_top_n"));
             m_nms_thresh = tensor::to_float(get("nms_thresh"));
             m_min_size = tensor::to_int(get("min_size"));
             m_min_level = tensor::to_int(get("min_level"));
