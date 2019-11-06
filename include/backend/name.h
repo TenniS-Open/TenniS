@@ -226,6 +226,7 @@ namespace ts {
         TS_DEBUG_API extern string repeats;
 
         TS_DEBUG_API extern string transpose;
+        TS_DEBUG_API extern string kernel_winograd_transformed;
     }
 }
 
