@@ -208,5 +208,7 @@ namespace ts {
         string repeats = "repeats";
 
         string transpose = "transpose";
+
+        string kernel_winograd_transformed = "kernel_winograd_transformed";
     }
 }
