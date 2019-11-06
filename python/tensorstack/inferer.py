@@ -143,7 +143,7 @@ def infer(node, endpoints=None, cache=None):
             cache[node] = []
             return []
 
-    inputs = [i[0] for i in inputs]
+    inputs = [i[0] if len(i) == 1 else i for i in inputs]
     shape = _shape_inferer[node.op](node, inputs)
 
     if isinstance(shape, NodeShape):
@@ -156,12 +156,20 @@ def infer(node, endpoints=None, cache=None):
         cache[node] = []
         return []
 
-    # sys.stderr.write("Infered shape of {}:{} = {}\n".format(node.op, node.name, shape))
+    # if node.op != Node.Const:
+    #     sys.stderr.write("Infered shape of {}:{} = {}\n".format(node.op, node.name, shape))
 
     node.shape = shape[0].shape
     node.dtype = shape[0].dtype
     cache[node] = shape
     return shape
+
+
+def _infer_value(node, value=None):
+    # type: (Node, object) -> Union[None, numpy.ndarray]
+    if node.op == Node.Const:
+        return node.get("value")
+    return node.try_get("#value", value)
 
 
 def _infer_dim(a, b):
@@ -202,10 +210,17 @@ def infer_eltwise(node, inputs):
     try:
         for i in range(len(c)):
             c[i] = _infer_dim(a[i], b[i])
-        return NodeShape(c, dtype)
     except:
         sys.stderr.write("Failed infer shape of {}:{} with {}, {}\n".format(node.op, node.name, inputs[0], inputs[1]))
         return None
+
+    lhs = _infer_value(node.inputs[0])
+    rhs = _infer_value(node.inputs[1])
+
+    if lhs is not None and rhs is not None:
+        pass
+
+    return NodeShape(c, dtype)
 
 
 _register_shape_inferer("add", infer_eltwise)
@@ -218,6 +233,11 @@ def infer_to_float(node, inputs):
     # type: (Node, List[NodeShape]) -> NodeShape
     assert len(inputs) == 1
     x = inputs[0]
+
+    a = _infer_value(node.inputs[0])
+    if a is not None:
+        node.set("#value", a, dtype=numpy.float32)
+
     return NodeShape(x.shape, FLOAT32)
 
 
@@ -255,6 +275,10 @@ def infer_transpose(node, inputs):
     y = [0] * len(x.shape)
     for i in range(len(y)):
         y[i] = x.shape[permute[i]]
+
+    a = _infer_value(node.inputs[0])
+    if a is not None:
+        node.set("#value", numpy.transpose(a, axes=permute))
 
     return NodeShape(y, x.dtype)
 
@@ -395,6 +419,10 @@ def infer_flatten(node, inputs):
 
     y = (x.shape[0], numpy.prod(x.shape[1:]))
 
+    a = _infer_value(node.inputs[0])
+    if a is not None:
+        node.set("#value", numpy.reshape(a, (a.shape[0], -1)))
+
     return NodeShape(y, x.dtype)
 
 
@@ -414,7 +442,11 @@ def infer_reshape(node, inputs):
 
     if _valid_dims(x):
         tmp = numpy.zeros(x.shape).reshape(y)
-        return NodeShape(tmp.shape, x.dtype)
+        y = tmp.shape
+
+    a = _infer_value(node.inputs[0])
+    if a is not None:
+        node.set("#value", numpy.reshape(a, y))
 
     return NodeShape(y, x.dtype)
 
@@ -471,6 +503,16 @@ def infer_concat(node, inputs):
     for i in range(1, len(inputs)):
         shape[dim] += inputs[i].shape[dim]
 
+    a = [_infer_value(i) for i in node.inputs]
+    ready = True
+    for i in a:
+        if i is None:
+            ready = False
+            break
+    if ready:
+        a = numpy.concatenate(a, axis=dim)
+        node.set("#value", a)
+
     return NodeShape(shape, inputs[0].dtype)
 
 
@@ -509,6 +551,9 @@ _register_shape_inferer("sigmoid", infer_copy_0)
 def infer_dims(node, inputs):
     # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
     assert len(inputs) == 1
+
+    node.set("#value", len(inputs[0].shape), numpy.int32)
+
     return NodeShape([], ts_dtype.INT32)
 
 
@@ -524,16 +569,10 @@ def infer_expand(node, inputs):
 
     assert isinstance(dims, Node)
 
-    if dims.op == Node.Const:
-        dims = int(dims.get("value"))
-    elif dims.op == "_dims":
-        y = dims.inputs[0]
-        assert isinstance(y, Node)
-        if not has_infered(y):
-            return None
-        dims = len(y.shape)
-    else:
-        return None
+    dims = _infer_value(dims)
+    if dims is None:
+        return
+    dims = int(dims)
 
     front = node.try_get("front", dims)
     end = node.try_get("end", dims)
@@ -550,6 +589,10 @@ def infer_expand(node, inputs):
             y.append(1)
         while len(y) < dims and front > 0:
             y.insert(0, 1)
+
+    a = _infer_value(node.inputs[0])
+    if a is not None:
+        node.set("#value", numpy.reshape(a, y), x.dtype)
 
     return NodeShape(y, x.dtype)
 
@@ -581,7 +624,21 @@ def infer_limit(node, inputs):
 _register_shape_inferer("_limit", infer_limit)
 
 
-_register_shape_inferer("_copy", infer_copy_0)
+def infer_copy(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) > 0
+
+    x = inputs[0]
+
+    a = _infer_value(node.inputs[0])
+    if a is not None:
+        node.set("#value", a)
+
+    return NodeShape(x.shape, x.dtype)
+
+
+_register_shape_inferer("_copy", infer_copy)
+
 _register_shape_inferer("prelu", infer_copy_0)
 
 
@@ -663,6 +720,10 @@ def infer_cast(node, inputs):
     x = inputs[0]
 
     dtype = int(node.get("dtype"))
+
+    a = _infer_value(node.inputs[0])
+    if a is not None:
+        node.set("#value", a, dtype=dtype)
 
     return NodeShape(x.shape, dtype)
 
@@ -816,7 +877,10 @@ def infer_shape(node, inputs):
     assert len(inputs) == 1
 
     x = inputs[0]
-    return NodeShape((len(x.shape),), x.dtype)
+
+    node.set("#value", x.shape, dtype=numpy.int32)
+
+    return NodeShape((len(x.shape),), ts_dtype.INT32)
 
 
 _register_shape_inferer("_shape", infer_shape)
@@ -830,10 +894,10 @@ def infer_gather(node, inputs):
     x = inputs[0]
     indices = node.inputs[1]
 
-    if indices.op != Node.Const:
+    indices = _infer_value(indices)
+    if indices is None:
         return None
 
-    indices = indices.get("value")
     indices = numpy.asarray(indices)
     indices_shape = indices.shape
 
@@ -843,9 +907,15 @@ def infer_gather(node, inputs):
     y = list(x.shape)
     del y[axis]
 
+    anchor = axis
     for i in indices_shape:
-        y.insert(axis, i)
-        axis += 1
+        y.insert(anchor, i)
+        anchor += 1
+
+    # == infer value
+    a = _infer_value(node.inputs[0])
+    if a is not None:
+        node.set("#value", numpy.take(a, indices, axis=axis))
 
     return NodeShape(y, x.dtype)
 
@@ -853,14 +923,81 @@ def infer_gather(node, inputs):
 _register_shape_inferer("gather", infer_gather)
 
 
+def infer_field(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 1
+
+    offset = node.get("offset")
+
+    x = inputs[0]
+    if isinstance(x, NodeShape):
+        x = [x]
+
+    if offset >= len(x):
+        return None
+
+    y = x[offset]
+
+    return NodeShape(y.shape, y.dtype)
+
+
+_register_shape_inferer("_field", infer_field)
+
+
 def infer_reshape_v2(node, inputs):
     # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
     assert len(inputs) == 2
 
-    raise NotImplementedError
+    x = inputs[0]
+    shape = node.inputs[1]
+
+    shape = _infer_value(shape)
+    if shape is None:
+        return None
+
+    y = list(shape)
+
+    for i in range(len(y)):
+        if y[i] == 0:
+            y[i] = x.shape[i]
+
+    if _valid_dims(x):
+        tmp = numpy.zeros(x.shape).reshape(y)
+        y = tmp.shape
+
+    a = _infer_value(node.inputs[0])
+    if a is not None:
+        node.set("#value", numpy.reshape(a, y))
+
+    return NodeShape(y, x.dtype)
 
 
-# _register_shape_inferer("_reshape_v2", infer_reshape_v2)
+_register_shape_inferer("_reshape_v2", infer_reshape_v2)
+
+
+def infer_stack(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) > 1
+
+    axis = int(node.get("axis"))
+
+    shape = list(inputs[0].shape)
+    shape.insert(axis, len(inputs))
+
+    a = [_infer_value(i) for i in node.inputs]
+    ready = True
+    for i in a:
+        if i is None:
+            ready = False
+            break
+    if ready:
+        a = numpy.stack(a, axis=axis)
+        node.set("#value", a)
+
+    return NodeShape(shape, inputs[0].dtype)
+
+
+_register_shape_inferer("stack", infer_stack)
 
 
 if __name__ == "__main__":

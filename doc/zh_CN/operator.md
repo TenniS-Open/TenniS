@@ -437,6 +437,18 @@ y_i = exp(t_i) / \sum{exp(t_i)}
 要把输的元素进行拼接，在`dim`维度上，除了`dim`维度，其他的输入的数据的维度必须相同。
 输出的`dim`维度是输入对应`dim`维度的和。
 
+
+### stack(x...) -> y
+Description:  
+Input `x`: `List<Tensor>`
+Input `y`: `Tensor`
+
+Attr:  
+- `axis`: `Int` Stack axis.
+
+Node:  
+Equals to `numpy.stack`
+
 ### pooling2d(x)
 描述：进行下采样
 
