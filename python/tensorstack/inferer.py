@@ -189,44 +189,50 @@ def _infer_dim(a, b):
     raise Exception("Can not reduce {} with {}".format(a, b))
 
 
-def infer_eltwise(node, inputs):
-    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
-    assert len(inputs) == 2
-    import numpy
-    a = inputs[0]
-    b = inputs[1]
-    if _valid_dims(a) and _valid_dims(b):
-        c = numpy.zeros(a.shape) + numpy.zeros(b.shape)
-        return NodeShape(c.shape, a.dtype)
-    dtype = a.dtype
-    a = a.shape
-    b = b.shape
-    if len(a) < len(b):
-        a, b = b, a
-    b = list(b)
-    while len(a) > len(b):
-        b.insert(0, 1)
-    c = [-1] * len(a)
-    try:
-        for i in range(len(c)):
-            c[i] = _infer_dim(a[i], b[i])
-    except:
-        sys.stderr.write("Failed infer shape of {}:{} with {}, {}\n".format(node.op, node.name, inputs[0], inputs[1]))
-        return None
+class EltwiseInferer(object):
+    def __init__(self, func=None):
+        self.__func = func
 
-    lhs = _infer_value(node.inputs[0])
-    rhs = _infer_value(node.inputs[1])
+    def __call__(self, node, inputs):
+        # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+        assert len(inputs) == 2
+        import numpy
+        a = inputs[0]
+        b = inputs[1]
+        dtype = a.dtype
+        if _valid_dims(a) and _valid_dims(b):
+            c = numpy.zeros(a.shape) + numpy.zeros(b.shape)
+            c = c.shape
+            # return NodeShape(c.shape, a.dtype)
+        else:
+            a = a.shape
+            b = b.shape
+            if len(a) < len(b):
+                a, b = b, a
+            b = list(b)
+            while len(a) > len(b):
+                b.insert(0, 1)
+            c = [-1] * len(a)
+            try:
+                for i in range(len(c)):
+                    c[i] = _infer_dim(a[i], b[i])
+            except:
+                sys.stderr.write("Failed infer shape of {}:{} with {}, {}\n".format(node.op, node.name, inputs[0], inputs[1]))
+                return None
 
-    if lhs is not None and rhs is not None:
-        pass
+        lhs = _infer_value(node.inputs[0])
+        rhs = _infer_value(node.inputs[1])
 
-    return NodeShape(c, dtype)
+        if self.__func is not None and lhs is not None and rhs is not None:
+            node.set("#value", self.__func(lhs, rhs), dtype=dtype)
+
+        return NodeShape(c, dtype)
 
 
-_register_shape_inferer("add", infer_eltwise)
-_register_shape_inferer("sub", infer_eltwise)
-_register_shape_inferer("mul", infer_eltwise)
-_register_shape_inferer("div", infer_eltwise)
+_register_shape_inferer("add", EltwiseInferer(lambda a, b: numpy.asarray(a) + numpy.asarray(b)))
+_register_shape_inferer("sub", EltwiseInferer(lambda a, b: numpy.asarray(a) - numpy.asarray(b)))
+_register_shape_inferer("mul", EltwiseInferer(lambda a, b: numpy.asarray(a) * numpy.asarray(b)))
+_register_shape_inferer("div", EltwiseInferer(lambda a, b: numpy.asarray(a) / numpy.asarray(b)))
 
 
 def infer_to_float(node, inputs):
@@ -272,13 +278,16 @@ def infer_transpose(node, inputs):
     if permute is None:
         permute = [i for i in range(len(x.shape))]
         permute[-1], permute[-2] = permute[-2], permute[1]
-    y = [0] * len(x.shape)
+    x_shape = list(x.shape)
+    while len(x_shape) < len(permute):
+        x_shape.insert(0, 1)
+    y = [0] * len(x_shape)
     for i in range(len(y)):
-        y[i] = x.shape[permute[i]]
+        y[i] = x_shape[permute[i]]
 
     a = _infer_value(node.inputs[0])
     if a is not None:
-        node.set("#value", numpy.transpose(a, axes=permute))
+        node.set("#value", numpy.transpose(numpy.reshape(a, x_shape), axes=permute))
 
     return NodeShape(y, x.dtype)
 
@@ -784,12 +793,18 @@ def infer_dynamic_padding(node, inputs):
 _register_shape_inferer("_onnx_pooling2d_padding", infer_dynamic_padding)
 _register_shape_inferer("_dragon_pooling2d_padding", infer_dynamic_padding)
 _register_shape_inferer("_mx_pooling2d_padding", infer_dynamic_padding)
+_register_shape_inferer("_tf_conv2d_padding", infer_dynamic_padding)
+_register_shape_inferer("_tf_pooling2d_padding", infer_dynamic_padding)
 
 
 _dynamic_padding_factory = {
+    # pooling2d
     "_onnx_pooling2d_padding": _inferer_.onnx_pooling2d_padding,
     "_dragon_pooling2d_padding": _inferer_.dragon_pooling2d_padding,
     "_mx_pooling2d_padding": _inferer_.mx_pooling2d_padding,
+    # conv2d
+    "_tf_conv2d_padding": _inferer_.tf_conv2d_padding,
+    "_tf_pooling2d_padding": _inferer_.tf_pooling2d_padding,
 }
 
 
@@ -852,6 +867,118 @@ def infer_pooling2d_v2(node, inputs):
 _register_shape_inferer("pooling2d_v2", infer_pooling2d_v2)
 
 
+def infer_conv2d_v2(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 3
+    x = inputs[0]
+
+    # == calculate dynamic padding
+    padding_node = node.inputs[1]
+    assert isinstance(padding_node, Node)
+    padding_op = padding_node.op
+    if padding_op not in _dynamic_padding_factory:
+        return None
+    padding = _dynamic_padding_factory[padding_op](padding_node)
+    if padding is None:
+        return None
+    # == end
+    padding = numpy.asarray(padding)
+
+    w = node.inputs[2]
+    if w.op != Node.Const:
+        return None
+    w = w.get("value")
+    w = tensor.from_any(w)
+
+    stride = node.get("stride")
+    dilation = node.get("dilation")
+    kernel = w.shape[-2:]
+
+    fmt = str(node.get("format"))
+    y = list(x.shape)
+    plant = ()
+    channel = 0
+    if fmt == "NCHW":
+        plant = (2, 3)
+        channel = 1
+    elif fmt == "NHWC":
+        plant = (1, 2)
+        channel = 3
+    else:
+        return None
+
+    for p in range(len(plant)):
+        i = plant[p]
+        if x.shape[i] < 0:
+            y[i] = -1
+            continue
+        y[i] = conv2d_forward(x.shape[i], padding[i, 0] + padding[i, 1], dilation[i], kernel[p], stride[i])
+    y[channel] = w.shape[0]
+
+    node.set("#padding", padding, dtype=numpy.int32)
+
+    return NodeShape(y, x.dtype)
+
+
+_register_shape_inferer("conv2d_v2", infer_conv2d_v2)
+
+
+def infer_depthwise_conv2d_v2(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 3
+    x = inputs[0]
+
+    # == calculate dynamic padding
+    padding_node = node.inputs[1]
+    assert isinstance(padding_node, Node)
+    padding_op = padding_node.op
+    if padding_op not in _dynamic_padding_factory:
+        return None
+    padding = _dynamic_padding_factory[padding_op](padding_node)
+    if padding is None:
+        return None
+    # == end
+    padding = numpy.asarray(padding)
+
+    w = node.inputs[2]
+    if w.op != Node.Const:
+        return None
+    w = w.get("value")
+    w = tensor.from_any(w)
+
+    stride = node.get("stride")
+    dilation = node.get("dilation")
+    kernel = w.shape[-2:]
+
+    fmt = str(node.get("format"))
+    y = list(x.shape)
+    plant = ()
+    channel = 0
+    if fmt == "NCHW":
+        plant = (2, 3)
+        channel = 1
+    elif fmt == "NHWC":
+        plant = (1, 2)
+        channel = 3
+    else:
+        return None
+
+    for p in range(len(plant)):
+        i = plant[p]
+        if x.shape[i] < 0:
+            y[i] = -1
+            continue
+        y[i] = conv2d_forward(x.shape[i], padding[i, 0] + padding[i, 1], dilation[i], kernel[p], stride[i])
+    y[channel] = w.shape[0] * x.shape[channel]
+
+    node.set("#padding", padding, dtype=numpy.int32)
+
+    return NodeShape(y, x.dtype)
+
+
+_register_shape_inferer("depthwise_conv2d_v2", infer_depthwise_conv2d_v2)
+
+
 def infer_gemm(node, inputs):
     # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
     assert len(inputs) == 3
@@ -896,14 +1023,7 @@ def infer_gather(node, inputs):
 
     axis = int(node.get("axis"))
     x = inputs[0]
-    indices = node.inputs[1]
-
-    indices = _infer_value(indices)
-    if indices is None:
-        return None
-
-    indices = numpy.asarray(indices)
-    indices_shape = indices.shape
+    indices_shape = inputs[1].shape
 
     if axis < 0:
         axis = len(x) + axis
@@ -918,8 +1038,9 @@ def infer_gather(node, inputs):
 
     # == infer value
     a = _infer_value(node.inputs[0])
-    if a is not None:
-        node.set("#value", numpy.take(a, indices, axis=axis))
+    i = _infer_value(node.inputs[1])
+    if a is not None and i is not None:
+        node.set("#value", numpy.take(a, i, axis=axis))
 
     return NodeShape(y, x.dtype)
 
@@ -981,9 +1102,12 @@ _register_shape_inferer("_reshape_v2", infer_reshape_v2)
 
 def infer_stack(node, inputs):
     # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
-    assert len(inputs) > 1
+    assert len(inputs) >= 1
 
     axis = int(node.get("axis"))
+
+    if axis < 0:
+        axis += len(inputs[0].shape) + 1
 
     shape = list(inputs[0].shape)
     shape.insert(axis, len(inputs))
@@ -1033,6 +1157,333 @@ def infer_dimshuffle(node, inputs):
 
 
 _register_shape_inferer("_dimshuffle", infer_dimshuffle)
+
+
+def infer_squeeze(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 1
+
+    x = inputs[0]
+    axes = node.try_get("axes", None)
+
+    y = list(x.shape)
+
+    if axes is None:
+        tmp = []
+        for i in y:
+            if i != 1:
+                tmp.append(i)
+        y = tmp
+    else:
+        for axis in axes[::-1]:
+            # if y[axis] != 1:
+            #     return None
+            y.pop(axis)
+
+    a = _infer_value(node.inputs[0])
+    if a is not None:
+        node.set("#value", numpy.reshape(a, y), x.dtype)
+
+    return NodeShape(y, x.dtype)
+
+
+_register_shape_inferer("squeeze", infer_squeeze)
+
+
+def infer_sample2d(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 1
+    x = inputs[0]
+
+    scale = float(node.get("scale"))
+    dim = int(node.try_get("dim", -2))
+
+    if dim < 0:
+        dim += len(x)
+
+    if dim < 0 or dim + 1 >= len(x):
+        return None
+
+    y = list(x.shape)
+
+    if y[dim] > 0:
+        y[dim] = int(y[dim] * scale)
+    if y[dim + 1] > 0:
+        y[dim + 1] = int(y[dim + 1] * scale)
+
+    return NodeShape(y, x.dtype)
+
+
+_register_shape_inferer("sample2d", infer_sample2d)
+
+
+def infer_proposal(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) >= 3
+    x = inputs[0]
+
+    min_level = int(node.try_get("min_level", 2))
+    max_level = int(node.try_get("max_level", 5))
+    post_nms_top_n = int(node.try_get("post_nms_top_n", 300))
+
+    num_images = inputs[0].shape[0]
+
+    output_size = max_level - min_level + 1
+
+    output = []
+    for i in range(output_size):
+        proto = NodeShape((num_images * post_nms_top_n if num_images > 0 else -1, 5), inputs[-3].dtype)
+        output.append(proto)
+
+    return output
+
+
+_register_shape_inferer("proposal", infer_proposal)
+
+
+def infer_roi_align(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 2
+
+    pool_h = int(node.get("pool_h"))
+    pool_w = int(node.get("pool_w"))
+
+    return NodeShape((inputs[1].shape[0], inputs[0].shape[1], pool_h, pool_w), inputs[0].dtype)
+
+
+_register_shape_inferer("roi_align", infer_roi_align)
+
+
+_register_shape_inferer("relu_max", infer_copy_0)
+
+
+def infer_reduce_mean(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 1
+
+    dims = list(numpy.asarray(node.get("dims")).reshape([-1]))
+    keep_dims = bool(node.try_get("keep_dims", True))
+
+    x = inputs[0]
+    y = list(x.shape)
+
+    if keep_dims:
+        for dim in dims:
+            if dim < 0:
+                dim += len(x)
+            y[dim] = 1
+    else:
+        for dim in dims[::-1]:
+            if dim < 0:
+                dim += len(x)
+            y.pop(dim)
+
+    return NodeShape(y, x.dtype)
+
+
+_register_shape_inferer("reduce_mean", infer_reduce_mean)
+
+
+_register_shape_inferer("square", infer_copy_0)
+_register_shape_inferer("maximum",  EltwiseInferer(lambda a, b: numpy.maximum(a, b)))
+_register_shape_inferer("rsqrt", infer_copy_0)
+_register_shape_inferer("exp", infer_copy_0)
+
+
+def infer_reduce_sum(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 1
+
+    dims = list(numpy.asarray(node.get("dims")).reshape([-1]))
+    keep_dims = bool(node.try_get("keep_dims", True))
+
+    x = inputs[0]
+    y = list(x.shape)
+
+    if keep_dims:
+        for dim in dims:
+            if dim < 0:
+                dim += len(x)
+            y[dim] = 1
+    else:
+        for dim in dims[::-1]:
+            if dim < 0:
+                dim += len(x)
+            y.pop(dim)
+
+    return NodeShape(y, x.dtype)
+
+
+_register_shape_inferer("reduce_sum", infer_reduce_sum)
+
+
+def infer_strided_slice(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 1
+
+
+    begin = list(node.get("begin"))
+    end = list(node.get("end"))
+
+    if node.has("stride"):
+        stride = list(node.get("stride"))
+    else:
+        stride = [1] * len(begin)
+
+    begin_mask = int(node.get("begin_mask"))
+    end_mask = int(node.get("end_mask"))
+    ellipsis_mask = int(node.get("ellipsis_mask"))
+    new_axis_mask = int(node.get("new_axis_mask"))
+    shrink_axis_mask = int(node.get("shrink_axis_mask"))
+
+    x = inputs[0]
+
+    y, shape = _inferer_.strided_slice.infer_stride_slice(_infer_value(node.inputs[0]),
+                                                          list(x.shape),
+                                                          begin, end, stride,
+                                                          begin_mask, end_mask,
+                                                          ellipsis_mask, new_axis_mask, shrink_axis_mask)
+
+    if shape is None:
+        return None
+
+    if y is not None:
+        node.set("#value", y)
+
+    return NodeShape(shape, x.dtype)
+
+
+_register_shape_inferer("strided_slice", infer_strided_slice)
+
+
+def infer_max(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 1
+
+    dims = list(numpy.asarray(node.get("dim")).reshape([-1]))
+    keep_dims = bool(node.try_get("keep_dims", True))
+
+    x = inputs[0]
+    y = list(x.shape)
+
+    if keep_dims:
+        for dim in dims:
+            if dim < 0:
+                dim += len(x)
+            y[dim] = 1
+    else:
+        for dim in dims[::-1]:
+            if dim < 0:
+                dim += len(x)
+            y.pop(dim)
+
+    return NodeShape(y, x.dtype)
+
+
+_register_shape_inferer("max", infer_max)
+
+
+def infer_topkv2(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 1
+
+    x = inputs[0]
+    K = int(node.get("number"))
+
+    if len(x.shape) == 0:
+        return NodeShape(x.shape, x.dtype), NodeShape(x.shape, ts_dtype.INT32)
+
+    K = min(x.shape[-1], K)
+    y = list(x.shape)
+    y[-1] = K
+
+    return NodeShape(y, x.dtype), NodeShape(y, ts_dtype.INT32)
+
+
+_register_shape_inferer("topkv2", infer_topkv2)
+
+
+def non_max_suppression_v3(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 2
+
+    boxes = inputs[0]
+    scores = inputs[1]
+
+    max_output_size = int(node.get("max_output_size"))
+
+    K = min(scores.shape[0], max_output_size)
+
+    return NodeShape((K,), ts_dtype.INT32)
+
+
+_register_shape_inferer("non_max_suppression_v3", non_max_suppression_v3)
+
+
+def infer_argmax(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 1
+
+    dim = int(node.get("dim"))
+
+    x = inputs[0]
+    y = list(x.shape)
+
+    if dim < 0:
+        dim += len(x)
+    y.pop(dim)
+
+    return NodeShape(y, x.dtype)
+
+
+_register_shape_inferer("argmax", infer_argmax)
+
+
+def infer_unsqueeze(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 1
+
+    x = inputs[0]
+    axes = numpy.asarray(node.get("axes"), dtype=numpy.int32).reshape([-1])
+
+    y = list(x.shape)
+
+    for axis in axes:
+        if axis < 0:
+            axis += len(y) + 1
+        y.insert(axis, 1)
+
+    a = _infer_value(node.inputs[0])
+    if a is not None:
+        node.set("#value", numpy.reshape(a, y), x.dtype)
+
+    return NodeShape(y, x.dtype)
+
+
+_register_shape_inferer("unsqueeze", infer_unsqueeze)
+
+
+def infer_pad(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 2
+
+    x = inputs[0]
+    padding = _infer_value(node.inputs[1])
+    if padding is None:
+        return padding
+    padding = numpy.asarray(padding, dtype=numpy.int32).reshape([-1, 2])
+
+    y = list(x.shape)
+
+    for i in range(len(y)):
+        if y[i] < 0:
+            continue
+        y[i] += padding[i, 0] + padding[i, 1]
+
+    return NodeShape(y, x.dtype)
+
+
+_register_shape_inferer("pad", infer_pad)
 
 
 if __name__ == "__main__":

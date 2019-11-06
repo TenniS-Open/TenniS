@@ -12,33 +12,9 @@ def _has_infered(node):
     return node.has(Node.RetentionParam.shape) and node.has(Node.RetentionParam.dtype)
 
 
-def pooling2d_forward_notset(x, padding, ksize, stride):
-    # type: (Size2D, Padding2D, KSize2D, Stride2D) -> Size2D
-    y = Size2D()
-    y.height = int(math.floor((x.height + padding.top + padding.bottom - ksize.height) / float(stride.height) + 1))
-    y.width = int(math.floor((x.width + padding.left + padding.right - ksize.width) / float(stride.width) + 1))
-    return y
-
-
-def dynamic_padding_notset(input_size, static_padding, ksize, stride):
-    # type: (Size2D, Padding2D, KSize2D, Stride2D) -> Padding2D
-
-    dynamic_padding = Padding2D()
-
-    dynamic_padding.top = static_padding.top
-    dynamic_padding.left = static_padding.left
-    dynamic_padding.bottom = static_padding.bottom \
-        - (input_size.height + static_padding.top + static_padding.bottom - ksize.height) % stride.height
-    dynamic_padding.right = static_padding.right \
-        - (input_size.width + static_padding.left + static_padding.right - ksize.width) % stride.width
-
-
-    return dynamic_padding
-
-
 # VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
 def forward_valid(input_spatial_shape, kernel_spatial_shape, strides_spatial_shape):
-    # type(int, int, int) -> int
+    # type: (int, int, int) -> int
     return int(math.ceil((input_spatial_shape - kernel_spatial_shape + 1) / float(strides_spatial_shape)))
 
 
@@ -50,9 +26,8 @@ def pooling2d_forward_valid(x, padding, ksize, stride):
     return y
 
 
-def dynamic_padding_valid(input_size, static_padding, ksize, stride):
+def dynamic_pooling2d_valid(input_size, static_padding, ksize, stride):
     # type: (Size2D, Padding2D, KSize2D, Stride2D) -> Padding2D
-
     dynamic_padding = Padding2D()
 
     expected_output_size = pooling2d_forward_valid(input_size, static_padding, ksize, stride)
@@ -65,7 +40,7 @@ def dynamic_padding_valid(input_size, static_padding, ksize, stride):
     return dynamic_padding
 
 
-# SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
+# SAME: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
 def forward_same(input_spatial_shape, kernel_spatial_shape, strides_spatial_shape):
     # type: (int, int, int) -> int
     return int(math.ceil(input_spatial_shape / float(strides_spatial_shape)))
@@ -79,49 +54,22 @@ def pooling2d_forward_same(x, padding, ksize, stride):
     return y
 
 
-def dynamic_padding_same_upper(input_size, static_padding, ksize, stride):
+def dynamic_padding_same(input_size, static_padding, ksize, stride):
     # type: (Size2D, Padding2D, KSize2D, Stride2D) -> Padding2D
 
     dynamic_padding = Padding2D()
 
     expected_output_size = pooling2d_forward_same(input_size, static_padding, ksize, stride)
     expected_input_size = pooling2d_backward(expected_output_size, static_padding, ksize, stride)
-
-    padding_height = (expected_input_size.height - input_size.height)
-    padding_width = (expected_input_size.width - input_size.width)
-    half_padding_height = padding_height // 2
-    half_padding_width = padding_width // 2
-
-    dynamic_padding.top = static_padding.top + half_padding_height
-    dynamic_padding.left = static_padding.left + half_padding_height
-    dynamic_padding.bottom = static_padding.bottom + (padding_height - half_padding_height)
-    dynamic_padding.right = static_padding.right + (padding_width - half_padding_width)
+    dynamic_padding.top = static_padding.top
+    dynamic_padding.left = static_padding.left
+    dynamic_padding.bottom = static_padding.bottom + expected_input_size.height - input_size.height
+    dynamic_padding.right = static_padding.right + expected_input_size.width - input_size.width
 
     return dynamic_padding
 
 
-def dynamic_padding_same_lower(input_size, static_padding, ksize, stride):
-    # type: (Size2D, Padding2D, KSize2D, Stride2D) -> Padding2D
-
-    dynamic_padding = Padding2D()
-
-    expected_output_size = pooling2d_forward_same(input_size, static_padding, ksize, stride)
-    expected_input_size = pooling2d_backward(expected_output_size, static_padding, ksize, stride)
-
-    padding_height = (expected_input_size.height - input_size.height)
-    padding_width = (expected_input_size.width - input_size.width)
-    half_padding_height = padding_height // 2
-    half_padding_width = padding_width // 2
-
-    dynamic_padding.top = static_padding.top + (padding_height - half_padding_height)
-    dynamic_padding.left = static_padding.left + (padding_width - half_padding_width)
-    dynamic_padding.bottom = static_padding.bottom + half_padding_height
-    dynamic_padding.right = static_padding.right + half_padding_width
-
-    return dynamic_padding
-
-
-def onnx_pooling2d_padding(node):
+def tf_pooling2d_padding(node):
     # type: (Node) -> Union[None, numpy.ndarray, List[List[int]]]
     x = node.inputs[0]
     ksize = node.inputs[1]
@@ -140,7 +88,7 @@ def onnx_pooling2d_padding(node):
     static_padding = node.get("padding")
     static_padding = numpy.asarray(static_padding).reshape(4, 2)
 
-    auto_pad = str(node.get("auto_pad"))
+    padding_method = str(node.get("padding_method"))
     fmt = str(node.try_get("format", "NCHW"))
     plant = ()
     if fmt == "NCHW":
@@ -158,14 +106,10 @@ def onnx_pooling2d_padding(node):
 
     dynamic_padding = Padding2D()
 
-    if auto_pad == "NOTSET":
-        dynamic_padding = dynamic_padding_notset(input_size, static_padding, ksize, stride)
-    elif auto_pad == "VALID":
-        dynamic_padding = dynamic_padding_valid(input_size, static_padding, ksize, stride)
-    elif auto_pad == "SAME_LOWER":
-        dynamic_padding = dynamic_padding_same_lower(input_size, static_padding, ksize, stride)
-    elif auto_pad == "SAME_UPPER":
-        dynamic_padding = dynamic_padding_same_upper(input_size, static_padding, ksize, stride)
+    if padding_method == "SAME":
+        dynamic_padding = dynamic_padding_same(input_size, static_padding, ksize, stride)
+    elif padding_method == "VALID":
+        dynamic_padding = dynamic_pooling2d_valid(input_size, static_padding, ksize, stride)
     else:
         return None
 

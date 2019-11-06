@@ -20,6 +20,12 @@ class Form2D(object):
         else:
             raise TypeError("Param 1 got not supported type: {}".format(type(obj)))
 
+    def __str__(self):
+        return "[{}, {}]".format(self.height, self.width)
+
+    def __repr__(self):
+        return self.__repr__()
+
 
 class Aspect2D(object):
     def __init__(self, obj=None):
@@ -56,6 +62,12 @@ class Aspect2D(object):
         else:
             raise TypeError("Param 1 got not supported type: {}".format(type(obj)))
 
+    def __str__(self):
+        return "[[{}, {}], [{}, {}]]".format(self.top, self.bottom, self.left, self.right)
+
+    def __repr__(self):
+        return self.__repr__()
+
 
 Padding2D = Aspect2D
 Stride2D = Form2D
@@ -69,5 +81,15 @@ def pooling2d_backward(y, padding, ksize, stride):
     x = Size2D()
     x.height = (y.height - 1) * stride.height + ksize.height - padding.top - padding.bottom
     x.width = (y.width - 1) * stride.width + ksize.width - padding.left - padding.right
+    return x
+
+
+def conv2d_backward(y, padding, ksize, stride, dialations):
+    # type: (Size2D, Padding2D, KSize2D, Stride2D, Dilation2D) -> Size2D
+    x = Size2D()
+    x.height = (y.height - 1) * stride.height + (dialations.height * (ksize.height - 1) + 1) \
+           - padding.top - padding.bottom
+    x.width = (y.width - 1) * stride.width + (dialations.width * (ksize.width - 1) + 1) \
+          - padding.left - padding.right
     return x
 
