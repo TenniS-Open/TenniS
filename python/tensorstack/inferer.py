@@ -504,7 +504,7 @@ _register_shape_inferer("batch_scale", infer_copy_0)
 
 def infer_concat(node, inputs):
     # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
-    assert len(inputs) > 1
+    assert len(inputs) >= 1
 
     dim = int(node.get("dim"))
 
@@ -795,6 +795,7 @@ _register_shape_inferer("_dragon_pooling2d_padding", infer_dynamic_padding)
 _register_shape_inferer("_mx_pooling2d_padding", infer_dynamic_padding)
 _register_shape_inferer("_tf_conv2d_padding", infer_dynamic_padding)
 _register_shape_inferer("_tf_pooling2d_padding", infer_dynamic_padding)
+_register_shape_inferer("_dragon_conv2d_padding", infer_dynamic_padding)
 
 
 _dynamic_padding_factory = {
@@ -802,9 +803,10 @@ _dynamic_padding_factory = {
     "_onnx_pooling2d_padding": _inferer_.onnx_pooling2d_padding,
     "_dragon_pooling2d_padding": _inferer_.dragon_pooling2d_padding,
     "_mx_pooling2d_padding": _inferer_.mx_pooling2d_padding,
+    "_tf_pooling2d_padding": _inferer_.tf_pooling2d_padding,
     # conv2d
     "_tf_conv2d_padding": _inferer_.tf_conv2d_padding,
-    "_tf_pooling2d_padding": _inferer_.tf_pooling2d_padding,
+    "_dragon_conv2d_padding": _inferer_.dragon_conv2d_padding,
 }
 
 
@@ -1484,6 +1486,419 @@ def infer_pad(node, inputs):
 
 
 _register_shape_inferer("pad", infer_pad)
+
+
+def infer_pack(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) >= 1
+
+    return tuple(inputs)
+
+
+_register_shape_inferer("_pack", infer_pack)
+
+_register_shape_inferer("prewhiten", infer_copy_0)
+
+
+def infer_batch_to_space4d(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 1
+
+    x = inputs[0]
+
+    crop = tuple(numpy.asarray(node.get("crop"), dtype=numpy.int32).reshape([-1]))
+    block_shape = tuple(numpy.asarray(node.get("block_shape"), dtype=numpy.int32).reshape([-1]))
+
+    block_height, block_width = block_shape
+    crop_top, crop_bottom, crop_left, crop_right = crop
+    input_shape = x.shape
+    output_shape = [-1] * 4
+
+    output_shape[0] = -1 if input_shape[0] < 0 else input_shape[0] // (block_height * block_width)
+    output_shape[2] = -1 if input_shape[2] < 0 else input_shape[2] * block_height - crop_top - crop_bottom
+    output_shape[3] = -1 if input_shape[3] < 0 else input_shape[3] * block_width - crop_left - crop_right
+    output_shape[1] = -1 if input_shape[1] < 0 else input_shape[1]
+
+    return NodeShape(output_shape, x.dtype)
+
+
+_register_shape_inferer("batch_to_space4d", infer_batch_to_space4d)
+
+
+def infer_space_to_batch4d(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 1
+
+    x = inputs[0]
+
+    padding = tuple(numpy.asarray(node.get("padding"), dtype=numpy.int32).reshape([-1]))
+    block_shape = tuple(numpy.asarray(node.get("block_shape"), dtype=numpy.int32).reshape([-1]))
+
+    block_height, block_width = block_shape
+    padding_top, padding_bottom, padding_left, padding_right = padding
+    input_shape = x.shape
+    output_shape = [-1] * 4
+
+    output_shape[0] = -1 if input_shape[0] < 0 else input_shape[0] * block_height * block_width
+    output_shape[2] = -1 if input_shape[2] < 0 else (input_shape[2] + padding_top + padding_bottom) // block_height
+    output_shape[3] = -1 if input_shape[3] < 0 else (input_shape[3] + padding_left + padding_right) // block_width
+    output_shape[1] = -1 if input_shape[1] < 0 else input_shape[1]
+
+    return NodeShape(output_shape, x.dtype)
+
+
+_register_shape_inferer("space_to_batch4d", infer_space_to_batch4d)
+
+
+def infer_affine_sample2d(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 4
+
+    x = inputs[0]
+    size = numpy.asarray(_infer_value(node.inputs[1]), dtype=numpy.int32).reshape([-1])
+
+    dim = node.get("dim")
+    if dim < 0:
+        dim += len(x)
+
+    y = list(x.shape)
+
+    y[dim] = size[0]
+    y[dim + 1] = size[1]
+
+    return NodeShape(y, x.dtype)
+
+
+_register_shape_inferer("affine_sample2d", infer_affine_sample2d)
+
+
+def infer_chunk(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 1
+
+    x = inputs[0]
+    chunks = int(node.get("chunks"))
+    dim = int(node.get("dim"))
+
+    dim = node.get("dim")
+    if dim < 0:
+        dim += len(x)
+
+    y = list(x.shape)
+
+    x_value = _infer_value(node.inputs[0])
+    if x_value is None:
+        a = numpy.zeros(x.shape)
+    else:
+        a = x_value
+
+    b = numpy.split(a, chunks, dim)
+
+    y = [NodeShape(i.shape, x.dtype) for i in b]
+
+    if x_value is not None:
+        pass
+
+    return y
+
+
+_register_shape_inferer("chunk", infer_chunk)
+
+
+def infer_dcn_v2_forward(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 5
+    x = inputs[0]
+
+    w = node.inputs[1]
+    if w.op != Node.Const:
+        return None
+    w = w.get("value")
+    w = tensor.from_any(w)
+
+    padding = node.get("padding")
+    fmt = str(node.get("format"))
+    stride = node.get("stride")
+    dilation = node.get("dilation")
+    kernel = w.shape[-2:]
+
+    padding = numpy.asarray(padding)
+
+    y = list(x.shape)
+    plant = ()
+    channel = 0
+    if fmt == "NCHW":
+        plant = (2, 3)
+        channel = 1
+    elif fmt == "NHWC":
+        plant = (1, 2)
+        channel = 3
+    else:
+        return None
+
+    for p in range(len(plant)):
+        i = plant[p]
+        if x.shape[i] < 0:
+            y[i] = -1
+            continue
+        y[i] = conv2d_forward(x.shape[i], padding[i, 0] + padding[i, 1], dilation[i], kernel[p], stride[i])
+    y[channel] = w.shape[0]
+
+    return NodeShape(y, x.dtype)
+
+
+_register_shape_inferer("dcn_v2_forward", infer_dcn_v2_forward)
+
+
+def infer_nhwc_center_crop2d(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 1
+
+    x = inputs[0]
+    size = numpy.asarray(node.get("size"), dtype=numpy.int32).reshape([-1])
+
+    assert len(x) == 4
+
+    y = list(x.shape)
+
+    y[1], y[2] = size[1], size[0]
+
+    return NodeShape(y, x.dtype)
+
+
+_register_shape_inferer("_nhwc_center_crop2d", infer_nhwc_center_crop2d)
+
+
+def infer_nhwc_scale_resize2d(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 1
+
+    x = inputs[0]
+    size = numpy.asarray(node.get("size"), dtype=numpy.int32).reshape([-1])
+
+    assert len(x) == 4
+    y = list(x.shape)
+
+    if len(size) == 1:
+        h = y[1]
+        w = y[2]
+        if h > w:
+            y[1], y[2] = size[0] * h / w, size[0]
+        else:
+            y[1], y[2] = size[0], size[0] * w / h
+    elif len(size) == 2:
+        y[1], y[2] = size[1], size[0]
+    else:
+        return None
+
+    return NodeShape(y, x.dtype)
+
+
+_register_shape_inferer("_nhwc_scale_resize2d", infer_nhwc_scale_resize2d)
+
+
+def infer_nhwc_letterbox(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 1
+
+    x = inputs[0]
+    size = numpy.asarray(node.get("size"), dtype=numpy.int32).reshape([-1])
+
+    assert len(x) == 4
+    y = list(x.shape)
+
+    if len(size) == 1:
+        y[1], y[2] = size[0], size[0]
+    elif len(size) == 2:
+        y[1], y[2] = size[1], size[0]
+    else:
+        return None
+
+    return NodeShape(y, x.dtype)
+
+
+_register_shape_inferer("_nhwc_letterbox", infer_nhwc_letterbox)
+
+
+def infer_divided(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 1
+
+    x = inputs[0]
+    size = numpy.asarray(node.get("size"), dtype=numpy.int32).reshape([-1])
+
+    if len(size) > len(x):
+        return None
+
+    size = list(size)
+    while len(size) < len(x):
+        size.insert(0, 1)
+
+    y = list(x.shape)
+
+    for i in range(len(y)):
+        if size[i] == 1:
+            continue
+        y[i] = int(math.ceil(float(y[i]) / size[i])) * size[i]
+
+    return NodeShape(y, x.dtype)
+
+
+_register_shape_inferer("divided", infer_divided)
+
+
+def infer_yolo(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 1
+
+    x = inputs[0]
+    if len(x) != 4:
+        return None
+
+    classes = int(node.get("classes"))
+    mask = numpy.asarray(node.get("mask"), dtype=numpy.int32).reshape([-1])
+    anchors = numpy.asarray(node.get("anchors"), dtype=numpy.float32).reshape([-1])
+    n = len(mask)
+
+    batch = x.shape[0]
+    h = x.shape[2]
+    w = x.shape[3]
+
+    outputs = [
+        NodeShape((batch, n * (classes + 4 + 1), h, w), x.dtype),
+        NodeShape([], ts_dtype.INT32),
+        NodeShape([len(mask)], ts_dtype.INT32),
+        NodeShape([len(anchors)], ts_dtype.FLOAT32),
+    ]
+
+    return outputs
+
+
+_register_shape_inferer("yolo", infer_yolo)
+
+
+def infer_yolo_poster(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) >= 1
+
+    yolo = inputs[-1]
+    if isinstance(yolo, (tuple, list)):
+        yolo = yolo[0]
+
+    assert isinstance(yolo, NodeShape)
+
+    n = yolo.shape[0]
+    if n <= 0:
+        n = 1
+
+    return [NodeShape((-1, 6), FLOAT32)] * n
+
+
+_register_shape_inferer("yolo_poster", infer_yolo_poster)
+
+
+_register_shape_inferer("tanh", infer_copy_0)
+
+
+def infer_force_gray(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 1
+
+    x = inputs[0]
+    y = list(x.shape)
+
+    y[-1] = 1
+
+    return NodeShape(y, x.dtype)
+
+
+_register_shape_inferer("force_gray", infer_force_gray)
+
+
+def infer_force_color(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 1
+
+    x = inputs[0]
+    y = list(x.shape)
+
+    y[-1] = 3
+
+    return NodeShape(y, x.dtype)
+
+
+_register_shape_inferer("force_color", infer_force_color)
+
+
+_register_shape_inferer("norm_image", infer_copy_0)
+_register_shape_inferer("sqrt", infer_copy_0)
+
+
+def infer_tile(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 1
+
+    x = inputs[0]
+    repeats = numpy.asarray(node.get("repeats"), dtype=numpy.int32).reshape([-1])
+
+    x_value = _infer_value(node.inputs[0])
+    if x_value is None:
+        a = numpy.zeros(x.shape)
+    else:
+        a = x_value
+
+    b = numpy.tile(a, repeats)
+    y = b.shape
+
+    if x_value is not None:
+        node.set("#value", b, dtype=x.dtype)
+
+    return NodeShape(y, x.dtype)
+
+
+_register_shape_inferer("tile", infer_tile)
+
+
+def infer_broadcast(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert len(inputs) == 2
+
+    x = inputs[0]
+    shape = _infer_value(node.inputs[1])
+    if shape is not None:
+        return None
+    shape = list(numpy.asarray(shape, numpy.int32).reshape([-1]))
+
+    dtype = x.dtype
+
+    if _valid_dims(x.shape) and _valid_dims(shape):
+        c = numpy.zeros(x.shape) + numpy.zeros(shape)
+        c = c.shape
+    else:
+        y = list(x.shape)
+        if len(y) > len(shape):
+            return None
+        while len(y) < len(shape):
+            y.insert(0, 1)
+        c = [-1] * len(y)
+        try:
+            for i in range(len(c)):
+                c[i] = _infer_dim(y[i], shape[i])
+                if c[i] > 0 and shape[i] > 0 and c[i] != shape[i]:
+                    return None
+        except:
+            return None
+
+    lhs = _infer_value(node.inputs[0])
+    rhs = None if not _valid_dims(shape) else numpy.zeros(shape)
+
+    if lhs is not None and rhs is not None:
+        node.set("#value", numpy.asarray(lhs) + numpy.asarray(rhs), dtype=dtype)
+
+    return NodeShape(c, dtype)
+
+
+_register_shape_inferer("broadcast", infer_broadcast)
 
 
 if __name__ == "__main__":

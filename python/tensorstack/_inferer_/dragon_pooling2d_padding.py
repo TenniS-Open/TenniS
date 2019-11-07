@@ -69,7 +69,7 @@ def forward_same(x, ksize, stride, padding, ceil_mode):
     pad_r = out.pad_r
 
     def DEFINE_SAME_PADDING(A, B):
-        A = padding_needed / 2
+        A = padding_needed // 2
         B = padding_needed - A
         return A, B
 
