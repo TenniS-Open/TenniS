@@ -965,7 +965,7 @@ pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel
 在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
 
 ### winograd_transform_kernel(x) -> y
-描述：将卷积的kernel参数变换为winograd f63或者f23的kernel参数。  
+描述：将卷积的kernel参数变换为winograd f63或者f23的kernel参数并pack_A(pack矩阵乘法左值)。  
 输入: `x`: `Tensor`  
 输出: `y`: `Tensor`  
 
@@ -998,6 +998,9 @@ pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel
                 0,     0,     1
             };
         }
+        
+        U = GgGT
+        y = pack_A(temp)
 ```
 ### conv2d_winograd(x..device, w..device) -> y..device
 描述：对输入的 Tensor 进行 二维卷积操作，输出卷积后的数据
@@ -1006,13 +1009,15 @@ pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel
 输出：`y` `Tensor4D`
 
 参数：
-- `winograd_mode` `String` 为 `winograd_f63` 或者 `winograd_f63` `[Optional]`默认为`winograd_f63`
 - `format` `String` 为 `NCHW` 或者 `NHWC`
+- `padding` `Int[4, 2]` `batch` 和 `channels` 的默认为 `[0, 0]`
+在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+- `padding_value` `Scalar Default(0)` `[Optional]` 表示 `padding` 时填充的参数
+- `kernel_winograd_transformed` `Bool Default(false)` `[Optional]`表示kernel未被transformed
 
 说明：
-conv2d_winograd的 `w` 输入需要通过 `winograd_transform_kernel` 算符变换获得.
-`winograd_mode` 为 `winograd_f63` ,则 `w` 的 `shape` 为[output_channels, input_channels, 8, 8]
-`winograd_mode` 为 `winograd_f23` ,则 `w` 的 `shape` 为[output_channels, input_channels, 4, 4]
+包含两种`winograd_mode`:`winograd_f63`,`winograd_f23`根据通道数以及输入size决定使用哪种模式.
 conv2d_winograd要求dilation,stride均为1.
 `type` 在当前版本中，固定为 `NCHW`。
 输出大小计算除法时，向下取整，最小为`1`。  
