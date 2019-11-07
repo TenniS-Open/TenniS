@@ -69,7 +69,7 @@ namespace ts {
         // TODO: add more options
         std::vector<const ZipperOption *> options = GetFullOptions();
 
-        for (auto &option : options) {
+        for (auto &option : m_options) {
             options.push_back(option);
         }
 
