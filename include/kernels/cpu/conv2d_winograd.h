@@ -11,10 +11,12 @@ namespace ts {
             using self = Conv2DWinograd;
             using supper = base::Conv2DWinograd;
 
-            //void conv2d_winograd(const Tensor &x, WinogradConv2DMode winograd_mode, const Padding2D &padding, float padding_value,
-            //    const Tensor &w, Conv2DFormat format, Tensor &out, Stack &stack);
-            void conv2d_winograd(const Tensor &x, WinogradConv2DMode winograd_mode,
-                const Tensor &w, Conv2DFormat format, Tensor &out, Stack &stack);
+            void conv2d_tranform_kernel(WinogradConv2DMode  winograd_mode, const Tensor &kernel, Tensor &kernel_transformed);
+
+            void conv2d_winograd(const Tensor &x, WinogradConv2DMode winograd_mode, const Padding2D &padding, float padding_value,
+                const Tensor &w, Conv2DFormat format, Tensor &out, bool kernel_transformed);
+//            void conv2d_winograd(const Tensor &x, WinogradConv2DMode winograd_mode,
+//                const Tensor &w, Conv2DFormat format, Tensor &out, Stack &stack);
         };
     }
 }
