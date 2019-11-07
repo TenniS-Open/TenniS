@@ -9,6 +9,8 @@
 #include "module/menu.h"
 
 #include <valarray>
+#include "kernels/common/function.h"
+#include "backend/common_function.h"
 
 namespace ts {
     bool Conv2dZipperOption::zip(const ComputingDevice &device, Node node, Node &zipped_node) const {
@@ -22,105 +24,69 @@ namespace ts {
 
         auto format_tensor = bubble.get(name::format);
         auto format = tensor::to_string(format_tensor);
+        if(format != name::NCHW)
+            return false;
         auto stride_tensor = tensor::cast(INT32, bubble.get(name::stride));
+
+        std::valarray<int> dilation4;
+        dilation4.resize(4);
+        std::valarray<int> stride4;
+        stride4.resize(4);
 
         if (bubble.has(name::dilation)) {
             auto dilation_tensor = tensor::cast(INT32, bubble.get(name::dilation));
-            std::valarray<int> dilation4;
-            dilation4.resize(4);
             for (size_t i = 0; i < 4; ++i)
                 dilation4[i] = dilation_tensor.data<int32_t>(i);
-            if (format == name::NCHW) {
-                if (dilation4[2] != 1 || dilation4[3] != 1)
-                    return false;
-            }
-            else if (format == name::NHWC) {
-                if (dilation4[1] != 1 || dilation4[2] != 1)
-                    return false;
-            }
-            else {
-                TS_LOG_ERROR << "Conv2d do not support format: " << format << eject;
-            }
         }
 
-        std::valarray<int> stride4;
-        stride4.resize(4);
         for (size_t i = 0; i < 4; ++i)
             stride4[i] = stride_tensor.data<int32_t>(i);
 
         auto inputs = node.inputs();
-        //Size2D ksize; KSize2D stride_size; Dilation2D dilation_size
-        if (format == name::NCHW) {
-            if (stride4[2] != 1 || stride4[3] != 1)
-                return false;
-        }
-        else if (format == name::NHWC) {
-            if (stride4[1] != 1 || stride4[2] != 1)
-                return false;
-        }
-        else {
-            TS_LOG_ERROR << "Conv2d do not support format: " << format << eject;
-        }
+
+        KSize2D stride_size; Dilation2D dilation_size;
+        stride_size.height = stride4[2];
+        stride_size.width = stride4[3];
+        dilation_size.height = dilation4[2];
+        dilation_size.width = dilation4[3];
 
         Tensor kernel_tensor;
+        Tensor padding_tensor;
+        Tensor padding_val_tensor = bubble.get(name::padding_value);
         if (op_name == name::layer::conv2d()) {
             TS_AUTO_CHECK(inputs.size() == 2);
             kernel_tensor = inputs[1].bubble().get(name::value);
+            padding_tensor = bubble.get(name::padding);
         }
         else {
             TS_AUTO_CHECK(inputs.size() == 3);
             kernel_tensor = inputs[2].bubble().get(name::value);
+            padding_tensor = inputs[1].bubble().get(name::value);
         }
         auto kernel_shape = kernel_tensor.sizes();
-        if (format == name::NCHW) {
-            if (kernel_shape[2] != 3 || kernel_shape[3] != 3)
-                return false;
-            //NOTE:When the number of channels is too large,winograd is slower than im2col+gemm
-            if (kernel_shape[0] * kernel_shape[1] > 256 * 512)
-                return false;
-        }
-        else {
-            if (kernel_shape[1] != 3 || kernel_shape[2] != 3)
-                return false;
-            if (kernel_shape[0] * kernel_shape[3] > 256 * 512)
-                return false;
-        }
+        Shape padding_shape = padding_tensor.sizes();
+
+        bool winograd_flag = KernelCommonFunc<float>::winograd_check(kernel_shape,
+                                                                     stride_size,
+                                                                     dilation_size);
+
+        if(!winograd_flag)
+            return false;
 
         if (op_name == name::layer::conv2d()) {
-            auto padding_param_tensor = node.bubble().get(name::padding);
-            std::string pad_param_name = node.bubble().name() + "_pad_param";
-            auto padding = bubble::data(pad_param_name, padding_param_tensor,CPU);
-            std::string pad_name = node.bubble().name() + "_pad";
-            auto pad_node = bubble::op(pad_name, name::layer::pad(), { inputs[0], padding });
-            if (node.bubble().has(name::padding_value)) {
-                auto padding_value_tensor = node.bubble().get(name::padding_value);
-                pad_node.bubble().set(name::padding_value, padding_value_tensor);
-            }
-
-            std::string transform_kernel_name = node.bubble().name() + "_transform_kernel";
-            auto transform_kernel_node = bubble::op(transform_kernel_name, name::layer::winograd_transform_kernel(), { inputs[1] });
-
             //std::string winograd_name = node.bubble().name() + "_conv2d_winograd";
             std::string winograd_name = node.bubble().name();
-            zipped_node = bubble::op(winograd_name, name::layer::conv2d_winograd(), { pad_node,transform_kernel_node });
+            zipped_node = bubble::op(winograd_name, name::layer::conv2d_winograd(), { inputs[0], inputs[1] });
         }
         else {
-            std::string pad_name = node.bubble().name() + "_pad";
-            auto pad_node = bubble::op(pad_name, name::layer::pad(), { inputs[0], inputs[1] });
-            if (node.bubble().has(name::padding_value)) {
-                auto padding_value_tensor = node.bubble().get(name::padding_value);
-                pad_node.bubble().set(name::padding_value, padding_value_tensor);
-            }
-
-            std::string transform_kernel_name = node.bubble().name() + "_transform_kernel";
-            auto transform_kernel_node = bubble::op(transform_kernel_name, name::layer::winograd_transform_kernel(), { inputs[2] });
-
             //std::string winograd_name = node.bubble().name() + "_conv2d_winograd";
             std::string winograd_name = node.bubble().name();
-            zipped_node = bubble::op(winograd_name, name::layer::conv2d_winograd(), { pad_node,transform_kernel_node });
+            zipped_node = bubble::op(winograd_name, name::layer::conv2d_winograd(), { inputs[0], inputs[2] });
         }
 
         zipped_node.bubble().set(name::format, format_tensor);
+        zipped_node.bubble().set(name::padding, padding_tensor);
+        zipped_node.bubble().set(name::padding_value, padding_val_tensor);
 
         return true;
     }
