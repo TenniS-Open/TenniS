@@ -20,7 +20,7 @@ namespace ts{
         int num_threads;
         DeviceType device;
         int id;
-        std::string pack_option;
+        std::string compile_option;
         int power_mode;
     };
 
@@ -234,7 +234,7 @@ namespace ts{
 //            if(option.power_mode != -1){
 //                bench->set_cpu_power_mode((CpuEnable::CpuPowerMode)option.power_mode);
 //            }
-            bench->setup(bench->compile(m));
+            bench->setup(bench->compile(m, option.compile_option));
 
             Shape shape = std::vector<int>(input_shape.begin(), input_shape.end());
             Tensor input_param(FLOAT32, shape);
