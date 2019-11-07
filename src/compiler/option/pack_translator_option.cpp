@@ -7,6 +7,7 @@
 #include "kernels/common/math.h"
 
 #include "global/operator_factory.h"
+#include "kernels/common/function.h"
 
 static bool has_defined_op(const ts::ComputingDevice &device, const std::string &op) {
     auto creator = ts::OperatorCreator::Query(device.type(), op, true);
@@ -143,6 +144,20 @@ bool ts::PackTranslatorOption::translate(const ComputingDevice &device, const No
     auto kernel_tensor = kernel_node.bubble().get(name::value);
     auto kernel_shape = kernel_tensor.sizes();
     auto kernel_type = kernel_tensor.dtype();
+
+    //winograd_check
+    if(op_name == name::layer::conv2d() || op_name == name::layer::conv2d_v2()){
+        Tensor stride_tensor = tensor::cast(INT32, node.bubble().get(name::stride));
+        Stride2D stride_size(stride_tensor.data<int>()[2], stride_tensor.data<int>()[3]);
+        Tensor dilation_tensor = tensor::cast(INT32, node.bubble().get(name::dilation));
+        Dilation2D dilation_size(dilation_tensor.data<int>()[2], dilation_tensor.data<int>()[3]);
+        bool winograd_flag = false;
+        winograd_flag = KernelCommonFunc<float>::winograd_check(kernel_shape, stride_size, dilation_size);
+        if(winograd_flag){
+            Node::Link(translated_node, node.inputs());
+            return true;
+        }
+    }
 
     int kernel_size_width;
     int kernel_size_height;
