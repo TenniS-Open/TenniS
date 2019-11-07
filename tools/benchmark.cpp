@@ -10,7 +10,7 @@ int main(int argc, const char* argv[]){
     using namespace ts;
 
     if(argc < 4){
-        std::cerr << "Usage: <command> loop_counts num_threads [device [id]]" << std::endl;
+        std::cerr << "Usage: <command> loop_counts num_threads [device [id]] need_statistical power_mode compile_option" << std::endl;
         return 1;
     }
 
@@ -40,9 +40,13 @@ int main(int argc, const char* argv[]){
         power_mode = int(std::strtol(argv[6], nullptr, 10));
     }
 
-    std::string pack_option = "--pack";
+    std::string compile_option = "--pack";
     if(argc > 7){
-        pack_option = argv[7];
+        compile_option = argv[7];
+        for (int i = 8; i < argc; ++i) {
+            compile_option += " ";
+            compile_option += argv[i];
+        }
     }
 
     Option option;
@@ -50,7 +54,7 @@ int main(int argc, const char* argv[]){
     option.num_threads = num_thread;
     option.device = device == "cpu" ? CPU : GPU;
     option.id = id;
-    option.pack_option = pack_option;
+    option.compile_option = compile_option;
     option.power_mode = power_mode;
 
     //print information
@@ -59,7 +63,7 @@ int main(int argc, const char* argv[]){
               << " ,device: " << option.device
               << " ,id: " << option.id
               << " ,need statistical: " << need_statistical
-              << " ,pack option: " << option.pack_option
+              << " ,compile option: " << option.compile_option
               << " ,power mode: " << option.power_mode << std::endl;
 
     BenchMark bm(option, need_statistical);
