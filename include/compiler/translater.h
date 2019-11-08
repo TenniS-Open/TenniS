@@ -29,6 +29,7 @@ namespace ts {
     private:
         ComputingDevice m_device;
         std::vector<const TranslatorOption*> m_options;
+        std::string m_params;
     };
 }
 

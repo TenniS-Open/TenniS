@@ -11,7 +11,10 @@
 #include "global/fp16_operator_factory.h"
 
 bool
-ts::Fp16TranslatorOption::translate(const ts::ComputingDevice &device, const ts::Node node, ts::Node &translated_node,
+ts::Fp16TranslatorOption::translate(const ts::ComputingDevice &device,
+                                    const ts::Node node,
+                                    ts::Node &translated_node,
+                                    const std::string &params,
                                     bool output_flag) const {
 
 //    if (device.type() != GPU)
