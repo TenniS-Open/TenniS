@@ -27,19 +27,16 @@ namespace ts{
 
         static bool winograd_check(const Shape &ksize,
                                    const Stride2D &stride,
-                                   const Dilation2D &dilation,
-                                   const Shape &input_shape,
-                                   const Shape &out_shape,
-                                   WinogradConv2DMode& winograd_model
-                                   );
+                                   const Dilation2D &dilation);
 
-        static bool winograd_check_arm(const Shape &ksize,
-                                   const Stride2D &stride,
-                                   const Dilation2D &dilation,
-                                   const Shape &input_shape,
-                                   const Shape &out_shape,
-                                   WinogradConv2DMode& winograd_model
-        );
+        //This function does not apply for the time being
+        static bool winograd_mode_select(const Shape &input_shape,
+                                         const int out_channels,
+                                         WinogradConv2DMode& winograd_model);
+
+        static bool winograd_mode_select_on_arm(const Shape &input_shape,
+                                                const int out_channels,
+                                                WinogradConv2DMode& winograd_model);
 
     };
 }
