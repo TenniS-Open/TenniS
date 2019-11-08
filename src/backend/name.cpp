@@ -123,6 +123,8 @@ namespace ts {
 
             const string &roi_align() TS_NOEXCEPT { static string str = "roi_align"; return str; }
             const string &proposal() TS_NOEXCEPT { static string str = "proposal"; return str; }
+
+            const string &conv2d_winograd_v2() TS_NOEXCEPT { static string str = "conv2d_winograd_v2"; return str; }
         }
 
         namespace typo {

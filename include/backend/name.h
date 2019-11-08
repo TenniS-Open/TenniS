@@ -140,6 +140,9 @@ namespace ts {
             // 2019-09-03
             TS_DEBUG_API const string &roi_align() TS_NOEXCEPT;
             TS_DEBUG_API const string &proposal() TS_NOEXCEPT;
+
+            TS_DEBUG_API const string &conv2d_winograd_v2() TS_NOEXCEPT;
+
         }
 
         namespace typo {
