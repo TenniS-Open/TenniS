@@ -25,6 +25,7 @@ namespace ts {
         virtual bool translate(const ComputingDevice &device,
             const Node node,
             Node &translated_node,
+            const std::string &params,
             bool output_flag = false) const = 0;
     };
 

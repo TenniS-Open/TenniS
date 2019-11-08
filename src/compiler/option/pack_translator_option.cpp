@@ -8,6 +8,7 @@
 
 #include "global/operator_factory.h"
 #include "kernels/common/function.h"
+#include "compiler/argparse.h"
 
 static bool has_defined_op(const ts::ComputingDevice &device, const std::string &op) {
     auto creator = ts::OperatorCreator::Query(device.type(), op, true);
@@ -15,7 +16,7 @@ static bool has_defined_op(const ts::ComputingDevice &device, const std::string 
 }
 
 bool ts::PackTranslatorOption::translate(const ComputingDevice &device, const Node node,
-    Node &translated_node, bool output_flag) const {
+    Node &translated_node, const std::string &params, bool output_flag) const {
     auto op_name = node.bubble().op();
 
     if (Bubble::IsEndPoint(op_name)) {
@@ -146,16 +147,21 @@ bool ts::PackTranslatorOption::translate(const ComputingDevice &device, const No
     auto kernel_type = kernel_tensor.dtype();
 
     //winograd_check
-    if(op_name == name::layer::conv2d() || op_name == name::layer::conv2d_v2()){
-        Tensor stride_tensor = tensor::cast(INT32, node.bubble().get(name::stride));
-        Stride2D stride_size(stride_tensor.data<int>()[2], stride_tensor.data<int>()[3]);
-        Tensor dilation_tensor = tensor::cast(INT32, node.bubble().get(name::dilation));
-        Dilation2D dilation_size(dilation_tensor.data<int>()[2], dilation_tensor.data<int>()[3]);
-        bool winograd_flag = false;
-        winograd_flag = KernelCommonFunc<float>::winograd_check(kernel_shape, stride_size, dilation_size);
-        if(winograd_flag){
-            Node::Link(translated_node, node.inputs());
-            return true;
+    ArgParser parser;
+    parser.add({"--winograd", "-win"}, {"--no-winograd", "-no-win"}, false);
+    parser.parse(params);
+    if (parser.get("--winograd")) {
+        if(op_name == name::layer::conv2d() || op_name == name::layer::conv2d_v2()){
+            Tensor stride_tensor = tensor::cast(INT32, node.bubble().get(name::stride));
+            Stride2D stride_size(stride_tensor.data<int>()[2], stride_tensor.data<int>()[3]);
+            Tensor dilation_tensor = tensor::cast(INT32, node.bubble().get(name::dilation));
+            Dilation2D dilation_size(dilation_tensor.data<int>()[2], dilation_tensor.data<int>()[3]);
+            bool winograd_flag = false;
+            winograd_flag = KernelCommonFunc<float>::winograd_check(kernel_shape, stride_size, dilation_size);
+            if(winograd_flag){
+                Node::Link(translated_node, node.inputs());
+                return true;
+            }
         }
     }
 

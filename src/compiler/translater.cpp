@@ -21,6 +21,7 @@ namespace ts {
         std::unordered_map<Node, Node> &ready_map,
         const ComputingDevice &device,
         std::vector<const TranslatorOption*> &options,
+        const std::string &params,
         bool output_flag) {
 
         //check ready map
@@ -31,7 +32,7 @@ namespace ts {
 
         auto translated_node = node;
         for (auto option : options) {
-            if (option->translate(device, node, translated_node, output_flag)) {
+            if (option->translate(device, node, translated_node, params, output_flag)) {
                 break;
             }
         }
@@ -39,7 +40,7 @@ namespace ts {
         std::vector<Node> translated_inputs;
         auto input_nodes = translated_node.inputs();
         for (auto &input : input_nodes) {
-            auto translated_input = translate_node(input, ready_map, device, options, false);
+            auto translated_input = translate_node(input, ready_map, device, options, params, false);
             translated_inputs.emplace_back(translated_input);
         }
 
@@ -79,7 +80,7 @@ namespace ts {
         auto output_nodes = new_module->outputs();
         for (auto & node : output_nodes)
         {
-            auto translated_node = translate_node(node, ready_map, m_device, options, true);
+            auto translated_node = translate_node(node, ready_map, m_device, options, m_params, true);
             traslated_nodes.emplace_back(translated_node);
         }
 
@@ -92,6 +93,7 @@ namespace ts {
 
     Translator::Translator(const ComputingDevice &device, const std::string &params)
         : m_device(device) {
+        m_params = params;
         ArgParser parser;
         parser.add({"--float16", "-fp16"}, {"--no-float16", "-no-fp16"}, false);
         parser.add({ "--pack" }, {"--no-pack"}, true);
