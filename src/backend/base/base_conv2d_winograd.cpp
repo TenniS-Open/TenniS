@@ -149,9 +149,17 @@ namespace ts {
                 KernelCommonFunc<float>::winograd_mode_select_on_arm(x_tensor.sizes(), kernel_tensor.size(0), winograd_mode);
                 m_winograd_mode = winograd_mode;
 
+                Shape kernel_shape = kernel_tensor.sizes();
+                Shape kernel_transformed_shape;
+                int in_tile_width = winograd_mode == F2X2_3X3 ? 4 : 8;
+                int in_tile_height = in_tile_width;
+                kernel_transformed_shape = {kernel_shape[0], kernel_shape[1], in_tile_height, in_tile_width };
+                m_k_transformed = Tensor(Tensor::InFlow::HOST, kernel_tensor.dtype(), kernel_transformed_shape);
+
                 conv2d_tranform_kernel(m_winograd_mode, kernel_tensor, m_k_transformed);
+
+                m_kernel_transformed = true;
             }
-            m_kernel_transformed= true;
 
             conv2d_winograd(x_tensor, m_winograd_mode, padding, m_padding_value, m_k_transformed, m_format, out, m_kernel_transformed);
 

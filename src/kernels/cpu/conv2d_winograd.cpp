@@ -12,14 +12,8 @@ namespace ts {
         static void conv2d_winograd_transform_kernel(WinogradConv2DMode winograd_mode,
                                                      const Tensor &kernel,
                                                      Tensor &kernel_transformed) {
-            Shape kernel_shape = kernel.sizes();
+            int in_tile_size = winograd_mode == F2X2_3X3 ? 16 : 64;
 
-            Shape kernel_transformed_shape;
-            int int_tile_width = winograd_mode == F2X2_3X3 ? 4 : 8;
-            int in_tile_size = int_tile_width * int_tile_width;
-
-            kernel_transformed_shape = {kernel_shape[0], kernel_shape[1], int_tile_width, int_tile_width };
-            kernel_transformed = Tensor(Tensor::InFlow::HOST, kernel.dtype(), kernel_transformed_shape);
             if(winograd_mode == F2X2_3X3){
                 Conv2dWinogradAlgorithm<T>::winograd_f23_transform_and_pack_kernel(kernel, in_tile_size, kernel_transformed);
             }
