@@ -61,7 +61,6 @@ namespace ts {
         else {
             TS_AUTO_CHECK(inputs.size() == 3);
             kernel_tensor = inputs[2].bubble().get(name::value);
-            padding_tensor = inputs[1].bubble().get(name::value);
         }
         auto kernel_shape = kernel_tensor.sizes();
         Shape padding_shape = padding_tensor.sizes();
@@ -77,15 +76,15 @@ namespace ts {
             //std::string winograd_name = node.bubble().name() + "_conv2d_winograd";
             std::string winograd_name = node.bubble().name();
             zipped_node = bubble::op(winograd_name, name::layer::conv2d_winograd(), { inputs[0], inputs[1] });
+            zipped_node.bubble().set(name::padding, padding_tensor);
         }
         else {
             //std::string winograd_name = node.bubble().name() + "_conv2d_winograd";
             std::string winograd_name = node.bubble().name();
-            zipped_node = bubble::op(winograd_name, name::layer::conv2d_winograd(), { inputs[0], inputs[2] });
+            zipped_node = bubble::op(winograd_name, name::layer::conv2d_winograd_v2(), { inputs[0], inputs[1], inputs[2] });
         }
 
         zipped_node.bubble().set(name::format, format_tensor);
-        zipped_node.bubble().set(name::padding, padding_tensor);
         zipped_node.bubble().set(name::padding_value, padding_val_tensor);
 
         return true;
