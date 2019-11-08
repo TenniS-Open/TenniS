@@ -88,7 +88,7 @@ namespace ts{
         int out_channel = ksize[0];
 
         if(kernel_height == 3 && kernel_width == 3 && stride.width == 1 && stride.height == 1 && dilation.height == 1 && dilation.width == 1){
-            if(input_channel >= 32 && out_channel > 32){
+            if(input_channel >= 32 && out_channel >= 32){
                 return true;
             }
         }
