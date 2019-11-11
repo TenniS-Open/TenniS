@@ -147,6 +147,7 @@ bool ts::PackTranslatorOption::translate(const ComputingDevice &device, const No
     auto kernel_type = kernel_tensor.dtype();
 
     //winograd_check
+#ifdef TS_ON_ARM
     ArgParser parser;
     parser.add({"--winograd", "-win"}, {"--no-winograd", "-no-win"}, false);
     parser.parse(params);
@@ -164,6 +165,7 @@ bool ts::PackTranslatorOption::translate(const ComputingDevice &device, const No
             }
         }
     }
+#endif
 
     int kernel_size_width;
     int kernel_size_height;

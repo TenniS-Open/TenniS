@@ -50,6 +50,7 @@ option(TS_USE_FMA "[Optional] Use FMA" OFF)
 option(TS_USE_NEON "[Optional] Use NEON" OFF)
 option(TS_USE_FAST_MATH "[Optional] Use fast math (-ffast-math)" OFF)
 option(TS_USE_WINOGRAD "[Optional] Use Winograd" OFF)
+option(TS_ON_ARM "[Optional] Target is arm" OFF)
 # Special for armv7
 option(TS_ON_ARMV7 "[Optional] Target is arm-v7a" OFF)
 
@@ -123,6 +124,9 @@ else (TS_USE_WINOGRAD)
 endif()
 
 # if target is target
+if (TS_ON_ARM)
+	add_definitions(-DTS_ON_ARM)
+endif()
 if (TS_ON_ARMV7)
     add_definitions(-DTS_ON_ARMV7)
 endif()

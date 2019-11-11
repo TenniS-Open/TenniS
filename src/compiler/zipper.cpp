@@ -86,12 +86,15 @@ namespace ts {
     Zipper::Zipper(const ComputingDevice &device, const std::string &params)
         : m_device(device) {
         ArgParser parser;
+        //NOTE:Winograd conv was only used on arm device now
+#ifdef TS_ON_ARM
         parser.add({"--winograd", "-win"}, {"--no-winograd", "-no-win"}, false);
         parser.parse(params);
         if (parser.get("--winograd")) {
             TS_LOG_STATUS << "Compiling with --winograd";
             m_options.push_back(new Conv2dZipperOption);
         }
+#endif
     }
 
     Zipper::~Zipper() {
