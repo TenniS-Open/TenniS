@@ -88,7 +88,7 @@ namespace ts {
         ArgParser parser;
         //NOTE:Winograd conv was only used on arm device now
 #ifdef TS_ON_ARM
-        parser.add({"--winograd", "-win"}, {"--no-winograd", "-no-win"}, false);
+        parser.add({"--winograd", "-win"}, {"--no-winograd", "-no-win"}, true);
         parser.parse(params);
         if (parser.get("--winograd")) {
             TS_LOG_STATUS << "Compiling with --winograd";
