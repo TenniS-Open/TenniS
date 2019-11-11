@@ -149,7 +149,7 @@ bool ts::PackTranslatorOption::translate(const ComputingDevice &device, const No
     //winograd_check
 #ifdef TS_ON_ARM
     ArgParser parser;
-    parser.add({"--winograd", "-win"}, {"--no-winograd", "-no-win"}, false);
+    parser.add({"--winograd", "-win"}, {"--no-winograd", "-no-win"}, true);
     parser.parse(params);
     if (parser.get("--winograd")) {
         if(op_name == name::layer::conv2d() || op_name == name::layer::conv2d_v2()){
