@@ -1215,6 +1215,23 @@ See `Dragon` for more details.
 
 ## tile_v2 (x..device, repeats..host) -> y..device = delete
 
+
+### slice_v2(x..device, begin..host, size..host) -> y..device
+Description: get slice of `x[begin:begin+size)`  
+Input:  
+x: Tensor  
+begin: IntArray  
+size: IntArray  
+Output：  
+y: Tensor  
+Node:  
+~~if len(begin) or len(size) < x.dims, expand with (0, -1) as (begin, size).
+`-1` means max size can be sliced.~~
+call slice inside
+
+### slice_v3(x..device, starts..host, ends..host[, axes..host[, steps..host]]) -> y..device
+See onnx.Slice
+
 ## 附录
 
 1. 在做基础运算的时候，`x`和`a`有会三种意义，分别为`标量`，`张量`和`广播张量`。这里的广播张量的意义为：
