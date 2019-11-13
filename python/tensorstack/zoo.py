@@ -79,6 +79,7 @@ class Name(object):
         range = "range"
         maximum = "maximum"
         exp = "exp"
+        slice_v3 = "slice_v3"
 
     dim = "dim"
     shuffle = "shuffle"

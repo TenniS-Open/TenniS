@@ -123,6 +123,8 @@ def convert(input_file, output_file, check_graph=False, specific=None):
             sys.stderr.write("[WARNING]: Check graph failed with: {}\n".format(e))
     onnx_model = optimizer.optimize(onnx_model, get_tensor_stack_passes())
 
+    print("[INFO] IR version: {}".format(onnx_model.ir_version))
+
     onnx_graph = onnx_model.graph
 
     # op
@@ -1063,7 +1065,7 @@ def convert_reduce_sum_layer(node, input_nodes, output_names):
     x = input_nodes[0]
 
     axes = attr_dict["axes"]
-    keepdims = bool(attr_dict["keepdims"])
+    keepdims = bool(attr_dict["keepdims"]) if "keepdims" in attr_dict else True
 
     if len(axes) == 0:
         node = ts.zoo.reshape(node_name + "_flatten", x=x, shape=[-1])
@@ -1472,4 +1474,83 @@ def convert_expand(node, input_nodes, output_names):
 
 
 register_layer_converter("Expand", convert_expand)
+
+
+def convert_exp_layer(node, input_nodes, output_names):
+    # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} -> {} ]=-".format(node.op_type, [n.name for n in input_nodes], output_names))
+
+    attribute = node.attribute
+    attr_dict = {}
+    for attr in attribute:
+        attr_dict[str(attr.name)] = topy(attr)
+
+    assert len(input_nodes) == 1
+    assert len(output_names) == 1
+
+    node_name = output_names[0]
+
+    x = input_nodes[0]
+
+    ts_node = ts.zoo.exp(node_name, x=x)
+
+    return ts_node,
+
+
+register_layer_converter("Exp", convert_exp_layer)
+
+
+def convert_slice_layer(node, input_nodes, output_names):
+    # type: (onnx.NodeProto, List[ts.Node], List[str]) -> List[ts.Node]
+    print("--# -=[ Converting {} layer: {} -> {} ]=-".format(node.op_type, [n.name for n in input_nodes], output_names))
+
+    attribute = node.attribute
+    attr_dict = {}
+    for attr in attribute:
+        attr_dict[str(attr.name)] = topy(attr)
+    assert len(output_names) == 1
+    assert len(input_nodes) >= 1
+
+    node_name = output_names[0]
+    x = input_nodes[0]
+
+    starts = None
+    ends = None
+    axes = None
+    steps = None
+
+    if len(input_nodes) == 1:
+        # is Slice-1
+        starts = attr_dict["starts"]
+        ends = attr_dict["ends"]
+        starts = ts.zoo.to_node(starts, node_name + "_starts", device=ts.device.CPU, dtype=numpy.int32)
+        ends = ts.zoo.to_node(ends, node_name + "_ends", device=ts.device.CPU, dtype=numpy.int32)
+        if "axes" in attr_dict:
+            axes = attr_dict["axes"]
+            axes = ts.zoo.to_node(axes, node_name + "_axes", device=ts.device.CPU, dtype=numpy.int32)
+    elif len(input_nodes) >= 3 and len(input_nodes) <= 5:
+        # is Slice-10 or Slice-11
+        starts = input_nodes[1]
+        ends = input_nodes[2]
+        if len(input_nodes) > 3:
+            axes = input_nodes[3]
+        if len(input_nodes) > 4:
+            steps = input_nodes[4]
+    else:
+        raise NotImplementedError("{}".format(node))
+
+    ts_node = None
+
+    if axes is None:
+        ts_node = ts.frontend.onnx.slice_v3(node_name, x, starts, ends)
+    elif steps is None:
+        ts_node = ts.frontend.onnx.slice_v3(node_name, x, starts, ends, axes)
+    else:
+        ts_node = ts.frontend.onnx.slice_v3(node_name, x, starts, ends, axes, steps)
+
+    return ts_node,
+
+
+register_layer_converter("Slice", convert_slice_layer)
+
 
