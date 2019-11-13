@@ -375,6 +375,9 @@ namespace ts {
                 m_begin[axis] = start;
                 m_end[axis] = end;
                 m_stride[axis] = step;
+
+                m_begin_mask &= ~(1 << axis);
+                m_end_mask &= ~(1 << axis);
             }
         }
     }
