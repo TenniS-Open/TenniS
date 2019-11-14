@@ -25,7 +25,8 @@ def convert_by_onnx(input_module, output_file, input, temp_onnx=None):
         torch_model = torch.load(input_module)
     elif isinstance(input_module, torch.nn.Module):
         torch_model = input_module
-    if torch_model is None:
+
+    if not isinstance(torch_model, torch.nn.Module):
         raise NotImplementedError("Not supported model: {}".format(type(input_module)))
     for param in torch_model.parameters():
         param.requires_grad = False
@@ -65,7 +66,8 @@ def convert(input_module, output_file, input):
         torch_model = torch.load(input_module)
     elif isinstance(input_module, torch.nn.Module):
         torch_model = input_module
-    if torch_model is None:
+
+    if not isinstance(torch_model, torch.nn.Module):
         raise NotImplementedError("Not supported model: {}".format(type(input_module)))
     for param in torch_model.parameters():
         param.requires_grad = False

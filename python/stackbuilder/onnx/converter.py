@@ -123,7 +123,30 @@ def convert(input_file, output_file, check_graph=False, specific=None):
             sys.stderr.write("[WARNING]: Check graph failed with: {}\n".format(e))
     onnx_model = optimizer.optimize(onnx_model, get_tensor_stack_passes())
 
-    print("[INFO] IR version: {}".format(onnx_model.ir_version))
+    opset_domain = "ai.onnx"
+    opset_version = 0
+    for opset in onnx_model.opset_import:
+        this_domain = opset.domain if opset.HasField("domain") else "ai.onnx"
+        this_version = opset.version if opset.HasField("version") else None
+
+        if this_version is None:
+            continue
+
+        if opset_version is None or this_version > opset_version:
+            opset_domain = this_domain
+            opset_version = this_version
+
+    if len(opset_domain) == 0:
+        opset_domain = "ai.onnx"
+
+    ir_version = onnx_model.ir_version if onnx_model.HasField("ir_version") else 0
+
+    producer_name = onnx_model.producer_name if onnx_model.HasField("producer_name") else "unknown"
+    producer_version = onnx_model.producer_version if onnx_model.HasField("producer_version") else 0
+
+    print("[INFO] format: ONNX v{}".format(ir_version))
+    print("[INFO] producer: {} {}".format(producer_name, producer_version))
+    print("[INFO] imports: {} v{}".format(opset_domain, opset_version))
 
     onnx_graph = onnx_model.graph
 
