@@ -991,9 +991,15 @@ def convert_softmax_layer(node, input_nodes, output_names):
     if Name.Attr.axis in attr_dict:
         axis = int(attr_dict[Name.Attr.axis])
 
-    ts_node = ts.zoo.softmax(name=node_name, x=x, dim=axis)
+    x_shape = ts.zoo.shape(name=node_name + "_shape", x=x)
 
-    return ts_node,
+    flatten_x = ts.zoo.flatten(name=node_name + "_flatten", x=x, dim=axis)
+
+    softmax_flatten_x = ts.zoo.softmax(name=node_name + "_softmax", x=flatten_x, dim=-1)
+
+    y = ts.zoo.reshape_v2(name=node_name, x=softmax_flatten_x, shape=x_shape)
+
+    return y,
 
 
 def convert_sub_layer(node, input_nodes, output_names):
