@@ -66,6 +66,11 @@ namespace ts {
 
     using Size2D = Form2D<int32_t>;
 
+    enum DataFormat{
+        DATA_NCHW = 0,
+        DATA_NHWC = 1,
+    };
+
     enum Conv2DFormat {
         FORMAT_NCHW = 0,
         FORMAT_NHWC = 1,
