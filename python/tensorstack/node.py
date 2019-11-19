@@ -55,8 +55,8 @@ class Node(object):
 
     @name.setter
     def name(self, value):
-        self.__params[self.RetentionParam.name] = value
         self.__name = value
+        self.__params[self.RetentionParam.name] = self.__name
 
     @property
     def op(self):
@@ -64,8 +64,8 @@ class Node(object):
 
     @op.setter
     def op(self, value):
-        self.__params[self.RetentionParam.op] = value
         self.__op = value
+        self.__params[self.RetentionParam.op] = self.__op
 
     @property
     def output_count(self):
@@ -77,8 +77,8 @@ class Node(object):
 
     @shape.setter
     def shape(self, value):
-        self.__params[self.RetentionParam.shape] = from_any(value, dtype=numpy.int32)
-        self.__shape = value
+        self.__shape = from_any(value, dtype=numpy.int32)
+        self.__params[self.RetentionParam.shape] = self.__shape
 
     @property
     def params(self):
@@ -92,8 +92,8 @@ class Node(object):
 
     @dtype.setter
     def dtype(self, value):
-        self.__params[self.RetentionParam.dtype] = from_any(value, dtype=numpy.int32)
-        self.__dtype = value
+        self.__dtype = from_any(value, dtype=numpy.int32)
+        self.__params[self.RetentionParam.dtype] = self.__dtype
 
     def has(self, param):
         return param in self.__params
