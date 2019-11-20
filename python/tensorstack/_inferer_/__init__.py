@@ -7,3 +7,4 @@ from .tf_conv2d_padding import tf_conv2d_padding
 from .dragon_conv2d_padding import dragon_conv2d_padding
 
 from . import strided_slice
+from . import slice_v3

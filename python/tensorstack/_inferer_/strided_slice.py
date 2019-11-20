@@ -4,6 +4,7 @@ import numpy
 
 import copy
 
+
 def infer_output(x, begin, end, stride, begin_flag, end_flag):
     # type: (int, int, int, int, bool, bool) -> (int, int, int)
     """
@@ -35,7 +36,6 @@ def infer_output(x, begin, end, stride, begin_flag, end_flag):
             elif begin < 0:
                 begin += x
 
-
     if end_flag:
         end = x if stride > 0 else -1
     else:
@@ -53,8 +53,6 @@ def infer_output(x, begin, end, stride, begin_flag, end_flag):
                 end = -1
             elif end < 0:
                 end += x
-
-
 
     if stride > 0:
         return (end - begin - 1) // stride + 1 if begin < end else 0, begin, end
