@@ -1901,6 +1901,55 @@ def infer_broadcast(node, inputs):
 _register_shape_inferer("broadcast", infer_broadcast)
 
 
+def infer_slice_v3(node, inputs):
+    # type: (Node, List[NodeShape]) -> Union[None, NodeShape]
+    assert 3 <= len(inputs) <= 5
+
+    dtype = inputs[0].dtype
+    x_shape = list(inputs[0].shape)
+
+    x = _infer_value(node.inputs[0])
+    starts = _infer_value(node.inputs[1])
+    ends = _infer_value(node.inputs[2])
+    axes = _infer_value(node.inputs[3]) if len(node.inputs) > 3 else None
+    steps = _infer_value(node.inputs[4]) if len(node.inputs) > 4 else None
+
+    if starts is None or ends is None:
+        return None
+
+    if len(node.inputs) > 3 and axes is None:
+        return None
+
+    if len(node.inputs) > 4 and steps is None:
+        return None
+
+    starts = list(starts)
+    ends = list(ends)
+
+    if axes:
+        axes = list(axes)
+    else:
+        axes = list(range(len(starts)))
+
+    if steps:
+        steps = list(steps)
+    else:
+        steps = [1] * len(starts)
+
+    y, y_shape = _inferer_.slice_v3.infer(x, x_shape, starts, ends, axes, steps)
+
+    if y_shape is None:
+        return None
+
+    if y is not None:
+        node.set("#value", y)
+
+    return NodeShape(y_shape, dtype)
+
+
+_register_shape_inferer("slice_v3", infer_slice_v3)
+
+
 if __name__ == "__main__":
     a = menu.param("a", [3], FLOAT32)
     b = menu.param("b", [3], FLOAT32)
