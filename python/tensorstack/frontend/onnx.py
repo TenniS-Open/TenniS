@@ -139,3 +139,22 @@ def gemm(name, A, B, C, alpha, beta, transA, transB):
 
     return node
 
+
+def slice_v3(name, x, starts, ends, axes=None, steps=None):
+    if steps is not None and axes is None:
+        raise ValueError("axes must be set, if steps set.")
+
+    node_inputs = []
+    if axes is None:
+        node_inputs = [x, starts, ends]
+    elif steps is None:
+        node_inputs = [x, starts, ends, axes]
+    else:
+        node_inputs = [x, starts, ends, axes, steps]
+
+    node = menu.op(name=name, op_name="slice_v3", inputs=node_inputs)
+
+    return node
+
+    pass
+

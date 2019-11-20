@@ -437,6 +437,18 @@ y_i = exp(t_i) / \sum{exp(t_i)}
 要把输的元素进行拼接，在`dim`维度上，除了`dim`维度，其他的输入的数据的维度必须相同。
 输出的`dim`维度是输入对应`dim`维度的和。
 
+
+### stack(x...) -> y
+Description:  
+Input `x`: `List<Tensor>`
+Input `y`: `Tensor`
+
+Attr:  
+- `axis`: `Int` Stack axis.
+
+Node:  
+Equals to `numpy.stack`
+
 ### pooling2d(x)
 描述：进行下采样
 
@@ -1241,6 +1253,23 @@ sampling_ratio (int, optional, default=2) – The number of sampling grids for e
 See `Dragon` for more details.
 
 ## tile_v2 (x..device, repeats..host) -> y..device = delete
+
+
+### slice_v2(x..device, begin..host, size..host) -> y..device
+Description: get slice of `x[begin:begin+size)`  
+Input:  
+x: Tensor  
+begin: IntArray  
+size: IntArray  
+Output：  
+y: Tensor  
+Node:  
+~~if len(begin) or len(size) < x.dims, expand with (0, -1) as (begin, size).
+`-1` means max size can be sliced.~~
+call slice inside
+
+### slice_v3(x..device, starts..host, ends..host[, axes..host[, steps..host]]) -> y..device
+See onnx.Slice
 
 ## 附录
 

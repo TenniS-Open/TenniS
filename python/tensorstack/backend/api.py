@@ -1019,12 +1019,14 @@ class OperatorParams(object):
 
     def get(self, item):
         # type: (str) -> Tensor
+        assert isinstance(item, basestring)
         item = item.encode()
         x = _C.ts_OperatorParams_get(self, item)
         return Tensor(x)
 
     def has(self, item):
         # type: (str) -> bool
+        assert isinstance(item, basestring)
         x = self.get(item)
         y = bool(x)
         del x

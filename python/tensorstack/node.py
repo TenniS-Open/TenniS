@@ -17,6 +17,7 @@ from .tensor import to_str
 from .dtype import VOID
 
 import numpy
+from typing import List, Tuple, Union
 
 
 class Node(object):
@@ -54,8 +55,8 @@ class Node(object):
 
     @name.setter
     def name(self, value):
-        self.__params[self.RetentionParam.name] = value
         self.__name = value
+        self.__params[self.RetentionParam.name] = self.__name
 
     @property
     def op(self):
@@ -63,8 +64,8 @@ class Node(object):
 
     @op.setter
     def op(self, value):
-        self.__params[self.RetentionParam.op] = value
         self.__op = value
+        self.__params[self.RetentionParam.op] = self.__op
 
     @property
     def output_count(self):
@@ -73,6 +74,11 @@ class Node(object):
     @property
     def shape(self):
         return self.__shape
+
+    @shape.setter
+    def shape(self, value):
+        self.__shape = from_any(value, dtype=numpy.int32)
+        self.__params[self.RetentionParam.shape] = self.__shape
 
     @property
     def params(self):
@@ -83,6 +89,11 @@ class Node(object):
         if self.RetentionParam.dtype in self.__params:
             return int(self.__params[self.RetentionParam.dtype])
         return VOID
+
+    @dtype.setter
+    def dtype(self, value):
+        self.__dtype = from_any(value, dtype=numpy.int32)
+        self.__params[self.RetentionParam.dtype] = self.__dtype
 
     def has(self, param):
         return param in self.__params
@@ -106,12 +117,12 @@ class Node(object):
 
     @property
     def inputs(self):
-        # type: () -> list[Node]
+        # type: () -> List[Node]
         return self.__inputs
 
     @property
     def outputs(self):
-        # type: () -> list[Node]
+        # type: () -> List[Node]
         return self.__outputs
 
     @staticmethod
