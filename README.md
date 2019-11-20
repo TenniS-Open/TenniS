@@ -32,6 +32,10 @@ cmake ..
 -DCMAKE_INSTALL_PREFIX=/usr/local
 ```
 
+When compilation target has no instruction-set like `AVX` or `FMA`,
+**MUST** turn corresponding option off.
+
+When compilation target is `arm-*`, **PLEASE** set `-DTS_ON_ARM=ON`.
 When compilation target is `arm-v7`, **MUST** set `-DTS_ON_ARMV7=ON`.
 
 2. Do `make -j16` and waiting.

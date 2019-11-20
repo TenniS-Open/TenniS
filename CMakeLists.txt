@@ -49,7 +49,6 @@ option(TS_USE_SSE "[Optional] Use SSE" OFF)
 option(TS_USE_FMA "[Optional] Use FMA" OFF)
 option(TS_USE_NEON "[Optional] Use NEON" OFF)
 option(TS_USE_FAST_MATH "[Optional] Use fast math (-ffast-math)" OFF)
-option(TS_USE_WINOGRAD "[Optional] Use Winograd" OFF)
 option(TS_ON_ARM "[Optional] Target is arm" OFF)
 # Special for armv7
 option(TS_ON_ARMV7 "[Optional] Target is arm-v7a" OFF)
@@ -57,6 +56,9 @@ option(TS_ON_ARMV7 "[Optional] Target is arm-v7a" OFF)
 # Not change for now version
 option(TS_USE_PROFILER "[Optional] Use Profiler" ON)
 option(TS_USE_HOOK "[Optional] Use Hook" ON)
+
+# Deprecated option, no use after all.
+option(TS_USE_WINOGRAD "[Deprecated] Use Winograd" OFF)
 
 # Hidden options (do not uncomment, it already defined later)
 # None
