@@ -9,6 +9,8 @@
 #include "runtime/stack.h"
 #include "global/operator_factory.h"
 
+#include "global/hard_allocator.h"
+
 namespace ts {
     static Tensor get_value(const Node &node) {
         if (node->op() == Bubble::Const) {
@@ -20,11 +22,29 @@ namespace ts {
         return Tensor();
     }
 
-    static void try_run(Node &node) {
-        std::vector<Tensor> inputs;
-        for (auto &i : node.inputs()) {
-            inputs.push_back(get_value(i));
-            if (inputs.back().empty()) return;
+    void *FakeMemoryAllocator(int, size_t, void *, size_t) {
+        return nullptr;
+    }
+
+    TS_STATIC_ACTION(HardAllocator::Register, "__fake__", FakeMemoryAllocator)
+
+    void infer_value(Node &node, const std::vector<bool> &ignore) {
+        if (Bubble::IsEndPoint(node->op())) {
+            return;
+        }
+
+        std::vector<Tensor> inputs(node.inputs().size());
+        for (size_t i = 0; i < inputs.size(); ++i) {
+            auto input = node.input(i);
+            auto this_input = get_value(input);
+            if (!this_input.empty()) {
+                inputs[i] = this_input;
+                continue;
+            }
+            if (i >= ignore.size()) return;
+            if (!ignore[i]) return;
+            if (!input->has("#shape")) return;
+            inputs[i] = Tensor(MemoryDevice("__fake__"), FLOAT32, input->get_int_list("#shape"));
         }
         MemoryDevice memory_device(CPU);
         Stack stack(memory_device);
@@ -91,13 +111,23 @@ namespace ts {
             RETURN_CACHE(VOID);
         }
 
+        auto before_node_value = get_value(node);
+
         auto output_proto = shape_infer(node, input_proto);
         if (output_proto.dtype() == VOID) {
             TS_LOG_ERROR << "Failed to infer " << node->op() << ":" << node->name();
             RETURN_CACHE(VOID);
         }
 
-        try_run(node);
+        auto after_node_value = get_value(node);
+
+        if (after_node_value.empty() || after_node_value.data() == before_node_value.data()) {
+            // if node's #value not set or not updated, then do infer
+            infer_value(node);
+        }
+
+
+        TS_LOG_INFO << node->op() << ":" << node->name() << " => " << output_proto;
 
         RETURN_CACHE(output_proto);
 #undef RETURN_CACHE
@@ -121,5 +151,9 @@ namespace ts {
     std::vector<TensorPrototype> infer(std::vector<Node> &nodes) {
         std::unordered_map<Node, TensorPrototype> cache;
         return infer(nodes, cache);
+    }
+
+    void infer_value(Node &node) {
+        return infer_value(node, {});
     }
 }

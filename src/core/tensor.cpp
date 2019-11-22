@@ -737,9 +737,20 @@ namespace ts {
         return field(size_t(offset >= 0 ? offset : int(fields_count()) + offset), value);
     }
 
+    static std::string to_checked_string(const std::vector<int32_t> &shape) {
+        std::ostringstream oss;
+        oss << "[";
+        for (size_t i = 0; i < shape.size(); ++i) {
+            if (i) oss << ", ";
+            oss << (shape[i] >= 0 ? std::to_string(shape[i]) : "?");
+        }
+        oss << "]";
+        return oss.str();
+    }
+
     std::ostream &operator<<(std::ostream &out, const Tensor::Prototype &proto) {
         std::ostringstream oss;
-        oss << type_str(proto.dtype()) << ":" << to_string(proto.sizes());
+        oss << type_str(proto.dtype()) << ":" << to_checked_string(proto.sizes());
         return out << oss.str();
     }
 

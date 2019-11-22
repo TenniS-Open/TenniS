@@ -15,6 +15,23 @@ namespace ts {
     TS_DEBUG_API TensorPrototype infer(Node &node);
 
     TS_DEBUG_API std::vector<TensorPrototype> infer(std::vector<Node> &nodes);
+
+    /**
+     * set #value attr if the value can be inferred with all input nodes inferred
+     * @param node node ready to infer
+     * @param ignore if ignore[i] is true, means i-th input's value be ignored. ie. _dims's ignore can be [true]
+     * @note all input attr #shape must be needed
+     * @note if ignore is empty, mean all inputs can not be ignored
+     * @note <const> Node happen nothing
+     */
+    TS_DEBUG_API void infer_value(Node &node, const std::vector<bool> &ignore);
+
+    /**
+     * Call infer_value(node, {})
+     * @param node node ready to infer
+     * @note all input attr #shape must be needed
+     */
+    TS_DEBUG_API void infer_value(Node &node);
 }
 
 #endif // TENSORSTACK_RUNTIME_INFERER_H
