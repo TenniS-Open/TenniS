@@ -366,7 +366,7 @@ namespace ts {
 
         TensorPrototype(DTYPE dtype, Shape &&sizes) : supper(dtype, std::move(sizes)) {}
 
-        explicit TensorPrototype(DTYPE dtype) : supper(dtype) {}
+        TensorPrototype(DTYPE dtype) : supper(dtype) {}
 
         TensorPrototype(const std::vector<Tensor::Prototype> &fields);
 

@@ -10,6 +10,8 @@
 #include <unordered_map>
 #include "core/tensor.h"
 
+#include "core/tensor_builder.h"
+
 namespace ts {
     class TS_DEBUG_API Bubble : public Serializable {
     public:
@@ -105,6 +107,38 @@ namespace ts {
         void shape(const Shape &shape);
 
         void dtype(DTYPE _dtype);
+
+        int get_int(const std::string &param) const { return tensor::to_int(get(param)); }
+
+        unsigned int get_uint(const std::string &param) const { return tensor::to_uint(get(param)); }
+
+        float get_float(const std::string &param) const { return tensor::to_float(get(param)); }
+
+        double get_double(const std::string &param) const { return tensor::to_double(get(param)); }
+
+        std::string get_string(const std::string &param) const { return tensor::to_string(get(param)); }
+
+        bool get_bool(const std::string &param) const { return tensor::to_bool(get(param)); }
+
+        std::vector<int32_t> get_int_list(const std::string &param) const {
+            return tensor::array::to_int(get(param));
+        }
+
+        std::vector<uint32_t> get_uint_list(const std::string &param) const {
+            return tensor::array::to_uint(get(param));
+        }
+
+        std::vector<float> get_float_list(const std::string &param) const {
+            return tensor::array::to_float(get(param));
+        }
+
+        std::vector<double> get_double_list(const std::string &param) const {
+            return tensor::array::to_double(get(param));
+        }
+
+        std::vector<bool> get_bool_list(const std::string &param) const {
+            return tensor::array::to_bool(get(param));
+        }
 
     private:
         void update_retention_params();

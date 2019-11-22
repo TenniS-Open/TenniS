@@ -132,6 +132,10 @@ namespace ts {
             return std::move(out_vector);
         }
 
+        const Node &input(int i) const { return inputs()[i]; }
+
+        const Node &input(size_t i) const { return inputs()[i]; }
+
         void *ptr() const { return m_ptr.lock().get(); }
 
 //        template<typename T>
