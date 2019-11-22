@@ -401,6 +401,56 @@ namespace ts {
 
         TS_STATIC_ACTION(ShapeInferer::Register, "pooling2d_v2", pooling2d_v2)
 
+        static TensorPrototype conv2d_v2(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            auto format = node->get_string("format");
+
+            auto padding_value = get_value(node.input(1));
+            auto padding = tensor::array::to_int(padding_value);
+
+            auto stide = node->get_int_list("stride");
+            auto dilation = node->get_int_list("dilation");
+
+            std::vector<int32_t> kernel_dims;
+            int32_t channel_dims;
+
+            auto &x = inputs[0];
+            auto &w = inputs[2];
+
+            if (format == "NCHW") {
+                channel_dims = 1;
+                kernel_dims = {2, 3};
+            } else if (format == "NHWC") {
+                channel_dims = 3;
+                kernel_dims = {1, 2};
+            } else {
+                return VOID;
+            }
+
+            std::vector<int32_t> y_shape(4);
+            y_shape[0] = x.size(0);
+            y_shape[channel_dims] = w.size(0);
+
+            int32_t kernel_shape[] = {w.size(2), w.size(3)};
+
+            for (size_t i = 0; i < kernel_dims.size(); ++i) {
+                auto dim = kernel_dims[i];
+                if (x.size(dim) < 0) {
+                    y_shape[dim] = -1;
+                    continue;
+                }
+                y_shape[dim] = conv2d_forward(
+                        x.size(dim),
+                        padding[2 * dim] + padding[2 * dim + 1],
+                        dilation[dim],
+                        kernel_shape[i],
+                        stide[dim]);
+            }
+
+            return {x.dtype(), y_shape};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "conv2d_v2", conv2d_v2)
+
         static TensorPrototype gemm(const Node &node, const std::vector<TensorPrototype> &inputs) {
             auto A = inputs[0];
             auto B = inputs[1];
@@ -416,6 +466,110 @@ namespace ts {
         }
 
         TS_STATIC_ACTION(ShapeInferer::Register, "gemm", gemm)
+
+        static TensorPrototype concat(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            if (inputs.empty()) return VOID;
+
+            auto dim = node->get_int("dim");
+
+            auto dtype = inputs[0].dtype();
+            auto shape = inputs[0].sizes();
+
+            if (dim < 0) dim = int32_t(shape.size()) + dim;
+            if (dim < 0 || dim >= int32_t(shape.size())) return VOID;
+
+            for (size_t i = 1; i < inputs.size(); ++i) {
+                auto inc = inputs[i].size(dim);
+                if (inc < 0) {
+                    shape[dim] = -1;
+                    break;
+                }
+                shape[dim] += inc;
+            }
+
+            return {dtype, shape};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "concat", concat)
+
+        static TensorPrototype global_pooling2d(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            auto format = node->get_string("format");
+
+            std::vector<int32_t> kernel_dims;
+            int32_t channel_dims;
+
+            auto &x = inputs[0];
+
+            if (format == "NCHW") {
+                channel_dims = 1;
+                kernel_dims = {2, 3};
+            } else if (format == "NHWC") {
+                channel_dims = 3;
+                kernel_dims = {1, 2};
+            } else {
+                return VOID;
+            }
+
+            std::vector<int32_t> y_shape(4);
+            y_shape[0] = x.size(0);
+            y_shape[channel_dims] = x.size(channel_dims);
+
+            for (size_t i = 0; i < kernel_dims.size(); ++i) {
+                auto dim = kernel_dims[i];
+                y_shape[dim] = 1;
+            }
+
+            return {x.dtype(), y_shape};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "global_pooling2d", global_pooling2d)
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "sigmoid", _copy)
+
+        static TensorPrototype _dims(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            infer_const_value(node, {true});
+            return {INT32, {}};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "_dims", _dims)
+
+        static TensorPrototype _expand(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            auto x = inputs[0];
+
+            auto dims_value = get_value(node.input(1));
+            if (dims_value.empty()) return VOID;
+
+            auto dims = size_t(tensor::to_int(dims_value));
+
+            auto front = int32_t(dims);
+            auto end = int32_t(dims);
+            bool inverse = false;
+            if (node->has("front")) front = node->get_int("front");
+            if (node->has("end")) end = node->get_int("end");
+            if (node->has("inverse")) inverse = node->get_bool("inverse");
+
+            auto y = x.sizes();
+
+            if (!inverse) {
+                while (y.size() < dims && front > 0) {
+                    y.insert(y.begin(), 1);
+                }
+                while (y.size() < dims && end > 0) {
+                    y.insert(y.end(), 1);
+                }
+            } else {
+                while (y.size() < dims && end > 0) {
+                    y.insert(y.end(), 1);
+                }
+                while (y.size() < dims && front > 0) {
+                    y.insert(y.begin(), 1);
+                }
+            }
+
+            return {x.dtype(), y};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "_expand", _expand)
     }
 
 }
