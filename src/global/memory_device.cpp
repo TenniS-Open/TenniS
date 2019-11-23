@@ -35,4 +35,13 @@ namespace ts {
         auto &map_memory_device = MapMemoryDevice();
         map_memory_device.clear();
     }
+
+    std::set<std::pair<std::string, std::string>> ComputingMemory::AllItems() TS_NOEXCEPT {
+        auto &map_memory_device = MapMemoryDevice();
+        std::set<std::pair<std::string, std::string>> items;
+        for (auto &pair_compute_memory : map_memory_device) {
+            items.insert(pair_compute_memory);
+        }
+        return items;
+    }
 }

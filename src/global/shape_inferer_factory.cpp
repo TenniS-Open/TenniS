@@ -35,5 +35,14 @@ namespace ts {
         auto &map_op_inferer = MapOpInferer();
         map_op_inferer.clear();
     }
+
+    std::set<std::string> ShapeInferer::AllKeys() TS_NOEXCEPT {
+        auto &map_op_inferer = MapOpInferer();
+        std::set<std::string> set_op;
+        for (auto &op : map_op_inferer) {
+            set_op.insert(op.first);
+        }
+        return set_op;
+    }
 }
 

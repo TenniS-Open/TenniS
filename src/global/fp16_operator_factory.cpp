@@ -74,4 +74,11 @@ namespace ts {
         Fp16OperatorCreator::Query(const DeviceType &device_type, const std::string &operator_name, bool strict) TS_NOEXCEPT {
         return TalentQuery(device_type, operator_name, strict);
     }
+
+    std::set<std::pair<std::string, std::string>> Fp16OperatorCreator::AllKeys() TS_NOEXCEPT {
+        auto &map_key_values = MapNameCreator();
+        std::set<std::pair<std::string, std::string>> keys;
+        for (auto &key_value : map_key_values) { keys.insert(key_value.first); }
+        return keys;
+    }
 }

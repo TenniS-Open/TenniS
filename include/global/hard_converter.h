@@ -10,6 +10,8 @@
 #include "utils/except.h"
 #include <functional>
 
+#include <set>
+
 namespace ts {
     class TS_DEBUG_API HardConverter {
     public:
@@ -52,6 +54,11 @@ namespace ts {
          * No details for this API, so DO NOT call it
          */
         static void Clear();
+
+        /**
+         * @return set of pair of dst device and src device
+         */
+        static std::set<std::pair<std::string, std::string>> AllKeys() TS_NOEXCEPT;
     };
 }
 

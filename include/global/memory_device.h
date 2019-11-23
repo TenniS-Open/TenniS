@@ -6,6 +6,7 @@
 #define TENSORSTACK_GLOBAL_DEVICE_MEMORY_H
 
 #include <sstream>
+#include <set>
 #include "utils/except.h"
 #include "core/device.h"
 
@@ -62,6 +63,11 @@ namespace ts {
          * No details for this API, so DO NOT call it
          */
         static void Clear();
+
+        /**
+         * @return set of pair of compute device and memory device
+         */
+        static std::set<std::pair<std::string, std::string>> AllItems() TS_NOEXCEPT;
     };
 }
 

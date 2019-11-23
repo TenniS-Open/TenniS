@@ -85,4 +85,13 @@ namespace ts {
         if (op == nullptr) throw OperatorNotFoundException(device_type, operator_name);
         return op;
     }
+
+    std::set<std::pair<std::string, std::string>> OperatorCreator::AllKeys() TS_NOEXCEPT {
+        auto &map_name_creator = MapNameCreator();
+        std::set<std::pair<std::string, std::string>> set_name;
+        for (auto &name : map_name_creator) {
+            set_name.insert(name.first);
+        }
+        return set_name;
+    }
 }

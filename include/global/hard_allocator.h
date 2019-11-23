@@ -14,6 +14,8 @@
 
 #include <iomanip>
 
+#include <set>
+
 namespace ts {
     class TS_DEBUG_API OutOfMemoryException : public Exception {
     public:
@@ -108,6 +110,11 @@ namespace ts {
         static void RegisterV3(const DeviceType &device_type, const _malloc &_new, const _free &_delete, const _realloc &_reset) TS_NOEXCEPT;
 
         static function Bind(const _malloc &_new, const _free &_delete, const _realloc &_reset);
+
+        /**
+         * @return set of device type
+         */
+        static std::set<std::string> AllKeys() TS_NOEXCEPT;
     };
 }
 

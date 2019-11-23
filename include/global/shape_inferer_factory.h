@@ -8,6 +8,8 @@
 #include <functional>
 #include "module/graph.h"
 
+#include <set>
+
 namespace ts {
     class TS_DEBUG_API ShapeInferer {
     public:
@@ -26,6 +28,8 @@ namespace ts {
          * No details for this API, so DO NOT call it
          */
         static void Clear();
+
+        static std::set<std::string> AllKeys() TS_NOEXCEPT;
     };
 }
 

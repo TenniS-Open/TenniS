@@ -5,6 +5,8 @@
 #include "runtime/operator.h"
 #include "utils/static.h"
 
+#include <set>
+
 namespace ts {
 
     class TS_DEBUG_API Fp16OperatorCreator {
@@ -27,6 +29,11 @@ namespace ts {
             const std::string &operator_name, bool strict) TS_NOEXCEPT;
 
         static void Clear();
+
+        /**
+         * @return set of pair of device type and operator name
+         */
+        static std::set<std::pair<std::string, std::string>> AllKeys() TS_NOEXCEPT;
     };
 }
 

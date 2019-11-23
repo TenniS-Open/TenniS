@@ -9,6 +9,8 @@
 
 #include "core/device.h"
 
+#include <set>
+
 namespace ts {
     class DeviceHandle;
     class TS_DEBUG_API DeviceAdmin {
@@ -59,6 +61,11 @@ namespace ts {
          * No details for this API, so DO NOT call it
          */
         static void Clear();
+
+        /**
+         * @return set of device type
+         */
+        static std::set<std::string> AllKeys() TS_NOEXCEPT;
     };
 }
 

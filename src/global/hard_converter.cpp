@@ -48,4 +48,17 @@ namespace ts {
         auto &map_dst_src_converter = MapDstSrcConverter();
         map_dst_src_converter.clear();
     }
+
+    std::set<std::pair<std::string, std::string>> HardConverter::AllKeys() TS_NOEXCEPT {
+        auto &map_dst_src_converter = MapDstSrcConverter();
+        std::set<std::pair<std::string, std::string>> keys;
+        for (auto &dst_src_converter : map_dst_src_converter) {
+            auto dst = dst_src_converter.first;
+            for (auto &src_converter : dst_src_converter.second) {
+                auto src = src_converter.first;
+                keys.insert(std::make_pair(dst, src));
+            }
+        }
+        return keys;
+    }
 }

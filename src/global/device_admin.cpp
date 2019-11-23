@@ -32,4 +32,11 @@ namespace ts {
         auto &map_device_type_admin = MapDeviceTypeAdmin();
         map_device_type_admin.clear();
     }
+
+    std::set<std::string> DeviceAdmin::AllKeys() TS_NOEXCEPT {
+        auto &map_key_values = MapDeviceTypeAdmin();
+        std::set<std::string> keys;
+        for (auto &key_value : map_key_values) { keys.insert(key_value.first); }
+        return keys;
+    }
 }
