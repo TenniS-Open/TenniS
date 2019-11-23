@@ -78,6 +78,7 @@ static void init_node_info() {
     g_node_infos[name::layer::resize2d()] = {"invtrapezium","#2bce93"};
     g_node_infos[name::layer::mx_pooling2d_padding()] = {"rect","#8f9996"};
     g_node_infos[name::layer::copy()] = {"triangle","#904546"};
+    g_node_infos["TensorStack"] = {"rect","#99cccc"};
 }
 
 static std::string get_node_id(const void * ptr) {
@@ -280,7 +281,7 @@ static void print_param(const std::string &op, const std::unordered_map<std::str
 
 
 
-static void print_node(const Node& node, int layer, bool isinput, int nprint) {
+static void print_node(const Node& node, int layer, bool isinput, int nprint, bool hype = false) {
      std::string name;
      std::string childname,strtmp;
      print_param(node.bubble().op(), node.bubble().params(), 0, strtmp); 
@@ -290,7 +291,8 @@ static void print_node(const Node& node, int layer, bool isinput, int nprint) {
 
      std::string op = node.bubble().op();
      std::string str2 = node.bubble().name();
-     str2 = convert_html(str2);
+     if (!hype)
+        str2 = convert_html(str2);
 
      if(str2.length() < 1) {
          str2 = "&nbsp;&nbsp;";
@@ -298,7 +300,8 @@ static void print_node(const Node& node, int layer, bool isinput, int nprint) {
      g_node_stream << name  << " [label=< <table border=\"0\" ><tr><td><table border=\"0\"><tr><td>";
      g_node_stream << str2 << "</td></tr><tr><td>";
      str2 = op;
-     str2 = convert_html(str2);
+    if (!hype)
+        str2 = convert_html(str2);
 
      if(str2.length() < 1) {
          std::cout << "operator name is empty!" << std::endl;
@@ -421,13 +424,36 @@ int main(int argc, char**argv)
         return -1;
     }
     std::string strtmp;
-    for (auto &node : m->inputs()) {
-        print_node(node, 1, true, nprint); 
+
+    {
+        std::ostringstream oss;
+        for (size_t i = 0; i < m->inputs().size(); ++i) {
+            auto input = m->input(i);
+            oss << "<font color=\"red\">input: </font>" << input->name();
+            if (input->has("#shape")) {
+                auto dtype = FLOAT32;
+                if (input->has("#dtype")) dtype = DTYPE(input->get_int("#dtype"));
+                oss << ", " << "<font color=\"blue\">"
+                << type_str(dtype) << to_string(input->get_int_list("#shape"))
+                << "</font>";
+            }
+            oss << "<br/>";
+        }
+        for (size_t i = 0; i < m->outputs().size(); ++i) {
+            auto output = m->output(i);
+            oss << "<font color=\"red\">output: </font>" << output->name();
+            oss << "<br/>";
+        }
+        Node info = g.make("TensorStack", oss.str());
+        print_node(info, 1, false, nprint, true);
     }
 
     for (auto &node : m->outputs()) {
         g_set.insert(node.bubble().name());
         print_node(node, 1, false, nprint);
+    }
+    for (auto &node : m->inputs()) {
+        print_node(node, 1, true, nprint);
     }
 
     std::string outfilename = filename;
