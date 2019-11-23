@@ -570,6 +570,35 @@ namespace ts {
         }
 
         TS_STATIC_ACTION(ShapeInferer::Register, "_expand", _expand)
-    }
 
+        TS_STATIC_ACTION(ShapeInferer::Register, "_copy", _copy)
+        TS_STATIC_ACTION(ShapeInferer::Register, "abs", _copy)
+        TS_STATIC_ACTION(ShapeInferer::Register, "exp", _copy)
+        TS_STATIC_ACTION(ShapeInferer::Register, "l2_norm", _copy)
+        TS_STATIC_ACTION(ShapeInferer::Register, "norm_image", _copy)
+        TS_STATIC_ACTION(ShapeInferer::Register, "prelu", _copy)
+        TS_STATIC_ACTION(ShapeInferer::Register, "prewhiten", _copy)
+        TS_STATIC_ACTION(ShapeInferer::Register, "relu_max", _copy)
+        TS_STATIC_ACTION(ShapeInferer::Register, "rsqrt", _copy)
+        TS_STATIC_ACTION(ShapeInferer::Register, "sqrt", _copy)
+        TS_STATIC_ACTION(ShapeInferer::Register, "square", _copy)
+        TS_STATIC_ACTION(ShapeInferer::Register, "tanh", _copy)
+
+        static TensorPrototype _dimshuffle(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            auto x = inputs[0];
+
+            auto dim = node->get_int("dim");
+            auto shuffle = node->get_int_list("shuffle");
+
+            if (dim < 0) dim += int32_t(x.dims());
+            if (dim < 0 || dim >= x.dims()) return VOID;
+
+            auto y_shape = x.sizes();
+            y_shape[dim] = int32_t(shuffle.size());
+
+            return {x.dtype(), y_shape};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "_dimshuffle", _dimshuffle)
+    }
 }
