@@ -9,6 +9,8 @@
 
 #include "runtime/inferer.h"
 
+#include "utils/box.h"
+
 namespace ts {
     namespace infer_factory {
         static Tensor get_value(const Node &node) {
@@ -315,13 +317,12 @@ namespace ts {
             }
 
             if (valid_dims(x.sizes())) {
-                Tensor tmp(INT8, x.sizes());
+                Tensor tmp(MemoryDevice("__fake__"), INT8, x.sizes());
                 tmp = tmp.reshape(shape);
                 shape = tmp.sizes();
             }
 
             return {x.dtype(), shape};
-
         }
 
         TS_STATIC_ACTION(ShapeInferer::Register, "_reshape", _reshape)
@@ -600,5 +601,810 @@ namespace ts {
         }
 
         TS_STATIC_ACTION(ShapeInferer::Register, "_dimshuffle", _dimshuffle)
+
+        static TensorPrototype _limit(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            auto x = inputs[0];
+            auto size = node->get_int_list("shape");
+            auto y_shape = x.sizes();
+            if (size.size() != y_shape.size()) return VOID;
+            for (size_t i = 0; i < size.size(); ++i) {
+                if (size[i] > 0 && y_shape[i] > size[i]) y_shape[i] = size[i];
+            }
+            return TensorPrototype(x.dtype(), y_shape);
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "_limit", _limit)
+
+        static TensorPrototype _nhwc_center_crop2d(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            auto x = inputs[0];
+            auto size = node->get_int_list("size");
+
+            if (size.size() != 2 || x.dims() != 4) return VOID;
+
+            auto W = size[0];
+            auto H = size[1];
+
+            auto y_shape = x.sizes();
+
+            y_shape[1] = H;
+            y_shape[2] = W;
+            return TensorPrototype(x.dtype(), y_shape);
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "_nhwc_center_crop2d", _nhwc_center_crop2d)
+
+        static TensorPrototype _nhwc_letterbox(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            auto x = inputs[0];
+            auto size = node->get_int_list("size");
+
+            if (size.empty() || x.dims() != 4) return VOID;
+
+            auto W = size[0];
+            auto H = size.size() > 1 ? size[1] : W;
+
+            auto y_shape = x.sizes();
+
+            y_shape[1] = H;
+            y_shape[2] = W;
+            return TensorPrototype(x.dtype(), y_shape);
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "_nhwc_letterbox", _nhwc_letterbox)
+
+        static TensorPrototype _nhwc_scale_resize2d(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            auto x = inputs[0];
+            auto size = node->get_int_list("size");
+
+            if (size.empty() || x.dims() != 4) return VOID;
+
+            auto y_shape = x.sizes();
+
+            if (size.size() == 1) {
+                auto S = size[0];
+                auto H = y_shape[1];
+                auto W = y_shape[2];
+
+                if (H > W) {
+                    y_shape[1] = S * H / W;
+                    y_shape[2] = S;
+                } else {
+                    y_shape[1] = S;
+                    y_shape[2] = S * W / H;
+                }
+            } else {
+                auto W = size[0];
+                auto H = size[1];
+
+                y_shape[1] = H;
+                y_shape[2] = W;
+            }
+
+            return TensorPrototype(x.dtype(), y_shape);
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "_nhwc_scale_resize2d", _nhwc_scale_resize2d)
+
+        static TensorPrototype _reshape_v2(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            auto &x = inputs[0];
+
+            auto shape_value = get_value(node.input(1));
+            if (shape_value.empty()) return VOID;
+            auto shape = tensor::array::to_int(shape_value);
+
+            for (size_t i = 0; i < shape.size(); ++i) {
+                if (shape[i] == 0) {
+                    if (i >= x.dims()) {
+                        return VOID;
+                    }
+                    shape[i] = x.size(i);
+                }
+            }
+
+            if (valid_dims(x.sizes())) {
+                Tensor tmp(MemoryDevice("__fake__"), INT8, x.sizes());
+                tmp = tmp.reshape(shape);
+                shape = tmp.sizes();
+            }
+
+            return {x.dtype(), shape};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "_reshape_v2", _reshape_v2)
+
+        static TensorPrototype _shape(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            infer_const_value(node, {true});
+            return {INT32, {int32_t(inputs[0].dims())}};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "_shape", _shape)
+
+        static TensorPrototype affine_sample2d(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            auto &x = inputs[0];
+
+            auto size_value = get_value(node.input(1));
+            if (size_value.empty()) return VOID;
+            auto size = tensor::array::to_int(size_value);
+
+            auto dim = -2;
+            if (node->has("dim")) dim = node->get_int("dim");
+
+            if (dim < 0) dim += int32_t(x.dims());
+            if (dim < 0 || dim + 1 >= int32_t(x.dims())) return VOID;
+
+            auto y_shape = x.sizes();
+
+            y_shape[dim] = size[0];
+            y_shape[dim + 1] = size[1];
+
+            return {x.dtype(), y_shape};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "affine_sample2d", affine_sample2d)
+
+        static TensorPrototype argmax(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            auto &x = inputs[0];
+
+            auto dim = node->get_int("dim");
+
+            if (dim < 0) dim += int32_t(x.dims());
+            if (dim < 0 || dim + 1 >= int32_t(x.dims())) return VOID;
+
+            auto y_shape = x.sizes();
+
+            y_shape.erase(y_shape.begin() + dim);
+
+            return {INT32, y_shape};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "argmax", argmax)
+
+        static TensorPrototype batch_to_space4d(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            auto &x = inputs[0];
+
+            auto crop = node->get_int_list("crop");
+            auto block_shape = node->get_int_list("block_shape");
+
+            if (crop.size() < 4 || block_shape.size() < 2) return VOID;
+
+            auto block_height = block_shape[0];
+            auto block_width = block_shape[1];
+            auto crop_top = crop[0];
+            auto crop_bottom = crop[1];
+            auto crop_left = crop[2];
+            auto crop_right = crop[3];
+
+            auto &input_shape = x.sizes();
+            std::vector<int32_t> output_shape(4, -1);
+
+            output_shape[0] = input_shape[0] < 0 ? -1 : input_shape[0] / (block_height * block_width);
+            output_shape[2] = input_shape[2] < 0 ? -1 : input_shape[2] * block_height - crop_top - crop_bottom;
+            output_shape[3] = input_shape[3] < 0 ? -1 : input_shape[3] * block_width - crop_left - crop_right;
+            output_shape[1] = input_shape[1] < 0 ? -1 : input_shape[1];
+
+            return {x.dtype(), output_shape};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "batch_to_space4d", batch_to_space4d)
+
+        static TensorPrototype space_to_batch4d(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            auto &x = inputs[0];
+
+            auto padding = node->get_int_list("padding");
+            auto block_shape = node->get_int_list("block_shape");
+
+            if (padding.size() < 4 || block_shape.size() < 2) return VOID;
+
+            auto block_height = block_shape[0];
+            auto block_width = block_shape[1];
+            auto padding_top = padding[0];
+            auto padding_bottom = padding[1];
+            auto padding_left = padding[2];
+            auto padding_right = padding[3];
+
+            auto &input_shape = x.sizes();
+            std::vector<int32_t> output_shape(4, -1);
+
+
+            output_shape[0] = input_shape[0] < 0 ? -1 : input_shape[0] * block_height * block_width;
+            output_shape[2] = input_shape[2] < 0 ? -1 : (input_shape[2] + padding_top + padding_bottom) / block_height;
+            output_shape[3] = input_shape[3] < 0 ? -1 : (input_shape[3] + padding_left + padding_right) / block_width;
+            output_shape[1] = input_shape[1] < 0 ? -1 : input_shape[1];
+
+            return {x.dtype(), output_shape};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "space_to_batch4d", space_to_batch4d)
+
+        static TensorPrototype _field(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            auto &x = inputs[0];
+
+            auto offset = node->get_int("offset");
+
+            if (offset < 0) offset += int32_t(x.fields_count());
+            if (offset < 0 || offset >= int32_t(x.fields_count())) return VOID;
+
+            return x.field(offset);
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "_field", _field)
+
+        static TensorPrototype quantize(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            auto &x = inputs[0];
+            return {INT8, x.sizes()};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "quantize", quantize)
+
+        static TensorPrototype broadcast(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            auto dtype = inputs[0].dtype();
+
+            auto lhs_shape = inputs[0].sizes();
+
+            auto rhs_shape_value = get_value(node.input(1));
+            if (rhs_shape_value.empty()) return VOID;
+            auto rhs_shape = tensor::array::to_int(rhs_shape_value);
+
+            if (lhs_shape.size() > rhs_shape.size()) {
+                begin_insert_ones(rhs_shape, lhs_shape.size() - rhs_shape.size());
+            } else if (rhs_shape.size() > lhs_shape.size()) {
+                begin_insert_ones(lhs_shape, rhs_shape.size() - lhs_shape.size());
+            }
+
+            auto dims = lhs_shape.size();
+            auto out_shape = std::vector<int32_t>(dims, -1);
+
+            for (size_t i = 0; i < dims; ++i) {
+                out_shape[i] = eltwise_infer_dim(lhs_shape[i], rhs_shape[i]);
+            }
+
+            return {dtype, out_shape};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "broadcast", broadcast)
+
+        static TensorPrototype chunk(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            auto &x = inputs[0];
+
+            auto chunks = node->get_int("chunks");
+            auto dim = node->get_int("dim");
+
+            if (dim < 0) dim += int32_t(x.dims());
+            if (dim < 0 || dim >= int32_t(x.dims())) return VOID;
+
+            auto bins = split_bins(0, x.size(dim), chunks);
+
+            std::vector<Tensor::Prototype> output;
+            for (auto &bin : bins) {
+                auto tmp = x.sizes();
+                tmp[dim] = bin.second - bin.first;
+                output.emplace_back(x.dtype(), tmp);
+            }
+
+            TensorPrototype packed;
+            packed.pack(output);
+
+            return packed;
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "chunk", chunk)
+
+        static TensorPrototype conv2d_quantized(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            auto format = node->get_string("format");
+
+            auto stide = node->get_int_list("stride");
+            auto dilation = node->get_int_list("dilation");
+            auto padding = node->get_int_list("padding");
+
+            std::vector<int32_t> kernel_dims;
+            int32_t channel_dims;
+
+            auto &x = inputs[0];
+            auto &w = inputs[1];
+
+            if (format == "NCHW") {
+                channel_dims = 1;
+                kernel_dims = {2, 3};
+            } else if (format == "NHWC") {
+                channel_dims = 3;
+                kernel_dims = {1, 2};
+            } else {
+                return VOID;
+            }
+
+            std::vector<int32_t> y_shape(4);
+            y_shape[0] = x.size(0);
+            y_shape[channel_dims] = w.size(0);
+
+            int32_t kernel_shape[] = {w.size(2), w.size(3)};
+
+            for (size_t i = 0; i < kernel_dims.size(); ++i) {
+                auto dim = kernel_dims[i];
+                if (x.size(dim) < 0) {
+                    y_shape[dim] = -1;
+                    continue;
+                }
+                y_shape[dim] = conv2d_forward(
+                        x.size(dim),
+                        padding[2 * dim] + padding[2 * dim + 1],
+                        dilation[dim],
+                        kernel_shape[i],
+                        stide[dim]);
+            }
+
+            return {FLOAT32, y_shape};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "conv2d_quantized", conv2d_quantized)
+
+        static TensorPrototype conv2d_winograd(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            auto format = node->get_string("format");
+
+            std::vector<int32_t> stide = {1, 1, 1, 1};
+            std::vector<int32_t> dilation = {1, 1, 1, 1};
+            std::vector<int32_t> padding = node->get_int_list("padding");
+
+            std::vector<int32_t> kernel_dims;
+            int32_t channel_dims;
+
+            auto &x = inputs[0];
+            auto &w = inputs[1];
+
+            if (format == "NCHW") {
+                channel_dims = 1;
+                kernel_dims = {2, 3};
+            } else if (format == "NHWC") {
+                channel_dims = 3;
+                kernel_dims = {1, 2};
+            } else {
+                return VOID;
+            }
+
+            std::vector<int32_t> y_shape(4);
+            y_shape[0] = x.size(0);
+            y_shape[channel_dims] = w.size(0);
+
+            int32_t kernel_shape[] = {3, 3};
+
+            for (size_t i = 0; i < kernel_dims.size(); ++i) {
+                auto dim = kernel_dims[i];
+                if (x.size(dim) < 0) {
+                    y_shape[dim] = -1;
+                    continue;
+                }
+                y_shape[dim] = conv2d_forward(
+                        x.size(dim),
+                        padding[2 * dim] + padding[2 * dim + 1],
+                        dilation[dim],
+                        kernel_shape[i],
+                        stide[dim]);
+            }
+
+            return {x.dtype(), y_shape};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "conv2d_winograd", conv2d_winograd)
+
+        static TensorPrototype conv2d_winograd_v2(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            auto format = node->get_string("format");
+
+            auto padding_value = get_value(node.input(1));
+            auto padding = tensor::array::to_int(padding_value);
+
+            std::vector<int32_t> stide = {1, 1, 1, 1};
+            std::vector<int32_t> dilation = {1, 1, 1, 1};
+
+            std::vector<int32_t> kernel_dims;
+            int32_t channel_dims;
+
+            auto &x = inputs[0];
+            auto &w = inputs[2];
+
+            if (format == "NCHW") {
+                channel_dims = 1;
+                kernel_dims = {2, 3};
+            } else if (format == "NHWC") {
+                channel_dims = 3;
+                kernel_dims = {1, 2};
+            } else {
+                return VOID;
+            }
+
+            std::vector<int32_t> y_shape(4);
+            y_shape[0] = x.size(0);
+            y_shape[channel_dims] = w.size(0);
+
+            int32_t kernel_shape[] = {3, 3};
+
+            for (size_t i = 0; i < kernel_dims.size(); ++i) {
+                auto dim = kernel_dims[i];
+                if (x.size(dim) < 0) {
+                    y_shape[dim] = -1;
+                    continue;
+                }
+                y_shape[dim] = conv2d_forward(
+                        x.size(dim),
+                        padding[2 * dim] + padding[2 * dim + 1],
+                        dilation[dim],
+                        kernel_shape[i],
+                        stide[dim]);
+            }
+
+            return {x.dtype(), y_shape};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "conv2d_winograd_v2", conv2d_winograd_v2)
+
+        static TensorPrototype dcn_v2_forward(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            auto format = node->get_string("format");
+
+            auto stide = node->get_int_list("stride");
+            auto dilation = node->get_int_list("dilation");
+            auto padding = node->get_int_list("padding");
+
+            std::vector<int32_t> kernel_dims;
+            int32_t channel_dims;
+
+            auto &x = inputs[0];
+            auto &w = inputs[1];
+
+            if (format == "NCHW") {
+                channel_dims = 1;
+                kernel_dims = {2, 3};
+            } else if (format == "NHWC") {
+                channel_dims = 3;
+                kernel_dims = {1, 2};
+            } else {
+                return VOID;
+            }
+
+            std::vector<int32_t> y_shape(4);
+            y_shape[0] = x.size(0);
+            y_shape[channel_dims] = w.size(0);
+
+            int32_t kernel_shape[] = {w.size(2), w.size(3)};
+
+            for (size_t i = 0; i < kernel_dims.size(); ++i) {
+                auto dim = kernel_dims[i];
+                if (x.size(dim) < 0) {
+                    y_shape[dim] = -1;
+                    continue;
+                }
+                y_shape[dim] = conv2d_forward(
+                        x.size(dim),
+                        padding[2 * dim] + padding[2 * dim + 1],
+                        dilation[dim],
+                        kernel_shape[i],
+                        stide[dim]);
+            }
+
+            return {x.dtype(), y_shape};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "dcn_v2_forward", dcn_v2_forward)
+
+        static TensorPrototype depthwise_conv2d(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            auto format = node->get_string("format");
+
+            auto stide = node->get_int_list("stride");
+            auto dilation = node->get_int_list("dilation");
+            auto padding = node->get_int_list("padding");
+
+            std::vector<int32_t> kernel_dims;
+            int32_t channel_dims;
+
+            auto &x = inputs[0];
+            auto &w = inputs[1];
+
+            if (format == "NCHW") {
+                channel_dims = 1;
+                kernel_dims = {2, 3};
+            } else if (format == "NHWC") {
+                channel_dims = 3;
+                kernel_dims = {1, 2};
+            } else {
+                return VOID;
+            }
+
+            std::vector<int32_t> y_shape(4);
+            y_shape[0] = x.size(0);
+            y_shape[channel_dims] = w.size(0) * x.size(channel_dims);
+
+            int32_t kernel_shape[] = {w.size(2), w.size(3)};
+
+            for (size_t i = 0; i < kernel_dims.size(); ++i) {
+                auto dim = kernel_dims[i];
+                if (x.size(dim) < 0) {
+                    y_shape[dim] = -1;
+                    continue;
+                }
+                y_shape[dim] = conv2d_forward(
+                        x.size(dim),
+                        padding[2 * dim] + padding[2 * dim + 1],
+                        dilation[dim],
+                        kernel_shape[i],
+                        stide[dim]);
+            }
+
+            return {x.dtype(), y_shape};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "depthwise_conv2d", depthwise_conv2d)
+
+        static TensorPrototype depthwise_conv2d_v2(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            auto format = node->get_string("format");
+
+            auto padding_value = get_value(node.input(1));
+            auto padding = tensor::array::to_int(padding_value);
+
+            auto stide = node->get_int_list("stride");
+            auto dilation = node->get_int_list("dilation");
+
+            std::vector<int32_t> kernel_dims;
+            int32_t channel_dims;
+
+            auto &x = inputs[0];
+            auto &w = inputs[2];
+
+            if (format == "NCHW") {
+                channel_dims = 1;
+                kernel_dims = {2, 3};
+            } else if (format == "NHWC") {
+                channel_dims = 3;
+                kernel_dims = {1, 2};
+            } else {
+                return VOID;
+            }
+
+            std::vector<int32_t> y_shape(4);
+            y_shape[0] = x.size(0);
+            y_shape[channel_dims] = w.size(0) * x.size(channel_dims);
+
+            int32_t kernel_shape[] = {w.size(2), w.size(3)};
+
+            for (size_t i = 0; i < kernel_dims.size(); ++i) {
+                auto dim = kernel_dims[i];
+                if (x.size(dim) < 0) {
+                    y_shape[dim] = -1;
+                    continue;
+                }
+                y_shape[dim] = conv2d_forward(
+                        x.size(dim),
+                        padding[2 * dim] + padding[2 * dim + 1],
+                        dilation[dim],
+                        kernel_shape[i],
+                        stide[dim]);
+            }
+
+            return {x.dtype(), y_shape};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "depthwise_conv2d_v2", depthwise_conv2d_v2)
+
+        static TensorPrototype divided(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            auto &x = inputs[0];
+
+            auto size = node->get_int_list("size");
+
+            if(size.size() > x.dims()) return VOID;
+
+            while (size.size() < x.dims()) {
+                size.insert(size.begin(), 1);
+            }
+
+            auto y_shape = x.sizes();
+
+            for (size_t i = 0; i < x.dims(); ++i) {
+                if (size[i] == 1) continue;
+                y_shape[i] = int32_t(std::ceil(float(y_shape[i]) / size[i])) * size[i];
+            }
+
+            return {x.dtype(), y_shape};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "divided", divided)
+
+        static TensorPrototype force_color(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            auto &x = inputs[0];
+            if (x.dims() == 0) return VOID;
+
+            auto y_shape = x.sizes();
+            y_shape.back() = 3;
+
+            return {x.dtype(), y_shape};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "force_color", force_color)
+
+        static TensorPrototype force_gray(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            auto &x = inputs[0];
+            if (x.dims() == 0) return VOID;
+
+            auto y_shape = x.sizes();
+            y_shape.back() = 1;
+
+            return {x.dtype(), y_shape};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "force_gray", force_gray)
+
+        static TensorPrototype gather(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            auto &x = inputs[0];
+            auto &indices = inputs[0].sizes();
+            auto dims = int32_t(x.dims());
+
+            auto axis = node->get_int("axis");
+
+            if (axis < 0) axis += dims;
+            if (axis < 0 || axis >= dims) return VOID;
+
+            auto y_shape = x.sizes();
+
+            y_shape.erase(y_shape.begin() + axis);
+            y_shape.insert(y_shape.begin() + axis, indices.begin(), indices.end());
+
+            return {x.dtype(), y_shape};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "gather", gather)
+
+        static TensorPrototype gatherv2(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            auto &x = inputs[0];
+            auto &indices = inputs[1];
+
+            if (x.dims() == 0 || indices.dims() == 0) return VOID;
+
+            Shape output_shape = indices.sizes();
+            output_shape.erase(output_shape.end() - 1);
+
+            auto &indices_shape = indices.sizes();
+            auto input_shape = x.sizes();
+            if(indices_shape[indices_shape.size() - 1] > input_shape.size()) return VOID;
+
+            output_shape.insert(output_shape.end(), input_shape.begin() + indices_shape[indices_shape.size() - 1], input_shape.end());
+
+            return {x.dtype(), output_shape};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "gatherv2", gatherv2)
+
+        class ReductionOp {
+        public:
+            std::string axes_attr_name;
+            std::string keep_axes_attr_name;
+
+            ReductionOp(const std::string &axes_attr, const std::string &keep_axes_attr)
+                : axes_attr_name(axes_attr), keep_axes_attr_name(keep_axes_attr) {}
+
+            TensorPrototype operator()(const Node &node, const std::vector<TensorPrototype> &inputs) {
+                auto &x = inputs[0];
+                auto dims = int32_t(x.dims());
+
+                auto axes = node->get_int_list(axes_attr_name);
+                auto keep_axes = node->get_bool(keep_axes_attr_name);
+
+                for (auto &axis : axes) {
+                    if (axis < 0) axis += dims;
+                    if (axis < 0 || axis >= dims) return VOID;
+                }
+
+                std::sort(axes.begin(), axes.end(), [](int a, int b) { return a > b; });
+
+                auto y_shape = x.sizes();
+                for (auto axis : axes) {
+                    y_shape.erase(y_shape.begin() + axis);
+                    if (keep_axes) {
+                        y_shape.insert(y_shape.begin() + axis, 1);
+                    }
+                }
+
+                return {x.dtype(), y_shape};
+            }
+        };
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "max", ReductionOp("dim", "keep_dims"))
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "maximum", _eltwise)
+
+        static TensorPrototype non_max_suppression_v3(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            // auto &x = inputs[0];
+            auto &scores = inputs[1];
+
+            if (scores.dims() == 0) return VOID;
+
+            auto max_output_size = node->get_int("max_output_size");
+
+            auto K = std::min(scores.size(0), max_output_size);
+
+            return {INT32, {K, }};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "non_max_suppression_v3", non_max_suppression_v3)
+
+        static int32_t conv2d_backward(int32_t y, int32_t padding, int32_t dilation, int32_t kernel, int32_t stride) {
+            return (y - 1) * stride + (dilation * (kernel - 1) + 1) - padding;
+        }
+
+        static TensorPrototype transpose_conv2d(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            auto format = node->get_string("format");
+
+            auto stide = node->get_int_list("stride");
+            auto dilation = node->get_int_list("dilation");
+            auto padding = node->get_int_list("padding");
+
+            std::vector<int32_t> kernel_dims;
+            int32_t channel_dims;
+
+            auto &x = inputs[0];
+            auto &w = inputs[1];
+
+            if (format == "NCHW") {
+                channel_dims = 1;
+                kernel_dims = {2, 3};
+            } else if (format == "NHWC") {
+                channel_dims = 3;
+                kernel_dims = {1, 2};
+            } else {
+                return VOID;
+            }
+
+            std::vector<int32_t> y_shape(4);
+            y_shape[0] = x.size(0);
+            y_shape[channel_dims] = w.size(1);
+
+            int32_t kernel_shape[] = {w.size(2), w.size(3)};
+
+            for (size_t i = 0; i < kernel_dims.size(); ++i) {
+                auto dim = kernel_dims[i];
+                if (x.size(dim) < 0) {
+                    y_shape[dim] = -1;
+                    continue;
+                }
+                y_shape[dim] = conv2d_backward(
+                        x.size(dim),
+                        padding[2 * dim] + padding[2 * dim + 1],
+                        dilation[dim],
+                        kernel_shape[i],
+                        stide[dim]);
+            }
+
+            return {x.dtype(), y_shape};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "transpose_conv2d", transpose_conv2d)
+
+        static TensorPrototype winograd_transform_kernel(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            auto &x = inputs[0];
+
+            auto winograd_mode_str = node->get_string("winograd_mode");
+
+            enum WINOGRAD_MODE {
+                F6X6_3X3 = 0,
+                F2X2_3X3 = 1,
+            };
+
+            WINOGRAD_MODE winograd_mode;
+
+            if (winograd_mode_str == "winograd_f23") {
+                winograd_mode = F2X2_3X3;
+            } else if (winograd_mode_str == "winograd_f63") {
+                winograd_mode = F6X6_3X3;
+            } else {
+                return VOID;
+            }
+
+            auto y_shape = x.sizes();
+
+            if (winograd_mode == F6X6_3X3) {
+                y_shape[2] = 8;
+                y_shape[3] = 8;
+            } else if (winograd_mode == F2X2_3X3) {
+                y_shape[2] = 4;
+                y_shape[3] = 4;
+            }
+
+            return {x.dtype(), y_shape};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "winograd_transform_kernel", winograd_transform_kernel)
     }
 }
