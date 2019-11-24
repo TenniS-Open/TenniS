@@ -1185,7 +1185,7 @@ namespace ts {
 
             auto size = node->get_int_list("size");
 
-            if(size.size() > x.dims()) return VOID;
+            if (size.size() > x.dims()) return VOID;
 
             while (size.size() < x.dims()) {
                 size.insert(size.begin(), 1);
@@ -1258,9 +1258,10 @@ namespace ts {
 
             auto &indices_shape = indices.sizes();
             auto input_shape = x.sizes();
-            if(indices_shape[indices_shape.size() - 1] > input_shape.size()) return VOID;
+            if (indices_shape[indices_shape.size() - 1] > input_shape.size()) return VOID;
 
-            output_shape.insert(output_shape.end(), input_shape.begin() + indices_shape[indices_shape.size() - 1], input_shape.end());
+            output_shape.insert(output_shape.end(), input_shape.begin() + indices_shape[indices_shape.size() - 1],
+                                input_shape.end());
 
             return {x.dtype(), output_shape};
         }
@@ -1272,8 +1273,8 @@ namespace ts {
             std::string axes_attr_name;
             std::string keep_axes_attr_name;
 
-            ReductionOp(const std::string &axes_attr, const std::string &keep_axes_attr)
-                : axes_attr_name(axes_attr), keep_axes_attr_name(keep_axes_attr) {}
+            ReductionOp(const std::string &axes_attr, const std::string &keep_axes_attr) TS_NOEXCEPT
+                    : axes_attr_name(axes_attr), keep_axes_attr_name(keep_axes_attr) {}
 
             TensorPrototype operator()(const Node &node, const std::vector<TensorPrototype> &inputs) {
                 auto &x = inputs[0];
@@ -1315,7 +1316,7 @@ namespace ts {
 
             auto K = std::min(scores.size(0), max_output_size);
 
-            return {INT32, {K, }};
+            return {INT32, {K,}};
         }
 
         TS_STATIC_ACTION(ShapeInferer::Register, "non_max_suppression_v3", non_max_suppression_v3)
@@ -1406,5 +1407,227 @@ namespace ts {
         }
 
         TS_STATIC_ACTION(ShapeInferer::Register, "winograd_transform_kernel", winograd_transform_kernel)
+
+        static TensorPrototype pad(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            auto &x = inputs[0];
+
+            auto padding_value = get_value(node.input(1));
+            if (padding_value.empty()) return VOID;
+            auto padding = tensor::array::to_int(padding_value);
+
+            if (padding.size() != x.dims() * 2) return VOID;
+
+            auto y_shape = x.sizes();
+            for (size_t i = 0; i < x.dims(); ++i) {
+                if (y_shape[i] < 0) continue;
+                y_shape[i] += padding[i * 2] + padding[i * 2 + 1];
+            }
+
+            return {x.dtype(), y_shape};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "pad", pad)
+
+#define TYR_GET_NODE_INT_ATTR(attr, value) \
+    int32_t attr = value; \
+    if (node->has(#attr)) attr = node->get_int(#attr);
+
+        static TensorPrototype proposal(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            auto &x = inputs[0];
+
+            if (inputs.size() < 3) return VOID;
+            auto dtype = inputs[inputs.size() - 3].dtype();
+
+            TYR_GET_NODE_INT_ATTR(min_level, 2)
+            TYR_GET_NODE_INT_ATTR(max_level, 5)
+            TYR_GET_NODE_INT_ATTR(post_nms_top_n, 300)
+
+            auto num_images = x.size(0);
+            auto output_size = max_level - min_level + 1;
+
+            std::vector<Tensor::Prototype> output;
+            for (int i = 0; i < output_size; ++i) {
+                Shape tmp = {num_images > 0 ? num_images * post_nms_top_n : -1, 5};
+                output.emplace_back(dtype, tmp);
+            }
+
+            TensorPrototype packed;
+            packed.pack(output);
+
+            return packed;
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "proposal", proposal)
+
+        static TensorPrototype range(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            infer_const_value(node, {});
+
+            auto value = get_value(node);
+            if (value.empty()) return VOID;
+
+            return TensorPrototype(value);
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "range", range)
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "reduce_mean", ReductionOp("dims", "keep_dims"))
+        TS_STATIC_ACTION(ShapeInferer::Register, "reduce_sum", ReductionOp("dims", "keep_dims"))
+
+#define GET_NODE_INT_ATTR(attr) \
+    if (!node->has(#attr)) return VOID; \
+    auto attr = node->get_int(#attr);
+
+#define GET_NODE_FLOAT_ATTR(attr) \
+    if (!node->has(#attr)) return VOID; \
+    auto attr = node->get_float(#attr);
+
+#define GET_NODE_INT_LIST_ATTR(attr) \
+    if (!node->has(#attr)) return VOID; \
+    auto attr = node->get_int_list(#attr);
+
+#define GET_NODE_INT_LIST_INPUT(var, i) \
+    std::vector<int32_t> var; \
+    { \
+        auto tmp = get_value(node.input(i)); \
+        if (tmp.empty()) return VOID; \
+        var = tensor::array::to_int(tmp); \
+    }
+
+#define FIX_DIM(dim, x) \
+    if (dim < 0) dim += int32_t(x.dims()); \
+    if (dim < 0 || dim >= int32_t(x.dims())) return VOID;
+
+#define FIX_DIM_ADD_1(dim, x) \
+    if (dim < 0) dim += int32_t(x.dims()); \
+    if (dim < 0 || dim + 1 >= int32_t(x.dims())) return VOID;
+
+        static TensorPrototype resize_nearest_neighbor(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            auto &x = inputs[0];
+
+            GET_NODE_INT_LIST_INPUT(size, 1)
+            GET_NODE_INT_ATTR(dim)
+
+            if (size.size() < 2) return VOID;
+
+            FIX_DIM_ADD_1(dim, x)
+
+            auto y_shape = x.sizes();
+            y_shape[dim] = size[0];
+            y_shape[dim + 1] = size[1];
+
+            return {x.dtype(), y_shape};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "resize_nearest_neighbor", resize_nearest_neighbor)
+
+        static TensorPrototype roi_align(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            if (inputs.size() != 2) return VOID;
+
+            GET_NODE_INT_ATTR(pool_h)
+            GET_NODE_INT_ATTR(pool_w)
+
+            // inputs = features, proposal
+
+            return {inputs[0].dtype(), {inputs[1].size(0), inputs[0].size(1), pool_h, pool_w}};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "roi_align", roi_align)
+
+        static TensorPrototype sample2d(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            if (inputs.size() != 1) return VOID;
+            auto &x = inputs[0];
+
+            GET_NODE_FLOAT_ATTR(scale)
+            TYR_GET_NODE_INT_ATTR(dim, -2)
+
+            FIX_DIM_ADD_1(dim, x)
+
+            auto y_shape = x.sizes();
+            if (y_shape[dim] > 0)
+                y_shape[dim] = int32_t(x.sizes()[dim] * scale);
+            if (y_shape[dim + 1] > 0)
+                y_shape[dim + 1] = int32_t(x.sizes()[dim + 1] * scale);
+
+            return {x.dtype(), y_shape};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "sample2d", sample2d)
+
+        static TensorPrototype shape_index_patch(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            if (inputs.size() != 1) return VOID;
+            auto &x = inputs[0];
+            auto &pos = inputs[1];
+
+            auto number = x.size(0);
+            auto channels = x.size(1);
+            auto height = x.size(2);
+            auto width = x.size(3);
+            auto landmarkx2 = pos.size(1);
+
+            GET_NODE_INT_LIST_ATTR(origin_patch)
+            GET_NODE_INT_LIST_ATTR(origin)
+
+            auto x_patch_h = int(origin_patch[0] * height / float(origin[0]) + 0.5f);
+            auto x_patch_w = int(origin_patch[1] * width / float(origin[1]) + 0.5f);
+
+            Shape y_shape = {number, channels, x_patch_h, landmarkx2 / 2, x_patch_w};
+
+            return {x.dtype(), y_shape};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "shape_index_patch", shape_index_patch)
+
+        class HardInferOp {
+        public:
+            using self = HardInferOp;
+
+            enum Mode {
+                DEFAULT = 0,
+                IGNORE_ALL = 1,
+            };
+            Mode m_mode = DEFAULT;
+            std::vector<bool> m_ignore;
+
+            HardInferOp(Mode mode, const std::vector<bool> &ignore) TS_NOEXCEPT
+                    : m_mode(mode), m_ignore(ignore) {}
+
+            HardInferOp(Mode mode) TS_NOEXCEPT : self(mode, {}) {}
+
+            HardInferOp(const std::vector<bool> &ignore) TS_NOEXCEPT : self(DEFAULT, ignore) {}
+
+            HardInferOp() = default;
+
+            TensorPrototype operator()(const Node &node, const std::vector<TensorPrototype> &inputs) {
+                std::vector<Tensor::Prototype> output;
+
+                switch (m_mode) {
+                    case DEFAULT: {
+                        output = infer_shape(node, m_ignore);
+                        break;
+                    }
+                    case IGNORE_ALL: {
+                        output = infer_shape(node, std::vector<bool>(inputs.size(), true));
+                    }
+                }
+
+                if (output.empty()) return VOID;
+
+                TensorPrototype packed;
+                packed.pack(output);
+
+                return packed;
+            }
+        };
+
+//        TS_STATIC_ACTION(ShapeInferer::Register, "slice", HardInferOp({true}))
+//        TS_STATIC_ACTION(ShapeInferer::Register, "slice_v3", HardInferOp({true}))
+//        TS_STATIC_ACTION(ShapeInferer::Register, "squeeze", HardInferOp({true}))
+//        TS_STATIC_ACTION(ShapeInferer::Register, "stack", HardInferOp(HardInferOp::IGNORE_ALL))
+//        TS_STATIC_ACTION(ShapeInferer::Register, "strided_slice", HardInferOp({true}))
+//        TS_STATIC_ACTION(ShapeInferer::Register, "tile", HardInferOp({true}))
+//        TS_STATIC_ACTION(ShapeInferer::Register, "topkv2", HardInferOp({true}))
+//        TS_STATIC_ACTION(ShapeInferer::Register, "unsqueeze", HardInferOp({true}))
+//        TS_STATIC_ACTION(ShapeInferer::Register, "yolo", HardInferOp())
+//        TS_STATIC_ACTION(ShapeInferer::Register, "yolo_poster", HardInferOp())
     }
 }
