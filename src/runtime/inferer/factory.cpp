@@ -10,6 +10,10 @@
 #include "runtime/inferer.h"
 
 #include "utils/box.h"
+#include <algorithm>
+#include <global/operator_factory.h>
+
+#include "runtime/stack.h"
 
 namespace ts {
     namespace infer_factory {
@@ -21,6 +25,49 @@ namespace ts {
                 return node->get("#value");
             }
             return Tensor();
+        }
+
+        static Tensor try_run(const Node &node, const std::vector<Tensor> &inputs) {
+            if (node->op() == Bubble::Const) {
+                return node->get("value");
+            }
+
+            if (Bubble::IsEndPoint(node->op())) {
+                return Tensor();
+            }
+
+            for (auto &input : inputs) {
+                if (input.empty()) return Tensor();
+            }
+
+            MemoryDevice memory_device(CPU);
+            Stack stack(memory_device);
+
+            auto op = OperatorCreator::CreateNoException(memory_device.type(), node->op());
+            if (op == nullptr) return Tensor();
+
+            Tensor output;
+
+            try {
+                for (const auto &it : node->params()) {
+                    op->set(it.first, it.second);
+                }
+                op->init();
+                for (auto &t : inputs) {
+                    stack.push(t);
+                }
+                auto out = op->run(stack);
+                stack.erase(0, -out);
+                if (out == 1) {
+                    output = stack[0];
+                } else {
+                    output = Tensor::Pack(std::vector<Tensor>(stack.begin(), stack.end()));
+                }
+            } catch (...) {
+                return Tensor();
+            }
+
+            return output;
         }
 
         static void infer_const_value(const Node &node, const std::vector<bool> &ignore) {
@@ -340,7 +387,46 @@ namespace ts {
         TS_STATIC_ACTION(ShapeInferer::Register, "_cast", _cast)
 
         static TensorPrototype dynamic_padding(const Node &node, const std::vector<TensorPrototype> &inputs) {
-            infer_const_value(node, {true});
+            std::string format = "HCHW";
+            if (node->has("format")) format = node->get_string("format");
+
+            std::vector<int32_t> kernel_dims;
+            int32_t channel_dim;
+
+            auto &x = inputs[0];
+
+            if (format == "NCHW") {
+                channel_dim = 1;
+                kernel_dims = {2, 3};
+            } else if (format == "NHWC") {
+                channel_dim = 3;
+                kernel_dims = {1, 2};
+            } else {
+                return VOID;
+            }
+
+            std::vector<int32_t> param0_shape(4, 1);
+            for (auto dim: kernel_dims) {
+                if (x.size(size_t(dim)) < 0) return VOID;
+                param0_shape[dim] = x.size(size_t(dim));
+            }
+
+            if (param0_shape[channel_dim] < 0) {
+                return VOID;
+            }
+            param0_shape[channel_dim] = x.size(size_t(channel_dim));
+
+            std::vector<Tensor> run_inputs = {Tensor(FLOAT32, param0_shape)};
+            for (size_t i = 1; i < inputs.size(); ++i) {
+                run_inputs.push_back(get_value(node.input(i)));
+            }
+
+            auto output = try_run(node, run_inputs);
+            if (!output.empty()) {
+                auto &update_node = *const_cast<Node*>(&node);
+                update_node->set("#value", output);
+            }
+
             return {INT32, {4, 2}};
         }
 
@@ -356,10 +442,10 @@ namespace ts {
 
             auto padding_value = get_value(node.input(1));
             if (padding_value.empty()) return VOID;
-            auto stride_value = get_value(node.input(2));
-            if (stride_value.empty()) return VOID;
-            auto ksize_value = get_value(node.input(3));
+            auto ksize_value = get_value(node.input(2));
             if (ksize_value.empty()) return VOID;
+            auto stride_value = get_value(node.input(3));
+            if (stride_value.empty()) return VOID;
 
             auto padding = tensor::array::to_int(padding_value);
             auto stide = tensor::array::to_int(stride_value);
@@ -406,6 +492,7 @@ namespace ts {
             auto format = node->get_string("format");
 
             auto padding_value = get_value(node.input(1));
+            if (padding_value.empty()) return VOID;
             auto padding = tensor::array::to_int(padding_value);
 
             auto stide = node->get_int_list("stride");
@@ -528,7 +615,12 @@ namespace ts {
         TS_STATIC_ACTION(ShapeInferer::Register, "sigmoid", _copy)
 
         static TensorPrototype _dims(const Node &node, const std::vector<TensorPrototype> &inputs) {
-            infer_const_value(node, {true});
+            {
+                auto &update_node = *const_cast<Node*>(&node);
+                auto dims = inputs[0].dims();
+                update_node->set("#value", tensor::build(INT32, dims));
+            }
+
             return {INT32, {}};
         }
 
@@ -712,7 +804,11 @@ namespace ts {
         TS_STATIC_ACTION(ShapeInferer::Register, "_reshape_v2", _reshape_v2)
 
         static TensorPrototype _shape(const Node &node, const std::vector<TensorPrototype> &inputs) {
-            infer_const_value(node, {true});
+            {
+                auto &update_node = *const_cast<Node*>(&node);
+                auto shape = inputs[0].sizes();
+                update_node->set("#value", tensor::build(INT32, shape));
+            }
             return {INT32, {int32_t(inputs[0].dims())}};
         }
 
@@ -1460,12 +1556,19 @@ namespace ts {
         TS_STATIC_ACTION(ShapeInferer::Register, "proposal", proposal)
 
         static TensorPrototype range(const Node &node, const std::vector<TensorPrototype> &inputs) {
-            infer_const_value(node, {});
+            if (inputs.size() != 3) return VOID;
 
-            auto value = get_value(node);
-            if (value.empty()) return VOID;
+            auto output = try_run(node, {
+                get_value(node.input(0)), get_value(node.input(1)),get_value(node.input(2)), });
 
-            return TensorPrototype(value);
+            if (output.empty()) return VOID;
+
+            {
+                auto &update_node = *const_cast<Node*>(&node);
+                update_node->set("#value", output);
+            }
+
+            return TensorPrototype(output);
         }
 
         TS_STATIC_ACTION(ShapeInferer::Register, "range", range)

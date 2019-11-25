@@ -52,7 +52,9 @@ namespace ts {
             if (!ignore[i]) return;
             if (!input->has("#shape")) return;
             auto fake_shape = input->get_int_list("#shape");
-            if (!valid_shape(fake_shape)) return;
+            for (auto &dim : fake_shape) {
+                if (dim < 0) dim = 1;
+            }
             inputs[i] = Tensor(MemoryDevice("__fake__"), FLOAT32, fake_shape);
         }
         MemoryDevice memory_device(CPU);
@@ -135,8 +137,8 @@ namespace ts {
             infer_value(node);
         }
 
-
-        TS_LOG_INFO << node->op() << ":" << node->name() << " => " << output_proto;
+        if (node->op() != Bubble::Const)
+            TS_LOG_INFO << node->op() << ":" << node->name() << " => " << output_proto;
 
         RETURN_CACHE(output_proto);
 #undef RETURN_CACHE
