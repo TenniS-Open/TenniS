@@ -3,6 +3,7 @@
 //
 
 #include <core/tensor_builder.h>
+#include <core/device_context.h>
 #include "runtime/inferer.h"
 #include "global/shape_inferer_factory.h"
 
@@ -28,14 +29,14 @@ namespace ts {
 
     TS_STATIC_ACTION(HardAllocator::Register, "__fake__", FakeMemoryAllocator)
 
-    static bool valid_shape(const Shape &shape) {
-        for (auto &dim : shape) {
-            if (dim < 0) return false;
-        }
-        return true;
-    }
+    // static bool valid_shape(const Shape &shape) {
+    //     for (auto &dim : shape) {
+    //         if (dim < 0) return false;
+    //     }
+    //     return true;
+    // }
 
-    void infer_value(Node &node, const std::vector<bool> &ignore) {
+    void infer_value(Node &node) {
         if (Bubble::IsEndPoint(node->op())) {
             return;
         }
@@ -48,17 +49,13 @@ namespace ts {
                 inputs[i] = this_input;
                 continue;
             }
-            if (i >= ignore.size()) return;
-            if (!ignore[i]) return;
-            if (!input->has("#shape")) return;
-            auto fake_shape = input->get_int_list("#shape");
-            for (auto &dim : fake_shape) {
-                if (dim < 0) dim = 1;
-            }
-            inputs[i] = Tensor(MemoryDevice("__fake__"), FLOAT32, fake_shape);
+            return;
         }
         MemoryDevice memory_device(CPU);
         Stack stack(memory_device);
+
+        DeviceContext device_context(CPU);
+        ctx::bind<DeviceContext> _bind_device_context(device_context);
 
         auto op = OperatorCreator::CreateNoException(memory_device.type(), node->op());
         if (op == nullptr) return;
@@ -137,8 +134,8 @@ namespace ts {
             infer_value(node);
         }
 
-        if (node->op() != Bubble::Const)
-            TS_LOG_INFO << node->op() << ":" << node->name() << " => " << output_proto;
+        // if (node->op() != Bubble::Const)
+        //     TS_LOG_INFO << node->op() << ":" << node->name() << " => " << output_proto;
 
         RETURN_CACHE(output_proto);
 #undef RETURN_CACHE
@@ -162,67 +159,5 @@ namespace ts {
     std::vector<TensorPrototype> infer(std::vector<Node> &nodes) {
         std::unordered_map<Node, TensorPrototype> cache;
         return infer(nodes, cache);
-    }
-
-    void infer_value(Node &node) {
-        return infer_value(node, {});
-    }
-
-    std::vector<Tensor::Prototype> infer_shape(const Node &node, const std::vector<bool> &ignore) {
-        if (node->op() == Bubble::Const) {
-            return {node->get("value").proto()};
-        }
-
-        if (node->op() == Bubble::Parameter) {
-            if (!node->has("#shape")) return {};
-            auto dtype = FLOAT32;
-            if (node->has("#dtype")) {
-                dtype = DTYPE(tensor::to_int(node->get("#dtype")));
-            }
-            auto shape = tensor::array::to_int(node->get("#shape"));
-            return {Tensor::Prototype(dtype, shape)};
-        }
-
-        std::vector<Tensor> inputs(node.inputs().size());
-        for (size_t i = 0; i < inputs.size(); ++i) {
-            auto input = node.input(i);
-            auto this_input = get_value(input);
-            if (!this_input.empty()) {
-                inputs[i] = this_input;
-                continue;
-            }
-            if (i >= ignore.size()) return {};
-            if (!ignore[i]) return {};
-            if (!input->has("#shape")) return {};
-            auto fake_shape = input->get_int_list("#shape");
-            if (!valid_shape(fake_shape)) return {};
-            inputs[i] = Tensor(MemoryDevice("__fake__"), FLOAT32, fake_shape);
-        }
-        MemoryDevice memory_device(CPU);
-        Stack stack(memory_device);
-
-        auto op = OperatorCreator::CreateNoException(memory_device.type(), node->op());
-        if (op == nullptr) return {};
-
-        std::vector<Tensor::Prototype> output;
-
-        try {
-            for (const auto &it : node->params()) {
-                op->set(it.first, it.second);
-            }
-            op->init();
-            for (auto &t : inputs) {
-                stack.push(t);
-            }
-            op->infer(stack, output);
-        } catch (...) {
-            return {};
-        }
-
-        return output;
-    }
-
-    std::vector<Tensor::Prototype> infer_shape(const Node &node) {
-        return infer_shape(node, {});
     }
 }

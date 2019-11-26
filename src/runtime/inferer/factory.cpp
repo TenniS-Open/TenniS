@@ -70,10 +70,6 @@ namespace ts {
             return output;
         }
 
-        static void infer_const_value(const Node &node, const std::vector<bool> &ignore) {
-            infer_value(*const_cast<Node *>(&node), ignore);
-        }
-
         static TensorPrototype _param(const Node &node, const std::vector<TensorPrototype> &inputs) {
             if (!node->has("#shape")) {
                 throw Exception(node->op() + ":" + node->name() + " must set #shape");
@@ -113,12 +109,27 @@ namespace ts {
 
         static TensorPrototype _transpose(const Node &node, const std::vector<TensorPrototype> &inputs) {
             auto x = inputs[0];
-            auto permute = node->get_int_list("permute");
+            std::vector<int32_t> permute;
+            if (node->has("permute")) {
+                permute = node->get_int_list("permute");
+            } else {
+                if (x.dims() < 2) return x;
+                std::vector<int32_t> tmp;
+                for (size_t i = 0; i < x.dims(); ++i) {
+                    tmp.push_back(i);
+                }
+                std::swap(tmp[tmp.size() - 1], tmp[tmp.size() - 2]);
+            }
+
+            auto x_shape = x.sizes();
+            while (x_shape.size() < permute.size()) {
+                x_shape.insert(x_shape.begin(), 1);
+            }
             auto y_shape = std::vector<int32_t>(permute.size());
 
             for (size_t i = 0; i < permute.size(); ++i) {
-                if (permute[i] >= x.dims()) return VOID;
-                y_shape[i] = x.size(permute[i]);
+                if (permute[i] >= x_shape.size()) return VOID;
+                y_shape[i] = x_shape[permute[i]];
             }
 
             return TensorPrototype(x.dtype(), y_shape);
@@ -387,7 +398,11 @@ namespace ts {
         TS_STATIC_ACTION(ShapeInferer::Register, "_cast", _cast)
 
         static TensorPrototype dynamic_padding(const Node &node, const std::vector<TensorPrototype> &inputs) {
-            std::string format = "HCHW";
+            if (node->name() == "_op_${EAGER}/${JOIN}/Tensor_111_dragon_padding") {
+                TS_LOG_DEBUG << "Hook";
+            }
+
+            std::string format = "NCHW";
             if (node->has("format")) format = node->get_string("format");
 
             std::vector<int32_t> kernel_dims;
@@ -843,7 +858,7 @@ namespace ts {
             auto dim = node->get_int("dim");
 
             if (dim < 0) dim += int32_t(x.dims());
-            if (dim < 0 || dim + 1 >= int32_t(x.dims())) return VOID;
+            if (dim < 0 || dim>= int32_t(x.dims())) return VOID;
 
             auto y_shape = x.sizes();
 
@@ -1325,7 +1340,7 @@ namespace ts {
 
         static TensorPrototype gather(const Node &node, const std::vector<TensorPrototype> &inputs) {
             auto &x = inputs[0];
-            auto &indices = inputs[0].sizes();
+            auto &indices = inputs[1].sizes();
             auto dims = int32_t(x.dims());
 
             auto axis = node->get_int("axis");
@@ -1588,12 +1603,37 @@ namespace ts {
     if (!node->has(#attr)) return VOID; \
     auto attr = node->get_int_list(#attr);
 
+#define TRY_GET_NODE_INT_LIST_ATTR(attr) \
+    std::vector<int32_t> attr; \
+    if (node->has(#attr)) \
+        attr = node->get_int_list(#attr);
+
+#define TRY_GET_NODE_INT_ATTR(attr, value) \
+    int32_t attr = value; \
+    if (node->has(#attr)) \
+        attr = node->get_int(#attr);
+
+#define GET_NODE_FLOAT_LIST_ATTR(attr) \
+    if (!node->has(#attr)) return VOID; \
+    auto attr = node->get_float_list(#attr);
+
 #define GET_NODE_INT_LIST_INPUT(var, i) \
     std::vector<int32_t> var; \
     { \
+        if (size_t(i) >= node.inputs().size()) return VOID; \
         auto tmp = get_value(node.input(i)); \
         if (tmp.empty()) return VOID; \
         var = tensor::array::to_int(tmp); \
+    }
+
+#define TRY_GET_NODE_INT_LIST_INPUT(var, i) \
+    std::vector<int32_t> var; \
+    { \
+        if (size_t(i) < node.inputs().size()) { \
+            auto tmp = get_value(node.input(i)); \
+            if (tmp.empty()) return VOID; \
+            var = tensor::array::to_int(tmp); \
+        } \
     }
 
 #define FIX_DIM(dim, x) \
@@ -1680,57 +1720,446 @@ namespace ts {
 
         TS_STATIC_ACTION(ShapeInferer::Register, "shape_index_patch", shape_index_patch)
 
-        class HardInferOp {
-        public:
-            using self = HardInferOp;
+        static TensorPrototype squeeze(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            auto &x = inputs[0];
 
-            enum Mode {
-                DEFAULT = 0,
-                IGNORE_ALL = 1,
-            };
-            Mode m_mode = DEFAULT;
-            std::vector<bool> m_ignore;
+            GET_NODE_INT_LIST_ATTR(axes)
 
-            HardInferOp(Mode mode, const std::vector<bool> &ignore) TS_NOEXCEPT
-                    : m_mode(mode), m_ignore(ignore) {}
+            auto y_shape = x.sizes();
 
-            HardInferOp(Mode mode) TS_NOEXCEPT : self(mode, {}) {}
-
-            HardInferOp(const std::vector<bool> &ignore) TS_NOEXCEPT : self(DEFAULT, ignore) {}
-
-            HardInferOp() = default;
-
-            TensorPrototype operator()(const Node &node, const std::vector<TensorPrototype> &inputs) {
-                std::vector<Tensor::Prototype> output;
-
-                switch (m_mode) {
-                    case DEFAULT: {
-                        output = infer_shape(node, m_ignore);
-                        break;
-                    }
-                    case IGNORE_ALL: {
-                        output = infer_shape(node, std::vector<bool>(inputs.size(), true));
+            if (axes.empty()) {
+                for (auto it = axes.begin(); it != axes.end(); ) {
+                    if (*it == 1) {
+                        it = axes.erase(it);
+                    } else {
+                        ++it;
                     }
                 }
-
-                if (output.empty()) return VOID;
-
-                TensorPrototype packed;
-                packed.pack(output);
-
-                return packed;
+            } else {
+                for (auto it = axes.rbegin(); it != axes.rend(); ++it) {
+                    auto axis = *it;
+                    FIX_DIM(axis, x)
+                    y_shape.erase(y_shape.begin() + axis);
+                }
             }
+
+            return {x.dtype(), y_shape};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "squeeze", squeeze)
+
+        static TensorPrototype unsqueeze(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            auto &x = inputs[0];
+
+            GET_NODE_INT_LIST_ATTR(axes)
+
+            auto y_shape = x.sizes();
+
+            for (auto axis : axes) {
+                auto max_axis = int32_t(y_shape.size());
+                if (axis > max_axis || axis < -max_axis) {
+                    return VOID;
+                }
+                if (axis >= 0) {
+                    y_shape.insert(y_shape.begin() + axis, 1);
+                } else {
+                    y_shape.insert(y_shape.end() + axis + 1, 1);
+                }
+            }
+
+            return {x.dtype(), y_shape};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "unsqueeze", unsqueeze)
+
+        static TensorPrototype stack(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            if (inputs.empty()) return VOID;
+            auto &x = inputs[0];
+
+            GET_NODE_INT_ATTR(axis)
+
+            auto y_shape = x.sizes();
+
+            if (axis >= 0) {
+                y_shape.insert(y_shape.begin() + axis, int32_t(inputs.size()));
+            } else {
+                y_shape.insert(y_shape.end() + axis + 1, int32_t(inputs.size()));
+            }
+
+            return {x.dtype(), y_shape};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "stack", stack)
+
+        static Shape infer_tile(Shape &x, Shape &repeats) {
+            if (x.size() == repeats.size()) {
+            } else if (x.size() > repeats.size()) {
+                do {
+                    repeats.insert(repeats.begin(), 1);
+                } while (x.size() > repeats.size());
+            } else{
+                do {
+                    x.insert(x.begin(), 1);
+                } while (x.size() < repeats.size());
+            }
+            Shape y(x.size());
+            for (size_t i = 0; i < x.size(); ++i) {
+                if (x[i] < 0) {
+                    y[i] = -1;
+                    continue;
+                }
+                y[i] = x[i] * repeats[i];
+            }
+            return y;
+        }
+
+        static TensorPrototype tile(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            if (inputs.empty()) return VOID;
+            auto &x = inputs[0];
+
+            GET_NODE_INT_LIST_ATTR(repeats)
+
+            auto y_shape = x.sizes();
+
+            return {x.dtype(), infer_tile(y_shape, repeats)};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "tile", tile)
+
+        static TensorPrototype topkv2(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            if (inputs.empty()) return VOID;
+            auto &x = inputs[0];
+
+            GET_NODE_INT_ATTR(number)
+
+            Tensor::Prototype y;
+            Tensor::Prototype index;
+
+            if (x.dims() == 0) {
+                y = Tensor::Prototype(x.dtype(), x.sizes());
+                index = Tensor::Prototype(INT32, x.sizes());
+            } else {
+                auto K = std::min(x.sizes().back(), number);
+                if (K < 0) K = number;
+                auto y_shape = x.sizes();
+                y_shape.back() = K;
+                y = Tensor::Prototype(x.dtype(), y_shape);
+                index = Tensor::Prototype(INT32, y_shape);
+            }
+
+            TensorPrototype packed;
+            packed.pack({y, index});
+
+            return packed;
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "topkv2", topkv2)
+
+        static TensorPrototype yolo(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            if (inputs.empty()) return VOID;
+
+            auto &x = inputs[0];
+            if (x.dims() != 4) return VOID;
+
+            GET_NODE_INT_ATTR(classes)
+            GET_NODE_INT_LIST_ATTR(mask)
+            GET_NODE_FLOAT_LIST_ATTR(anchors)
+
+            auto n = int32_t(mask.size());
+
+            auto batch = x.size(0);
+            auto h = x.size(2);
+            auto w = x.size(3);
+
+            std::vector<Tensor::Prototype> outputs = {
+                    Tensor::Prototype(x.dtype(), {batch, n * (classes + 4 + 1), h, w}),
+                    Tensor::Prototype(INT32, {}),
+                    Tensor::Prototype(INT32, {int32_t(mask.size())}),
+                    Tensor::Prototype(FLOAT32, {int32_t(anchors.size())}),
+
+            };
+
+            TensorPrototype packed;
+            packed.pack(outputs);
+            return packed;
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "yolo", yolo)
+
+        static TensorPrototype yolo_poster(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            if (inputs.empty()) return VOID;
+
+            auto &yolo = inputs.back();
+
+            auto N = yolo.size(0);
+            if (N < 0) N = 1;
+
+            std::vector<Tensor::Prototype> outputs(N, Tensor::Prototype(FLOAT32, {-1, 6}));
+
+            TensorPrototype packed;
+            packed.pack(outputs);
+            return packed;
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "yolo_poster", yolo_poster)
+
+        static TensorPrototype slice(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            if (inputs.empty()) return VOID;
+
+            auto &x = inputs[0];
+
+            GET_NODE_INT_LIST_ATTR(begin)
+            GET_NODE_INT_LIST_ATTR(size)
+
+            if (begin.size() > x.dims()) return VOID;
+            if (begin.size() != size.size()) return VOID;
+
+            auto y_shape = x.sizes();
+            for (size_t i = 0; i < size.size(); ++i) {
+                if (y_shape[i] < 0) {
+                    y_shape[i] = size[i];
+                    continue;
+                }
+                if (begin[i] >= y_shape[i]) {
+                    y_shape[i] = 0;
+                    continue;
+                }
+                auto right = std::min(y_shape[i], begin[i] + size[i]);
+                y_shape[i] = right - begin[i];
+            }
+
+            return {x.dtype(), y_shape};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "slice", slice)
+
+        static int infer_output(int x, int &begin, int &end, int stride, bool begin_flag, bool end_flag) {
+            // begin \in [0, x)
+            // end \in [-1, x]
+            if (x >= 0) {
+                if (begin_flag) {
+                    begin = stride > 0 ? 0 : x - 1;
+                } else {
+                    if (stride > 0) {
+                        if (begin >= x) return 0;  // no elements
+                        else if (begin < -x) begin = 0;
+                        else if (begin < 0) begin += x;
+                    } else {
+                        if (begin < -x) return 0;  // no elements
+                        else if (begin >= x) begin = x - 1;
+                        else if (begin < 0) begin += x;
+                    }
+                }
+                if (end_flag) {
+                    end = stride > 0 ? x : -1;
+                } else {
+                    if (stride > 0) {
+                        if (end <= -x) return 0;     // no elements
+                        else if (end > x) end = x;
+                        else if (end < 0) end += x;
+                    } else {
+                        if (end > x) return 0;     // no elements
+                        else if (end <= -x) end = -1;
+                        else if (end < 0) end += x;
+                    }
+                }
+            }
+
+            if (stride > 0) {
+                return begin < end ? (end - begin - 1) / stride + 1 : 0;
+            } else if (stride < 0) {
+                return begin > end ? (begin - end - 1) / -stride + 1 : 0;
+            } else {
+                return -1;
+            }
+        }
+
+        static TensorPrototype slice_v3(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            if (inputs.empty()) return VOID;
+
+            auto &x = inputs[0];
+
+            GET_NODE_INT_LIST_INPUT(starts, 1)
+            GET_NODE_INT_LIST_INPUT(ends, 2)
+            TRY_GET_NODE_INT_LIST_INPUT(axes, 3)
+            TRY_GET_NODE_INT_LIST_INPUT(steps, 4)
+
+            if (starts.size() != ends.size()) return VOID;
+
+            if (axes.empty()) {
+                for (size_t i = 0; i < starts.size(); ++i) {
+                    axes.push_back(int32_t(i));
+                }
+            } else {
+                if (starts.size() != axes.size()) return VOID;
+            }
+
+            if (steps.empty()) {
+                steps = std::vector<int32_t>(starts.size(), 1);
+            } else {
+                if (starts.size() != steps.size()) return VOID;
+            }
+
+            auto y_shape = x.sizes();
+            auto N = starts.size();
+
+            for (size_t i = 0; i < N; ++i) {
+                auto dim = axes[i];
+
+                y_shape[dim] = infer_output(
+                        y_shape[dim],
+                        starts[i],
+                        ends[i],
+                        steps[i],
+                        false,
+                        false);
+            }
+
+            return {x.dtype(), y_shape};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "slice_v3", slice_v3)
+
+        class SliceDim {
+        public:
+            SliceDim() = default;
+
+            SliceDim(int begin, int end, int stride = 1,
+                    bool begin_flag = false, bool end_flag = false,
+                    bool ellipsis_flag = false,
+                    bool new_axis_flag = false, bool shrink_axis_flag = false) {
+                this->begin = begin;
+                this->end = end;
+                this->stride = stride;
+                this->flag.begin = begin_flag;
+                this->flag.end = end_flag;
+                this->flag.ellipsis = ellipsis_flag;
+                this->flag.new_axis = new_axis_flag;
+                this->flag.shrink_axis = shrink_axis_flag;
+            }
+
+            int begin = 0;
+            int end = 0;
+            int stride = 1;
+            struct {
+                bool begin = false;
+                bool end = false;
+                bool ellipsis = false;
+                bool new_axis = false;
+                bool shrink_axis = false;
+            } flag;
         };
 
-//        TS_STATIC_ACTION(ShapeInferer::Register, "slice", HardInferOp({true}))
-//        TS_STATIC_ACTION(ShapeInferer::Register, "slice_v3", HardInferOp({true}))
-//        TS_STATIC_ACTION(ShapeInferer::Register, "squeeze", HardInferOp({true}))
-//        TS_STATIC_ACTION(ShapeInferer::Register, "stack", HardInferOp(HardInferOp::IGNORE_ALL))
-//        TS_STATIC_ACTION(ShapeInferer::Register, "strided_slice", HardInferOp({true}))
-//        TS_STATIC_ACTION(ShapeInferer::Register, "tile", HardInferOp({true}))
-//        TS_STATIC_ACTION(ShapeInferer::Register, "topkv2", HardInferOp({true}))
-//        TS_STATIC_ACTION(ShapeInferer::Register, "unsqueeze", HardInferOp({true}))
-//        TS_STATIC_ACTION(ShapeInferer::Register, "yolo", HardInferOp())
-//        TS_STATIC_ACTION(ShapeInferer::Register, "yolo_poster", HardInferOp())
+        static TensorPrototype strided_slice(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            if (inputs.empty()) return VOID;
+
+            auto &x = inputs[0];
+
+            GET_NODE_INT_LIST_ATTR(begin)
+            GET_NODE_INT_LIST_ATTR(end)
+            TRY_GET_NODE_INT_LIST_ATTR(stride)
+            TRY_GET_NODE_INT_ATTR(begin_mask, 0)
+            TRY_GET_NODE_INT_ATTR(end_mask, 0)
+            TRY_GET_NODE_INT_ATTR(ellipsis_mask, 0)
+            TRY_GET_NODE_INT_ATTR(new_axis_mask, 0)
+            TRY_GET_NODE_INT_ATTR(shrink_axis_mask, 0)
+
+            if (stride.empty()) {
+                stride.resize(begin.size(), 1);
+            } else {
+                if (begin.size() != stride.size()) return VOID;
+            }
+            if (begin.size() != end.size()) return VOID;
+
+            std::vector<SliceDim> slice_dims;
+
+            for (size_t i = 0; i < begin.size(); ++i) {
+                slice_dims.emplace_back(begin[i], end[i], stride[i],
+                                        begin_mask & (1 << i),
+                                        end_mask & (1 << i),
+                                        ellipsis_mask & (1 << i),
+                                        new_axis_mask & (1 << i),
+                                        shrink_axis_mask & (1 << i));
+            }
+
+            auto base_slice_dims = slice_dims;
+
+            // deal ellipsis
+            {
+                // find ellipsis count;
+                int32_t ellipsis_count = 0;
+                int32_t sliced_count = 0;
+                for (auto &slice_dim : slice_dims) {
+                    if (slice_dim.flag.ellipsis) {
+                        ++ellipsis_count;
+                    } else if(!slice_dim.flag.new_axis) {
+                        ++sliced_count;
+                    }
+                }
+                if (ellipsis_count > 1) return VOID;
+                if (sliced_count > int32_t(x.dims())) return VOID;
+                if (ellipsis_count) {
+                    for (auto it = slice_dims.begin(); it != slice_dims.end(); ++it) {
+                        if (it->flag.ellipsis) {
+                            it = slice_dims.erase(it);
+                            std::vector<SliceDim> full_select_dims(x.dims() - sliced_count,
+                                                                   SliceDim(0, 0, 1, true, true));
+                            slice_dims.insert(it, full_select_dims.begin(), full_select_dims.end());
+                            break;
+                        }
+                    }
+                } else if (sliced_count < int32_t(x.dims())) {
+                    std::vector<SliceDim> full_select_dims(x.dims() - sliced_count,
+                                                           SliceDim(0, 0, 1, true, true));
+                    slice_dims.insert(slice_dims.end(), full_select_dims.begin(), full_select_dims.end());
+                }
+            }
+
+            auto have_new_axes_slice_dims = slice_dims;
+
+            // remove new axes
+            {
+                for (auto it = slice_dims.begin(); it != slice_dims.end(); ) {
+                    if (it->flag.new_axis) {
+                        it = slice_dims.erase(it);
+                    } else {
+                        ++it;
+                    }
+                }
+            }
+
+            if (slice_dims.size() != x.dims()) return VOID;
+
+            auto y_shape = x.sizes();
+            for (size_t i = 0; i < slice_dims.size(); ++i) {
+                auto &s = slice_dims[i];
+                y_shape[i] = infer_output(y_shape[i], s.begin, s.end, s.stride, s.flag.begin, s.flag.end);
+            }
+
+            auto fixed_value_slice_dims = slice_dims;
+            // do new_axis
+            slice_dims = have_new_axes_slice_dims;
+            {
+                for (size_t i = 0; i < slice_dims.size(); ++i) {
+                    auto &s = slice_dims[i];
+                    if (s.flag.new_axis) {
+                        y_shape.insert(y_shape.begin() + i, 1);
+                    }
+                }
+            }
+            // do shrink axis
+            {
+                for (int i = int(slice_dims.size()) - 1; i >= 0; --i) {
+                    auto &s = slice_dims[i];
+                    if (s.flag.shrink_axis) {
+                        y_shape.erase(y_shape.begin() + i);
+                    }
+                }
+            }
+
+            return {x.dtype(), y_shape};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "strided_slice", strided_slice)
     }
 }
