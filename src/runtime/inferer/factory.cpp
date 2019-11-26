@@ -498,6 +498,11 @@ namespace ts {
                         stide[dim]);
             }
 
+            {
+                auto &update_node = *const_cast<Node*>(&node);
+                update_node->set("#padding", tensor::build(INT32, {4, 2}, padding));
+            }
+
             return {x.dtype(), y_shape};
         }
 
@@ -547,6 +552,11 @@ namespace ts {
                         dilation[dim],
                         kernel_shape[i],
                         stide[dim]);
+            }
+
+            {
+                auto &update_node = *const_cast<Node*>(&node);
+                update_node->set("#padding", tensor::build(INT32, {4, 2}, padding));
             }
 
             return {x.dtype(), y_shape};
@@ -1140,6 +1150,11 @@ namespace ts {
                         stide[dim]);
             }
 
+            {
+                auto &update_node = *const_cast<Node*>(&node);
+                update_node->set("#padding", tensor::build(INT32, {4, 2}, padding));
+            }
+
             return {x.dtype(), y_shape};
         }
 
@@ -1284,6 +1299,11 @@ namespace ts {
                         dilation[dim],
                         kernel_shape[i],
                         stide[dim]);
+            }
+
+            {
+                auto &update_node = *const_cast<Node*>(&node);
+                update_node->set("#padding", tensor::build(INT32, {4, 2}, padding));
             }
 
             return {x.dtype(), y_shape};
