@@ -949,6 +949,18 @@ namespace ts {
 
         TS_STATIC_ACTION(ShapeInferer::Register, "_field", _field)
 
+        static TensorPrototype _pack(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            std::vector<Tensor::Prototype> output;
+            for (auto &i : inputs) {
+                output.emplace_back(i.dtype(), i.sizes());
+            }
+            TensorPrototype packed;
+            packed.pack(output);
+            return packed;
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "_pack", _pack)
+
         static TensorPrototype quantize(const Node &node, const std::vector<TensorPrototype> &inputs) {
             auto &x = inputs[0];
             return {INT8, x.sizes()};
