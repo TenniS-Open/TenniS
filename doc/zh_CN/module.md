@@ -98,6 +98,7 @@ int type_bytes(DTYPE dtype) {
     return 0;
 }
 ```
+
 这里需要说明的是，`type_bytes`是用来计算某个类型表示的长度的。  
 内置支持的类型的枚举声明如下：
 ```cpp
@@ -132,24 +133,26 @@ enum DTYPE {
 
 ```
 
+
 ## 4. 模块存储格式
 
-```
-string := <int32:size><char8*$size:data>;
-prototype := <int8:dtype><int32:sizes_size><int32*$sizes_size:sizes>;
+模块存储格式声明：
+
+`string := <int32:size><char8*$size:data>;
+prototype := <int8:dtype><int32:dims><int32*dims:shape>;
 tensor := <prototype:proto>
-    <byte*(prod($proto.sizes) * type_bytes($proto.dtype)):memory>;
+    <byte*(prod($proto.shape) * type_bytes($proto.dtype)):memory>;
 packed_tensor := <int32:size><tensor*$size:fields>;
-bubble := <int32:size><<string:name><packed_tensor:value>*$size:params>
+bubble := <int32:size><[<string:name><packed_tensor:value>]*$size:params>
 inputs := <int32:size><int32*$size:indexs>;
 node := <bubble:bubble><inputs:inputs>;
 graph := <int32:size><node*$size:nodes>;
 outputs := <int32:size><int32*$size:indexs>;
-module := <inputs:outputs><outputs:outputs><graph:graph>;
+module := <inputs:inputs><outputs:outputs><graph:graph>;
 header := <int32:fake><int32:code><byte*120:data>;
-<header><module>
-```
+<header><module>`
 
+----
 其中 `$tensor.memory` 存放的是 `$tensor.proto.dtype` 描述的类型号的内存。
 关于类型号和类型以及对应关系的描述见`3.3`节。
 
