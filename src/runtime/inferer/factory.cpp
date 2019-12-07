@@ -500,7 +500,7 @@ namespace ts {
 
             {
                 auto &update_node = *const_cast<Node*>(&node);
-                update_node->set("#padding", tensor::build(INT32, {4, 2}, padding));
+                update_node->set("#padding", tensor::build<int32_t>(INT32, {4, 2}, padding));
             }
 
             return {x.dtype(), y_shape};
@@ -556,7 +556,7 @@ namespace ts {
 
             {
                 auto &update_node = *const_cast<Node*>(&node);
-                update_node->set("#padding", tensor::build(INT32, {4, 2}, padding));
+                update_node->set("#padding", tensor::build<int32_t>(INT32, {4, 2}, padding));
             }
 
             return {x.dtype(), y_shape};
@@ -643,7 +643,7 @@ namespace ts {
             {
                 auto &update_node = *const_cast<Node*>(&node);
                 auto dims = inputs[0].dims();
-                update_node->set("#value", tensor::build(INT32, dims));
+                update_node->set("#value", tensor::build<int32_t>(INT32, int32_t(dims)));
             }
 
             return {INT32, {}};
@@ -832,7 +832,7 @@ namespace ts {
             {
                 auto &update_node = *const_cast<Node*>(&node);
                 auto shape = inputs[0].sizes();
-                update_node->set("#value", tensor::build(INT32, shape));
+                update_node->set("#value", tensor::build<int32_t>(INT32, shape));
             }
             return {INT32, {int32_t(inputs[0].dims())}};
         }
@@ -1164,7 +1164,7 @@ namespace ts {
 
             {
                 auto &update_node = *const_cast<Node*>(&node);
-                update_node->set("#padding", tensor::build(INT32, {4, 2}, padding));
+                update_node->set("#padding", tensor::build<int32_t>(INT32, {4, 2}, padding));
             }
 
             return {x.dtype(), y_shape};
@@ -1315,7 +1315,7 @@ namespace ts {
 
             {
                 auto &update_node = *const_cast<Node*>(&node);
-                update_node->set("#padding", tensor::build(INT32, {4, 2}, padding));
+                update_node->set("#padding", tensor::build<int32_t>(INT32, {4, 2}, padding));
             }
 
             return {x.dtype(), y_shape};
