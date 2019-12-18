@@ -8,6 +8,8 @@
 #include <unordered_map>
 #include <string>
 #include <cstdint>
+#include <functional>
+
 #include "utils/except.h"
 #include "utils/ctxmgr_lite.h"
 
