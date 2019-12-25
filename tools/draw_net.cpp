@@ -83,6 +83,8 @@ static void init_node_info() {
 
 static std::string get_node_id(const void * ptr) {
     char buf[100] = {0};
+
+    //offset is 2 not 4, for mark ptr header 0X
 #ifdef WIN32 
     _snprintf_s(buf+2, sizeof(buf) - 2, sizeof(buf) - 3, "%p", ptr);
 #else
@@ -94,6 +96,20 @@ static std::string get_node_id(const void * ptr) {
     buf[2] = 'd';
     buf[3] = 'e';
     return std::string(buf);
+}
+
+static std::string get_bubble_name(const std::string & name, const void * ptr)
+{
+    char buf[100] = {0};
+#ifdef WIN32 
+    _snprintf_s(buf, sizeof(buf), sizeof(buf) - 1, "%p", ptr);
+#else
+    snprintf(buf, sizeof(buf) - 1, "%p", ptr);
+#endif 
+ 
+    std::string str(buf);
+    str = name + "_" + str; 
+    return str;
 }
 
 static bool get_node_info(const std::string &name, node_info & info) {
@@ -352,9 +368,13 @@ static void print_node(const Node& node, int layer, bool isinput, int nprint, bo
          g_direct_stream << name;
          g_direct_stream << "\n";
 
-         if(g_set.find(inputs[i].bubble().name()) == g_set.end())
+         std::string tmpname = get_bubble_name(inputs[i].bubble().name(), inputs[i].bubble().name().c_str());
+         //if(g_set.find(inputs[i].bubble().name()) == g_set.end())
+
+         if(g_set.find(tmpname) == g_set.end())
          { 
-            g_set.insert(inputs[i].bubble().name());
+            //g_set.insert(inputs[i].bubble().name());
+            g_set.insert(tmpname);
             print_node(inputs[i], ++layer, isinput, nprint); 
 
          }
@@ -449,8 +469,15 @@ int main(int argc, char**argv)
     }
 
     for (auto &node : m->outputs()) {
-        g_set.insert(node.bubble().name());
-        print_node(node, 1, false, nprint);
+        std::string tmpname = get_bubble_name(node.bubble().name(), node.bubble().name().c_str());
+        if(g_set.find(tmpname) == g_set.end()) 
+        {
+            g_set.insert(tmpname);
+            print_node(node, 1, false, nprint);
+        }
+
+        //g_set.insert(node.bubble().name());
+        //print_node(node, 1, false, nprint);
     }
     for (auto &node : m->inputs()) {
         print_node(node, 1, true, nprint);
