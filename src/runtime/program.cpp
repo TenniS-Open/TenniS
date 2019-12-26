@@ -112,10 +112,12 @@ namespace ts {
         int slot_i = 0;
         for (auto &input : module_inputs) {
             program->m_map_input_slots.insert(std::make_pair(input.bubble().name(), slot_i++));
+            program->m_input_names.emplace_back(input.bubble().name());
         }
         slot_i = 0;
         for (auto &output : module_outputs) {
             program->m_map_output_slots.insert(std::make_pair(output.bubble().name(), slot_i++));
+            program->m_output_names.emplace_back(output.bubble().name());
         }
 
         program->m_input_dtypes.resize(module_inputs.size(), VOID);
@@ -267,5 +269,13 @@ namespace ts {
 
     const Stack &Program::data_sagment() const {
         return *m_data_sagment;
+    }
+
+    const std::vector<std::string> &Program::input_names() const {
+        return m_input_names;
+    }
+
+    const std::vector<std::string> &Program::output_names() const {
+        return m_output_names;
     }
 }

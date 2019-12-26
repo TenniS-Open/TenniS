@@ -69,6 +69,10 @@ namespace ts {
 
         const Stack &data_sagment() const;
 
+        const std::vector<std::string> &input_names() const;
+
+        const std::vector<std::string> &output_names() const;
+
     private:
         Program(const ComputingDevice &device);
         Program(const ComputingDevice &device, const std::shared_ptr<std::mutex> &mutex);
@@ -91,6 +95,9 @@ namespace ts {
         std::vector<shared> m_input_filters;    // program filter
 
         std::shared_ptr<std::mutex> m_mutex;
+
+        std::vector<std::string> m_input_names;
+        std::vector<std::string> m_output_names;
     };
 
     class TS_DEBUG_API ProgramEnv {

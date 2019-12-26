@@ -572,12 +572,26 @@ namespace ts {
     void Workbench::run_hook(const std::vector<std::string> &node_names) {
         this->m_hooked_tensor.clear();
 
+        auto controller = std::make_shared<DynamicMemoryController>(MemoryDevice(CPU));
+
+        // Save input
+        auto &input_names = m_desktop->input_names();
+        auto input_count = m_desktop->input_count();
+        for (int i = 0; i < input_count; ++i) {
+            auto &value = m_inputs[i];
+            auto &name = input_names[i];
+            auto name_it = m_hooked_tensor.find(name);
+            if (name_it == m_hooked_tensor.end()) {
+                m_hooked_tensor.insert(std::make_pair(name, value.clone(controller)));
+            } else {
+                name_it->second =value.clone(controller);
+            }
+        }
+
         std::unordered_set<std::string> node_name_set;
         for (auto &node_name : node_names) {
             node_name_set.insert(node_name);
         }
-
-        auto controller = std::make_shared<DynamicMemoryController>(MemoryDevice(CPU));
 
         Hook hooker;
         hooker.after_run([&](const Hook::StructAfterRun &info) {
