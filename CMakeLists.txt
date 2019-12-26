@@ -35,6 +35,9 @@ option(TS_USE_OPENCV "[Optional] Use OpenCV" OFF)
 # If build with debug API, must set on if TS_BUILD_TEST=ON
 option(TS_USE_DEBUG_API "[Optional] Use Debug API" OFF)
 
+# if use other kernel files
+set(TS_EXTRA_KERNELS "" CACHE STRING "List kernels, like: rknn,nnie. Empty for no extra.")
+
 # if use 
 option(TS_USE_CUDA "[Optional] Use CUDA" OFF)
 option(TS_USE_CUBLAS "[Optional] Use CUBLAS" OFF)
@@ -162,10 +165,10 @@ set(TENSORSTACK_MODULES
         runtime
         utils
         )
-set(TENSORSTACK_ACHIVES common cpu) # in kernels and ops
+set(TENSORSTACK_ARCHIVES common cpu) # in kernels and ops
 
 #add_definitions(-DTS_USE_SSE)
-# 4 types of achive
+# 4 types of archive
 # blas
 # Eigen
 # Ordinary
@@ -202,7 +205,7 @@ endif ()
 if (TS_USE_CUDA)
     find_package(CUDA REQUIRED)
     message(STATUS "[Optional] Use CUDA: [ON]; Found ${CUDA_VERSION}")
-    list(APPEND TENSORSTACK_ACHIVES gpu)
+    list(APPEND TENSORSTACK_ARCHIVES gpu)
     add_definitions(-DTS_USE_CUDA)
 
     include(use_cuda)
@@ -233,13 +236,26 @@ endif()
 
 if (TS_USE_CBLAS)
     message(STATUS "[Optional] Use CBLAS: [ON]")
-    list(APPEND TENSORSTACK_ACHIVES cblas)
+    list(APPEND TENSORSTACK_ARCHIVES cblas)
     add_definitions(-DTS_USE_CBLAS)
 
     include(use_cblas)
 else()
     message(STATUS "[Optional] Use CBLAS: [OFF]")
 endif()
+
+
+if ("${TS_EXTRA_KERNELS}" STREQUAL "")
+else()
+    message(STATUS "[Important] Extra kernels: ${TS_EXTRA_KERNELS}")
+    string(REPLACE "," ";" EXTRA_ARCHIVE_LIST ${TS_EXTRA_KERNELS})
+
+    foreach (archive ${EXTRA_ARCHIVE_LIST})
+        string(STRIP ${archive} archive)
+        list(APPEND TENSORSTACK_ARCHIVES ${archive})
+    endforeach ()
+endif()
+
 
 set(INCLUDE_FILES)
 set(SRC_FILES)
@@ -256,32 +272,32 @@ foreach (module ${TENSORSTACK_MODULES})
     LIST(APPEND SRC_INCLUDE_FILES ${SRC_INCLUDE_${module}_FILES})
 endforeach ()
 
-foreach (achive ${TENSORSTACK_ACHIVES})
-    FILE(GLOB_RECURSE INCLUDE_ARCHIVE_${achive}_FILES
-            ${SOURCE_DIR}/include/kernels/${achive}/*.h
-            ${SOURCE_DIR}/include/ops/${achive}/*.h
+foreach (archive ${TENSORSTACK_ARCHIVES})
+    FILE(GLOB_RECURSE INCLUDE_ARCHIVE_${archive}_FILES
+            ${SOURCE_DIR}/include/kernels/${archive}/*.h
+            ${SOURCE_DIR}/include/ops/${archive}/*.h
             )
-    LIST(APPEND INCLUDE_FILES ${INCLUDE_ARCHIVE_${achive}_FILES})
+    LIST(APPEND INCLUDE_FILES ${INCLUDE_ARCHIVE_${archive}_FILES})
 
-    FILE(GLOB_RECURSE SRC_ARCHIVE_${achive}_FILES
-            ${SOURCE_DIR}/src/kernels/${achive}/*.cpp
-            ${SOURCE_DIR}/src/ops/${achive}/*.cpp
+    FILE(GLOB_RECURSE SRC_ARCHIVE_${archive}_FILES
+            ${SOURCE_DIR}/src/kernels/${archive}/*.cpp
+            ${SOURCE_DIR}/src/ops/${archive}/*.cpp
             )
-    LIST(APPEND SRC_FILES ${SRC_ARCHIVE_${achive}_FILES})
+    LIST(APPEND SRC_FILES ${SRC_ARCHIVE_${archive}_FILES})
 
     if (TS_USE_CUDA)
-        FILE(GLOB_RECURSE SRC_ARCHIVE_${achive}_CU_FILES
-                ${SOURCE_DIR}/src/kernels/${achive}/*.cu
-                ${SOURCE_DIR}/src/ops/${achive}/*.cu
+        FILE(GLOB_RECURSE SRC_ARCHIVE_${archive}_CU_FILES
+                ${SOURCE_DIR}/src/kernels/${archive}/*.cu
+                ${SOURCE_DIR}/src/ops/${archive}/*.cu
                 )
-        LIST(APPEND SRC_FILES ${SRC_ARCHIVE_${achive}_CU_FILES})
+        LIST(APPEND SRC_FILES ${SRC_ARCHIVE_${archive}_CU_FILES})
     endif()
 
-    FILE(GLOB_RECURSE SRC_INCLUDE_ARCHIVE_${achive}_FILES
-            ${SOURCE_DIR}/src/kernels/${achive}/*.h
-            ${SOURCE_DIR}/src/ops/${achive}/*.h
+    FILE(GLOB_RECURSE SRC_INCLUDE_ARCHIVE_${archive}_FILES
+            ${SOURCE_DIR}/src/kernels/${archive}/*.h
+            ${SOURCE_DIR}/src/ops/${archive}/*.h
             )
-    LIST(APPEND SRC_INCLUDE_FILES ${SRC_INCLUDE_ARCHIVE_${achive}_FILES})
+    LIST(APPEND SRC_INCLUDE_FILES ${SRC_INCLUDE_ARCHIVE_${archive}_FILES})
 endforeach ()
 
 ts_add_library(${PROJECT_NAME}_LIB ${TARGET} ${INCLUDE_FILES} ${SRC_INCLUDE_FILES} ${SRC_FILES})
