@@ -116,7 +116,7 @@ namespace ts {
                 if (x.dims() < 2) return x;
                 std::vector<int32_t> tmp;
                 for (size_t i = 0; i < x.dims(); ++i) {
-                    tmp.push_back(i);
+                    tmp.push_back(int32_t(i));
                 }
                 std::swap(tmp[tmp.size() - 1], tmp[tmp.size() - 2]);
             }
