@@ -253,6 +253,12 @@ else()
     foreach (archive ${EXTRA_ARCHIVE_LIST})
         string(STRIP ${archive} archive)
         list(APPEND TENSORSTACK_ARCHIVES ${archive})
+
+        if (EXISTS ${SOLUTION_DIR}/cmake/use_${archive}.cmake)
+            include(use_${archive})
+        else ()
+            message(WARNING "Not found cmake/use_${archive}.cmake for ${archive}")
+        endif ()
     endforeach ()
 endif()
 
