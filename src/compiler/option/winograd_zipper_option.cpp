@@ -52,7 +52,10 @@ namespace ts {
 
         Tensor kernel_tensor;
         Tensor padding_tensor;
-        Tensor padding_val_tensor = bubble.get(name::padding_value);
+        Tensor padding_val_tensor;
+        if (bubble.has(name::padding_value)) {
+            padding_val_tensor = bubble.get(name::padding_value);
+        }
         if (op_name == name::layer::conv2d()) {
             TS_AUTO_CHECK(inputs.size() == 2);
             kernel_tensor = inputs[1].bubble().get(name::value);
@@ -85,7 +88,9 @@ namespace ts {
         }
 
         zipped_node.bubble().set(name::format, format_tensor);
-        zipped_node.bubble().set(name::padding_value, padding_val_tensor);
+        if (bubble.has(name::padding_value)) {
+            zipped_node.bubble().set(name::padding_value, padding_val_tensor);
+        }
 
         return true;
     }
