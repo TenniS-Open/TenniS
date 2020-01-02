@@ -17,7 +17,7 @@ namespace ts {
         shape.insert(shape.begin(), ones.begin(), ones.end());
     }
 
-    bool ElementWiseReduce::reduce(Shape &_lhs_shape, Shape &_rhs_shape, Shape &_out_shape, bool broadcast) {
+    bool ElementWiseReduce::reduce(Operator *op, Shape &_lhs_shape, Shape &_rhs_shape, Shape &_out_shape, bool broadcast) {
 
         if (_lhs_shape == _rhs_shape) {
             _out_shape = _lhs_shape;
@@ -25,7 +25,7 @@ namespace ts {
         }
 
         if (!broadcast) {
-            TS_LOG_ERROR << "Can not reduce shape: " << to_string(_lhs_shape) << " vs. " << to_string(_rhs_shape) << eject;
+            TS_LOG_ERROR << "[" << op->op() << ":" << op->name() << "] Can not reduce shape: " << to_string(_lhs_shape) << " vs. " << to_string(_rhs_shape) << eject;
         }
 
         // TS_AUTO_CHECK(!_lhs_shape.empty());
@@ -50,7 +50,7 @@ namespace ts {
             int size = lhs_shape[i];
             if (lhs_shape[i] != rhs_shape[i]) {
                 if (lhs_shape[i] != 1 && rhs_shape[i] != 1)
-                    TS_LOG_ERROR << "Can not reduce shape: " << to_string(_lhs_shape) << " vs. " << to_string(_rhs_shape) << eject;
+					TS_LOG_ERROR << "[" << op->op() << ":" << op->name() << "] Can not reduce shape: " << to_string(_lhs_shape) << " vs. " << to_string(_rhs_shape) << eject;
                 do_broadcast = true;
                 size = lhs_shape[i] * rhs_shape[i];
             }
@@ -74,13 +74,17 @@ namespace ts {
         auto lhs = *stack.index(0);
         auto rhs = *stack.index(1);
 
-        TS_AUTO_CHECK(lhs.dtype() == rhs.dtype());
+        if (lhs.dtype() != rhs.dtype()) {
+            TS_LOG_ERROR << "[" << this->op() << ":" << this->name() << "] Can not reduce mismatch type: "
+                << type_str(lhs.dtype()) << " vs. "
+                << type_str(rhs.dtype()) << eject;
+        }
 
         auto lhs_shape = lhs.sizes();
         auto rhs_shape = rhs.sizes();
         Shape out_shape;
 
-        bool do_broadcast = reduce(lhs_shape, rhs_shape, out_shape, true);
+        bool do_broadcast = reduce(this, lhs_shape, rhs_shape, out_shape, true);
         (void)(do_broadcast);
 
         output.resize(1);
@@ -113,7 +117,7 @@ namespace ts {
         auto rhs = *stack.index(1);
 
         if (lhs.dtype() != rhs.dtype()) {
-            TS_LOG_ERROR << "Can not reduce mismatch type: "
+            TS_LOG_ERROR << "[" << this->op() << ":" << this->name() << "] Can not reduce mismatch type: "
                 << type_str(lhs.dtype()) << " vs. "
                 << type_str(rhs.dtype()) << eject;
         }
@@ -122,7 +126,7 @@ namespace ts {
         auto rhs_shape = rhs.sizes();
         Shape out_shape;
 
-        bool do_broadcast = reduce(lhs_shape, rhs_shape, out_shape, true);
+        bool do_broadcast = reduce(this, lhs_shape, rhs_shape, out_shape, true);
 
         auto out_proto = Tensor::Prototype(lhs.dtype(), out_shape);
 

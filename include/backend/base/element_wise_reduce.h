@@ -83,7 +83,7 @@ namespace ts {
          * @param [out] out_shape output shape
          * @return if broadcast done
          */
-        static bool reduce(Shape &lhs_shape, Shape &rhs_shape, Shape &out_shape, bool broadcast = true);
+        static bool reduce(Operator *op, Shape &lhs_shape, Shape &rhs_shape, Shape &out_shape, bool broadcast = true);
 
         /**
          *
