@@ -2193,5 +2193,7 @@ namespace ts {
         }
 
         TS_STATIC_ACTION(ShapeInferer::Register, "strided_slice", strided_slice)
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "leaky_relu", _copy)
     }
 }

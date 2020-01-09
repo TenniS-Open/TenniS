@@ -401,8 +401,14 @@ Notice: if x.dims > 2, do `flatten(x) \dot a` instead.
 - `dim`: `Int` slope 所在的维度，此参数必须设置。
 
 
-说明：  
-`$slope.size == $x.shape($dim)`
+### leaky_relu(x..device) -> y
+Description: `y = x > 0 ? x : scale * x`  
+Input: `x`: `Tensor`  
+Output: `y`: `Tensor` `$y.shape == $x.shape`  
+
+Attr:  
+- `scale`: `Float`
+
 
 ### softmax(x) -> y
 描述：  
