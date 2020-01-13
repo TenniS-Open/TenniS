@@ -337,7 +337,7 @@ if (TS_BUILD_FRAMEWORK)
             XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "iPhone Developer"
             )
     install(DIRECTORY ${SOLUTION_DIR}/include/api
-            DESTINATION "framework/TenniS.framework/Headers"
+            DESTINATION "framework/${PROJECT_NAME}.framework/Headers"
             )
 else ()
     install(DIRECTORY ${SOLUTION_DIR}/include/api
