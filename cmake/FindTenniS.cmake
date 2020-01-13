@@ -89,15 +89,6 @@ else()
 	set(TenniS_LIBRARY ${TenniS_LIBRARY_RELEASE})
 endif()
 
-
-
-message(STATUS TenniS_LIBRARY_RELEASE: ${TenniS_NAME}${TenniS_VERSION})
-message(STATUS TenniS_ROOT_DIR: ${TenniS_ROOT_DIR})
-message(STATUS TenniS_MODULE_PATH: ${TenniS_MODULE_PATH})
-message(STATUS ENV_LIBRARY_DIR: ${ENV_LIBRARY_DIR})
-message(STATUS TenniS_INCLUDE_DIR: ${TenniS_INCLUDE_DIR})
-message(STATUS TenniS_LIBRARY: ${TenniS_LIBRARY})
-
 find_package(PackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(${TenniS_NAME}
 	FOUND_VAR
