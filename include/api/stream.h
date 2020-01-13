@@ -2,8 +2,8 @@
 // Created by kier on 19-4-25.
 //
 
-#ifndef TENSORSTACK_API_STREAM_H
-#define TENSORSTACK_API_STREAM_H
+#ifndef TENNIS_API_STREAM_H
+#define TENNIS_API_STREAM_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,4 +34,4 @@ typedef uint64_t ts_stream_read(void *obj, char *data, uint64_t length);
 }
 #endif
 
-#endif //TENSORSTACK_API_STREAM_H
+#endif //TENNIS_API_STREAM_H

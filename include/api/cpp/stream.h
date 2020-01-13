@@ -2,8 +2,8 @@
 // Created by kier on 19-4-25.
 //
 
-#ifndef TENSORSTACK_API_CPP_STREAM_H
-#define TENSORSTACK_API_CPP_STREAM_H
+#ifndef TENNIS_API_CPP_STREAM_H
+#define TENNIS_API_CPP_STREAM_H
 
 #include "../stream.h"
 #include <fstream>
@@ -183,4 +183,4 @@ namespace ts {
     }
 }
 
-#endif //TENSORSTACK_API_CPP_STREAM_H
+#endif //TENNIS_API_CPP_STREAM_H

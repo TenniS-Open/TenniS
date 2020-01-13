@@ -2,8 +2,8 @@
 // Created by kier on 19-5-7.
 //
 
-#ifndef TENSORSTACK_API_PROGORAM_H
-#define TENSORSTACK_API_PROGORAM_H
+#ifndef TENNIS_API_PROGORAM_H
+#define TENNIS_API_PROGORAM_H
 
 #include "device.h"
 #include "common.h"
@@ -30,14 +30,14 @@ typedef struct ts_Program ts_Program;
  * @note Call ts_Workbench_setup_context before compile, or call ts_Workbench_compile instead
  * @note call @see ts_free_Program to free ts_Program
  */
-TENSOR_STACK_C_API ts_Program *ts_Program_Compile(const ts_Module *module, const ts_Device *device);
+TENNIS_C_API ts_Program *ts_Program_Compile(const ts_Module *module, const ts_Device *device);
 
 /**
  * Free program.
  * @param module the return value of ts_Program_Compile or ts_Workbench_compile
  * Happen nothing if failed.
  */
-TENSOR_STACK_C_API void ts_free_Program(const ts_Program *program);
+TENNIS_C_API void ts_free_Program(const ts_Program *program);
 
 /**
  * Clone existing program.
@@ -45,21 +45,21 @@ TENSOR_STACK_C_API void ts_free_Program(const ts_Program *program);
  * @return new reference, NULL if failed
  * Each thread must has thead-local program and workbench
  */
-TENSOR_STACK_C_API ts_Program *ts_Program_clone(ts_Program *program);
+TENNIS_C_API ts_Program *ts_Program_clone(ts_Program *program);
 
 /**
  * Get input number of program
  * @param module instance of program
  * @return input count
  */
-TENSOR_STACK_C_API int32_t ts_Program_input_count(ts_Program *program);
+TENNIS_C_API int32_t ts_Program_input_count(ts_Program *program);
 
 /**
  * Get output number of program
  * @param module instance of program
  * @return output count
  */
-TENSOR_STACK_C_API int32_t ts_Program_output_count(ts_Program *program);
+TENNIS_C_API int32_t ts_Program_output_count(ts_Program *program);
 
 /**
  * Compile module to program running on device
@@ -76,8 +76,8 @@ TENSOR_STACK_C_API int32_t ts_Program_output_count(ts_Program *program);
  * 1. "--pack" Default ON, pack weights
  * 2. "--filter" Default OFF, filter const values, set values to zero which smaller than FLT_EPSILON
  */
-TENSOR_STACK_C_API ts_Program *ts_Program_Compile_v2(const ts_Module *module, const ts_Device *device,
-        const char *options);
+TENNIS_C_API ts_Program *ts_Program_Compile_v2(const ts_Module *module, const ts_Device *device,
+                                               const char *options);
 /**
  * Set operator's param value.
  * @param program instance of program
@@ -86,12 +86,12 @@ TENSOR_STACK_C_API ts_Program *ts_Program_Compile_v2(const ts_Module *module, co
  * @param value param value
  * @return false if failed
  */
-TENSOR_STACK_C_API ts_bool ts_Program_set_operator_param(ts_Program *program, const char *node_name,
-        const char *param, const ts_Tensor *value);
+TENNIS_C_API ts_bool ts_Program_set_operator_param(ts_Program *program, const char *node_name,
+                                                   const char *param, const ts_Tensor *value);
 
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif //TENSORSTACK_API_PROGORAM_H
+#endif //TENNIS_API_PROGORAM_H

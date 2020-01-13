@@ -2,8 +2,8 @@
 // Created by kier on 19-5-7.
 //
 
-#ifndef TENSORSTACK_API_CPP_PROGORAM_H
-#define TENSORSTACK_API_CPP_PROGORAM_H
+#ifndef TENNIS_API_CPP_PROGORAM_H
+#define TENNIS_API_CPP_PROGORAM_H
 
 #include "../program.h"
 
@@ -95,4 +95,4 @@ namespace ts {
     }
 }
 
-#endif //TENSORSTACK_API_CPP_PROGORAM_H
+#endif //TENNIS_API_CPP_PROGORAM_H

@@ -2,8 +2,8 @@
 // Created by keir on 2019/3/16.
 //
 
-#ifndef TENSORSTACK_API_DEVICE_H
-#define TENSORSTACK_API_DEVICE_H
+#ifndef TENNIS_API_DEVICE_H
+#define TENNIS_API_DEVICE_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -24,4 +24,4 @@ typedef struct ts_Device ts_Device;
 }
 #endif
 
-#endif //TENSORSTACK_API_DEVICE_H
+#endif //TENNIS_API_DEVICE_H

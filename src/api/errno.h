@@ -2,8 +2,8 @@
 // Created by kier on 2019/3/16.
 //
 
-#ifndef TENSORSTACK_API_ERRNO_H
-#define TENSORSTACK_API_ERRNO_H
+#ifndef TENNIS_API_ERRNO_H
+#define TENNIS_API_ERRNO_H
 
 #include <string>
 
@@ -25,4 +25,4 @@ namespace ts {
     }
 }
 
-#endif //TENSORSTACK_API_ERRNO_H
+#endif //TENNIS_API_ERRNO_H

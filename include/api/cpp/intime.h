@@ -2,8 +2,8 @@
 // Created by kier on 19-5-13.
 //
 
-#ifndef TENSORSTACK_API_CPP_INTIME_H
-#define TENSORSTACK_API_CPP_INTIME_H
+#ifndef TENNIS_API_CPP_INTIME_H
+#define TENNIS_API_CPP_INTIME_H
 
 #include "tensor.h"
 #include "../intime.h"
@@ -236,4 +236,4 @@ namespace ts {
     }
 }
 
-#endif //TENSORSTACK_API_CPP_INTIME_H
+#endif //TENNIS_API_CPP_INTIME_H

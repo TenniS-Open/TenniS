@@ -2,8 +2,8 @@
 // Created by kier on 19-5-8.
 //
 
-#ifndef TENSORSTACK_API_CPP_OPERATOR_H
-#define TENSORSTACK_API_CPP_OPERATOR_H
+#ifndef TENNIS_API_CPP_OPERATOR_H
+#define TENNIS_API_CPP_OPERATOR_H
 
 #include "../operator.h"
 #include "tensor.h"

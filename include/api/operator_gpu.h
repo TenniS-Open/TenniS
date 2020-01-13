@@ -2,8 +2,8 @@
 // Created by kier on 19-5-18.
 //
 
-#ifndef TENSORSTACK_API_OPERATOR_GPU_H
-#define TENSORSTACK_API_OPERATOR_GPU_H
+#ifndef TENNIS_API_OPERATOR_GPU_H
+#define TENNIS_API_OPERATOR_GPU_H
 
 #include "operator.h"
 
@@ -18,7 +18,7 @@ extern "C" {
  * @param context instance of ts_OperatorContext
  * @raturn pointer value of cudaStream_t @sa TS_CUDA_STREAM
  */
-TENSOR_STACK_C_API void *ts_OperatorContext_cuda_stream(ts_OperatorContext *context);
+TENNIS_C_API void *ts_OperatorContext_cuda_stream(ts_OperatorContext *context);
 
 /**
  * get cuda stream in gpu operator
@@ -30,4 +30,4 @@ TENSOR_STACK_C_API void *ts_OperatorContext_cuda_stream(ts_OperatorContext *cont
 }
 #endif
 
-#endif //TENSORSTACK_API_OPERATOR_GPU_H
+#endif //TENNIS_API_OPERATOR_GPU_H

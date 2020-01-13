@@ -2,8 +2,8 @@
 // Created by kier on 2019/3/16.
 //
 
-#ifndef TENSORSTACK_API_CPP_WORKBENCH_H
-#define TENSORSTACK_API_CPP_WORKBENCH_H
+#ifndef TENNIS_API_CPP_WORKBENCH_H
+#define TENNIS_API_CPP_WORKBENCH_H
 
 #include "../workbench.h"
 
@@ -240,4 +240,4 @@ namespace ts {
     }
 }
 
-#endif //TENSORSTACK_API_CPP_WORKBENCH_H
+#endif //TENNIS_API_CPP_WORKBENCH_H
