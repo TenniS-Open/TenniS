@@ -1,4 +1,6 @@
-# TensorStack 
+# TenniS
+
+TenniS: Tensor based Edge Neural Network Inference System 
 
 ## Compilation
 
