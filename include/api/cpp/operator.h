@@ -81,7 +81,7 @@ namespace ts {
                 }
                 auto count = int32_t(data.size());
                 auto packed_tensor = ts_new_Tensor(&count, 1, TS_INT32, data.data());
-                // TS_API_AUTO_CHECK(packed_tensor != nullptr); // check in tensorstack side
+                // TS_API_AUTO_CHECK(packed_tensor != nullptr); // check in tennis side
                 return packed_tensor;
             }
 
@@ -94,7 +94,7 @@ namespace ts {
                     cfields.emplace_back(field.get_raw());
                 }
                 auto packed_raw = ts_Tensor_pack(cfields.data(), int32_t(cfields.size()));
-                // TS_API_AUTO_CHECK(packed_raw != nullptr);    // check in tensorstack side
+                // TS_API_AUTO_CHECK(packed_raw != nullptr);    // check in tennis side
                 return packed_raw;
             }
         };
