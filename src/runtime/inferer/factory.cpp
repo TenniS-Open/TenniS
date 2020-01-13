@@ -1668,6 +1668,16 @@ namespace ts {
         } \
     }
 
+#define TRY_GET_NODE_FLOAT_LIST_INPUT(var, i) \
+    std::vector<float> var; \
+    { \
+        if (size_t(i) < node.inputs().size()) { \
+            auto tmp = get_value(node.input(i)); \
+            if (tmp.empty()) return VOID; \
+            var = tensor::array::to_float(tmp); \
+        } \
+    }
+
 #define FIX_DIM(dim, x) \
     if (dim < 0) dim += int32_t(x.dims()); \
     if (dim < 0 || dim >= int32_t(x.dims())) return VOID;
@@ -2195,5 +2205,22 @@ namespace ts {
         TS_STATIC_ACTION(ShapeInferer::Register, "strided_slice", strided_slice)
 
         TS_STATIC_ACTION(ShapeInferer::Register, "leaky_relu", _copy)
+
+        static TensorPrototype sample2d_v2(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            if (inputs.size() != 2) return VOID;
+            auto &x = inputs[0];
+            TRY_GET_NODE_FLOAT_LIST_INPUT(scale, 1)
+
+            if (x.dims() != int(scale.size())) return VOID;
+
+            auto y_shape = x.sizes();
+            for (size_t i = 0; i < y_shape.size(); ++i) {
+                y_shape[i] = int32_t(float(x.size(i)) * scale[i]);
+            }
+
+            return {x.dtype(), y_shape};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "sample2d_v2", sample2d_v2)
     }
 }

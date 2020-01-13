@@ -726,6 +726,18 @@ y的坐标为`[x, y]`映射到原图为`affine * [x, y, 1]'`，然后根据type�
 `scale > 1` 表示上采样，`scale < 0` 下采样。
 `dim` 和 `dim+1` 表示了图像的二维采样。
 
+
+### sample2d_v2(x..device, scale..host) -> y..device
+Description: call resize2d(x, x.shape * scale) inside.  
+input: `x`: `Tensor`  
+input: `scale`: `FloatArray`  
+
+Attr:  
+- `type`: `Enum[linear=0, cubic=1, nearest=2, hard=3] Default hard`
+Note:  
+`x.shape.dim == scale.dim`
+
+
 ### chunk(x..device) -> y..device
 
 描述：concat的逆操作
@@ -1105,6 +1117,18 @@ for dim in 2...N
 
 ### _dims(x..device) -> y..host
 Return x.dims()
+
+
+### _dtype(x..device) -> y..host = delete
+Return x.dtype()
+
+
+### _cast_v2(x..device, dtype..host) -> y = delete
+Input: `x` `Tensor`  
+Input: `dtype` `Int` 
+
+Output: `y` `Tensor` dtype tell dtype 
+
 
 ### _expand(x..device, dims..host) -> y..device
 Return x if dims <= x.dims(), else expanded x shape to has dims
