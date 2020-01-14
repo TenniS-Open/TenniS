@@ -5,8 +5,8 @@
 #ifndef TENSORSTACK_API_TENSORSTACK_H
 #define TENSORSTACK_API_TENSORSTACK_H
 
-// version 0.3.1.0
-#define TS_VERSION 30100
+// version 00.05.00.00
+#define TS_VERSION 50000
 
 #include "setup.h"
 #include "common.h"
