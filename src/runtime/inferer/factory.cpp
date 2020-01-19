@@ -2222,5 +2222,35 @@ namespace ts {
         }
 
         TS_STATIC_ACTION(ShapeInferer::Register, "sample2d_v2", sample2d_v2)
+
+        static TensorPrototype slice_v2(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            if (inputs.empty()) return VOID;
+
+            auto &x = inputs[0];
+
+            TRY_GET_NODE_INT_LIST_INPUT(begin, 1)
+            TRY_GET_NODE_INT_LIST_INPUT(size, 2)
+
+            if (begin.size() > x.dims()) return VOID;
+            if (begin.size() != size.size()) return VOID;
+
+            auto y_shape = x.sizes();
+            for (size_t i = 0; i < size.size(); ++i) {
+                if (y_shape[i] < 0) {
+                    y_shape[i] = size[i];
+                    continue;
+                }
+                if (begin[i] >= y_shape[i]) {
+                    y_shape[i] = 0;
+                    continue;
+                }
+                auto right = std::min(y_shape[i], begin[i] + size[i]);
+                y_shape[i] = right - begin[i];
+            }
+
+            return {x.dtype(), y_shape};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "slice_v2", slice_v2)
     }
 }
