@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 2.7)
 project(tennis)
 
+# set tennis version
+set(TS_VERSION "1.0.0.rc1")
+
 set(TARGET "SHARED" CACHE STRING "STATIC or SHARED" FORCE)
 add_definitions(-DBUILDING_TENNIS)
 
@@ -329,9 +332,9 @@ if (TS_BUILD_FRAMEWORK)
             MACOSX_FRAMEWORK_IDENTIFIER com.seetatech.sdk.TenniS
             # MACOSX_FRAMEWORK_INFO_PLIST Info.plist
             # "current version" in semantic format in Mach-O binary file
-            VERSION 0.5.0
+            VERSION ${TS_VERSION}
             # "compatibility version" in semantic format in Mach-O binary file
-            SOVERSION 0.5.0
+            SOVERSION ${TS_VERSION}
             # PUBLIC_HEADER "${FRAMEWORK_PUBLIC_HEADER_FILES}"
             # RESOURCE      "${RESOURCE_FILES1}"
             XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "iPhone Developer"

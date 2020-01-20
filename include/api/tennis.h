@@ -5,8 +5,8 @@
 #ifndef TENNIS_API_TENNIS_H
 #define TENNIS_API_TENNIS_H
 
-// version 00.05.00.00
-#define TS_VERSION 50000
+// version 01.00.00.00
+#define TS_VERSION 1000000
 
 #include "setup.h"
 #include "common.h"
