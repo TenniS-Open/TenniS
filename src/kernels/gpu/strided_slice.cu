@@ -13,7 +13,7 @@
 #include "kernels/gpu/operator_on_gpu.h"
 #include "backend/base/base_strided_slice.h"
 
-#include "kernels/gpu/gpu_helper.h"
+#include "kernels/gpu/gpu_kernel.h"
 #include "device_launch_parameters.h"
 
 
@@ -130,11 +130,9 @@ namespace ts {
             auto in_data = x.data<T>();
             auto out_data = out.data<T>();
 
-            auto cuda_stream = get_cuda_stream_on_context();
-
-            gpu_stride_slice_kernel<T> << < CUDA_BLOCK(count, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >> > (
-                    count, in_data, out_data,
-                            x_hype_shape, out_hype_shape, gpu_slice.slice);
+            RUN_KERNEL(gpu_stride_slice_kernel<T>, CUDA_BLOCK(count, CUDA_THREAD_NUM), CUDA_THREAD_NUM,
+                       count, in_data, out_data,
+                       x_hype_shape, out_hype_shape, gpu_slice.slice);
         }
 
         void StridedSlice::strided_slice(const ts::Tensor &x, const std::vector<int> &begin,

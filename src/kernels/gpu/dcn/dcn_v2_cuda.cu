@@ -7,7 +7,7 @@
 #include <cuda_runtime_api.h>
 #include <device_launch_parameters.h>
 
-#include "kernels/gpu/gpu_helper.h"
+#include "kernels/gpu/gpu_kernel.h"
 #include "utils.h"
 #include "core/device_context.h"
 #include "kernels/gpu/cuda_context.h"
@@ -120,9 +120,7 @@ namespace ts {
         const int block = 128;
         const int grid = (batch + block - 1) / block;
 
-        auto cuda_stream = gpu::get_cuda_stream_on_context();
-
-        createBatchGemmBuffer << < grid, block, 0, cuda_stream >> > (
+        RUN_KERNEL(createBatchGemmBuffer, grid, block,
                 input_b, output_b,
                         columns_b, ones_b,
                         weight_b, bias_b,

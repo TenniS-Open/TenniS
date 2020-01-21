@@ -20,6 +20,7 @@
 #include "kernels/gpu/math_cublas.h"
 
 #include <kernels/gpu/operator_on_gpu.h>
+#include "kernels/gpu/gpu_kernel.h"
 
 /////////////////////////////////////////////////
 namespace ts {
@@ -166,9 +167,8 @@ namespace ts {
                     kernel_dims, conv_out_spatial_dim, weight_shape[0], T(1.f), pweight, pinput, T(0.f), col_buffer);
 
             #else
-                auto cuda_stream = handle->stream();
-                gpu_transpose_conv2d_run_kernel<T> <<< blocksize, threadsize, 0, cuda_stream >>>
-                      (pweight, pinput, col_buffer, M, N, K);
+                RUN_KERNEL(gpu_transpose_conv2d_run_kernel<T>, blocksize, threadsize,
+                           pweight, pinput, col_buffer, M, N, K);
             #endif
  
                
@@ -177,14 +177,11 @@ namespace ts {
                           (void*)col_buffer, col_tensor.device(), col_buffer_size * sizeof(T));
 
                 } else {
-                    auto cuda_stream = handle->stream();
-                    gpu_col2im_kernel<T> <<< CUDA_BLOCK(put_param, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >>> (
-                                            put_param, col_buffer, input.height, input.width,
-                                            ksize.height, ksize.width, padding.top, padding.left,
-                                            stride.height, stride.width, dilation.height, dilation.width,
-                                            x_shape[2], x_shape[3], poutput);
-
-                     
+                    RUN_KERNEL(gpu_col2im_kernel<T>, CUDA_BLOCK(put_param, CUDA_THREAD_NUM), CUDA_THREAD_NUM,
+                               put_param, col_buffer, input.height, input.width,
+                               ksize.height, ksize.width, padding.top, padding.left,
+                               stride.height, stride.width, dilation.height, dilation.width,
+                               x_shape[2], x_shape[3], poutput);
                 }
 
                 pinput += input_number_offset;

@@ -14,7 +14,7 @@
 #include "core/device_context.h"
 #include "utils/ctxmgr_lite.h"
 #include "kernels/gpu/math_cublas.h"
-#include "kernels/gpu/gpu_helper.h"
+#include "kernels/gpu/gpu_kernel.h"
 
 
 namespace ts {
@@ -201,12 +201,11 @@ namespace ts {
 
             for(int i=0; i<number; i++) { 
                 if(!is_1x1_conv) {
-                    gpu_im2col_kernel<T> <<< CUDA_BLOCK(put_param, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >>> (
-                                            put_param, pinput, input.height, input.width, 
-                                            ksize.height, ksize.width, padding.top, padding.left,
-                                            stride.height, stride.width, dilation.height, dilation.width,
-                                            output_shape[2], output_shape[3], col_buffer, T(padding_value));
-
+                    RUN_KERNEL(gpu_im2col_kernel<T>, CUDA_BLOCK(put_param, CUDA_THREAD_NUM), CUDA_THREAD_NUM,
+                               put_param, pinput, input.height, input.width,
+                               ksize.height, ksize.width, padding.top, padding.left,
+                               stride.height, stride.width, dilation.height, dilation.width,
+                               output_shape[2], output_shape[3], col_buffer, T(padding_value));
                 }else {
                     col_buffer = const_cast<T *>(pinput);
                 }
@@ -219,9 +218,8 @@ namespace ts {
                     weight_shape[0], conv_out_spatial_dim, kernel_dims, T(1.f), pweight, col_buffer, T(0.f), poutput);
 
 #else
-                auto cuda_stream = handle->stream();
-                gpu_conv2d_compute_run_kernel<T> <<<blocksize, threadsize, 0, cuda_stream >>>
-                      (weight_shape[0], kernel_dims,conv_out_spatial_dim, pweight, col_buffer, poutput);
+                RUN_KERNEL(gpu_conv2d_compute_run_kernel<T>, blocksize, threadsize,
+                           weight_shape[0], kernel_dims,conv_out_spatial_dim, pweight, col_buffer, poutput);
 #endif
 
                 pinput += input_number_offset;

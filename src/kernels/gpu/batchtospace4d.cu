@@ -10,7 +10,7 @@
 #include <cuda_runtime.h>
 #include <cuda_fp16.h>
 
-#include "kernels/gpu/gpu_helper.h"
+#include "kernels/gpu/gpu_kernel.h"
 
 //#include "kernels/common/simd.h"
 
@@ -85,16 +85,13 @@ namespace ts {
             const T * pinput = x.data<T>();
             T * poutput = out.data<T>();
 
-            auto cuda_stream = get_cuda_stream_on_context();
-
-            gBatchToSpaceND_kernel<T> << <CUDA_BLOCK(output_size, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >> >
-                               (pinput, poutput,
-                                input_number, input_channels, input_height, input_width,
-                                output_number, output_channels, output_height, output_width,
-                                input_size, input_number_step, input_channels_step, input_height_step,
-                                output_size, output_number_step, output_channels_step, output_height_step,
-                                block_height,block_width, crop_top, crop_bottom, crop_left, crop_right);
-
+            RUN_KERNEL(gBatchToSpaceND_kernel<T>, CUDA_BLOCK(output_size, CUDA_THREAD_NUM), CUDA_THREAD_NUM,
+                       pinput, poutput,
+                       input_number, input_channels, input_height, input_width,
+                       output_number, output_channels, output_height, output_width,
+                       input_size, input_number_step, input_channels_step, input_height_step,
+                       output_size, output_number_step, output_channels_step, output_height_step,
+                       block_height, block_width, crop_top, crop_bottom, crop_left, crop_right);
         }
 
 

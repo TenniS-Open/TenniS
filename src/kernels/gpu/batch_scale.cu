@@ -12,7 +12,7 @@
 #include <cuda_runtime.h>
 #include <cuda_fp16.h>
 
-#include "kernels/gpu/gpu_helper.h"
+#include "kernels/gpu/gpu_kernel.h"
 
 namespace ts {
     namespace gpu {
@@ -49,14 +49,11 @@ namespace ts {
             const T *pbias = bias.data<T>();
             T *pdst = out.data<T>();
 
-            auto cuda_stream = get_cuda_stream_on_context();
-
 //            memcpy((void*)pdst, out.device(), out.count() * sizeof(T),
 //                   (void*)psrc, x.device(), out.count() * sizeof(T));
 
-            gpu_batch_scale_compute_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >>>
-                                              (pdst, psrc, out.count(), backdims, shape[dim], pscale, pbias);
-
+            RUN_KERNEL(gpu_batch_scale_compute_kernel<T>, CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM,
+                       pdst, psrc, out.count(), backdims, shape[dim], pscale, pbias);
         }
 
 

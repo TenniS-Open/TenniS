@@ -11,7 +11,7 @@
 
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
-#include <kernels/gpu/gpu_helper.h>
+#include <kernels/gpu/gpu_kernel.h>
 #include <kernels/gpu/cudax_fp16_math.h>
 #include "global/fp16_operator_factory.h"
 
@@ -47,9 +47,7 @@ namespace ts {
             dim3 blockSize(CUDA_THREAD_NUM);
             dim3 gridSize(CUDA_BLOCK(count, blockSize.x));
 
-            auto cuda_stream = get_cuda_stream_on_context();
-
-            tanh_kernel<T> << < gridSize, blockSize, 0, cuda_stream >> > (input_data, output_data, count);
+            RUN_KERNEL(tanh_kernel<T>, gridSize, blockSize, input_data, output_data, count);
         }
 
 #ifdef TS_USE_CUDA_FP16
@@ -73,12 +71,10 @@ namespace ts {
             dim3 blockSize(CUDA_THREAD_NUM);
             dim3 gridSize(CUDA_BLOCK(count, blockSize.x));
 
-            auto cuda_stream = get_cuda_stream_on_context();
-
             auto one = __float2half(1);
             auto two = __float2half(2);
 
-            tanh_kernel << < gridSize, blockSize, 0, cuda_stream >> > (input_data, output_data, count, one, two);
+            RUN_KERNEL(tanh_kernel, gridSize, blockSize, input_data, output_data, count, one, two);
         }
 #endif
 

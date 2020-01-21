@@ -12,7 +12,7 @@
 #include <cuda_fp16.h>
 #include <device_launch_parameters.h>
 
-#include "kernels/gpu/gpu_helper.h"
+#include "kernels/gpu/gpu_kernel.h"
 
 #include "kernels/gpu/cudax_fp16_math.h"
 
@@ -119,16 +119,14 @@ namespace ts {
 
             dim3 block_size(CUDA_THREAD_NUM);
 
-            auto cuda_stream = get_cuda_stream_on_context();
-
             dim3 square_kernel_grid_size((count + block_size.x - 1) / block_size.x);
-            square_kernel<T> << <square_kernel_grid_size, block_size, 0, cuda_stream >> > (input_data, output_data, count);
+            RUN_KERNEL(square_kernel<T>, square_kernel_grid_size, block_size, input_data, output_data, count);
 
             dim3 sum_kernel_grid_size((pre_num * inner_num + block_size.x - 1) / block_size.x);
-            sum_kernel<T> << <sum_kernel_grid_size, block_size, 0, cuda_stream >> > (output_data, scale_data, axis, pre_num, inner_num);
+            RUN_KERNEL(sum_kernel<T>, sum_kernel_grid_size, block_size, output_data, scale_data, axis, pre_num, inner_num);
 
             dim3 div_kernel_grid_size((count + block_size.x - 1) / block_size.x);
-            div_kernel<T> << <div_kernel_grid_size,block_size, 0, cuda_stream >> > (input_data, scale_data, output_data, count,axis,pre_num,inner_num, float_to<T>::F(epsilon));
+            RUN_KERNEL(div_kernel<T>, div_kernel_grid_size,block_size, input_data, scale_data, output_data, count,axis,pre_num,inner_num, float_to<T>::F(epsilon));
         }
 
         void L2Norm::normalize(const Tensor &x, int dim, float epsilon, Tensor &out) {

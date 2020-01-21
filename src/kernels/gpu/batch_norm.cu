@@ -16,7 +16,7 @@
 
 #include <runtime/runtime.h>
 
-#include "kernels/gpu/gpu_helper.h"
+#include "kernels/gpu/gpu_kernel.h"
 
 namespace ts {
     namespace gpu {
@@ -72,17 +72,15 @@ namespace ts {
             Tensor vec_tensor(RuntimeContext::FlowMemory(), variance.dtype(), vec_shape, MemoryDevice(variance.device()));
             T* vec_data = vec_tensor.data<T>();
 
-            auto cuda_stream = get_cuda_stream_on_context();
-
             int vec_len = vec_tensor.count();
             dim3 block_size(CUDA_THREAD_NUM);
             dim3 grid_size(CUDA_BLOCK(vec_len, block_size.x));
             T one(1.f);
             T temp_epsilon(epsilon);
-            vec_kernel<T> << <grid_size, block_size, 0, cuda_stream >> > (vec_len, one, temp_epsilon, pvariance,vec_data);
+            RUN_KERNEL(vec_kernel<T>, grid_size, block_size, vec_len, one, temp_epsilon, pvariance,vec_data);
 
-            gpu_batch_norm_compute_kernel<T> << < CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >> > (psrc, pdst, out.count(), backdims, shape[dim], pmean, vec_data);
-           
+            RUN_KERNEL(gpu_batch_norm_compute_kernel<T>, CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM,
+                       psrc, pdst, out.count(), backdims, shape[dim], pmean, vec_data);
         }
 
 

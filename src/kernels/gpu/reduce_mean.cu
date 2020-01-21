@@ -18,6 +18,7 @@
 #include "kernels/gpu/cudax_fp16_math.h"
 
 #include "global/fp16_operator_factory.h"
+#include "kernels/gpu/gpu_kernel.h"
 
 namespace ts {
     namespace gpu {
@@ -82,12 +83,13 @@ namespace ts {
 
             cudaMemsetAsync(output_data, 0, output_count * sizeof(T), stream);
 
-            reduce_sum_kernel<T> <<< gridSize, blockSize, 0, stream >>> (input_data, output_data,
-                    input_count, output_count, number, channels, width,
-                    channels * width);
+            RUN_KERNEL_STREAM(reduce_sum_kernel<T>, gridSize, blockSize, 0, stream,
+                              input_data, output_data,
+                              input_count, output_count, number, channels, width,
+                              channels * width);
             // mean
-            mean_kernel<T> <<< gridSize, blockSize, 0, stream >>> (
-                    output_data, output_count, T(channels));
+            RUN_KERNEL_STREAM(mean_kernel<T>, gridSize, blockSize, 0, stream,
+                              output_data, output_count, T(channels));
         }
 
         template <typename T>
@@ -96,12 +98,12 @@ namespace ts {
                                      int number, int channels, int width, int number_step, cudaStream_t stream) {
             dim3 blockSize(CUDA_THREAD_NUM);
             dim3 gridSize(CUDA_BLOCK(output_count, blockSize.x));
-            reduce_sum_kernel_no_atomic<T> << < gridSize, blockSize, 0, stream >> > (
-                    input_data, output_data,
-                            channels, number, width);
+            RUN_KERNEL_STREAM(reduce_sum_kernel_no_atomic<T>, gridSize, blockSize, 0, stream,
+                              input_data, output_data,
+                              channels, number, width);
             // mean
-            mean_kernel<T> <<< gridSize, blockSize, 0, stream >>> (
-                    output_data, output_count, T(channels));
+            RUN_KERNEL_STREAM(mean_kernel<T>, gridSize, blockSize, 0, stream,
+                              output_data, output_count, T(channels));
         }
 
 #ifdef TS_USE_CUDA_FP16
@@ -129,12 +131,12 @@ namespace ts {
                                      int number, int channels, int width, int number_step, cudaStream_t stream) {
             dim3 blockSize(CUDA_THREAD_NUM);
             dim3 gridSize(CUDA_BLOCK(output_count, blockSize.x));
-            reduce_sum_kernel_no_atomic<half> << < gridSize, blockSize, 0, stream >> > (
-                    input_data, output_data,
-                            channels, number, width);
+            RUN_KERNEL_STREAM(reduce_sum_kernel_no_atomic<half>, gridSize, blockSize, 0, stream,
+                              input_data, output_data,
+                              channels, number, width);
             // mean
-            mean_kernel<half> <<< gridSize, blockSize, 0, stream >>> (
-                    output_data, output_count, __float2half(float(channels)));
+            RUN_KERNEL_STREAM(mean_kernel<half>, gridSize, blockSize, 0, stream,
+                              output_data, output_count, __float2half(float(channels)));
         }
 #endif
 

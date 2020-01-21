@@ -10,7 +10,7 @@
 #include <device_launch_parameters.h>
 #include <cmath>
 
-#include "kernels/gpu/gpu_helper.h"
+#include "kernels/gpu/gpu_kernel.h"
 
 #define CUDA_KERNEL_LOOP(i, n)                          \
   for (int i = blockIdx.x * blockDim.x + threadIdx.x;   \
@@ -337,10 +337,8 @@ void modulated_deformable_im2col_cuda(const float* data_im, const float* data_of
     const int channel_per_deformable_group = channels / deformable_group;
     const int num_kernels = channels * batch_size * height_col * width_col;
 
-    auto cuda_stream = ts::gpu::get_cuda_stream_on_context();
-
-    modulated_deformable_im2col_gpu_kernel
-        << <GET_BLOCKS(num_kernels), CUDA_NUM_THREADS, 0, cuda_stream >> > (
+    RUN_KERNEL(modulated_deformable_im2col_gpu_kernel,
+            GET_BLOCKS(num_kernels), CUDA_NUM_THREADS,
             num_kernels, data_im, data_offset, data_mask, height_im, width_im, kernel_h, kernel_w,
             pad_h, pad_w, stride_h, stride_w, dilation_h, dilation_w, channel_per_deformable_group,
             batch_size, channels, deformable_group, height_col, width_col, data_col);

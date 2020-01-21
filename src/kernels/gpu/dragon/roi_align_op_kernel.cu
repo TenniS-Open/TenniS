@@ -10,6 +10,7 @@
 #ifdef TS_USE_CUDA_FP16
 #include "kernels/gpu/cudax_fp16_math.h"
 #endif
+#include "kernels/gpu/gpu_kernel.h"
 
 namespace ts {
 
@@ -146,11 +147,11 @@ namespace ts {
                     float *y,
                     CUDAContext *ctx) {
                 auto nthreads = num_rois * C * pool_h * pool_w;
-                _ROIAlign<float>
-                        << < CUDA_BLOCKS(nthreads), CUDA_THREADS,
-                        0, ctx->cuda_stream() >> >
-                           (nthreads, C, H, W, pool_h, pool_w,
-                                   sampling_ratio, spatial_scale, x, rois, y);
+                RUN_KERNEL_STREAM(_ROIAlign<float>,
+                                  CUDA_BLOCKS(nthreads), CUDA_THREADS,
+                                  0, ctx->cuda_stream(),
+                                  nthreads, C, H, W, pool_h, pool_w,
+                                  sampling_ratio, spatial_scale, x, rois, y);
             }
 
 #ifdef TS_USE_CUDA_FP16
@@ -282,13 +283,13 @@ namespace ts {
                     float16 *y,
                     CUDAContext *ctx) {
                 auto nthreads = num_rois * C * pool_h * pool_w;
-                _ROIAlignHalf
-                        << < CUDA_BLOCKS(nthreads), CUDA_THREADS,
-                        0, ctx->cuda_stream() >> >
-                           (nthreads, C, H, W, pool_h, pool_w,
-                                   sampling_ratio, spatial_scale,
-                                   reinterpret_cast<const half *>(x), rois,
-                                   reinterpret_cast<half *>(y));
+                RUN_KERNEL_STREAM(_ROIAlignHalf,
+                                  CUDA_BLOCKS(nthreads), CUDA_THREADS,
+                                  0, ctx->cuda_stream(),
+                                  nthreads, C, H, W, pool_h, pool_w,
+                                  sampling_ratio, spatial_scale,
+                                  reinterpret_cast<const half *>(x), rois,
+                                  reinterpret_cast<half *>(y));
             }
 #endif
         }  // namespace kernel

@@ -5,7 +5,7 @@
 #include "kernels/gpu/gatherv2.h"
 #include "global/operator_factory.h"
 #include "backend/name.h"
-#include "kernels/gpu/gpu_helper.h"
+#include "kernels/gpu/gpu_kernel.h"
 #include <numeric>
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
@@ -65,11 +65,8 @@ namespace ts {
             auto out_data = out.data<char>();
             auto indices_data = indices.data<int32_t>();
 
-            auto &context = ctx::ref<DeviceContext>();
-            CUDAContextHandle* handle = reinterpret_cast<CUDAContextHandle*>(context.handle);
-            auto cuda_stream = handle->stream();
-
-            gpu_gatherv2_kernel <<< CUDA_BLOCK(number, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >>> (number, x_data, indices_data, out_data,axis, bytes, width_bytes,x_hype_shape);
+            RUN_KERNEL(gpu_gatherv2_kernel, CUDA_BLOCK(number, CUDA_THREAD_NUM), CUDA_THREAD_NUM,
+                       number, x_data, indices_data, out_data, axis, bytes, width_bytes, x_hype_shape);
 
         }
     }

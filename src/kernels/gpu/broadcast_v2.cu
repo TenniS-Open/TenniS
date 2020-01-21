@@ -13,7 +13,7 @@
 #include "kernels/gpu/math_gpu.h"
 #endif
 
-#include "kernels/gpu/gpu_helper.h"
+#include "kernels/gpu/gpu_kernel.h"
 
 #include "global/operator_factory.h"
 #include "global/fp16_operator_factory.h"
@@ -82,10 +82,9 @@ namespace ts {
             auto &out_hype_shape = gpu_hype_shape.second[1];
             auto count = out.count();
 
-            gpu_broadcast_kernel<T>
-                    << < CUDA_BLOCK(count, CUDA_THREAD_NUM), CUDA_THREAD_NUM,
-                    0, get_cuda_stream_on_context() >> >
-                       (count, C.data<T>(), out.data<T>(), C_hype_shape, out_hype_shape);
+            RUN_KERNEL(gpu_broadcast_kernel<T>,
+                       CUDA_BLOCK(count, CUDA_THREAD_NUM), CUDA_THREAD_NUM,
+                       count, C.data<T>(), out.data<T>(), C_hype_shape, out_hype_shape);
         }
 
         template<typename T>
@@ -101,10 +100,9 @@ namespace ts {
             auto pout = out.data<T>();
             auto count = out.count();
 
-            gpu_broadcast_with_scalar_kernel<T>
-                    << < CUDA_BLOCK(count, CUDA_THREAD_NUM), CUDA_THREAD_NUM,
-                    0, get_cuda_stream_on_context() >> >
-                       (count, pout, val);
+            RUN_KERNEL(gpu_broadcast_with_scalar_kernel<T>,
+                       CUDA_BLOCK(count, CUDA_THREAD_NUM), CUDA_THREAD_NUM,
+                       count, pout, val);
         }
 
         template<typename T>
@@ -129,10 +127,9 @@ namespace ts {
 
             auto N = out.count();
 
-            gpu_broadcast_with_bias_kernel<T>
-                    << < CUDA_BLOCK(N, CUDA_THREAD_NUM), CUDA_THREAD_NUM,
-                    0, get_cuda_stream_on_context() >> >
-                       (N, pout, channels, count, px);
+            RUN_KERNEL(gpu_broadcast_with_bias_kernel<T>,
+                       CUDA_BLOCK(N, CUDA_THREAD_NUM), CUDA_THREAD_NUM,
+                       N, pout, channels, count, px);
         }
 
         void BroadcastV2::broadcast(const Tensor &x, Tensor &out) {

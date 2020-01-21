@@ -10,7 +10,7 @@
 #include <cuda_runtime.h>
 #include <cuda_fp16.h>
 
-#include "kernels/gpu/gpu_helper.h"
+#include "kernels/gpu/gpu_kernel.h"
 
 /////////////////////////////////////////////////
 namespace ts {
@@ -42,13 +42,12 @@ namespace ts {
         const T *pbias = b.data<T>();
         T *pdst = out.data<T>();
 
-        auto cuda_stream = get_cuda_stream_on_context();
-
 //        memcpy((void*)pdst, out.device(), x.count() * sizeof(T),
 //               (void*)psrc, x.device(), x.count() * sizeof(T));
 
 
-        add_bias_kernel<T> <<< CUDA_BLOCK(x.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >>> (psrc, pdst, x.count(), back_dims, shape[dim], pbias, b.count());
+        RUN_KERNEL(add_bias_kernel<T>, CUDA_BLOCK(x.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM,
+                   psrc, pdst, x.count(), back_dims, shape[dim], pbias, b.count());
 
         //cudaDeviceSynchronize();
     }

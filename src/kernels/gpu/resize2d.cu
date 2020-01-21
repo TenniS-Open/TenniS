@@ -11,7 +11,7 @@
 #include <cuda_runtime.h>
 #include <cuda_fp16.h>
 
-#include "kernels/gpu/gpu_helper.h"
+#include "kernels/gpu/gpu_kernel.h"
 
 namespace ts {
     namespace gpu {
@@ -377,11 +377,8 @@ namespace ts {
 
             int ncount = y_height * y_width * channels;
 
-            auto cuda_stream = get_cuda_stream_on_context();
-
-            Resize2d_ResizeImageLinear_kernel<T> << < CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0,
-                    cuda_stream >> >
-                    (psrc, x_width, x_height, channels, pdst, y_width, y_height, ncount);
+            RUN_KERNEL(Resize2d_ResizeImageLinear_kernel<T>, CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM,
+                       psrc, x_width, x_height, channels, pdst, y_width, y_height, ncount);
 
         }
 
@@ -396,10 +393,8 @@ namespace ts {
 
             int ncount = y_height * y_width * channels;
 
-            auto cuda_stream = get_cuda_stream_on_context();
-            Resize2d_ResizeImageCubic_kernel<T> << < CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0,
-                    cuda_stream >> >
-                    (psrc, x_width, x_height, channels, pdst, y_width, y_height, ncount);
+            RUN_KERNEL(Resize2d_ResizeImageCubic_kernel<T>, CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM,
+                       psrc, x_width, x_height, channels, pdst, y_width, y_height, ncount);
         }
 
 
@@ -413,10 +408,8 @@ namespace ts {
 
             int ncount = y_height * y_width * channels;
 
-            auto cuda_stream = get_cuda_stream_on_context();
-            Resize2d_ResizeNearest_kernel<T> << < CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0,
-                    cuda_stream >> >
-                    (psrc, x_width, x_height, channels, pdst, y_width, y_height, ncount);
+            RUN_KERNEL(Resize2d_ResizeNearest_kernel<T>, CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM,
+                       psrc, x_width, x_height, channels, pdst, y_width, y_height, ncount);
         }
 
 
@@ -430,9 +423,8 @@ namespace ts {
 
             int ncount = y_height * y_width * channels;
 
-            auto cuda_stream = get_cuda_stream_on_context();
-            Resize2d_ResizeHard_kernel<T> << < CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >> >
-                                                                                                        (psrc, x_width, x_height, channels, pdst, y_width, y_height, ncount);
+            RUN_KERNEL(Resize2d_ResizeHard_kernel<T>, CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM,
+                       psrc, x_width, x_height, channels, pdst, y_width, y_height, ncount);
         }
 
         template<typename T>

@@ -8,7 +8,7 @@
 #include <cuda_runtime.h>
 #include <cuda_fp16.h>
 
-#include "kernels/gpu/gpu_helper.h"
+#include "kernels/gpu/gpu_kernel.h"
 
 namespace ts {
     namespace gpu {
@@ -89,14 +89,12 @@ namespace ts {
             const T *pweight_base = weight.data<T>();
             T *poutput = out.data<T>();
 
-            auto cuda_stream = get_cuda_stream_on_context();
-
-            gpu_depthwise_conv2d_nchw_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >>> (
-                                               out.count(), pinput, pweight_base, output_shape[0], output_shape[1],
-                                               output_shape[2],output_shape[3],input_shape[2], input_shape[3], 
-                                               weight_shape[2], weight_shape[3],stride.height, stride.width,
-                                               padding.top, padding.bottom, padding.left, padding.right,
-                                               dilation.height,dilation.width, poutput);
+            RUN_KERNEL(gpu_depthwise_conv2d_nchw_kernel<T>, CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM,
+                       out.count(), pinput, pweight_base, output_shape[0], output_shape[1],
+                       output_shape[2], output_shape[3], input_shape[2], input_shape[3],
+                       weight_shape[2], weight_shape[3], stride.height, stride.width,
+                       padding.top, padding.bottom, padding.left, padding.right,
+                       dilation.height, dilation.width, poutput);
         }
 
         void

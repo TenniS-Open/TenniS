@@ -4,7 +4,7 @@
 #include "global/fp16_operator_factory.h"
 #include "backend/name.h"
 
-#include "kernels/gpu/gpu_helper.h"
+#include "kernels/gpu/gpu_kernel.h"
 
 #include <numeric>
 #include <cuda_fp16.h>
@@ -74,11 +74,10 @@ namespace ts {
             int number = out.count();
             dim3 blockSize(CUDA_THREAD_NUM);
             dim3 gridSize(CUDA_BLOCK(number, blockSize.x));
-            auto cuda_stream = get_cuda_stream_on_context();
 
-            int dims = int(x_shape.size());
-            gpu_slice_kernel<T> << <gridSize, blockSize, 0, cuda_stream>> >
-                     (p_xdata, p_bdata, p_outdata, number, int(x_shape.size()), x_hype_shape, out_hype_shape);
+            // int dims = int(x_shape.size());
+            RUN_KERNEL(gpu_slice_kernel<T>, gridSize, blockSize,
+                       p_xdata, p_bdata, p_outdata, number, int(x_shape.size()), x_hype_shape, out_hype_shape);
 
         }
 

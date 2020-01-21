@@ -9,7 +9,7 @@
 #include <cuda_runtime.h>
 #include <cuda_runtime_api.h>
 
-#include "kernels/gpu/gpu_helper.h"
+#include "kernels/gpu/gpu_kernel.h"
 
 
 namespace ts {
@@ -290,19 +290,16 @@ namespace ts {
 
             int ncount = y_height * y_width * channels;
 
-            auto cuda_stream = get_cuda_stream_on_context();
-
             if (type == Affine_Sample2DType::CUBIC) {
                 for (int k = 0; k < number; k++) {
 
                     const T *psrc = x->data<T>() + k * x_batch_step;
                     T *pdst = y->data<T>() + k * y_batch_step;
-                    affine_sample2d_cubic_kernel<T> << < CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0,
-                            cuda_stream >> >
-                            (psrc, pdst, ncount, x_height, x_width, y_height, y_width, channels,
-                                    rz00, rz01, rz02, rz10, rz11, rz12, rz20, rz21, rz22,
-                                    MIN, MAX,
-                                    outer_mode, outer_value);
+                    RUN_KERNEL(affine_sample2d_cubic_kernel<T>, CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM,
+                               psrc, pdst, ncount, x_height, x_width, y_height, y_width, channels,
+                               rz00, rz01, rz02, rz10, rz11, rz12, rz20, rz21, rz22,
+                               MIN, MAX,
+                               outer_mode, outer_value);
                 }
             } else if (type == Affine_Sample2DType::NEAREST) {
 
@@ -311,12 +308,11 @@ namespace ts {
                     const T *psrc = x->data<T>() + k * x_batch_step;
                     T *pdst = y->data<T>() + k * y_batch_step;
 
-                    affine_sample2d_nearest_kernel<T> << < CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0,
-                            cuda_stream >> >
-                            (psrc, pdst, ncount, x_height, x_width, y_height, y_width, channels,
-                                    rz00, rz01, rz02, rz10, rz11, rz12, rz20, rz21, rz22,
-                                    MIN, MAX,
-                                    outer_mode, outer_value);
+                    RUN_KERNEL(affine_sample2d_nearest_kernel<T>, CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM,
+                               psrc, pdst, ncount, x_height, x_width, y_height, y_width, channels,
+                               rz00, rz01, rz02, rz10, rz11, rz12, rz20, rz21, rz22,
+                               MIN, MAX,
+                               outer_mode, outer_value);
                 }
             } else if (type == Affine_Sample2DType::HARD) {
 
@@ -325,12 +321,11 @@ namespace ts {
                     const T *psrc = x->data<T>() + k * x_batch_step;
                     T *pdst = y->data<T>() + k * y_batch_step;
 
-                    affine_sample2d_hard_kernel<T> << < CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0,
-                            cuda_stream >> >
-                            (psrc, pdst, ncount, x_height, x_width, y_height, y_width, channels,
-                                    rz00, rz01, rz02, rz10, rz11, rz12, rz20, rz21, rz22,
-                                    MIN, MAX,
-                                    outer_mode, outer_value);
+                    RUN_KERNEL(affine_sample2d_hard_kernel<T>, CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM,
+                               psrc, pdst, ncount, x_height, x_width, y_height, y_width, channels,
+                               rz00, rz01, rz02, rz10, rz11, rz12, rz20, rz21, rz22,
+                               MIN, MAX,
+                               outer_mode, outer_value);
                 }
             } else { //LINEAR
                 for (int k = 0; k < number; k++) {
@@ -338,12 +333,11 @@ namespace ts {
                     const T *psrc = x->data<T>() + k * x_batch_step;
                     T *pdst = y->data<T>() + k * y_batch_step;
 
-                    affine_sample2d_linear_kernel<T> << < CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0,
-                            cuda_stream >> >
-                            (psrc, pdst, ncount, x_height, x_width, y_height, y_width, channels,
-                                    rz00, rz01, rz02, rz10, rz11, rz12, rz20, rz21, rz22,
-                                    MIN, MAX,
-                                    outer_mode, outer_value);
+                    RUN_KERNEL(affine_sample2d_linear_kernel<T>, CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM,
+                               psrc, pdst, ncount, x_height, x_width, y_height, y_width, channels,
+                               rz00, rz01, rz02, rz10, rz11, rz12, rz20, rz21, rz22,
+                               MIN, MAX,
+                               outer_mode, outer_value);
                 }
             }
         }
