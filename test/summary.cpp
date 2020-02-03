@@ -129,7 +129,6 @@ int main() {
         std::cout << std::endl;
     }
 
-
     std::cout << "== Float16 operator ==" << std::endl;
     auto fp16_operators = ts::Fp16OperatorCreator::AllKeys();
 
@@ -143,6 +142,19 @@ int main() {
         std::cout << "Count: " << ops.size() << std::endl;
         std::cout << std::endl;
     }
+
+    std::cout << "== All Attributes ==" << std::endl;
+    std::set<std::string> all_attr_set;
+    for (auto &device_op : operators) {
+        auto op = ts::OperatorCreator::Create(device_op.first, device_op.second);
+        auto fields = op->list_all_fields();
+        all_attr_set.insert(fields.begin(), fields.end());
+    }
+    plot_set<std::string>(std::cout, all_attr_set, copy) << std::endl;
+    std::cout << "Count: " << all_attr_set.size() << std::endl;
+    std::cout << std::endl;
+
+
 
     std::cout << "-- == ++ Warning part ++ == --" << std::endl;
     auto &cpu_op_set = device_operators["cpu"];

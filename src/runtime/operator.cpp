@@ -232,6 +232,33 @@ namespace ts {
         this->m_param_checking_mode = mode;
     }
 
+    std::vector<std::string> Operator::list_all_fields() const {
+        std::vector<std::string> result;
+        for (auto &f : m_required_fields) {
+            result.emplace_back(f);
+        }
+        for (auto &f : m_optional_fields) {
+            result.emplace_back(f);
+        }
+        return result;
+    }
+
+    std::vector<std::string> Operator::list_required_fields() const {
+        std::vector<std::string> result;
+        for (auto &f : m_required_fields) {
+            result.emplace_back(f);
+        }
+        return result;
+    }
+
+    std::vector<std::string> Operator::list_optional_fields() const {
+        std::vector<std::string> result;
+        for (auto &f : m_optional_fields) {
+            result.emplace_back(f);
+        }
+        return result;
+    }
+
     int RunOperator(Operator::shared op, Stack &stack, int nargs) {
         TS_AUTO_CHECK(stack.size() >= static_cast<size_t>(nargs));
 
