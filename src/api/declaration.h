@@ -2,8 +2,8 @@
 // Created by kier on 2019/3/16.
 //
 
-#ifndef TENSORSTACK_API_DECLARATION_H
-#define TENSORSTACK_API_DECLARATION_H
+#ifndef TENNIS_API_DECLARATION_H
+#define TENNIS_API_DECLARATION_H
 
 #include <memory>
 #include "errno.h"
@@ -44,4 +44,4 @@ return cat; \
 } catch (const Exception &) { \
 }
 
-#endif //TENSORSTACK_API_DECLARATION_H
+#endif //TENNIS_API_DECLARATION_H

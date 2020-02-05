@@ -6,6 +6,7 @@
 #ifdef TS_USE_CUDA_FP16
 #include "kernels/gpu/cudax_fp16_math.h"
 #endif
+#include "kernels/gpu/gpu_kernel.h"
 
 namespace ts {
     namespace dragon {
@@ -105,12 +106,12 @@ namespace ts {
                     float *proposals,
                     CUDAContext *ctx) {
                 const auto num_proposals = A * feat_h * feat_w;
-                _GenerateProposals<float>
-                        << < CUDA_BLOCKS(num_proposals), CUDA_THREADS,
-                        0, ctx->cuda_stream() >> >
-                           (num_proposals, A, feat_h, feat_w, stride,
-                                   im_h, im_w, min_box_h, min_box_w,
-                                   scores, bbox_deltas, anchors, proposals);
+                RUN_KERNEL_STREAM(_GenerateProposals<float>,
+                                  CUDA_BLOCKS(num_proposals), CUDA_THREADS,
+                                  0, ctx->cuda_stream(),
+                                  num_proposals, A, feat_h, feat_w, stride,
+                                  im_h, im_w, min_box_h, min_box_w,
+                                  scores, bbox_deltas, anchors, proposals);
             }
 
             template<typename T>
@@ -147,11 +148,11 @@ namespace ts {
                     const float *bbox_deltas,
                     float *proposals,
                     CUDAContext *ctx) {
-                _GenerateProposals_v2<float>
-                        << < CUDA_BLOCKS(total_anchors), CUDA_THREADS,
-                        0, ctx->cuda_stream() >> >
-                           (total_anchors, im_h, im_w, min_box_h, min_box_w,
-                                   scores, bbox_deltas, proposals);
+                RUN_KERNEL_STREAM(_GenerateProposals_v2<float>,
+                                  CUDA_BLOCKS(total_anchors), CUDA_THREADS,
+                                  0, ctx->cuda_stream(),
+                                  total_anchors, im_h, im_w, min_box_h, min_box_w,
+                                  scores, bbox_deltas, proposals);
             }
 
             /******************** NMS ********************/
@@ -229,10 +230,10 @@ namespace ts {
                 CUDA_CHECK(cudaMalloc(&mask_dev, mask_nbytes));
                 CUDA_CHECK(cudaMemcpy(boxes_dev, boxes,
                                       boxes_nbytes, cudaMemcpyHostToDevice));
-                nms_mask < T >
-                << < blocks, NMS_BLOCK_SIZE,
-                        0, ctx->cuda_stream() >> > (num_boxes,
-                        thresh, (T *) boxes_dev, (uint64_t *) mask_dev);
+                RUN_KERNEL_STREAM(nms_mask<T>,
+                                  blocks, NMS_BLOCK_SIZE,
+                                  0, ctx->cuda_stream(), num_boxes,
+                                  thresh, (T *) boxes_dev, (uint64_t *) mask_dev);
                 CUDA_CHECK(cudaPeekAtLastError());
 
                 std::vector<uint64_t> mask_host(num_boxes * num_blocks);

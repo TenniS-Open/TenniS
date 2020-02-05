@@ -2,8 +2,8 @@
 // Created by kier on 2019/3/16.
 //
 
-#ifndef TENSORSTACK_API_CPP_TENSOR_H
-#define TENSORSTACK_API_CPP_TENSOR_H
+#ifndef TENNIS_API_CPP_TENSOR_H
+#define TENNIS_API_CPP_TENSOR_H
 
 #include "../tensor.h"
 
@@ -412,4 +412,4 @@ namespace ts {
     }
 }
 
-#endif //TENSORSTACK_API_CPP_TENSOR_H
+#endif //TENNIS_API_CPP_TENSOR_H

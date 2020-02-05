@@ -11,7 +11,7 @@
 
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
-#include <kernels/gpu/gpu_helper.h>
+#include <kernels/gpu/gpu_kernel.h>
 #include "backend/name.h"
 #include <numeric>
 
@@ -102,8 +102,6 @@ namespace ts {
             dim3 blockSize(CUDA_THREAD_NUM);
             dim3 gridSize(CUDA_BLOCK(number, blockSize.x));
 
-            auto cuda_stream = get_cuda_stream_on_context();
-
             switch (scale.size()) {
                 default: {
                     auto gpu_scale_data_size = scale.size() * sizeof(float);
@@ -111,16 +109,17 @@ namespace ts {
                     memcpy(gpu_scale.data(), gpu_scale.device(), gpu_scale_data_size,
                             scale.data(), Device(CPU), gpu_scale_data_size);
 
-                    force_gray_kernel<T> << < gridSize, blockSize, 0, cuda_stream >> > (
-                            input_data, output_data, number, input_channels, output_channels, gpu_scale.data<float>());
+                    RUN_KERNEL(force_gray_kernel<T>, gridSize, blockSize,
+                               input_data, output_data, number, input_channels,
+                               output_channels, gpu_scale.data<float>());
                     break;
                 }
 #define CASE_N_FORCE_KERNEL(N) \
                 case N: { \
                     __gpu_array<float, N> gpu_scale(scale.begin(), scale.end()); \
                     gpu_scale[0]; \
-                    force_gray_kernel<T> << < gridSize, blockSize, 0, cuda_stream >> > ( \
-                            input_data, output_data, number, input_channels, output_channels, gpu_scale); \
+                    RUN_KERNEL(force_gray_kernel<T>, gridSize, blockSize, \
+                               input_data, output_data, number, input_channels, output_channels, gpu_scale); \
                     break; \
                 }
                 CASE_N_FORCE_KERNEL(1)

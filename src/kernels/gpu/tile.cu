@@ -11,7 +11,7 @@
 
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
-#include <kernels/gpu/gpu_helper.h>
+#include <kernels/gpu/gpu_kernel.h>
 #include <kernels/gpu/cudax_fp16_math.h>
 #include "global/fp16_operator_factory.h"
 
@@ -63,9 +63,8 @@ namespace ts {
             auto out_data = out.data<T>();
             auto count = out.count();
 
-            auto cuda_stream = get_cuda_stream_on_context();
-
-            tile_gpu_kernel<T> << < CUDA_BLOCK(count, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >> > (count, in_data, out_data, gpu_in_shape, gpu_out_shape);
+            RUN_KERNEL(tile_gpu_kernel<T>, CUDA_BLOCK(count, CUDA_THREAD_NUM), CUDA_THREAD_NUM,
+                       count, in_data, out_data, gpu_in_shape, gpu_out_shape);
         }
 
 

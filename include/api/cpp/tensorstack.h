@@ -1,17 +1,8 @@
-//
-// Created by kier on 2019/1/24.
-//
+#ifndef TENNIS_API_CPP_TENSORSTACK_H
+#define TENNIS_API_CPP_TENSORSTACK_H
 
-#ifndef TENSORSTACK_API_CPP_TENSORSTACK_H
-#define TENSORSTACK_API_CPP_TENSORSTACK_H
+#pragma message("Using decrepted header, please use #include \"api/cpp/tennis.h\" instead")
 
-#include "except.h"
-#include "dtype.h"
-#include "device.h"
-#include "tensor.h"
-#include "module.h"
-#include "image_filter.h"
-#include "workbench.h"
-#include "intime.h"
+#include "tennis.h"
 
-#endif //TENSORSTACK_API_CPP_TENSORSTACK_H
+#endif //TENNIS_API_CPP_TENSORSTACK_H

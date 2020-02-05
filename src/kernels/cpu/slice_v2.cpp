@@ -1,12 +1,17 @@
-#include "kernels/cpu/slice.h"
+#include "kernels/cpu/operator_on_cpu.h"
+#include "backend/base/base_slice_v2.h"
 #include "global/operator_factory.h"
 #include "backend/name.h"
 
-#include <numeric>
-
 namespace ts {
     namespace cpu {
+        class SliceV2 : public OperatorOnCPU<base::SliceV2> {
+        public:
+            using self = SliceV2;
+            using supper = OperatorOnCPU<base::SliceV2>;
 
+            void slice(const Tensor &x, const std::vector<int> &begins,const std::vector<int> &sizes, Tensor &out) override;
+        };
 
         template <typename T>
         static void cpu_slice_compute_run(const Tensor &x, const std::vector<int> &begins,const std::vector<int> &sizes, Tensor &out) {
@@ -31,12 +36,12 @@ namespace ts {
         }
 
 
-        void Slice::slice(const Tensor &x, Tensor &out) {
+        void SliceV2::slice(const Tensor &x, const std::vector<int> &begins,const std::vector<int> &sizes, Tensor &out) {
             DTYPE dtype = out.dtype();
            
             switch (dtype) {
 #define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
-        case DTYPE: { cpu_slice_compute_run<TYPE>(x, m_begin, m_size, out); break; }
+        case DTYPE: { cpu_slice_compute_run<TYPE>(x, begins, sizes, out); break; }
                 DECLARE_COMPUTE_RUN(INT8, int8_t);
                 DECLARE_COMPUTE_RUN(UINT8, uint8_t);
                 DECLARE_COMPUTE_RUN(INT16, int16_t);
@@ -61,4 +66,4 @@ namespace ts {
 
 using namespace ts;
 using namespace cpu;
-TS_REGISTER_OPERATOR(Slice, CPU, name::layer::slice())
+TS_REGISTER_OPERATOR(SliceV2, CPU, "slice_v2")

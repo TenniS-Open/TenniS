@@ -18,6 +18,7 @@
 #include "utils/ctxmgr_lite.h"
 
 #include "kernels/gpu/cudax_fp16_math.h"
+#include "kernels/gpu/gpu_kernel.h"
 
 
 namespace ts {
@@ -82,13 +83,12 @@ namespace ts {
             T* vec_data = vec_tensor.data<T>();
             int vec_len = vec_tensor.count();
 
-            auto &context = ctx::ref<DeviceContext>();
-            CUDAContextHandle* handle = reinterpret_cast<CUDAContextHandle*>(context.handle);
-            auto cuda_stream = handle->stream();
+            RUN_KERNEL(inner_vec_kernel<T>, CUDA_BLOCK(vec_len, CUDA_THREAD_NUM), CUDA_THREAD_NUM,
+                       vec_len, epsilon, pvariance, vec_data);
 
-            inner_vec_kernel<T> << < CUDA_BLOCK(vec_len, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >> > (vec_len,epsilon,pvariance, vec_data);
-
-            gpu_fused_batch_norm_compute_kernel<T> << < CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >> > (psrc, pdst, out.count(), backdims, shape[dim], pmean, vec_data, pscale, pbias);
+            RUN_KERNEL(gpu_fused_batch_norm_compute_kernel<T>,
+                       CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM,
+                       psrc, pdst, out.count(), backdims, shape[dim], pmean, vec_data, pscale, pbias);
 
         }
 

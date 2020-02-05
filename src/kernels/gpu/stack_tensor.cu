@@ -13,7 +13,7 @@
 #include "kernels/gpu/math_gpu.h"
 #endif
 
-#include "kernels/gpu/gpu_helper.h"
+#include "kernels/gpu/gpu_kernel.h"
 
 #include "global/operator_factory.h"
 #include "global/fp16_operator_factory.h"
@@ -83,12 +83,10 @@ namespace ts {
             }
             Tensor x_data_gpu = x_data_cpu.view(Tensor::InFlow::DEVICE);
 
-            auto cuda_stream = get_cuda_stream_on_context();
-
-            gpu_stack_tensor_kernel<T> << < CUDA_BLOCK(count, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >> > (
-                    count, x_data_gpu.data<const T *>(), out.data<T>(),
-                            number, slice, width,
-                            slice * width);
+            RUN_KERNEL(gpu_stack_tensor_kernel<T>, CUDA_BLOCK(count, CUDA_THREAD_NUM), CUDA_THREAD_NUM,
+                       count, x_data_gpu.data<const T *>(), out.data<T>(),
+                       number, slice, width,
+                       slice * width);
         }
 
 

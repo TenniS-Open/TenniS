@@ -10,7 +10,7 @@
 #include <cuda_runtime.h>
 #include <cuda_fp16.h>
 
-#include "kernels/gpu/gpu_helper.h"
+#include "kernels/gpu/gpu_kernel.h"
 
 /////////////////////////////////////////////////
 namespace ts {
@@ -59,9 +59,8 @@ namespace ts {
                 return;
             }
 
-            auto cuda_stream = get_cuda_stream_on_context();
-
-            gpu_cast_kernel << < CUDA_BLOCK(x.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >> > (pdst, psrc, x.count());
+            RUN_KERNEL(gpu_cast_kernel, CUDA_BLOCK(x.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM,
+                       pdst, psrc, x.count());
 
         }
 

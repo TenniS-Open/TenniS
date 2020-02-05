@@ -10,7 +10,7 @@
 #include <device_launch_parameters.h>
 #include <cuda_fp16.h>
 
-#include "kernels/gpu/gpu_helper.h"
+#include "kernels/gpu/gpu_kernel.h"
 
 namespace ts {
     namespace gpu {
@@ -48,9 +48,7 @@ namespace ts {
             dim3 blockSize(CUDA_THREAD_NUM);
             dim3 gridSize(CUDA_BLOCK(count, blockSize.x));
 
-            auto cuda_stream = get_cuda_stream_on_context();
-
-            relu_kernel<T> << < gridSize, blockSize, 0, cuda_stream >> > (input_data, output_data, count);
+            RUN_KERNEL(relu_kernel<T>, gridSize, blockSize, input_data, output_data, count);
         }
 
         void ReLU::active(const Tensor &x, Tensor &out) {

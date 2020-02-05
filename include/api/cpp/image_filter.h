@@ -2,8 +2,8 @@
 // Created by kier on 2019/3/16.
 //
 
-#ifndef TENSORSTACK_API_CPP_IMAGE_FILTER_H
-#define TENSORSTACK_API_CPP_IMAGE_FILTER_H
+#ifndef TENNIS_API_CPP_IMAGE_FILTER_H
+#define TENNIS_API_CPP_IMAGE_FILTER_H
 
 #include "../image_filter.h"
 
@@ -205,4 +205,4 @@ namespace ts {
     }
 }
 
-#endif //TENSORSTACK_API_CPP_IMAGE_FILTER_H
+#endif //TENNIS_API_CPP_IMAGE_FILTER_H

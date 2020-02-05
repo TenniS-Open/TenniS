@@ -8,7 +8,7 @@
 #include <cuda_fp16.h>
 #include <device_launch_parameters.h>
 
-#include "kernels/gpu/gpu_helper.h"
+#include "kernels/gpu/gpu_kernel.h"
 
 #include "kernels/gpu/cudax_fp16_math.h"
 
@@ -46,9 +46,7 @@ namespace ts {
             dim3 blockSize(CUDA_THREAD_NUM);
             dim3 gridSize(CUDA_BLOCK(count, blockSize.x));
 
-            auto cuda_stream = get_cuda_stream_on_context();
-
-            sigmoid_kernel<T> << < gridSize, blockSize, 0, cuda_stream >> > (input_data, output_data, count);
+            RUN_KERNEL(sigmoid_kernel<T>, gridSize, blockSize, input_data, output_data, count);
         }
 
         void Sigmoid::active(const Tensor &x, Tensor &out) {

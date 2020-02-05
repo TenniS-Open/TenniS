@@ -7,7 +7,7 @@
 #include "backend/name.h"
 
 #include "kernels/gpu/math_gpu.h"
-#include "kernels/gpu/gpu_helper.h"
+#include "kernels/gpu/gpu_kernel.h"
 
 #include <cuda_runtime.h>
 #include <cuda_fp16.h>
@@ -149,8 +149,6 @@ namespace ts {
             count /= batch;
             auto batch_outout_data = output_data;
 
-            auto cuda_stream = get_cuda_stream_on_context();
-
             int grid_size = CUDA_BLOCK(count, CUDA_THREAD_NUM);
             int block_size = CUDA_THREAD_NUM;
 
@@ -164,15 +162,15 @@ namespace ts {
             for (int n = 0; n < batch; ++n) {
                 at = batch_outout_data;
                 math<T>::sum(count, at,mean);
-                mean_kernel<T> << < 1, 1, 0, cuda_stream >> > (count,mean);
+                RUN_KERNEL(mean_kernel<T>, 1, 1, count,mean);
 
                 at = batch_outout_data;
-                dev_kernel<T> << < grid_size, block_size, 0, cuda_stream >> > (count, at, mean, dev_buffer);
+                RUN_KERNEL(dev_kernel<T>, grid_size, block_size, count, at, mean, dev_buffer);
                 math<T>::sum(grid_size, dev_buffer, std_dev);
-                std_dev_kernel<T> << <1, 1, 0, cuda_stream >> > (count, std_dev, T(epsilon));
+                RUN_KERNEL(std_dev_kernel<T>, 1, 1, count, std_dev, T(epsilon));
 
                 at = batch_outout_data;
-                prewhiten_kernel<T> << <grid_size, block_size, 0, cuda_stream >> > (count,at,mean, std_dev);
+                RUN_KERNEL(prewhiten_kernel<T>, grid_size, block_size, count,at,mean, std_dev);
 
                 batch_outout_data += count;
             }

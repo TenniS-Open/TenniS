@@ -11,7 +11,7 @@
 
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
-#include <kernels/gpu/gpu_helper.h>
+#include <kernels/gpu/gpu_kernel.h>
 #include "backend/name.h"
 #include <numeric>
 
@@ -44,9 +44,8 @@ namespace ts {
             dim3 blockSize(CUDA_THREAD_NUM);
             dim3 gridSize(CUDA_BLOCK(number, blockSize.x));
 
-            auto cuda_stream = get_cuda_stream_on_context();
-
-            force_color_kernel<T> << < gridSize, blockSize, 0, cuda_stream >> > (input_data, output_data, number, input_channels, output_channels);
+            RUN_KERNEL(force_color_kernel<T>, gridSize, blockSize,
+                       input_data, output_data, number, input_channels, output_channels);
         }
 
         class ForceColor : public OperatorOnGPU<base::ForceColor> {

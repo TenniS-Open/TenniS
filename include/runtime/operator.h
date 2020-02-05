@@ -117,6 +117,12 @@ namespace ts {
 
         void set_param_checking_mode(ParamCheckingMode mode);
 
+        std::vector<std::string> list_all_fields() const;
+
+        std::vector<std::string> list_required_fields() const;
+
+        std::vector<std::string> list_optional_fields() const;
+
     private:
         bool is_in_fields(const std::string &name);
 

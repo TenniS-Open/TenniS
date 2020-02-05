@@ -2,8 +2,8 @@
 // Created by keir on 2019/3/16.
 //
 
-#ifndef TENSORSTACK_API_WORKBENCH_H
-#define TENSORSTACK_API_WORKBENCH_H
+#ifndef TENNIS_API_WORKBENCH_H
+#define TENNIS_API_WORKBENCH_H
 
 #include "common.h"
 #include "tensor.h"
@@ -39,21 +39,21 @@ enum ts_CpuPowerMode {
  * @return new reference, NULL if failed.
  * @note @sa ts_free_Workbench to free ts_Workbench
  */
-TENSOR_STACK_C_API ts_Workbench *ts_Workbench_Load(const ts_Module *module, const ts_Device *device);
+TENNIS_C_API ts_Workbench *ts_Workbench_Load(const ts_Module *module, const ts_Device *device);
 
 /**
  * Free workbench.
  * @param workbench instance of workbench
  * Happen nothing if failed.
  */
-TENSOR_STACK_C_API void ts_free_Workbench(const ts_Workbench *workbench);
+TENNIS_C_API void ts_free_Workbench(const ts_Workbench *workbench);
 
 /**
  * Clone existing ts_Workbench with setup program.
  * @param workbench instance of workbench
  * @return new reference, NULL if failed.
  */
-TENSOR_STACK_C_API ts_Workbench *ts_Workbench_clone(ts_Workbench *workbench);
+TENNIS_C_API ts_Workbench *ts_Workbench_clone(ts_Workbench *workbench);
 
 /**
  * Input i-th tensor.
@@ -62,7 +62,7 @@ TENSOR_STACK_C_API ts_Workbench *ts_Workbench_clone(ts_Workbench *workbench);
  * @param tensor input tensor
  * @return false if failed.
  */
-TENSOR_STACK_C_API ts_bool ts_Workbench_input(ts_Workbench *workbench, int32_t i, const ts_Tensor *tensor);
+TENNIS_C_API ts_bool ts_Workbench_input(ts_Workbench *workbench, int32_t i, const ts_Tensor *tensor);
 
 /**
  * Input named tensor.
@@ -71,14 +71,14 @@ TENSOR_STACK_C_API ts_bool ts_Workbench_input(ts_Workbench *workbench, int32_t i
  * @param tensor input tensor
  * @return false if failed.
  */
-TENSOR_STACK_C_API ts_bool ts_Workbench_input_by_name(ts_Workbench *workbench, const char *name, const ts_Tensor *tensor);
+TENNIS_C_API ts_bool ts_Workbench_input_by_name(ts_Workbench *workbench, const char *name, const ts_Tensor *tensor);
 
 /**
  * Run network. then get output by ts_Workbench_output or ts_Workbench_output_by_name
  * @param workbench instance of workbench
  * @return false if failed.
  */
-TENSOR_STACK_C_API ts_bool ts_Workbench_run(ts_Workbench *workbench);
+TENNIS_C_API ts_bool ts_Workbench_run(ts_Workbench *workbench);
 
 /**
  * Get output i-th tensor.
@@ -87,7 +87,7 @@ TENSOR_STACK_C_API ts_bool ts_Workbench_run(ts_Workbench *workbench);
  * @param tensor output tensor
  * @return false if failed.
  */
-TENSOR_STACK_C_API ts_bool ts_Workbench_output(ts_Workbench *workbench, int32_t i, ts_Tensor *tensor);
+TENNIS_C_API ts_bool ts_Workbench_output(ts_Workbench *workbench, int32_t i, ts_Tensor *tensor);
 
 /**
  * Get output named tensor.
@@ -96,7 +96,7 @@ TENSOR_STACK_C_API ts_bool ts_Workbench_output(ts_Workbench *workbench, int32_t 
  * @param tensor output tensor
  * @return false if failed.
  */
-TENSOR_STACK_C_API ts_bool ts_Workbench_output_by_name(ts_Workbench *workbench, const char *name, ts_Tensor *tensor);
+TENNIS_C_API ts_bool ts_Workbench_output_by_name(ts_Workbench *workbench, const char *name, ts_Tensor *tensor);
 
 /**
  * Set computing thread number
@@ -104,7 +104,7 @@ TENSOR_STACK_C_API ts_bool ts_Workbench_output_by_name(ts_Workbench *workbench, 
  * @param number thread number
  * @return false if failed.
  */
-TENSOR_STACK_C_API ts_bool ts_Workbench_set_computing_thread_number(ts_Workbench *workbench, int32_t number);
+TENNIS_C_API ts_bool ts_Workbench_set_computing_thread_number(ts_Workbench *workbench, int32_t number);
 
 /**
  * Bind filter on i-th input.
@@ -113,7 +113,7 @@ TENSOR_STACK_C_API ts_bool ts_Workbench_set_computing_thread_number(ts_Workbench
  * @param filter output tensor
  * @return false if failed.
  */
-TENSOR_STACK_C_API ts_bool ts_Workbench_bind_filter(ts_Workbench *workbench, int32_t i, const ts_ImageFilter *filter);
+TENNIS_C_API ts_bool ts_Workbench_bind_filter(ts_Workbench *workbench, int32_t i, const ts_ImageFilter *filter);
 
 /**
  * Bind filter on named input.
@@ -122,14 +122,14 @@ TENSOR_STACK_C_API ts_bool ts_Workbench_bind_filter(ts_Workbench *workbench, int
  * @param filter output tensor
  * @return false if failed.
  */
-TENSOR_STACK_C_API ts_bool ts_Workbench_bind_filter_by_name(ts_Workbench *workbench, const char *name, const ts_ImageFilter *filter);
+TENNIS_C_API ts_bool ts_Workbench_bind_filter_by_name(ts_Workbench *workbench, const char *name, const ts_ImageFilter *filter);
 
 /**
  * New workbench.
  * @param device @sa ts_Device
  * @return new reference, NULL if failed.
  */
-TENSOR_STACK_C_API ts_Workbench *ts_new_Workbench(const ts_Device *device);
+TENNIS_C_API ts_Workbench *ts_new_Workbench(const ts_Device *device);
 
 /**
  * Setup program on workbench. workbench device must same with program device.
@@ -138,7 +138,7 @@ TENSOR_STACK_C_API ts_Workbench *ts_new_Workbench(const ts_Device *device);
  * @return false if failed.
  * @note this api will change next input, output and run APIs
  */
-TENSOR_STACK_C_API ts_bool ts_Workbench_setup(ts_Workbench *workbench, const ts_Program *program);
+TENNIS_C_API ts_bool ts_Workbench_setup(ts_Workbench *workbench, const ts_Program *program);
 
 /**
  * Setup context of workbench.
@@ -148,7 +148,7 @@ TENSOR_STACK_C_API ts_bool ts_Workbench_setup(ts_Workbench *workbench, const ts_
  *     ts_new_Tensor_in_flow, ts_Program_Compile_XXX, ts_intime_XXX
  *     ts_Tensor_view_in_flow
  */
-TENSOR_STACK_C_API ts_bool ts_Workbench_setup_context(ts_Workbench *workbench);
+TENNIS_C_API ts_bool ts_Workbench_setup_context(ts_Workbench *workbench);
 
 /**
  * Compile module to program
@@ -156,31 +156,31 @@ TENSOR_STACK_C_API ts_bool ts_Workbench_setup_context(ts_Workbench *workbench);
  * @param module instance of module
  * @return new reference, NULL if failed.
  */
-TENSOR_STACK_C_API ts_Program *ts_Workbench_compile(ts_Workbench *workbench, const ts_Module *module);
+TENNIS_C_API ts_Program *ts_Workbench_compile(ts_Workbench *workbench, const ts_Module *module);
 
 /**
  * @deprecated Use ts_Workbench_setup_context instead
  */
-TENSOR_STACK_C_API ts_bool ts_Workbench_setup_device(ts_Workbench *workbench);
+TENNIS_C_API ts_bool ts_Workbench_setup_device(ts_Workbench *workbench);
 
 /**
  * @deprecated Use ts_Workbench_setup_context instead
  */
-TENSOR_STACK_C_API ts_bool ts_Workbench_setup_runtime(ts_Workbench *workbench);
+TENNIS_C_API ts_bool ts_Workbench_setup_runtime(ts_Workbench *workbench);
 
 /**
  * Get setup program's input count
  * @param workbench instance of workbench
  * @return input count
  */
-TENSOR_STACK_C_API int32_t ts_Workbench_input_count(ts_Workbench *workbench);
+TENNIS_C_API int32_t ts_Workbench_input_count(ts_Workbench *workbench);
 
 /**
  * Get setup program's output count
  * @param workbench instance of workbench
  * @return output count
  */
-TENSOR_STACK_C_API int32_t ts_Workbench_output_count(ts_Workbench *workbench);
+TENNIS_C_API int32_t ts_Workbench_output_count(ts_Workbench *workbench);
 
 /**
  * Run network hook inner node value, for debug using.
@@ -189,7 +189,7 @@ TENSOR_STACK_C_API int32_t ts_Workbench_output_count(ts_Workbench *workbench);
  * @param len length of node_names
  * @return false if failed.
  */
-TENSOR_STACK_C_API ts_bool ts_Workbench_run_hook(ts_Workbench *workbench, const char **node_names, int32_t len);
+TENNIS_C_API ts_bool ts_Workbench_run_hook(ts_Workbench *workbench, const char **node_names, int32_t len);
 
 /**
  * New workbench and setup compiled program with module.
@@ -205,8 +205,8 @@ TENSOR_STACK_C_API ts_bool ts_Workbench_run_hook(ts_Workbench *workbench, const 
  * 1. "--pack" Default ON, pack weights
  * 2. "--filter" Default OFF, filter const values, set values to zero which smaller than FLT_EPSILON
  */
-TENSOR_STACK_C_API ts_Workbench *ts_Workbench_Load_v2(const ts_Module *module, const ts_Device *device,
-        const char *options);
+TENNIS_C_API ts_Workbench *ts_Workbench_Load_v2(const ts_Module *module, const ts_Device *device,
+                                                const char *options);
 
 /**
  * Compile module to program
@@ -221,8 +221,8 @@ TENSOR_STACK_C_API ts_Workbench *ts_Workbench_Load_v2(const ts_Module *module, c
  * 1. "--pack" Default ON, pack weights
  * 2. "--filter" Default OFF, filter const values, set values to zero which smaller than FLT_EPSILON
  */
-TENSOR_STACK_C_API ts_Program *ts_Workbench_compile_v2(ts_Workbench *workbench, const ts_Module *module,
-        const char *options);
+TENNIS_C_API ts_Program *ts_Workbench_compile_v2(ts_Workbench *workbench, const ts_Module *module,
+                                                 const char *options);
 
 /**
  * Set operator's param value.
@@ -232,8 +232,8 @@ TENSOR_STACK_C_API ts_Program *ts_Workbench_compile_v2(ts_Workbench *workbench, 
  * @param value param value
  * @return false if failed
  */
-TENSOR_STACK_C_API ts_bool ts_Workbench_set_operator_param(ts_Workbench *workbench, const char *node_name,
-        const char *param, const ts_Tensor *value);
+TENNIS_C_API ts_bool ts_Workbench_set_operator_param(ts_Workbench *workbench, const char *node_name,
+                                                     const char *param, const ts_Tensor *value);
 
 /**
  * Get operator's summary
@@ -242,7 +242,7 @@ TENSOR_STACK_C_API ts_bool ts_Workbench_set_operator_param(ts_Workbench *workben
  * summary is a json string, like:
  *     {"device": "gpu:0", "thread": 4, "shared": "97.8MB", "memory": {"cpu:0": "32B", "gpu:0": "7.3MB"}}
  */
-TENSOR_STACK_C_API const char *ts_Workbench_summary(ts_Workbench *workbench);
+TENNIS_C_API const char *ts_Workbench_summary(ts_Workbench *workbench);
 
 /**
  * Set workbench thread mode, effected now working thread
@@ -252,11 +252,11 @@ TENSOR_STACK_C_API const char *ts_Workbench_summary(ts_Workbench *workbench);
  * @note may call in each workbench in working thread.
  * @note this is testing API
  */
-TENSOR_STACK_C_API ts_bool ts_Workbench_set_cpu_mode(ts_Workbench *workbench, ts_CpuPowerMode mode);
+TENNIS_C_API ts_bool ts_Workbench_set_cpu_mode(ts_Workbench *workbench, ts_CpuPowerMode mode);
 
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif //TENSORSTACK_API_WORKBENCH_H
+#endif //TENNIS_API_WORKBENCH_H

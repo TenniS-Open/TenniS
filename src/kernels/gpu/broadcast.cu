@@ -13,7 +13,7 @@
 #include "kernels/gpu/math_gpu.h"
 #endif
 
-#include "kernels/gpu/gpu_helper.h"
+#include "kernels/gpu/gpu_kernel.h"
 
 #include "global/operator_factory.h"
 #include "global/fp16_operator_factory.h"
@@ -74,11 +74,8 @@ namespace ts {
             auto &out_hype_shape = gpu_hype_shape.second[1];
             auto count = out.count();
 
-            auto &context = ctx::ref<DeviceContext>();
-            CUDAContextHandle* handle = reinterpret_cast<CUDAContextHandle*>(context.handle);
-            auto cuda_stream = handle->stream();
-
-            gpu_broadcast_kernel<T> << < CUDA_BLOCK(count, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >> > (count, C.data<T>(), out.data<T>(), C_hype_shape, out_hype_shape);
+            RUN_KERNEL(gpu_broadcast_kernel<T>, CUDA_BLOCK(count, CUDA_THREAD_NUM), CUDA_THREAD_NUM,
+                       count, C.data<T>(), out.data<T>(), C_hype_shape, out_hype_shape);
         }
 
 

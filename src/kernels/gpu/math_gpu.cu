@@ -16,6 +16,7 @@
 #include "utils/ctxmgr_lite.h"
 
 #include "kernels/gpu/cudax_fp16_math.h"
+#include "kernels/gpu/gpu_kernel.h"
 
 namespace ts {
     namespace gpu {
@@ -217,20 +218,17 @@ namespace ts {
         template<typename T>
         bool math<T>::dot(const int N, const T *x, const T *y, T *z) {
             int grid_size = CUDA_BLOCK(N, CUDA_THREAD_NUM);
-            auto &context = ctx::ref<DeviceContext>();
-            CUDAContextHandle* handle = reinterpret_cast<CUDAContextHandle*>(context.handle);
-            auto cuda_stream = handle->stream();
 
-            int device_id = context.memory_device.id();
-            T* tmp_z = (T*)gpu_allocator(device_id, grid_size *sizeof(T),nullptr,0);
-            dot_kernel<T> << < CUDA_BLOCK(N, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >> > (N,x,y,tmp_z);
+            Tensor tmp_tensor(Tensor::InFlow::DEVICE, UINT8, {int32_t(grid_size *sizeof(T))});
+            T* tmp_z = tmp_tensor.data<T>();
+            RUN_KERNEL(dot_kernel<T>, CUDA_BLOCK(N, CUDA_THREAD_NUM), CUDA_THREAD_NUM, N,x,y,tmp_z);
             while (grid_size > CUDA_THREAD_NUM) {
                 int len = grid_size;
                 grid_size = CUDA_BLOCK(grid_size, CUDA_THREAD_NUM);
-                sum_kernel<T> << <grid_size, CUDA_THREAD_NUM, 0, cuda_stream >> > (len, tmp_z, tmp_z);
+                RUN_KERNEL(sum_kernel<T>, grid_size, CUDA_THREAD_NUM, len, tmp_z, tmp_z);
             }
 
-            sum_kernel<T> << < 1, grid_size, 0, cuda_stream >> > (grid_size,tmp_z,z);
+            RUN_KERNEL(sum_kernel<T>, 1, grid_size, grid_size,tmp_z,z);
             return true;
         }
 
@@ -261,11 +259,8 @@ namespace ts {
             bool transA_bool = TransA == cublas::NoTrans ? false : true;
             bool transB_bool = TransB == cublas::NoTrans ? false : true;
 
-            auto &context = ctx::ref<DeviceContext>();
-            CUDAContextHandle* handle = reinterpret_cast<CUDAContextHandle*>(context.handle);
-            auto cuda_stream = handle->stream();
-
-            gemm_kernel<T> << < gridSize, blockSize, 0, cuda_stream >> > (transA_bool, transB_bool, M, N, K, alpha, A, lda, B, ldb, beta, C, ldc);
+            RUN_KERNEL(gemm_kernel<T>, gridSize, blockSize,
+                       transA_bool, transB_bool, M, N, K, alpha, A, lda, B, ldb, beta, C, ldc);
 
             return true;
         }
@@ -300,45 +295,37 @@ namespace ts {
 
         template<typename T>
         bool math<T>::asum(int N, const T *x, T * out) {
-            auto &context = ctx::ref<DeviceContext>();
-            CUDAContextHandle* handle = reinterpret_cast<CUDAContextHandle*>(context.handle);
-            auto cuda_stream = handle->stream();
-
-            int device_id = context.memory_device.id();
             int grid_size = CUDA_BLOCK(N, CUDA_THREAD_NUM);
             int block_size = CUDA_THREAD_NUM;
             //unsigned int shared_size = block_size * sizeof(T);
-            T* tmp_out = (T*)gpu_allocator(device_id, grid_size * sizeof(T), nullptr, 0);
-            abs_sum_kernel<T> << < grid_size, block_size, 0, cuda_stream >> > (N, const_cast<T*>(x), tmp_out);
+            Tensor tmp_tensor(Tensor::InFlow::DEVICE, UINT8, {int32_t(grid_size *sizeof(T))});
+            T* tmp_out = tmp_tensor.data<T>();
+            RUN_KERNEL(abs_sum_kernel<T>, grid_size, block_size, N, const_cast<T*>(x), tmp_out);
             while (grid_size > CUDA_THREAD_NUM) {
                 int len = grid_size;
                 grid_size = CUDA_BLOCK(grid_size, CUDA_THREAD_NUM);
-                abs_sum_kernel<T> << < grid_size, block_size, 0, cuda_stream >> > (len, tmp_out, tmp_out);
+                RUN_KERNEL(abs_sum_kernel<T>, grid_size, block_size, len, tmp_out, tmp_out);
             }
 
-            abs_sum_kernel<T> << < 1, grid_size, 0, cuda_stream >> > (grid_size, tmp_out, out);
+            RUN_KERNEL(abs_sum_kernel<T>, 1, grid_size, grid_size, tmp_out, out);
             return true;
         }
 
         template<typename T>
         bool math<T>::sum(int N, const T *x, T * out) {
-            auto &context = ctx::ref<DeviceContext>();
-            CUDAContextHandle* handle = reinterpret_cast<CUDAContextHandle*>(context.handle);
-            auto cuda_stream = handle->stream();
-
-            int device_id = context.memory_device.id();
             int grid_size = CUDA_BLOCK(N, CUDA_THREAD_NUM);
             int block_size = CUDA_THREAD_NUM;
             //unsigned int shared_size = block_size * sizeof(T);
-            T* tmp_out = (T*)gpu_allocator(device_id, grid_size * sizeof(T), nullptr, 0);
-            sum_kernel<T> << < grid_size, block_size, 0, cuda_stream >> > (N, const_cast<T*>(x), tmp_out);
+            Tensor tmp_tensor(Tensor::InFlow::DEVICE, UINT8, {int32_t(grid_size *sizeof(T))});
+            T* tmp_out = tmp_tensor.data<T>();
+            RUN_KERNEL(sum_kernel<T>, grid_size, block_size, N, const_cast<T*>(x), tmp_out);
             while (grid_size > CUDA_THREAD_NUM) {
                 int len = grid_size;
                 grid_size = CUDA_BLOCK(grid_size, CUDA_THREAD_NUM);
-                sum_kernel<T> << < grid_size, block_size, 0, cuda_stream >> > (len, tmp_out, tmp_out);
+                RUN_KERNEL(sum_kernel<T>, grid_size, block_size, len, tmp_out, tmp_out);
             }
 
-            sum_kernel<T> << < 1, grid_size, 0, cuda_stream >> > (grid_size, tmp_out, out);
+            RUN_KERNEL(sum_kernel<T>, 1, grid_size, grid_size, tmp_out, out);
             return true;
         }
 

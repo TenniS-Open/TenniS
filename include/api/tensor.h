@@ -2,8 +2,8 @@
 // Created by keir on 2019/3/16.
 //
 
-#ifndef TENSORSTACK_API_TENSOR_H
-#define TENSORSTACK_API_TENSOR_H
+#ifndef TENNIS_API_TENSOR_H
+#define TENNIS_API_TENSOR_H
 
 #include "common.h"
 
@@ -56,14 +56,14 @@ typedef enum ts_InFlow ts_InFlow;
  * @return new reference, NULL if failed.
  * @note @sa ts_free_Tensor to free ts_Tensor
  */
-TENSOR_STACK_C_API ts_Tensor *ts_new_Tensor(const int32_t *shape, int32_t shape_len, ts_DTYPE dtype, const void *data);
+TENNIS_C_API ts_Tensor *ts_new_Tensor(const int32_t *shape, int32_t shape_len, ts_DTYPE dtype, const void *data);
 
 /**
  * Free tensor.
  * @param tensor the instance of tensor
  * Happen nothing if failed.
  */
-TENSOR_STACK_C_API void ts_free_Tensor(const ts_Tensor *tensor);
+TENNIS_C_API void ts_free_Tensor(const ts_Tensor *tensor);
 
 /**
  * Return tensor's shape
@@ -71,42 +71,42 @@ TENSOR_STACK_C_API void ts_free_Tensor(const ts_Tensor *tensor);
  * @return pointer to shape, borrowed pointer.
  * @note shape length can be get by @sa ts_Tensor_shape_size
  */
-TENSOR_STACK_C_API const int32_t *ts_Tensor_shape(ts_Tensor *tensor);
+TENNIS_C_API const int32_t *ts_Tensor_shape(ts_Tensor *tensor);
 
 /**
  * Return tensor's shape size
  * @param tensor the instance of tensor
  * @return pointer to shape size, zero if failed.
  */
-TENSOR_STACK_C_API int32_t ts_Tensor_shape_size(ts_Tensor *tensor);
+TENNIS_C_API int32_t ts_Tensor_shape_size(ts_Tensor *tensor);
 
 /**
  * Return tensor's data type
  * @param tensor the instance of tensor
  * @return data type, TS_VOID if failed.
  */
-TENSOR_STACK_C_API ts_DTYPE ts_Tensor_dtype(ts_Tensor *tensor);
+TENNIS_C_API ts_DTYPE ts_Tensor_dtype(ts_Tensor *tensor);
 
 /**
  * Return tensor's data
  * @param tensor the instance of tensor
  * @return pointer to data, borrowed pointer
  */
-TENSOR_STACK_C_API void* ts_Tensor_data(ts_Tensor *tensor);
+TENNIS_C_API void* ts_Tensor_data(ts_Tensor *tensor);
 
 /**
  * Clone tensor on original device.
  * @param tensor the instance of tensor
  * @return new reference. NULL if failed.
  */
-TENSOR_STACK_C_API ts_Tensor *ts_Tensor_clone(ts_Tensor *tensor);
+TENNIS_C_API ts_Tensor *ts_Tensor_clone(ts_Tensor *tensor);
 
 /**
  * Sync tensor's data to cpu
  * @param tensor the instance of tensor
  * @return false if failed.
  */
-TENSOR_STACK_C_API ts_bool ts_Tensor_sync_cpu(ts_Tensor *tensor);
+TENNIS_C_API ts_bool ts_Tensor_sync_cpu(ts_Tensor *tensor);
 
 /**
  * Cast tensor to given dtype. new tensor data would force on CPU
@@ -115,7 +115,7 @@ TENSOR_STACK_C_API ts_bool ts_Tensor_sync_cpu(ts_Tensor *tensor);
  * @return new reference, NULL if failed.
  * @note new tensor data would force on CPU
  */
-TENSOR_STACK_C_API ts_Tensor *ts_Tensor_cast(ts_Tensor *tensor, ts_DTYPE dtype);
+TENNIS_C_API ts_Tensor *ts_Tensor_cast(ts_Tensor *tensor, ts_DTYPE dtype);
 
 /**
  * reshape tensor to given shape. data would not change.
@@ -125,7 +125,7 @@ TENSOR_STACK_C_API ts_Tensor *ts_Tensor_cast(ts_Tensor *tensor, ts_DTYPE dtype);
  * @return new reference, NULL if failed.
  * @note the prod new shape must equal to old shape
  */
-TENSOR_STACK_C_API ts_Tensor *ts_Tensor_reshape(ts_Tensor *tensor, const int32_t *shape, int32_t shape_len);
+TENNIS_C_API ts_Tensor *ts_Tensor_reshape(ts_Tensor *tensor, const int32_t *shape, int32_t shape_len);
 
 /**
  * New tensor
@@ -138,7 +138,7 @@ TENSOR_STACK_C_API ts_Tensor *ts_Tensor_reshape(ts_Tensor *tensor, const int32_t
  * @note @sa ts_free_Tensor to free ts_Tensor
  * @note call ts_Workbench_setup_context to fix exception "Empty context:<ts::Workbench>"
  */
-TENSOR_STACK_C_API ts_Tensor *ts_new_Tensor_in_flow(ts_InFlow in_flow, const int32_t *shape, int32_t shape_len, ts_DTYPE dtype, const void *data);
+TENNIS_C_API ts_Tensor *ts_new_Tensor_in_flow(ts_InFlow in_flow, const int32_t *shape, int32_t shape_len, ts_DTYPE dtype, const void *data);
 
 /**
  * Get tensor view on device in flow.
@@ -147,7 +147,7 @@ TENSOR_STACK_C_API ts_Tensor *ts_new_Tensor_in_flow(ts_InFlow in_flow, const int
  * @return new reference, NULL if failed.
  * @note call ts_Workbench_setup_context to fix exception "Empty context:<ts::Workbench>"
  */
-TENSOR_STACK_C_API ts_Tensor *ts_Tensor_view_in_flow(ts_Tensor *tensor, ts_InFlow in_flow);
+TENNIS_C_API ts_Tensor *ts_Tensor_view_in_flow(ts_Tensor *tensor, ts_InFlow in_flow);
 
 /**
  * Get tensor field in packed tensor
@@ -156,21 +156,21 @@ TENSOR_STACK_C_API ts_Tensor *ts_Tensor_view_in_flow(ts_Tensor *tensor, ts_InFlo
  * @return new reference, NULL if failed
  * if index < 0 or index >= fields_count, API will return NULL
  */
-TENSOR_STACK_C_API ts_Tensor *ts_Tensor_field(ts_Tensor *tensor, int32_t index);
+TENNIS_C_API ts_Tensor *ts_Tensor_field(ts_Tensor *tensor, int32_t index);
 
 /**
  * Return false if failed. False also mean no packed
  * @param tensor the instance of tensor
  * @return if packed
  */
-TENSOR_STACK_C_API ts_bool ts_Tensor_packed(ts_Tensor *tensor);
+TENNIS_C_API ts_bool ts_Tensor_packed(ts_Tensor *tensor);
 
 /**
  * Get fields count
  * @param tensor the instance of tensor
  * @return fields count, 0 if failed.
  */
-TENSOR_STACK_C_API int32_t ts_Tensor_fields_count(ts_Tensor *tensor);
+TENNIS_C_API int32_t ts_Tensor_fields_count(ts_Tensor *tensor);
 
 /**
  * Pack fields to new tensor.
@@ -178,7 +178,7 @@ TENSOR_STACK_C_API int32_t ts_Tensor_fields_count(ts_Tensor *tensor);
  * @param count length of fields
  * @return new reference, NULL if failed.
  */
-TENSOR_STACK_C_API ts_Tensor *ts_Tensor_pack(ts_Tensor **fields, int32_t count);
+TENNIS_C_API ts_Tensor *ts_Tensor_pack(ts_Tensor **fields, int32_t count);
 
 /**
  * Return slice tensor, slice tensor will invalid after origin tensor free
@@ -186,7 +186,7 @@ TENSOR_STACK_C_API ts_Tensor *ts_Tensor_pack(ts_Tensor **fields, int32_t count);
  * @param i tell indices
  * @return tensor[i, :]
  */
-TENSOR_STACK_C_API ts_Tensor *ts_Tensor_slice(ts_Tensor *tensor, int32_t i);
+TENNIS_C_API ts_Tensor *ts_Tensor_slice(ts_Tensor *tensor, int32_t i);
 
 /**
  * Return slice tensor, slice tensor will invalid after origin tensor free
@@ -195,7 +195,7 @@ TENSOR_STACK_C_API ts_Tensor *ts_Tensor_slice(ts_Tensor *tensor, int32_t i);
  * @param end tell indices
  * @return tensor[beg:end, :]
  */
-TENSOR_STACK_C_API ts_Tensor *ts_Tensor_slice_v2(ts_Tensor *tensor, int32_t beg, int32_t end);
+TENNIS_C_API ts_Tensor *ts_Tensor_slice_v2(ts_Tensor *tensor, int32_t beg, int32_t end);
 
 /**
  * Save tensor to file
@@ -203,18 +203,18 @@ TENSOR_STACK_C_API ts_Tensor *ts_Tensor_slice_v2(ts_Tensor *tensor, int32_t beg,
  * @param tensor the instance of tensor
  * @return false if failed
  */
-TENSOR_STACK_C_API ts_bool ts_Tensor_save(const char *path, const ts_Tensor *tensor);
+TENNIS_C_API ts_bool ts_Tensor_save(const char *path, const ts_Tensor *tensor);
 
 /**
  * Load tensor from file
  * @param path file path
  * @return NULL if failed
  */
-TENSOR_STACK_C_API ts_Tensor *ts_Tensor_load(const char *path);
+TENNIS_C_API ts_Tensor *ts_Tensor_load(const char *path);
 
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif //TENSORSTACK_API_TENSOR_H
+#endif //TENNIS_API_TENSOR_H

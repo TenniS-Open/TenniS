@@ -2,8 +2,8 @@
 // Created by kier on 2019/3/16.
 //
 
-#ifndef TENSORSTACK_API_CPP_EXCEPT_H
-#define TENSORSTACK_API_CPP_EXCEPT_H
+#ifndef TENNIS_API_CPP_EXCEPT_H
+#define TENNIS_API_CPP_EXCEPT_H
 
 #include "../common.h"
 #include <exception>
@@ -36,4 +36,4 @@ namespace ts {
 #define TS_API_AUTO_CHECK(condition) \
     if (!(condition)) { throw ts::api::Exception(); }
 
-#endif //TENSORSTACK_API_CPP_EXCEPT_H
+#endif //TENNIS_API_CPP_EXCEPT_H

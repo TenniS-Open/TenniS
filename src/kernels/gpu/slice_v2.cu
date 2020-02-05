@@ -1,4 +1,5 @@
-#include "kernels/gpu/slice.h"
+#include "kernels/gpu/operator_on_gpu.h"
+#include "backend/base/base_slice_v2.h"
 #include "global/operator_factory.h"
 #include "global/fp16_operator_factory.h"
 #include "backend/name.h"
@@ -10,6 +11,13 @@
 
 namespace ts {
     namespace gpu {
+        class SliceV2 : public OperatorOnGPU<base::SliceV2> {
+        public:
+            using self = SliceV2;
+            using supper = OperatorOnGPU<base::SliceV2>;
+
+            void slice(const Tensor &x, const std::vector<int> &begins,const std::vector<int> &sizes, Tensor &out) override;
+        };
 
         template <typename T>
         static __global__ void gpu_slice_kernel(const T* x_data, const int32_t* b_data,
@@ -74,12 +82,12 @@ namespace ts {
         }
 
 
-        void Slice::slice(const Tensor &x, Tensor &out) {
+        void SliceV2::slice(const Tensor &x, const std::vector<int> &begins,const std::vector<int> &sizes, Tensor &out) {
             DTYPE dtype = out.dtype();
            
             switch (dtype) {
 #define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
-        case DTYPE: { gpu_slice_compute_run<TYPE>(x, m_begin, m_size, out); break; }
+        case DTYPE: { gpu_slice_compute_run<TYPE>(x, begins, sizes, out); break; }
                 DECLARE_COMPUTE_RUN(INT8, int8_t);
                 DECLARE_COMPUTE_RUN(UINT8, uint8_t);
                 DECLARE_COMPUTE_RUN(INT16, int16_t);
@@ -105,5 +113,7 @@ namespace ts {
 
 using namespace ts;
 using namespace gpu;
-TS_REGISTER_OPERATOR(Slice, GPU, name::layer::slice())
-TS_REGISTER_FP16_OPERATOR(Slice, GPU, name::layer::slice())
+TS_REGISTER_OPERATOR(SliceV2, GPU, "slice_v2")
+#ifdef TS_USE_CUDA_FP16
+TS_REGISTER_FP16_OPERATOR(SliceV2, GPU, "slice_v2")
+#endif

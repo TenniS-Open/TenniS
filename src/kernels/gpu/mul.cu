@@ -12,7 +12,7 @@
 #include <cuda_runtime.h>
 #include <cuda_fp16.h>
 
-#include "kernels/gpu/gpu_helper.h"
+#include "kernels/gpu/gpu_kernel.h"
 
 namespace ts {
     namespace gpu {
@@ -149,10 +149,8 @@ namespace ts {
                    (void*)out_hype.weight().data(), MemoryDevice(CPU), out_hype.weight().size() * sizeof(int32_t));
             /////////////////////////////////////
 
-            auto cuda_stream = get_cuda_stream_on_context();
-
-            reduce_operator_kernel<T> <<< CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >>> (pout, ncount,
-                        plhs, prhs, lhsshape, lhsweight, rhsshape, rhsweight, outweight, int(out.sizes().size()));
+            RUN_KERNEL(reduce_operator_kernel<T>, CUDA_BLOCK(ncount, CUDA_THREAD_NUM), CUDA_THREAD_NUM, pout, ncount,
+                       plhs, prhs, lhsshape, lhsweight, rhsshape, rhsweight, outweight, int(out.sizes().size()));
 
         }
 
@@ -164,9 +162,8 @@ namespace ts {
             memcpy((void*)pout, out.device(), out.count() * sizeof(T),
                    (void*)plhs, lhs.device(), out.count() * sizeof(T));
 
-            auto cuda_stream = get_cuda_stream_on_context();
-
-            reduce_operator_scalar_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >>> (pout, out.count(), prhs);
+            RUN_KERNEL(reduce_operator_scalar_kernel<T>, CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM,
+                       pout, out.count(), prhs);
         }
 
 
@@ -180,9 +177,8 @@ namespace ts {
             memcpy((void*)pout, out.device(), out.count() * sizeof(T),
                    (void*)plhs, lhs.device(), out.count() * sizeof(T));
 
-            auto cuda_stream = get_cuda_stream_on_context();
-
-            reduce_operator_same_shape_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >>> (pout, prhs, out.count());
+            RUN_KERNEL(reduce_operator_same_shape_kernel<T>, CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM,
+                       pout, prhs, out.count());
 
         }
 
@@ -202,10 +198,8 @@ namespace ts {
             memcpy((void*)pout, out.device(), out.count() * sizeof(T),
                    (void*)plhs, lhs.device(), out.count() * sizeof(T));
 
-            auto cuda_stream = get_cuda_stream_on_context();
-
-            reduce_operator_bias_kernel<T> <<< CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM, 0, cuda_stream >>>
-                                           (pout, out.count(), count, channels, prhs, rhs.count());
+            RUN_KERNEL(reduce_operator_bias_kernel<T>, CUDA_BLOCK(out.count(), CUDA_THREAD_NUM), CUDA_THREAD_NUM,
+                       pout, out.count(), count, channels, prhs, rhs.count());
 
         }
 

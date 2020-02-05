@@ -2,8 +2,8 @@
 // Created by kier on 19-5-8.
 //
 
-#ifndef TENSORSTACK_API_OPERATOR_H
-#define TENSORSTACK_API_OPERATOR_H
+#ifndef TENNIS_API_OPERATOR_H
+#define TENNIS_API_OPERATOR_H
 
 #include "tensor.h"
 
@@ -30,7 +30,7 @@ typedef struct ts_OperatorContext ts_OperatorContext;
  * @param param param name
  * @return new reference, NULL if param is not exist
  */
-TENSOR_STACK_C_API ts_Tensor *ts_OperatorParams_get(const ts_OperatorParams *dict, const char *param);
+TENNIS_C_API ts_Tensor *ts_OperatorParams_get(const ts_OperatorParams *dict, const char *param);
 
 /**
  *
@@ -92,7 +92,7 @@ typedef ts_Tensor *ts_Operator_run(void *op, int32_t argc, ts_Tensor **argv, ts_
  * @param f_infer function to infer data shape
  * @param f_run function to run operator
  */
-TENSOR_STACK_C_API void ts_Operator_Register(
+TENNIS_C_API void ts_Operator_Register(
         const char *device, const char *op,
         ts_new_Operator *f_new,
         ts_free_Operator *f_free,
@@ -110,7 +110,7 @@ TENSOR_STACK_C_API void ts_Operator_Register(
  * @param f_infer function to infer data shape
  * @param f_run function to run operator
  */
-TENSOR_STACK_C_API void ts_Operator_RegisterEx(
+TENNIS_C_API void ts_Operator_RegisterEx(
         const char *device, const char *op,
         ts_new_Operator *f_new,
         ts_free_Operator *f_free,
@@ -122,7 +122,7 @@ TENSOR_STACK_C_API void ts_Operator_RegisterEx(
  * Throw exception message to break running in operator's functions
  * @param message throw message
  */
-TENSOR_STACK_C_API void ts_Operator_Throw(const char *message);
+TENNIS_C_API void ts_Operator_Throw(const char *message);
 
 /**
  * Throw exception message to break running in operator's functions
@@ -130,7 +130,7 @@ TENSOR_STACK_C_API void ts_Operator_Throw(const char *message);
  * @param filename Exceptional filename
  * @param line_number Exceptional line number
  */
-TENSOR_STACK_C_API void ts_Operator_ThrowV2(const char *message, const char *filename, int32_t line_number);
+TENNIS_C_API void ts_Operator_ThrowV2(const char *message, const char *filename, int32_t line_number);
 
 /**
  * Throw exception message to break running in operator's functions
@@ -144,4 +144,4 @@ TENSOR_STACK_C_API void ts_Operator_ThrowV2(const char *message, const char *fil
 }
 #endif
 
-#endif //TENSORSTACK_API_OPERATOR_H
+#endif //TENNIS_API_OPERATOR_H

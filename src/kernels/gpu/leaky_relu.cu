@@ -9,7 +9,7 @@
 #include <cuda_fp16.h>
 #include <device_launch_parameters.h>
 
-#include "kernels/gpu/gpu_helper.h"
+#include "kernels/gpu/gpu_kernel.h"
 //#include <thrust/functional.h>
 
 namespace ts {
@@ -62,9 +62,7 @@ namespace ts {
             dim3 blockSize(CUDA_THREAD_NUM);
             dim3 gridSize(CUDA_BLOCK(count, blockSize.x));
 
-            auto cuda_stream = get_cuda_stream_on_context();
-
-            leaky_relu_kernel<T> << < gridSize, blockSize , 0, cuda_stream >> > (input_data, output_data, casted_scale, count);
+            RUN_KERNEL(leaky_relu_kernel<T>, gridSize, blockSize, input_data, output_data, casted_scale, count);
         }
 
         void LeakyReLU::leaky_relu(const Tensor &x, float scale, Tensor &out) {

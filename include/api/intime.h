@@ -2,8 +2,8 @@
 // Created by kier on 19-5-13.
 //
 
-#ifndef TENSORSTACK_API_INTIME_H
-#define TENSORSTACK_API_INTIME_H
+#ifndef TENNIS_API_INTIME_H
+#define TENNIS_API_INTIME_H
 
 #include "common.h"
 #include "tensor.h"
@@ -21,7 +21,7 @@ extern "C" {
  * @note call ts_Workbench_setup_context to fix Exception "Must bind Workbench before run"
  * @note output tensor should on device setting in setup context ts_Workbench
  */
-TENSOR_STACK_C_API ts_Tensor *ts_intime_transpose(const ts_Tensor *x, const int32_t *permute, int32_t len);
+TENNIS_C_API ts_Tensor *ts_intime_transpose(const ts_Tensor *x, const int32_t *permute, int32_t len);
 
 /**
  * Return sigmoid x. `out = 1 / (1 + e^{-x})`
@@ -30,7 +30,7 @@ TENSOR_STACK_C_API ts_Tensor *ts_intime_transpose(const ts_Tensor *x, const int3
  * @note call ts_Workbench_setup_context to fix Exception "Must bind Workbench before run"
  * @note output tensor should on device setting in setup context ts_Workbench
  */
-TENSOR_STACK_C_API ts_Tensor *ts_intime_sigmoid(const ts_Tensor *x);
+TENNIS_C_API ts_Tensor *ts_intime_sigmoid(const ts_Tensor *x);
 
 /**
  * Return gathered x. `out = take(x, indices=indices, axis=axis)`
@@ -41,7 +41,7 @@ TENSOR_STACK_C_API ts_Tensor *ts_intime_sigmoid(const ts_Tensor *x);
  * @note call ts_Workbench_setup_context to fix Exception "Must bind Workbench before run"
  * @note output tensor should on device setting in setup context ts_Workbench
  */
-TENSOR_STACK_C_API ts_Tensor *ts_intime_gather(const ts_Tensor *x, const ts_Tensor *indices, int32_t axis);
+TENNIS_C_API ts_Tensor *ts_intime_gather(const ts_Tensor *x, const ts_Tensor *indices, int32_t axis);
 
 /**
  * Return concat x. `out = concat(x, axis=dim)`
@@ -52,7 +52,7 @@ TENSOR_STACK_C_API ts_Tensor *ts_intime_gather(const ts_Tensor *x, const ts_Tens
  * @note call ts_Workbench_setup_context to fix Exception "Must bind Workbench before run"
  * @note output tensor should on device setting in setup context ts_Workbench
  */
-TENSOR_STACK_C_API ts_Tensor *ts_intime_concat(const ts_Tensor *const *x, int32_t len, int32_t dim);
+TENNIS_C_API ts_Tensor *ts_intime_concat(const ts_Tensor *const *x, int32_t len, int32_t dim);
 
 /**
  * Return softmax x. output y.
@@ -72,7 +72,7 @@ TENSOR_STACK_C_API ts_Tensor *ts_intime_concat(const ts_Tensor *const *x, int32_
  * y_i = exp(t_i) / \sum{exp(t_i)}
  * in framework like caffe, smooth is true.
  */
-TENSOR_STACK_C_API ts_Tensor *ts_intime_softmax(const ts_Tensor *x, int32_t dim, ts_bool smooth);
+TENNIS_C_API ts_Tensor *ts_intime_softmax(const ts_Tensor *x, int32_t dim, ts_bool smooth);
 
 /**
  * Return pad x.
@@ -84,7 +84,7 @@ TENSOR_STACK_C_API ts_Tensor *ts_intime_softmax(const ts_Tensor *x, int32_t dim,
  * @note output tensor should on device setting in setup context ts_Workbench
  * @note padding size can be neg value.
  */
-TENSOR_STACK_C_API ts_Tensor *ts_intime_pad(const ts_Tensor *x, const ts_Tensor *padding, float padding_value);
+TENNIS_C_API ts_Tensor *ts_intime_pad(const ts_Tensor *x, const ts_Tensor *padding, float padding_value);
 
 /**
  * Return given dtype tensor.
@@ -95,7 +95,7 @@ TENSOR_STACK_C_API ts_Tensor *ts_intime_pad(const ts_Tensor *x, const ts_Tensor 
  * @note output tensor should on device setting in setup context ts_Workbench
  *
  */
-TENSOR_STACK_C_API ts_Tensor *ts_intime_cast(const ts_Tensor *x, ts_DTYPE dtype);
+TENNIS_C_API ts_Tensor *ts_intime_cast(const ts_Tensor *x, ts_DTYPE dtype);
 
 /**
  * Return resized tensor
@@ -105,7 +105,7 @@ TENSOR_STACK_C_API ts_Tensor *ts_intime_cast(const ts_Tensor *x, ts_DTYPE dtype)
  * @return new reference tensor, nullptr if failed.
  * @note call ts_Workbench_setup_context to fix Exception "Must bind Workbench before run"
  */
-TENSOR_STACK_C_API ts_Tensor *ts_intime_resize2d(const ts_Tensor *x, const ts_Tensor *size, int32_t method);
+TENNIS_C_API ts_Tensor *ts_intime_resize2d(const ts_Tensor *x, const ts_Tensor *size, int32_t method);
 
 /**
  * Return sample2d tensor, out_position = affine * in_position
@@ -118,7 +118,7 @@ TENSOR_STACK_C_API ts_Tensor *ts_intime_resize2d(const ts_Tensor *x, const ts_Te
  * @return new reference tensor, nullptr if failed.
  * @note call ts_Workbench_setup_context to fix Exception "Must bind Workbench before run"
  */
-TENSOR_STACK_C_API ts_Tensor *ts_intime_affine_sample2d(
+TENNIS_C_API ts_Tensor *ts_intime_affine_sample2d(
         const ts_Tensor *x,
         const ts_Tensor *size,
         const ts_Tensor *affine,
@@ -135,7 +135,7 @@ TENSOR_STACK_C_API ts_Tensor *ts_intime_affine_sample2d(
  * @note call ts_Workbench_setup_context to fix Exception "Must bind Workbench before run"
  * @note ON = Outer value is Nearest pixel
  */
-TENSOR_STACK_C_API ts_Tensor *ts_intime_affine_on_sample2d(
+TENNIS_C_API ts_Tensor *ts_intime_affine_on_sample2d(
         const ts_Tensor *x,
         const ts_Tensor *size,
         const ts_Tensor *affine,
@@ -152,7 +152,7 @@ TENSOR_STACK_C_API ts_Tensor *ts_intime_affine_on_sample2d(
  * @param size the sizeof memory would copy
  * @return copied memory size
  */
-TENSOR_STACK_C_API int64_t ts_intime_memcpy(
+TENNIS_C_API int64_t ts_intime_memcpy(
         ts_Tensor *dst_desc, void *dst_ptr, int64_t dst_shift,
         const ts_Tensor *src_desc, const void *src_ptr, int64_t src_shift,
         int64_t size);
@@ -166,7 +166,7 @@ TENSOR_STACK_C_API int64_t ts_intime_memcpy(
  * @note call ts_Workbench_setup_context to fix Exception "Must bind Workbench before run"
  * @note output tensor should on device setting in setup context ts_Workbench
  */
-TENSOR_STACK_C_API ts_Tensor *ts_intime_matmul(const ts_Tensor *A, const ts_Tensor *B, ts_bool transpose);
+TENNIS_C_API ts_Tensor *ts_intime_matmul(const ts_Tensor *A, const ts_Tensor *B, ts_bool transpose);
 
 
 #ifdef __cplusplus

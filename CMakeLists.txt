@@ -1,8 +1,11 @@
 cmake_minimum_required(VERSION 2.7)
-project(TensorStack)
+project(tennis)
+
+# set tennis version
+set(TS_VERSION "1.0.0.rc1")
 
 set(TARGET "SHARED" CACHE STRING "STATIC or SHARED" FORCE)
-add_definitions(-DBUILDING_TENSORSTACK)
+add_definitions(-DBUILDING_TENNIS)
 
 # global root dir
 set(SOLUTION_DIR ${CMAKE_CURRENT_SOURCE_DIR})
@@ -150,7 +153,7 @@ include_directories(${SOLUTION_DIR}/src)
 
 set(SOURCE_DIR ${SOLUTION_DIR})
 
-set(TENSORSTACK_MODULES
+set(TENNIS_MODULES
         api
         backend
         board
@@ -165,7 +168,7 @@ set(TENSORSTACK_MODULES
         runtime
         utils
         )
-set(TENSORSTACK_ARCHIVES common cpu) # in kernels and ops
+set(TENNIS_ARCHIVES common cpu) # in kernels and ops
 
 #add_definitions(-DTS_USE_SSE)
 # 4 types of archive
@@ -205,7 +208,7 @@ endif ()
 if (TS_USE_CUDA)
     find_package(CUDA REQUIRED)
     message(STATUS "[Optional] Use CUDA: [ON]; Found ${CUDA_VERSION}")
-    list(APPEND TENSORSTACK_ARCHIVES gpu)
+    list(APPEND TENNIS_ARCHIVES gpu)
     add_definitions(-DTS_USE_CUDA)
 
     include(use_cuda)
@@ -236,7 +239,7 @@ endif()
 
 if (TS_USE_CBLAS)
     message(STATUS "[Optional] Use CBLAS: [ON]")
-    list(APPEND TENSORSTACK_ARCHIVES cblas)
+    list(APPEND TENNIS_ARCHIVES cblas)
     add_definitions(-DTS_USE_CBLAS)
 
     include(use_cblas)
@@ -252,7 +255,7 @@ else()
 
     foreach (archive ${EXTRA_ARCHIVE_LIST})
         string(STRIP ${archive} archive)
-        list(APPEND TENSORSTACK_ARCHIVES ${archive})
+        list(APPEND TENNIS_ARCHIVES ${archive})
 
         if (EXISTS ${SOLUTION_DIR}/cmake/use_${archive}.cmake)
             include(use_${archive})
@@ -267,7 +270,7 @@ set(INCLUDE_FILES)
 set(SRC_FILES)
 set(SRC_INCLUDE_FILES)
 
-foreach (module ${TENSORSTACK_MODULES})
+foreach (module ${TENNIS_MODULES})
     FILE(GLOB_RECURSE INCLUDE_${module}_FILES ${SOURCE_DIR}/include/${module}/*.h)
     LIST(APPEND INCLUDE_FILES ${INCLUDE_${module}_FILES})
 
@@ -278,7 +281,7 @@ foreach (module ${TENSORSTACK_MODULES})
     LIST(APPEND SRC_INCLUDE_FILES ${SRC_INCLUDE_${module}_FILES})
 endforeach ()
 
-foreach (archive ${TENSORSTACK_ARCHIVES})
+foreach (archive ${TENNIS_ARCHIVES})
     FILE(GLOB_RECURSE INCLUDE_ARCHIVE_${archive}_FILES
             ${SOURCE_DIR}/include/kernels/${archive}/*.h
             ${SOURCE_DIR}/include/ops/${archive}/*.h
@@ -326,18 +329,18 @@ if (TS_BUILD_FRAMEWORK)
     set_target_properties(${PROJECT_NAME}_LIB PROPERTIES
             FRAMEWORK TRUE
             FRAMEWORK_VERSION A
-            MACOSX_FRAMEWORK_IDENTIFIER com.seetatech.sdk.TensorStack
+            MACOSX_FRAMEWORK_IDENTIFIER com.seetatech.sdk.TenniS
             # MACOSX_FRAMEWORK_INFO_PLIST Info.plist
             # "current version" in semantic format in Mach-O binary file
-            VERSION 0.3.3
+            VERSION ${TS_VERSION}
             # "compatibility version" in semantic format in Mach-O binary file
-            SOVERSION 0.3.3
+            SOVERSION ${TS_VERSION}
             # PUBLIC_HEADER "${FRAMEWORK_PUBLIC_HEADER_FILES}"
             # RESOURCE      "${RESOURCE_FILES1}"
             XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "iPhone Developer"
             )
     install(DIRECTORY ${SOLUTION_DIR}/include/api
-            DESTINATION "framework/TensorStack.framework/Headers"
+            DESTINATION "framework/${PROJECT_NAME}.framework/Headers"
             )
 else ()
     install(DIRECTORY ${SOLUTION_DIR}/include/api
@@ -351,6 +354,13 @@ install(TARGETS ${PROJECT_NAME}_LIB
         ARCHIVE DESTINATION ${ENV_ARCHIVE_DIR}
         FRAMEWORK DESTINATION framework
         )
+
+install(FILES ${SOLUTION_DIR}/cmake/FindTenniS.cmake
+        DESTINATION cmake)
+
+install(FILES ${SOLUTION_DIR}/cmake/FindTenniS.cmake
+        DESTINATION cmake
+        RENAME TenniSConfig.cmake)
 
 install(FILES ${SOLUTION_DIR}/cmake/FindTensorStack.cmake
         DESTINATION cmake)

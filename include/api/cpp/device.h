@@ -2,8 +2,8 @@
 // Created by kier on 2019/3/16.
 //
 
-#ifndef TENSORSTACK_API_CPP_DEVICE_H
-#define TENSORSTACK_API_CPP_DEVICE_H
+#ifndef TENNIS_API_CPP_DEVICE_H
+#define TENNIS_API_CPP_DEVICE_H
 
 #include "../device.h"
 
@@ -57,4 +57,4 @@ namespace ts {
     }
 }
 
-#endif //TENSORSTACK_API_CPP_DEVICE_H
+#endif //TENNIS_API_CPP_DEVICE_H

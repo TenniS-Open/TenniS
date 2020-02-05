@@ -2,8 +2,8 @@
 // Created by keir on 2019/3/16.
 //
 
-#ifndef TENSORSTACK_API_MODULE_H
-#define TENSORSTACK_API_MODULE_H
+#ifndef TENNIS_API_MODULE_H
+#define TENNIS_API_MODULE_H
 
 #include "common.h"
 #include "stream.h"
@@ -37,7 +37,7 @@ typedef enum ts_SerializationFormat ts_SerializationFormat;
  * @return New reference. Return NULL if failed.
  * @note call @see ts_free_Module to free ts_Module
  */
-TENSOR_STACK_C_API ts_Module *ts_Module_Load(const char *filename, ts_SerializationFormat format);
+TENNIS_C_API ts_Module *ts_Module_Load(const char *filename, ts_SerializationFormat format);
 
 /**
  * Load module from given stream.
@@ -47,14 +47,14 @@ TENSOR_STACK_C_API ts_Module *ts_Module_Load(const char *filename, ts_Serializat
  * @return New reference. Return NULL if failed.
  * @note call @see ts_free_Module to free ts_Module
  */
-TENSOR_STACK_C_API ts_Module *ts_Module_LoadFromStream(void *obj, ts_stream_read *reader, ts_SerializationFormat format);
+TENNIS_C_API ts_Module *ts_Module_LoadFromStream(void *obj, ts_stream_read *reader, ts_SerializationFormat format);
 
 /**
  * Free module.
  * @param module the return value of ts_Module_Load<XXX>
  * Happen nothing if failed.
  */
-TENSOR_STACK_C_API void ts_free_Module(const ts_Module *module);
+TENNIS_C_API void ts_free_Module(const ts_Module *module);
 
 /**
  * Fusion two modules to one.
@@ -66,11 +66,11 @@ TENSOR_STACK_C_API void ts_free_Module(const ts_Module *module);
  * @note call @see ts_free_Module to free ts_Module
  * @note new module's input and output is sorted all `in` and `out` modules left input and output nodes
  */
-TENSOR_STACK_C_API ts_Module *ts_Module_Fusion(const ts_Module *in, int32_t in_out_slot, const ts_Module *out, int32_t out_in_slot);
+TENNIS_C_API ts_Module *ts_Module_Fusion(const ts_Module *in, int32_t in_out_slot, const ts_Module *out, int32_t out_in_slot);
 
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif //TENSORSTACK_API_MODULE_H
+#endif //TENNIS_API_MODULE_H
