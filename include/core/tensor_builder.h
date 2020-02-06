@@ -6,6 +6,7 @@
 #define TENSORSTACK_CORE_TENSOR_CONVERTER_H
 
 #include "tensor.h"
+#include "utils/otl.h"
 
 namespace ts {
     template <typename T>
@@ -48,6 +49,11 @@ namespace ts {
 
     namespace tensor {
         TS_DEBUG_API Tensor from(const std::string &value);
+
+        template <size_t N>
+        inline Tensor from(const otl::string<N> &value) {
+            return from(value.std());
+        }
 
         template<size_t _size>
         inline Tensor from(const char (&value)[_size]) { return from(std::string(value)); }

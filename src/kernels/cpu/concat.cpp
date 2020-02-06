@@ -11,7 +11,7 @@ namespace ts {
 
         template<typename T>
         static void cpu_concat_run(const std::vector<Tensor> &x, int dim, Tensor &out) {
-            auto device_type = out.device().type();
+            // auto device_type = out.device().type();
             auto device_id = out.device().id();
             // first sync all memory to running_memory_device, then doo all inner deivce copy
             auto memcpy_handler = HardConverter::Query(out.device().type(), out.device().type());

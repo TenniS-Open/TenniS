@@ -1,5 +1,6 @@
 # 模块文件描述
 > 该文件用于说明保存的模块文件的描述格式
+> update in 2020-02-03, add string limit.
 
 ## 1. 声明定义
 
@@ -169,3 +170,5 @@ header := <int32:fake><int32:code><byte*120:data>;
 `$header.fake` 为保留字节，无实际意义。
 
 `$header.data` 为保留字节区，长度为120个字节。保留字节可用于用户自定义。
+
+`$bubble.params.name` 的长度在 `[0, 32)`。

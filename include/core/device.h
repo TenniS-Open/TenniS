@@ -7,6 +7,7 @@
 
 #include "utils/api.h"
 #include "utils/except.h"
+#include "utils/otl.h"
 
 #include <sstream>
 #include <string>
@@ -19,7 +20,7 @@ namespace ts {
     /**
      * DeviceType: hardware includeing CPU, GPU or other predictable device
      */
-    using DeviceType = std::string;
+    using DeviceType = otl::string<8>;
     static const char *CPU = "cpu";
     static const char *GPU = "gpu";
     static const char *EIGEN = "eigen";
@@ -81,13 +82,13 @@ namespace ts {
          * return repr string
          * @return repr string
          */
-        const std::string repr() const { return m_type + ":" + std::to_string(m_id); }
+        const std::string repr() const { return m_type.std() + ":" + std::to_string(m_id); }
 
         /**
          * return string show the content
          * @return string
          */
-        const std::string str() const { return m_type + ":" + std::to_string(m_id); }
+        const std::string str() const { return m_type.std() + ":" + std::to_string(m_id); }
 
         static const self &portal() {
             static self _portal(PORTAL, PORTAL_ID);

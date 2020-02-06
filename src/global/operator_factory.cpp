@@ -90,7 +90,8 @@ namespace ts {
         auto &map_name_creator = MapNameCreator();
         std::set<std::pair<std::string, std::string>> set_name;
         for (auto &name : map_name_creator) {
-            set_name.insert(name.first);
+            auto &pair = name.first;
+            set_name.insert(std::make_pair(pair.first.std(), pair.first.std()));
         }
         return set_name;
     }

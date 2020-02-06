@@ -78,7 +78,10 @@ namespace ts {
     std::set<std::pair<std::string, std::string>> Fp16OperatorCreator::AllKeys() TS_NOEXCEPT {
         auto &map_key_values = MapNameCreator();
         std::set<std::pair<std::string, std::string>> keys;
-        for (auto &key_value : map_key_values) { keys.insert(key_value.first); }
+        for (auto &key_value : map_key_values) {
+            auto &pair = key_value.first;
+            keys.insert(std::make_pair(pair.first.std(), pair.first.std()));
+        }
         return keys;
     }
 }

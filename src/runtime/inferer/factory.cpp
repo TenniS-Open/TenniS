@@ -375,7 +375,7 @@ namespace ts {
             }
 
             if (valid_dims(x.sizes())) {
-                Tensor tmp(MemoryDevice("__fake__"), INT8, x.sizes());
+                Tensor tmp(MemoryDevice("_fake_"), INT8, x.sizes());
                 tmp = tmp.reshape(shape);
                 shape = tmp.sizes();
             }
@@ -818,7 +818,7 @@ namespace ts {
             }
 
             if (valid_dims(x.sizes())) {
-                Tensor tmp(MemoryDevice("__fake__"), INT8, x.sizes());
+                Tensor tmp(MemoryDevice("_fake_"), INT8, x.sizes());
                 tmp = tmp.reshape(shape);
                 shape = tmp.sizes();
             }

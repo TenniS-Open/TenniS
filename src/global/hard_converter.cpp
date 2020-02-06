@@ -56,7 +56,7 @@ namespace ts {
             auto dst = dst_src_converter.first;
             for (auto &src_converter : dst_src_converter.second) {
                 auto src = src_converter.first;
-                keys.insert(std::make_pair(dst, src));
+                keys.insert(std::make_pair(dst.std(), src.std()));
             }
         }
         return keys;
