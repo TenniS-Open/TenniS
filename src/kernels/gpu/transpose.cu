@@ -49,9 +49,9 @@ namespace ts {
             out[out_index] = in[in_index];
         }
 
-        static inline std::vector<int> get_dim_weights(const std::vector<int> &shape) {
-            if (shape.empty()) return std::vector<int>();
-            std::vector<int> result(shape.size());
+        static inline Shape get_dim_weights(const Shape &shape) {
+            if (shape.empty()) return Shape();
+            Shape result(shape.size());
             result.back() = 1;
             auto out_it = result.rbegin() + 1;
             auto in_it = shape.rbegin();
@@ -72,7 +72,7 @@ namespace ts {
             const T*in_data = x.data<T>();
             int count = out.count();
 
-            std::vector<int> cpu_in_dim_weights = get_dim_weights(x.sizes());
+            Shape cpu_in_dim_weights = get_dim_weights(x.sizes());
 
             auto gpu_memory = MakeGPUHypeShape(out.device(), {out.sizes(), },
             {

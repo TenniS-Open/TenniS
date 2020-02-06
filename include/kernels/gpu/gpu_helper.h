@@ -8,6 +8,7 @@
 
 #include <core/sync/sync_memory.h>
 #include <core/sync/sync_controller.h>
+#include "core/tensor.h"
 
 #include <cuda_runtime.h>
 
@@ -34,11 +35,12 @@ namespace ts {
             int32_t *weights = nullptr; // each weight, [weight_i]_{i=0}^{dims}, and weight_i = \sum_{j=i}^{dims} dim_i
         };
 
-        std::pair<SyncMemory, GpuHypeShape> MakeGPUHypeShape(const MemoryDevice &device, const std::vector<int> &shape);
-        std::pair<SyncMemory, std::vector<GpuHypeShape>> MakeGPUHypeShape(const MemoryDevice &device, const std::vector<std::vector<int>> &shape);
-        std::pair<SyncMemory, std::vector<GpuHypeShape>> MakeGPUHypeShape(const MemoryDevice &device, const std::vector<std::vector<int>> &shape,
+        // std::pair<SyncMemory, GpuHypeShape> MakeGPUHypeShape(const MemoryDevice &device, const Shape &shape);
+        std::pair<SyncMemory, std::vector<GpuHypeShape>> MakeGPUHypeShape(const MemoryDevice &device, const std::vector<Shape> &shape);
+        std::pair<SyncMemory, std::vector<GpuHypeShape>> MakeGPUHypeShape(const MemoryDevice &device, const std::vector<Shape> &shape,
                                                                           const std::vector<CpuBlock> &cpu,
                                                                           const std::vector<void **> &gpu);
+
 
         /**
         * get cuda stream on current context
