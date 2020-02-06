@@ -38,9 +38,9 @@ namespace ts {
                     Tensor &out) = 0;
 
         private:
-            std::vector<int32_t> m_begin;
-            std::vector<int32_t> m_end;
-            std::vector<int32_t> m_stride;
+            Shape m_begin;
+            Shape m_end;
+            Shape m_stride;
 
             int32_t m_begin_mask;
             int32_t m_end_mask;

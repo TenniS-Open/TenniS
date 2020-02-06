@@ -284,8 +284,8 @@ namespace ts {
             return -1;
         }
 
-        static void begin_insert_ones(std::vector<int32_t> &x, size_t n) {
-            auto ones = std::vector<int32_t>(n, 1);
+        static void begin_insert_ones(Shape &x, size_t n) {
+            auto ones = Shape(n, 1);
             x.insert(x.begin(), ones.begin(), ones.end());
         }
 
@@ -354,7 +354,7 @@ namespace ts {
 
         TS_STATIC_ACTION(ShapeInferer::Register, "inner_prod", inner_prod)
 
-        static bool valid_dims(const std::vector<int32_t> &dims) {
+        static bool valid_dims(const Shape &dims) {
             for (auto dim : dims) {
                 if (dim <= 0) return false;
             }
@@ -363,7 +363,7 @@ namespace ts {
 
         static TensorPrototype _reshape(const Node &node, const std::vector<TensorPrototype> &inputs) {
             auto &x = inputs[0];
-            auto shape = node->get_int_list("shape");
+            Shape shape = node->get_int_list("shape");
 
             for (size_t i = 0; i < shape.size(); ++i) {
                 if (shape[i] == 0) {
@@ -646,7 +646,7 @@ namespace ts {
                 update_node->set("#value", tensor::build<int32_t>(INT32, int32_t(dims)));
             }
 
-            return {INT32, {}};
+            return {INT32, Shape()};
         }
 
         TS_STATIC_ACTION(ShapeInferer::Register, "_dims", _dims)
@@ -806,7 +806,7 @@ namespace ts {
 
             auto shape_value = get_value(node.input(1));
             if (shape_value.empty()) return VOID;
-            auto shape = tensor::array::to_int(shape_value);
+            Shape shape = tensor::array::to_int(shape_value);
 
             for (size_t i = 0; i < shape.size(); ++i) {
                 if (shape[i] == 0) {
@@ -975,7 +975,7 @@ namespace ts {
 
             auto rhs_shape_value = get_value(node.input(1));
             if (rhs_shape_value.empty()) return VOID;
-            auto rhs_shape = tensor::array::to_int(rhs_shape_value);
+            Shape rhs_shape = tensor::array::to_int(rhs_shape_value);
 
             if (lhs_shape.size() > rhs_shape.size()) {
                 begin_insert_ones(rhs_shape, lhs_shape.size() - rhs_shape.size());
@@ -1635,6 +1635,10 @@ namespace ts {
     if (!node->has(#attr)) return VOID; \
     auto attr = node->get_int_list(#attr);
 
+#define GET_NODE_OTL_INT_LIST_ATTR(attr) \
+    if (!node->has(#attr)) return VOID; \
+    Shape attr = node->get_int_list(#attr);
+
 #define TRY_GET_NODE_INT_LIST_ATTR(attr) \
     std::vector<int32_t> attr; \
     if (node->has(#attr)) \
@@ -1859,7 +1863,7 @@ namespace ts {
             if (inputs.empty()) return VOID;
             auto &x = inputs[0];
 
-            GET_NODE_INT_LIST_ATTR(repeats)
+            GET_NODE_OTL_INT_LIST_ATTR(repeats)
 
             auto y_shape = x.sizes();
 
@@ -1915,7 +1919,7 @@ namespace ts {
 
             std::vector<Tensor::Prototype> outputs = {
                     Tensor::Prototype(x.dtype(), {batch, n * (classes + 4 + 1), h, w}),
-                    Tensor::Prototype(INT32, {}),
+                    Tensor::Prototype(INT32, Shape()),
                     Tensor::Prototype(INT32, {int32_t(mask.size())}),
                     Tensor::Prototype(FLOAT32, {int32_t(anchors.size())}),
 

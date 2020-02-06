@@ -20,7 +20,7 @@
 #include "tensor_iterator.h"
 
 namespace ts {
-    using Shape = std::vector<int32_t>;
+    using Shape = otl::vector<int32_t, 7, int32_t>;
 
     inline std::string to_string(const Shape &shape) {
         std::ostringstream oss;
@@ -75,7 +75,7 @@ namespace ts {
 
         protected:
             DTYPE m_dtype = VOID;
-            std::vector<int> m_sizes = {};  ///< ?in reversed mode?
+            Shape m_sizes;
             // std::string m_layout; ///< NCHW or NHWC
 
         public:

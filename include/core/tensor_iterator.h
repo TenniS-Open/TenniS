@@ -14,13 +14,15 @@ namespace ts {
     class TS_DEBUG_API ShapeIterator {
     public:
         using self = ShapeIterator;
+        template <typename T>
+        using Shape = otl::vector<T, 7, T>;
 
-        explicit ShapeIterator(const std::vector<int> &shape)
+        explicit ShapeIterator(const Shape<int> &shape)
                 : m_shape(shape) {
             m_coordinate.resize(m_shape.size(), 0);
         }
 
-        ShapeIterator(const std::vector<int> &shape, const std::vector<int> &coordinate)
+        ShapeIterator(const Shape<int> &shape, const Shape<int> &coordinate)
                 : m_shape(shape), m_coordinate(coordinate) {
         }
 
@@ -52,7 +54,7 @@ namespace ts {
             }
         }
 
-        const std::vector<int> &coordinate() {
+        const Shape<int> &coordinate() {
             return m_coordinate;
         }
 
@@ -92,8 +94,8 @@ namespace ts {
         }
 
 
-        std::vector<int> m_shape;
-        std::vector<int> m_coordinate;
+        Shape<int> m_shape;
+        Shape<int> m_coordinate;
 
     public:
         ShapeIterator(const self &other) = default;
@@ -116,7 +118,10 @@ namespace ts {
         using self = HypeShape;
         using T = int32_t;
 
-        explicit HypeShape(const std::vector<int> &shape)
+        template <typename T>
+        using Shape = otl::vector<T, 7, T>;
+
+        explicit HypeShape(const Shape<int32_t> &shape)
                 : m_shape(shape) {
             // update weights
             if (m_shape.empty()) return;
@@ -149,6 +154,22 @@ namespace ts {
         }
 
         T to_index(const std::vector<T> &coordinate) const {
+            // if (coordinate.size() > m_shape.size()) throw CoordinateOutOfShapeException(m_shape, coordinate);
+            if (coordinate.empty()) return 0;
+            auto size = coordinate.size();
+            auto weight_it = m_weights.end() - size + 1;
+            auto coordinate_it = coordinate.begin();
+            T index = 0;
+            for (size_t times = size - 1; times; --times) {
+                index += *weight_it * *coordinate_it;
+                ++weight_it;
+                ++coordinate_it;
+            }
+            index += *coordinate_it;
+            return index;
+        }
+
+        T to_index(const Shape<T> &coordinate) const {
             // if (coordinate.size() > m_shape.size()) throw CoordinateOutOfShapeException(m_shape, coordinate);
             if (coordinate.empty()) return 0;
             auto size = coordinate.size();
@@ -271,17 +292,17 @@ namespace ts {
 
         T weight(size_t i) const { return m_weights[i]; };
 
-        const std::vector<T> &weight() const { return m_weights; };
+        const Shape<T> &weight() const { return m_weights; };
 
         T shape(size_t i) const { return m_shape[i]; };
 
-        const std::vector<T> &shape() const { return m_shape; };
+        const Shape<T> &shape() const { return m_shape; };
 
-        explicit operator std::vector<int>() const { return m_shape; }
+        explicit operator Shape<int>() const { return m_shape; }
 
     private:
-        std::vector<int32_t> m_shape;
-        std::vector<T> m_weights;
+        Shape<int32_t> m_shape;
+        Shape<T> m_weights;
 
     public:
         HypeShape(const self &other) = default;

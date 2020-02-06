@@ -31,7 +31,7 @@ namespace ts {
             virtual void tile(const Tensor &x, const std::vector<int32_t> &repeats, Tensor &out) = 0;
 
         private:
-            std::vector<int32_t> m_repeats;
+            Shape m_repeats;
             bool m_zeros;
         };
     }

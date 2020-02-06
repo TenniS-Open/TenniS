@@ -117,18 +117,18 @@ namespace ts {
          * @return if infer succeed
          */
         static bool infer_output(
-                const std::vector<int> &x,
-                std::vector<int> &y,
-                std::vector<int> &begin,
-                std::vector<int> &end,
-                std::vector<int> &stride,
+                const Shape &x,
+                Shape &y,
+                Shape &begin,
+                Shape &end,
+                Shape &stride,
                 int begin_mask,
                 int end_mask,
                 int ellipsis_mask,
                 int new_axis_mask,
                 int shrink_axis_mask,
-                std::vector<int> &in,
-                std::vector<int> &out) {
+                Shape &in,
+                Shape &out) {
             if (stride.empty()) stride.resize(begin.size(), 1);
             if (begin.size() != end.size() || begin.size() != stride.size()) return false;
 
@@ -139,7 +139,7 @@ namespace ts {
             if (ellipsis_ones > 1) return false;
 
             size_t ellipsis_index = 0;
-            std::vector<int> ellipsis_shape;
+            Shape ellipsis_shape;
 
             // deal ellipsis
             if (ellipsis_ones) {
@@ -181,10 +181,10 @@ namespace ts {
                 }
             }
 
-            std::vector<int> final_shape;
+            Shape final_shape;
 
             if (slice_size < in.size()) {
-                final_shape = std::vector<int>(in.begin() + slice_size, in.end());
+                final_shape = Shape(in.begin() + slice_size, in.end());
                 auto final_size = std::accumulate(in.begin() + slice_size, in.end(), 1, std::multiplies<int>());
                 in.erase(in.begin() + slice_size, in.end());
                 in.push_back(final_size);
@@ -238,9 +238,9 @@ namespace ts {
         }
 
         static std::string slice_string(
-                const std::vector<int> &begin,
-                const std::vector<int> &end,
-                const std::vector<int> &stride,
+                const Shape &begin,
+                const Shape &end,
+                const Shape &stride,
                 int begin_mask,
                 int end_mask,
                 int ellipsis_mask,
@@ -278,7 +278,7 @@ namespace ts {
             auto begin = m_begin;
             auto end = m_end;
             auto stride = m_stride;
-            std::vector<int32_t> y, in, out;
+            Shape y, in, out;
             auto succeed = infer_output(x.sizes(), y, begin, end, stride, m_begin_mask, m_end_mask, m_ellipsis_mask, m_new_axis_mask, m_shrink_axis_mask, in, out);
 
             if (!succeed) {
@@ -300,7 +300,7 @@ namespace ts {
             auto begin = m_begin;
             auto end = m_end;
             auto stride = m_stride;
-            std::vector<int32_t> y, in, out;
+            Shape y, in, out;
 
             auto succeed = infer_output(x.sizes(), y, begin, end, stride, m_begin_mask, m_end_mask, m_ellipsis_mask, m_new_axis_mask, m_shrink_axis_mask, in, out);
 
@@ -316,7 +316,7 @@ namespace ts {
             auto raw_in = stack[0].view(memory_device).reshape(in);
             auto &raw_out = *stack.push(x.dtype(), y, memory_device);
 
-            strided_slice(raw_in, begin, end, stride, raw_out);
+            strided_slice(raw_in, begin.std(), end.std(), stride.std(), raw_out);
 
             raw_out = raw_out.reshape(out);
 

@@ -87,7 +87,7 @@ namespace ts {
 
             x = x.reshape(local_x_shape);
 
-            tile(x, local_repeats, out);
+            tile(x, local_repeats.std(), out);
 
             return 1;
         }

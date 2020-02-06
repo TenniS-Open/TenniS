@@ -41,7 +41,7 @@ namespace ts {
         }
 
         EmptyMemoryKeeper() {
-            Tensor::Prototype proto(VOID, {});
+            Tensor::Prototype proto(VOID, Shape());
             auto memory = std::make_shared<HardMemory>(CPU, Allocator, proto.type_bytes() * proto.count());
             _empty_memory = new SyncMemory(memory, true);
             object = new Smart<SyncMemory>(_empty_memory, EmptyDeleter);
@@ -203,7 +203,7 @@ namespace ts {
     }
 
     Tensor::Tensor()
-            : Tensor(VOID, {}) {
+            : Tensor(VOID, Shape()) {
     }
 
     bool Tensor::empty() const {
@@ -483,9 +483,9 @@ namespace ts {
             std::vector<int> ones(need_size - x_size, 1);
             auto shape = x.sizes();
             shape.insert(shape.end(), ones.begin(), ones.end());
-            return std::move(shape);
+            return std::move(shape.std());
         } else {
-            return x.sizes();
+            return x.sizes().std();
         }
     }
 
@@ -627,7 +627,7 @@ namespace ts {
         auto &sizes = this->sizes();
         auto width = std::accumulate(sizes.begin() + 1, sizes.end(), 1, std::multiplies<int>());
         width *= this->proto().type_bytes();
-        std::vector<int32_t> slice_shape(sizes.begin() + 1, sizes.end());
+        Shape slice_shape(sizes.begin() + 1, sizes.end());
         Memory slice_memory(this->device(), this->data<char>() + i * width, width);
         return Tensor(slice_memory, Tensor::Prototype(this->dtype(), slice_shape));
     }
@@ -639,7 +639,7 @@ namespace ts {
         width *= this->proto().type_bytes();
 
         auto batch = end - beg;
-        std::vector<int32_t> slice_shape = sizes;
+        Shape slice_shape = sizes;
         slice_shape[0] = batch;
         Memory slice_memory(this->device(), this->data<char>() + beg * width, batch * width);
         return Tensor(slice_memory, Tensor::Prototype(this->dtype(), slice_shape));
@@ -737,7 +737,7 @@ namespace ts {
         return field(size_t(offset >= 0 ? offset : int(fields_count()) + offset), value);
     }
 
-    static std::string to_checked_string(const std::vector<int32_t> &shape) {
+    static std::string to_checked_string(const Shape &shape) {
         std::ostringstream oss;
         oss << "[";
         for (size_t i = 0; i < shape.size(); ++i) {

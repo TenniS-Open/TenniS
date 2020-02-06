@@ -79,7 +79,7 @@ namespace ts {
         }
 
     private:
-        std::vector<int> m_base;
+        Shape m_base;
     };
 
     Tensor ImageFilter::run(const Tensor &image) {

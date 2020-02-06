@@ -22,6 +22,10 @@ namespace ts {
         static Tensor build(const std::vector<T> &value) {
             return build(value.data(), value.size());
         }
+        template <size_t N, typename S>
+        static Tensor build(const otl::vector<T, N, S> &value) {
+            return build(value.data(), value.size());
+        }
         static Tensor build(const T *data, size_t count);
     };
 
@@ -69,6 +73,9 @@ namespace ts {
         template<typename T>
         Tensor from(const std::vector<T> &value) { return tensor_builder<T>::build(value); }
 
+        template <typename T, size_t N, typename S>
+        Tensor from(const otl::vector<T, N, S> &value) { return tensor_builder<T>::build(value); }
+
         TS_DEBUG_API int to_int(const Tensor &value);
 
         TS_DEBUG_API unsigned int to_uint(const Tensor &value);
@@ -109,6 +116,11 @@ namespace ts {
 
         template<typename T>
         inline Tensor build(DTYPE dtype, const std::vector<T> &value) {
+            return cast(dtype, tensor_builder<T>::build(value));
+        }
+
+        template<typename T, size_t N, typename S>
+        inline Tensor build(DTYPE dtype, const otl::vector<T, N, S> &value) {
             return cast(dtype, tensor_builder<T>::build(value));
         }
 

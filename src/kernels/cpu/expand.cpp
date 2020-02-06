@@ -31,19 +31,19 @@ namespace ts {
                 m_inverse = tensor::to_bool(get("inverse"));
             }
 
-            static void insert_front(std::vector<int32_t> &shape, size_t N) {
+            static void insert_front(Shape &shape, size_t N) {
                 if (N == 0) return;
-                std::vector<int32_t> ones(N, 1);
+                Shape ones(N, 1);
                 shape.insert(shape.begin(), ones.begin(), ones.end());
             }
 
-            static void insert_end(std::vector<int32_t> &shape, size_t N) {
+            static void insert_end(Shape &shape, size_t N) {
                 if (N == 0) return;
-                std::vector<int32_t> ones(N, 1);
+                Shape ones(N, 1);
                 shape.insert(shape.end(), ones.begin(), ones.end());
             }
 
-            static bool expand_front(std::vector<int32_t> &shape, size_t dims, int limit) {
+            static bool expand_front(Shape &shape, size_t dims, int limit) {
                 if (limit < 0) {
                     const auto N = dims - shape.size();
                     insert_front(shape, N);
@@ -55,7 +55,7 @@ namespace ts {
                 }
             }
 
-            static bool expand_end(std::vector<int32_t> &shape, size_t dims, int limit) {
+            static bool expand_end(Shape &shape, size_t dims, int limit) {
                 if (limit < 0) {
                     const auto N = dims - shape.size();
                     insert_end(shape, N);
@@ -68,7 +68,7 @@ namespace ts {
             }
 
             // return true, if satisfied
-            bool expand(std::vector<int32_t> &shape, size_t dims) {
+            bool expand(Shape &shape, size_t dims) {
                 if (shape.size() > dims) return false;
                 if (shape.size() == dims) return true;
                 if (m_front > 0 && m_end > 0 && (shape.size() + size_t(m_front) + size_t(m_end)) < dims) {
@@ -96,7 +96,7 @@ namespace ts {
                                  << "." << eject;
                 }
 
-                return shape;
+                return shape.std();
             }
 
             int run(Stack &stack) final {

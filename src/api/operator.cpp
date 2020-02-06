@@ -111,7 +111,7 @@ public:
                     auto this_dtype = DTYPE(data[anchor++]);
                     auto this_dims = data[anchor++];
                     if (size - anchor < this_dims) throw _();
-                    std::vector<int32_t> this_shape(this_dims);
+                    Shape this_shape(this_dims);
                     for (int j = 0; j < this_dims; ++j) {
                         this_shape[j] = data[anchor++];
                     }
