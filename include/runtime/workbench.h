@@ -27,6 +27,7 @@
 #include "utils/cpu.h"
 
 #include "program.h"
+#include "runtime/switcher.h"
 
 namespace ts {
     class TS_DEBUG_API Workbench : public SetupContext<Workbench> {
@@ -287,6 +288,8 @@ namespace ts {
         std::map<std::string, Tensor> m_hooked_tensor;
 
         std::string m_summary;
+
+        Switcher::shared switcher;
     private:
         Operator::shared m_cast_op; ///< for input cast
 

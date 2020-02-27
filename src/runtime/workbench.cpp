@@ -75,7 +75,7 @@ namespace ts {
         return oss.str();
     }
 
-    static void check_cpu_features() {
+    static bool check_cpu_features() {
         //TestCPUFeature
         std::vector<CPUFeature> features;
 #if defined(TS_USE_FMA)
@@ -90,14 +90,16 @@ namespace ts {
         for (auto &fea : features) {
             auto flag = check_cpu_feature(fea);
             if (!flag) {
-                TS_LOG_ERROR << "The processor does not support the current instruction set: " << feature_log(features)
-                             << eject;
+                /*TS_LOG_ERROR << "The processor does not support the current instruction set: " << feature_log(features)
+                             << eject;*/
+                return false;
             }
         }
+        return true;
     }
 
     Workbench::Workbench(const ComputingDevice &device) {
-        check_cpu_features();
+        //check_cpu_features();
 
         this->m_device_context.initialize(device);
         auto &memory_device = this->m_device_context.memory_device;
@@ -110,6 +112,11 @@ namespace ts {
         // bind flow and dynamic memory, so you can use it to alloc memory in any where
         this->m_runtime_context.bind_flow(this->m_flow_memory);
         this->m_runtime_context.bind_dynamic(this->m_dynamic_memory);
+
+        this->switcher = std::make_shared<Switcher>();
+        //if(!check_cpu_features()){
+            switcher->auto_switch(device);
+        //}
     }
 
     Workbench::Workbench(const ComputingDevice &device, int computing_thread_number)
@@ -118,7 +125,7 @@ namespace ts {
     }
 
     Workbench::Workbench(const ComputingDevice &device, CpuEnable::CpuPowerMode cpu_mode)
-        : self(device) {
+            : self(device) {
         set_cpu_power_mode(cpu_mode);
     }
 
@@ -152,9 +159,9 @@ namespace ts {
     Workbench::shared Workbench::clone() const {
         Workbench::shared dolly(new Workbench(
                 this->m_device_context.computing_device));
-        
+
         BindWorkbenchRuntime _bind_runtime(*dolly);
-        
+
         dolly->m_inputs.resize(this->m_inputs.size());
         dolly->m_outputs.resize(this->m_outputs.size());
         dolly->m_runtime_context = this->m_runtime_context.clone();

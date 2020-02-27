@@ -39,6 +39,19 @@ namespace ts {
         map_name_creator[device_operator_name] = operator_creator;
     }
 
+    const OperatorCreator::CreatorFucMap OperatorCreator::GetCreatorFucMap(){
+        auto map_name_creator = MapNameCreator();
+        return map_name_creator;
+    }
+
+    void OperatorCreator::flush(const OperatorCreator::CreatorFucMap& creator_map){
+        auto &map_name_creator = MapNameCreator();
+        map_name_creator.clear();
+        for(auto it=creator_map.begin(); it!=creator_map.end(); ++it){
+            map_name_creator[it->first] = it->second;
+        }
+    }
+
     void OperatorCreator::Clear() {
         auto &map_name_creator = MapNameCreator();
         map_name_creator.clear();

@@ -10,6 +10,7 @@
 #include "utils/static.h"
 
 #include <set>
+#include <map>
 
 namespace ts {
 
@@ -43,6 +44,7 @@ namespace ts {
     public:
 
         using function =  std::function<Operator::shared(void)>;
+        using CreatorFucMap = std::map<std::pair<DeviceType, std::string>, OperatorCreator::function>;
 
         Operator::shared OperatorCreatorFunction();
 
@@ -52,6 +54,10 @@ namespace ts {
         static void Register(const DeviceType &device_type,
                              const std::string &operator_name,
                              const function &operator_creator) TS_NOEXCEPT;
+
+        static const CreatorFucMap GetCreatorFucMap();
+
+        static void flush(const CreatorFucMap& creator_map);
 
         static Operator::shared CreateNoException(const DeviceType &device_type,
                                                   const std::string &operator_name,
