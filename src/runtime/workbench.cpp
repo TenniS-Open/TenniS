@@ -114,9 +114,9 @@ namespace ts {
         this->m_runtime_context.bind_dynamic(this->m_dynamic_memory);
 
         this->switcher = std::make_shared<Switcher>();
-        //if(!check_cpu_features()){
+        if(!check_cpu_features()){
             switcher->auto_switch(device);
-        //}
+        }
     }
 
     Workbench::Workbench(const ComputingDevice &device, int computing_thread_number)
