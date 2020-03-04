@@ -14,23 +14,6 @@ set(CMAKE_CXX_CREATE_SHARED_MODULE "${CMAKE_CXX_CREATE_SHARED_MODULE} -fPIC")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 
-if (TS_USE_SSE)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse2")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse2")
-endif()
-
-if (TS_USE_AVX)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mavx")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mavx2")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2")
-endif()
-
-if (TS_USE_FMA)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfma")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfma")
-endif()
-
 if (TS_USE_FAST_MATH)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ffast-math")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffast-math")

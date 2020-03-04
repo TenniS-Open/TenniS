@@ -17,6 +17,11 @@ add_definitions(-DTS_DISABLE_PARALLEL)
 list(APPEND CMAKE_MODULE_PATH ${SOLUTION_DIR}/cmake)
 list(APPEND CMAKE_PREFIX_PATH ${SOLUTION_DIR}/cmake)
 
+# set library name for different architectures
+set(HASWEILL_LIB_NAME ${PROJECT_NAME}_Haswell)
+set(SANDYBRIDGE_LIB_NAME ${PROJECT_NAME}_SandyBridge)
+set(PENTINUM_LIB_NAME ${PROJECT_NAME}_Pentium)
+
 #------------------------------------------------------------------------------#
 # ============================= Options start ================================ #
 #------------------------------------------------------------------------------#
@@ -50,9 +55,13 @@ set(TS_CUDA_ARCH "" CACHE STRING "List arch, like: 60,61,62. Empty for all arch.
 option(TS_USE_CBLAS "[Optional] Use CBLAS" OFF) # [discarded]
 option(TS_USE_OPENMP "[Optional] Use OpenMP" ON)
 option(TS_USE_SIMD "[Optional] Use SIMD" ON)
-option(TS_USE_AVX "[Optional] Use AVX" OFF)
-option(TS_USE_SSE "[Optional] Use SSE" OFF)
-option(TS_USE_FMA "[Optional] Use FMA" OFF)
+option(TS_DYNAMIC_INSTRUCTION "[Optional] Dynamic support for different instruction sets" OFF)
+option(TS_ON_HASWELL "[Optional] Use AVX and FMA" OFF)
+option(TS_ON_SAMDYBRIDGE "[Optional] Use AVX but not FMA" OFF)
+option(TS_ON_PENTIUM "[Optional] Use SSE" OFF)
+#option(TS_USE_AVX "[Optional] Use AVX" OFF)
+#option(TS_USE_SSE "[Optional] Use SSE" OFF)
+#option(TS_USE_FMA "[Optional] Use FMA" OFF)
 option(TS_USE_NEON "[Optional] Use NEON" OFF)
 option(TS_USE_FAST_MATH "[Optional] Use fast math (-ffast-math)" OFF)
 option(TS_ON_ARM "[Optional] Target is arm" OFF)
@@ -100,27 +109,6 @@ if (TS_USE_DEBUG_API)
     add_definitions(-DTS_USE_DEBUG_API)
 else (TS_USE_DEBUG_API)
     message(STATUS "[Important] Use debug API: [OFF]")
-endif()
-
-if (TS_USE_SIMD)
-	message(STATUS "[Optional] Use SIMD: [ON]")
-	add_definitions(-DTS_USE_SIMD)
-    if (TS_USE_AVX)
-		message(STATUS "[Optional] Use AVX: [ON]")
-		add_definitions(-DTS_USE_AVX)
-	elseif (TS_USE_SSE)
-		message(STATUS "[Optional] Use SSE: [ON]")
-		add_definitions(-DTS_USE_SSE)
-	elseif (TS_USE_NEON)
-		message(STATUS "[Optional] Use NEON: [ON]")
-		add_definitions(-DTS_USE_NEON)
-	endif()
-    if (TS_USE_FMA)
-        message(STATUS "[Optional] Use FMA: [ON]")
-        add_definitions(-DTS_USE_FMA)
-    else (TS_USE_FMA)
-        message(STATUS "[Optional] Use FMA: [OFF]")
-    endif()
 endif()
 
 # set winograd support
@@ -310,10 +298,74 @@ foreach (archive ${TENNIS_ARCHIVES})
 endforeach ()
 
 ts_add_library(${PROJECT_NAME}_LIB ${TARGET} ${INCLUDE_FILES} ${SRC_INCLUDE_FILES} ${SRC_FILES})
-
 target_link_libraries(${PROJECT_NAME}_LIB ${third_libraries})
-
 set_target_properties(${PROJECT_NAME}_LIB PROPERTIES OUTPUT_NAME ${PROJECT_NAME}${ENV_SUFFIX})
+
+if (TS_USE_SIMD)
+    message(STATUS "[Optional] Use SIMD: [ON]")
+    add_definitions(-DTS_USE_SIMD)
+    if (TS_ON_HASWELL)
+        message(STATUS "[Optional] Use AVX and FMA: [ON]")
+        target_compile_definitions(${PROJECT_NAME}_LIB PRIVATE TS_USE_AVX TS_USE_FMA)
+        ts_add_instruction_support(${PROJECT_NAME}_LIB 0)
+    elseif (TS_ON_SAMDYBRIDGE)
+        message(STATUS "[Optional] Use AVX: [ON]")
+        target_compile_definitions(${PROJECT_NAME}_LIB PRIVATE TS_USE_AVX)
+        ts_add_instruction_support(${PROJECT_NAME}_LIB 1)
+    elseif (TS_ON_PENTIUM)
+        message(STATUS "[Optional] Use SSE: [ON]")
+        target_compile_definitions(${PROJECT_NAME}_LIB PRIVATE TS_USE_SSE)
+        ts_add_instruction_support(${PROJECT_NAME}_LIB 2)
+    elseif (TS_USE_NEON)
+        message(STATUS "[Optional] Use NEON: [ON]")
+        target_compile_definitions(${PROJECT_NAME}_LIB PRIVATE TS_USE_NEON)
+    endif()
+endif()
+
+# support different instruction set
+if(TS_DYNAMIC_INSTRUCTION)
+    message(STATUS "[Optional] Dynamic support for different instruction sets: [ON]")
+
+    ts_add_library(${HASWEILL_LIB_NAME}_LIB ${TARGET} ${INCLUDE_FILES} ${SRC_INCLUDE_FILES} ${SRC_FILES})
+    target_link_libraries(${HASWEILL_LIB_NAME}_LIB ${third_libraries})
+    target_compile_definitions(${HASWEILL_LIB_NAME}_LIB PRIVATE TS_USE_AVX TS_USE_FMA)
+    ts_add_instruction_support(${HASWEILL_LIB_NAME}_LIB 0)
+
+    ts_add_library(${SANDYBRIDGE_LIB_NAME}_LIB ${TARGET} ${INCLUDE_FILES} ${SRC_INCLUDE_FILES} ${SRC_FILES})
+    target_link_libraries(${SANDYBRIDGE_LIB_NAME}_LIB ${third_libraries})
+    target_compile_definitions(${SANDYBRIDGE_LIB_NAME}_LIB PRIVATE TS_USE_AVX)
+    ts_add_instruction_support(${SANDYBRIDGE_LIB_NAME}_LIB 1)
+
+    ts_add_library(${PENTINUM_LIB_NAME}_LIB ${TARGET} ${INCLUDE_FILES} ${SRC_INCLUDE_FILES} ${SRC_FILES})
+    target_link_libraries(${PENTINUM_LIB_NAME}_LIB ${third_libraries})
+    target_compile_definitions(${PENTINUM_LIB_NAME}_LIB PRIVATE TS_USE_SSE)
+    ts_add_instruction_support(${PENTINUM_LIB_NAME}_LIB 2)
+
+    set_target_properties(${HASWEILL_LIB_NAME}_LIB
+                          PROPERTIES
+                          OUTPUT_NAME ${HASWEILL_LIB_NAME}${ENV_SUFFIX})
+    set_target_properties(${SANDYBRIDGE_LIB_NAME}_LIB
+                          PROPERTIES
+                          RUNTIME_OUTPUT_DIRECTORY ${LOCAL_OUTPUT_DIR}/${ENV_RUNTIME_DIR}
+                          OUTPUT_NAME ${SANDYBRIDGE_LIB_NAME}${ENV_SUFFIX})
+    set_target_properties(${PENTINUM_LIB_NAME}_LIB
+                          PROPERTIES
+                          RUNTIME_OUTPUT_DIRECTORY ${LOCAL_OUTPUT_DIR}/${ENV_RUNTIME_DIR}
+                          OUTPUT_NAME ${PENTINUM_LIB_NAME}${ENV_SUFFIX})
+    if(WIN32)
+        set_target_properties(${HASWEILL_LIB_NAME}_LIB
+                PROPERTIES
+                RUNTIME_OUTPUT_DIRECTORY ${LOCAL_OUTPUT_DIR}/${ENV_RUNTIME_DIR})
+        set_target_properties(${SANDYBRIDGE_LIB_NAME}_LIB
+                PROPERTIES
+                RUNTIME_OUTPUT_DIRECTORY ${LOCAL_OUTPUT_DIR}/${ENV_RUNTIME_DIR})
+        set_target_properties(${PENTINUM_LIB_NAME}_LIB
+                PROPERTIES
+                RUNTIME_OUTPUT_DIRECTORY ${LOCAL_OUTPUT_DIR}/${ENV_RUNTIME_DIR})
+    endif()
+else()
+    message(STATUS "[Optional] Dynamic support for different instruction sets: [OFF]")
+endif(TS_DYNAMIC_INSTRUCTION)
 
 if (WIN32)
     set_target_properties(${PROJECT_NAME}_LIB PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${LOCAL_OUTPUT_DIR}/${ENV_RUNTIME_DIR})
@@ -354,6 +406,15 @@ install(TARGETS ${PROJECT_NAME}_LIB
         ARCHIVE DESTINATION ${ENV_ARCHIVE_DIR}
         FRAMEWORK DESTINATION framework
         )
+
+if(TS_DYNAMIC_INSTRUCTION)
+    install(TARGETS ${HASWEILL_LIB_NAME}_LIB ${SANDYBRIDGE_LIB_NAME}_LIB ${PENTINUM_LIB_NAME}_LIB
+            RUNTIME DESTINATION ${ENV_RUNTIME_DIR}
+            LIBRARY DESTINATION ${ENV_LIBRARY_DIR}
+            ARCHIVE DESTINATION ${ENV_ARCHIVE_DIR}
+            FRAMEWORK DESTINATION framework
+            )
+endif()
 
 install(FILES ${SOLUTION_DIR}/cmake/FindTenniS.cmake
         DESTINATION cmake)
