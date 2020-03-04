@@ -41,7 +41,7 @@ namespace ts {
 
     const OperatorCreator::CreatorFucMap OperatorCreator::GetCreatorFucMap(){
         auto map_name_creator = MapNameCreator();
-        return map_name_creator;
+        return std::move(map_name_creator);
     }
 
     void OperatorCreator::flush(const OperatorCreator::CreatorFucMap& creator_map){

@@ -2,6 +2,7 @@
 // Created by yang on 2020/2/26.
 //
 
+#include "global/operator_factory.h"
 #include "runtime/importor.h"
 #include "runtime/switcher.h"
 #include "utils/cpu_info.h"
@@ -14,9 +15,9 @@ const std::string tennis_avx_fma_dll = "tennis_Haswell.dll";
 const std::string tennis_avx_dll = "tennis_SandyBridge.dll";
 const std::string tennis_sse_dll = "tennis_Pentium.dll";
 #elif TS_PLATFORM_OS_LINUX
-const std::string tennis_avx_fma_dll = "tennis_Haswell.so";
-const std::string tennis_avx_dll = "tennis_SandyBridge.so";
-const std::string tennis_sse_dll = "tennis_Pentium.so";
+const std::string tennis_avx_fma_dll = "libtennis_Haswell.so";
+const std::string tennis_avx_dll = "libtennis_SandyBridge.so";
+const std::string tennis_sse_dll = "libtennis_Pentium.so";
 #endif
 
 namespace ts{
@@ -57,6 +58,10 @@ namespace ts{
         else if(check_cpu_features({SSE, SSE2})){
             m_importer->load(tennis_sse_dll);
         }
+        else{
+            TS_LOG_ERROR <<
+                "Minimum support for SSE instruction,Otherwise you need to compile a version that does not support any instruction set" << eject;
+        }
 
         get_creator_map creator_map_fuc =
                 (get_creator_map)m_importer->get_fuc_address("ts_get_creator_map");
@@ -77,8 +82,7 @@ namespace ts{
     }
 
     void Switcher::free(){
-
+        OperatorCreator::Clear();
     }
-
 }
 

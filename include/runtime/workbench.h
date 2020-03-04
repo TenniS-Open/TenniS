@@ -289,7 +289,7 @@ namespace ts {
 
         std::string m_summary;
 
-        Switcher::shared switcher;
+        Switcher::shared m_switcher;
     private:
         Operator::shared m_cast_op; ///< for input cast
 

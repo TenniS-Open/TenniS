@@ -16,14 +16,16 @@
 #undef VOID
 #endif
 #define Handle HMODULE
-#define LOAD_LIBRARY LoadLibrary
+#define LOAD_LIBRARY(x) LoadLibrary(x)
 #define GET_FUC_ADDRESS GetProcAddress
+#define GET_LAST_ERROR GetLastError
 #define FREE_LIBRARY FreeLibrary
 #elif TS_PLATFORM_OS_LINUX
 #include <dlfcn.h>
 #define Handle void*
-#define LOAD_LIBRARY dlopen
+#define LOAD_LIBRARY(x) dlopen(x,RTLD_LAZY)
 #define GET_FUC_ADDRESS dlsym
+#define GET_LAST_ERROR dlerror
 #define FREE_LIBRARY dlclose
 #endif
 

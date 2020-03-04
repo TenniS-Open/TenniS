@@ -17,7 +17,7 @@ using creator_map = std::map<std::pair<std::string, std::string>, OperatorCreato
 
 struct ts_op_creator_map{
     using self = ts_op_creator_map;
-    explicit ts_op_creator_map(creator_map map) : map(map) {}
+    explicit ts_op_creator_map(creator_map map) {this->map=std::move(map);}
     creator_map map;
 };
 
@@ -42,6 +42,7 @@ void ts_flush_creator(ts_op_creator_map* creator_map){
 
 void ts_free_creator_map(ts_op_creator_map* creator_map){
     TRY_HEAD
+    creator_map->map.clear();
     delete(creator_map);
     TRY_TAIL
 }
