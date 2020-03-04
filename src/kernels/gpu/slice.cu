@@ -46,11 +46,11 @@ namespace ts {
 
             Shape out_shape = out.sizes();
 
-            auto gpu_hype_xshape = MakeGPUHypeShape(x.device(), x_shape);
-            auto gpu_hype_outshape = MakeGPUHypeShape(x.device(), out.sizes());
+            auto gpu_hype_xshape = MakeGPUHypeShape(x.device(), {x_shape});
+            auto gpu_hype_outshape = MakeGPUHypeShape(x.device(), {out.sizes()});
 
-            auto & x_hype_shape = gpu_hype_xshape.second;
-            auto & out_hype_shape = gpu_hype_outshape.second;
+            auto & x_hype_shape = gpu_hype_xshape.second[0];
+            auto & out_hype_shape = gpu_hype_outshape.second[0];
 
 
             Shape tmpshape;

@@ -40,7 +40,7 @@ namespace ts {
         auto &map_memory_device = MapMemoryDevice();
         std::set<std::pair<std::string, std::string>> items;
         for (auto &pair_compute_memory : map_memory_device) {
-            items.insert(pair_compute_memory);
+            items.insert(std::make_pair(pair_compute_memory.first.std(), pair_compute_memory.second.std()));
         }
         return items;
     }

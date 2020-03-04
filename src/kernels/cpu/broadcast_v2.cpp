@@ -31,7 +31,7 @@ namespace ts {
 
         };
 
-        static inline int to_mod_index(const HypeShape &hype, const std::vector<int> &coordinate) {
+        static inline int to_mod_index(const HypeShape &hype, const Shape &coordinate) {
             auto temp = coordinate;
             for (size_t i = 0; i < temp.size(); ++i) {
                 temp[i] %= hype.shape(i);

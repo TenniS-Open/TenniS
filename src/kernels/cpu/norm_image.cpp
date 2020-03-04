@@ -25,7 +25,7 @@ namespace ts {
 	namespace cpu {
         template<typename T>
         void cpu_norm_image_compute_run(const Tensor &x, float epsilon, Tensor &out) {
-            auto output_shape = out.sizes();
+            // auto output_shape = out.sizes();
             const T *input_data = x.data<T>();
             T *output_data = out.data<T>();
             auto count = size_t(out.count());

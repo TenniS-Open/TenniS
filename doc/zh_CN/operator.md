@@ -8,8 +8,10 @@
 - `#op`: `String` 算符的名称
 - `#name`: `String` 实例化名称
 - `#output_count`: `Int` 输出结果数
-- `#shape`: `IntArray` 大小
+- `#shape`: `IntArray` 大小  
+- `#dtype`: `Int` dtype enumrate value
 
+算符名称长度应该在 `[0, 32)`。
 
 ## 内置算符
 

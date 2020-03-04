@@ -118,8 +118,8 @@ namespace ts{
             const T* src_data = x.data<T>();
             T* dst_data = out.data<T>();
             T value = T(padding_value);
-            auto out_device = out.device();
-            auto x_device = x.device();
+            // auto out_device = out.device();
+            // auto x_device = x.device();
 
             for (int n = 0; n < num; n++){
 #ifdef TS_USE_OPENMP

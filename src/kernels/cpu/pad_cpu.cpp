@@ -24,10 +24,10 @@ namespace ts {
          * @param [out] x_coord the transpose back coordinate
          * @return true if transposed, else return false
          */
-        static inline bool transpose_pad(const std::vector<int> &out_coord,
+        static inline bool transpose_pad(const Shape &out_coord,
                 const std::vector<std::array<int, 2>> &padding,
-                const std::vector<int> &x_shape,
-                std::vector<int> &x_coord) {
+                const Shape &x_shape,
+                Shape &x_coord) {
             auto dims = out_coord.size();
             x_coord.resize(dims);
             for (size_t i = 0; i < dims; ++i) {
@@ -62,7 +62,7 @@ namespace ts {
 
             ShapeIterator out_it(out.sizes());
             auto &x_shape = x.sizes();
-            std::vector<int> x_coord;
+            Shape x_coord;
             auto out_data = out.data<T>();
             auto x_data = x.data<T>();
 

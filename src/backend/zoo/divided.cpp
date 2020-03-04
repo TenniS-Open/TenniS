@@ -50,7 +50,7 @@ namespace ts {
             m_padding = Tensor(INT32, {4, 2});
         }
 
-        static inline void divided_shape(std::vector<int32_t> &x, const std::vector<int32_t> &size) {
+        static inline void divided_shape(Shape &x, const std::vector<int32_t> &size) {
             if (size.size() > x.size()) {
                 TS_LOG_ERROR << "Can not divided shape " << to_string(x) << " to " << to_string(size) << eject;
             }

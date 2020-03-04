@@ -9,7 +9,7 @@
 namespace ts {
     namespace cpu {
         void Dimshuffle::dimshuffle(const Tensor &x, int dim, const std::vector<int> &shuffle, Tensor &out) {
-            auto device_type = out.device().type();
+            // auto device_type = out.device().type();
             auto device_id = out.device().id();
             // first sync all memory to running_memory_device, then doo all inner deivce copy
             auto memcpy_handler = HardConverter::Query(out.device().type(), out.device().type());

@@ -27,7 +27,7 @@ namespace ts {
         return nullptr;
     }
 
-    TS_STATIC_ACTION(HardAllocator::Register, "__fake__", FakeMemoryAllocator)
+    TS_STATIC_ACTION(HardAllocator::Register, "_fake_", FakeMemoryAllocator)
 
     // static bool valid_shape(const Shape &shape) {
     //     for (auto &dim : shape) {

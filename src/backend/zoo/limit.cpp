@@ -43,7 +43,7 @@ namespace ts {
             m_pad_op->init();
         }
 
-        static inline bool if_overflow(const std::vector<int> &x_shape, std::vector<int> &limit) {
+        static inline bool if_overflow(const Shape &x_shape, std::vector<int> &limit) {
             TS_AUTO_CHECK(x_shape.size() >= limit.size());
 
             if (limit.size() < x_shape.size()) {

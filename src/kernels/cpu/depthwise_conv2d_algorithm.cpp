@@ -105,7 +105,7 @@ namespace ts {
             const Dilation2D &dilation,
             Tensor &out) {
 
-            auto weight_shape = weight.sizes();
+            // auto weight_shape = weight.sizes();
             auto output_shape = out.sizes();
             auto input_shape = x.sizes();
             int input_height = input_shape[2];

@@ -54,7 +54,7 @@ namespace ts {
             return std::move(gpu_memory);
         }
 
-        std::pair<SyncMemory, GpuHypeShape> MakeGPUHypeShape(const MemoryDevice &device, const std::vector<int> &shape) {
+        std::pair<SyncMemory, GpuHypeShape> MakeGPUHypeShape(const MemoryDevice &device, const Shape &shape) {
             HypeShape hype_shape(shape);
             GpuHypeShape gpu_shape;
             gpu_shape.dims = int(shape.size());
@@ -65,11 +65,11 @@ namespace ts {
             return std::make_pair(std::move(gpu_memory), gpu_shape);
         }
 
-        std::pair<SyncMemory, std::vector<GpuHypeShape>> MakeGPUHypeShape(const MemoryDevice &device, const std::vector<std::vector<int>> &shape) {
+        std::pair<SyncMemory, std::vector<GpuHypeShape>> MakeGPUHypeShape(const MemoryDevice &device, const std::vector<Shape> &shape) {
             return MakeGPUHypeShape(device, shape, {}, {});
         }
 
-        std::pair<SyncMemory, std::vector<GpuHypeShape>> MakeGPUHypeShape(const MemoryDevice &device, const std::vector<std::vector<int>> &shape,
+        std::pair<SyncMemory, std::vector<GpuHypeShape>> MakeGPUHypeShape(const MemoryDevice &device, const std::vector<Shape> &shape,
                                                                           const std::vector<CpuBlock> &cpu_part,
                                                                           const std::vector<void **> &gpu_part) {
             std::vector<HypeShape> hype_shape_array;

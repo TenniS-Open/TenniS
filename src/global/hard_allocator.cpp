@@ -76,7 +76,7 @@ namespace ts {
     std::set<std::string> HardAllocator::AllKeys() TS_NOEXCEPT {
         auto &map_key_values = MapDeviceAllocator();
         std::set<std::string> keys;
-        for (auto &key_value : map_key_values) { keys.insert(key_value.first); }
+        for (auto &key_value : map_key_values) { keys.insert(key_value.first.std()); }
         return keys;
     }
 }

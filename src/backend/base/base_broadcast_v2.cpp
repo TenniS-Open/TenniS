@@ -97,7 +97,7 @@ namespace ts {
             auto shape = *stack.index(1);
 
             auto x_shape = x.sizes();
-            auto out_shape = tensor::array::to_int(shape);
+            auto out_shape = Shape(tensor::array::to_int(shape));
 
             bool do_broadcast = broadcast(x_shape, out_shape);
 

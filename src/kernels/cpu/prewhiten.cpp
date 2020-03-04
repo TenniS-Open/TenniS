@@ -9,7 +9,7 @@ namespace ts {
 
 		template<typename T>
 		static void cpu_pre_whiten_compute_run(const Tensor &x, Tensor &out) {
-			auto output_shape = out.sizes();
+			// auto output_shape = out.sizes();
 			const T *input_data = x.data<T>();
 			T *output_data = out.data<T>();
 			auto count = size_t(out.count());

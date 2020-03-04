@@ -19,7 +19,7 @@ namespace ts {
             return 1;
         }
 
-        static bool can_broadcast(const std::vector<int32_t> &x, const std::vector<int32_t> &y) {
+        static bool can_broadcast(const Shape &x, const Shape &y) {
             if (x.size() != y.size()) return false;
             auto N = x.size();
             for (size_t i = 0; i < N; ++i) {

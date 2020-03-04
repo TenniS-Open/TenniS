@@ -66,7 +66,7 @@ namespace ts {
             kernel_tensor = inputs[2].bubble().get(name::value);
         }
         auto kernel_shape = kernel_tensor.sizes();
-        Shape padding_shape = padding_tensor.sizes();
+        // Shape padding_shape = padding_tensor.sizes();
 
         bool winograd_flag = KernelCommonFunc<float>::winograd_check(kernel_shape,
                                                                      stride_size,

@@ -55,8 +55,8 @@ namespace ts {
             auto number = std::accumulate(i_shape.begin(), i_shape.end() - 1, 1, std::multiplies<int>());
             auto width = std::accumulate(x_shape.begin() + axis, x_shape.end(), 1, std::multiplies<int>());
 
-            auto gpu_hype_shape = MakeGPUHypeShape(x.device(), x_shape);
-            auto &x_hype_shape = gpu_hype_shape.second;
+            auto gpu_hype_shape = MakeGPUHypeShape(x.device(), {x_shape});
+            auto &x_hype_shape = gpu_hype_shape.second[0];
 
             auto bytes = x.proto().type_bytes();
             auto width_bytes = width * bytes;

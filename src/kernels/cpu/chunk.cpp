@@ -20,7 +20,7 @@ namespace ts {
 
         template<typename T>
         static void cpu_chunk_run(const Tensor &x, int dim, std::vector<Tensor> &out) {
-            auto device_type = x.device().type();
+            // auto device_type = x.device().type();
             auto device_id = x.device().id();
             // first sync all memory to running_memory_device, then doo all inner deivce copy
             auto memcpy_handler = HardConverter::Query(x.device().type(), x.device().type());
