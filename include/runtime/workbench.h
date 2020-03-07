@@ -250,6 +250,8 @@ namespace ts {
         */
         bool set_cpu_power_mode(CpuEnable::CpuPowerMode cpu_mode);
 
+        SwitchControll::shared switch_controller();
+
     private:
         // size_t m_pointer = 0;   // pointer to running function
         // std::vector<Instruction::shared> m_program; // running function, program area
@@ -289,7 +291,7 @@ namespace ts {
 
         std::string m_summary;
 
-        Switcher::shared m_switcher;
+        SwitchControll::shared m_switch_controller;
     private:
         Operator::shared m_cast_op; ///< for input cast
 

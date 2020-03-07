@@ -8,29 +8,25 @@
 #include "api/api.h"
 #include "core/device.h"
 
-class Importor;
-
 namespace ts{
 
-    class TS_DEBUG_API Switcher{
+    class TS_DEBUG_API SwitchControll{
     public:
-        using self = Switcher;
-        using shared = std::shared_ptr<self>;
+        using self = SwitchControll;
+        using shared = std::shared_ptr<SwitchControll>;
 
-        Switcher();
-        ~Switcher();
+        SwitchControll() = default;
+        ~SwitchControll() = default;
 
         void auto_switch(const ComputingDevice &device);
+        void bind_context(const ComputingDevice &device);
+
+        bool is_load_dll();
 
     private:
-        void free();
-
-    private:
-        std::shared_ptr<Importor> m_importer;
-
-        std::shared_ptr<ts_op_creator_map> m_creator_map;
         std::shared_ptr<ts_device_context> m_device_context;
 
+        bool m_is_loaded = false;
     };
 }
 

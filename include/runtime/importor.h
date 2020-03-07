@@ -37,7 +37,7 @@ namespace ts{
 
         Importor() = default;
 
-        void load(const std::string& dll_name);
+        bool load(const std::string& dll_name);
         void unload();
         void* get_fuc_address(const std::string& fuc_name);
 

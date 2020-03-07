@@ -6,12 +6,13 @@
 #include "utils/log.h"
 
 namespace ts{
-    void Importor::load(const std::string& dll_name){
+    bool Importor::load(const std::string& dll_name){
         m_handle = LOAD_LIBRARY(dll_name.c_str());
         if(m_handle == nullptr){
             unload();
             TS_LOG_ERROR << "load dll: " << dll_name << " failed." << eject;
         }
+        return true;
     }
 
     void Importor::unload(){

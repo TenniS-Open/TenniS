@@ -40,6 +40,11 @@ namespace ts {
             , bind_work_bench(bench) {
             // bench.device().active();
             m_pre_device_context = DeviceContext::Switch(&bench.device());
+
+            auto switch_controller = bench.switch_controller();
+            if(switch_controller->is_load_dll()){
+                switch_controller->bind_context(bench.device().computing_device);
+            }
         }
 
         ~BindWorkbenchRuntime() {
@@ -113,9 +118,9 @@ namespace ts {
         this->m_runtime_context.bind_flow(this->m_flow_memory);
         this->m_runtime_context.bind_dynamic(this->m_dynamic_memory);
 
-        this->m_switcher = std::make_shared<Switcher>();
+        this->m_switch_controller = std::make_shared<SwitchControll>();
         if(!check_cpu_features()){
-            m_switcher->auto_switch(device);
+            m_switch_controller->auto_switch(device);
         }
     }
 
@@ -137,7 +142,7 @@ namespace ts {
         this->m_device_context.finalize();
         std::stack<ProgramEnv> empty;
         this->m_env.swap(empty);
-        this->m_switcher.reset();
+        this->m_switch_controller.reset();
     }
 
     static inline std::unique_ptr<ctx::bind<Profiler>> bind_profiler(bool _do, Profiler &profiler) {
@@ -665,6 +670,11 @@ namespace ts {
         }
         return flag;
     }
+
+    SwitchControll::shared Workbench::switch_controller(){
+        return m_switch_controller;
+    }
+
 }
 
 TS_LITE_CONTEXT(ts::Workbench)
