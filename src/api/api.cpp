@@ -13,7 +13,7 @@
 
 using namespace ts;
 
-using creator_map = std::map<std::pair<std::string, std::string>, OperatorCreator::function>;
+using creator_map = std::map<std::pair<DeviceType, std::string>, OperatorCreator::function>;
 
 struct ts_op_creator_map{
     using self = ts_op_creator_map;
@@ -27,27 +27,27 @@ struct ts_device_context{
     std::shared_ptr<DeviceContext> pointer;
 };
 
-ts_op_creator_map* ts_get_creator_map(){
+ts_op_creator_map* ts_plugin_get_creator_map(){
     TRY_HEAD
     auto creator_map = OperatorCreator::GetCreatorFucMap();
     std::unique_ptr<ts_op_creator_map> res(new ts_op_creator_map(creator_map));
     RETURN_OR_CATCH(res.release(), nullptr);
 }
 
-void ts_flush_creator(ts_op_creator_map* creator_map){
+void ts_plugin_flush_creator(ts_op_creator_map* creator_map){
     TRY_HEAD
     OperatorCreator::flush(creator_map->map);
     TRY_TAIL
 }
 
-void ts_free_creator_map(ts_op_creator_map* creator_map){
+void ts_plugin_free_creator_map(ts_op_creator_map* creator_map){
     TRY_HEAD
     creator_map->map.clear();
     delete(creator_map);
     TRY_TAIL
 }
 
-ts_device_context* ts_initial_device_context(const ts_Device *device){
+ts_device_context* ts_plugin_initial_device_context(const ts_Device *device){
     TRY_HEAD
     std::shared_ptr<DeviceContext> device_context = std::make_shared<DeviceContext>();
     device_context->initialize(ComputingDevice(device->type, device->id));
@@ -56,7 +56,7 @@ ts_device_context* ts_initial_device_context(const ts_Device *device){
     RETURN_OR_CATCH(tdc.release(), nullptr)
 }
 
-void ts_free_device_context(ts_device_context* device){
+void ts_plugin_free_device_context(ts_device_context* device){
     TRY_HEAD
     delete(device);
     TRY_TAIL
