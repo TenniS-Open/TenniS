@@ -18,9 +18,9 @@ list(APPEND CMAKE_MODULE_PATH ${SOLUTION_DIR}/cmake)
 list(APPEND CMAKE_PREFIX_PATH ${SOLUTION_DIR}/cmake)
 
 # set library name for different architectures
-set(HASWEILL_LIB_NAME ${PROJECT_NAME}_Haswell)
-set(SANDYBRIDGE_LIB_NAME ${PROJECT_NAME}_SandyBridge)
-set(PENTINUM_LIB_NAME ${PROJECT_NAME}_Pentium)
+set(HASWEILL_LIB_NAME ${PROJECT_NAME}_haswell)
+set(SANDYBRIDGE_LIB_NAME ${PROJECT_NAME}_sandy_bridge)
+set(PENTINUM_LIB_NAME ${PROJECT_NAME}_pentium)
 
 #------------------------------------------------------------------------------#
 # ============================= Options start ================================ #
