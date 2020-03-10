@@ -27,6 +27,13 @@
 #define GET_FUC_ADDRESS dlsym
 #define GET_LAST_ERROR dlerror
 #define FREE_LIBRARY dlclose
+#elif TS_PLATFORM_OS_MAC
+#include <dlfcn.h>
+#define Handle void*
+#define LOAD_LIBRARY(x) dlopen(x,RTLD_LAZY)
+#define GET_FUC_ADDRESS dlsym
+#define GET_LAST_ERROR dlerror
+#define FREE_LIBRARY dlclose
 #endif
 
 namespace ts{

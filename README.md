@@ -37,6 +37,7 @@ cmake ..
 > Option `TS_ON_PENTIUM` means only support `SSE2`.  
 
 If want compile all instructions support, switch `TS_DYNAMIC_INSTRUCTION` ON.
+Notice: `TS_DYNAMIC_INSTRUCTION` ONLY work in release version.
 
 ~~When compilation target has no instruction-set like `AVX` or `FMA`,
 **MUST** turn corresponding option off.~~
