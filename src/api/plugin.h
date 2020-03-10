@@ -5,8 +5,8 @@
 #ifndef TENNIS_API_API_H
 #define TENNIS_API_API_H
 
-#include "common.h"
-#include "device.h"
+#include "api/common.h"
+#include "api/device.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -4,7 +4,7 @@
 
 #include <map>
 
-#include "api/api.h"
+#include "api/plugin.h"
 #include "global/operator_factory.h"
 #include "core/device_context.h"
 #include "core/device.h"

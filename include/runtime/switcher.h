@@ -5,7 +5,7 @@
 #ifndef TENSORSTACK_RUNTIME_SWITCHER_H
 #define TENSORSTACK_RUNTIME_SWITCHER_H
 
-#include "api/api.h"
+#include "api/plugin.h"
 #include "core/device.h"
 
 namespace ts{

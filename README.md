@@ -12,8 +12,7 @@ add `-DCMAKE_INSTALL_PREFIX` to change installation DIR.
 cmake ..
 -DTS_USE_OPENMP=ON
 -DTS_USE_SIMD=ON
--DTS_USE_AVX=ON
--DTS_USE_FMA=ON
+-DTS_ON_HASWELL=ON
 -DTS_BUILD_TEST=OFF
 -DTS_BUILD_TOOLS=OFF
 -DCMAKE_BUILD_TYPE=Release
@@ -26,16 +25,21 @@ cmake ..
 -DTS_USE_CUBLAS=ON
 -DTS_USE_OPENMP=ON
 -DTS_USE_SIMD=ON
--DTS_USE_AVX=ON
--DTS_USE_FMA=ON
+-DTS_ON_HASWELL=ON
 -DTS_BUILD_TEST=OFF
 -DTS_BUILD_TOOLS=OFF
 -DCMAKE_BUILD_TYPE=Release
 -DCMAKE_INSTALL_PREFIX=/usr/local
 ```
 
-When compilation target has no instruction-set like `AVX` or `FMA`,
-**MUST** turn corresponding option off.
+> Option `TS_ON_HASWELL` means support `AVX2` and `FMA`.  
+> Option `TS_ON_SANDYBRIDGE` means only support `AVX2` but no `FMA`.  
+> Option `TS_ON_PENTIUM` means only support `SSE2`.  
+
+If want compile all instructions support, switch `TS_DYNAMIC_INSTRUCTION` ON.
+
+~~When compilation target has no instruction-set like `AVX` or `FMA`,
+**MUST** turn corresponding option off.~~
 
 When compilation target is `arm-*`, **PLEASE** set `-DTS_ON_ARM=ON`.
 When compilation target is `arm-v7`, **MUST** set `-DTS_ON_ARMV7=ON`.
