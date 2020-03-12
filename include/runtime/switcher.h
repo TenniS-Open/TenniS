@@ -19,7 +19,8 @@ namespace ts{
         ~SwitchControll() = default;
 
         void auto_switch(const ComputingDevice &device);
-        void bind_context(const ComputingDevice &device);
+        void init_context(const ComputingDevice &device);
+        void bind_context();
 
         bool is_load_dll();
 

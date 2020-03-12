@@ -10,7 +10,8 @@ namespace ts{
         m_handle = LOAD_LIBRARY(dll_name.c_str());
         if(m_handle == nullptr){
             unload();
-            TS_LOG_ERROR << "load dll: " << dll_name << " failed." << eject;
+//            TS_LOG_ERROR << "load dll: " << dll_name << " failed." << eject;
+            return false;
         }
         return true;
     }

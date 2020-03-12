@@ -62,3 +62,10 @@ void ts_plugin_free_device_context(ts_device_context* device){
     TRY_TAIL
 }
 
+void ts_plugin_bind_device_context(ts_device_context* device){
+    TRY_HEAD
+    DeviceContext::Switch(device->pointer.get());
+    TRY_TAIL
+}
+
+

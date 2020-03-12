@@ -43,7 +43,7 @@ namespace ts {
 
             auto switch_controller = bench.switch_controller();
             if(switch_controller->is_load_dll()){
-                switch_controller->bind_context(bench.device().computing_device);
+                switch_controller->bind_context();
             }
         }
 

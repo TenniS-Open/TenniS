@@ -28,6 +28,8 @@ TENNIS_C_API ts_device_context* ts_plugin_initial_device_context(const ts_Device
 
 TENNIS_C_API void ts_plugin_free_device_context(ts_device_context* device);
 
+TENNIS_C_API void ts_plugin_bind_device_context(ts_device_context* device);
+
 #ifdef __cplusplus
 }
 #endif
