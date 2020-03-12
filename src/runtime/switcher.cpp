@@ -120,7 +120,7 @@ namespace ts{
 
                     pPath = strchr (sLine, '/');
 
-                    tmp = strrchr (pPath, '/n');
+                    tmp = strrchr (pPath, '\n');
                     if (tmp) *tmp = 0;
 
                     len = strlen (pPath);
