@@ -20,7 +20,7 @@ const std::string tennis_sse_dll = "tennis_pentium.dll";
 const std::string tennis_avx_fma_dll = "libtennis_haswell.so";
 const std::string tennis_avx_dll = "libtennis_sandy_bridge.so";
 const std::string tennis_sse_dll = "libtennis_pentium.so";
-#elif TS_PLATFORM_OS_MAC
+#elif TS_PLATFORM_OS_MAC || TS_PLATFORM_OS_IOS
 const std::string tennis_avx_fma_dll = "libtennis_haswell.dylib";
 const std::string tennis_avx_dll = "libtennis_sandy_bridge.dylib";
 const std::string tennis_sse_dll = "libtennis_pentium.dylib";
