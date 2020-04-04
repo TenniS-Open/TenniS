@@ -110,7 +110,7 @@ TENNIS_C_API ts_Tensor *ts_intime_resize2d(const ts_Tensor *x, const ts_Tensor *
 /**
  * Return sample2d tensor, out_position = affine * in_position
  * @param x input tensor
- * @param size size tensor like Int[2]
+ * @param size size tensor like Int[2], means {height, width}
  * @param affine affine tensor like Float[3, 3]
  * @param method 0-BILINEAR, 1-BICUBIC, 2-NEAREST, @sa ts_ResizeMethod
  * @param dim first dim of image height and width
@@ -127,7 +127,7 @@ TENNIS_C_API ts_Tensor *ts_intime_affine_sample2d(
 /**
  * Return sample2d tensor, out_position = affine * in_position
  * @param x input tensor
- * @param size size tensor like Int[2]
+ * @param size size tensor like Int[2], means {height, width}
  * @param affine affine tensor like Float[3, 3]
  * @param dim first dim of image height and width
  * @param method 0-BILINEAR, 1-BICUBIC, 2-NEAREST, @sa ts_ResizeMethod
