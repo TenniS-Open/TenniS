@@ -129,10 +129,16 @@ namespace ts {
 
             Size2D expected_output_size = pooling2d_forward_same(input_size, static_padding, ksize, stride);
             Size2D expected_input_size = pooling2d_backward(expected_output_size, static_padding, ksize, stride);
-            dynamic_padding.top = static_padding.top;
-            dynamic_padding.left = static_padding.left;
-            dynamic_padding.bottom = static_padding.bottom + expected_input_size.height - input_size.height;
-            dynamic_padding.right = static_padding.right + expected_input_size.width - input_size.width;
+
+            auto padding_height = (expected_input_size.height - input_size.height);
+            auto padding_width = (expected_input_size.width - input_size.width);
+            auto half_padding_height = padding_height / 2;
+            auto half_padding_width = padding_width / 2;
+
+            dynamic_padding.top = static_padding.top + half_padding_height;
+            dynamic_padding.left = static_padding.left + half_padding_height;
+            dynamic_padding.bottom = static_padding.bottom + (padding_height - half_padding_height);
+            dynamic_padding.right = static_padding.right + (padding_width - half_padding_width);
 
             return dynamic_padding;
         }
