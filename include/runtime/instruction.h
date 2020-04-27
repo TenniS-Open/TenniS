@@ -62,13 +62,13 @@ namespace ts {
     /**
      * \brief push data sagment to stack
      */
-    class TS_DEBUG_API DataSagmentInstruction : public Instruction {
+    class TS_DEBUG_API DataSegmentInstruction : public Instruction {
     public:
-        using self = DataSagmentInstruction;    ///< self class
+        using self = DataSegmentInstruction;    ///< self class
         using shared = std::shared_ptr<self>;  ///< smart pointer
         using supper = Instruction;
 
-        explicit DataSagmentInstruction(int data_index);
+        explicit DataSegmentInstruction(int data_index);
 
         int data_index() const { return m_data_index; }
 

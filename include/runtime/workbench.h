@@ -58,7 +58,7 @@ namespace ts {
 
         void jump_absolute(size_t pointer);
 
-        void push_data_sagment(int data_index);
+        void push_data_segment(int data_index);
 
         // clear all stack
         void clear() { this->m_stack->clear(); }

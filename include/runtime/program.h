@@ -57,7 +57,7 @@ namespace ts {
 
         const ComputingDevice &device() const {  return m_device; }
 
-        Tensor data_sagment(int index) const;
+        Tensor data_segment(int index) const;
 
         size_t length() const;
 
@@ -67,7 +67,7 @@ namespace ts {
 
         void set_operator_param(const std::string &node_name, const std::string &param, const Tensor &value);
 
-        const Stack &data_sagment() const;
+        const Stack &data_segment() const;
 
         const std::vector<std::string> &input_names() const;
 
@@ -81,7 +81,7 @@ namespace ts {
 
         std::vector<Instruction::shared> m_program; // running function, program area
 
-        Stack::shared m_data_sagment;   // save static area
+        Stack::shared m_data_segment;   // save static area
         // map slot, means <tensor'name, tensor's index in stack>
         map<std::string, int> m_map_input_slots;
         map<std::string, int> m_map_output_slots;

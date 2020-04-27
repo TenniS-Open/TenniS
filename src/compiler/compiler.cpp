@@ -157,11 +157,11 @@ namespace ts {
             }
             auto &bubble = node.bubble();
             auto value = bubble.get(name::value);
-            auto data_index = int(block.data_sagment.size());
+            auto data_index = int(block.data_segment.size());
             if (bubble.has(name::device)) {
-                block.data_sagment.push_back(DeviceTensor(value, tensor::to_string(bubble.get(name::device))));
+                block.data_segment.push_back(DeviceTensor(value, tensor::to_string(bubble.get(name::device))));
             } else {
-                block.data_sagment.push_back(DeviceTensor(value));
+                block.data_segment.push_back(DeviceTensor(value));
             }
             map_node_data_sagment_index.insert(std::make_pair(node, data_index));
             return data_index;
@@ -285,7 +285,7 @@ namespace ts {
             // case2-0: use Const
             if (bubble.op() == Bubble::Const) {
                 int data_index = push_data_sagment(node);
-                block.instructions.push_back(std::make_shared<DataSagmentInstruction>(data_index));
+                block.instructions.push_back(std::make_shared<DataSegmentInstruction>(data_index));
                 simulator_pop();
                 continue;
             }

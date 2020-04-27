@@ -63,7 +63,7 @@ inline _simd_int32x4x2 _simd_int32x4x2_set(_simd_int32 a, _simd_int32 b, _simd_i
     return res;
 }
 
-inline void _simd_int32x4x2_store(_simd_int32 *p, _simd_int32x4x2 m) {
+inline void _simd_int32x4x2_store(_simd_int32 *p, const _simd_int32x4x2 &m) {
     _mm_storeu_si128((_simd_int32x4*)p, m.val[0]);
     _mm_storeu_si128((_simd_int32x4*)(p + 4), m.val[1]);
 }
