@@ -29,7 +29,7 @@ namespace ts {
         int nargs = 0;
         int nresults = 0;
         std::vector<Instruction::shared> instructions;
-        std::vector<DeviceTensor> data_sagment;
+        std::vector<DeviceTensor> data_segment;
     };
 
     /**

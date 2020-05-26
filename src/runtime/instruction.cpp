@@ -140,16 +140,16 @@ namespace ts {
         return this->str();
     }
 
-    DataSagmentInstruction::DataSagmentInstruction(int data_index)
+    DataSegmentInstruction::DataSegmentInstruction(int data_index)
         : m_data_index(data_index) {
 
     }
 
-    void DataSagmentInstruction::run(Workbench &workbench) {
-        workbench.push_data_sagment(m_data_index);
+    void DataSegmentInstruction::run(Workbench &workbench) {
+        workbench.push_data_segment(m_data_index);
     }
 
-    std::string DataSagmentInstruction::str() const {
+    std::string DataSegmentInstruction::str() const {
         std::ostringstream oss;
         oss << "<Const: @" << m_data_index << ">";
         return oss.str();

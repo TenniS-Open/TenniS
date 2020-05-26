@@ -169,7 +169,7 @@ namespace ts {
 #ifdef TS_SOLUTION_DIR
 #define TS_LOCAL_FILE ( \
     std::strlen(TS_SOLUTION_DIR) + 1 < std::strlen(__FILE__) \
-    ? ((const char *)(__FILE__ + std::strlen(TS_SOLUTION_DIR) + 1)) \
+    ? ((const char *)(__FILE__) + std::strlen(TS_SOLUTION_DIR) + 1) \
     : ((const char *)(__FILE__)) \
     )
 #else

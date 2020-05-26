@@ -267,9 +267,9 @@ namespace ts {
         return this->input(m_desktop->input_slot(name));
     }
 
-    void Workbench::push_data_sagment(int data_index) {
+    void Workbench::push_data_segment(int data_index) {
         // TODO: deal with data_sagment, in case of thread sharing, waitting testing
-        this->m_stack->push(this->m_env.top().program->data_sagment(data_index));
+        this->m_stack->push(this->m_env.top().program->data_segment(data_index));
     }
 
     Operator::shared Workbench::offline_create(const Bubble &bubble, bool strict) {
@@ -630,7 +630,7 @@ namespace ts {
     const std::string &Workbench::summary() {
         uint64_t shared_memory = 0;
         if (m_desktop) {
-            auto &stack = m_desktop->data_sagment();
+            auto &stack = m_desktop->data_segment();
             auto size = stack.size();
             for (size_t i = 0; i < size; ++i) {
                 auto &tensor = stack[i];

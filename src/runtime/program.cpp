@@ -73,11 +73,11 @@ namespace ts {
 
         // link data sagment
         // TODO: link multi-data-sagment
-        auto data_sagment_base = int(program->m_data_sagment->size());
+        auto data_sagment_base = int(program->m_data_segment->size());
         for (auto &inst : block.instructions) {
-            auto data_sagment_inst = dynamic_cast<DataSagmentInstruction *>(inst.get());
+            auto data_sagment_inst = dynamic_cast<DataSegmentInstruction *>(inst.get());
             if (data_sagment_inst == nullptr) continue;
-            inst = std::make_shared<DataSagmentInstruction>(data_sagment_inst->data_index() + data_sagment_base);
+            inst = std::make_shared<DataSegmentInstruction>(data_sagment_inst->data_index() + data_sagment_base);
         }
 
         ArgParser parser;
@@ -85,12 +85,12 @@ namespace ts {
         parser.parse(options);
         auto do_filter = parser.get("--filter");
 
-        for (auto &data : block.data_sagment) {
+        for (auto &data : block.data_segment) {
             Tensor *value = nullptr;
             if (data.device.empty()) {
-                value = program->m_data_sagment->clone_push(data.tensor);
+                value = program->m_data_segment->clone_push(data.tensor);
             } else {
-                value = program->m_data_sagment->clone_push(data.tensor, data.device);
+                value = program->m_data_segment->clone_push(data.tensor, data.device);
             }
 
             // filter value
@@ -148,7 +148,7 @@ namespace ts {
         // dolly->m_outputs.resize(this->m_outputs.size());
         dolly->m_map_input_slots = this->m_map_input_slots;
         dolly->m_map_output_slots = this->m_map_output_slots;
-        dolly->m_data_sagment = this->m_data_sagment;
+        dolly->m_data_segment = this->m_data_segment;
         dolly->m_input_filters.resize(this->m_input_filters.size(), nullptr);
 
         for (size_t i = 0; i < this->m_input_filters.size(); ++i) {
@@ -181,11 +181,11 @@ namespace ts {
         : m_device(device), m_mutex(mutex) {
         auto memory_device = ComputingMemory::Query(m_device);
 
-        this->m_data_sagment = std::make_shared<Stack>(memory_device, DynamicSyncMemoryController::Make(memory_device, true));
+        this->m_data_segment = std::make_shared<Stack>(memory_device, DynamicSyncMemoryController::Make(memory_device, true));
     }
 
-    Tensor Program::data_sagment(int index) const {
-        return this->m_data_sagment->index(index)->weak();
+    Tensor Program::data_segment(int index) const {
+        return this->m_data_segment->index(index)->weak();
     }
 
     Program::shared Program::input_filter(int slot) const {
@@ -267,8 +267,8 @@ namespace ts {
         return Compile(module, device, "");
     }
 
-    const Stack &Program::data_sagment() const {
-        return *m_data_sagment;
+    const Stack &Program::data_segment() const {
+        return *m_data_segment;
     }
 
     const std::vector<std::string> &Program::input_names() const {
