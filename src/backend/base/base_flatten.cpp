@@ -17,16 +17,18 @@ namespace ts {
 
         void Flatten::init() {
             m_dim = tensor::to_int(get(name::dim));
-            TS_AUTO_CHECK(m_dim >= 0);
+            // TS_AUTO_CHECK(m_dim >= 0);
         }
 
         Shape Flatten::newshape(const Tensor &x) {
-            auto need_size = size_t(m_dim + 1);
+            auto fixed_dim = m_dim;
+            if (fixed_dim < 0) fixed_dim += x.dims();
+            auto need_size = size_t(fixed_dim + 1);
             auto x_size = x.sizes().size();
             if (need_size < x_size) {
                 auto &size = x.sizes();
                 std::vector<int> shape(size.begin(), size.begin() + need_size);
-                shape.back() = std::accumulate(size.begin() + m_dim, size.end(), 1, std::multiplies<int>());
+                shape.back() = std::accumulate(size.begin() + fixed_dim, size.end(), 1, std::multiplies<int>());
                 return std::move(shape);
             } else if (need_size > x_size) {
                 std::vector<int> ones(need_size - x_size, 1);

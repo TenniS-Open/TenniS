@@ -515,10 +515,23 @@ padding_type为black时，超出可计算区域的结果为0。
 - `dim`: `Int` `[Optional] Default=1`
 
 说明：  
-输入 `x` 的 `shape` 为 `[1, 20, 3, 3]`，输出的 `shape` 为 `[1, 180]`。
-在对应 `dim` 位置进行拉伸。
-输入 `x` 的 `shape` 为 `[1, 20, 3, 3]`，`dim = 2`，输出的 `shape` 为 `[1, 20, 9]`。
-输入 `x` 的 `shape` 为 `[2, 3]`，`dim = 2`，输出的 `shape` 为 `[2, 3, 1]`。
+输入 `x` 的 `shape` 为 `[1, 20, 3, 3]`，输出的 `shape` 为 `[1, 180]`。  
+在对应 `dim` 位置进行拉伸。  
+输入 `x` 的 `shape` 为 `[1, 20, 3, 3]`，`dim = 2`，输出的 `shape` 为 `[1, 20, 9]`。  
+输入 `x` 的 `shape` 为 `[2, 3]`，`dim = 2`，输出的 `shape` 为 `[2, 3, 1]`。  
+
+### flatten2d(x) -> y
+Input: `x`: `Tensor`  
+Input: `y`: `Tensor`  
+
+- `dim`: `Int` `[Optional] Default=1`
+
+说明：  
+输入 `x` 的 `shape` 为 `[1, 20, 3, 3]`，输出的 `shape` 为 `[1, 180]`。  
+在对应 `dim` 位置进行拉伸。  
+输入 `x` 的 `shape` 为 `[1, 20, 3, 3]`，`dim = 2`，输出的 `shape` 为 `[20, 9]`。  
+输入 `x` 的 `shape` 为 `[2, 3]`，`dim = 2`，输出的 `shape` 为 `[6, 1]`。  
+输入 `x` 的 `shape` 为 `[2, 3]`，`dim = 0`，输出的 `shape` 为 `[1, 6]`。  
 
 ## to_float(x) -> y
 描述：把输入类型，调整成 `float` 类型。  

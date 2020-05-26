@@ -319,22 +319,54 @@ namespace ts {
         static TensorPrototype flatten(const Node &node, const std::vector<TensorPrototype> &inputs) {
             auto &x = inputs[0];
 
-            if (x.dims() < 1) return x;
-            if (x.dims() < 2) { return {x.dtype(), {x.size(0), 1}}; }
+            auto dim = node->has("dim") ? node->get_int("dim") : 1;
+            if (dim < 0) dim += int32_t(x.dims());
 
-            int32_t prod = 1;
-            for (auto it = x.sizes().begin() + 1; it != x.sizes().end(); ++it) {
-                if (*it < 0) {
-                    prod = -1;
-                    break;
-                }
-                prod *= *it;
+            std::vector<int> y_shape;
+
+            auto need_size = size_t(dim + 1);
+            auto x_size = x.sizes().size();
+            if (need_size < x_size) {
+                auto &size = x.sizes();
+                std::vector<int> shape(size.begin(), size.begin() + need_size);
+                shape.back() = std::accumulate(size.begin() + dim, size.end(), 1, std::multiplies<int>());
+                y_shape = std::move(shape);
+            } else if (need_size > x_size) {
+                std::vector<int> ones(need_size - x_size, 1);
+                auto shape = x.sizes();
+                shape.insert(shape.end(), ones.begin(), ones.end());
+                y_shape = shape.std();
+            } else {
+                y_shape = x.sizes().std();
             }
 
-            return {x.dtype(), {x.size(0), prod}};
+            return {x.dtype(), y_shape};
         }
 
         TS_STATIC_ACTION(ShapeInferer::Register, "flatten", flatten)
+
+        static TensorPrototype flatten2d(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            auto &x = inputs[0];
+
+            auto dim = node->has("dim") ? node->get_int("dim") : 1;
+            if (dim < 0) dim += int32_t(x.dims());
+
+            auto &size = x.sizes();
+            std::vector<int> y_shape;
+
+            if (dim <= 0) {
+                y_shape = {1, std::accumulate(size.begin(), size.end(), 1, std::multiplies<int>())};
+            } else if (dim >= x.dims()) {
+                y_shape = {std::accumulate(size.begin(), size.end(), 1, std::multiplies<int>()), 1};
+            } else {
+                y_shape = {std::accumulate(size.begin(), size.begin() + dim, 1, std::multiplies<int>()),
+                           std::accumulate(size.begin() +  dim, size.end(), 1, std::multiplies<int>())};
+            }
+
+            return {x.dtype(), y_shape};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "flatten2d", flatten2d)
 
         static TensorPrototype inner_prod(const Node &node, const std::vector<TensorPrototype> &inputs) {
             auto &x = inputs[0];
