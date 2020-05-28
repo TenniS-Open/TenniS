@@ -14,6 +14,7 @@
 #include <global/operator_factory.h>
 
 #include "runtime/stack.h"
+#include <numeric>
 
 namespace ts {
     namespace infer_factory {
