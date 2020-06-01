@@ -18,6 +18,10 @@ namespace ts {
     public:
         using self = Translator;
 
+        Translator(const Translator&) = delete;
+
+        Translator &operator=(const Translator&) = delete;
+
         ~Translator();
 
         explicit Translator(const ComputingDevice &device);

@@ -740,6 +740,17 @@ Note:
 `x.shape.dim == scale.dim`
 
 
+### sample2d_like(x..device, y..device) -> y..device
+Description: call resize2d(x, y.shape) inside.  
+input: `x`: `Tensor`  
+input: `y`: `Tensor`  
+
+Attr:  
+- `type`: `Enum[linear=0, cubic=1, nearest=2, hard=3] Default hard`
+Note:  
+Resize x to y's shape, y must have no more the 2 different dim to x. 
+
+
 ### chunk(x..device) -> y..device
 
 描述：concat的逆操作
@@ -1302,6 +1313,18 @@ call slice inside
 
 ### slice_v3(x..device, starts..host, ends..host[, axes..host[, steps..host]]) -> y..device
 See onnx.Slice
+
+### ceil(x..device) -> y..device
+y = ceil(x)
+
+### _transpose_v2(x..device, permute..host) -> y.device
+描述：对输入的 Tensor 进行维度转换，输出转换后的图像  
+别名：`permute`  
+输入：`x`: `Tensor` 要转换的数据  
+输出：`y`: `Tensor` 转换后的数据  
+参数：   
+- `permute`: `IntArray` `[Optional]` 数组的长度，要和 `a` 的维度一致。输入的第 `i` 个维度就是 `permute[i]` 的维度。
+如果，没有设置该参数，则相当于普通矩阵转置。
 
 ## 附录
 

@@ -44,6 +44,10 @@ namespace ts {
             translated_inputs.emplace_back(translated_input);
         }
 
+        if (translated_node == node) {
+            translated_node = bubble::bubble(node.bubble());
+        }
+
         ready_map.insert(std::make_pair(node, translated_node));
 
         Node::Link(translated_node, translated_inputs);
