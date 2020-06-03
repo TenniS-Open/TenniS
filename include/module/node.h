@@ -47,7 +47,15 @@ namespace ts {
                 m_depends = node_depends;
             }
 
-            const std::set<self*> &depends() const { return m_depends; }
+            bool depends_on(const shared &node) const {
+                return m_depends.find(node.get()) != m_depends.end();
+            }
+
+            bool depends_on(const self *node) const {
+                return m_depends.find(node) != m_depends.end();
+            }
+
+            const std::set<self *> &depends() const { return m_depends; }
 
             const std::vector<shared> &inputs() const { return m_inputs; }
 
@@ -101,6 +109,10 @@ namespace ts {
 
             Node &operator=(self &&) = default;
 
+            explicit Node(LinkedBubble::shared raw) : m_raw(std::move(raw)) {}
+
+            explicit Node(LinkedBubble *raw) : m_raw(raw, [](const LinkedBubble *) {}) {}
+
             void link(const std::vector<Node> &inputs) {
                 LinkedBubble::vector raw_inputs;
                 raw_inputs.reserve(inputs.size());
@@ -108,6 +120,28 @@ namespace ts {
                     raw_inputs.emplace_back(i.m_raw);
                 }
                 m_raw->link(raw_inputs);
+            }
+
+            bool depends_on(const Node &node) const {
+                return m_raw->depends_on(node.m_raw);
+            }
+
+            /**
+             * Got depends node, this is borrowed structure
+             * @return
+             */
+            std::vector<Node> depends() const {
+                auto &raw_depends = m_raw->depends();
+                return std::vector<Node>(raw_depends.begin(), raw_depends.end());
+            }
+
+            /**
+             * Got depends node, this is borrowed structure
+             * @return
+             */
+            std::set<Node> depends_set() const {
+                auto &raw_depends = m_raw->depends();
+                return std::set<Node>(raw_depends.begin(), raw_depends.end());
             }
 
             static void Link(Node &node, const std::vector<Node> &inputs) {
@@ -120,10 +154,7 @@ namespace ts {
 
             std::vector<Node> inputs() const {
                 auto &raw_vector = m_raw->inputs();
-                std::vector<Node> out_vector;
-                out_vector.reserve(raw_vector.size());
-                for (auto &node : raw_vector) out_vector.emplace_back(Node(node));
-                return std::move(out_vector);
+                return std::vector<Node>(raw_vector.begin(), raw_vector.end());
             }
 
             Node input(int i) const { return inputs()[i]; }
@@ -168,8 +199,6 @@ namespace ts {
 
         private:
             LinkedBubble::shared m_raw;
-
-            explicit Node(LinkedBubble::shared raw) : m_raw(std::move(raw)) {}
         };
 
         inline bool operator==(const Node &lhs, const Node &rhs) { return lhs.ptr() == rhs.ptr(); }
