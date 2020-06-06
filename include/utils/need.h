@@ -30,6 +30,8 @@ namespace ts {
 
         need &operator=(need &&that) { std::swap(task, that.task); return *this; }
 
+        void release() { task = [](){}; }
+
     private:
         need(const need &that) = delete;
 
