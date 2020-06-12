@@ -134,7 +134,7 @@ score_threshold:   Float A float representing the threshold for deciding when to
 mode: String Default["xyxy"] or ["xywh"]
 
 
-topkv2(x..device) -> values..device, indices..device
+topkv2(x..device [, number..host]) -> values..device, indices..device
 描述：返回 x 中最后一个维度中的前nums个最大的数，并且返回它们所在位置的索引
 输入：
 x: Tensor 输入数据
@@ -145,4 +145,5 @@ indices: IntTensor, 数据维度同values
 参数：
 number: Int 设置每行要返回的数据个数
 sorted: Int 是否做排序,0：不要排序，1：需要排序,当前输出数据都是排序的
+
 

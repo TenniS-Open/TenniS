@@ -17,7 +17,7 @@
 
 #if TS_PLATFORM_OS_ANDROID
 #include "android/log.h"
-#define ANDROID_LOG_TAG "TensorStack"
+#define ANDROID_LOG_TAG "TenniS"
 #define ANDROID_LOG(LEVEL, ...) __android_log_print(LEVEL,          ANDROID_LOG_TAG, __VA_ARGS__)
 #define ANDROID_LOGV(...) __android_log_print(ANDROID_LOG_VERBOSE,  ANDROID_LOG_TAG, __VA_ARGS__)
 #define ANDROID_LOGI(...) __android_log_print(ANDROID_LOG_INFO,     ANDROID_LOG_TAG, __VA_ARGS__)

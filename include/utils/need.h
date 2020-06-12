@@ -24,11 +24,21 @@ namespace ts {
             task = void_bind(func, std::forward<Args>(args)...);
         }
 
-        ~need() { task(); }
+        ~need() { if (task) task(); }
 
         need(need &&that) { std::swap(task, that.task); }
 
-        need &operator=(need &&that) { std::swap(task, that.task); return *this; }
+        need &operator=(need &&that) {
+            std::swap(task, that.task);
+            return *this;
+        }
+
+        void release() { task = nullptr; }
+
+        void emit() {
+            if (task) task();
+            task = nullptr;
+        }
 
     private:
         need(const need &that) = delete;
