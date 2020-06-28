@@ -1,6 +1,6 @@
 # TenniS
 
-<div align=center>
+<div align=left>
 <img src="./logo/TenniS-H.png" width="640" height="213" />
 </div>
 
