@@ -1,7 +1,7 @@
 # TenniS
 
-<div align=left>
-<img src="./logo/TenniS-H.png" width="640" height="213" />
+<div align="divcss5">
+<img src="./logo/TenniS-H.png" width="640"/>
 </div>
 
 > TenniS: Tensor based Edge Neural Network Inference System 
