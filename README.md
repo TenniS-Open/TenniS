@@ -1,6 +1,10 @@
 # TenniS
 
-TenniS: Tensor based Edge Neural Network Inference System 
+<div align="divcss5">
+<img src="./logo/TenniS-H.png" width="640"/>
+</div>
+
+> TenniS: Tensor based Edge Neural Network Inference System 
 
 ## Compilation
 

@@ -104,7 +104,7 @@ namespace ts {
         std::set<std::pair<std::string, std::string>> set_name;
         for (auto &name : map_name_creator) {
             auto &pair = name.first;
-            set_name.insert(std::make_pair(pair.first.std(), pair.first.std()));
+            set_name.insert(std::make_pair(pair.first.std(), pair.second));
         }
         return set_name;
     }
