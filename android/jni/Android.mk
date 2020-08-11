@@ -1,16 +1,10 @@
 LOCAL_PATH := $(call my-dir)/..
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := rknn-prebuilt
-LOCAL_SRC_FILES := $(LOCAL_PATH)/../thirdparty/rknn/jniLibs/$(TARGET_ARCH_ABI)/librknn_api.so
-LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)/../thirdparty/rknn/include/
-include $(PREBUILT_SHARED_LIBRARY)
-
-include $(CLEAR_VARS)
 
 LOCAL_MODULE := tennis
 
-LOCAL_CFLAGS += -DTS_USE_RKNN=ON
+#LOCAL_CFLAGS += -DTS_USE_RKNN=ON
 #LOCAL_CFLAGS += -DTS_ON_ARMV7=ON
 LOCAL_CFLAGS += -DTS_ON_ARM=ON
 LOCAL_CFLAGS += -DTS_USE_OPENMP=ON
@@ -24,7 +18,7 @@ LOCAL_CFLAGS += -DTS_USE_SIMD=ON
 	
 MY_CPP_LIST := $(wildcard $(LOCAL_PATH)/../src/api/*.cpp)
 
-MY_CPP_LIST += $(wildcard $(LOCAL_PATH)/../src/kernels/rknn/*.cpp)
+#MY_CPP_LIST += $(wildcard $(LOCAL_PATH)/../src/kernels/rknn/*.cpp)
 
 MY_CPP_LIST += $(wildcard $(LOCAL_PATH)/../src/backend/*.cpp)
 MY_CPP_LIST += $(wildcard $(LOCAL_PATH)/../src/backend/base/*.cpp)
@@ -56,6 +50,8 @@ MY_CPP_LIST += $(wildcard $(LOCAL_PATH)/../src/kernels/common/*.cpp)
 MY_CPP_LIST += $(wildcard $(LOCAL_PATH)/../src/kernels/common/third/dragon/*.cpp)
 
 MY_CPP_LIST += $(wildcard $(LOCAL_PATH)/../src/kernels/cpu/*.cpp)
+MY_CPP_LIST += $(wildcard $(LOCAL_PATH)/../src/kernels/cpu/arm/*.cpp)
+MY_CPP_LIST += $(wildcard $(LOCAL_PATH)/../src/kernels/cpu/caffe/*.cpp)
 MY_CPP_LIST += $(wildcard $(LOCAL_PATH)/../src/kernels/cpu/dcn/*.cpp)
 MY_CPP_LIST += $(wildcard $(LOCAL_PATH)/../src/kernels/cpu/dragon/*.cpp)
 MY_CPP_LIST += $(wildcard $(LOCAL_PATH)/../src/kernels/cpu/quantized/*.cpp)
@@ -85,7 +81,5 @@ LOCAL_LDLIBS += -llog -fopenmp
 LOCAL_CFLAGS += -mfpu=neon-vfpv4 -funsafe-math-optimizations -ftree-vectorize  -ffast-math -fopenmp
 
 LOCAL_SHORT_COMMANDS := true
-
-LOCAL_SHARED_LIBRARIES = rknn-prebuilt
 	
 include $(BUILD_SHARED_LIBRARY)
