@@ -217,6 +217,13 @@ namespace ts {
                 return std::vector<int32_t>(data, data + count);
             }
 
+            std::vector<int64_t> to_long(const Tensor &value) {
+                auto count = value.count();
+                auto t = cast(INT64, value);
+                auto data = t.data<int64_t>();
+                return std::vector<int64_t>(data, data + count);
+            }
+
             std::vector<uint32_t> to_uint(const Tensor &value) {
                 auto count = value.count();
                 auto t = cast(UINT32, value);

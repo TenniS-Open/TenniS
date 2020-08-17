@@ -301,6 +301,24 @@ namespace ts {
             return 1;
         }
 
+        static std::vector<int32_t> tensor_long_to_int(const Tensor &tensor) {
+            auto long_array = tensor::array::to_long(tensor);
+            auto int_array = std::vector<int32_t>(long_array.size());
+
+            for (size_t i = 0; i < int_array.size(); ++i) {
+                auto v = long_array[i];
+                if (v > 0 && v > INT_MAX) {
+                    int_array[i] = INT_MAX;
+                } else if (v < 0 && v < INT_MIN) {
+                    int_array[i] = INT_MIN;
+                } else {
+                    int_array[i] = int32_t(v);
+                }
+            }
+
+            return int_array;
+        }
+
         void SliceV3::load_params(const Stack &stack) {
             // set m_begin, m_end, m_stride
             // set every mask
@@ -315,15 +333,15 @@ namespace ts {
             auto &x = stack[0];
             auto dims = int32_t(x.dims());
 
-            auto starts = tensor::array::to_int(stack[1]);
-            auto ends = tensor::array::to_int(stack[2]);
+            auto starts = tensor_long_to_int(stack[1]);
+            auto ends = tensor_long_to_int(stack[2]);
 
             auto slice_size = int32_t(starts.size());
             TS_AUTO_CHECK(slice_size > 0);
 
             Shape axes;
             if (stack.size() > 3) {
-                axes = tensor::array::to_int(stack[3]);
+                axes = tensor_long_to_int(stack[3]);
             } else {
                 axes = Shape(starts.size());
                 for (int32_t i = 0; i < slice_size; ++i) {
@@ -334,7 +352,7 @@ namespace ts {
 
             Shape steps;
             if (stack.size() > 4) {
-                steps = tensor::array::to_int(stack[4]);
+                steps = tensor_long_to_int(stack[4]);
             } else {
                 steps = Shape(slice_size, 1);
             }

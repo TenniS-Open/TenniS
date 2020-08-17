@@ -10,6 +10,8 @@
 #include <functional>
 #include <kernels/cpu/pooling_algorithm.h>
 
+#include "utils/platform.h"
+
 namespace ts {
     namespace cpu {
 
@@ -29,7 +31,10 @@ namespace ts {
               (padding.right == 0 || padding.right == 1)){
                 if (pooling_type == Pooling2DType::MAX) {
                     if (ksize.width == 3 && ksize.height == 3) {
+#if ! TS_PLATFORM_OS_IOS
+                        // TODO: k3s2 failed in IOS, disable for now.
                         pooling_kernel = PoolingAlgorithm<T>::max_pooling_k3s2;
+#endif
                     }
                     else if (ksize.width == 2 && ksize.height == 2) {
                         pooling_kernel = PoolingAlgorithm<T>::max_pooling_k2s2;
