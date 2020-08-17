@@ -91,6 +91,8 @@ namespace ts {
         namespace array {
             TS_DEBUG_API std::vector<int32_t> to_int(const Tensor &value);
 
+            TS_DEBUG_API std::vector<int64_t> to_long(const Tensor &value);
+
             TS_DEBUG_API std::vector<uint32_t> to_uint(const Tensor &value);
 
             TS_DEBUG_API std::vector<float> to_float(const Tensor &value);
