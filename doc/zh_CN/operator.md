@@ -1231,22 +1231,22 @@ for dim in 2...N
 - `epsilon` `Float` `[Optional] Default=1e-5f`
 
 说明：  
-对于每个`x_i \in x[i,:,:,:]`进行如下操作：
+对于每个 `x_i \in x[i,:,:,:]` 进行如下操作：
 
 ```
 x_i = (x_i - mean(x_i)) / (std_dev(x_i) + epsilon)
 ```
 
 ### sqrt (x..device) -> y..device
-描述：计算 x 元素的平方根
-输入：`x`: `Tensor` 输入数据
-输出：`y`: `Tensor`
+描述：计算 x 元素的平方根  
+输入：`x`: `Tensor` 输入数据  
+输出：`y`: `Tensor`  
 
 
 ### tile (x..device) -> y..device
-描述：与numpy.tile等价
-输入: `x`: `Tensor`
-输出：`y`: `Tensor`
+描述：与 numpy.tile 等价  
+输入: `x`: `Tensor`  
+输出：`y`: `Tensor`  
 
 参数：  
 - `repeats` `IntArray` 长度和`x.shape`相同。
@@ -1263,22 +1263,22 @@ x_i = (x_i - mean(x_i)) / (std_dev(x_i) + epsilon)
 描述: 见 [Dragon proposal](http://dragon.seetatech.com/api/python/contents/operators/contrib/rcnn.html)  
 输入: `list[scores]`: `List[Tensor]` 张量列表, 长度与`strides`一致  
 输入: `prob`: `DTypeTensor`  
-输入: `bbox`: `DTypeTensor`  
-输入: `im_info`: `Float[3]`  
+输入:  `bbox`: `DTypeTensor`  
+输入:  `im_info`: `Float[3]`  
 输出: `y`: `FloatTensor`
 
 参数:  
 ~~`inputs` (sequence of Tensor) 输入.~~
-- `strides` `IntArray`   `anchors`的`strides`.
-- `ratios` `FloatArray`   `anchors`的 `ratios`.
-- `scales` `FloatArray`  `anchors`的 `scales`.
-- `pre_nms_top_n` `Int` `[Optional] Default=6000` `nms`操作前`anchor`的数量
-- `post_nms_top_n` `Int` `[Optional] Default=300` `nms`操作后`anchor`的数量
-- `nms_thresh``Float` `[Optional] Default=0.7` `nms`的阈值.
-- `min_size` `Int` `[Optional] Default=16` `anchors`的最小尺寸.
-- `min_level``Int` `[Optional] Default=2`   FPN 金字塔的顶层.
-- `max_level``Int` `[Optional] Default=5`   FPN金字塔的底层.
-- `canonical_scale` `Int` `[Optional] Default=224` 映射策略的基准缩放尺度 The baseline scale of mapping policy.
+- `strides` `IntArray`   `anchors` 的 `strides`.
+- `ratios` `FloatArray`   `anchors` 的 `ratios`.
+- `scales` `FloatArray`  `anchors` 的 `scales`.
+- `pre_nms_top_n` `Int` `[Optional] Default=6000` `nms` 操作前 `anchor` 的数量
+- `post_nms_top_n` `Int` `[Optional] Default=300` `nms` 操作后 `anchor` 的数量
+- `nms_thresh` `Float` `[Optional] Default=0.7` `nms` 的阈值.
+- `min_size` `Int` `[Optional] Default=16` `anchors` 的最小尺寸.
+- `min_level` `Int` `[Optional] Default=2`   FPN 金字塔的顶层.
+- `max_level` `Int` `[Optional] Default=5`   FPN 金字塔的底层.
+- `canonical_scale` `Int` `[Optional] Default=224`映射策略的基准缩放尺度 The baseline scale of mapping policy.
 - `canonical_level` `Int` `[Optional] Default=4` 规范缩放尺度的经典级别 Heuristic level of the canonical scale.
 
 
@@ -1301,15 +1301,15 @@ x_i = (x_i - mean(x_i)) / (std_dev(x_i) + epsilon)
 
 ### _dragon_pooling2d_padding(x, ksize, stride) -> dynamic_padding
 描述：  
-输入: `x` `Tensor4D` 预计要进行 padding 的数据
+输入: `x` `Tensor4D` 预计要进行 padding 的数据  
 输入: `ksize` `Int[4]`
 在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
-在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。  
 输入: `stride` `Int[4]`
 在 `NCHW` 四个维度分别表示 `[batch, channels, height, width]`,
-在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。
+在 `NHWC` 四个维度分别表示 `[batch, height, width, channels]`。  
 - `dynamic_padding`  `Int[4, 2]`输出的padding形式，为4x2维  
-- `ceil` `Bool`计算输出大小时，是否使用ceil
+- `ceil` `Bool`计算输出大小时，是否使用ceil  
 
 参数：  
 - `auto_pad` `String` 为 `SAME_UPPER`、`SAME_LOWER`、`VALID`  
@@ -1319,14 +1319,14 @@ x_i = (x_i - mean(x_i)) / (std_dev(x_i) + epsilon)
 
 
 ### slice_v2(x..device, begin..host, size..host) -> y..device
-描述:  得到`x[begin:begin+size)`的`slice`
+描述:  得到 `x[begin:begin+size)` 的 `slice`
 输入:` x`: `Tensor`  
 输入: `begin`: `IntArray`  
 输入: `size`:` IntArray`  
 输出: `y`: `Tensor`  
 
 注意:  
-内部调用`slice`
+内部调用`slice`  
 ~~if len(begin) or len(size) < x.dims, expand with (0, -1) as (begin, size).
 `-1` means max size can be sliced.~~
 
