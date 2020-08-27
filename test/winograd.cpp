@@ -81,7 +81,8 @@ void test_speed(const std::string& device, int times, const Shape& input_shape,
     std::cout << "====device: " << device << " comment: " << comment << "====" << std::endl;
     bench->profiler().log(std::cout);
     auto output_c = bench->output("conv2d_op");
-    std::vector<int> vec = output_c.sizes();
+//    std::vector<int> vec = output_c.sizes();
+    std::vector<int> vec = (const std::vector<int> &) output_c.sizes();
     std::cout << "output size: ";
     for (int i = 0; i<vec.size(); i++)
         std::cout << vec[i] << ",";

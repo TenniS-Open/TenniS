@@ -11,6 +11,8 @@
 #include <numeric>
 #include <cstdint>
 
+#include <climits>
+
 namespace ts {
     namespace base {
         SliceV3::SliceV3() {

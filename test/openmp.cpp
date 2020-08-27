@@ -14,16 +14,16 @@
 #if TS_PLATFORM_OS_MAC || TS_PLATFORM_OS_IOS
 #include <Accelerate/Accelerate.h>
 #elif TS_PLATFORM_OS_LINUX
-#include <openblas/cblas.h>
+//#include <openblas/cblas.h>
 #elif TS_PLATFORM_OS_WINDOWS && TS_PLATFORM_CC_MINGW
 #include <OpenBLAS/cblas.h>
 #else
 #include <cblas.h>
 #endif
 
-float dot0(const float *x, const float *y, int N) {
-    return cblas_sdot(N, x, 1, y, 1);
-}
+//float dot0(const float *x, const float *y, int N) {
+//    return cblas_sdot(N, x, 1, y, 1);
+//}
 
 float dot1(const float *x, const float *y, int N) {
     float sum = 0;
@@ -198,7 +198,7 @@ int main()
         b[i] = rand() % 400 / 100.0 - 2;
     }
 
-    print_avg_time("BLAS        ", times, dot0, a, b, N);
+//    print_avg_time("BLAS        ", times, dot0, a, b, N);
     print_avg_time("Pure CPU    ", times, dot1, a, b, N);
     print_avg_time("Pure CPU(4) ", times, dot2, a, b, N);
     print_avg_time("Threads CPU ", times, dot3, a, b, N);

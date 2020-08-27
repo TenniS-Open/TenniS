@@ -13,7 +13,8 @@ int main() {
     ts::setup();
 
     ts::Tensor str = ts::tensor::from("ABC");
-    ts::Bubble bubble("str:op", "str:name", 3);
+//    ts::Bubble bubble("str:op", "str:name", 3);
+    ts::Bubble bubble("str:op", "str:name", 1);
     bubble.set("str:param", str);
 
     ts::FileStreamWriter out("test.txt");
