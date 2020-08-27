@@ -7,7 +7,7 @@ set "PLATFORM_TARGET=x86"
 
 set "ORZ_HOME=D:\3rd\local"
 
-set "INSTALL_DIR=../bin"
+set "INSTALL_DIR=%~dp0/../../build"
 
 call "%VS140COMNTOOLS%..\..\VC\vcvarsall.bat" %PLATFORM%
 
