@@ -4,21 +4,16 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := tennis
 
-#LOCAL_CFLAGS += -DTS_USE_RKNN=ON
-#LOCAL_CFLAGS += -DTS_ON_ARMV7=ON
 LOCAL_CFLAGS += -DTS_ON_ARM=ON
 LOCAL_CFLAGS += -DTS_USE_OPENMP=ON
 LOCAL_CFLAGS += -DTS_USE_NEON=ON
 LOCAL_CFLAGS += -DTS_USE_SIMD=ON
 
-#LOCAL_CFLAGS += -DTS_USE_CBLAS=ON
-#LOCAL_CFLAGS += -DTS_USE_DEBUG_API=ON
-#LOCAL_CFLAGS += -DTS_USE_HOOK=ON
+ifeq ($(TARGET_ARCH_ABI), armeabi-v7a)
+	LOCAL_CFLAGS += -DTS_ON_ARMV7=ON
+endif
 
-	
 MY_CPP_LIST := $(wildcard $(LOCAL_PATH)/../src/api/*.cpp)
-
-#MY_CPP_LIST += $(wildcard $(LOCAL_PATH)/../src/kernels/rknn/*.cpp)
 
 MY_CPP_LIST += $(wildcard $(LOCAL_PATH)/../src/backend/*.cpp)
 MY_CPP_LIST += $(wildcard $(LOCAL_PATH)/../src/backend/base/*.cpp)
@@ -45,7 +40,6 @@ MY_CPP_LIST += $(wildcard $(LOCAL_PATH)/../src/frontend/*.cpp)
 
 MY_CPP_LIST += $(wildcard $(LOCAL_PATH)/../src/global/*.cpp)
 
-#MY_CPP_LIST += $(wildcard $(LOCAL_PATH)/../src/kernels/cblas/*.cpp)
 MY_CPP_LIST += $(wildcard $(LOCAL_PATH)/../src/kernels/common/*.cpp)
 MY_CPP_LIST += $(wildcard $(LOCAL_PATH)/../src/kernels/common/third/dragon/*.cpp)
 
@@ -74,7 +68,7 @@ LOCAL_SRC_FILES := $(MY_CPP_LIST:$(LOCAL_PATH)/%=%)
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/../include/
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/../src/
 
-LOCAL_LDFLAGS += -L$(LOCAL_PATH)/lib -fuse-ld=bfd.exe
+LOCAL_LDFLAGS += -L$(LOCAL_PATH)/lib
 
 LOCAL_LDLIBS += -llog -fopenmp
 

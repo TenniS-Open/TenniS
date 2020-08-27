@@ -8,7 +8,7 @@
 
 ## Compilation
 
-The default installation DIR is ` ${PROJECT_BINARY_DIR}/build`,
+The default installation DIR is ` ${PROJECT_BINARY_DIR}/../build`,
 add `-DCMAKE_INSTALL_PREFIX` to change installation DIR.
 
 1. Do `cmake` or `CPU`:
