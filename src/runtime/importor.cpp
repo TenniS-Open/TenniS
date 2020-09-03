@@ -27,7 +27,7 @@ namespace ts{
         if(m_handle == nullptr){
             TS_LOG_ERROR << "handle is nullptr,please call load() first." << eject;
         }
-        return GET_FUC_ADDRESS(m_handle, fuc_name.c_str());
+        return (void*)GET_FUC_ADDRESS(m_handle, fuc_name.c_str());
     }
 }
 
