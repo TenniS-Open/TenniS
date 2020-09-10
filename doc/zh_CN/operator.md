@@ -1337,6 +1337,9 @@ x_i = (x_i - mean(x_i)) / (std_dev(x_i) + epsilon)
 ### ceil(x..device) -> y..device
 描述: `y = ceil(x)`
 
+### floor(x..device) -> y..device
+描述: `y = floor(x)`
+
 ### _transpose_v2(x..device, permute..host) -> y.device
 描述：对输入的 Tensor 进行维度转换，输出转换后的图像  
 别名：`permute`  
