@@ -1,6 +1,3 @@
-//
-// Created by sen on 8/26/20.
-//
 #include <kernels/cpu/softplus.h>
 #include "backend/name.h"
 #include "global/operator_factory.h"

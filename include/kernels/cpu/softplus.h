@@ -1,7 +1,3 @@
-//
-// Created by sen on 8/26/20.
-//
-
 #ifndef TENNIS_SOFTPLUS_H
 #define TENNIS_SOFTPLUS_H
 
