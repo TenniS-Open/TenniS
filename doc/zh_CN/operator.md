@@ -436,6 +436,17 @@ y_i = exp(t_i) / \sum{exp(t_i)}
 ```
 
 
+### softplus(x..device) -> y..device
+描述：对Tensor进行softmax操作。
+输入: `x`: `Tensor`  
+输出: `y`: `Tensor` `$y.shape == $x.shape`  
+
+说明：  
+```
+y_i = ln(exp(x_i) + 1)
+```
+
+
 ### concat(x..device) -> y..device
 描述：链接算符，用于对数据的拼接。 
 输入: `x`: `List<Tensor>` 要进行拼接的数据  
@@ -447,6 +458,32 @@ y_i = exp(t_i) / \sum{exp(t_i)}
 说明：  
 要把输入的元素进行拼接，在`dim`维度上，除了`dim`维度，其他输入数据的维度必须相同。
 输出的`dim`维度是输入对应`dim`维度的和。
+
+
+### constant_of_shape(x..device) -> y..device
+描述：生成具有给定`value`的值与类型和输入`x`形状的`Tensor`。  
+输入: `x`: `Tensor`  
+输出: `y`: `Tensor` `$y.shape == $x.shape`
+
+参数：
+- `value`: `Any type` `[Optional] Default type=float, value=0`
+
+说明：  
+输出`Tensor`与`x`形状相同。如果指定了参数`value`，则从`value`获取输出`Tensor`的值和数据类型。
+如果未指定属性`value`，则输出`y`的值默认为0，数据类型默认为`float`。
+
+
+### where(cond..device, lhs..device, rhs..device) -> y..device
+描述: 根据`cond`从`lhs`或`rhs`返回元素(具有Numpy风格的`broadcast`支持)。   
+输入: `cond`: `Tensor`  
+输入: `lhs`: `Tensor`  
+输入: `rhs`: `Tensor`  
+输出: `y`: `Tensor`  
+
+说明：  
+当`cond`为`True`时，返回`lhs`，否则返回`rhs`。  
+`lhs`与`rhs`类型须相同，此类型即为`y`的类型。
+输出`y`的形状由`cond`、`lhs`和`rhs`进行Numpy风格`broadcast`后决定。  
 
 
 ### stack(x..device) -> y..device
@@ -652,7 +689,7 @@ This operator supports unidirectional broadcasting
 to tensor A * B); 
 ```
 
-### lrn (x..device) -> y..device = delete
+### lrn(x..device) -> y..device = delete
 
 参数：
 - `dim` `Int` 要进行LRN的维度
