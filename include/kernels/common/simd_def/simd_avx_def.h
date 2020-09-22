@@ -88,6 +88,10 @@ inline _simd_f32x4 _simd_f32x4_div(_simd_f32x4 lhs, _simd_f32x4 rhs) {
     return _mm_div_ps(lhs, rhs);
 }
 
+inline _simd_f32x4 _simd_f32x4_cmpeq(_simd_f32x4 lhs, _simd_f32x4 rhs) {
+    return _mm_cmpeq_ps(lhs, rhs);
+}
+
 inline _simd_f32x4 _simd_f32x4_max(_simd_f32x4 lhs, _simd_f32x4 rhs) {
     return _mm_max_ps(lhs, rhs);
 }
