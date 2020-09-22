@@ -474,7 +474,7 @@ y_i = ln(exp(x_i) + 1)
 
 
 ### where(cond..device, lhs..device, rhs..device) -> y..device
-描述: 根据`cond`从`lhs`或`rhs`返回元素(具有Numpy风格的`broadcast`支持)。   
+描述: 根据`cond`从`lhs`或`rhs`返回元素。支持`Broadcast`。   
 输入: `cond`: `Tensor`  
 输入: `lhs`: `Tensor`  
 输入: `rhs`: `Tensor`  
@@ -483,7 +483,17 @@ y_i = ln(exp(x_i) + 1)
 说明：  
 当`cond`为`True`时，返回`lhs`，否则返回`rhs`。  
 `lhs`与`rhs`类型须相同，此类型即为`y`的类型。
-输出`y`的形状由`cond`、`lhs`和`rhs`进行Numpy风格`broadcast`后决定。  
+输出`y`的形状由`cond`、`lhs`和`rhs`进行广播后决定。关于广播的含义见附1。 
+
+
+### equal(a..device, b..device) -> y..device
+描述: 通过对输入`a`和`b`进行元素相等的逻辑运算。  
+输入: `a`: `Tensor`  
+输入: `b`: `Tensor`  
+输出: `y`: `Tensor`  
+
+说明:  
+输出`y`的类型为`bool`。此算子支持广播，关于广播的含义见附1。
 
 
 ### stack(x..device) -> y..device
