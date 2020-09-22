@@ -72,7 +72,7 @@ namespace ts {
 
 #ifdef UPCAST_DTYPE
     DTYPE upcast_dtype(Tensor &lhs, Tensor &rhs) {
-        // naive table
+        // diagonal element represents the type in dtype.h
         int lookup_table[15][15]{
                 {1	,1	,3	,3	,5	,5	,7	,7	,9	,10	,11	,1	,3	,5	,1},
                 {1	,2	,3	,3	,5	,6	,7	,7	,9	,10	,11	,1	,3	,5	,2},
@@ -155,7 +155,6 @@ namespace ts {
 
 #ifdef UPCAST_DTYPE
         DTYPE out_dtype = upcast_dtype(lhs, rhs);
-        std::cout << "[" << this->op() << ":" << this->name() << "]" << "element_wise_reduce out dtype: " << out_dtype << std::endl;
         if (lhs.dtype() != out_dtype) {
             lhs = tensor::cast(out_dtype, lhs);
         }

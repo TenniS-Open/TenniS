@@ -142,8 +142,6 @@ int main() {
     auto WIDTH = 608;  // the input of yolov4 is 608x608
     auto DEST = std::max(cvimage.rows, cvimage.cols);
 
-    std::cout << DEST << std::endl;
-
     Workbench bench(device);
     bench.setup_context();
     bench.set_computing_thread_number(4);
