@@ -111,6 +111,10 @@ inline _simd_f32x4 _simd_f32x4_div(_simd_f32x4 lhs, _simd_f32x4 rhs) {
     return _mm_div_ps(lhs, rhs);
 }
 
+inline _simd_f32x4 _simd_f32x4_cmpeq(_simd_f32x4 lhs, _simd_f32x4 rhs) {
+    return _mm_cmpeq_ps(lhs, rhs);
+}
+
 inline _simd_f32x4 _simd_f32x4_max(_simd_f32x4 lhs, _simd_f32x4 rhs) {
     return _mm_max_ps(lhs, rhs);
 }
@@ -210,6 +214,13 @@ inline _simd_f32x4x2 _simd_f32x4x2_div(_simd_f32x4x2 lhs, _simd_f32x4x2 rhs) {
     _simd_f32x4x2 res;
     res.val[0] = _mm_div_ps(lhs.val[0], rhs.val[0]);
     res.val[1] = _mm_div_ps(lhs.val[1], rhs.val[1]);
+    return res;
+}
+
+inline _simd_f32x4x2 _simd_f32x4x2_cmpeq(_simd_f32x4x2 lhs, _simd_f32x4x2 rhs) {
+    _simd_f32x4x2 res;
+    res.val[0] = _mm_cmpeq_ps(lhs.val[0], rhs.val[0]);
+    res.val[1] = _mm_cmpeq_ps(lhs.val[1], rhs.val[1]);
     return res;
 }
 

@@ -91,6 +91,11 @@ inline _simd_f32x4 _simd_f32x4_div(_simd_f32x4 lhs, _simd_f32x4 rhs) {
     return { lhs[0] / rhs[0], lhs[1] / rhs[1], lhs[2] / rhs[2], lhs[3] / rhs[3] };
 }
 
+inline _simd_f32x4 _simd_f32x4_cmpeq(_simd_f32x4 lhs, _simd_f32x4 rhs) {
+
+    return { static_cast<_simd_f32>(lhs[0] == rhs[0]), static_cast<_simd_f32>(lhs[1] == rhs[1]), static_cast<_simd_f32>(lhs[2] == rhs[2]), static_cast<_simd_f32>(lhs[3] == rhs[3]) };
+}
+
 inline _simd_f32x4 _simd_f32x4_max(_simd_f32x4 lhs, _simd_f32x4 rhs) {
     return{ std::max(lhs[0],rhs[0]), std::max(lhs[1],rhs[1]), std::max(lhs[2],rhs[2]), std::max(lhs[3],rhs[3]) };
 }
@@ -184,6 +189,10 @@ inline _simd_f32x4x2 _simd_f32x4x2_mul(_simd_f32x4x2 lhs, _simd_f32x4x2 rhs) {
 
 inline _simd_f32x4x2 _simd_f32x4x2_div(_simd_f32x4x2 lhs, _simd_f32x4x2 rhs) {
     return { lhs[0] / rhs[0], lhs[1] / rhs[1], lhs[2] / rhs[2], lhs[3] / rhs[3], lhs[4] / rhs[4], lhs[5] / rhs[5], lhs[6] / rhs[6], lhs[7] / rhs[7]};
+}
+
+inline _simd_f32x4x2 _simd_f32x4x2_cmpeq(_simd_f32x4x2 lhs, _simd_f32x4x2 rhs) {
+    return { static_cast<float_t>(lhs[0] == rhs[0]), static_cast<float_t>(lhs[1] == rhs[1]), static_cast<float_t>(lhs[2] == rhs[2]), static_cast<float_t>(lhs[3] == rhs[3]), static_cast<float_t>(lhs[4] == rhs[4]), static_cast<float_t>(lhs[5] == rhs[5]), static_cast<float_t>(lhs[6] == rhs[6]), static_cast<float_t>(lhs[7] == rhs[7])}
 }
 
 inline _simd_f32x4 _simd_f32x4x2_index(_simd_f32x4x2 src, const int index) {

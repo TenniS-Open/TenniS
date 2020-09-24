@@ -204,6 +204,10 @@ namespace ts {
         return _simd_f32x4x2_div(lhs.value, rhs.value);
     }
 
+    inline simd<float, 8> operator==(const simd<float, 8> &lhs, const simd<float, 8> &rhs) {
+        return _simd_f32x4x2_cmpeq(lhs.value, rhs.value);
+    }
+
     inline simd<float, 8> fmadd(const simd<float, 8> &q0, const simd<float, 8> &q1, const simd<float, 8> &q2) {
         return _simd_f32x4x2_fmadd(q0.value, q1.value, q2.value);
     }

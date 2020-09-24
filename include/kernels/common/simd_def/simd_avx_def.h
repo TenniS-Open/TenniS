@@ -181,6 +181,10 @@ inline _simd_f32x4x2 _simd_f32x4x2_div(_simd_f32x4x2 lhs, _simd_f32x4x2 rhs) {
     return _mm256_div_ps(lhs, rhs);
 }
 
+inline _simd_f32x4x2 _simd_f32x4x2_cmpeq(_simd_f32x4x2 lhs, _simd_f32x4x2 rhs) {
+    return _mm256_cmp_ps(lhs, rhs, 0x10);  // 0x10 means ordered, signaling
+}
+
 inline _simd_f32x4 _simd_f32x4x2_index(_simd_f32x4x2 src, const int index) {
     switch (index)
     {
