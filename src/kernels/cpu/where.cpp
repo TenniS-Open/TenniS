@@ -5,7 +5,7 @@
 namespace ts {
     namespace cpu {
         template<typename T>
-        static inline void reduce_operator(T &x, T cond, T lhs, T rhs) {
+        static inline void reduce_operator(T &x, uint8_t cond, T lhs, T rhs) {
             x = cond ? lhs : rhs;
         }
 
@@ -25,7 +25,7 @@ namespace ts {
             HypeShape rhs_hype(rhs.sizes());
             ShapeIterator out_iterator(out.sizes());
 
-            auto pcond = cond.data<T>();
+            auto pcond = cond.data<uint8_t>();
             auto plhs = lhs.data<T>();
             auto prhs = rhs.data<T>();
             auto pout = out.data<T>();
@@ -42,7 +42,7 @@ namespace ts {
         template<typename T>
         static inline void
         compute_run_same_shape(const Tensor &cond, const Tensor &lhs, const Tensor &rhs, Tensor &out) {
-            auto pcond = cond.data<T>();
+            auto pcond = cond.data<uint8_t>();
             auto plhs = lhs.data<T>();
             auto prhs = rhs.data<T>();
             auto pout = out.data<T>();

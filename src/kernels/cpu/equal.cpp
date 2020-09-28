@@ -2,17 +2,13 @@
 #include "global/operator_factory.h"
 #include <algorithm>
 #include "kernels/common/simd.h"
+#include "core/tensor_builder.h"
 
 namespace ts {
     namespace cpu {
         template<typename T>
-        static inline void reduce_operator(T &x, T lhs, T rhs) {
-            x = lhs == rhs;
-        }
-
-        template<typename T>
-        static inline void reduce_operator(T &x, T y) {
-            x = x == y;
+        static inline void reduce_operator(uint8_t &x, T lhs, T rhs) {
+            x = static_cast<uint8_t>(lhs == rhs);
         }
 
         static inline int to_mod_index(const HypeShape &hype, const Shape &coordinate) {
@@ -32,7 +28,7 @@ namespace ts {
 
             auto plhs = lhs.data<T>();
             auto prhs = rhs.data<T>();
-            auto pout = out.data<T>();
+            auto pout = out.data<uint8_t>();
 
             auto ncount = out.count();
             for (int i = 0; i < ncount; ++i) {
@@ -44,23 +40,8 @@ namespace ts {
         }
 
         template<typename T>
-        static inline void compute_run_scalar(const T *plhs, T scalar, T *pout, int count) {
-            // this is CPU operator, so just using memcpy
-            if (pout != plhs) std::memcpy(pout, plhs, count * sizeof(T));
-
+        static inline void compute_run_scalar(const T *plhs, T scalar, uint8_t *pout, int count) {
             for (int i = 0; i < count; ++i) {
-                reduce_operator(pout[i], scalar);
-            }
-        }
-
-        template<>
-        inline void compute_run_scalar(const float *plhs, float scalar, float *pout, int count) {
-            float32x4 scalarx4(scalar);
-            for (int i = 0; i < count - 3; i += 4) {
-                float32x4 pout_x4 = float32x4(&plhs[i]) == scalarx4;
-                pout_x4.store(&pout[i]);
-            }
-            for (int i = count / 4 * 4; i < count; ++i) {
                 reduce_operator(pout[i], plhs[i], scalar);
             }
         }
@@ -69,7 +50,7 @@ namespace ts {
         static inline void compute_run_scalar(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
             auto plhs = lhs.data<T>();
             auto prhs = rhs.data<T>();
-            auto pout = out.data<T>();
+            auto pout = out.data<uint8_t>();
 
             auto scalar = prhs[0];
 
@@ -77,22 +58,8 @@ namespace ts {
         }
 
         template<typename T>
-        static inline void compute_run_same_shape(const T *plhs, const T *prhs, T *pout, int count) {
-            if (pout != plhs) std::memcpy(pout, plhs, count * sizeof(T));
-
+        static inline void compute_run_same_shape(const T *plhs, const T *prhs, uint8_t *pout, int count) {
             for (int i = 0; i < count; ++i) {
-                reduce_operator(pout[i], prhs[i]);
-            }
-        }
-
-        template<>
-        inline void compute_run_same_shape(const float *plhs, const float *prhs, float *pout, int count) {
-            for (int i = 0; i < count - 3; i += 4) {
-                float32x4 pout_x4 = float32x4(&plhs[i]) == float32x4(&prhs[i]);
-                pout_x4.store(&pout[i]);
-            }
-
-            for (int i = count / 4 * 4; i < count; ++i) {
                 reduce_operator(pout[i], plhs[i], prhs[i]);
             }
         }
@@ -101,7 +68,7 @@ namespace ts {
         void compute_run_same_shape(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
             auto plhs = lhs.data<T>();
             auto prhs = rhs.data<T>();
-            auto pout = out.data<T>();
+            auto pout = out.data<uint8_t>();
 
             compute_run_same_shape(plhs, prhs, pout, out.count());
         }

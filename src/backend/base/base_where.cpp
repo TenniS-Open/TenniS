@@ -81,12 +81,15 @@ namespace ts {
             auto lhs = *stack.index(1);
             auto rhs = *stack.index(2);
 
-            if (lhs.dtype() != rhs.dtype() && cond.dtype() != BOOLEAN) {
+            if (lhs.dtype() != rhs.dtype() || cond.dtype() != BOOLEAN) {
                 TS_LOG_ERROR << "[" << this->op() << ":" << this->name() << "] Can not reduce mismatch type: "
                              << type_str(cond.dtype()) << " vs. "
                              << type_str(lhs.dtype()) << " vs. "
                              << type_str(rhs.dtype()) << eject;
             }
+
+            std::vector<Tensor::Prototype> output;
+            infer(stack, output);
 
             auto cond_shape = cond.sizes();
             auto lhs_shape = lhs.sizes();
@@ -96,15 +99,13 @@ namespace ts {
 
             bool do_broadcast = reduce(this, cond_shape, lhs_shape, rhs_shape, out_shape, true);
 
-            auto out_proto = Tensor::Prototype(lhs.dtype(), out_shape);
-
             auto memory_device = running_memory_device();
 
             cond = cond.view(memory_device).reshape(cond_shape);    // do sync, and set default data to given device
             lhs = lhs.view(memory_device).reshape(lhs_shape);
             rhs = rhs.view(memory_device).reshape(rhs_shape);
 
-            Tensor &out = *stack.push(out_proto, memory_device);
+            Tensor &out = *stack.push(output[0], memory_device);
 
             if (!do_broadcast) {
                 reduce_with_same_shape(cond, lhs, rhs, out);
@@ -122,7 +123,7 @@ namespace ts {
             auto lhs = *stack.index(1);
             auto rhs = *stack.index(2);
 
-            if (lhs.dtype() != rhs.dtype() && cond.dtype() != BOOLEAN) {
+            if (lhs.dtype() != rhs.dtype() || cond.dtype() != BOOLEAN) {
                 TS_LOG_ERROR << "[" << this->op() << ":" << this->name() << "] Can not reduce mismatch type: "
                              << type_str(cond.dtype()) << " vs. "
                              << type_str(lhs.dtype()) << " vs. "

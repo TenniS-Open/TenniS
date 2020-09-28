@@ -10,6 +10,8 @@ namespace ts {
             using self = Equal;
             using supper = ElementWiseReduce;
 
+            int infer(Stack &stack, std::vector<Tensor::Prototype> &output) override;
+
             int run(Stack &stack) override;
         };
     }

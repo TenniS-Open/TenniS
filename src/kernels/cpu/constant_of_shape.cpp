@@ -80,6 +80,7 @@ namespace ts {
             switch (dtype) {
 #define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
         case DTYPE: { cpu_ConstantOfShape_compute_run<TYPE>(val, out); break; }
+                DECLARE_COMPUTE_RUN(BOOLEAN, uint8_t);
                 DECLARE_COMPUTE_RUN(INT8, int8_t);
                 DECLARE_COMPUTE_RUN(UINT8, uint8_t);
                 DECLARE_COMPUTE_RUN(INT16, int16_t);
