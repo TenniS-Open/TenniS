@@ -2289,5 +2289,92 @@ namespace ts {
         }
 
         TS_STATIC_ACTION(ShapeInferer::Register, "slice_v2", slice_v2)
+
+
+        static TensorPrototype equal(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            if (inputs.size() != 2) return VOID;
+            auto lhs_shape = inputs[0].sizes();
+            auto rhs_shape = inputs[1].sizes();
+
+            if (lhs_shape.size() > rhs_shape.size()) {
+                begin_insert_ones(rhs_shape, lhs_shape.size() - rhs_shape.size());
+            } else if (rhs_shape.size() > lhs_shape.size()) {
+                begin_insert_ones(lhs_shape, rhs_shape.size() - lhs_shape.size());
+            }
+
+            auto dims = lhs_shape.size();
+            auto out_shape = std::vector<int32_t>(dims, -1);
+
+            for (size_t i = 0; i < dims; ++i) {
+                out_shape[i] = eltwise_infer_dim(lhs_shape[i], rhs_shape[i]);
+            }
+
+            return {BOOLEAN, out_shape};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "equal", equal)
+
+
+        static TensorPrototype where(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            if (inputs.size() != 3) return VOID;
+            if (inputs[1].dtype() != inputs[2].dtype()) return VOID;
+
+            auto cond_shape = inputs[0].sizes();
+            auto lhs_shape = inputs[1].sizes();
+            auto rhs_shape = inputs[2].sizes();
+
+            int cond_dim = cond_shape.size();
+            int lhs_dim = lhs_shape.size();
+            int rhs_dim = rhs_shape.size();
+
+            int max_dim = std::max(std::max(cond_dim, lhs_dim), rhs_dim);
+
+            if (cond_shape.size() < max_dim) {
+                begin_insert_ones(cond_shape, int(max_dim - cond_dim));
+            }
+            if (lhs_shape.size() < max_dim) {
+                begin_insert_ones(lhs_shape, int(max_dim - lhs_dim));
+            }
+            if (rhs_shape.size() < max_dim) {
+                begin_insert_ones(rhs_shape, int(max_dim - rhs_dim));
+            }
+
+            auto dims = cond_shape.size();
+            auto out_shape = std::vector<int32_t>(dims, -1);
+
+            for (size_t i = 0; i < dims; ++i) {
+                int size = cond_shape[i];
+                if (!(cond_shape[i] == lhs_shape[i] && cond_shape[i] == rhs_shape[i])) {
+                    // exception condition
+                    if ((cond_shape[i] != 1 && lhs_shape[i] != 1 && cond_shape[i] != lhs_shape[i]) ||
+                        (cond_shape[i] != 1 && rhs_shape[i] != 1 && cond_shape[i] != rhs_shape[i]) ||
+                        (lhs_shape[i] != 1 && rhs_shape[i] != 1 && lhs_shape[i] != rhs_shape[i])) {
+                        return VOID;
+                    }
+                    size = std::max((std::max(cond_shape[i], lhs_shape[i])), rhs_shape[i]);
+                }
+                out_shape[i] = size;
+            }
+
+            return {inputs[1].dtype(), out_shape};
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "where", where)
+
+
+        static TensorPrototype constant_of_shape(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            if (inputs.size() != 1) return VOID;
+
+            if (node->has("value")) {
+                auto val_attr = node->get("value");
+                return {val_attr.dtype(), inputs[0].sizes()};
+            } else {
+                return {FLOAT32, inputs[0].sizes()};
+            }
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "constant_of_shape", constant_of_shape)
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "softplus", _copy)
     }
 }
