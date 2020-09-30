@@ -12,8 +12,6 @@ namespace ts {
 
             Where() = default;
 
-            void init() override;
-
             int infer(Stack &stack, std::vector<Tensor::Prototype> &output) override;
 
             int run(Stack &stack) override;

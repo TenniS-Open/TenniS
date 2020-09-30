@@ -89,7 +89,9 @@ inline _simd_f32x4 _simd_f32x4_div(_simd_f32x4 lhs, _simd_f32x4 rhs) {
 }
 
 inline _simd_f32x4 _simd_f32x4_cmpeq(_simd_f32x4 lhs, _simd_f32x4 rhs) {
-    return _mm_cmpeq_ps(lhs, rhs);
+    __m128 res_cmp = _mm_cmpeq_ps(lhs, rhs);
+    int mask_val = _mm_movemask_ps(res_cmp);
+    return _mm_set_ps(mask_val >> 3, (mask_val & 0b0111) >> 2, (mask_val & 0b0011) >> 1, mask_val & 0b0001);
 }
 
 inline _simd_f32x4 _simd_f32x4_max(_simd_f32x4 lhs, _simd_f32x4 rhs) {

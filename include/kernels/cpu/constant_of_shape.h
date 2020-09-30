@@ -12,13 +12,15 @@ namespace ts {
             ConstantOfShape();
 
             void init() override;
+
             int run(Stack &stack) override;
+
             int infer(Stack &stack, std::vector<Tensor::Prototype> &output) override;
 
             virtual void constant_of_shape(const Tensor &val, Tensor &out);
 
-        protected:
-            float_t m_val = 0;
+        private:
+            Tensor m_tensor;
         };
     }
 }

@@ -1,56 +1,58 @@
+#include <frontend/intime.h>
 #include "backend/base/base_equal.h"
 #include "core/tensor_builder.h"
-#define UPCAST_DTYPE
 
 namespace ts {
     namespace base {
 
-#ifdef UPCAST_DTYPE
-        DTYPE upcast_dtype(Tensor &lhs, Tensor &rhs) {
-            // diagonal element represents the type in dtype.h
-            int lookup_table[15][15]{
-                    {1	,1	,3	,3	,5	,5	,7	,7	,9	,10	,11	,1	,3	,5	,1},
-                    {1	,2	,3	,3	,5	,6	,7	,7	,9	,10	,11	,1	,3	,5	,2},
-                    {3	,3	,3	,3	,5	,5	,7	,7	,9	,10	,11	,3	,3	,5	,3},
-                    {3	,3	,3	,4	,5	,6	,7	,8	,9	,10	,11	,3	,3	,5	,4},
-                    {5	,5	,5	,5	,5	,5	,7	,7	,10	,10	,11	,5	,5	,5	,5},
-                    {5	,6	,5	,6	,5	,6	,7	,8	,10	,10	,11	,5	,5	,5	,6},
-                    {7	,7	,7	,7	,7	,7	,7	,7	,11	,11	,11	,7	,7	,7	,7},
-                    {7	,7	,7	,8	,7	,8	,7	,8	,11	,11	,11	,7	,7	,7	,8},
-                    {9	,9	,9	,9	,10	,10	,11	,11	,9	,10	,11	,9	,9	,10	,9},
-                    {10	,10	,10	,10	,10	,10	,11	,11	,10	,10	,11	,10	,10	,11	,10},
-                    {11	,11	,11	,11	,11	,11	,11	,11	,11	,11	,11	,11	,11	,11	,11},
-                    {1	,1	,3	,3	,5	,5	,7	,7	,9	,10	,11	,13	,14	,15	,13},
-                    {3	,3	,3	,3	,5	,5	,7	,7	,9	,10	,11	,14	,14	,15	,14},
-                    {5	,5	,5	,5	,5	,5	,7	,7	,10	,11	,11	,15	,15	,15	,15},
-                    {1	,2	,3	,4	,5	,6	,7	,8	,9	,10	,11	,13	,14	,15	,21}
-            };
-            if (lhs.dtype() == rhs.dtype()) return lhs.dtype();
-            return DTYPE(lookup_table[lhs.dtype()][rhs.dtype()]);
+        bool uncorr_cast_dtype(DTYPE type) {
+            if (type == 0 || type == 12 || (type > 15 && type != 21)) return true;
+            else return false;
         }
-#endif
+
+        DTYPE upcast_dtype(Operator *op, Tensor &lhs, Tensor &rhs) {
+            // diagonal element represents the type in dtype.h
+            DTYPE lhs_dtype = lhs.dtype();
+            DTYPE rhs_dtype = rhs.dtype();
+            if (lhs_dtype == rhs_dtype) return lhs_dtype;
+            else if (uncorr_cast_dtype(lhs_dtype) || uncorr_cast_dtype(rhs_dtype)) {
+                TS_LOG_ERROR << "[" << op->op() << ":" << op->name() << "] Can not reduce mismatch type: "
+                             << type_str(lhs.dtype()) << " vs. "
+                             << type_str(rhs.dtype()) << eject;
+            } else {
+                static const char lookup_table[22][22]{
+                        {0, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 0,  0,  0,  0, 0, 0, 0, 0, 0},
+                        {0, 1,  1,  3,  3,  5,  5,  7,  7,  9,  10, 11, 0, 1,  3,  5,  0, 0, 0, 0, 0, 1},
+                        {0, 1,  2,  3,  3,  5,  6,  7,  7,  9,  10, 11, 0, 1,  3,  5,  0, 0, 0, 0, 0, 2},
+                        {0, 3,  3,  3,  3,  5,  5,  7,  7,  9,  10, 11, 0, 3,  3,  5,  0, 0, 0, 0, 0, 3},
+                        {0, 3,  3,  3,  4,  5,  6,  7,  8,  9,  10, 11, 0, 3,  3,  5,  0, 0, 0, 0, 0, 4},
+                        {0, 5,  5,  5,  5,  5,  5,  7,  7,  10, 10, 11, 0, 5,  5,  5,  0, 0, 0, 0, 0, 5},
+                        {0, 5,  6,  5,  6,  5,  6,  7,  8,  10, 10, 11, 0, 5,  5,  5,  0, 0, 0, 0, 0, 6},
+                        {0, 7,  7,  7,  7,  7,  7,  7,  7,  11, 11, 11, 0, 7,  7,  7,  0, 0, 0, 0, 0, 7},
+                        {0, 7,  7,  7,  8,  7,  8,  7,  8,  11, 11, 11, 0, 7,  7,  7,  0, 0, 0, 0, 0, 8},
+                        {0, 9,  9,  9,  9,  10, 10, 11, 11, 9,  10, 11, 0, 9,  9,  10, 0, 0, 0, 0, 0, 9},
+                        {0, 10, 10, 10, 10, 10, 10, 11, 11, 10, 10, 11, 0, 10, 10, 11, 0, 0, 0, 0, 0, 10},
+                        {0, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 0, 11, 11, 11, 0, 0, 0, 0, 0, 11},
+                        {0, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 0,  0,  0,  0, 0, 0, 0, 0, 0},
+                        {0, 1,  1,  3,  3,  5,  5,  7,  7,  9,  10, 11, 0, 13, 14, 15, 0, 0, 0, 0, 0, 13},
+                        {0, 3,  3,  3,  3,  5,  5,  7,  7,  9,  10, 11, 0, 14, 14, 15, 0, 0, 0, 0, 0, 14},
+                        {0, 5,  5,  5,  5,  5,  5,  7,  7,  10, 11, 11, 0, 15, 15, 15, 0, 0, 0, 0, 0, 15},
+                        {0, 1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 0, 13, 14, 15, 0, 0, 0, 0, 0, 21},
+                        {0, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 0,  0,  0,  0, 0, 0, 0, 0, 0},
+                        {0, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 0,  0,  0,  0, 0, 0, 0, 0, 0},
+                        {0, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 0,  0,  0,  0, 0, 0, 0, 0, 0},
+                        {0, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 0,  0,  0,  0, 0, 0, 0, 0, 0},
+                        {0, 1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 0, 13, 14, 15, 0, 0, 0, 0, 0, 21}
+                };
+                return DTYPE(lookup_table[lhs_dtype][rhs_dtype]);
+            }
+        }
 
         int Equal::infer(Stack &stack, std::vector<Tensor::Prototype> &output) {
             TS_AUTO_CHECK(stack.size() == 2);
 
-            auto &lhs = *stack.index(0);
-            auto &rhs = *stack.index(1);
-
-#ifdef UPCAST_DTYPE
-            DTYPE out_dtype = upcast_dtype(lhs, rhs);
-            if (lhs.dtype() != out_dtype) {
-                lhs = tensor::cast(out_dtype, lhs);
-            }
-            if (rhs.dtype() != out_dtype) {
-                rhs = tensor::cast(out_dtype, rhs);
-            }
-#endif
-
-            if (lhs.dtype() != rhs.dtype()) {
-                TS_LOG_ERROR << "[" << this->op() << ":" << this->name() << "] Can not reduce mismatch type: "
-                             << type_str(lhs.dtype()) << " vs. "
-                             << type_str(rhs.dtype()) << eject;
-            }
+            auto lhs = *stack.index(0);
+            auto rhs = *stack.index(1);
 
             auto lhs_shape = lhs.sizes();
             auto rhs_shape = rhs.sizes();
@@ -70,8 +72,12 @@ namespace ts {
 
             infer(stack, output);
 
-            auto &lhs = stack[0];
-            auto &rhs = stack[1];
+            auto lhs = stack[0];
+            auto rhs = stack[1];
+
+            DTYPE out_dtype = upcast_dtype(this, lhs, rhs);
+            lhs = intime::cast(lhs, out_dtype);
+            rhs = intime::cast(rhs, out_dtype);
 
             auto lhs_shape = lhs.sizes();
             auto rhs_shape = rhs.sizes();

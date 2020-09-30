@@ -11,6 +11,11 @@ namespace ts {
 
         void ConstantOfShape::init() {
             supper::init();
+            if (has("value")) {
+                m_tensor = get("value");
+            } else {
+                m_tensor = tensor::build(FLOAT32, 0.f);
+            }
         }
 
         int ConstantOfShape::infer(Stack &stack, std::vector<Tensor::Prototype> &output) {
@@ -18,61 +23,30 @@ namespace ts {
 
             auto x = stack[0];
 
-            TS_AUTO_CHECK(x.dtype() == INT64);
-
             output.resize(1);
-            if (has("value")) {
-                output[0] = Tensor::Prototype(get("value").dtype(), x.sizes());
-            } else {
-                output[0] = Tensor::Prototype(FLOAT32, x.sizes());
-            }
+            output[0] = Tensor::Prototype(m_tensor.dtype(), x.sizes());
+
+            return 1;
+        }
+
+        int ConstantOfShape::run(Stack &stack) {
+            std::vector<Tensor::Prototype> output;
+
+            infer(stack, output);
+
+            auto memory_device = running_memory_device();
+
+            auto out = *stack.push(output[0], memory_device);
+
+            constant_of_shape(m_tensor, out);
 
             return 1;
         }
 
         template<typename T>
         static void cpu_ConstantOfShape_compute_run(const Tensor &val, Tensor &out) {
-            auto pout = out.data<T>();
-            int count = out.count();
-
-            auto value = val.data<T>();
-
-            for (int i = 0; i < count; ++i) {
-                pout[i] = *value;
-            }
-        }
-
-        template<>
-        void cpu_ConstantOfShape_compute_run<float>(const Tensor &val, Tensor &out) {
-            auto pout = out.data<float>();
-            int count = out.count();
-
-            auto value = tensor::to_float(val);
-
-            for (int i = 0; i < count; ++i) {
-                *(pout + i) = value;
-            }
-        }
-
-        int ConstantOfShape::run(Stack &stack) {
-            std::vector<Tensor::Prototype> output_protos;
-
-            infer(stack, output_protos);
-
-            auto memory_device = running_memory_device();
-
-            auto x = stack[0].view(memory_device);
-            auto out = *stack.push(output_protos[0], memory_device);
-
-            if (has("value")) {
-                auto value = get("value");
-                constant_of_shape(value, out);
-            } else {
-                auto value = tensor::build(FLOAT32, m_val);
-                constant_of_shape(value, out);
-            }
-
-            return 1;
+            memset(out.data(), out.device(), out.count() * out.proto().type_bytes(),
+                   val.data(), val.device(), val.count() * val.proto().type_bytes());
         }
 
         void ConstantOfShape::constant_of_shape(const Tensor &val, Tensor &out) {

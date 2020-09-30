@@ -1,4 +1,5 @@
 #include "backend/base/base_where.h"
+#include "frontend/intime.h"
 
 namespace ts {
     namespace base {
@@ -70,8 +71,32 @@ namespace ts {
             return do_broadcast;
         }
 
-        void Where::init() {
-            supper::init();
+        int Where::infer(Stack &stack, std::vector<Tensor::Prototype> &output) {
+            TS_AUTO_CHECK(stack.size() == 3);
+
+            auto cond = *stack.index(0);
+            auto lhs = *stack.index(1);
+            auto rhs = *stack.index(2);
+
+            if (lhs.dtype() != rhs.dtype()) {
+                TS_LOG_ERROR << "[" << this->op() << ":" << this->name() << "] Can not reduce mismatch type: "
+                             << type_str(cond.dtype()) << " vs. "
+                             << type_str(lhs.dtype()) << " vs. "
+                             << type_str(rhs.dtype()) << eject;
+            }
+
+            auto cond_shape = cond.sizes();
+            auto lhs_shape = lhs.sizes();
+            auto rhs_shape = rhs.sizes();
+            Shape out_shape;
+
+            bool do_broadcast = reduce(this, cond_shape, lhs_shape, rhs_shape, out_shape, true);
+            TS_UNUSED(do_broadcast);
+
+            output.resize(1);
+            output[0] = Tensor::Prototype(lhs.dtype(), out_shape);
+
+            return 1;
         }
 
         int Where::run(Stack &stack) {
@@ -81,15 +106,10 @@ namespace ts {
             auto lhs = *stack.index(1);
             auto rhs = *stack.index(2);
 
-            if (lhs.dtype() != rhs.dtype() || cond.dtype() != BOOLEAN) {
-                TS_LOG_ERROR << "[" << this->op() << ":" << this->name() << "] Can not reduce mismatch type: "
-                             << type_str(cond.dtype()) << " vs. "
-                             << type_str(lhs.dtype()) << " vs. "
-                             << type_str(rhs.dtype()) << eject;
-            }
-
             std::vector<Tensor::Prototype> output;
             infer(stack, output);
+
+            cond = intime::cast(cond, BOOLEAN);
 
             auto cond_shape = cond.sizes();
             auto lhs_shape = lhs.sizes();
@@ -112,34 +132,6 @@ namespace ts {
             } else {
                 reduce_with_broadcast(cond, lhs, rhs, out);
             }
-
-            return 1;
-        }
-
-        int Where::infer(Stack &stack, std::vector<Tensor::Prototype> &output) {
-            TS_AUTO_CHECK(stack.size() == 3);
-
-            auto cond = *stack.index(0);
-            auto lhs = *stack.index(1);
-            auto rhs = *stack.index(2);
-
-            if (lhs.dtype() != rhs.dtype() || cond.dtype() != BOOLEAN) {
-                TS_LOG_ERROR << "[" << this->op() << ":" << this->name() << "] Can not reduce mismatch type: "
-                             << type_str(cond.dtype()) << " vs. "
-                             << type_str(lhs.dtype()) << " vs. "
-                             << type_str(rhs.dtype()) << eject;
-            }
-
-            auto cond_shape = cond.sizes();
-            auto lhs_shape = lhs.sizes();
-            auto rhs_shape = rhs.sizes();
-            Shape out_shape;
-
-            bool do_broadcast = reduce(this, cond_shape, lhs_shape, rhs_shape, out_shape, true);
-            TS_UNUSED(do_broadcast);
-
-            output.resize(1);
-            output[0] = Tensor::Prototype(lhs.dtype(), out_shape);
 
             return 1;
         }
