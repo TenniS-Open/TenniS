@@ -171,7 +171,7 @@ namespace ts {
 
         simd() = default;
 
-        simd(type value) : value(value) {}
+        simd(const type &value) : value(value) {}
 
         simd(base a) : simd(a, a, a, a, a, a, a, a) {}
 
@@ -295,7 +295,7 @@ namespace ts {
 
         simd() = default;
 
-        simd(type value) : value(value) {}
+        simd(const type &value) : value(value) {}
 
         simd(base a) : simd(a, a, a, a, a, a, a, a) {}
 

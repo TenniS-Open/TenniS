@@ -6,7 +6,8 @@
 #include "runtime/stack.h"
 #include "global/operator_factory.h"
 #include "core/tensor_builder.h"
-
+#include <cmath>
+#include <algorithm>
 namespace ts {
     namespace cpu {
         class PriorBox : public Operator {

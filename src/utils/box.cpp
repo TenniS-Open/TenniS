@@ -111,7 +111,7 @@ namespace ts {
 
     static struct tm time2tm(std::time_t from) {
         std::tm to = {0};
-#if TS_PLATFORM_CC_MSVC
+#if TS_PLATFORM_CC_MSVC || TS_PLATFORM_CC_MINGW
         localtime_s(&to, &from);
 #else
         localtime_r(&from, &to);

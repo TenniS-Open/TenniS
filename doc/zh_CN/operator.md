@@ -1384,6 +1384,9 @@ x_i = (x_i - mean(x_i)) / (std_dev(x_i) + epsilon)
 ### ceil(x..device) -> y..device
 描述: `y = ceil(x)`
 
+### floor(x..device) -> y..device
+描述: `y = floor(x)`
+
 ### _transpose_v2(x..device, permute..host) -> y.device
 描述：对输入的 Tensor 进行维度转换，输出转换后的图像  
 别名：`permute`  
@@ -1391,6 +1394,16 @@ x_i = (x_i - mean(x_i)) / (std_dev(x_i) + epsilon)
 输出：`y`: `Tensor` 转换后的数据  
 参数：   
 - `permute`: `IntArray` `[Optional]` 数组的长度，要和 `a` 的维度一致。输入的第 `i` 个维度就是 `permute[i]` 的维度。如果没有设置该参数，则相当于普通矩阵转置。
+
+### crop_to (x..device, y..device) -> z..device
+描述: 与`caffe`的`Crop`相同  
+输入：`x`: `Tensor` 待 `crop` 的数据   
+输入：`y`: `Tensor` 需要 `crop` 的数据   
+输出：`z`: `Tensor` 输出数据  
+参数：   
+- `axis`: `Int` `[Optional] Default=2` 从那个维度进行裁剪，支持负值  
+- `offset`: `IntArray` `[Optional]` 裁剪的偏移大小
+
 
 ## 附录
 
