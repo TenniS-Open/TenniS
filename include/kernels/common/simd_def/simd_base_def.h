@@ -192,7 +192,7 @@ inline _simd_f32x4x2 _simd_f32x4x2_div(_simd_f32x4x2 lhs, _simd_f32x4x2 rhs) {
 }
 
 inline _simd_f32x4x2 _simd_f32x4x2_cmpeq(_simd_f32x4x2 lhs, _simd_f32x4x2 rhs) {
-    return { static_cast<float_t>(lhs[0] == rhs[0]), static_cast<float_t>(lhs[1] == rhs[1]), static_cast<float_t>(lhs[2] == rhs[2]), static_cast<float_t>(lhs[3] == rhs[3]), static_cast<float_t>(lhs[4] == rhs[4]), static_cast<float_t>(lhs[5] == rhs[5]), static_cast<float_t>(lhs[6] == rhs[6]), static_cast<float_t>(lhs[7] == rhs[7])}
+    return { static_cast<float_t>(lhs[0] == rhs[0]), static_cast<float_t>(lhs[1] == rhs[1]), static_cast<float_t>(lhs[2] == rhs[2]), static_cast<float_t>(lhs[3] == rhs[3]), static_cast<float_t>(lhs[4] == rhs[4]), static_cast<float_t>(lhs[5] == rhs[5]), static_cast<float_t>(lhs[6] == rhs[6]), static_cast<float_t>(lhs[7] == rhs[7])};
 }
 
 inline _simd_f32x4 _simd_f32x4x2_index(_simd_f32x4x2 src, const int index) {
