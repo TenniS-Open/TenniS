@@ -109,13 +109,13 @@ void drawRectangles(std::vector<BBox> &boxes, int &DEST, std::vector<std::string
 
 int main() {
     using namespace ts::api;
-    Device device("cpu", 0);
+    Device device("gpu", 0);
 
     auto start = std::chrono::system_clock::now();
 
 //    cv::Mat cvimage = cv::imread("/home/sen/Downloads/yolo_tsm/yolov4_tsm//dog.jpg");
     cv::Mat cvimage = cv::imread("/home/sen/Downloads/horses.jpg");
-    std::string model = "/home/sen/Downloads/yolo_tsm/yolov4_tsm/yolov4_1_3_608_608_static(2).tsm";
+    std::string model = "/home/sen/Workspace/gitlab/TenniS-frontend/tennis/test/convert.onnx.tsm";
     std::vector<std::string> label = {
             "person", "bicycle", "car", "motorbike",
             "aeroplane", "bus", "train", "truck",
@@ -174,6 +174,9 @@ int main() {
 
     auto out = bench.output(0);  // [batch, num, 1, 4]
     auto confs = bench.output(1);  // [batch, num, num_classes]
+
+    out = out.view(ts_InFlow(TS_HOST));
+    confs = confs.view(ts_InFlow(TS_HOST));
 
     std::vector<BBox> boxLists;
 
