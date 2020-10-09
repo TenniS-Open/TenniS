@@ -87,6 +87,8 @@ namespace ts {
 
             auto memory_device = running_memory_device();
 
+            lhs = lhs.view(memory_device);
+            rhs = rhs.view(memory_device);
             auto &out = *stack.push(output[0], memory_device);
 
             if (!do_broadcast) {
