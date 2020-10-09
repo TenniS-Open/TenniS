@@ -37,6 +37,10 @@ namespace ts {
     template <typename T>
     __device__ inline T fabs(const T &a) { return T(std::fabs(a)); }
     __device__ inline half fabs(const half &a) { return a > half(0.0f) ? a : -a; }
+
+    template <typename T>
+    __device__ inline T log(const T &a) { return T(std::log(a)); }
+    __device__ inline half log(const half &a) { return hlog(a); }
 // #endif
 }
 
