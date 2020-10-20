@@ -10,6 +10,7 @@
 #include "global/memory_device.h"
 #include "global/operator_factory.h"
 #include "global/shape_inferer_factory.h"
+#include "global/module_loader_factory.h"
 
 #include <iterator>
 
@@ -112,11 +113,17 @@ int main() {
     std::cout << "Count: " << shape_inferer.size() << std::endl;
     std::cout << std::endl;
 
+    std::cout << "== Module Loader ==" << std::endl;
+    auto modules = ts::ModuleLoader::AllKeys();
+    plot_set<std::string>(std::cout, modules, copy) << std::endl;
+    std::cout << "All module loaders: " << modules.size() << std::endl;
+    std::cout << std::endl;
+
     std::cout << "== Operator ==" << std::endl;
     auto operators = ts::OperatorCreator::AllKeys();
 
     auto all_ops = set2set_value(operators);
-    std::cout << "All operators count: " << all_ops.size() << std::endl;
+    std::cout << "Count: " << all_ops.size() << std::endl;
 
     auto device_operators = set2map(operators);
     for (auto &dev_ops : device_operators) {
