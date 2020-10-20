@@ -1,5 +1,5 @@
-#ifndef TENNIS_SOFTPLUS_H
-#define TENNIS_SOFTPLUS_H
+#ifndef TENNIS_GPU_SOFTPLUS_H
+#define TENNIS_GPU_SOFTPLUS_H
 
 #include "backend/base/base_activation.h"
 #include "operator_on_gpu.h"
@@ -16,4 +16,4 @@ namespace ts {
     }
 }
 
-#endif //TENNIS_SOFTPLUS_H
+#endif //TENNIS_GPU_SOFTPLUS_H
