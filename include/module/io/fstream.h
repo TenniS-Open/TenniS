@@ -39,6 +39,38 @@ namespace ts {
         std_stream m_stream;
     };
 
+    class TS_DEBUG_API FileStreamReaderV2 : public StreamReaderV2 {
+    public:
+        using self = FileStreamReaderV2;
+        using supper = StreamReaderV2;
+        using std_stream = std::ifstream;
+
+        FileStreamReaderV2(const self &) = delete;
+
+        self &operator=(const self &) = delete;
+
+        FileStreamReaderV2();
+
+        explicit FileStreamReaderV2(const std::string &path);
+
+        void open(const std::string &path);
+
+        bool is_open() const;
+
+        void close();
+
+        size_t read(void *buffer, size_t size) final;
+
+        std_stream &stream() { return m_stream; }
+
+        const std_stream &stream() const { return m_stream; }
+
+        void rewind() final;
+
+    private:
+        std_stream m_stream;
+    };
+
     class TS_DEBUG_API FileStreamWriter : public StreamWriter {
     public:
         using self = FileStreamWriter;

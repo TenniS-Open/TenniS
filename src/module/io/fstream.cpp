@@ -29,6 +29,34 @@ namespace ts {
 
     FileStreamReader::FileStreamReader() = default;
 
+    bool FileStreamReaderV2::is_open() const {
+        return m_stream.is_open();
+    }
+
+    size_t FileStreamReaderV2::read(void *buffer, size_t size) {
+        m_stream.read(reinterpret_cast<char *>(buffer), size);
+        return size_t(m_stream.gcount());
+    }
+
+    void FileStreamReaderV2::rewind() {
+//        m_stream.seekg(0, m_stream.beg);
+        m_stream.seekg(0, std::ios::beg);
+    }
+
+    FileStreamReaderV2::FileStreamReaderV2(const std::string &path)
+            : m_stream(path, std::ios::binary) {}
+
+    void FileStreamReaderV2::open(const std::string &path) {
+        m_stream.open(path, std::ios::binary);
+    }
+
+    void FileStreamReaderV2::close() {
+        m_stream.close();
+    }
+
+    FileStreamReaderV2::FileStreamReaderV2() = default;
+
+
     bool FileStreamWriter::is_open() const {
         return m_stream.is_open();
     }
