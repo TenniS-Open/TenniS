@@ -30,6 +30,12 @@ typedef uint64_t ts_stream_write(void *obj, const char *data, uint64_t length);
  */
 typedef uint64_t ts_stream_read(void *obj, char *data, uint64_t length);
 
+/**
+ * Callback function of stream reading.
+ * @param obj stream object
+ */
+typedef void ts_stream_rewind(void *obj);
+
 #ifdef __cplusplus
 }
 #endif
