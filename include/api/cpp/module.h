@@ -73,6 +73,18 @@ namespace ts {
                 return std::move(loaded);
             }
 
+            static Module LoadV2(const std::string &path, const void *buffer, int32_t buffer_size, SerializationFormat format = TS_BINARY) {
+                Module loaded(ts_Module_LoadV2(path.c_str(), buffer, buffer_size, ts_SerializationFormat(format)));
+                TS_API_AUTO_CHECK(loaded.m_impl != nullptr);
+                return std::move(loaded);
+            }
+
+            static Module LoadV2(StreamReaderV2 &stream, const void *buffer, int32_t buffer_size, SerializationFormat format = TS_BINARY) {
+                Module loaded(ts_Module_LoadFromStreamV2(&stream, StreamReader::C, StreamReaderV2::C, buffer, buffer_size, ts_SerializationFormat(format)));
+                TS_API_AUTO_CHECK(loaded.m_impl != nullptr);
+                return std::move(loaded);
+            }
+
             static Module Fusion(const Module &in, int32_t in_out_slot, const Module &out, int32_t out_in_slot) {
                 Module fusion(ts_Module_Fusion(in.get_raw(), in_out_slot, out.get_raw(), out_in_slot));
                 TS_API_AUTO_CHECK(fusion.m_impl != nullptr);
