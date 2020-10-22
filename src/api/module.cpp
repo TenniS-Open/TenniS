@@ -16,6 +16,17 @@ ts_Module *ts_Module_Load(const char *filename, ts_SerializationFormat format) {
     RETURN_OR_CATCH(module.release(), nullptr)
 }
 
+ts_Module *ts_Module_LoadV2(const char *filename, const void *buffer, int32_t buffer_size,
+                            ts_SerializationFormat format) {
+    TRY_HEAD
+    if (!filename) throw Exception("NullPointerException: @param: 1");
+    if (!buffer) throw Exception("NullPointerException: @param: 2");
+    std::unique_ptr<ts_Module> module(new ts_Module(
+            Module::LoadV2(filename, buffer, buffer_size, Module::SerializationFormat(format))));
+    RETURN_OR_CATCH(module.release(), nullptr);
+}
+
+
 void ts_free_Module(const ts_Module *module) {
     TRY_HEAD
     delete module;
@@ -37,6 +48,26 @@ private:
     ts_stream_read *m_reader;
 };
 
+class CStreamReaderV2 : public ts::StreamReaderV2 {
+public:
+    CStreamReaderV2(void *obj, ts_stream_read *reader, ts_stream_rewind *rewind)
+            : m_obj(obj), m_reader(reader), m_rewind(rewind) {}
+
+    size_t read(void *buf, size_t len) override {
+        auto ret = m_reader(m_obj, reinterpret_cast<char *>(buf), uint64_t(len));
+        return size_t(ret);
+    }
+
+    void rewind() override {
+        m_rewind(m_obj);
+    }
+
+private:
+    void *m_obj;
+    ts_stream_read *m_reader;
+    ts_stream_rewind *m_rewind;
+};
+
 ts_Module *ts_Module_LoadFromStream(void *obj, ts_stream_read *reader, ts_SerializationFormat format) {
     TRY_HEAD
     if (!obj) throw Exception("NullPointerException: @param: 1");
@@ -45,6 +76,18 @@ ts_Module *ts_Module_LoadFromStream(void *obj, ts_stream_read *reader, ts_Serial
     std::unique_ptr<ts_Module> module(new ts_Module(
             Module::Load(stream_reader, Module::SerializationFormat(format))));
     RETURN_OR_CATCH(module.release(), nullptr)
+}
+
+ts_Module *ts_Module_LoadFromStreamV2(void *obj, ts_stream_read *reader, ts_stream_rewind *rewind,
+                                      const void *buffer, int32_t buffer_size, ts_SerializationFormat format) {
+    TRY_HEAD
+    if (!obj) throw Exception("NullPointerException: @param: 1");
+    if (!reader) throw Exception("NullPointerException: @param: 2");
+    if (!rewind) throw Exception("NullPointerException: @param: 3");
+    CStreamReaderV2 stream_reader(obj, reader, rewind);
+    std::unique_ptr<ts_Module> module(new ts_Module(
+            Module::LoadV2(stream_reader, buffer, buffer_size, Module::SerializationFormat(format))));
+    RETURN_OR_CATCH(module.release(), nullptr);
 }
 
 ts_Module *ts_Module_translate(const ts_Module *module, const ts_Device *device, const char *options) {

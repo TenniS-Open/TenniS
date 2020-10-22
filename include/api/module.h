@@ -40,6 +40,17 @@ typedef enum ts_SerializationFormat ts_SerializationFormat;
 TENNIS_C_API ts_Module *ts_Module_Load(const char *filename, ts_SerializationFormat format);
 
 /**
+ * Load module from given filename.
+ * @param filename
+ * @param buffer reserved
+ * @param buffer size of buffer
+ * @param format @sa ts_SerializationFormat, only support TS_BINARY in this version.
+ * @return New reference. Return NULL if failed.
+ * @note call @see ts_free_Module to free ts_Module
+ */
+TENNIS_C_API ts_Module *ts_Module_LoadV2(const char *filename, const void *buffer, int32_t buffer_size, ts_SerializationFormat format);
+
+/**
  * Load module from given stream.
  * @param obj object pointer pass to reader
  * @param reader stream reader
@@ -48,6 +59,20 @@ TENNIS_C_API ts_Module *ts_Module_Load(const char *filename, ts_SerializationFor
  * @note call @see ts_free_Module to free ts_Module
  */
 TENNIS_C_API ts_Module *ts_Module_LoadFromStream(void *obj, ts_stream_read *reader, ts_SerializationFormat format);
+
+/**
+ * Load module from given stream.
+ * @param obj object pointer pass to reader
+ * @param reader stream reader
+ * @param rewind stream rewind
+ * @param buffer reserved
+ * @param buffer_size size of buffer
+ * @param format @sa ts_SerializationFormat, only support TS_BINARY in this version.
+ * @return New reference. Return NULL if failed.
+ * @note call @see ts_free_Module to free ts_Module
+ */
+TENNIS_C_API ts_Module *ts_Module_LoadFromStreamV2(void *obj, ts_stream_read *reader, ts_stream_rewind *rewind,
+                                                   const void *buffer, int32_t buffer_size, ts_SerializationFormat format);
 
 /**
  * Free module.
