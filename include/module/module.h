@@ -55,6 +55,10 @@ namespace ts {
         static Module::shared Load(StreamReader &stream, SerializationFormat format = BINARY);
         static Module::shared Load(const std::string &filename, SerializationFormat format = BINARY);
 
+        static Module::shared LoadV2(StreamReaderV2 &stream, const void *buffer, int32_t buffer_size, SerializationFormat format = BINARY);
+        static Module::shared LoadV2(const std::string &filename, const void *buffer, int32_t buffer_size, SerializationFormat format = BINARY);
+
+
         static void Save(StreamWriter &stream, Module::shared module, SerializationFormat format = BINARY);
         static void Save(const std::string &filename, Module::shared module, SerializationFormat format = BINARY);
 
@@ -98,6 +102,14 @@ namespace ts {
         std::vector<Node> m_outputs;
         std::vector<Graph> m_graphs;
     };
+
+    class TS_DEBUG_API FormatMismatchException : public Exception {
+    public:
+        FormatMismatchException() : Exception() {}
+        explicit FormatMismatchException(const std::string &message) : Exception(message) {}
+    };
+
+    size_t read_uint32_list(StreamReader &stream, std::vector<uint32_t> &list);
 }
 
 

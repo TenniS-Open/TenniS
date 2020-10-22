@@ -22,6 +22,9 @@
 #include "compiler/translater.h"
 #include "backend/name.h"
 
+#include <global/module_loader_factory.h>
+
+
 namespace ts {
 
     void Module::load(Graph g) {
@@ -278,7 +281,7 @@ namespace ts {
         Save(stream, module, format);  
     }
 
-    static size_t read_uint32_list(StreamReader &stream, std::vector<uint32_t> &list) {
+    size_t read_uint32_list(StreamReader &stream, std::vector<uint32_t> &list) {
         uint32_t size_buffer = 0;
         size_t read_size = 0;
         read_size += binio::read<uint32_t>(stream, size_buffer);
@@ -336,6 +339,31 @@ namespace ts {
                 node->set(param, value);
             }
         }
+    }
+
+    Module::shared Module::LoadV2(StreamReaderV2 &stream, const void *buffer, int32_t buffer_size,
+                                  Module::SerializationFormat format) {
+        auto module_loaders = ModuleLoader::AllKeys();
+        for (auto &module_loader : module_loaders) {
+            auto loader = ModuleLoader::Query(module_loader);
+            try {
+                auto m = loader(stream, buffer, buffer_size, format);
+                return m;
+            } catch (const FormatMismatchException &e) {
+                stream.rewind();
+                continue;
+            }
+        }
+        TS_LOG_ERROR << "Format not recognized" << eject;
+        return Module::shared();
+    }
+
+    Module::shared Module::LoadV2(const std::string &filename, const void *buffer, int32_t buffer_size,
+                                Module::SerializationFormat format) {
+        FileStreamReaderV2 stream(filename);
+        // all SerializationFormat checked here
+        TS_CHECK(format == BINARY);
+        return LoadV2(stream, buffer, buffer_size, format);
     }
 
     Module::shared Module::Load(Graph g) {
