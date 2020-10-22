@@ -3,6 +3,9 @@
 //
 
 #include <module/graph.h>
+#include <module/module.h>
+#include <module/menu.h>
+#include <runtime/workbench.h>
 #include <iostream>
 
 template <typename T>
@@ -24,12 +27,28 @@ inline std::ostream &operator<<(std::ostream &out, const Add<T> &node) {
 
 int main()
 {
-    int N= 1000;
-    for (int i = 0; i < N; ++i) {
-        ts::Graph g;
-        auto a = g.make("a");
-        auto b = g.make("b");
-        auto c = g.make("c");
-        ts::Node::Link(c, {a, b});
-    }
+    using namespace ts;
+    ComputingDevice device;
+
+
+    Graph g;
+    g.setup_context();
+
+    auto shape = bubble::data("shape", tensor::build(INT64, {1, 0, 9}));
+    auto data = bubble::param("data");
+    auto reshape = bubble::op("reshape", "_reshape_v2", {data, shape});
+
+    auto module = std::make_shared<Module>();
+    module->load(g, {reshape});
+
+    auto bench = Workbench::Load(module, device);
+
+    auto input = Tensor(INT32, {1, 2, 3, 3});
+    bench->input(0, input);
+    bench->run();
+    auto output = bench->output(0);
+
+    TS_LOG_INFO << output.proto();
+
+    return 0;
 }

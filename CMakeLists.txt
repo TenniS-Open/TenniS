@@ -26,7 +26,7 @@ set(PENTINUM_LIB_NAME ${PROJECT_NAME}_pentium)
 # ============================= Options start ================================ #
 #------------------------------------------------------------------------------#
 # Install path
-set(CMAKE_INSTALL_PREFIX ${PROJECT_BINARY_DIR}/build
+set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/build
     CACHE STRING "set install prefix" FORCE)
 
 # Option for platform
@@ -422,13 +422,6 @@ install(FILES ${SOLUTION_DIR}/cmake/FindTenniS.cmake
 install(FILES ${SOLUTION_DIR}/cmake/FindTenniS.cmake
         DESTINATION cmake
         RENAME TenniSConfig.cmake)
-
-install(FILES ${SOLUTION_DIR}/cmake/FindTensorStack.cmake
-        DESTINATION cmake)
-
-install(FILES ${SOLUTION_DIR}/cmake/FindTensorStack.cmake
-        DESTINATION cmake
-        RENAME TensorStackConfig.cmake)
 
 # project files for clion
 FILE(GLOB_RECURSE TEST_FILES ${PROJECT_SOURCE_DIR}/test/*.cpp)

@@ -19,4 +19,10 @@
 *.out
 # project files
 /.idea
+# related files
+/bin
+/build
+/python
+/venv
+
 

@@ -46,7 +46,6 @@ else(TS_CUDA_ARCH)
        message(STATUS "    CUDA: support Turing in 7.5")
        set(CUDA_ARCH "${CUDA_ARCH} -gencode arch=compute_75,code=sm_75")
    endif()
-
    if (${CUDA_VERSION} VERSION_GREATER "10.999")
        message(STATUS "    CUDA: support Ampere in 8.0")
        set(CUDA_ARCH "${CUDA_ARCH} -gencode arch=compute_80,code=sm_80")
