@@ -26,6 +26,21 @@ namespace ts {
         };
 
         /**
+         * @see ts_stream_readerV2
+         */
+        class StreamReaderV2 : public StreamReader {
+        public:
+            using self = StreamReaderV2;
+            using supper = StreamReader;
+
+            virtual void rewind() = 0;
+
+            static void C(void *obj) {
+                return reinterpret_cast<self *>(obj)->rewind();
+            }
+        };
+
+        /**
          * @see ts_stream_write
          */
         class StreamWriter {
@@ -65,6 +80,26 @@ namespace ts {
             std_stream &stream() { return m_stream; }
 
             const std_stream &stream() const { return m_stream; }
+
+        private:
+            std_stream m_stream;
+        };
+
+        class FileStreamReaderV2 : public StreamReaderV2 {
+        public:
+            using self = FileStreamReaderV2;
+            using supper = StreamReaderV2;
+            using std_stream = std::ifstream;
+
+            FileStreamReaderV2(const self &) = delete;
+
+            self &operator=(const self &) = delete;
+
+            FileStreamReaderV2();
+
+            explicit FileStreamReaderV2(const std::string &path);
+
+            void rewind();
 
         private:
             std_stream m_stream;
@@ -148,6 +183,15 @@ namespace ts {
         }
 
         FileStreamReader::FileStreamReader() = default;
+
+        FileStreamReaderV2::FileStreamReaderV2(const std::string &path)
+                : m_stream(path, std::ios::binary) {}
+
+        FileStreamReaderV2::FileStreamReaderV2() = default;
+
+        void FileStreamReaderV2::rewind() {
+            m_stream.seekg(0, std::ifstream::beg);
+        }
 
         bool FileStreamWriter::is_open() const {
             return m_stream.is_open();
