@@ -219,7 +219,7 @@ namespace ts {
         FileStreamReaderV2::FileStreamReaderV2() = default;
 
         inline void FileStreamReaderV2::rewind() {
-            this->stream().seekg(0, std::ifstream::beg);
+            m_stream.seekg(0, std::ifstream::beg);
         }
 
         inline bool FileStreamWriter::is_open() const {
