@@ -4,7 +4,6 @@
 
 #include <module/io/fstream.h>
 
-#include "module/io/fstream.h"
 
 namespace ts {
     bool FileStreamReader::is_open() const {
@@ -39,7 +38,6 @@ namespace ts {
     }
 
     void FileStreamReaderV2::rewind() {
-//        m_stream.seekg(0, m_stream.beg);
         m_stream.seekg(0, std::ios::beg);
     }
 

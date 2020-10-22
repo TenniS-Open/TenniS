@@ -61,11 +61,11 @@ namespace ts {
 
         size_t read(void *buffer, size_t size) final;
 
+        void rewind() final;
+
         std_stream &stream() { return m_stream; }
 
         const std_stream &stream() const { return m_stream; }
-
-        void rewind() final;
 
     private:
         std_stream m_stream;
