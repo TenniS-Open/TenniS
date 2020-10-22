@@ -2,7 +2,7 @@
 #define TENNIS_GLOBAL_LOADER_FACTORY_H
 
 #include <functional>
-#include "module/modulev2.h"
+#include "module/module.h"
 
 #include <map>
 #include <set>
@@ -10,7 +10,7 @@
 namespace ts {
     class TS_DEBUG_API ModuleLoader {
     public:
-        using function = std::function<ModuleV2::shared(StreamReaderV2 &, const void*, int32_t, ModuleV2::SerializationFormat)>;
+        using function = std::function<Module::shared(StreamReaderV2 &, const void*, int32_t, Module::SerializationFormat)>;
 
         static void Register(const std::string &module, const function &loader) TS_NOEXCEPT;
 
