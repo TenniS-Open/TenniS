@@ -99,6 +99,18 @@ namespace ts {
 
             explicit FileStreamReaderV2(const std::string &path);
 
+            void open(const std::string &path);
+
+            bool is_open() const;
+
+            void close();
+
+            uint64_t read(void *buffer, uint64_t size) final;
+
+            std_stream &stream() { return m_stream; }
+
+            const std_stream &stream() const { return m_stream; }
+
             void rewind();
 
         private:
@@ -184,17 +196,33 @@ namespace ts {
 
         FileStreamReader::FileStreamReader() = default;
 
-        inline bool FileStreamWriter::is_open() const {
-        FileStreamReaderV2::FileStreamReaderV2(const std::string &path)
+        inline bool FileStreamReaderV2::is_open() const {
+            return m_stream.is_open();
+        }
+
+        inline uint64_t FileStreamReaderV2::read(void *buffer, uint64_t size) {
+            m_stream.read(reinterpret_cast<char *>(buffer), size);
+            return uint64_t(m_stream.gcount());
+        }
+
+        inline FileStreamReaderV2::FileStreamReaderV2(const std::string &path)
                 : m_stream(path, std::ios::binary) {}
+
+        inline void FileStreamReaderV2::open(const std::string &path) {
+            m_stream.open(path, std::ios::binary);
+        }
+
+        inline void FileStreamReaderV2::close() {
+            m_stream.close();
+        }
 
         FileStreamReaderV2::FileStreamReaderV2() = default;
 
-        void FileStreamReaderV2::rewind() {
-            m_stream.seekg(0, std::ifstream::beg);
+        inline void FileStreamReaderV2::rewind() {
+            this->stream().seekg(0, std::ifstream::beg);
         }
 
-        bool FileStreamWriter::is_open() const {
+        inline bool FileStreamWriter::is_open() const {
             return m_stream.is_open();
         }
 
