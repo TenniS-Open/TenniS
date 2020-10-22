@@ -79,6 +79,7 @@ namespace ts {
             TS_LOG_ERROR << "[" << op->op() << ":" << op->name() << "] Can not reduce mismatch type: "
                          << type_str(lhs.dtype()) << " vs. "
                          << type_str(rhs.dtype()) << eject;
+            return static_cast<DTYPE>(0);
         } else {
             static const char lookup_table[22][22]{
                     {0, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 0,  0,  0,  0, 0, 0, 0, 0, 0},
@@ -104,7 +105,7 @@ namespace ts {
                     {0, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 0,  0,  0,  0, 0, 0, 0, 0, 0},
                     {0, 1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 0, 13, 14, 15, 0, 0, 0, 0, 0, 21}
             };
-            return DTYPE(lookup_table[lhs_dtype][rhs_dtype]);
+            return static_cast<DTYPE>(lookup_table[lhs_dtype][rhs_dtype]);
         }
     }
 

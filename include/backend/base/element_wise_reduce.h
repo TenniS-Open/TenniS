@@ -111,6 +111,9 @@ namespace ts {
          */
         static bool is_bias(Shape &lhs_shape, Shape &rhs_shape, int &dim);
     };
+
+    DTYPE upcast_dtype(Operator *op, Tensor &lhs, Tensor &rhs);
+    bool uncorr_cast_dtype(DTYPE type);
 }
 
 
