@@ -20,6 +20,13 @@ namespace ts {
         virtual size_t read(void *buffer, size_t size) = 0;
     };
 
+    class TS_DEBUG_API StreamReaderV2 : public StreamReader {
+    public:
+        using self = StreamReaderV2;
+
+        virtual void rewind() = 0;
+    };
+
     class TS_DEBUG_API StreamWriter {
     public:
         using self = StreamWriter;
