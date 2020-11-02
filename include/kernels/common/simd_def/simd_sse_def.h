@@ -219,7 +219,7 @@ inline _simd_f32x4x2 _simd_f32x4x2_div(const _simd_f32x4x2 &lhs, const _simd_f32
     return res;
 }
 
-inline _simd_f32x4x2 _simd_f32x4x2_cmpeq(_simd_f32x4x2 lhs, _simd_f32x4x2 rhs) {
+inline _simd_f32x4x2 _simd_f32x4x2_cmpeq(const _simd_f32x4x2 &lhs, const _simd_f32x4x2 &rhs) {
     _simd_f32x4x2 res;
     res.val[0] = _simd_f32x4_cmpeq(lhs.val[0], rhs.val[0]);
     res.val[1] = _simd_f32x4_cmpeq(lhs.val[1], rhs.val[1]);
