@@ -194,7 +194,7 @@ namespace ts {
             m_stream.close();
         }
 
-        FileStreamReader::FileStreamReader() = default;
+        inline FileStreamReader::FileStreamReader() = default;
 
         inline bool FileStreamReaderV2::is_open() const {
             return m_stream.is_open();
@@ -216,7 +216,7 @@ namespace ts {
             m_stream.close();
         }
 
-        FileStreamReaderV2::FileStreamReaderV2() = default;
+        inline FileStreamReaderV2::FileStreamReaderV2() = default;
 
         inline void FileStreamReaderV2::rewind() {
             m_stream.seekg(0, std::ifstream::beg);
@@ -242,7 +242,7 @@ namespace ts {
             m_stream.close();
         }
 
-        FileStreamWriter::FileStreamWriter() = default;
+        inline FileStreamWriter::FileStreamWriter() = default;
 
         inline uint64_t BufferReader::read(void *buffer, uint64_t size) {
             if (m_buffer == nullptr || m_index >= m_size) return 0;
