@@ -10,11 +10,29 @@ namespace ts {
             field(name::size,REQUIRED);
         }
 
+        static std::vector<int32_t> tensor_long_to_int(const Tensor &tensor) {
+            auto long_array = tensor::array::to_long(tensor);
+            auto int_array = std::vector<int32_t>(long_array.size());
+
+            for (size_t i = 0; i < int_array.size(); ++i) {
+                auto v = long_array[i];
+                if (v > 0 && v > INT_MAX) {
+                    int_array[i] = INT_MAX;
+                } else if (v < 0 && v < INT_MIN) {
+                    int_array[i] = INT_MIN;
+                } else {
+                    int_array[i] = int32_t(v);
+                }
+            }
+
+            return int_array;
+        }
+
         void Slice::init() {
             supper::init();
 
-            m_begin = tensor::array::to_int(get(name::begin));
-            m_size = tensor::array::to_int(get(name::size));
+            m_begin = tensor_long_to_int(get(name::begin));
+            m_size = tensor_long_to_int(get(name::size));
         }
 
         static Tensor::Prototype infer_slice(const Tensor &x, const std::vector<int> &begins, const std::vector<int> & sizes) {
