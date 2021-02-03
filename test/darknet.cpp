@@ -7,7 +7,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <iostream>
 
-#include "api/cpp/tensorstack.h"
+#include "api/cpp/tennis.h"
 
 int main() {
     using namespace ts::api;
