@@ -48,18 +48,21 @@ namespace ts {
             auto x_count = x.count();
 
             auto shape = m_shape;
+            decltype(m_count_without_dim) running_count = 1;
             for (size_t i = 0; i < shape.size(); ++i) {
                 if (shape[i] == 0) {
                     if (i >= x.dims()) {
                         TS_LOG_ERROR << "Can not reshape " << to_string(x.sizes()) << " to " << to_string(m_shape) << eject;
                     }
                     shape[i] = x.size(i);
+                    running_count *= x.size(i);
                 }
             }
 
             if (m_broadcast_dim >= 0) {
-                shape[m_broadcast_dim] = x_count / m_count_without_dim;
-                if (shape[m_broadcast_dim] * m_count_without_dim != x_count) {
+                running_count *= m_count_without_dim;
+                shape[m_broadcast_dim] = x_count / running_count;
+                if (shape[m_broadcast_dim] * running_count != x_count) {
                     TS_LOG_ERROR << "Can not reshape " << to_string(x.sizes()) << " to " << to_string(m_shape) << eject;
                 }
             }
