@@ -2376,5 +2376,38 @@ namespace ts {
         TS_STATIC_ACTION(ShapeInferer::Register, "constant_of_shape", constant_of_shape)
 
         TS_STATIC_ACTION(ShapeInferer::Register, "softplus", _copy)
+
+        static TensorPrototype LSTM(const Node &node, const std::vector<TensorPrototype> &inputs) {
+            if (inputs.size() < 3) return VOID;
+            auto x_shape = inputs[0].sizes();
+            auto w_shape = inputs[1].sizes();
+            auto r_shape = inputs[2].sizes();
+
+            auto dtype = inputs[0].dtype();
+
+            int num_direction = 1;
+            int hidden_size = 0;
+            if (node->has("direction")) {
+                auto dir_str = tensor::to_string(node->get("direction"));
+                num_direction = dir_str == "bidirectional" ? 2 : 1;
+            }
+            if (node->has("hidden_size")) {
+                hidden_size = tensor::to_int(node->get("hidden_size"));
+            }
+
+            std::vector<Tensor::Prototype> output;
+            output.resize(3);
+            output[0] = Tensor::Prototype(dtype, {x_shape[0], num_direction, x_shape[1], hidden_size});
+            output[1] = Tensor::Prototype(dtype, {num_direction, x_shape[1], hidden_size});
+            output[2] = Tensor::Prototype(dtype, {num_direction, x_shape[1], hidden_size});
+
+            TensorPrototype packed;
+            packed.pack(output);
+
+            return packed;
+        }
+
+        TS_STATIC_ACTION(ShapeInferer::Register, "LSTM", LSTM)
+
     }
 }
