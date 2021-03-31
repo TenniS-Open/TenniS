@@ -2,6 +2,7 @@
 // Created by Kier on 2021/3/29.
 //
 
+#include <module/io/sstream.h>
 #include "compiler/fence/splitter.h"
 #include "module/menu.h"
 
@@ -68,7 +69,7 @@ int main() {
     Splitter splitter(&rule);
     splitter.single_input = false;
 
-    auto main = splitter.split(tops, bottoms);
+    MainGraph main = splitter.split(tops, bottoms);
 
     std::cout << "================ Main ===============" << std::endl;
     plot_graph(std::cout, main.outputs());
@@ -78,7 +79,22 @@ int main() {
         auto &node = main.sub_node(i);
         auto &graph = main.sub_graph(i);
         plot_graph(std::cout, graph.outputs());
+
+        auto submodule = std::make_shared<Module>();
+        submodule->load(graph.graph(), graph.outputs());
+        submodule->sort_inputs(graph.inputs());
+
+        StringStreamWriter ssw;
+        Module::Save(ssw, submodule);
+        auto binary = ssw.str();
+
+        node->name("submodule");
+        node->set("module", tensor::build(UINT8,
+                                          Shape({int(binary.size()),}),
+                                          reinterpret_cast<const uint8_t *>(binary.data())));
     }
+
+    main.module();
 
     return 0;
 }

@@ -23,9 +23,14 @@ namespace ts {
             return m_outputs;
         }
 
+        const Graph &graph() const {
+            return m_graph;
+        }
+
     private:
         friend class Splitter;
 
+        Graph m_graph;
         std::vector<Node> m_inputs;
         std::vector<Node> m_outputs;
     };
@@ -41,6 +46,10 @@ namespace ts {
         }
 
         const Node &sub_node(size_t i) const {
+            return m_sub_nodes[i];
+        }
+
+        Node &sub_node(size_t i) {
             return m_sub_nodes[i];
         }
 

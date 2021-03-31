@@ -762,6 +762,7 @@ namespace ts {
                 }
             }
             SubGraph sub;
+            sub.m_graph = g;
             sub.m_inputs = sub_inputs;
             sub.m_outputs = io.outputs;
             main.m_sub_graphs.emplace_back(sub);
