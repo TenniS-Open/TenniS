@@ -118,7 +118,7 @@ namespace ts {
                 auto converted_module = converter->convert(m_computing_device, outputs, inputs);
                 tmp_module = converted_module;
                 outputs = converted_module->outputs();
-                inputs = converted_module->outputs();
+                inputs = converted_module->inputs();
             }
         }
         
