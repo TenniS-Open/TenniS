@@ -3,6 +3,11 @@
 #include "backend/name.h"
 #include "core/tensor_builder.h"
 
+#include <algorithm>
+#include <numeric>
+#include <cstdint>
+#include <climits>
+
 namespace ts {
     namespace base {
         SliceV2::SliceV2() {
