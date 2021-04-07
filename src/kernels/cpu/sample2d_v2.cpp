@@ -62,7 +62,7 @@ namespace ts {
                 TS_LOG_ERROR << op->op() << ":" << op->name() << " scale must has same shape with input tensor, got input: "
                     << x.proto() << ", " << scale.proto() << eject;
             }
-            auto size = stack.make(INT32, {scale_count});
+            auto size = stack.make(INT32, {scale_count}, MemoryDevice("cpu"));
             auto float_scale = tensor::cast(FLOAT32, scale);
             for (int32_t i = 0; i < scale_count; ++i) {
                 size.data<int32_t>(i) = int32_t(std::floor(shape[i] * float_scale.data<float>(i)));
