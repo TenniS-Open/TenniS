@@ -32,7 +32,11 @@
 
 namespace ts {
     RuntimeContext::RuntimeContext() {
-        set_computing_thread_number(4);
+        int threads = 4;
+        char *env_value = std::getenv("THREAD_NUMS");
+        if (env_value != nullptr) threads = std::stoi(env_value);
+
+        set_computing_thread_number(threads);
     }
     RuntimeContext::RuntimeContext(const MemoryDevice &device): self() {
         this->m_flow = HypeSyncMemoryController<FlowMemoryController>::Make(device, false);
