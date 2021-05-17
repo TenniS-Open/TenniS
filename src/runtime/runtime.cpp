@@ -30,11 +30,13 @@
 #include <omp.h>
 #endif
 
+#include "utils/env_vars.h"
+
 namespace ts {
     RuntimeContext::RuntimeContext() {
         int threads = 4;
-        char *env_value = std::getenv("THREAD_NUMS");
-        if (env_value != nullptr) threads = std::stoi(env_value);
+        std::string thread_nums = getEnvironmentVariable("THREAD_NUMS");
+        if (!thread_nums.empty()) threads = std::stoi(thread_nums);
 
         set_computing_thread_number(threads);
     }
