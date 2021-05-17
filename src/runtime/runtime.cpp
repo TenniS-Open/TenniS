@@ -35,7 +35,7 @@
 namespace ts {
     RuntimeContext::RuntimeContext() {
         int threads = 4;
-        std::string thread_nums = getEnvironmentVariable("THREAD_NUMS");
+        std::string thread_nums = getEnvironmentVariable("TENNIS_NUMBER_THREADS");
         if (!thread_nums.empty()) threads = std::stoi(thread_nums);
 
         set_computing_thread_number(threads);
