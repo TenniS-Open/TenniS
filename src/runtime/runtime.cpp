@@ -30,9 +30,15 @@
 #include <omp.h>
 #endif
 
+#include "utils/env_vars.h"
+
 namespace ts {
     RuntimeContext::RuntimeContext() {
-        set_computing_thread_number(4);
+        int threads = 4;
+        std::string thread_nums = getEnvironmentVariable("TENNIS_NUMBER_THREADS");
+        if (!thread_nums.empty()) threads = std::stoi(thread_nums);
+
+        set_computing_thread_number(threads);
     }
     RuntimeContext::RuntimeContext(const MemoryDevice &device): self() {
         this->m_flow = HypeSyncMemoryController<FlowMemoryController>::Make(device, false);
