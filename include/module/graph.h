@@ -39,6 +39,23 @@ namespace ts {
         static void Link(const weak &node, const std::vector<weak> &inputs) {
             auto output = node.lock();
             if (!output) throw NullPointerException("Link expired node");
+            // first unlink pre-linked inputs
+            for (auto &bottom : output->m_inputs) {
+                auto tmp = bottom.lock();
+                if (!tmp) continue;
+                auto &bottom_tops = tmp->m_outputs;
+                for (auto it = bottom_tops.begin(); it != bottom_tops.end();) {
+                    auto top = it->lock();
+                    if (!top) continue;
+                    if (top == output) {
+                        it = bottom_tops.erase(it);
+                    } else {
+                        ++it;
+                    }
+                }
+            }
+            output->m_inputs.clear();
+            // link new nodes
             output->m_inputs.resize(inputs.size());
             for (size_t i = 0; i < inputs.size(); ++i) {
                 auto input = inputs[i].lock();

@@ -28,6 +28,7 @@
 #include "frontend/intime.h"
 #include "compiler/zipper.h"
 #include "compiler/translater.h"
+#include "compiler/option/converter_option.h"
 
 
 
@@ -107,6 +108,19 @@ namespace ts {
         // plot_graph(std::cout, outputs);
         Graph temp_graph;
         ctx::bind<Graph> _bind_graph(temp_graph);
+
+        std::shared_ptr<Module> tmp_module;
+        // convert graph
+        {
+            auto device = m_computing_device.type().std();
+            auto converter = QueryConverter(device);
+            if (converter) {
+                auto converted_module = converter->convert(m_computing_device, outputs, inputs);
+                tmp_module = converted_module;
+                outputs = converted_module->outputs();
+                inputs = converted_module->inputs();
+            }
+        }
         
         // zip graph
         {

@@ -8,7 +8,7 @@
 
 namespace ts {
     /**
-     * convert between the Menu ang Graph
+     * convert tsm graph to other style graph
      */
     class Converter {
     public:
