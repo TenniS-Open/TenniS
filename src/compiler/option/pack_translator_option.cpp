@@ -7,12 +7,23 @@
 #include "kernels/common/math.h"
 
 #include "global/operator_factory.h"
+#include "global/memory_device.h"
 #include "kernels/common/function.h"
 #include "compiler/argparse.h"
 
 static bool has_defined_op(const ts::ComputingDevice &device, const std::string &op) {
     auto creator = ts::OperatorCreator::Query(device.type(), op, true);
-    return creator != nullptr;
+
+    if (creator) return true;
+
+    auto memory_device = ts::ComputingMemory::Query(device.type());
+    if (memory_device.std() == ts::CPU) return false;
+
+    creator = ts::OperatorCreator::Query(memory_device, op, true);
+
+    if (creator) return true;
+
+    return false;
 }
 
 bool ts::PackTranslatorOption::translate(const ComputingDevice &device, const Node node,
