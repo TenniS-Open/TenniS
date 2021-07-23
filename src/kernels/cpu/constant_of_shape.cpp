@@ -22,9 +22,10 @@ namespace ts {
             TS_AUTO_CHECK(stack.size() == 1);
 
             auto x = stack[0];
+            auto shape = tensor::array::to_int(x);
 
             output.resize(1);
-            output[0] = Tensor::Prototype(m_tensor.dtype(), x.sizes());
+            output[0] = Tensor::Prototype(m_tensor.dtype(), shape);
 
             return 1;
         }
