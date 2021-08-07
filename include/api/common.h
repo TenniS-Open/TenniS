@@ -7,7 +7,7 @@
 
 #define TENNIS_EXTERN_C extern "C"
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__) || defined(__MINGW64__)
 #   define TENNIS_DLL_IMPORT __declspec(dllimport)
 #   define TENNIS_DLL_EXPORT __declspec(dllexport)
 #   define TENNIS_DLL_LOCAL
