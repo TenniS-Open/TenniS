@@ -60,6 +60,10 @@ variables:
     - mkdir build
     - cd build
     - cmake .. -DTS_DYNAMIC_INSTRUCTION=ON -DTS_USE_CUDA=ON -DTS_USE_CUBLAS=ON -DCMAKE_INSTALL_PREFIX=$ARTIFACTS
+    - make -j$THREADS tennis_LIB
+    - make -j$THREADS tennis_haswell_LIB
+    - make -j$THREADS tennis_sandy_bridge_LIB
+    - make -j$THREADS tennis_pentium_LIB
     - make install
     
   
