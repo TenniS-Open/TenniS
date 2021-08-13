@@ -60,7 +60,7 @@ variables:
     - mkdir build
     - cd build
     - cmake .. -DTS_DYNAMIC_INSTRUCTION=ON -DTS_USE_CUDA=ON -DTS_USE_CUBLAS=ON -DCMAKE_INSTALL_PREFIX=$ARTIFACTS
-    - make -j$THREADS install
+    - make install
     
   
 .ubuntu1604_image: &ubuntu1604_config
