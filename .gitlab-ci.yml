@@ -1,0 +1,192 @@
+# Build TenniS
+
+stages:
+  - build
+  - test
+  
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+  THREADS: '4'
+  
+  
+.only_config:
+  only: &only_config
+    - ci
+    
+.ubuntu_before_script:
+  before_script: &ubuntu_before_script
+    - export DEBIAN_FRONTEND=noninteractive
+    - export TZ=Asia/Shanghai
+    - sed -i s@/archive.ubuntu.com/@/mirrors.aliyun.com/@g /etc/apt/sources.list
+    - apt-get update
+    - apt-get install -y git cmake gcc g++
+
+    
+.linux_build_config:
+  script: &linux_build_script_config
+    - export ARTIFACTS=`pwd`/$CI_PROJECT_NAME-$CI_JOB_NAME
+    - if [ ! -d "$ARTIFACTS" ]; then mkdir "$ARTIFACTS"; fi
+    - 'echo [Version] > $ARTIFACTS/version.txt'
+    - 'echo date: `date` >> $ARTIFACTS/version.txt'
+    - 'echo ref: $CI_COMMIT_REF_NAME >> $ARTIFACTS/version.txt'
+    - 'echo tag: $CI_COMMIT_TAG >> $ARTIFACTS/version.txt'
+    - 'echo reversion: $CI_COMMIT_SHA >> $ARTIFACTS/version.txt'
+    - 'echo [Recent Log]  >> $ARTIFACTS/version.txt'
+    - git log --pretty=format:"%h [%ad] %s" | grep -v Merge | head -n 16 >> $ARTIFACTS/version.txt
+    - cat $ARTIFACTS/version.txt
+    - mkdir build
+    - cd build
+    - cmake .. -DTS_DYNAMIC_INSTRUCTION=ON -DCMAKE_INSTALL_PREFIX=$ARTIFACTS
+    - make -j$THREADS install
+
+  artifacts: &linux_artifacts_config
+    name: '$CI_PROJECT_NAME-$CI_JOB_NAME'
+    paths:
+      - '$CI_PROJECT_NAME-$CI_JOB_NAME/'
+
+    
+.linux_build_cuda_config:
+  script: &linux_build_cuda_script_config
+    - export ARTIFACTS=`pwd`/$CI_PROJECT_NAME-$CI_JOB_NAME
+    - if [ ! -d "$ARTIFACTS" ]; then mkdir "$ARTIFACTS"; fi
+    - 'echo [Version] > $ARTIFACTS/version.txt'
+    - 'echo date: `date` >> $ARTIFACTS/version.txt'
+    - 'echo ref: $CI_COMMIT_REF_NAME >> $ARTIFACTS/version.txt'
+    - 'echo tag: $CI_COMMIT_TAG >> $ARTIFACTS/version.txt'
+    - 'echo reversion: $CI_COMMIT_SHA >> $ARTIFACTS/version.txt'
+    - 'echo [Recent Log]  >> $ARTIFACTS/version.txt'
+    - git log --pretty=format:"%h [%ad] %s" | grep -v Merge | head -n 16 >> $ARTIFACTS/version.txt
+    - cat $ARTIFACTS/version.txt
+    - mkdir build
+    - cd build
+    - cmake .. -DTS_DYNAMIC_INSTRUCTION=ON -DTS_USE_CUDA=ON -DTS_USE_CUBLAS=ON -DCMAKE_INSTALL_PREFIX=$ARTIFACTS
+    - make -j$THREADS install
+    
+  
+.ubuntu1604_image: &ubuntu1604_config
+  image: "ubuntu:16.04"
+  before_script: *ubuntu_before_script
+    
+    
+.ubuntu1804_image: &ubuntu1804_config
+  image: "ubuntu:18.04"
+  before_script: *ubuntu_before_script
+  
+  
+.ubuntu2004_image: &ubuntu2004_config
+  image: "ubuntu:20.04"
+  before_script: *ubuntu_before_script
+
+
+.ubuntu1604_cuda92_image: &ubuntu1604_cuda92_config
+  image: "nvidia/cuda:9.2-devel-ubuntu16.04"
+  before_script: *ubuntu_before_script
+
+
+.ubuntu1604_cuda102_image: &ubuntu1604_cuda102_config
+  image: "nvidia/cuda:10.2-devel-ubuntu16.04"
+  before_script: *ubuntu_before_script
+
+
+.ubuntu1604_cuda1131_image: &ubuntu1604_cuda1131_config
+  image: "nvidia/cuda:11.3.1-devel-ubuntu16.04"
+  before_script: *ubuntu_before_script
+
+
+.ubuntu1804_cuda1141_image: &ubuntu1804_cuda1141_config
+  image: "nvidia/cuda:11.4.1-devel-ubuntu18.04"
+  before_script: *ubuntu_before_script
+
+    
+.linux_test_config:
+  script: &linux_test_script_config
+    - ls -l
+  
+  
+ubuntu16.04-amd64:
+  <<: *ubuntu1604_config
+  stage: build
+  tags:
+    - docker,amd64,linux
+  only: *only_config
+  script: *linux_build_script_config
+  artifacts: *linux_artifacts_config
+  
+  
+ubuntu18.04-amd64:
+  <<: *ubuntu1804_config
+  stage: build
+  tags:
+    - docker,amd64,linux
+  only: *only_config
+  script: *linux_build_script_config
+  artifacts: *linux_artifacts_config
+  
+  
+ubuntu20.04-amd64:
+  <<: *ubuntu2004_config
+  stage: build
+  tags:
+    - docker,amd64,linux
+  only: *only_config
+  script: *linux_build_script_config
+  artifacts: *linux_artifacts_config
+
+
+ubuntu16.04_cuda9.2-amd64:
+  <<: *ubuntu1604_cuda92_config
+  stage: build
+  tags:
+    - docker,amd64,linux
+  only: *only_config
+  script: *linux_build_cuda_script_config
+  artifacts: *linux_artifacts_config
+
+
+ubuntu16.04_cuda10.2-amd64:
+  <<: *ubuntu1604_cuda102_config
+  stage: build
+  tags:
+    - docker,amd64,linux
+  only: *only_config
+  script: *linux_build_cuda_script_config
+  artifacts: *linux_artifacts_config
+
+
+ubuntu16.04_cuda11.3.1-amd64:
+  <<: *ubuntu1604_cuda1131_config
+  stage: build
+  tags:
+    - docker,amd64,linux
+  only: *only_config
+  script: *linux_build_cuda_script_config
+  artifacts: *linux_artifacts_config
+
+
+ubuntu18.04_cuda11.4.1-amd64:
+  <<: *ubuntu1804_cuda1141_config
+  stage: build
+  tags:
+    - docker,amd64,linux
+  only: *only_config
+  script: *linux_build_cuda_script_config
+  artifacts: *linux_artifacts_config
+  
+
+# ubuntu1604_test:
+#   <<: *ubuntu1604_config
+#   stage: test
+#   only: *only_config
+#   script: *linux_test_script_config
+#   dependencies:
+#     - ubuntu1604_build
+  
+  
+# ubuntu2004_test:
+#   <<: *ubuntu2004_config
+#   stage: test
+#   only: *only_config
+#   script: *linux_test_script_config
+#   dependencies:
+#     - ubuntu2004_build
+ 

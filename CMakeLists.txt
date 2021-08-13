@@ -27,7 +27,7 @@ set(PENTINUM_LIB_NAME ${PROJECT_NAME}_pentium)
 #------------------------------------------------------------------------------#
 # Install path
 set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/build
-    CACHE STRING "set install prefix" FORCE)
+    CACHE STRING "set install prefix")
 
 # Option for platform
 set(PLATFORM "auto" CACHE STRING "auto, x86 or x64")
