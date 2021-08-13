@@ -32,8 +32,7 @@ variables:
     - 'echo tag: $CI_COMMIT_TAG >> $ARTIFACTS/version.txt'
     - 'echo reversion: $CI_COMMIT_SHA >> $ARTIFACTS/version.txt'
     - 'echo [Recent Log]  >> $ARTIFACTS/version.txt'
-    - git log --pretty=format:"%h [%ad] %s"
-    - git log --pretty=format:"%h [%ad] %s" | grep -v Merge | head -n 16 >> $ARTIFACTS/version.txt
+    - git log -n 32 --pretty=format:"%h [%ad] %s" | grep -v Merge | head -n 16 >> $ARTIFACTS/version.txt
     - cat $ARTIFACTS/version.txt
     - mkdir build
     - cd build
@@ -56,8 +55,7 @@ variables:
     - 'echo tag: $CI_COMMIT_TAG >> $ARTIFACTS/version.txt'
     - 'echo reversion: $CI_COMMIT_SHA >> $ARTIFACTS/version.txt'
     - 'echo [Recent Log]  >> $ARTIFACTS/version.txt'
-    - git log --pretty=format:"%h [%ad] %s"
-    - git log --pretty=format:"%h [%ad] %s" | grep -v Merge | head -n 16 >> $ARTIFACTS/version.txt
+    - git log -n 32 --pretty=format:"%h [%ad] %s" | grep -v Merge | head -n 16 >> $ARTIFACTS/version.txt
     - cat $ARTIFACTS/version.txt
     - mkdir build
     - cd build
