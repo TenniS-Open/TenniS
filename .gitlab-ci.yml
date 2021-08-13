@@ -113,64 +113,64 @@ ubuntu16.04-amd64:
   artifacts: *linux_artifacts_config
   
   
-# ubuntu18.04-amd64:
-#   <<: *ubuntu1804_config
-#   stage: build
-#   tags:
-#     - docker,amd64,linux
-#   only: *only_config
-#   script: *linux_build_script_config
-#   artifacts: *linux_artifacts_config
+ubuntu18.04-amd64:
+  <<: *ubuntu1804_config
+  stage: build
+  tags:
+    - docker,amd64,linux
+  only: *only_config
+  script: *linux_build_script_config
+  artifacts: *linux_artifacts_config
   
   
-# ubuntu20.04-amd64:
-#   <<: *ubuntu2004_config
-#   stage: build
-#   tags:
-#     - docker,amd64,linux
-#   only: *only_config
-#   script: *linux_build_script_config
-#   artifacts: *linux_artifacts_config
+ubuntu20.04-amd64:
+  <<: *ubuntu2004_config
+  stage: build
+  tags:
+    - docker,amd64,linux
+  only: *only_config
+  script: *linux_build_script_config
+  artifacts: *linux_artifacts_config
 
 
-# ubuntu16.04_cuda9.2-amd64:
-#   <<: *ubuntu1604_cuda92_config
-#   stage: build
-#   tags:
-#     - docker,amd64,linux
-#   only: *only_config
-#   script: *linux_build_cuda_script_config
-#   artifacts: *linux_artifacts_config
+ubuntu16.04_cuda9.2-amd64:
+  <<: *ubuntu1604_cuda92_config
+  stage: build
+  tags:
+    - docker,amd64,linux
+  only: *only_config
+  script: *linux_build_cuda_script_config
+  artifacts: *linux_artifacts_config
 
 
-# ubuntu16.04_cuda10.2-amd64:
-#   <<: *ubuntu1604_cuda102_config
-#   stage: build
-#   tags:
-#     - docker,amd64,linux
-#   only: *only_config
-#   script: *linux_build_cuda_script_config
-#   artifacts: *linux_artifacts_config
+ubuntu16.04_cuda10.2-amd64:
+  <<: *ubuntu1604_cuda102_config
+  stage: build
+  tags:
+    - docker,amd64,linux
+  only: *only_config
+  script: *linux_build_cuda_script_config
+  artifacts: *linux_artifacts_config
 
 
-# ubuntu16.04_cuda11.3.1-amd64:
-#   <<: *ubuntu1604_cuda1131_config
-#   stage: build
-#   tags:
-#     - docker,amd64,linux
-#   only: *only_config
-#   script: *linux_build_cuda_script_config
-#   artifacts: *linux_artifacts_config
+ubuntu16.04_cuda11.3.1-amd64:
+  <<: *ubuntu1604_cuda1131_config
+  stage: build
+  tags:
+    - docker,amd64,linux
+  only: *only_config
+  script: *linux_build_cuda_script_config
+  artifacts: *linux_artifacts_config
 
 
-# ubuntu18.04_cuda11.4.1-amd64:
-#   <<: *ubuntu1804_cuda1141_config
-#   stage: build
-#   tags:
-#     - docker,amd64,linux
-#   only: *only_config
-#   script: *linux_build_cuda_script_config
-#   artifacts: *linux_artifacts_config
+ubuntu18.04_cuda11.4.1-amd64:
+  <<: *ubuntu1804_cuda1141_config
+  stage: build
+  tags:
+    - docker,amd64,linux
+  only: *only_config
+  script: *linux_build_cuda_script_config
+  artifacts: *linux_artifacts_config
   
 
 # ubuntu1604_test:
