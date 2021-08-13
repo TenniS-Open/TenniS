@@ -37,6 +37,7 @@ variables:
     - mkdir build
     - cd build
     - cmake .. -DTS_DYNAMIC_INSTRUCTION=ON -DCMAKE_INSTALL_PREFIX=$ARTIFACTS
+    # - export THREADS=`cat /proc/cpuinfo | grep processor| wc -l`
     - make -j$THREADS install
 
   artifacts: &linux_artifacts_config
@@ -60,6 +61,7 @@ variables:
     - mkdir build
     - cd build
     - cmake .. -DTS_DYNAMIC_INSTRUCTION=ON -DTS_USE_CUDA=ON -DTS_USE_CUBLAS=ON -DCMAKE_INSTALL_PREFIX=$ARTIFACTS
+    # - export THREADS=`cat /proc/cpuinfo | grep processor| wc -l`
     - make -j$THREADS tennis_LIB
     - make -j$THREADS tennis_haswell_LIB
     - make -j$THREADS tennis_sandy_bridge_LIB
