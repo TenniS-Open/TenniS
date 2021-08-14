@@ -11,8 +11,8 @@ variables:
   
 .only_config:
   only: &only_config
-    # - ci
-    - nothing
+    - ci
+    # - nothing
     
 .ubuntu_before_script:
   before_script: &ubuntu_before_script
@@ -100,6 +100,12 @@ variables:
     - cmake .. -DCMAKE_TOOLCHAIN_FILE=../toolchain/MinGW.cmake -DTS_DYNAMIC_INSTRUCTION=ON -DCMAKE_INSTALL_PREFIX=$ARTIFACTS
     # - export THREADS=`cat /proc/cpuinfo | grep processor| wc -l`
     - make -j$THREADS install
+    # Copy ref DLLs to artifacts. Notice that GCC is assumed version 9.3 in Ubuntu20.04.
+    - if [ ! -d "$ARTIFACTS/bin" ]; then mkdir "$ARTIFACTS/bin"; fi
+    - cp /usr/x86_64-w64-mingw32/lib/libwinpthread-1.dll $ARTIFACTS/bin
+    - cp /usr/lib/gcc/x86_64-w64-mingw32/9.3-posix/libgcc_s_seh-1.dll $ARTIFACTS/bin
+    - cp /usr/lib/gcc/x86_64-w64-mingw32/9.3-posix/libgomp-1.dll $ARTIFACTS/bin
+    - cp /usr/lib/gcc/x86_64-w64-mingw32/9.3-posix/libstdc++-6.dll $ARTIFACTS/bin
     
   
 .ubuntu1604_image: &ubuntu1604_config
