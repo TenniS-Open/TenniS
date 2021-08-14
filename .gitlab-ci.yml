@@ -18,7 +18,7 @@ variables:
     - export DEBIAN_FRONTEND=noninteractive
     - export TZ=Asia/Shanghai
     - sed -i s@/archive.ubuntu.com/@/mirrors.aliyun.com/@g /etc/apt/sources.list
-    - apt-get update
+    - (apt update || echo "[WARNNING] Some thing wrong, but ignored!")
     - apt-get install -y git cmake gcc g++
 
     
