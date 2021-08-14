@@ -23,7 +23,6 @@
 #define GETCWD(buffer, length) ::_getcwd((buffer), (length))
 #define CHDIR(path) ::_chdir(path)
 
-#include <Windows.h>
 #include <sys/stat.h>
 
 #elif TS_PLATFORM_OS_LINUX || TS_PLATFORM_OS_MAC || TS_PLATFORM_OS_IOS

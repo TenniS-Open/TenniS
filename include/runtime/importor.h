@@ -11,7 +11,11 @@
 #include <memory>
 
 #if TS_PLATFORM_OS_WINDOWS
+#if TS_PLATFORM_CC_MINGW
+#include "windows.h"
+#else
 #include "Windows.h"
+#endif
 #ifdef VOID
 #undef VOID
 #endif

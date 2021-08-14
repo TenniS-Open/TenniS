@@ -1,4 +1,15 @@
 #include <utils/env_vars.h>
+#include <utils/platform.h>
+
+#if TS_PLATFORM_OS_WINDOWS
+#if TS_PLATFORM_CC_MINGW
+    #include "windows.h"
+#else
+    #include "Windows.h"
+#endif
+#elif TS_PLATFORM_OS_LINUX || TS_PLATFORM_OS_ANDROID
+    #include <cstdlib>
+#endif
 
 namespace ts {
     std::string getEnvironmentVariable(const std::string& envName) {
