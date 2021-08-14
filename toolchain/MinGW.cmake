@@ -1,6 +1,5 @@
 # Set target OS is Windows
 SET(CMAKE_SYSTEM_NAME Windows)
-ADD_DEFINITIONS(-D__MINGW64__)
 
 # Set C/C++ compiler
 # Use posix version to support thread with libwinpthreads.
