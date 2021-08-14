@@ -14,7 +14,6 @@
 namespace ts {
     std::string getEnvironmentVariable(const std::string& envName) {
 #if TS_PLATFORM_OS_WINDOWS
-        #include <Windows.h>
         char buffer[MAX_PATH];
         DWORD code = GetEnvironmentVariable(envName.c_str(), buffer, MAX_PATH);
         return code == 0 ? std::string("") : std::string(buffer);
