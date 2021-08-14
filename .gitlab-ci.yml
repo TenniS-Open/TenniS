@@ -177,6 +177,7 @@ ubuntu16.04_cuda11.3.1-amd64:
   artifacts: *linux_artifacts_config
 
 
+# Ubuntu18.04 default cmake had conflict with CUDA 10.x
 # ubuntu18.04_cuda11.4.1-amd64:
 #   <<: *ubuntu1804_cuda1141_config
 #   stage: build
