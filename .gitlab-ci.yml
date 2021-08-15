@@ -77,7 +77,10 @@ variables:
   before_script: &mingw_before_script
     - export DEBIAN_FRONTEND=noninteractive
     - export TZ=Asia/Shanghai
-    - sed -i s@/archive.ubuntu.com/@/mirrors.aliyun.com/@g /etc/apt/sources.list
+    # Using default ubuntu repo. Aliyun is unstable to download mingw-w64
+    # - sed -i s@/archive.ubuntu.com/@/mirrors.aliyun.com/@g /etc/apt/sources.list
+    # Try tuna repo.
+    - sed -i s#http://archive.ubuntu.com/#https://mirrors.tuna.tsinghua.edu.cn/#g /etc/apt/sources.list
     - (apt update || echo "[WARNNING] Some thing wrong, but ignored!")
     - apt-get install -y git cmake mingw-w64
 
@@ -200,69 +203,38 @@ variables:
     - ls -l
   
   
-ubuntu16.04-amd64:
-  <<: *ubuntu1604_config
-  stage: build
-  tags:
-    - docker,amd64,linux
-  only: *only_config
-  script: *linux_build_script_config
-  artifacts: *linux_artifacts_config
+# ubuntu16.04-amd64:
+#   <<: *ubuntu1604_config
+#   stage: build
+#   tags:
+#     - docker,amd64,linux
+#   only: *only_config
+#   script: *linux_build_script_config
+#   artifacts: *linux_artifacts_config
   
   
-ubuntu18.04-amd64:
-  <<: *ubuntu1804_config
-  stage: build
-  tags:
-    - docker,amd64,linux
-  only: *only_config
-  script: *linux_build_script_config
-  artifacts: *linux_artifacts_config
+# ubuntu18.04-amd64:
+#   <<: *ubuntu1804_config
+#   stage: build
+#   tags:
+#     - docker,amd64,linux
+#   only: *only_config
+#   script: *linux_build_script_config
+#   artifacts: *linux_artifacts_config
   
   
-ubuntu20.04-amd64:
-  <<: *ubuntu2004_config
-  stage: build
-  tags:
-    - docker,amd64,linux
-  only: *only_config
-  script: *linux_build_script_config
-  artifacts: *linux_artifacts_config
+# ubuntu20.04-amd64:
+#   <<: *ubuntu2004_config
+#   stage: build
+#   tags:
+#     - docker,amd64,linux
+#   only: *only_config
+#   script: *linux_build_script_config
+#   artifacts: *linux_artifacts_config
 
 
-ubuntu16.04_cuda9.2-amd64:
-  <<: *ubuntu1604_cuda92_config
-  stage: build
-  tags:
-    - docker,amd64,linux
-  only: *only_config
-  script: *linux_build_cuda_script_config
-  artifacts: *linux_artifacts_config
-
-
-ubuntu16.04_cuda10.2-amd64:
-  <<: *ubuntu1604_cuda102_config
-  stage: build
-  tags:
-    - docker,amd64,linux
-  only: *only_config
-  script: *linux_build_cuda_script_config
-  artifacts: *linux_artifacts_config
-
-
-ubuntu16.04_cuda11.3.1-amd64:
-  <<: *ubuntu1604_cuda1131_config
-  stage: build
-  tags:
-    - docker,amd64,linux
-  only: *only_config
-  script: *linux_build_cuda_script_config
-  artifacts: *linux_artifacts_config
-
-
-# Ubuntu18.04 default cmake had conflict with CUDA 10.x
-# ubuntu18.04_cuda11.4.1-amd64:
-#   <<: *ubuntu1804_cuda1141_config
+# ubuntu16.04_cuda9.2-amd64:
+#   <<: *ubuntu1604_cuda92_config
 #   stage: build
 #   tags:
 #     - docker,amd64,linux
@@ -271,14 +243,45 @@ ubuntu16.04_cuda11.3.1-amd64:
 #   artifacts: *linux_artifacts_config
 
 
-ubuntu20.04_cuda11.4.1-amd64:
-  <<: *ubuntu2004_cuda1141_config
-  stage: build
-  tags:
-    - docker,amd64,linux
-  only: *only_config
-  script: *linux_build_cuda_script_config
-  artifacts: *linux_artifacts_config
+# ubuntu16.04_cuda10.2-amd64:
+#   <<: *ubuntu1604_cuda102_config
+#   stage: build
+#   tags:
+#     - docker,amd64,linux
+#   only: *only_config
+#   script: *linux_build_cuda_script_config
+#   artifacts: *linux_artifacts_config
+
+
+# ubuntu16.04_cuda11.3.1-amd64:
+#   <<: *ubuntu1604_cuda1131_config
+#   stage: build
+#   tags:
+#     - docker,amd64,linux
+#   only: *only_config
+#   script: *linux_build_cuda_script_config
+#   artifacts: *linux_artifacts_config
+
+
+# # Ubuntu18.04 default cmake had conflict with CUDA 10.x
+# # ubuntu18.04_cuda11.4.1-amd64:
+# #   <<: *ubuntu1804_cuda1141_config
+# #   stage: build
+# #   tags:
+# #     - docker,amd64,linux
+# #   only: *only_config
+# #   script: *linux_build_cuda_script_config
+# #   artifacts: *linux_artifacts_config
+
+
+# ubuntu20.04_cuda11.4.1-amd64:
+#   <<: *ubuntu2004_cuda1141_config
+#   stage: build
+#   tags:
+#     - docker,amd64,linux
+#   only: *only_config
+#   script: *linux_build_cuda_script_config
+#   artifacts: *linux_artifacts_config
 
 
 mingw-x86_64:
