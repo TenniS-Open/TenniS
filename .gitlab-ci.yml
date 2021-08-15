@@ -50,8 +50,7 @@ variables:
     
 .linux_test_config:
   script: &linux_test_script_config
-    - export ARTIFACTS=`pwd`/$CI_PROJECT_NAME-$CI_JOB_NAME
-    - export ARTIFACTS=${ARTIFACTS%_*}
+    - export ARTIFACTS=`pwd`/$CI_PROJECT_NAME-${CI_JOB_NAME%_*}
     - echo $ARTIFACTS
     - ls -l
     - cd $ARTIFACTS
@@ -151,10 +150,10 @@ variables:
     - make -j$THREADS install
     # Copy ref DLLs to artifacts. Notice that GCC is assumed version 9.3 in Ubuntu20.04.
     - if [ ! -d "$ARTIFACTS/bin" ]; then mkdir "$ARTIFACTS/bin"; fi
-    # - cp /usr/$ARCH-w64-mingw32/lib/libwinpthread-1.dll $ARTIFACTS/bin
-    # - cp /usr/lib/gcc/$ARCH-w64-mingw32/$VERSION-posix/libgcc_s_seh-1.dll $ARTIFACTS/bin
-    # - cp /usr/lib/gcc/$ARCH-w64-mingw32/$VERSION-posix/libgomp-1.dll $ARTIFACTS/bin
-    # - cp /usr/lib/gcc/$ARCH-w64-mingw32/$VERSION-posix/libstdc++-6.dll $ARTIFACTS/bin
+    - cp /usr/$ARCH-w64-mingw32/lib/libwinpthread-1.dll $ARTIFACTS/bin
+    - cp /usr/lib/gcc/$ARCH-w64-mingw32/$VERSION-posix/libgcc_s_sjlj-1.dll $ARTIFACTS/bin
+    - cp /usr/lib/gcc/$ARCH-w64-mingw32/$VERSION-posix/libgomp-1.dll $ARTIFACTS/bin
+    - cp /usr/lib/gcc/$ARCH-w64-mingw32/$VERSION-posix/libstdc++-6.dll $ARTIFACTS/bin
     # Add tips to tell how to use packaged files.
     - 'echo [Notice] > $ARTIFACTS/notice.txt'
     - 'echo Please use the DLLs in this package to replace the same name DLLs in your own environment \
