@@ -11,8 +11,8 @@ variables:
   
 .only_config:
   only: &only_config
-    - ci
-    # - nothing
+    # - ci
+    - nothing
     
 .ubuntu_before_script:
   before_script: &ubuntu_before_script
@@ -205,38 +205,69 @@ variables:
   before_script: *mingw_before_script
   
   
-# ubuntu16.04-amd64:
-#   <<: *ubuntu1604_config
-#   stage: build
-#   tags:
-#     - docker,amd64,linux
-#   only: *only_config
-#   script: *linux_build_script_config
-#   artifacts: *linux_artifacts_config
+ubuntu16.04-amd64:
+  <<: *ubuntu1604_config
+  stage: build
+  tags:
+    - docker,amd64,linux
+  only: *only_config
+  script: *linux_build_script_config
+  artifacts: *linux_artifacts_config
   
   
-# ubuntu18.04-amd64:
-#   <<: *ubuntu1804_config
-#   stage: build
-#   tags:
-#     - docker,amd64,linux
-#   only: *only_config
-#   script: *linux_build_script_config
-#   artifacts: *linux_artifacts_config
+ubuntu18.04-amd64:
+  <<: *ubuntu1804_config
+  stage: build
+  tags:
+    - docker,amd64,linux
+  only: *only_config
+  script: *linux_build_script_config
+  artifacts: *linux_artifacts_config
   
   
-# ubuntu20.04-amd64:
-#   <<: *ubuntu2004_config
-#   stage: build
-#   tags:
-#     - docker,amd64,linux
-#   only: *only_config
-#   script: *linux_build_script_config
-#   artifacts: *linux_artifacts_config
+ubuntu20.04-amd64:
+  <<: *ubuntu2004_config
+  stage: build
+  tags:
+    - docker,amd64,linux
+  only: *only_config
+  script: *linux_build_script_config
+  artifacts: *linux_artifacts_config
 
 
-# ubuntu16.04_cuda9.2-amd64:
-#   <<: *ubuntu1604_cuda92_config
+ubuntu16.04_cuda9.2-amd64:
+  <<: *ubuntu1604_cuda92_config
+  stage: build
+  tags:
+    - docker,amd64,linux
+  only: *only_config
+  script: *linux_build_cuda_script_config
+  artifacts: *linux_artifacts_config
+
+
+ubuntu16.04_cuda10.2-amd64:
+  <<: *ubuntu1604_cuda102_config
+  stage: build
+  tags:
+    - docker,amd64,linux
+  only: *only_config
+  script: *linux_build_cuda_script_config
+  artifacts: *linux_artifacts_config
+
+
+ubuntu16.04_cuda11.3.1-amd64:
+  <<: *ubuntu1604_cuda1131_config
+  stage: build
+  tags:
+    - docker,amd64,linux
+  only: *only_config
+  script: *linux_build_cuda_script_config
+  artifacts: *linux_artifacts_config
+
+
+# Ubuntu18.04 default cmake had conflict with CUDA 10.x
+# ubuntu18.04_cuda11.4.1-amd64:
+#   <<: *ubuntu1804_cuda1141_config
 #   stage: build
 #   tags:
 #     - docker,amd64,linux
@@ -245,55 +276,24 @@ variables:
 #   artifacts: *linux_artifacts_config
 
 
-# ubuntu16.04_cuda10.2-amd64:
-#   <<: *ubuntu1604_cuda102_config
-#   stage: build
-#   tags:
-#     - docker,amd64,linux
-#   only: *only_config
-#   script: *linux_build_cuda_script_config
-#   artifacts: *linux_artifacts_config
+ubuntu20.04_cuda11.4.1-amd64:
+  <<: *ubuntu2004_cuda1141_config
+  stage: build
+  tags:
+    - docker,amd64,linux
+  only: *only_config
+  script: *linux_build_cuda_script_config
+  artifacts: *linux_artifacts_config
 
 
-# ubuntu16.04_cuda11.3.1-amd64:
-#   <<: *ubuntu1604_cuda1131_config
-#   stage: build
-#   tags:
-#     - docker,amd64,linux
-#   only: *only_config
-#   script: *linux_build_cuda_script_config
-#   artifacts: *linux_artifacts_config
-
-
-# # Ubuntu18.04 default cmake had conflict with CUDA 10.x
-# # ubuntu18.04_cuda11.4.1-amd64:
-# #   <<: *ubuntu1804_cuda1141_config
-# #   stage: build
-# #   tags:
-# #     - docker,amd64,linux
-# #   only: *only_config
-# #   script: *linux_build_cuda_script_config
-# #   artifacts: *linux_artifacts_config
-
-
-# ubuntu20.04_cuda11.4.1-amd64:
-#   <<: *ubuntu2004_cuda1141_config
-#   stage: build
-#   tags:
-#     - docker,amd64,linux
-#   only: *only_config
-#   script: *linux_build_cuda_script_config
-#   artifacts: *linux_artifacts_config
-
-
-# mingw-x86_64:
-#   <<: *mingw_config
-#   stage: build
-#   tags:
-#     - docker,amd64,linux
-#   only: *only_config
-#   script: *mingw-x86_64_build_script_config
-#   artifacts: *linux_artifacts_config
+mingw-x86_64:
+  <<: *mingw_config
+  stage: build
+  tags:
+    - docker,amd64,linux
+  only: *only_config
+  script: *mingw-x86_64_build_script_config
+  artifacts: *linux_artifacts_config
 
   
 mingw-i686:
@@ -306,14 +306,14 @@ mingw-i686:
   artifacts: *linux_artifacts_config
 
   
-mingw-i686_test:
-  image: "ubuntu:20.04"
-  stage: test
-  tags:
-    - docker,amd64,linux
-  only: *only_config
-  script: *linux_test_script_config
-  dependencies:
-    - mingw-i686
+# mingw-i686_test:
+#   image: "ubuntu:20.04"
+#   stage: test
+#   tags:
+#     - docker,amd64,linux
+#   only: *only_config
+#   script: *linux_test_script_config
+#   dependencies:
+#     - mingw-i686
   
   
