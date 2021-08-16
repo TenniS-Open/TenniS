@@ -20,8 +20,19 @@ variables:
     - sed -i s@/archive.ubuntu.com/@/mirrors.aliyun.com/@g /etc/apt/sources.list
     - (apt update || echo "[WARNNING] Some thing wrong, but ignored!")
     - apt-get install -y git cmake gcc g++
-
     
+.centos7_before_script:
+  before_script: &centos7_before_script
+    - curl -o /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo
+    - (yum -y update || echo "[WARNNING] Some thing wrong, but ignored!")
+    - yum install -y git cmake make gcc gcc-c++
+    
+.centos8_before_script:
+  before_script: &centos8_before_script
+    - curl -o /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo
+    - (yum -y update || echo "[WARNNING] Some thing wrong, but ignored!")
+    - yum install -y git cmake make gcc gcc-c++
+
 .linux_build_config:
   script: &linux_build_script_config
     - export ARTIFACTS=`pwd`/$CI_PROJECT_NAME-$CI_JOB_NAME
@@ -39,7 +50,7 @@ variables:
     - cd build
     - cmake .. -DTS_DYNAMIC_INSTRUCTION=ON -DCMAKE_INSTALL_PREFIX=$ARTIFACTS
     # - export THREADS=`cat /proc/cpuinfo | grep processor| wc -l`
-    - make -j$THREADS install
+    - cmake --build . --target install -- -j $THREADS
 
   artifacts: &linux_artifacts_config
     name: '$CI_PROJECT_NAME-$CI_JOB_NAME-$CI_COMMIT_REF_NAME'
@@ -74,11 +85,11 @@ variables:
     - cd build
     - cmake .. -DTS_DYNAMIC_INSTRUCTION=ON -DTS_USE_CUDA=ON -DTS_USE_CUBLAS=ON -DCMAKE_INSTALL_PREFIX=$ARTIFACTS
     # - export THREADS=`cat /proc/cpuinfo | grep processor| wc -l`
-    - make -j$THREADS tennis_LIB
-    - make -j$THREADS tennis_haswell_LIB
-    - make -j$THREADS tennis_sandy_bridge_LIB
-    - make -j$THREADS tennis_pentium_LIB
-    - make install
+    - cmake --build . --target tennis_LIB -- -j $THREADS
+    - cmake --build . --target tennis_haswell_LIB -- -j $THREADS
+    - cmake --build . --target tennis_sandy_bridge_LIB -- -j $THREADS
+    - cmake --build . --target tennis_pentium_LIB -- -j $THREADS
+    - cmake --build . --target install -- -j $THREADS
     
 
 .mingw_before_script:
@@ -113,7 +124,7 @@ variables:
     - cd build
     - cmake .. -DCMAKE_TOOLCHAIN_FILE=../toolchain/MinGW-$ARCH.cmake -DTS_DYNAMIC_INSTRUCTION=ON -DCMAKE_INSTALL_PREFIX=$ARTIFACTS
     # - export THREADS=`cat /proc/cpuinfo | grep processor| wc -l`
-    - make -j$THREADS install
+    - cmake --build . --target install -- -j $THREADS
     # Copy ref DLLs to artifacts.
     - if [ ! -d "$ARTIFACTS/bin" ]; then mkdir "$ARTIFACTS/bin"; fi
     - cp /usr/$ARCH-w64-mingw32/lib/libwinpthread-1.dll $ARTIFACTS/bin
@@ -147,7 +158,7 @@ variables:
     - cd build
     - cmake .. -DCMAKE_TOOLCHAIN_FILE=../toolchain/MinGW-$ARCH.cmake -DTS_DYNAMIC_INSTRUCTION=ON -DCMAKE_INSTALL_PREFIX=$ARTIFACTS
     # - export THREADS=`cat /proc/cpuinfo | grep processor| wc -l`
-    - make -j$THREADS install
+    - cmake --build . --target install -- -j $THREADS
     # Copy ref DLLs to artifacts. Notice that GCC is assumed version 9.3 in Ubuntu20.04.
     - if [ ! -d "$ARTIFACTS/bin" ]; then mkdir "$ARTIFACTS/bin"; fi
     - cp /usr/$ARCH-w64-mingw32/lib/libwinpthread-1.dll $ARTIFACTS/bin
@@ -203,6 +214,16 @@ variables:
 .mingw_image: &mingw_config
   image: "ubuntu:20.04"
   before_script: *mingw_before_script
+
+
+.centos7_image: &centos7_config
+  image: "centos:7"
+  before_script: *centos7_before_script
+
+
+.centos8_image: &centos8_config
+  image: "centos:8"
+  before_script: *centos8_before_script
   
   
 ubuntu16.04-amd64:
@@ -303,6 +324,26 @@ mingw-i686:
     - docker,amd64,linux
   only: *only_config
   script: *mingw-i686_build_script_config
+  artifacts: *linux_artifacts_config
+  
+  
+centos7-amd64:
+  <<: *centos7_config
+  stage: build
+  tags:
+    - docker,amd64,linux
+  only: *only_config
+  script: *linux_build_script_config
+  artifacts: *linux_artifacts_config
+  
+  
+centos8-amd64:
+  <<: *centos8_config
+  stage: build
+  tags:
+    - docker,amd64,linux
+  only: *only_config
+  script: *linux_build_script_config
   artifacts: *linux_artifacts_config
 
   
