@@ -226,6 +226,21 @@ namespace ts {
             }
             return target;
         }
+
+        auto top_it() -> decltype(m_list.begin()) {
+            auto &ref = *m_ref;
+            auto it = m_list.begin();
+            if (it == m_list.end()) return it;
+            auto target = it;
+            while (true) {
+                ++it;
+                if (it == m_list.end()) break;
+                if (ref.ref(*it, *target)) {
+                    target = it;
+                }
+            }
+            return target;
+        }
     };
 
     class BottomFirstQueue {
@@ -263,6 +278,21 @@ namespace ts {
         const RefCache *m_ref;
 
         auto top_it() const -> decltype(m_list.begin()) {
+            auto &ref = *m_ref;
+            auto it = m_list.begin();
+            if (it == m_list.end()) return it;
+            auto target = it;
+            while (true) {
+                ++it;
+                if (it == m_list.end()) break;
+                if (ref.ref(*target, *it)) {
+                    target = it;
+                }
+            }
+            return target;
+        }
+
+        auto top_it() -> decltype(m_list.begin()) {
             auto &ref = *m_ref;
             auto it = m_list.begin();
             if (it == m_list.end()) return it;
