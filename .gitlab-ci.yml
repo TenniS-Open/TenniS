@@ -211,6 +211,7 @@ variables:
        -DANDROID_STL=c++_static 
        -DANDROID_ARM_NEON=ON 
        -DPLATFORM="arm64-v8a" 
+       -DTS_USE_FAST_MATH=ON 
        -DTS_ON_ARM=ON'
     - cmake --build . --target install -- -j $THREADS
     - popd
@@ -223,6 +224,7 @@ variables:
        -DANDROID_STL=c++_static 
        -DANDROID_ARM_NEON=ON 
        -DPLATFORM="armeabi-v7a" 
+       -DTS_USE_FAST_MATH=ON 
        -DTS_ON_ARM=ON 
        -DTS_ON_ARMV7=ON'
     - cmake --build . --target install -- -j $THREADS
