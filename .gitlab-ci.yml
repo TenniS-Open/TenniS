@@ -24,13 +24,13 @@ variables:
 .centos7_before_script:
   before_script: &centos7_before_script
     - curl -o /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo
-    - (yum -y update || echo "[WARNNING] Some thing wrong, but ignored!")
+    - (yum makecache || echo "[WARNNING] Some thing wrong, but ignored!")
     - yum install -y git cmake make gcc gcc-c++
     
 .centos8_before_script:
   before_script: &centos8_before_script
-    - curl -o /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo
-    - (yum -y update || echo "[WARNNING] Some thing wrong, but ignored!")
+    - curl -o /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-8.repo
+    - (yum makecache || echo "[WARNNING] Some thing wrong, but ignored!")
     - yum install -y git cmake make gcc gcc-c++
 
 .android_before_script:
@@ -211,6 +211,7 @@ variables:
        -DANDROID_STL=c++_static 
        -DANDROID_ARM_NEON=ON 
        -DPLATFORM="armeabi-v7a" 
+       -DTS_USE_NEON=ON 
        -DTS_USE_FAST_MATH=ON 
        -DTS_ON_ARM=ON 
        -DTS_ON_ARMV7=ON'
@@ -225,6 +226,7 @@ variables:
        -DANDROID_STL=c++_static 
        -DANDROID_ARM_NEON=ON 
        -DPLATFORM="arm64-v8a" 
+       -DTS_USE_NEON=ON 
        -DTS_USE_FAST_MATH=ON 
        -DTS_ON_ARM=ON'
     - cmake --build . --target install -- -j $THREADS
