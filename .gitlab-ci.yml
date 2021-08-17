@@ -202,22 +202,9 @@ variables:
     - cat $ARTIFACTS/version.txt
     - cmake --version
     - export ANDROID_PLATFORM=19
-    - mkdir build_armv8
-    - pushd build_armv8
-    - 'cmake .. -DCMAKE_INSTALL_PREFIX=`pwd`/install 
-       -DCMAKE_TOOLCHAIN_FILE=${ANDROID_NDK}/build/cmake/android.toolchain.cmake 
-       -DANDROID_ABI="arm64-v8a" 
-       -DANDROID_PLATFORM=android-$ANDROID_PLATFORM 
-       -DANDROID_STL=c++_static 
-       -DANDROID_ARM_NEON=ON 
-       -DPLATFORM="arm64-v8a" 
-       -DTS_USE_FAST_MATH=ON 
-       -DTS_ON_ARM=ON'
-    - cmake --build . --target install -- -j $THREADS
-    - popd
     - mkdir build_armv7
     - pushd build_armv7
-    - 'cmake .. -DCMAKE_INSTALL_PREFIX=`pwd`/install 
+    - 'cmake .. -DCMAKE_INSTALL_PREFIX=$ARTIFACTS 
        -DCMAKE_TOOLCHAIN_FILE=${ANDROID_NDK}/build/cmake/android.toolchain.cmake 
        -DANDROID_ABI="armeabi-v7a" 
        -DANDROID_PLATFORM=android-$ANDROID_PLATFORM 
@@ -227,6 +214,19 @@ variables:
        -DTS_USE_FAST_MATH=ON 
        -DTS_ON_ARM=ON 
        -DTS_ON_ARMV7=ON'
+    - cmake --build . --target install -- -j $THREADS
+    - popd
+    - mkdir build_armv8
+    - pushd build_armv8
+    - 'cmake .. -DCMAKE_INSTALL_PREFIX=$ARTIFACTS 
+       -DCMAKE_TOOLCHAIN_FILE=${ANDROID_NDK}/build/cmake/android.toolchain.cmake 
+       -DANDROID_ABI="arm64-v8a" 
+       -DANDROID_PLATFORM=android-$ANDROID_PLATFORM 
+       -DANDROID_STL=c++_static 
+       -DANDROID_ARM_NEON=ON 
+       -DPLATFORM="arm64-v8a" 
+       -DTS_USE_FAST_MATH=ON 
+       -DTS_ON_ARM=ON'
     - cmake --build . --target install -- -j $THREADS
     - popd
 
