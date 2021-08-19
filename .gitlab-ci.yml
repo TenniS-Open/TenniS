@@ -45,11 +45,15 @@ variables:
     - export ANDROID_NDK_ARCH=x86_64
     - export ANDROID_NDK_ZIP=android-ndk-$ANDROID_NDK_VERSION-$ANDROID_NDK_HOST-$ANDROID_NDK_ARCH.zip
     - export ANDROID_NDK=`pwd`/android-ndk/android-ndk-$ANDROID_NDK_VERSION
-    - mkdir android-ndk
+    - if [ ! -d android-ndk ]; then mkdir android-ndk; fi
     - pushd android-ndk
-    - wget https://dl.google.com/android/repository/$ANDROID_NDK_ZIP
+    - if [ ! -f $ANDROID_NDK_ZIP ]; then wget https://dl.google.com/android/repository/$ANDROID_NDK_ZIP; fi
     - unzip -q $ANDROID_NDK_ZIP
     - popd
+
+  cache: &android_cache_config
+    paths:
+      - android-ndk/*.zip
 
 .linux_build_config:
   script: &linux_build_script_config
@@ -421,6 +425,7 @@ android19-arm:
     - docker,amd64,linux
   only: *only_config
   script: *android19_build_script_config
+  cache: *android_cache_config
   artifacts: *linux_artifacts_config
 
   
