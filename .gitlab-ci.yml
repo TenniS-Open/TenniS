@@ -12,7 +12,7 @@ variables:
 .only_config:
   only: &only_config
     - /^r\d+\.\d+\W?/
-    # - ci
+    - ci
 
 
 .ubuntu_before_script:
@@ -32,8 +32,9 @@ variables:
 .centos8_before_script:
   before_script: &centos8_before_script
     - curl -o /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-8.repo
+    # - sed -i -e '/mirrors.cloud.aliyuncs.com/d' -e '/mirrors.aliyuncs.com/d' /etc/yum.repos.d/CentOS-Base.repo
     - (yum makecache || echo "[WARNNING] Some thing wrong, but ignored!")
-    - yum install -y git cmake make gcc gcc-c++
+    - yum install -y git cmake make gcc gcc-c++ libarchive
 
 .android_before_script:
   before_script: &android_before_script
