@@ -47,8 +47,12 @@ else(TS_CUDA_ARCH)
        set(CUDA_ARCH "${CUDA_ARCH} -gencode arch=compute_75,code=sm_75")
    endif()
    if (${CUDA_VERSION} VERSION_GREATER "10.999")
-       message(STATUS "    CUDA: support Ampere in 8.0")
+       message(STATUS "    CUDA: support Ampere in part in 8.0")
        set(CUDA_ARCH "${CUDA_ARCH} -gencode arch=compute_80,code=sm_80")
+   endif()
+   if (${CUDA_VERSION} VERSION_GREATER "11.0")  # for 11.1 - 11.4
+       message(STATUS "    CUDA: support Ampere fully in 8.6")
+       set(CUDA_ARCH "${CUDA_ARCH} -gencode arch=compute_86,code=sm_86")
    endif()
 endif(TS_CUDA_ARCH)
 
