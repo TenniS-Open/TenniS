@@ -12,7 +12,7 @@ variables:
 .only_config:
   only: &only_config
     - /^r\d+\.\d+\W?/
-    - ci
+    # - ci
 
 
 .ubuntu_before_script:
@@ -73,7 +73,7 @@ variables:
     - cmake --version
     - mkdir build
     - cd build
-    - cmake .. -DTS_DYNAMIC_INSTRUCTION=ON -DCMAKE_INSTALL_PREFIX=$ARTIFACTS
+    - cmake .. -DTS_DYNAMIC_INSTRUCTION=ON -DCMAKE_INSTALL_PREFIX=$ARTIFACTS -DCMAKE_BUILD_TYPE=Release
     # - export THREADS=`cat /proc/cpuinfo | grep processor| wc -l`
     - cmake --build . --target install -- -j $THREADS
 
@@ -108,7 +108,7 @@ variables:
     - cmake --version
     - mkdir build
     - cd build
-    - cmake .. -DTS_DYNAMIC_INSTRUCTION=ON -DTS_USE_CUDA=ON -DTS_USE_CUBLAS=ON -DCMAKE_INSTALL_PREFIX=$ARTIFACTS
+    - cmake .. -DTS_DYNAMIC_INSTRUCTION=ON -DTS_USE_CUDA=ON -DTS_USE_CUBLAS=ON -DCMAKE_INSTALL_PREFIX=$ARTIFACTS -DCMAKE_BUILD_TYPE=Release
     # - export THREADS=`cat /proc/cpuinfo | grep processor| wc -l`
     - cmake --build . --target tennis_LIB -- -j $THREADS
     - cmake --build . --target tennis_haswell_LIB -- -j $THREADS
@@ -147,7 +147,7 @@ variables:
     - cmake --version
     - mkdir build
     - cd build
-    - cmake .. -DCMAKE_TOOLCHAIN_FILE=../toolchain/MinGW-$ARCH.cmake -DTS_DYNAMIC_INSTRUCTION=ON -DCMAKE_INSTALL_PREFIX=$ARTIFACTS
+    - cmake .. -DCMAKE_TOOLCHAIN_FILE=../toolchain/MinGW-$ARCH.cmake -DTS_DYNAMIC_INSTRUCTION=ON -DCMAKE_INSTALL_PREFIX=$ARTIFACTS -DCMAKE_BUILD_TYPE=Release
     # - export THREADS=`cat /proc/cpuinfo | grep processor| wc -l`
     - cmake --build . --target install -- -j $THREADS
     # Copy ref DLLs to artifacts.
@@ -181,7 +181,7 @@ variables:
     - cmake --version
     - mkdir build
     - cd build
-    - cmake .. -DCMAKE_TOOLCHAIN_FILE=../toolchain/MinGW-$ARCH.cmake -DTS_DYNAMIC_INSTRUCTION=ON -DCMAKE_INSTALL_PREFIX=$ARTIFACTS
+    - cmake .. -DCMAKE_TOOLCHAIN_FILE=../toolchain/MinGW-$ARCH.cmake -DTS_DYNAMIC_INSTRUCTION=ON -DCMAKE_INSTALL_PREFIX=$ARTIFACTS -DCMAKE_BUILD_TYPE=Release
     # - export THREADS=`cat /proc/cpuinfo | grep processor| wc -l`
     - cmake --build . --target install -- -j $THREADS
     # Copy ref DLLs to artifacts. Notice that GCC is assumed version 9.3 in Ubuntu20.04.
@@ -212,6 +212,7 @@ variables:
     - mkdir build_armv7
     - pushd build_armv7
     - 'cmake .. -DCMAKE_INSTALL_PREFIX=$ARTIFACTS 
+       -DCMAKE_BUILD_TYPE=Release 
        -DCMAKE_TOOLCHAIN_FILE=${ANDROID_NDK}/build/cmake/android.toolchain.cmake 
        -DANDROID_ABI="armeabi-v7a" 
        -DANDROID_PLATFORM=android-$ANDROID_PLATFORM 
@@ -227,6 +228,7 @@ variables:
     - mkdir build_armv8
     - pushd build_armv8
     - 'cmake .. -DCMAKE_INSTALL_PREFIX=$ARTIFACTS 
+       -DCMAKE_BUILD_TYPE=Release 
        -DCMAKE_TOOLCHAIN_FILE=${ANDROID_NDK}/build/cmake/android.toolchain.cmake 
        -DANDROID_ABI="arm64-v8a" 
        -DANDROID_PLATFORM=android-$ANDROID_PLATFORM 
@@ -261,7 +263,7 @@ variables:
     - cmake --version
     - mkdir build
     - cd build
-    - cmake .. -DTS_DYNAMIC_INSTRUCTION=ON -DCMAKE_INSTALL_PREFIX=$ARTIFACTS
+    - cmake .. -DTS_DYNAMIC_INSTRUCTION=ON -DCMAKE_INSTALL_PREFIX=$ARTIFACTS -DCMAKE_BUILD_TYPE=Release
     - cmake --build . --target install -- -j $THREADS
 
 .ios9_build_config:
@@ -293,6 +295,7 @@ variables:
     - mkdir build
     - cd build
     - 'cmake .. -DCMAKE_TOOLCHAIN_FILE=../toolchain/iOS.cmake -DCMAKE_INSTALL_PREFIX=$ARTIFACTS
+      -DCMAKE_BUILD_TYPE=Release 
       -DTS_USE_OPENMP=OFF
       -DTS_USE_SIMD=ON
       -DTS_USE_CBLAS=ON

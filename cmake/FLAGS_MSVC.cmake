@@ -36,8 +36,9 @@ else()
 endif()
 
 # Use DLL multi-threads
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MD")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MD")
+# Use those flags by default.
+# set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MD")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MD")
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /wd4819")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4819")
