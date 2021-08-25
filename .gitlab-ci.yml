@@ -12,7 +12,14 @@ variables:
 .only_config:
   only: &only_config
     - /^r\d+\.\d+\W?/
-    # - ci
+    - ci
+
+.common_artifacts: &common_artifacts_config
+  name: '${CI_PROJECT_NAME}-${CI_JOB_NAME}-${CI_COMMIT_REF_NAME}'
+  paths:
+    - '${CI_PROJECT_NAME}-${CI_JOB_NAME}/'
+  # defualt is 1 month
+  expire_in: '1 month'
 
 
 .ubuntu_before_script:
@@ -78,11 +85,7 @@ variables:
     - cmake --build . --target install -- -j $THREADS
 
   artifacts: &linux_artifacts_config
-    name: '${CI_PROJECT_NAME}-${CI_JOB_NAME}-${CI_COMMIT_REF_NAME}'
-    paths:
-      - '${CI_PROJECT_NAME}-${CI_JOB_NAME}/'
-    # defualt is 1 month
-    expire_in: 1 year
+    <<: *common_artifacts_config
     
 .linux_test_config:
   script: &linux_test_script_config
@@ -307,7 +310,99 @@ variables:
       '
     - cmake --build . --target install -- -j $THREADS
 
-    
+
+.windows_setup_vs2019_x64:
+  before_script: &windows_setup_vs2019_x64
+    - $version = "vs2019"
+    - $arch = "x64"
+    - '&script\pwsh\setup_vcvars.ps1 $version $arch'
+
+.windows_setup_vs2019_x86:
+  before_script: &windows_setup_vs2019_x86
+    - $version = "vs2019"
+    - $arch = "x86"
+    - '&script\pwsh\setup_vcvars.ps1 $version $arch'
+
+.windows_setup_vs2017_x64:
+  before_script: &windows_setup_vs2017_x64
+    - $version = "vs2017"
+    - $arch = "x64"
+    - '&script\pwsh\setup_vcvars.ps1 $version $arch'
+
+.windows_setup_vs2017_x86:
+  before_script: &windows_setup_vs2017_x86
+    - $version = "vs2017"
+    - $arch = "x86"
+    - '&script\pwsh\setup_vcvars.ps1 $version $arch'
+
+.windows_setup_vs2015_x64:
+  before_script: &windows_setup_vs2015_x64
+    - $version = "vs2015"
+    - $arch = "x64"
+    - '&script\pwsh\setup_vcvars.ps1 $version $arch'
+
+.windows_setup_vs2015_x86:
+  before_script: &windows_setup_vs2015_x86
+    - $version = "vs2015"
+    - $arch = "x86"
+    - '&script\pwsh\setup_vcvars.ps1 $version $arch'
+
+.windows_setup_vs2013_x64:
+  before_script: &windows_setup_vs2013_x64
+    - $version = "vs2013"
+    - $arch = "x64"
+    - '&script\pwsh\setup_vcvars.ps1 $version $arch'
+
+.windows_setup_vs2013_x86:
+  before_script: &windows_setup_vs2013_x86
+    - $version = "vs2013"
+    - $arch = "x86"
+    - '&script\pwsh\setup_vcvars.ps1 $version $arch'
+
+.windows_build_config:
+  script: &windows_build_script_config
+    - $ARTIFACTS = (pwd).Path + "\${CI_PROJECT_NAME}-${CI_JOB_NAME}"
+    - if (![io.Directory]::Exists("$ARTIFACTS")) { mkdir "$ARTIFACTS" > NUL; }
+    - 'Write-Output "[Version]" > $ARTIFACTS\version.txt'
+    - 'Write-Output "date: $(Get-Date -Format `"yyyy-MM-dd HH:mm:ss z`")" >> $ARTIFACTS/version.txt'
+    - 'Write-Output "ref: $CI_COMMIT_REF_NAME" >> $ARTIFACTS/version.txt'
+    - 'Write-Output "tag: $CI_COMMIT_TAG" >> $ARTIFACTS/version.txt'
+    - 'Write-Output "reversion: $CI_COMMIT_SHA" >> $ARTIFACTS/version.txt'
+    - 'Write-Output "[Recent Log]"  >> $ARTIFACTS/version.txt'
+    - git log -n 32 --pretty=format:"%h [%ai] %s" | findstr -v "Merge" | select -first 16 >> $ARTIFACTS/version.txt
+    - Get-Content $ARTIFACTS/version.txt
+    - cmake --version
+    - mkdir build > NUL
+    - pushd build
+    - cmake .. -G "NMake Makefiles" -DTS_DYNAMIC_INSTRUCTION=ON -DCMAKE_INSTALL_PREFIX="${ARTIFACTS}" -DCMAKE_BUILD_TYPE=Release
+    - cmake --build . --target install
+    - popd
+    - '&script\pwsh\fusion_v2.ps1 $ARTIFACTS\bin'
+
+.windows_build_cuda_config:
+  script: &windows_build_cuda_script_config
+    - $ARTIFACTS = (pwd).Path + "\${CI_PROJECT_NAME}-${CI_JOB_NAME}"
+    - if (![io.Directory]::Exists("$ARTIFACTS")) { mkdir "$ARTIFACTS" > NUL; }
+    - 'Write-Output "[Version]" > $ARTIFACTS\version.txt'
+    - 'Write-Output "date: $(Get-Date -Format `"yyyy-MM-dd HH:mm:ss z`")" >> $ARTIFACTS/version.txt'
+    - 'Write-Output "ref: $CI_COMMIT_REF_NAME" >> $ARTIFACTS/version.txt'
+    - 'Write-Output "tag: $CI_COMMIT_TAG" >> $ARTIFACTS/version.txt'
+    - 'Write-Output "reversion: $CI_COMMIT_SHA" >> $ARTIFACTS/version.txt'
+    - 'Write-Output "[Recent Log]"  >> $ARTIFACTS/version.txt'
+    - git log -n 32 --pretty=format:"%h [%ai] %s" | findstr -v "Merge" | select -first 16 >> $ARTIFACTS/version.txt
+    - Get-Content $ARTIFACTS/version.txt
+    - cmake --version
+    - mkdir build > NUL
+    - pushd build
+    - cmake .. -G "NMake Makefiles" -DTS_DYNAMIC_INSTRUCTION=ON -DTS_USE_CUDA=ON -DCMAKE_INSTALL_PREFIX="${ARTIFACTS}" -DCMAKE_BUILD_TYPE=Release
+    - cmake --build . --target install
+    - popd
+    - '&script\pwsh\fusion_v2.ps1 $ARTIFACTS\bin'
+
+  artifacts: &windows_artifacts_config
+    <<: *common_artifacts_config
+
+
 .ubuntu1604_image: &ubuntu1604_config
   image: "ubuntu:16.04"
   before_script: *ubuntu_before_script
@@ -516,6 +611,33 @@ ios9-arm:
   only: *only_config
   script: *ios9_build_script_config
   artifacts: *linux_artifacts_config
+
+windows_vs2019-x64:
+  stage: build
+  tags:
+    - shell,vs2019,windows
+  only: *only_config
+  before_script: *windows_setup_vs2019_x64
+  script: *windows_build_script_config
+  artifacts: *windows_artifacts_config
+
+windows_vs2019-x86:
+  stage: build
+  tags:
+    - shell,vs2019,windows
+  only: *only_config
+  before_script: *windows_setup_vs2019_x86
+  script: *windows_build_script_config
+  artifacts: *windows_artifacts_config
+
+windows_vs2019_cuda-x64:
+  stage: build
+  tags:
+    - shell,vs2019,cuda,windows
+  only: *only_config
+  before_script: *windows_setup_vs2019_x64
+  script: *windows_build_cuda_script_config
+  artifacts: *windows_artifacts_config
 
 
 # mingw-i686_test:
