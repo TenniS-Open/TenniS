@@ -66,7 +66,11 @@ function Fusion {
         if ($null -eq $ready_dlls[$lower_ref]) {
             # find and copy dll
             ## find
-            $posible = where.exe $ref
+            $posible = @()
+            foreach ($_ in where.exe $ref) { $posible += $_; }
+            ### try x86 and x64 as well
+            foreach ($_ in where.exe $ref /R C:\Windows\System32) { $posible += $_; }
+            foreach ($_ in where.exe $ref /R C:\Windows\SysWOW64) { $posible += $_; }
             $found = $null
             :posible
             foreach ($_ in $posible) {
@@ -82,11 +86,11 @@ function Fusion {
             }
             ## check
             if ($null -eq $found) {
-                Write-Output "[WARNING] Can not found $ref for arch($arch)."
+                Write-Output "[WARNING] Can not found $ref for $dll($arch)."
                 continue refs
             }
             ## copy
-            Write-Output "[INFO] Fusion $dll <- $found."
+            Write-Output "[INFO] Fusion $dll <- $found"
             Copy-Item $found .
             $ready_dlls[$lower_ref] = 1
             $ref = Split-Path -Leaf $found  # make ref name to found ref.
