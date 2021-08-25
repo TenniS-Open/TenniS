@@ -16,8 +16,8 @@ namespace ts {
             virtual void hard_sigmoid(const Tensor &x, float alpha, float beta, Tensor &out) = 0;
 
         private:
-            float m_alpha = 0.2;
-            float m_beta = 0.5;
+            float m_alpha = 0.2f;
+            float m_beta = 0.5f;
         };
     }
 }

@@ -2323,9 +2323,9 @@ namespace ts {
             auto lhs_shape = inputs[1].sizes();
             auto rhs_shape = inputs[2].sizes();
 
-            int cond_dim = cond_shape.size();
-            int lhs_dim = lhs_shape.size();
-            int rhs_dim = rhs_shape.size();
+            auto cond_dim = int(cond_shape.size());
+            auto lhs_dim = int(lhs_shape.size());
+            auto rhs_dim = int(rhs_shape.size());
 
             int max_dim = std::max(std::max(cond_dim, lhs_dim), rhs_dim);
 

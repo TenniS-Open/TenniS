@@ -297,7 +297,7 @@ namespace ts {
                 size_type n = 0;
                 for (auto it = first; it != last; ++it) {
                     if (n > CAPACITY) {
-                        TS_LOG_ERROR << VectorOutOfRangeException::Message(N, n) << eject;
+                        TS_LOG_ERROR << VectorOutOfRangeException::Message(N, int(n)) << eject;
                     }
                     m_buf[n] = *it;
                     ++n;
@@ -311,7 +311,7 @@ namespace ts {
             // initializer list
             vector(std::initializer_list<value_type> il) {
                 if (il.size() > CAPACITY) {
-                    TS_LOG_ERROR << VectorOutOfRangeException::Message(N, il.size()) << eject;
+                    TS_LOG_ERROR << VectorOutOfRangeException::Message(N, int(il.size())) << eject;
                 }
                 size_type n = 0;
                 for (auto it = il.begin(); it != il.end(); ++it) {
@@ -424,7 +424,7 @@ namespace ts {
                 auto size = this->size();
                 if (len + i > size) len = size - i;
                 std::memmove(m_buf + i, m_buf + i + len, sizeof(T) * (this->size() - i - len));
-                m_size -= len;
+                m_size -= S(len);
             }
 
             void _insert(size_type i, const T&val) {
@@ -443,7 +443,7 @@ namespace ts {
                 }
                 std::memmove(m_buf + i + vec.size(), m_buf + i, sizeof(T) * (this->size() - i));
                 std::memcpy(m_buf + i, vec.data(), sizeof(T) * (vec.size()));
-                m_size += vec.size();
+                m_size += S(vec.size());
             }
         };
 

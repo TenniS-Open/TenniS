@@ -349,7 +349,7 @@ namespace ts {
             try {
                 auto m = loader(stream, buffer, buffer_size, format);
                 return m;
-            } catch (const FormatMismatchException &e) {
+            } catch (const FormatMismatchException &) {
                 stream.rewind();
                 continue;
             }

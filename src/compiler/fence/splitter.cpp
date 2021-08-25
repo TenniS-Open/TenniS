@@ -606,7 +606,7 @@ namespace ts {
         while (!queue.empty()) {
             auto node = queue.pop();
             if (color.color(node) >= 0) continue;
-            auto io = explore(node, *this, ref, *this->m_rule, color, sub_graph_ios.size() + 1);
+            auto io = explore(node, *this, ref, *this->m_rule, color, int(sub_graph_ios.size() + 1));
             if (!io.is_sub_graph) {
                 color.color(node, 0);
                 for (auto &bottom : node.inputs()) {

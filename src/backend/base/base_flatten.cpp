@@ -22,7 +22,7 @@ namespace ts {
 
         Shape Flatten::newshape(const Tensor &x) {
             auto fixed_dim = m_dim;
-            if (fixed_dim < 0) fixed_dim += x.dims();
+            if (fixed_dim < 0) fixed_dim += int(x.dims());
             auto need_size = size_t(fixed_dim + 1);
             auto x_size = x.sizes().size();
             if (need_size < x_size) {
