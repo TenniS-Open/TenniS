@@ -362,7 +362,7 @@ variables:
 .windows_build_config:
   script: &windows_build_script_config
     - $ARTIFACTS = (pwd).Path + "\${CI_PROJECT_NAME}-${CI_JOB_NAME}"
-    - if (![io.Directory]::Exists("$ARTIFACTS")) { mkdir "$ARTIFACTS" > NUL; }
+    - if (![io.Directory]::Exists("$ARTIFACTS")) { mkdir "$ARTIFACTS" > $null; }
     - 'Write-Output "[Version]" > $ARTIFACTS\version.txt'
     - 'Write-Output "date: $(Get-Date -Format `"yyyy-MM-dd HH:mm:ss z`")" >> $ARTIFACTS/version.txt'
     - 'Write-Output "ref: $CI_COMMIT_REF_NAME" >> $ARTIFACTS/version.txt'
@@ -372,7 +372,7 @@ variables:
     - git log -n 32 --pretty=format:"%h [%ai] %s" | findstr -v "Merge" | select -first 16 >> $ARTIFACTS/version.txt
     - Get-Content $ARTIFACTS/version.txt
     - cmake --version
-    - mkdir build > NUL
+    - mkdir build > $null
     - pushd build
     - cmake .. -G "NMake Makefiles" -DTS_DYNAMIC_INSTRUCTION=ON -DCMAKE_INSTALL_PREFIX="${ARTIFACTS}" -DCMAKE_BUILD_TYPE=Release
     - cmake --build . --target install
@@ -382,7 +382,7 @@ variables:
 .windows_build_cuda_config:
   script: &windows_build_cuda_script_config
     - $ARTIFACTS = (pwd).Path + "\${CI_PROJECT_NAME}-${CI_JOB_NAME}"
-    - if (![io.Directory]::Exists("$ARTIFACTS")) { mkdir "$ARTIFACTS" > NUL; }
+    - if (![io.Directory]::Exists("$ARTIFACTS")) { mkdir "$ARTIFACTS" > $null; }
     - 'Write-Output "[Version]" > $ARTIFACTS\version.txt'
     - 'Write-Output "date: $(Get-Date -Format `"yyyy-MM-dd HH:mm:ss z`")" >> $ARTIFACTS/version.txt'
     - 'Write-Output "ref: $CI_COMMIT_REF_NAME" >> $ARTIFACTS/version.txt'
@@ -392,7 +392,7 @@ variables:
     - git log -n 32 --pretty=format:"%h [%ai] %s" | findstr -v "Merge" | select -first 16 >> $ARTIFACTS/version.txt
     - Get-Content $ARTIFACTS/version.txt
     - cmake --version
-    - mkdir build > NUL
+    - mkdir build > $null
     - pushd build
     - cmake .. -G "NMake Makefiles" -DTS_DYNAMIC_INSTRUCTION=ON -DTS_USE_CUDA=ON -DCMAKE_INSTALL_PREFIX="${ARTIFACTS}" -DCMAKE_BUILD_TYPE=Release
     - cmake --build . --target install
