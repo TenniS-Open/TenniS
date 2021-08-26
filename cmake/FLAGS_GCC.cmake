@@ -30,14 +30,20 @@ string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" PROCESSOR)
 if ("${PROCESSOR}" MATCHES "aarch64" OR
     "${PROCESSOR}" MATCHES "armv8")
     if (ANDROID)
+        # This is legacy settings. Maybe had no usage, but kept.
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfloat-abi=hard")        # could be softfp as well
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfloat-abi=hard")    # could be softfp as well
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpu=neon-vfpv4")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfpu=neon-vfpv4")
     endif()
 elseif ("${PROCESSOR}" MATCHES "armv7")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfloat-abi=hard")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfloat-abi=hard")
+    if (ANDROID)
+        # it seems that default android ndk cross compiler does not support hard
+    else()
+        # change toolchain to set float-abi, so that's it...
+        # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfloat-abi=hard")
+        # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfloat-abi=hard")
+    endif ()
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpu=neon-vfpv4")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfpu=neon-vfpv4")
 endif()
