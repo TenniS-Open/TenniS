@@ -12,7 +12,7 @@ variables:
 .only_config:
   only: &only_config
     - /^r\d+\.\d+\W?/
-    # - ci
+    - ci
 
 .common_artifacts: &common_artifacts_config
   name: '${CI_PROJECT_NAME}-${CI_JOB_NAME}-${CI_COMMIT_REF_NAME}'
@@ -21,6 +21,29 @@ variables:
   # defualt is 1 month
   expire_in: '1 month'
 
+.shell_artifacts_version: &shell_artifacts_version
+  - export ARTIFACTS=`pwd`/${CI_PROJECT_NAME}-${CI_JOB_NAME}
+  - if [ ! -d "$ARTIFACTS" ]; then mkdir "$ARTIFACTS"; fi
+  - 'echo [Version] > $ARTIFACTS/version.txt'
+  - 'echo date: `date "+%A %Y-%m-%d %H:%M:%S %Z"` >> $ARTIFACTS/version.txt'
+  - 'echo ref: $CI_COMMIT_REF_NAME >> $ARTIFACTS/version.txt'
+  - 'echo tag: $CI_COMMIT_TAG >> $ARTIFACTS/version.txt'
+  - 'echo reversion: $CI_COMMIT_SHA >> $ARTIFACTS/version.txt'
+  - 'echo [Recent Log]  >> $ARTIFACTS/version.txt'
+  - git log -n 32 --pretty=format:"%h [%ai] %s" | grep -v Merge | head -n 16 >> $ARTIFACTS/version.txt
+  - cat $ARTIFACTS/version.txt
+
+.pwsh_artifacts_version: &pwsh_artifacts_version
+  - $ARTIFACTS = (pwd).Path + "\${CI_PROJECT_NAME}-${CI_JOB_NAME}"
+  - if (![io.Directory]::Exists("$ARTIFACTS")) { mkdir "$ARTIFACTS" > $null; }
+  - 'Write-Output "[Version]" > $ARTIFACTS\version.txt'
+  - 'Write-Output "date: $(Get-Date -Format `"yyyy-MM-dd HH:mm:ss z`")" >> $ARTIFACTS/version.txt'
+  - 'Write-Output "ref: $CI_COMMIT_REF_NAME" >> $ARTIFACTS/version.txt'
+  - 'Write-Output "tag: $CI_COMMIT_TAG" >> $ARTIFACTS/version.txt'
+  - 'Write-Output "reversion: $CI_COMMIT_SHA" >> $ARTIFACTS/version.txt'
+  - 'Write-Output "[Recent Log]"  >> $ARTIFACTS/version.txt'
+  - git log -n 32 --pretty=format:"%h [%ai] %s" | findstr -v "Merge" | select -first 16 >> $ARTIFACTS/version.txt
+  - Get-Content $ARTIFACTS/version.txt
 
 .ubuntu_before_script:
   before_script: &ubuntu_before_script
@@ -29,12 +52,34 @@ variables:
     - sed -i s@/archive.ubuntu.com/@/mirrors.aliyun.com/@g /etc/apt/sources.list
     - (apt update || echo "[WARNNING] Some thing wrong, but ignored!")
     - apt-get install -y git cmake gcc g++
+    # plot information of project.
+    - export ARTIFACTS=`pwd`/${CI_PROJECT_NAME}-${CI_JOB_NAME}
+    - if [ ! -d "$ARTIFACTS" ]; then mkdir "$ARTIFACTS"; fi
+    - 'echo [Version] > $ARTIFACTS/version.txt'
+    - 'echo date: `date "+%A %Y-%m-%d %H:%M:%S %Z"` >> $ARTIFACTS/version.txt'
+    - 'echo ref: $CI_COMMIT_REF_NAME >> $ARTIFACTS/version.txt'
+    - 'echo tag: $CI_COMMIT_TAG >> $ARTIFACTS/version.txt'
+    - 'echo reversion: $CI_COMMIT_SHA >> $ARTIFACTS/version.txt'
+    - 'echo [Recent Log]  >> $ARTIFACTS/version.txt'
+    - git log -n 32 --pretty=format:"%h [%ai] %s" | grep -v Merge | head -n 16 >> $ARTIFACTS/version.txt
+    - cat $ARTIFACTS/version.txt
     
 .centos7_before_script:
   before_script: &centos7_before_script
     - curl -o /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo
     - (yum makecache || echo "[WARNNING] Some thing wrong, but ignored!")
     - yum install -y git cmake make gcc gcc-c++
+    # plot information of project.
+    - export ARTIFACTS=`pwd`/${CI_PROJECT_NAME}-${CI_JOB_NAME}
+    - if [ ! -d "$ARTIFACTS" ]; then mkdir "$ARTIFACTS"; fi
+    - 'echo [Version] > $ARTIFACTS/version.txt'
+    - 'echo date: `date "+%A %Y-%m-%d %H:%M:%S %Z"` >> $ARTIFACTS/version.txt'
+    - 'echo ref: $CI_COMMIT_REF_NAME >> $ARTIFACTS/version.txt'
+    - 'echo tag: $CI_COMMIT_TAG >> $ARTIFACTS/version.txt'
+    - 'echo reversion: $CI_COMMIT_SHA >> $ARTIFACTS/version.txt'
+    - 'echo [Recent Log]  >> $ARTIFACTS/version.txt'
+    - git log -n 32 --pretty=format:"%h [%ai] %s" | grep -v Merge | head -n 16 >> $ARTIFACTS/version.txt
+    - cat $ARTIFACTS/version.txt
     
 .centos8_before_script:
   before_script: &centos8_before_script
@@ -42,6 +87,17 @@ variables:
     # - sed -i -e '/mirrors.cloud.aliyuncs.com/d' -e '/mirrors.aliyuncs.com/d' /etc/yum.repos.d/CentOS-Base.repo
     - (yum makecache || echo "[WARNNING] Some thing wrong, but ignored!")
     - yum install -y git cmake make gcc gcc-c++ libarchive
+    # plot information of project.
+    - export ARTIFACTS=`pwd`/${CI_PROJECT_NAME}-${CI_JOB_NAME}
+    - if [ ! -d "$ARTIFACTS" ]; then mkdir "$ARTIFACTS"; fi
+    - 'echo [Version] > $ARTIFACTS/version.txt'
+    - 'echo date: `date "+%A %Y-%m-%d %H:%M:%S %Z"` >> $ARTIFACTS/version.txt'
+    - 'echo ref: $CI_COMMIT_REF_NAME >> $ARTIFACTS/version.txt'
+    - 'echo tag: $CI_COMMIT_TAG >> $ARTIFACTS/version.txt'
+    - 'echo reversion: $CI_COMMIT_SHA >> $ARTIFACTS/version.txt'
+    - 'echo [Recent Log]  >> $ARTIFACTS/version.txt'
+    - git log -n 32 --pretty=format:"%h [%ai] %s" | grep -v Merge | head -n 16 >> $ARTIFACTS/version.txt
+    - cat $ARTIFACTS/version.txt
 
 .android_before_script:
   before_script: &android_before_script
@@ -60,13 +116,7 @@ variables:
     - if [ ! -f $ANDROID_NDK_ZIP ]; then wget https://dl.google.com/android/repository/$ANDROID_NDK_ZIP; fi
     - unzip -q $ANDROID_NDK_ZIP
     - popd
-
-  cache: &android_cache_config
-    paths:
-      - android-ndk/*.zip
-
-.linux_build_config:
-  script: &linux_build_script_config
+    # plot information of project.
     - export ARTIFACTS=`pwd`/${CI_PROJECT_NAME}-${CI_JOB_NAME}
     - if [ ! -d "$ARTIFACTS" ]; then mkdir "$ARTIFACTS"; fi
     - 'echo [Version] > $ARTIFACTS/version.txt'
@@ -77,6 +127,13 @@ variables:
     - 'echo [Recent Log]  >> $ARTIFACTS/version.txt'
     - git log -n 32 --pretty=format:"%h [%ai] %s" | grep -v Merge | head -n 16 >> $ARTIFACTS/version.txt
     - cat $ARTIFACTS/version.txt
+
+  cache: &android_cache_config
+    paths:
+      - android-ndk/*.zip
+
+.linux_build_config:
+  script: &linux_build_script_config
     - cmake --version
     - mkdir build
     - cd build
@@ -98,16 +155,6 @@ variables:
     
 .linux_build_cuda_config:
   script: &linux_build_cuda_script_config
-    - export ARTIFACTS=`pwd`/${CI_PROJECT_NAME}-${CI_JOB_NAME}
-    - if [ ! -d "$ARTIFACTS" ]; then mkdir "$ARTIFACTS"; fi
-    - 'echo [Version] > $ARTIFACTS/version.txt'
-    - 'echo date: `date "+%A %Y-%m-%d %H:%M:%S %Z"` >> $ARTIFACTS/version.txt'
-    - 'echo ref: $CI_COMMIT_REF_NAME >> $ARTIFACTS/version.txt'
-    - 'echo tag: $CI_COMMIT_TAG >> $ARTIFACTS/version.txt'
-    - 'echo reversion: $CI_COMMIT_SHA >> $ARTIFACTS/version.txt'
-    - 'echo [Recent Log]  >> $ARTIFACTS/version.txt'
-    - git log -n 32 --pretty=format:"%h [%ai] %s" | grep -v Merge | head -n 16 >> $ARTIFACTS/version.txt
-    - cat $ARTIFACTS/version.txt
     - cmake --version
     - mkdir build
     - cd build
@@ -129,10 +176,7 @@ variables:
     # Try tuna repo.
     - (apt update || echo "[WARNNING] Some thing wrong, but ignored!")
     - apt-get install -y git cmake mingw-w64
-
-    
-.mingw-x86_64_build_config:
-  script: &mingw-x86_64_build_script_config
+    # plot information of project.
     - export ARTIFACTS=`pwd`/${CI_PROJECT_NAME}-${CI_JOB_NAME}
     - if [ ! -d "$ARTIFACTS" ]; then mkdir "$ARTIFACTS"; fi
     - 'echo [Version] > $ARTIFACTS/version.txt'
@@ -143,6 +187,10 @@ variables:
     - 'echo [Recent Log]  >> $ARTIFACTS/version.txt'
     - git log -n 32 --pretty=format:"%h [%ai] %s" | grep -v Merge | head -n 16 >> $ARTIFACTS/version.txt
     - cat $ARTIFACTS/version.txt
+
+    
+.mingw-x86_64_build_config:
+  script: &mingw-x86_64_build_script_config
     # Config
     - export ARCH=x86_64  # or i686
     - export VERSION=9.3  # Notice that GCC is assumed version 9.3 in Ubuntu20.04.
@@ -173,16 +221,6 @@ variables:
     
 .mingw-i686_build_config:
   script: &mingw-i686_build_script_config
-    - export ARTIFACTS=`pwd`/${CI_PROJECT_NAME}-${CI_JOB_NAME}
-    - if [ ! -d "$ARTIFACTS" ]; then mkdir "$ARTIFACTS"; fi
-    - 'echo [Version] > $ARTIFACTS/version.txt'
-    - 'echo date: `date "+%A %Y-%m-%d %H:%M:%S %Z"` >> $ARTIFACTS/version.txt'
-    - 'echo ref: $CI_COMMIT_REF_NAME >> $ARTIFACTS/version.txt'
-    - 'echo tag: $CI_COMMIT_TAG >> $ARTIFACTS/version.txt'
-    - 'echo reversion: $CI_COMMIT_SHA >> $ARTIFACTS/version.txt'
-    - 'echo [Recent Log]  >> $ARTIFACTS/version.txt'
-    - git log -n 32 --pretty=format:"%h [%ai] %s" | grep -v Merge | head -n 16 >> $ARTIFACTS/version.txt
-    - cat $ARTIFACTS/version.txt
     # Config
     - export ARCH=i686  # or x86_64
     - export VERSION=9.3  # Notice that GCC is assumed version 9.3 in Ubuntu20.04.
@@ -212,16 +250,6 @@ variables:
 
 .android19_build_config:
   script: &android19_build_script_config
-    - export ARTIFACTS=`pwd`/${CI_PROJECT_NAME}-${CI_JOB_NAME}
-    - if [ ! -d "$ARTIFACTS" ]; then mkdir "$ARTIFACTS"; fi
-    - 'echo [Version] > $ARTIFACTS/version.txt'
-    - 'echo date: `date "+%A %Y-%m-%d %H:%M:%S %Z"` >> $ARTIFACTS/version.txt'
-    - 'echo ref: $CI_COMMIT_REF_NAME >> $ARTIFACTS/version.txt'
-    - 'echo tag: $CI_COMMIT_TAG >> $ARTIFACTS/version.txt'
-    - 'echo reversion: $CI_COMMIT_SHA >> $ARTIFACTS/version.txt'
-    - 'echo [Recent Log]  >> $ARTIFACTS/version.txt'
-    - git log -n 32 --pretty=format:"%h [%ai] %s" | grep -v Merge | head -n 16 >> $ARTIFACTS/version.txt
-    - cat $ARTIFACTS/version.txt
     - cmake --version
     - export ANDROID_PLATFORM=19
     - mkdir build_armv7
@@ -256,8 +284,9 @@ variables:
     - cmake --build . --target install -- -j $THREADS
     - popd
 
-.darwin_build_config:
-  script: &darwin_build_script_config
+.darwin_before_script:
+  before_script: &darwin_before_script
+    # plot information of project.
     - export ARTIFACTS=`pwd`/${CI_PROJECT_NAME}-${CI_JOB_NAME}
     - if [ ! -d "$ARTIFACTS" ]; then mkdir "$ARTIFACTS"; fi
     - 'echo [Version] > $ARTIFACTS/version.txt'
@@ -274,7 +303,9 @@ variables:
     - 'echo [CC]  >> $ARTIFACTS/version.txt'
     - cc --version >> $ARTIFACTS/version.txt
     - cat $ARTIFACTS/version.txt
-    # start build
+
+.darwin_build_config:
+  script: &darwin_build_script_config
     - cmake --version
     - mkdir build
     - cd build
@@ -283,23 +314,6 @@ variables:
 
 .ios9_build_config:
   script: &ios9_build_script_config
-    - export ARTIFACTS=`pwd`/${CI_PROJECT_NAME}-${CI_JOB_NAME}
-    - if [ ! -d "$ARTIFACTS" ]; then mkdir "$ARTIFACTS"; fi
-    - 'echo [Version] > $ARTIFACTS/version.txt'
-    - 'echo date: `date "+%A %Y-%m-%d %H:%M:%S %Z"` >> $ARTIFACTS/version.txt'
-    - 'echo ref: $CI_COMMIT_REF_NAME >> $ARTIFACTS/version.txt'
-    - 'echo tag: $CI_COMMIT_TAG >> $ARTIFACTS/version.txt'
-    - 'echo reversion: $CI_COMMIT_SHA >> $ARTIFACTS/version.txt'
-    - 'echo [Recent Log]  >> $ARTIFACTS/version.txt'
-    - git log -n 32 --pretty=format:"%h [%ai] %s" | grep -v Merge | head -n 16 >> $ARTIFACTS/version.txt
-    - 'echo [System]  >> $ARTIFACTS/version.txt'
-    - sw_vers >> $ARTIFACTS/version.txt
-    - 'echo [Xcode]  >> $ARTIFACTS/version.txt'
-    - xcodebuild -version >> $ARTIFACTS/version.txt
-    - 'echo [CC]  >> $ARTIFACTS/version.txt'
-    - cc --version >> $ARTIFACTS/version.txt
-    - cat $ARTIFACTS/version.txt
-    # start build
     - export TARGET=9
     - export ENABLE_BITCODE=0
     # PLATFORM could be, OS SIMULATOR64
@@ -325,54 +339,39 @@ variables:
 
 .windows_setup_vs2019_x64:
   before_script: &windows_setup_vs2019_x64
-    - $version = "vs2019"
-    - $arch = "x64"
-    - '&script\pwsh\setup_vcvars.ps1 $version $arch'
+    - '&script\pwsh\setup_vcvars.ps1 vs2019 x64'
 
 .windows_setup_vs2019_x86:
   before_script: &windows_setup_vs2019_x86
-    - $version = "vs2019"
-    - $arch = "x86"
-    - '&script\pwsh\setup_vcvars.ps1 $version $arch'
+    - '&script\pwsh\setup_vcvars.ps1 vs2019 x86'
 
 .windows_setup_vs2017_x64:
   before_script: &windows_setup_vs2017_x64
-    - $version = "vs2017"
-    - $arch = "x64"
-    - '&script\pwsh\setup_vcvars.ps1 $version $arch'
+    - '&script\pwsh\setup_vcvars.ps1 vs2017 x64'
 
 .windows_setup_vs2017_x86:
   before_script: &windows_setup_vs2017_x86
-    - $version = "vs2017"
-    - $arch = "x86"
-    - '&script\pwsh\setup_vcvars.ps1 $version $arch'
+    - '&script\pwsh\setup_vcvars.ps1 vs2017 x86'
 
 .windows_setup_vs2015_x64:
   before_script: &windows_setup_vs2015_x64
-    - $version = "vs2015"
-    - $arch = "x64"
-    - '&script\pwsh\setup_vcvars.ps1 $version $arch'
+    - '&script\pwsh\setup_vcvars.ps1 vs2015 x64'
 
 .windows_setup_vs2015_x86:
   before_script: &windows_setup_vs2015_x86
-    - $version = "vs2015"
-    - $arch = "x86"
-    - '&script\pwsh\setup_vcvars.ps1 $version $arch'
+    - '&script\pwsh\setup_vcvars.ps1 vs2015 x86'
 
 .windows_setup_vs2013_x64:
   before_script: &windows_setup_vs2013_x64
-    - $version = "vs2013"
-    - $arch = "x64"
-    - '&script\pwsh\setup_vcvars.ps1 $version $arch'
+    - '&script\pwsh\setup_vcvars.ps1 vs2013 x64'
 
 .windows_setup_vs2013_x86:
   before_script: &windows_setup_vs2013_x86
-    - $version = "vs2013"
-    - $arch = "x86"
-    - '&script\pwsh\setup_vcvars.ps1 $version $arch'
+    - '&script\pwsh\setup_vcvars.ps1 vs2013 x86'
 
 .windows_build_config:
   script: &windows_build_script_config
+    # plot information of project.
     - $ARTIFACTS = (pwd).Path + "\${CI_PROJECT_NAME}-${CI_JOB_NAME}"
     - if (![io.Directory]::Exists("$ARTIFACTS")) { mkdir "$ARTIFACTS" > $null; }
     - 'Write-Output "[Version]" > $ARTIFACTS\version.txt'
@@ -383,6 +382,7 @@ variables:
     - 'Write-Output "[Recent Log]"  >> $ARTIFACTS/version.txt'
     - git log -n 32 --pretty=format:"%h [%ai] %s" | findstr -v "Merge" | select -first 16 >> $ARTIFACTS/version.txt
     - Get-Content $ARTIFACTS/version.txt
+    # start build
     - cmake --version
     - mkdir build > $null
     - pushd build
@@ -393,6 +393,7 @@ variables:
 
 .windows_build_cuda_config:
   script: &windows_build_cuda_script_config
+    # plot information of project.
     - $ARTIFACTS = (pwd).Path + "\${CI_PROJECT_NAME}-${CI_JOB_NAME}"
     - if (![io.Directory]::Exists("$ARTIFACTS")) { mkdir "$ARTIFACTS" > $null; }
     - 'Write-Output "[Version]" > $ARTIFACTS\version.txt'
@@ -403,6 +404,7 @@ variables:
     - 'Write-Output "[Recent Log]"  >> $ARTIFACTS/version.txt'
     - git log -n 32 --pretty=format:"%h [%ai] %s" | findstr -v "Merge" | select -first 16 >> $ARTIFACTS/version.txt
     - Get-Content $ARTIFACTS/version.txt
+    # start build
     - cmake --version
     - mkdir build > $null
     - pushd build
@@ -425,6 +427,17 @@ variables:
     - export ARM_ABI=gnueabihf
     - apt-get install -y git cmake gcc-$ARM_VER-linux-$ARM_ABI g++-$ARM_VER-linux-$ARM_ABI
     - export TOOLCAHIN=`pwd`/toolchain/$ARM_VER-linux-$ARM_ABI.cmake
+    # plot information of project.
+    - export ARTIFACTS=`pwd`/${CI_PROJECT_NAME}-${CI_JOB_NAME}
+    - if [ ! -d "$ARTIFACTS" ]; then mkdir "$ARTIFACTS"; fi
+    - 'echo [Version] > $ARTIFACTS/version.txt'
+    - 'echo date: `date "+%A %Y-%m-%d %H:%M:%S %Z"` >> $ARTIFACTS/version.txt'
+    - 'echo ref: $CI_COMMIT_REF_NAME >> $ARTIFACTS/version.txt'
+    - 'echo tag: $CI_COMMIT_TAG >> $ARTIFACTS/version.txt'
+    - 'echo reversion: $CI_COMMIT_SHA >> $ARTIFACTS/version.txt'
+    - 'echo [Recent Log]  >> $ARTIFACTS/version.txt'
+    - git log -n 32 --pretty=format:"%h [%ai] %s" | grep -v Merge | head -n 16 >> $ARTIFACTS/version.txt
+    - cat $ARTIFACTS/version.txt
 
 .linux_aarch64_before_script:
   before_script: &linux_aarch64_before_script
@@ -436,9 +449,7 @@ variables:
     - export ARM_ABI=gnu
     - apt-get install -y git cmake gcc-$ARM_VER-linux-$ARM_ABI g++-$ARM_VER-linux-$ARM_ABI
     - export TOOLCAHIN=`pwd`/toolchain/$ARM_VER-linux-$ARM_ABI.cmake
-
-.linux_arm_build_config:
-  script: &linux_arm_build_config
+    # plot information of project.
     - export ARTIFACTS=`pwd`/${CI_PROJECT_NAME}-${CI_JOB_NAME}
     - if [ ! -d "$ARTIFACTS" ]; then mkdir "$ARTIFACTS"; fi
     - 'echo [Version] > $ARTIFACTS/version.txt'
@@ -449,6 +460,9 @@ variables:
     - 'echo [Recent Log]  >> $ARTIFACTS/version.txt'
     - git log -n 32 --pretty=format:"%h [%ai] %s" | grep -v Merge | head -n 16 >> $ARTIFACTS/version.txt
     - cat $ARTIFACTS/version.txt
+
+.linux_arm_build_config:
+  script: &linux_arm_build_config
     - cmake --version
     - mkdir build
     - cd build
@@ -655,6 +669,7 @@ darwin-amd64:
   tags:
     - shell,amd64,darwin
   only: *only_config
+  before_script: *darwin_before_script
   script: *darwin_build_script_config
   artifacts: *linux_artifacts_config
 
@@ -664,6 +679,7 @@ ios9-arm:
   tags:
     - shell,darwin
   only: *only_config
+  before_script: *darwin_before_script
   script: *ios9_build_script_config
   artifacts: *linux_artifacts_config
 
