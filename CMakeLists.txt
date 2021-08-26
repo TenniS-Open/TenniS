@@ -82,6 +82,20 @@ option(TS_USE_WINOGRAD "[Deprecated] Use Winograd" OFF)
 # ============================= Options end ================================== #
 #------------------------------------------------------------------------------#
 
+# ============================= Setup force config ============================#
+string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" PROCESSOR)
+if ("${PROCESSOR}" MATCHES "aarch64" OR
+    "${PROCESSOR}" MATCHES "armv8")
+    set(TS_ON_ARM ON)
+    set(TS_USE_NEON ON)
+elseif("${PROCESSOR}" MATCHES "armv7")
+    set(TS_ON_ARM ON)
+    set(TS_ON_ARMV7 ON)
+    set(TS_USE_NEON ON)
+elseif("${PROCESSOR}" MATCHES "arm")
+    set(TS_ON_ARM ON)
+endif()
+
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "")
     set(CONFIGURATION "Release")
 else ()
@@ -121,7 +135,7 @@ endif()
 
 # if target is target
 if (TS_ON_ARM)
-	add_definitions(-DTS_ON_ARM)
+    add_definitions(-DTS_ON_ARM)
 endif()
 if (TS_ON_ARMV7)
     add_definitions(-DTS_ON_ARMV7)

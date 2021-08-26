@@ -26,10 +26,18 @@ if (TS_USE_FAST_MATH)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffast-math")
 endif()
 
-if ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "arm|ARM|aarch64|AARCH64")
-    # message(STATUS "Using ARM: ${CMAKE_SYSTEM_PROCESSOR}")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfloat-abi=hard")        # could be softfp as well
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfloat-abi=hard")    # could be softfp as well
+string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" PROCESSOR)
+if ("${PROCESSOR}" MATCHES "aarch64" OR
+    "${PROCESSOR}" MATCHES "armv8")
+    if (ANDROID)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfloat-abi=hard")        # could be softfp as well
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfloat-abi=hard")    # could be softfp as well
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpu=neon-vfpv4")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfpu=neon-vfpv4")
+    endif()
+elseif ("${PROCESSOR}" MATCHES "armv7")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfloat-abi=hard")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfloat-abi=hard")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpu=neon-vfpv4")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfpu=neon-vfpv4")
 endif()
