@@ -163,6 +163,12 @@ variables:
     - 'echo [Notice] > $ARTIFACTS/notice.txt'
     - 'echo Please use the DLLs in this package to replace the same name DLLs in your own environment 
        or put them in the working directory to prevent symbols conflict. > $ARTIFACTS/notice.txt'
+    # export lib for MSVC usage.
+    - $ARCH-w64-mingw32-dlltool $ARTIFACTS/bin/libtennis.dll --export-all-symbols --output-def $ARTIFACTS/lib/libtennis.def.tmp
+    - echo "; $ARCH-w64-mingw32-dlltool libtennis.dll --export-all-symbols --output-def libtennis.def" > $ARTIFACTS/lib/libtennis.def
+    - echo "EXPORTS" >> $ARTIFACTS/lib/libtennis.def
+    - cat $ARTIFACTS/lib/libtennis.def.tmp | grep '^\s*ts_' >> $ARTIFACTS/lib/libtennis.def
+    - $ARCH-w64-mingw32-dlltool -D $ARTIFACTS/bin/libtennis.dll -d $ARTIFACTS/lib/libtennis.def -l $ARTIFACTS/lib/libtennis.lib -v
 
     
 .mingw-i686_build_config:
@@ -197,6 +203,12 @@ variables:
     - 'echo [Notice] > $ARTIFACTS/notice.txt'
     - 'echo Please use the DLLs in this package to replace the same name DLLs in your own environment 
        or put them in the working directory to prevent symbols conflict. > $ARTIFACTS/notice.txt'
+    # export lib for MSVC usage.
+    - $ARCH-w64-mingw32-dlltool $ARTIFACTS/bin/libtennis.dll --export-all-symbols --output-def $ARTIFACTS/lib/libtennis.def.tmp
+    - echo "; $ARCH-w64-mingw32-dlltool libtennis.dll --export-all-symbols --output-def libtennis.def" > $ARTIFACTS/lib/libtennis.def
+    - echo "EXPORTS" >> $ARTIFACTS/lib/libtennis.def
+    - cat $ARTIFACTS/lib/libtennis.def.tmp | grep '^\s*ts_' >> $ARTIFACTS/lib/libtennis.def
+    - $ARCH-w64-mingw32-dlltool -D $ARTIFACTS/bin/libtennis.dll -d $ARTIFACTS/lib/libtennis.def -l $ARTIFACTS/lib/libtennis.lib -v
 
 .android19_build_config:
   script: &android19_build_script_config
