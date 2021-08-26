@@ -4,6 +4,8 @@ param(
 
 $ignore = @{}
 $ignore["kernel32.dll"] = 1
+$ignore["ntdll.dll"] = 1
+$ignore["kernelbase.dll"] = 1
 
 if ([io.File]::Exists($target)) {
     $target = (Resolve-Path $target).Path
@@ -28,7 +30,7 @@ function Get-Arch {
     param(
         [string]$dll
     )
-    $arch = dumpbin.exe /headers $dll | where {$_ -match "machine \((.*)\)"}
+    dumpbin.exe /headers $dll | Where-Object {$_ -match "machine \((.*)\)"}
     return $matches[1]
 }
 
@@ -37,7 +39,7 @@ function Fusion {
         [string]$dll,
         [string]$arch
     )
-    $refs = dumpbin.exe /dependents $dll | where {$_ -match "\.dll$"}
+    $refs = dumpbin.exe /dependents $dll | Where-Object {$_ -match "\.dll$"}
     :refs
     foreach ($ref in $refs) {
         # ignore self
@@ -53,13 +55,16 @@ function Fusion {
         $walked_dlls[$lower_ref] = 1    # now i had walked this dll
         # ignore system DLL
         if ($null -ne $ignore[$lower_ref]) {
+            Write-Output "[INFO] Ignore $ref"
             continue refs
         }
         # ignore windows API
         if ($lower_ref -match "^ext-ms-") {
+            Write-Output "[INFO] Ignore $ref"
             continue refs
         }
         if ($lower_ref -match "^api-ms-") {
+            Write-Output "[INFO] Ignore $ref"
             continue refs
         }
         # check if dll exists
@@ -67,10 +72,15 @@ function Fusion {
             # find and copy dll
             ## find
             $posible = @()
-            foreach ($_ in where.exe $ref) { $posible += $_; }
+            ### try default PATH envriment
+            where.exe $ref /Q; if ($?) { foreach ($_ in where.exe $ref) { $posible += $_; }}
             ### try x86 and x64 as well
-            foreach ($_ in where.exe $ref /R C:\Windows\System32) { $posible += $_; }
-            foreach ($_ in where.exe $ref /R C:\Windows\SysWOW64) { $posible += $_; }
+            where.exe $ref /Q /R C:\Windows\System32; if ($?) {
+                foreach ($_ in where.exe $ref /R C:\Windows\System32) { $posible += $_; }
+            }
+            where.exe $ref /Q /R C:\Windows\SysWOW64; if ($?) {
+                foreach ($_ in where.exe $ref /R C:\Windows\SysWOW64) { $posible += $_; }
+            }
             $found = $null
             :posible
             foreach ($_ in $posible) {
@@ -102,8 +112,8 @@ function Fusion {
 
 $arch = Get-Arch $target
 
-$pwd = (pwd).Path
+$location = (Get-Location).Path
 
-cd $root
+Set-Location $root
 Fusion $file $arch
-cd $pwd
+Set-Location $location
