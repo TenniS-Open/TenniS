@@ -1,14 +1,15 @@
 set(CMAKE_SYSTEM_NAME Linux)
-set(CMAKE_SYSTEM_PROCESSOR arm)
+set(CMAKE_SYSTEM_PROCESSOR armv7-a)
 
-set(ARM_ARCH gnueabi)
+set(ARM_VER arm)
+set(ARM_ABI gnueabi)
 
-#set(CMAKE_SYSROOT /usr/arm-linux-${ARM_ARCH})
-set(CMAKE_FIND_ROOT_PATH /usr/arm-linux-${ARM_ARCH})
-#set(CMAKE_STAGING_PREFIX /usr/arm-linux-${ARM_ARCH})
+#set(CMAKE_SYSROOT /usr/${ARM_VER}-linux-${ARM_ABI})
+set(CMAKE_FIND_ROOT_PATH /usr/${ARM_VER}-linux-${ARM_ABI})
+#set(CMAKE_STAGING_PREFIX /usr/${ARM_VER}-linux-${ARM_ABI})
 
-set(CMAKE_C_COMPILER arm-linux-${ARM_ARCH}-gcc)
-set(CMAKE_CXX_COMPILER arm-linux-${ARM_ARCH}-g++)
+set(CMAKE_C_COMPILER ${ARM_VER}-linux-${ARM_ABI}-gcc)
+set(CMAKE_CXX_COMPILER ${ARM_VER}-linux-${ARM_ABI}-g++)
 
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)

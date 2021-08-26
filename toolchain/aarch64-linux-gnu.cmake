@@ -1,8 +1,8 @@
 set(CMAKE_SYSTEM_NAME Linux)
-set(CMAKE_SYSTEM_PROCESSOR armv7-a)
+set(CMAKE_SYSTEM_PROCESSOR aarch64)
 
-set(ARM_VER arm)
-set(ARM_ABI gnueabihf)
+set(ARM_VER aarch64)
+set(ARM_ABI gnu)
 
 #set(CMAKE_SYSROOT /usr/${ARM_VER}-linux-${ARM_ABI})
 set(CMAKE_FIND_ROOT_PATH /usr/${ARM_VER}-linux-${ARM_ABI})
