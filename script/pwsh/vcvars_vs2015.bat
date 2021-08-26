@@ -20,7 +20,7 @@ exit 0
 
 
 :notfound
-echo Can not found VS2015: Not envriment named VS140COMNTOOLS.
+echo Can not found VS2015: Envriment variable missing: %%VS140COMNTOOLS%%.
 exit 1
 
 

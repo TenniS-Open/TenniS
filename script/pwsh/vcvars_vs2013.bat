@@ -20,7 +20,7 @@ exit 0
 
 
 :notfound
-echo Can not found VS2013: Not envriment named VS140COMNTOOLS.
+echo Can not found VS2013: Envriment variable missing: %%VS120COMNTOOLS%%.
 exit 1
 
 
