@@ -1,4 +1,6 @@
-# Find shortcut
+# Find Visual Studio
+# ECHO path to vcvarsall.bat or error string.
+# Use [io.File]::Exists(...) to tell if found needed script.
 
 $startup = "Visual Studio 2017"
 $ide2buildtools = "..\.."

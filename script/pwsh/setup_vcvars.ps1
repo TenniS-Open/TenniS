@@ -1,3 +1,9 @@
+# Setup VC envriment
+# Usage: <command> version [arch]
+# [version]: vs2013 | vs2015 | vs2017 | vs2019
+# [arch]: x86 | {amd64} | x86_amd64 | x86_arm | x86_arm64 | amd64_x86 | amd64_arm | amd64_arm64
+# Notice: before use this script, please install according Visual Studio and create Shotcut at Start Menu by default.
+
 param (
     [string]$version,
     [string]$arch = "amd64"

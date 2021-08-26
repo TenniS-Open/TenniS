@@ -1,3 +1,8 @@
+# Fusion dll (or exe) references to present directory.
+# Usage: <command> target
+# [target]: path to target dll or exe.
+# Notice: The search order is: %PATH%, C:\Windows\System32, C:\Windows\SysWOW64
+
 param(
     [string]$target
 )

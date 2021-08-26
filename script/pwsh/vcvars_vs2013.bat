@@ -1,4 +1,7 @@
 @echo off
+:: Find Visual Studio
+:: ECHO path to vcvarsall.bat or error string.
+:: Use `if exist ... (...)` to tell if found needed script.
 
 set COMNTOOLS=%VS120COMNTOOLS%
 set VCVARSALL="%COMNTOOLS%..\..\VC\vcvarsall.bat"
