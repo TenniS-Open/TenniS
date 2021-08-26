@@ -26,6 +26,24 @@ if (TS_USE_FAST_MATH)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffast-math")
 endif()
 
+if ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "arm|ARM|aarch64|AARCH64")
+    # message(STATUS "Using ARM: ${CMAKE_SYSTEM_PROCESSOR}")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfloat-abi=hard")        # could be softfp as well
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfloat-abi=hard")    # could be softfp as well
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpu=neon-vfpv4")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfpu=neon-vfpv4")
+endif()
+
+if (ANDROID)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unused-command-line-argument")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-command-line-argument")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions -frtti")
+    # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -funsafe-math-optimizations -ftree-vectorize")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -funsafe-math-optimizations -ftree-vectorize")
+    list(APPEND third_libraries log)
+endif()
+
 if ("${PLATFORM}" STREQUAL "x86")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m32")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32")
