@@ -85,6 +85,7 @@ option(TS_USE_WINOGRAD "[Deprecated] Use Winograd" OFF)
 # ============================= Setup force config ============================#
 string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" PROCESSOR)
 if ("${PROCESSOR}" MATCHES "aarch64" OR
+    "${PROCESSOR}" MATCHES "arm64" OR
     "${PROCESSOR}" MATCHES "armv8")
     set(TS_ON_ARM ON)
     set(TS_USE_NEON ON)

@@ -28,6 +28,7 @@ endif()
 
 string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" PROCESSOR)
 if ("${PROCESSOR}" MATCHES "aarch64" OR
+    "${PROCESSOR}" MATCHES "arm64" OR
     "${PROCESSOR}" MATCHES "armv8")
     if (ANDROID)
         # This is legacy settings. Maybe had no usage, but kept.
