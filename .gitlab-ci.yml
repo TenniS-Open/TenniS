@@ -12,7 +12,11 @@ variables:
 .only_config:
   only: &only_config
     - /^r\d+\.\d+\W?/
-    - ci
+    - api
+    - schedules
+    - triggers
+    - web
+    # - ci
 
 .common_artifacts: &common_artifacts_config
   name: '${CI_PROJECT_NAME}-${CI_JOB_NAME}-${CI_COMMIT_REF_NAME}'
