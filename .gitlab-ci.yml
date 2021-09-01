@@ -16,7 +16,9 @@ variables:
     - schedules
     - triggers
     - web
-    # - ci
+    - ci
+    - main
+    - master
 
 .common_artifacts: &common_artifacts_config
   name: '${CI_PROJECT_NAME}-${CI_JOB_NAME}-${CI_COMMIT_REF_NAME}'
