@@ -12,6 +12,10 @@ variables:
 .only_config:
   only: &only_config
     - /^r\d+\.\d+\W?/
+    - api
+    - schedules
+    - triggers
+    - web
     # - ci
 
 .common_artifacts: &common_artifacts_config

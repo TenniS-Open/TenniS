@@ -6,7 +6,9 @@
 
 > TenniS: Tensor based Edge Neural Network Inference System 
 
-## Compilation
+[![build status](https://gitlab.seetatech.com/TenniS/TenniS/badges/master/build.svg)](https://gitlab.seetatech.com/TenniS/TenniS/commits/master)
+
+## Compilation(on Linux)
 
 The default installation DIR is ` ${PROJECT_BINARY_DIR}/../build`,
 add `-DCMAKE_INSTALL_PREFIX` to change installation DIR.
@@ -54,3 +56,18 @@ When compilation target is `arm-v7`, **MUST** set `-DTS_ON_ARMV7=ON`.
 3. Do `make install`.
 
 4. Find headers and libraries in `CMAKE_INSTALL_PREFIX`
+
+## Compilation on other platform.
+
+Read [CI](.gitlab-ci.yml) file for more tips.
+
+
+## Setup CI
+
+For multi platform CI usage. You need configure project CI setting and install gitlab-runner with following tags.
+
+- `amd64,docker,linux` for linux and cross compile envriment, including ARM and MinGW.
+- `amd64,darwin,shell` for darwin and IOS compilation. Install Xcode, cmake, git and libomp in advance.
+- `amd64,cuda,shell,vs2019,windows` for windows apllication. Install VS, cuda, pwsh, cmake and git in advance.
+
+
