@@ -76,7 +76,7 @@ namespace ts {
             auto width = std::accumulate(x_shape.begin() + axis + 1, x_shape.end(), 1, std::multiplies<int32_t>());
 
             auto x_slice = x_shape[axis];
-            auto out_slice = std::accumulate(out_shape.begin(), out_shape.end(), 1, std::multiplies<int32_t>());
+            auto out_slice = std::accumulate(out_shape.begin() + axis, out_shape.end(), 1, std::multiplies<int32_t>());
 
             auto count = out.count();
 
@@ -84,7 +84,7 @@ namespace ts {
                        count, x.data<T>(), out.data<T>(),
                        indices.data<int32_t>(), x_slice,
                        number, out_slice, width,
-                       out_slice * width);
+                       out_slice);
         }
 
 
