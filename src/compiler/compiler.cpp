@@ -70,7 +70,16 @@ namespace ts {
         if (icreator != nullptr) {
             return icreator(node);
         }
+
+#ifdef TS_USE_XNNPACK
+        std::function<ts::Operator::shared()> creator;
+        if (TS_USE_XNNPACK) {
+            creator = OperatorCreator::Query(ts::XNNPACK, bubble.op(), true);
+            if (creator == nullptr) creator = OperatorCreator::Query(m_computing_device.type(), bubble.op(), false);
+        }
+#else
         auto creator = OperatorCreator::Query(m_computing_device.type(), bubble.op(), false);
+#endif
 
         if (creator == nullptr) TS_LOG_ERROR << "Not supported operator " << bubble.op() << eject;
         std::string description = bubble.op() + "(in=" + std::to_string(node.inputs().size()) + ", out=" +
@@ -121,7 +130,7 @@ namespace ts {
                 inputs = converted_module->inputs();
             }
         }
-        
+
         // zip graph
         {
             Zipper zipper(m_computing_device, options);

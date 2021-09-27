@@ -27,6 +27,7 @@ namespace ts {
     static const char *BLAS = "blas";
     static const char *CUDNN = "cudnn";
     static const char *CUBLAS = "cublas";
+    static const char *XNNPACK = "xnnpack";
 
     // This device and id may used in tensor view and sync, means do-not change the memory device
     static const char *PORTAL = "portal";   //
@@ -124,6 +125,7 @@ namespace ts {
         TS_UNUSED(BLAS);
         TS_UNUSED(CUDNN);
         TS_UNUSED(CUBLAS);
+        TS_UNUSED(XNNPACK);
         return out << device.str();
     }
 
@@ -182,7 +184,7 @@ namespace ts {
         MemoryDevice(const DeviceType &type, int id) : supper(type, id) {}
 
         MemoryDevice(const DeviceType &type) : supper(type) {}
-        
+
         MemoryDevice(const char *type) : supper(type) {}
 
         MemoryDevice() : supper() {}
