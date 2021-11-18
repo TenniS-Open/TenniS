@@ -8,6 +8,7 @@
 
 #include "compiler/option/fp16_translator_option.h"
 #include "compiler/option/pack_translator_option.h"
+#include "kernels/xnnpack/xnnpack_translator_option.h"
 
 #include "module/menu.h"
 
@@ -100,7 +101,12 @@ namespace ts {
         m_params = params;
         ArgParser parser;
         parser.add({"--float16", "-fp16"}, {"--no-float16", "-no-fp16"}, false);
+#ifdef TS_USE_XNNPACK
+        parser.add({ "--pack" }, {"--no-pack"}, false);
+        parser.add({"--xnnpack"}, {"--no-xnnpack"}, false);
+#else
         parser.add({ "--pack" }, {"--no-pack"}, true);
+#endif
         parser.parse(params);
         if (parser.get("--float16")) {
              TS_LOG_STATUS << "Compiling with --float16";
@@ -110,6 +116,12 @@ namespace ts {
         if (parser.get("--pack")) {
             TS_LOG_STATUS << "Compiling with --pack";
             m_options.push_back(new PackTranslatorOption);
+        }
+#endif
+#ifdef TS_USE_XNNPACK
+        if (parser.get("--xnnpack")) {
+            TS_LOG_STATUS << "Compiling with --xnnpack";
+            m_options.push_back(new XnnpackTranslatorOption);
         }
 #endif
     }

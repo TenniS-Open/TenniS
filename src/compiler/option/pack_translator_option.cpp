@@ -224,7 +224,7 @@ bool ts::PackTranslatorOption::translate(const ComputingDevice &device, const No
                 } \
                 else{ \
                     cpu::math<TYPE, TYPE>::pack8_B(kernel_size_height, kernel_size_width, kernel_tensor.data<TYPE>(), kernel_size_width, kernel_packed.data<TYPE>()); \
-                } break;}         
+                } break;}
             DECLARE_COMPUTE_RUN(FLOAT32, float);
 #undef DECLARE_COMPUTE_RUN
             default: {

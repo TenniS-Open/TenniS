@@ -60,7 +60,13 @@ namespace ts {
     static OperatorCreator::function TalentQuery(const DeviceType &device_type,
                                                  const std::string &operator_name, bool strict) {
         // step 1: check in strict mode
+#ifdef TS_USE_XNNPACK
+        auto creator = OperatorCreator::Query(ts::XNNPACK, operator_name);
+        if (creator == nullptr) creator = OperatorCreator::Query(device_type, operator_name);
+#else
+
         auto creator = OperatorCreator::Query(device_type, operator_name);
+#endif
 
         if (strict) return creator;
 

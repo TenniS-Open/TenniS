@@ -77,7 +77,7 @@ namespace ts {
             TS_DEBUG_API const string &chunk() TS_NOEXCEPT;
 
             TS_DEBUG_API const string &dcn_v2_forward() TS_NOEXCEPT;
-            
+
             TS_DEBUG_API const string &transpose_conv2d() TS_NOEXCEPT;
 
             TS_DEBUG_API const string &batchtospace4d() TS_NOEXCEPT;
@@ -197,7 +197,7 @@ namespace ts {
         TS_DEBUG_API extern string end;
 
         TS_DEBUG_API extern string shift;
-        
+
         TS_DEBUG_API extern string chunks;
         TS_DEBUG_API extern string deformable_groups;
 
@@ -209,7 +209,7 @@ namespace ts {
         TS_DEBUG_API extern string mode;
         TS_DEBUG_API extern string iou_threshold;
         TS_DEBUG_API extern string score_threshold;
- 
+
         TS_DEBUG_API extern string max_output_size;
         TS_DEBUG_API extern string align_corners;
 
@@ -230,6 +230,10 @@ namespace ts {
 
         TS_DEBUG_API extern string transpose;
         TS_DEBUG_API extern string kernel_winograd_transformed;
+
+        TS_DEBUG_API extern string bias;
+        TS_DEBUG_API extern string xnnpack;
+
     }
 }
 

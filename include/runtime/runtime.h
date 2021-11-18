@@ -11,6 +11,9 @@
 #include "core/sync/sync_controller.h"
 
 #include "utils/ctxmgr_lite.h"
+#ifdef TS_USE_XNNPACK
+#include "kernels/xnnpack/xnnpack.h"
+#endif
 
 namespace ts {
 
@@ -47,6 +50,9 @@ namespace ts {
         static SyncMemoryController::shared FlowMemory();
 
         static SyncMemoryController::shared DynamicMemory();
+#ifdef TS_USE_XNNPACK
+        pthreadpool_t get_xnn_threadpool();
+#endif
 
     private:
         /**
@@ -55,6 +61,10 @@ namespace ts {
         int m_computing_thread_number = 1;
 
         ThreadPool::shared m_thread_pool;
+#ifdef TS_USE_XNNPACK
+        using XnnThreadPool = std::unique_ptr<pthreadpool, decltype(&pthreadpool_destroy)>;
+        XnnThreadPool m_xnn_pthreadpool = XnnThreadPool(pthreadpool_create(m_computing_thread_number), pthreadpool_destroy);
+#endif
 
         SyncMemoryController::shared m_flow;
         SyncMemoryController::shared m_dynamic;

@@ -2,14 +2,14 @@
 // Created by sen on 2021/9/27.
 //
 
-#ifndef TENNIS_LAYOUT_TRANSLATOR_OPTION_H
-#define TENNIS_LAYOUT_TRANSLATOR_OPTION_H
+#ifndef TENNIS_XNNPACK_TRANSLATOR_OPTION_H
+#define TENNIS_XNNPACK_TRANSLATOR_OPTION_H
 
-#include "translator_option.h"
+#include "compiler/option/translator_option.h"
 
 namespace ts {
 
-    class LayoutTranslatorOption : public TranslatorOption {
+    class XnnpackTranslatorOption : public TranslatorOption {
     public:
         bool translate(const ComputingDevice &device,
                        const Node node,
@@ -19,4 +19,4 @@ namespace ts {
     };
 }
 
-#endif //TENNIS_LAYOUT_TRANSLATOR_OPTION_H
+#endif //TENNIS_XNNPACK_TRANSLATOR_OPTION_H

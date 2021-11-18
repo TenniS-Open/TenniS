@@ -178,10 +178,10 @@ namespace ts {
         string end = "end";
 
         string shift = "shift";
-        
+
         string chunks = "chunks";
         string deformable_groups = "deformable_groups";
-        
+
         string crop = "crop";
         string block_shape = "block_shape";
 
@@ -212,5 +212,7 @@ namespace ts {
         string transpose = "transpose";
 
         string kernel_winograd_transformed = "kernel_winograd_transformed";
+        string bias = "bias";
+        string xnnpack = "xnnpack";
     }
 }

@@ -47,7 +47,7 @@ namespace ts {
         if (m_impl->m_graph->nodes().size() > 1) {
             Module::shared module = std::make_shared<Module>();
             module->load(*m_impl->m_graph);
-            m_impl->m_program = Program::Compile(module, m_impl->m_computing_device);
+            m_impl->m_program = Program::Compile(module, m_impl->m_computing_device, "ImageFilter");
         }
         m_impl->m_compiled = true;
     }
