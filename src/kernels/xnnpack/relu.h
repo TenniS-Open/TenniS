@@ -30,8 +30,6 @@ namespace ts {
             pthreadpool_t m_threadpool;
             xnn_status m_status;
             xnn_operator_t m_op = nullptr;
-
-            std::unordered_map<size_t, std::shared_ptr<xnn_operator>> m_shared_op_map;
         };
     }
 }

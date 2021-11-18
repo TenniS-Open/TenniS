@@ -44,14 +44,9 @@ namespace ts {
             size_t input_stride = channels;
             size_t output_stride = channels;
 
-            auto iter = m_shared_op_map.find(channels);
-            if (iter == m_shared_op_map.end()) {
+            if (m_op == nullptr) {
                 m_status = xnn_create_abs_nc_f32(channels, input_stride, output_stride, 0, &m_op);
                 TS_CHECK(m_status == xnn_status_success);
-                m_shared_op_map.insert(
-                        std::pair<size_t, std::shared_ptr<xnn_operator>>(channels, std::shared_ptr<xnn_operator>(m_op, xnn_delete_operator)));
-            } else {
-                m_op = iter->second.get();
             }
 
             m_status = xnn_setup_abs_nc_f32(m_op, batch_size, x.data<float>(), out.data<float>(), m_threadpool);
