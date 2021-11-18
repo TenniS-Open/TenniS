@@ -59,11 +59,21 @@ namespace ts {
 
             auto memory_device = running_memory_device();
             auto x = stack[0].view(memory_device);
+
+            auto& indices_viewed = stack[1];
+            for (int i = 0; i < indices_viewed.count(); ++i) {
+
+                indices_viewed.data<int32_t>()[i] = indices_viewed.data<int32_t>()[i] < 0 ?
+                                                    indices_viewed.data<int32_t>()[i] + x.size(m_axis) :
+                                                    indices_viewed.data<int32_t>()[i];
+            }
+            indices_viewed.view(memory_device);
+
             auto &out = *stack.push(output_proto, memory_device);
 
             auto positive_axis = m_axis >= 0 ? m_axis : int(x.dims()) + m_axis;
 
-            gather(x, indices, positive_axis, out);
+            gather(x, indices_viewed, positive_axis, out);
 
             return 1;
         }
