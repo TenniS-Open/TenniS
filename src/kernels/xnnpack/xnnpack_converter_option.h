@@ -69,7 +69,6 @@ namespace ts {
                 name::layer::square(), // Square
                 name::layer::prelu(), // PReLU
                 name::layer::sqrt(),
-                name::layer::add_bias()
         };
 
         std::unordered_set<std::string> xnn_route_op = {
@@ -77,6 +76,7 @@ namespace ts {
 //                name::layer::batch_scale(),
 //                name::layer::inner_prod(),
 
+                name::layer::add_bias(),
                 Bubble::Const,
                 name::layer::copy(), // Copy, TenniS using shallow copy
                 name::layer::cast(),
@@ -614,6 +614,8 @@ namespace ts {
 
                     io.is_sub_graph = true;
                     io.color = 0;
+                    io.inputs = std::vector<Node>(graph_bottoms.begin(), graph_bottoms.end());
+                    io.outputs = std::vector<Node>(graph_tops.begin(), graph_tops.end());
                     return io;
                 }
             }
