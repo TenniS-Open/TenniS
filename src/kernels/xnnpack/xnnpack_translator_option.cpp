@@ -22,7 +22,7 @@ bool ts::XnnpackTranslatorOption::translate(const ComputingDevice &device, const
         return true;
     }
 
-    if (op_name == name::layer::add_bias()) {
+    if (op_name == xnn_op_prefix + name::layer::add_bias()) {
         auto _input = node.inputs()[0];
         auto _bias = node.inputs()[1];
         if (_bias->op() == Bubble::Const && _input->op() == xnn_op_prefix + name::layer::conv2d()) {

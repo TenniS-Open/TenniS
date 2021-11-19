@@ -68,7 +68,8 @@ namespace ts {
                 name::layer::softmax(),
                 name::layer::square(), // Square
                 name::layer::prelu(), // PReLU
-                name::layer::sqrt()
+                name::layer::sqrt(),
+                name::layer::add_bias()
         };
 
         std::unordered_set<std::string> xnn_route_op = {
@@ -78,7 +79,6 @@ namespace ts {
 
                 Bubble::Const,
                 name::layer::copy(), // Copy, TenniS using shallow copy
-                name::layer::add_bias(),
                 name::layer::cast(),
                 name::layer::concat(),
                 // TODO: add element-wise activation
