@@ -328,7 +328,7 @@ set_target_properties(${PROJECT_NAME}_LIB PROPERTIES OUTPUT_NAME ${PROJECT_NAME}
 
 # copy xnn related libraries to correct path
 if (TS_USE_XNNPACK)
-    set(XNNPACK_LIB_PATH "${LIBRARY_OUTPUT_PATH}/xnnpack")
+    set(XNNPACK_LIB_PATH "${CMAKE_SOURCE_DIR}/lib/third_party/xnnpack")
     if (TS_ON_ARM)
         if (TS_ON_ARMV7)
             set(XNNPACK_ARM "${XNNPACK_LIB_PATH}/arm64-v7a")
