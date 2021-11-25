@@ -13,6 +13,7 @@
 #include <runtime/workbench.h>
 #include "compiler/fence/splitter.h"
 #include "module/menu.h"
+#include "compiler/option/converter_option.h"
 
 namespace ts {
     namespace xnn {
@@ -39,8 +40,9 @@ namespace ts {
             std::unordered_set<std::string> m_route;
         };
 
-        std::unordered_set<std::string> xnn_support_op = {
+        static std::unordered_set<std::string> xnn_support_op = {
                 name::layer::conv2d(),  // 2D convolution
+                name::layer::depthwise_conv2d(),
 //            name::layer::transpose_conv2d(), // 2D Deconvolution
 //                name::layer::pooling2d(), // 2D average pooling and 2D max pooling
 //            name::layer::conv2d_v2(),
@@ -69,9 +71,11 @@ namespace ts {
                 name::layer::square(), // Square
                 name::layer::prelu(), // PReLU
                 name::layer::sqrt(),
+                name::layer::relu_max(),
+                name::layer::global_pooling2d(),
         };
 
-        std::unordered_set<std::string> xnn_route_op = {
+        static std::unordered_set<std::string> xnn_route_op = {
 //                name::layer::batch_norm(),
 //                name::layer::batch_scale(),
 //                name::layer::inner_prod(),
@@ -80,10 +84,14 @@ namespace ts {
                 Bubble::Const,
                 name::layer::copy(), // Copy, TenniS using shallow copy
                 name::layer::cast(),
-                name::layer::concat(),
+//                name::layer::concat(),
                 // TODO: add element-wise activation
                 "softplus",
                 "tanh",
+                "hard_sigmoid",
+                name::layer::to_float(),
+                name::layer::flatten()
+
         };
 
         class XnnpackConverter : public ConverterOption {

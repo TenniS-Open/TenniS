@@ -131,6 +131,21 @@ bool ts::XnnpackTranslatorOption::translate(const ComputingDevice &device, const
 //        }
 //    }
 
+    if (op_name == xnn_op_prefix + name::layer::global_pooling2d()) {
+        translated_node->set(name::format, tensor::from(name::NHWC));
+        Node::Link(translated_node, node.inputs());
+        return true;
+    }
+
+    if (op_name == name::layer::flatten()) {
+        // input dims == 4
+        if (node.input(0)->op().find(xnn_op_prefix) != std::string::npos) {
+            translated_node->set(name::dim, tensor::from({3}));
+            Node::Link(translated_node, node.inputs());
+            return true;
+        }
+    }
+
     if (op_name != xnn_op_prefix + name::layer::conv2d() && op_name != xnn_op_prefix + name::layer::depthwise_conv2d()) {
         Node::Link(translated_node, node.inputs());
         return true;
