@@ -214,10 +214,8 @@ namespace ts {
 //            splitter.only_max_graph = true;
 
             auto module = get_color_map_from_spliter(outputs, inputs, splitter, rule);
-            // fuse bias and conv2d
             auto translated_module = Module::Translate(module, CPU, "--xnnpack");
-            // transpose conv2d layout
-            translated_module = Module::Translate(translated_module, CPU, "--xnnpack");
+            // which xnn backend do not support, use pack optimization
             translated_module = Module::Translate(translated_module, CPU, "--pack");
             return translated_module;
         }
