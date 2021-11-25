@@ -1,7 +1,7 @@
 //
 // Created by sen on 2021/9/15.
 //
-#include "conv2d.h"
+#include "depthwise_conv2d.h"
 #include "backend/base/operator_on_device.h"
 #include "kernels/cpu/operator_on_cpu.h"
 #include "backend/name.h"
@@ -16,7 +16,7 @@
 
 namespace ts {
     namespace xnn {
-        Conv2d::Conv2d() {
+        DepthwiseConv2D::DepthwiseConv2D() {
             field(name::format, REQUIRED);
             field(name::padding, REQUIRED);
             field(name::padding_value, OPTIONAL, tensor::from(0.0f));
@@ -24,9 +24,7 @@ namespace ts {
             field(name::dilation, OPTIONAL);
             field(name::typo::dialations, OPTIONAL);
             field(name::kernel_packed, OPTIONAL, tensor::from<bool>(false));
-//            field(name::bias, OPTIONAL);
             field("bias", OPTIONAL, tensor::from(0.0f));
-            field("groups", OPTIONAL, tensor::from(1));
         }
 
         static std::string to_string(const std::valarray<int> &arr) {
@@ -40,13 +38,12 @@ namespace ts {
             return out.str();
         }
 
-        void Conv2d::init() {
+        void DepthwiseConv2D::init() {
             supper::init();
             auto ctx = ctx::get<RuntimeContext>();
             m_threadpool = ctx->get_xnn_threadpool();
 
             if (has("bias")) m_bias = get("bias");
-            if (has("groups")) m_groups = tensor::to_int(get("groups"));
             auto format = tensor::to_string(get(name::format));
             auto padding_tensor = tensor::cast(INT32, get(name::padding));
             m_padding_value = tensor::to_float(get(name::padding_value));
@@ -97,15 +94,12 @@ namespace ts {
             }
             if (m_dilation4[0] != 1 ||
                 m_dilation4[1] != 1) {
-                TS_LOG_ERROR << this->op() << " do not support dialations: " << to_string(m_dilation4) << eject;
+                TS_LOG_ERROR << this->op() << " do not support dilation: " << to_string(m_dilation4) << eject;
             }
 
         }
 
-        int Conv2d::infer(Stack &stack, std::vector<Tensor::Prototype> &output) {
-//            auto cpu_conv2d_infer = OperatorCreator::Create(memory_device().type(), name::layer::conv2d(), true);
-//            InferOperator(cpu_conv2d_infer, stack, 2, output);
-//            return 1;
+        int DepthwiseConv2D::infer(Stack &stack, std::vector<Tensor::Prototype> &output) {
             TS_AUTO_CHECK(stack.size() == 2);
             if (m_format == FORMAT_NCHW) {
                 TS_LOG_ERROR << "Only support NHWC layout in xnnpack backend." << eject;
@@ -120,32 +114,32 @@ namespace ts {
             TS_AUTO_CHECK(x_tensor.dtype() == w_tensor.dtype());
 
             if(w_tensor.size(3) != x_tensor.size(3)) {
-                TS_LOG_ERROR << "Conv2d assert failed when x=" << x_tensor.proto() << ", w=" << w_tensor.proto() << eject;
+                TS_LOG_ERROR << "Depthwise_conv2d assert failed when x=" << x_tensor.proto() << ", w=" << w_tensor.proto() << eject;
             }
 
             Size2D x;
             Size2D ksize;
             Padding2D padding;
             Stride2D stride;
-            Dilation2D dialations;
+            Dilation2D dilation;
 
             x = Size2D(x_tensor.size(1), x_tensor.size(2));
             ksize = Size2D(w_tensor.size(1), w_tensor.size(2));
             padding = Padding2D(m_padding4x2[4], m_padding4x2[5], m_padding4x2[6], m_padding4x2[7]);
             stride = Stride2D(m_stride4[2], m_stride4[3]);
-            dialations = Stride2D(m_dilation4[2], m_dilation4[3]);
+            dilation = Stride2D(m_dilation4[2], m_dilation4[3]);
 
-            Size2D y = conv2d_forward(x, padding, ksize, stride, dialations);
+            Size2D y = conv2d_forward(x, padding, ksize, stride, dilation);
 
             Tensor::Prototype out_proto;
-            out_proto = Tensor::Prototype(x_tensor.dtype(), {x_tensor.size(0), y.height, y.width, w_tensor.size(0)});
+            out_proto = Tensor::Prototype(x_tensor.dtype(), {x_tensor.size(0), y.height, y.width, x_tensor.size(3)});
 
             output.resize(1);
             output[0] = out_proto;
             return 1;
         }
 
-        int Conv2d::run(Stack &stack) {
+        int DepthwiseConv2D::run(Stack &stack) {
             std::vector<Tensor::Prototype> output_protos;
             infer(stack, output_protos);
 
@@ -163,23 +157,24 @@ namespace ts {
             stride = Stride2D(m_stride4[2], m_stride4[3]);
             dilation = Stride2D(m_dilation4[2], m_dilation4[3]);
 
-            conv2d(x, padding, m_padding_value, w, stride, dilation, m_format, out);
+            depthwise_conv2d(x, padding, m_padding_value, w, stride, dilation, m_format, out);
 
             return 1;
         }
 
-        void Conv2d::conv2d(const Tensor &x, const Padding2D &padding, float padding_value, const Tensor &w,
-                            const Stride2D &stride, const Dilation2D &dilation, Conv2DFormat format, Tensor &out) {
+        void DepthwiseConv2D::depthwise_conv2d(const Tensor &x, const Padding2D &padding, float padding_value,
+                                               const Tensor &w, const Stride2D &stride, const Dilation2D &dilation,
+                                               Conv2DFormat format, Tensor &out) {
             // only support zero padding
             TS_CHECK(padding_value == 0);
 
             if (m_op == nullptr) {
-                size_t groups = m_groups;
-                size_t group_input_channels = x.size(3) / groups;;
-                size_t group_output_channels = out.size(3) / groups;;
+                size_t groups = x.size(3);
+                size_t group_input_channels = x.size(3) / groups;
+                size_t group_output_channels = out.size(3) / groups;
 
                 size_t input_channel_stride = groups * group_input_channels;
-                size_t output_channel_stride = groups * group_output_channels;
+                size_t output_channel_stride = groups *  group_output_channels;
                 float min = -std::numeric_limits<float>::infinity();
                 float max = std::numeric_limits<float>::infinity();
                 m_status = xnn_create_convolution2d_nhwc_f32(padding.top, padding.right, padding.bottom, padding.left,
@@ -188,7 +183,7 @@ namespace ts {
                                                              dilation.width, groups, group_input_channels,
                                                              group_output_channels,
                                                              input_channel_stride, output_channel_stride,
-                                                             w.data<float>(), m_bias.data<float>(), min, max, 0, &m_op);
+                                                             w.data<float>(), m_bias.data<float>(), min, max, XNN_FLAG_DEPTHWISE_CONVOLUTION, &m_op);
                 TS_CHECK_EQ(m_status, xnn_status_success);
                 m_shared_op.reset(m_op, xnn_delete_operator);
             }
@@ -209,4 +204,4 @@ namespace ts {
 
 using namespace ts;
 using namespace xnn;
-TS_REGISTER_OPERATOR(Conv2d, ts::XNNPACK, "xnn::conv2d")
+TS_REGISTER_OPERATOR(DepthwiseConv2D, ts::XNNPACK, "xnn::depthwise_conv2d")
