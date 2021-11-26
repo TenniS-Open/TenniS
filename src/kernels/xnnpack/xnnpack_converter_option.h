@@ -73,6 +73,7 @@ namespace ts {
                 name::layer::sqrt(),
                 name::layer::relu_max(),
                 name::layer::global_pooling2d(),
+                name::layer::gemm()
         };
 
         static std::unordered_set<std::string> xnn_route_op = {
@@ -90,7 +91,7 @@ namespace ts {
                 "tanh",
                 "hard_sigmoid",
                 name::layer::to_float(),
-                name::layer::flatten()
+                name::layer::flatten(),
 
         };
 

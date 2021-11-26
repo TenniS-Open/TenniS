@@ -2,6 +2,7 @@
 // Created by sen on 2021/9/27.
 //
 #include <runtime/workbench.h>
+#include <kernels/common/math.h>
 #include "xnnpack_converter_option.h"
 #include "xnnpack_translator_option.h"
 #include "backend/name.h"
@@ -137,10 +138,20 @@ bool ts::XnnpackTranslatorOption::translate(const ComputingDevice &device, const
         return true;
     }
 
-    if (op_name == name::layer::flatten()) {
-        // input dims == 4
-        if (node.input(0)->op().find(xnn_op_prefix) != std::string::npos) {
-            translated_node->set(name::dim, tensor::from({3}));
+    if (op_name == xnn_op_prefix + name::layer::gemm()) {
+        // if satisfy situation, then translate to xnn::inner_prod
+        // else translate to cpu::gemm
+        float alpha = tensor::to_float(node->get(name::alpha));
+        float beta = tensor::to_float(node->get(name::beta));
+        bool transA = tensor::to_bool(node->get(name::transA));
+        bool transB = tensor::to_bool(node->get(name::transB));
+        bool xnn_inner_prod_flag = transB && !transA && ts::near(alpha, float(1)) && ts::near(beta, float(1));
+        if (xnn_inner_prod_flag) {
+            translated_node->op(xnn_op_prefix + name::layer::inner_prod());
+            Node::Link(translated_node, node.inputs());
+            return true;
+        } else {
+            translated_node->op(name::layer::gemm());
             Node::Link(translated_node, node.inputs());
             return true;
         }
