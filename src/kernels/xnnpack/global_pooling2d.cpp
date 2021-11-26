@@ -82,15 +82,15 @@ namespace ts {
                 size_t batch_size = x.count() / channels;
                 size_t input_stride = channels;
                 size_t output_stride = channels;
-                float min = -std::numeric_limits<float>::infinity();
-                float max = std::numeric_limits<float>::infinity();
                 if (m_op == nullptr) {
+                    float min = -std::numeric_limits<float>::infinity();
+                    float max = std::numeric_limits<float>::infinity();
                     m_status = xnn_create_global_average_pooling_nwc_f32(channels, input_stride, output_stride, min, max, 0, &m_op);
                     TS_CHECK_EQ(m_status, xnn_status_success);
+                    size_t width = ksize.height * ksize.width;
+                    m_status = xnn_setup_global_average_pooling_nwc_f32(m_op, batch_size, width, x.data<float>(), out.data<float>(), m_threadpool);
+                    TS_CHECK_EQ(m_status, xnn_status_success);
                 }
-                size_t width = ksize.height * ksize.width;
-                m_status = xnn_setup_global_average_pooling_nwc_f32(m_op, batch_size, width, x.data<float>(), out.data<float>(), m_threadpool);
-                TS_CHECK_EQ(m_status, xnn_status_success);
 
                 m_status = xnn_run_operator(m_op, m_threadpool);
                 TS_CHECK_EQ(m_status, xnn_status_success);
