@@ -72,8 +72,9 @@ namespace ts {
                 name::layer::prelu(), // PReLU
                 name::layer::sqrt(),
                 name::layer::relu_max(),
-                name::layer::global_pooling2d(),
-                name::layer::gemm()
+//                name::layer::global_pooling2d(),
+//                name::layer::gemm(),
+                "hard_sigmoid",
         };
 
         static std::unordered_set<std::string> xnn_route_op = {
@@ -89,7 +90,6 @@ namespace ts {
                 // TODO: add element-wise activation
                 "softplus",
                 "tanh",
-                "hard_sigmoid",
                 name::layer::to_float(),
                 name::layer::flatten(),
 

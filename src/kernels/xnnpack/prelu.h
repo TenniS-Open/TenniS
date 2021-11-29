@@ -29,6 +29,7 @@ namespace ts {
             xnn_status m_status;
             xnn_operator_t m_op = nullptr;
             pthreadpool_t  m_threadpool;
+            std::shared_ptr<xnn_operator> m_shared_op;
             int m_dim = -1;
             bool check_inputs(Stack &stack) const;
         };

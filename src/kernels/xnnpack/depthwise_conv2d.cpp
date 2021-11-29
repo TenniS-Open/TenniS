@@ -186,8 +186,8 @@ namespace ts {
                                                              w.data<float>(), m_bias.data<float>(), min, max, XNN_FLAG_DEPTHWISE_CONVOLUTION, &m_op);
                 TS_CHECK_EQ(m_status, xnn_status_success);
                 m_shared_op.reset(m_op, xnn_delete_operator);
+                m_op = m_shared_op.get();
             }
-            m_op = m_shared_op.get();
 
             int batch_size = x.size(0);
             int input_height = x.size(1);

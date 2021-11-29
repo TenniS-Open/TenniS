@@ -37,8 +37,6 @@ namespace ts {
 
             TS_AUTO_CHECK(x_tensor.dims() == 4);
 
-            TS_CHECK_EQ(m_format, FORMAT_NHWC);
-
             if (m_format == FORMAT_NHWC) {
                 output.resize(1);
                 output[0] = Tensor::Prototype(
@@ -87,10 +85,12 @@ namespace ts {
                     float max = std::numeric_limits<float>::infinity();
                     m_status = xnn_create_global_average_pooling_nwc_f32(channels, input_stride, output_stride, min, max, 0, &m_op);
                     TS_CHECK_EQ(m_status, xnn_status_success);
-                    size_t width = ksize.height * ksize.width;
-                    m_status = xnn_setup_global_average_pooling_nwc_f32(m_op, batch_size, width, x.data<float>(), out.data<float>(), m_threadpool);
-                    TS_CHECK_EQ(m_status, xnn_status_success);
+                    m_shared_op.reset(m_op, xnn_delete_operator);
+                    m_op = m_shared_op.get();
                 }
+                size_t width = ksize.height * ksize.width;
+                m_status = xnn_setup_global_average_pooling_nwc_f32(m_op, batch_size, width, x.data<float>(), out.data<float>(), m_threadpool);
+                TS_CHECK_EQ(m_status, xnn_status_success);
 
                 m_status = xnn_run_operator(m_op, m_threadpool);
                 TS_CHECK_EQ(m_status, xnn_status_success);

@@ -19,8 +19,8 @@ namespace ts {
                 m_status = xnn_create_maximum_nd_f32(0, &m_op);
                 TS_CHECK_EQ(m_status, xnn_status_success);
                 m_shared_op.reset(m_op, xnn_delete_operator);
+                m_op = m_shared_op.get();
             }
-            m_op = m_shared_op.get();
         }
 
         int Maximum::infer(Stack &stack, std::vector<Tensor::Prototype> &output) {

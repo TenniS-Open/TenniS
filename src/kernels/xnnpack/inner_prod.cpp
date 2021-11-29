@@ -50,11 +50,12 @@ namespace ts {
         }
 
         void InnerProd::inner_prod(const Tensor &A, const Tensor &B, const Tensor &C, Tensor &out) {
+            TS_CHECK_EQ(A.dims(), 2);
             size_t in_channels = A.size(1);
             size_t out_channels = out.size(1);
             size_t batch_size = A.count() / in_channels;
             size_t in_stride = in_channels;
-            size_t out_stride = in_stride;
+            size_t out_stride = out_channels;
 
             if (m_op == nullptr) {
                 float min = -std::numeric_limits<float>::infinity();
@@ -62,6 +63,8 @@ namespace ts {
                 m_status = xnn_create_fully_connected_nc_f32(in_channels, out_channels, in_stride, out_stride,
                                                              B.data<float>(), C.data<float>(), min, max, 0, &m_op);
                 TS_CHECK(m_status == xnn_status_success);
+                m_shared_op.reset(m_op, xnn_delete_operator);
+                m_op = m_shared_op.get();
             }
 
             m_status = xnn_setup_fully_connected_nc_f32(m_op, batch_size, A.data<float>(), out.data<float>(), m_threadpool);

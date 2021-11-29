@@ -27,6 +27,7 @@ namespace ts {
             pthreadpool_t m_threadpool = nullptr;
             xnn_operator_t m_op = nullptr;
             xnn_status m_status;
+            std::shared_ptr<xnn_operator> m_shared_op;
 
             void pooling2d(const Tensor &x, Pooling2DType type, Padding2D padding, Padding2DType padding_type,
                            Size2D ksize, Stride2D stride, Conv2DFormat format, Tensor &out);

@@ -29,10 +29,8 @@ namespace ts {
             xnn_status m_status;
             xnn_operator_t m_op = nullptr;
             pthreadpool_t m_threadpool;
+            std::shared_ptr<xnn_operator> m_shared_op;
             float m_scale;
-
-            // not only one feature
-//            std::unordered_map<size_t, std::shared_ptr<xnn_operator>> m_shared_op_map;
         };
     }
 }

@@ -28,6 +28,10 @@
 #include "utils/ctxmgr_lite_support.h"
 #include "utils/cpu_info.h"
 
+#ifdef TS_USE_XNNPACK
+#include "kernels/xnnpack/xnnpack.h"
+#endif
+
 namespace ts {
     class BindWorkbenchRuntime {
     public:
@@ -160,6 +164,11 @@ namespace ts {
         auto outputs = launch_offline(m_desktop, m_inputs);
 
         m_outputs = outputs;
+#ifdef TS_USE_XNNPACK
+        xnn_status status;
+        status = xnn_deinitialize();
+        TS_CHECK(status == xnn_status_success);
+#endif
     }
 
     Workbench::shared Workbench::clone() const {

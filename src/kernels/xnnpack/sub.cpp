@@ -26,8 +26,8 @@ namespace ts {
                 m_status = xnn_create_subtract_nd_f32(min, max, 0, &m_op);
                 TS_CHECK_EQ(m_status, xnn_status_success);
                 m_shared_op.reset(m_op, xnn_delete_operator);
+                m_op = m_shared_op.get();
             }
-            m_op = m_shared_op.get();
         }
 
         int Sub::infer(Stack &stack, std::vector<Tensor::Prototype> &output) {

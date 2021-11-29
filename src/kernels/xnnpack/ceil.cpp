@@ -49,6 +49,8 @@ namespace ts {
             if (m_op == nullptr) {
                 m_status = xnn_create_ceiling_nc_f32(channels, input_stride, output_stride, 0, &m_op);
                 TS_CHECK(m_status == xnn_status_success);
+                m_shared_op.reset(m_op, xnn_delete_operator);
+                m_op = m_shared_op.get();
             }
 
             m_status = xnn_setup_ceiling_nc_f32(m_op, batch_size, x.data<float>(), out.data<float>(), m_threadpool);

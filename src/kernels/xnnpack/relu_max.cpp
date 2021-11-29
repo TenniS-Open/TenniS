@@ -17,8 +17,6 @@ namespace ts {
             supper::init();
             m_max = tensor::to_float(get(name::max));
 
-            // m_status = xnn_initialize(nullptr);
-            // TS_CHECK(m_status == xnn_status_success);
             auto ctx = ctx::get<RuntimeContext>();
             m_threadpool = ctx->get_xnn_threadpool();
         }
@@ -54,6 +52,8 @@ namespace ts {
                 float max = m_max;
                 m_status = xnn_create_clamp_nc_f32(channels, input_stride, output_stride, min, max, 0, &m_op);
                 TS_CHECK(m_status == xnn_status_success);
+                m_shared_op.reset(m_op, xnn_delete_operator);
+                m_op = m_shared_op.get();
             }
 
             m_status = xnn_setup_clamp_nc_f32(m_op, batch_size, x.data<float>(), out.data<float>(), m_threadpool);
