@@ -212,7 +212,6 @@ namespace ts {
         string transpose = "transpose";
 
         string kernel_winograd_transformed = "kernel_winograd_transformed";
-        string bias = "bias";
         string xnnpack = "xnnpack";
     }
 }

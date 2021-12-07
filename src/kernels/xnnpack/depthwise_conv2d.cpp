@@ -25,6 +25,8 @@ namespace ts {
             field(name::typo::dialations, OPTIONAL);
             field(name::kernel_packed, OPTIONAL, tensor::from<bool>(false));
             field("bias", OPTIONAL, tensor::from(0.0f));
+            field("value_max", OPTIONAL);
+            field("value_min", OPTIONAL);
         }
 
         static std::string to_string(const std::valarray<int> &arr) {
@@ -44,6 +46,8 @@ namespace ts {
             m_threadpool = ctx->get_xnn_threadpool();
 
             if (has("bias")) m_bias = get("bias");
+            if (has("value_max")) m_value_max = tensor::to_float(get("value_max"));
+            if (has("value_min")) m_value_min = tensor::to_float(get("value_min"));
             auto format = tensor::to_string(get(name::format));
             auto padding_tensor = tensor::cast(INT32, get(name::padding));
             m_padding_value = tensor::to_float(get(name::padding_value));
@@ -175,15 +179,13 @@ namespace ts {
 
                 size_t input_channel_stride = groups * group_input_channels;
                 size_t output_channel_stride = groups *  group_output_channels;
-                float min = -std::numeric_limits<float>::infinity();
-                float max = std::numeric_limits<float>::infinity();
                 m_status = xnn_create_convolution2d_nhwc_f32(padding.top, padding.right, padding.bottom, padding.left,
                                                              w.size(1), w.size(2),
                                                              stride.height, stride.width, dilation.height,
                                                              dilation.width, groups, group_input_channels,
                                                              group_output_channels,
                                                              input_channel_stride, output_channel_stride,
-                                                             w.data<float>(), m_bias.data<float>(), min, max, XNN_FLAG_DEPTHWISE_CONVOLUTION, &m_op);
+                                                             w.data<float>(), m_bias.data<float>(), m_value_min, m_value_max, XNN_FLAG_DEPTHWISE_CONVOLUTION, &m_op);
                 TS_CHECK_EQ(m_status, xnn_status_success);
                 m_shared_op.reset(m_op, xnn_delete_operator);
                 m_op = m_shared_op.get();

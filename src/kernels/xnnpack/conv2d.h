@@ -43,6 +43,8 @@ namespace ts {
             std::valarray<int> m_dilation4;
             bool m_kernel_packed = false;
             int m_groups = 1;
+            float m_value_max = +std::numeric_limits<float>::infinity();
+            float m_value_min = -std::numeric_limits<float>::infinity();
         };
     }
 }

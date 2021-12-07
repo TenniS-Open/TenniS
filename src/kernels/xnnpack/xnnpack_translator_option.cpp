@@ -8,6 +8,14 @@
 #include "backend/name.h"
 #include "module/menu.h"
 
+static std::set<std::string> conv_family = {
+        "xnn::" + ts::name::layer::conv2d(),
+        "xnn::" + ts::name::layer::conv2d_v2(),
+        "xnn::" + ts::name::layer::depthwise_conv2d(),
+        "xnn::" + ts::name::layer::depthwise_conv2d_v2(),
+        "xnn::" + ts::name::layer::transpose_conv2d()
+};
+
 static ts::Node translate_conv_family(const ts::ComputingDevice &device, ts::Node &node) {
     std::string xnn_op_prefix = "xnn::";
     auto op_name = node.bubble().op();
@@ -31,10 +39,8 @@ static ts::Node translate_conv_family(const ts::ComputingDevice &device, ts::Nod
 
     ts::Tensor kernel_nhwc(kernel_type, {kernel_shape[0], kernel_shape[2], kernel_shape[3], kernel_shape[1]});
 
-    if (op_name == xnn_op_prefix + ts::name::layer::conv2d()
-        || op_name == xnn_op_prefix + ts::name::layer::conv2d_v2()
-        || op_name == xnn_op_prefix + ts::name::layer::depthwise_conv2d()
-        || op_name == xnn_op_prefix + ts::name::layer::depthwise_conv2d_v2()) {
+    auto conv_iter = conv_family.find(op_name);
+    if (conv_iter != conv_family.end()) {
         // transpose kernel from nchw to nhwc
         auto op_transpose = ts::OperatorCreator::Create(ts::CPU, ts::name::layer::transpose(), true);
         TS_CHECK_NQ(op_transpose, nullptr) << "Can not find operator: " << ts::name::layer::transpose() << ts::eject;
@@ -81,14 +87,46 @@ bool ts::XnnpackTranslatorOption::translate(const ComputingDevice &device, const
         return true;
     }
 
+    // fuse relu and relu_max into convolution family
+    if (op_name == xnn_op_prefix + name::layer::relu() || op_name == xnn_op_prefix + name::layer::relu_max()) {
+        if (node.inputs()[0]->op() == name::layer::add_bias()) {
+            auto _bias_node = node.inputs()[0];
+            auto _input = _bias_node.inputs()[0];
+            auto _bias = _bias_node.inputs()[1];
+            auto conv_iter = conv_family.find(_input->op());
+            if (_bias->op() == Bubble::Const && conv_iter != conv_family.end()) {
+                _input.bubble().set("bias", _bias->get(name::value));
+
+                float max_value = op_name == xnn_op_prefix + name::layer::relu() ?
+                        std::numeric_limits<float>::infinity() : tensor::to_float(node->get(name::max));
+                _input.bubble().set("value_max", tensor::from(max_value));
+                _input.bubble().set("value_min", tensor::from(0.f));
+                auto kernel_translated_node = translate_conv_family(device, _input);
+                translated_node = bubble::bubble(kernel_translated_node.bubble());
+                translated_node->set(name::format, ts::tensor::from(name::NHWC));
+                Node::Link(translated_node, _input.inputs());
+                return true;
+            }
+        }
+        // the previous node belongs to conv layers
+        auto it = conv_family.find(node.inputs()[0]->op());
+        if (it != conv_family.end()) {
+            auto _conv_node = node.inputs()[0];
+            float max_value = op_name == xnn_op_prefix + name::layer::relu() ?
+                          std::numeric_limits<float>::infinity() : tensor::to_float(node->get(name::max));
+            _conv_node.bubble().set("value_max", tensor::from(max_value));
+            _conv_node.bubble().set("value_min", tensor::from(0.f));
+            translated_node = bubble::bubble(_conv_node.bubble());
+            Node::Link(translated_node, _conv_node.inputs());
+            return true;
+        }
+    }
+
     if (op_name == name::layer::add_bias()) {
         auto _input = node.inputs()[0];
         auto _bias = node.inputs()[1];
-        if (_bias->op() == Bubble::Const
-            && (_input->op() == xnn_op_prefix + name::layer::conv2d()
-                || _input->op() == xnn_op_prefix + name::layer::conv2d_v2()
-                || _input->op() == xnn_op_prefix + name::layer::depthwise_conv2d()
-                || _input->op() == xnn_op_prefix + name::layer::depthwise_conv2d_v2())) {
+        auto conv_iter = conv_family.find(_input->op());
+        if (_bias->op() == Bubble::Const && conv_iter!= conv_family.end()) {
             _input.bubble().set("bias", _bias->get(name::value));
             auto kernel_translated_node = translate_conv_family(device, _input);
             translated_node = bubble::bubble(kernel_translated_node.bubble());
@@ -190,10 +228,8 @@ bool ts::XnnpackTranslatorOption::translate(const ComputingDevice &device, const
 
     Tensor kernel_nhwc(kernel_type, {kernel_shape[0], kernel_shape[2], kernel_shape[3], kernel_shape[1]});
 
-    if (op_name == xnn_op_prefix + name::layer::conv2d()
-        || op_name == xnn_op_prefix + name::layer::conv2d_v2()
-        || op_name == xnn_op_prefix + name::layer::depthwise_conv2d()
-        || op_name == xnn_op_prefix + name::layer::depthwise_conv2d_v2()) {
+    auto conv_iter = conv_family.find(op_name);
+    if (conv_iter != conv_family.end()) {
         // transpose kernel from nchw to nhwc
         auto op_transpose = OperatorCreator::Create(CPU, name::layer::transpose(), true);
         TS_CHECK_NQ(op_transpose, nullptr) << "Can not find operator: " << name::layer::transpose() << eject;

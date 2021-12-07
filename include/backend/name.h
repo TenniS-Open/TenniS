@@ -231,7 +231,6 @@ namespace ts {
         TS_DEBUG_API extern string transpose;
         TS_DEBUG_API extern string kernel_winograd_transformed;
 
-        TS_DEBUG_API extern string bias;
         TS_DEBUG_API extern string xnnpack;
 
     }
