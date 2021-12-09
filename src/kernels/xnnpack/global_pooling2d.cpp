@@ -77,7 +77,6 @@ namespace ts {
                                         Size2D ksize, Stride2D stride, Conv2DFormat format, Tensor &out) {
             if (m_type == Pooling2DType::AVG) {
                 size_t channels = x.size(3);
-                size_t batch_size = x.count() / channels;
                 size_t input_stride = channels;
                 size_t output_stride = channels;
                 if (m_op == nullptr) {
@@ -88,15 +87,14 @@ namespace ts {
                     m_shared_op.reset(m_op, xnn_delete_operator);
                     m_op = m_shared_op.get();
                 }
-                size_t width = ksize.height * ksize.width;
-                m_status = xnn_setup_global_average_pooling_nwc_f32(m_op, batch_size, width, x.data<float>(), out.data<float>(), m_threadpool);
+                m_status = xnn_setup_global_average_pooling_nwc_f32(m_op, x.size(0), x.count() / channels, x.data<float>(), out.data<float>(), m_threadpool);
                 TS_CHECK_EQ(m_status, xnn_status_success);
 
                 m_status = xnn_run_operator(m_op, m_threadpool);
                 TS_CHECK_EQ(m_status, xnn_status_success);
 
             } else {
-                TS_LOG_ERROR << "Not implement global_max_pooling" << eject;
+                TS_LOG_ERROR << "Not implement global_max_pooling, only support global_avg_pooling." << eject;
 
             }
         }
