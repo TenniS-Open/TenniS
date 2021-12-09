@@ -45,7 +45,7 @@ namespace ts {
                 name::layer::depthwise_conv2d(),
 //            name::layer::transpose_conv2d(), // 2D Deconvolution
 //                name::layer::pooling2d(), // 2D average pooling and 2D max pooling
-//            name::layer::conv2d_v2(),
+                name::layer::conv2d_v2(),
 
 //            name::layer::resize2d(), // only bilinear resize, others using cpu-op
 //                name::layer::sample2d(),
@@ -56,7 +56,7 @@ namespace ts {
                 name::layer::maximum(), // Maximum
 //                "minimum", // Minimum not support on cpu
                 name::layer::mul(), // Multiply (including broadcasting)
-//                name::layer::gemm(), // Fully Connected
+                name::layer::gemm(), // Fully Connected
                 "abs",
 //                "bankers' rounding", // not support on cpu
                 "ceil", // Ceiling
@@ -72,8 +72,7 @@ namespace ts {
                 name::layer::prelu(), // PReLU
                 name::layer::sqrt(),
                 name::layer::relu_max(),
-//                name::layer::global_pooling2d(),
-//                name::layer::gemm(),
+                name::layer::global_pooling2d(),
                 "hard_sigmoid",
         };
 

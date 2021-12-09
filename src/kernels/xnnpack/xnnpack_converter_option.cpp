@@ -39,7 +39,7 @@ namespace ts {
             return dolly_nodes;
         }
 
-        std::shared_ptr<Module> get_color_map_from_spliter(const std::vector<Node> &outputs, const std::vector<Node> &inputs,
+        std::shared_ptr<Module> getSplitModuleBySplitter(const std::vector<Node> &outputs, const std::vector<Node> &inputs,
                                               const Splitter &config, XnnSplitRule &rule) {
             Graph g;
             ctx::bind<Graph> _bind(g);
@@ -213,7 +213,7 @@ namespace ts {
             splitter.single_output = false;
 //            splitter.only_max_graph = true;
 
-            auto module = get_color_map_from_spliter(outputs, inputs, splitter, rule);
+            auto module = getSplitModuleBySplitter(outputs, inputs, splitter, rule);
             auto translated_module = Module::Translate(module, CPU, "--xnnpack");
             // which xnn backend do not support, use pack optimization
             translated_module = Module::Translate(translated_module, CPU, "--pack");
