@@ -54,8 +54,10 @@ namespace ts {
         void HardSigmoid::hard_sigmoid(const Tensor &x, Tensor &out) {
             float min = 0.f;
             float max = 1.f;
+            float min_limits = -std::numeric_limits<float>::infinity();
+            float max_limits = +std::numeric_limits<float>::infinity();
             if (m_mul_op == nullptr) {
-                m_status = xnn_create_multiply_nd_f32(min, max, 0, &m_mul_op);
+                m_status = xnn_create_multiply_nd_f32(min_limits, max_limits, 0, &m_mul_op);
                 TS_CHECK_EQ(m_status, xnn_status_success);
                 m_shared_mul_op.reset(m_mul_op, xnn_delete_operator);
                 m_mul_op = m_shared_mul_op.get();
