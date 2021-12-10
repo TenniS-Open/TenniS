@@ -40,7 +40,7 @@ namespace ts {
 
         void ReLU::relu(const Tensor &x, Tensor &out) {
 
-            size_t channels = x.size(3);
+            size_t channels = x.size(-1);
             size_t batch_size = x.count() / channels;
             size_t input_stride = channels;
             size_t output_stride = channels;
