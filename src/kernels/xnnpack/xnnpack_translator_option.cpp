@@ -23,7 +23,8 @@ static ts::Node translate_conv_family(const ts::ComputingDevice &device, ts::Nod
     auto inputs = node.inputs();
     auto kernel_node = inputs[1];
     if (op_name == xnn_op_prefix + ts::name::layer::conv2d()
-        || op_name == xnn_op_prefix + ts::name::layer::depthwise_conv2d()) {
+        || op_name == xnn_op_prefix + ts::name::layer::depthwise_conv2d()
+        || op_name == xnn_op_prefix + ts::name::layer::transpose_conv2d()) {
         kernel_node = inputs[1];
     }
     else if (op_name == xnn_op_prefix + ts::name::layer::conv2d_v2()
@@ -65,7 +66,8 @@ static ts::Node translate_conv_family(const ts::ComputingDevice &device, ts::Nod
     kernel_transposed_node.bubble().set(ts::name::value, kernel_nhwc);
     kernel_transposed_node.bubble().set(ts::name::format, ts::tensor::from(ts::name::NHWC));
 
-    if(op_name == xnn_op_prefix + ts::name::layer::conv2d() || op_name == xnn_op_prefix + ts::name::layer::depthwise_conv2d())
+    if(op_name == xnn_op_prefix + ts::name::layer::conv2d() || op_name == xnn_op_prefix + ts::name::layer::depthwise_conv2d()
+        || op_name == xnn_op_prefix + ts::name::layer::transpose_conv2d())
         ts::Node::Link(translated_node, { inputs[0], kernel_transposed_node });
     else
         ts::Node::Link(translated_node, { inputs[0], inputs[1], kernel_transposed_node });
@@ -189,13 +191,13 @@ bool ts::XnnpackTranslatorOption::translate(const ComputingDevice &device, const
             Node::Link(translated_node, node.inputs());
             return true;
         } else {
-            translated_node->op(name::layer::gemm());
-            Node::Link(translated_node, node.inputs());
-            return true;
+            TS_LOG_ERROR << "Not support gemm in (alpha=" << alpha << ", beta=" << beta << ", transA=" << transA
+                        << ", transB=" << transB << ")." << ts::eject;
         }
     }
 
-    if (op_name != xnn_op_prefix + name::layer::conv2d() && op_name != xnn_op_prefix + name::layer::depthwise_conv2d()) {
+    auto it = conv_family.find(op_name);
+    if (it == conv_family.end()) {
         Node::Link(translated_node, node.inputs());
         return true;
     }
@@ -210,7 +212,8 @@ bool ts::XnnpackTranslatorOption::translate(const ComputingDevice &device, const
     // kernel should be nhwc layout
     auto inputs = node.inputs();
     auto kernel_node = inputs[1];
-    if (op_name == xnn_op_prefix + name::layer::conv2d() || op_name == xnn_op_prefix + name::layer::depthwise_conv2d()) {
+    if (op_name == xnn_op_prefix + name::layer::conv2d() || op_name == xnn_op_prefix + name::layer::depthwise_conv2d()
+        || op_name == xnn_op_prefix + name::layer::transpose_conv2d()) {
         kernel_node = inputs[1];
     }
     else if (op_name == xnn_op_prefix + name::layer::conv2d_v2()) {
@@ -254,7 +257,8 @@ bool ts::XnnpackTranslatorOption::translate(const ComputingDevice &device, const
     kernel_transposed_node.bubble().set(name::value, kernel_nhwc);
     translated_node.bubble().set(name::format, tensor::from(name::NHWC));
 
-    if(op_name == xnn_op_prefix + name::layer::conv2d() || op_name == xnn_op_prefix + name::layer::depthwise_conv2d())
+    if(op_name == xnn_op_prefix + name::layer::conv2d() || op_name == xnn_op_prefix + name::layer::depthwise_conv2d()
+        || op_name == xnn_op_prefix + name::layer::transpose_conv2d())
         Node::Link(translated_node, { inputs[0], kernel_transposed_node });
     else
         Node::Link(translated_node, { inputs[0], inputs[1], kernel_transposed_node });
