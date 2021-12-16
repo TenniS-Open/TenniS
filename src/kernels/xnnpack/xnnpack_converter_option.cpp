@@ -171,6 +171,11 @@ namespace ts {
                         }
                     }
 
+                    // if dims of operator output less 4, do not transpose
+                    if (node->op() == xnn_op_prefix + name::layer::gemm()) {
+                        continue;
+                    }
+
                     Node node_inserted = g.make(name::layer::transpose(), node->name() + "_nhwc2nchw");
                     node_inserted->set(name::permute, tensor::from({0, 3, 1, 2}));
 
