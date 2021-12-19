@@ -130,9 +130,11 @@ namespace ts {
         running_core_cond.notify_all();
     }
 
+#ifdef TS_USE_XNNPACK
     pthreadpool_t ThreadPool::get_xnn_threadpool() {
         return m_xnn_threadpool;
     }
+#endif
 }
 
 TS_LITE_CONTEXT(ts::ThreadPool)

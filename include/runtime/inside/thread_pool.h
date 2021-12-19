@@ -117,11 +117,13 @@ namespace ts {
          */
         size_t size() const;
 
+#ifdef TS_USE_XNNPACK
         /**
          * @brief threadpool for xnnpack backend
          * @return used pthreadpool of xnnpack
          */
          pthreadpool_t get_xnn_threadpool();
+#endif
 
     private:
 
@@ -143,7 +145,9 @@ namespace ts {
         std::condition_variable running_core_cond;      ///< active when cartridge pushed in chest
         std::deque<int> running_core;                  ///< save all cartridge ready to fire
 
+#ifdef TS_USE_XNNPACK
         pthreadpool_t m_xnn_threadpool;                 ///< threadpool for xnnpack backend
+#endif
     };
 }
 
