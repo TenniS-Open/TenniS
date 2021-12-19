@@ -14,6 +14,7 @@
 #include "compiler/fence/splitter.h"
 #include "module/menu.h"
 #include "compiler/option/converter_option.h"
+#include "kernels/xnnpack/xnnpack.h"
 
 namespace ts {
     namespace xnn {
