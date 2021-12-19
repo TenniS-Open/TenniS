@@ -43,7 +43,7 @@ namespace ts {
 
         void Conv2d::init() {
             supper::init();
-            auto ctx = ctx::get<RuntimeContext>();
+            auto ctx = ctx::get<ThreadPool>();
             m_threadpool = ctx->get_xnn_threadpool();
 
             if (has("bias")) m_bias = get("bias");

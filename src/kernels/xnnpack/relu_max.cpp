@@ -17,7 +17,7 @@ namespace ts {
             supper::init();
             m_max = tensor::to_float(get(name::max));
 
-            auto ctx = ctx::get<RuntimeContext>();
+            auto ctx = ctx::get<ThreadPool>();
             m_threadpool = ctx->get_xnn_threadpool();
         }
 

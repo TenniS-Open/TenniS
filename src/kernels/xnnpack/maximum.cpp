@@ -13,7 +13,7 @@ namespace ts {
         void Maximum::init() {
             supper::init();
 
-            auto ctx = ctx::get<RuntimeContext>();
+            auto ctx = ctx::get<ThreadPool>();
             m_threadpool = ctx->get_xnn_threadpool();
             if (m_op == nullptr) {
                 m_status = xnn_create_maximum_nd_f32(0, &m_op);

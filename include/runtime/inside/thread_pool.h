@@ -16,6 +16,9 @@
 
 #include <utils/api.h>
 #include "utils/ctxmgr_lite.h"
+#ifdef TS_USE_XNNPACK
+#include "kernels/xnnpack/pthreadpool.h"
+#endif
 
 namespace ts {
     class TS_DEBUG_API Thread {
@@ -114,6 +117,12 @@ namespace ts {
          */
         size_t size() const;
 
+        /**
+         * @brief threadpool for xnnpack backend
+         * @return used pthreadpool of xnnpack
+         */
+         pthreadpool_t get_xnn_threadpool();
+
     private:
 
         /**
@@ -133,6 +142,8 @@ namespace ts {
         std::mutex running_core_mutex;                  ///< mutex to get cartridges
         std::condition_variable running_core_cond;      ///< active when cartridge pushed in chest
         std::deque<int> running_core;                  ///< save all cartridge ready to fire
+
+        pthreadpool_t m_xnn_threadpool;                 ///< threadpool for xnnpack backend
     };
 }
 

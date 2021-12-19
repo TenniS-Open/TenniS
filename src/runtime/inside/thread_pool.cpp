@@ -57,12 +57,18 @@ namespace ts {
             thread_pool[i] = new Thread();
             running_core.push_back(i);   // push all cartridge into chest
         }
+#ifdef TS_USE_XNNPACK
+        m_xnn_threadpool = pthreadpool_create(pool_size);
+#endif
     }
 
     ThreadPool::~ThreadPool() {
         for (int i = 0; i < static_cast<int>(thread_pool.size()); ++i) {
             delete thread_pool[i];
         }
+#ifdef TS_USE_XNNPACK
+        pthreadpool_destroy(m_xnn_threadpool);
+#endif
     }
 
     Thread *ThreadPool::run(const Thread::task_type &task) {
@@ -122,6 +128,10 @@ namespace ts {
         std::unique_lock<std::mutex> locker(running_core_mutex);
         this->running_core.push_front(signet);
         running_core_cond.notify_all();
+    }
+
+    pthreadpool_t ThreadPool::get_xnn_threadpool() {
+        return m_xnn_threadpool;
     }
 }
 

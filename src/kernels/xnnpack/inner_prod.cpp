@@ -20,7 +20,7 @@ namespace ts {
         void InnerProd::init() {
             supper::init();
 
-            auto ctx = ctx::get<RuntimeContext>();
+            auto ctx = ctx::get<ThreadPool>();
             m_threadpool = ctx->get_xnn_threadpool();
         }
 

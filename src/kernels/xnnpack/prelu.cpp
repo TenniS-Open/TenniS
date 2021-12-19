@@ -18,7 +18,7 @@ namespace ts {
             // supper::init();
             // m_status = xnn_initialize(nullptr);
             // TS_CHECK(m_status == xnn_status_success);
-            auto ctx = ctx::get<RuntimeContext>();
+            auto ctx = ctx::get<ThreadPool>();
             m_threadpool = ctx->get_xnn_threadpool();
 
             m_dim = tensor::to_int(this->get(name::dim));

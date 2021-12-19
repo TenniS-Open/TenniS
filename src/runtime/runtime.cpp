@@ -63,9 +63,6 @@ namespace ts {
         this->m_computing_thread_number = fixed_thread_number;
 
         this->m_thread_pool = std::make_shared<ThreadPool>(fixed_thread_number);
-#ifdef TS_USE_XNNPACK
-        this->m_xnn_pthreadpool.reset(pthreadpool_create(fixed_thread_number));
-#endif
 #ifdef TS_USE_CBLAS
 #ifdef TS_USING_OPENBLAS
         goto_set_num_threads(fixed_thread_number);
@@ -135,11 +132,6 @@ namespace ts {
         auto runtime = ctx::get<RuntimeContext>();
         if (!runtime) return nullptr;
         return runtime->dynamic();}
-#ifdef TS_USE_XNNPACK
-    pthreadpool_t RuntimeContext::get_xnn_threadpool() {
-        return this->m_xnn_pthreadpool.get();
-    }
-#endif
 }
 
 TS_LITE_CONTEXT(ts::RuntimeContext)
