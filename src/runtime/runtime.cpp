@@ -63,6 +63,9 @@ namespace ts {
         this->m_computing_thread_number = fixed_thread_number;
 
         this->m_thread_pool = std::make_shared<ThreadPool>(fixed_thread_number);
+#ifdef TS_USE_XNNPACK
+        this->m_xnn_thread_pool = xnn::XnnThreadPool::set_thread_number(fixed_thread_number).get_thread_pool();
+#endif
 #ifdef TS_USE_CBLAS
 #ifdef TS_USING_OPENBLAS
         goto_set_num_threads(fixed_thread_number);

@@ -19,7 +19,7 @@ namespace ts {
         void HardSigmoid::init() {
             supper::init();
 
-            auto ctx = ctx::get<ThreadPool>();
+            auto ctx = ctx::get<RuntimeContext>();
             m_threadpool = ctx->get_xnn_threadpool();
 
             m_alpha = tensor::to_float(get("alpha"));

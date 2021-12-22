@@ -11,7 +11,7 @@ namespace ts {
     namespace xnn {
         void Abs::init() {
             supper::init();
-            auto ctx = ctx::get<ThreadPool>();
+            auto ctx = ctx::get<RuntimeContext>();
             m_threadpool = ctx->get_xnn_threadpool();
         }
 

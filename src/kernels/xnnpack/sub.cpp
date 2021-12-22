@@ -17,7 +17,7 @@ namespace ts {
         void Sub::init() {
             supper::init();
 
-            auto ctx = ctx::get<ThreadPool>();
+            auto ctx = ctx::get<RuntimeContext>();
             m_threadpool = ctx->get_xnn_threadpool();
 
             if (m_op == nullptr) {

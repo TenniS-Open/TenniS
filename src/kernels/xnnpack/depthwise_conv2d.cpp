@@ -42,7 +42,7 @@ namespace ts {
 
         void DepthwiseConv2D::init() {
             supper::init();
-            auto ctx = ctx::get<ThreadPool>();
+            auto ctx = ctx::get<RuntimeContext>();
             m_threadpool = ctx->get_xnn_threadpool();
 
             if (has("bias")) m_bias = get("bias");

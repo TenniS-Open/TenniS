@@ -11,6 +11,9 @@
 #include "core/sync/sync_controller.h"
 
 #include "utils/ctxmgr_lite.h"
+#ifdef TS_USE_XNNPACK
+#include "kernels/xnnpack/threadpool.h"
+#endif
 
 namespace ts {
 
@@ -47,7 +50,11 @@ namespace ts {
         static SyncMemoryController::shared FlowMemory();
 
         static SyncMemoryController::shared DynamicMemory();
-
+#ifdef TS_USE_XNNPACK
+        pthreadpool_t get_xnn_threadpool() {
+            return m_xnn_thread_pool;
+        }
+#endif
     private:
         /**
          * Computing threads number. Used in OpenMP
@@ -55,7 +62,9 @@ namespace ts {
         int m_computing_thread_number = 1;
 
         ThreadPool::shared m_thread_pool;
-
+#ifdef TS_USE_XNNPACK
+        pthreadpool_t m_xnn_thread_pool;
+#endif
         SyncMemoryController::shared m_flow;
         SyncMemoryController::shared m_dynamic;
     };

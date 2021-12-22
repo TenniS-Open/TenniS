@@ -13,6 +13,7 @@
 #include "utils/need.h"
 #include "core/tensor_builder.h"
 #include "frontend/intime.h"
+#include "kernels/xnnpack/threadpool.h"
 
 namespace ts {
     namespace xnn {
@@ -43,7 +44,7 @@ namespace ts {
 
         void Conv2d::init() {
             supper::init();
-            auto ctx = ctx::get<ThreadPool>();
+            auto ctx = ctx::get<RuntimeContext>();
             m_threadpool = ctx->get_xnn_threadpool();
 
             if (has("bias")) m_bias = get("bias");
@@ -172,6 +173,10 @@ namespace ts {
                             const Stride2D &stride, const Dilation2D &dilation, Conv2DFormat format, Tensor &out) {
             // only support zero padding
             TS_CHECK(padding_value == 0);
+
+
+//            auto xnn_thread_pool = ctx::get<RuntimeContext>();
+//            std::cout << xnn_thread_pool->get_xnn_thread_pool() << std::endl;
 
             if (m_op == nullptr) {
                 size_t groups = m_groups;
