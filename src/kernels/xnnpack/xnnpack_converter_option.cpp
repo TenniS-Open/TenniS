@@ -146,11 +146,6 @@ namespace ts {
 
                 std::string xnn_op_prefix = "xnn::";
                 if (color.color(node) > 0) {
-
-                    // TODO: when init xnn is better, and deinit?
-                    xnn_status status = xnn_initialize(nullptr);
-                    TS_CHECK_EQ(status, xnn_status_success);
-
                     if (xnn_support_op.find(node->op()) != xnn_support_op.end()) {
                         node.bubble().op(xnn_op_prefix + node->op());
                     }

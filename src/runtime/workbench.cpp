@@ -164,11 +164,6 @@ namespace ts {
         auto outputs = launch_offline(m_desktop, m_inputs);
 
         m_outputs = outputs;
-#ifdef TS_USE_XNNPACK
-        xnn_status status;
-        status = xnn_deinitialize();
-        TS_CHECK(status == xnn_status_success);
-#endif
     }
 
     Workbench::shared Workbench::clone() const {
