@@ -53,12 +53,9 @@ static ts::Node translate_conv_family(const ts::ComputingDevice &device, ts::Nod
 
         op_transpose->init();
 
-        std::shared_ptr<ts::Workbench> bench_ptr;
-        bench_ptr = std::make_shared<ts::Workbench>(device);
-
-        ts::Workbench &bench = *bench_ptr;
+        auto bench = ts::ctx::get<ts::Workbench>();
         std::vector<ts::Tensor> run_output;
-        bench.offline_run(op_transpose, {kernel_tensor}, run_output);
+        bench->offline_run(op_transpose, {kernel_tensor}, run_output);
         kernel_nhwc = run_output[0];
     }
 
