@@ -14,7 +14,9 @@ ts::xnn::XnnThreadPool::XnnThreadPool(int size) {
 }
 
 ts::xnn::XnnThreadPool::~XnnThreadPool() {
+    TS_CHECK(m_threadpool != nullptr);
     pthreadpool_destroy(m_threadpool);
+    m_threadpool = nullptr;
     xnn_status status;
     status = xnn_deinitialize();
     TS_CHECK(status == xnn_status_success);

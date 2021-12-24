@@ -16,18 +16,6 @@ namespace ts {
     namespace xnn {
         void Sub::init() {
             supper::init();
-
-            auto ctx = ctx::get<RuntimeContext>();
-            m_threadpool = ctx->get_xnn_threadpool();
-
-            if (m_op == nullptr) {
-                float min = -std::numeric_limits<float>::infinity();
-                float max = std::numeric_limits<float>::infinity();
-                m_status = xnn_create_subtract_nd_f32(min, max, 0, &m_op);
-                TS_CHECK_EQ(m_status, xnn_status_success);
-                m_shared_op.reset(m_op, xnn_delete_operator);
-                m_op = m_shared_op.get();
-            }
         }
 
         int Sub::infer(Stack &stack, std::vector<Tensor::Prototype> &output) {
@@ -57,6 +45,18 @@ namespace ts {
         }
 
         void Sub::sub(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
+            if (m_op == nullptr) {
+                auto ctx = ctx::get<RuntimeContext>();
+                m_threadpool = ctx->get_xnn_threadpool();
+
+                float min = -std::numeric_limits<float>::infinity();
+                float max = std::numeric_limits<float>::infinity();
+                m_status = xnn_create_subtract_nd_f32(min, max, 0, &m_op);
+                TS_CHECK_EQ(m_status, xnn_status_success);
+                m_shared_op.reset(m_op, xnn_delete_operator);
+                m_op = m_shared_op.get();
+            }
+
             std::vector<size_t> lhs_shape;
             std::vector<size_t> rhs_shape;
             lhs_shape.reserve(lhs.dims());

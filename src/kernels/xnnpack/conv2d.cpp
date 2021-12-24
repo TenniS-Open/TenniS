@@ -44,8 +44,6 @@ namespace ts {
 
         void Conv2d::init() {
             supper::init();
-            auto ctx = ctx::get<RuntimeContext>();
-            m_threadpool = ctx->get_xnn_threadpool();
 
             if (has("bias")) m_bias = get("bias");
             if (has("groups")) m_groups = tensor::to_int(get("groups"));
@@ -174,11 +172,10 @@ namespace ts {
             // only support zero padding
             TS_CHECK(padding_value == 0);
 
-
-//            auto xnn_thread_pool = ctx::get<RuntimeContext>();
-//            std::cout << xnn_thread_pool->get_xnn_thread_pool() << std::endl;
-
             if (m_op == nullptr) {
+                auto xnn_thread_pool = ctx::get<RuntimeContext>();
+                m_threadpool = xnn_thread_pool->get_xnn_threadpool();
+
                 size_t groups = m_groups;
                 size_t group_input_channels = x.size(3) / groups;;
                 size_t group_output_channels = out.size(3) / groups;;

@@ -12,15 +12,6 @@ namespace ts {
 
         void Maximum::init() {
             supper::init();
-
-            auto ctx = ctx::get<RuntimeContext>();
-            m_threadpool = ctx->get_xnn_threadpool();
-            if (m_op == nullptr) {
-                m_status = xnn_create_maximum_nd_f32(0, &m_op);
-                TS_CHECK_EQ(m_status, xnn_status_success);
-                m_shared_op.reset(m_op, xnn_delete_operator);
-                m_op = m_shared_op.get();
-            }
         }
 
         int Maximum::infer(Stack &stack, std::vector<Tensor::Prototype> &output) {
@@ -50,6 +41,15 @@ namespace ts {
         }
 
         void Maximum::maximum(const Tensor &lhs, const Tensor &rhs, Tensor &out) {
+            if (m_op == nullptr) {
+                auto ctx = ctx::get<RuntimeContext>();
+                m_threadpool = ctx->get_xnn_threadpool();
+                m_status = xnn_create_maximum_nd_f32(0, &m_op);
+                TS_CHECK_EQ(m_status, xnn_status_success);
+                m_shared_op.reset(m_op, xnn_delete_operator);
+                m_op = m_shared_op.get();
+            }
+
             std::vector<size_t> lhs_shape;
             std::vector<size_t> rhs_shape;
             lhs_shape.reserve(lhs.dims());

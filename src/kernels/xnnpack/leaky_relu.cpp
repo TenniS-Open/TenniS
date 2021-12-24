@@ -18,9 +18,6 @@ namespace ts {
         void LeakyReLU::init() {
             supper::init();
 
-            auto ctx = ctx::get<RuntimeContext>();
-            m_threadpool = ctx->get_xnn_threadpool();
-
             m_scale = tensor::to_float(get(name::scale));
         }
 
@@ -53,6 +50,9 @@ namespace ts {
             size_t output_stride = channels;
 
             if (m_op == nullptr) {
+                auto ctx = ctx::get<RuntimeContext>();
+                m_threadpool = ctx->get_xnn_threadpool();
+
                 m_status = xnn_create_leaky_relu_nc_f32(channels, input_stride, output_stride, m_scale, 0, &m_op);
                 TS_CHECK(m_status == xnn_status_success);
                 m_shared_op.reset(m_op, xnn_delete_operator);

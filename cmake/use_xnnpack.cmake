@@ -1,5 +1,16 @@
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 
+if (WIN32)
+elseif (ANDROID)
+    # TODO: check android
+    #    link_libraries(log)
+elseif (IOS)
+elseif (APPLE)
+elseif (UNIX)
+    link_libraries(dl)
+else ()
+endif ()
+
 if(${CMAKE_VERSION} VERSION_GREATER 3.11)
     include(FetchContent)
     FetchContent_Declare(

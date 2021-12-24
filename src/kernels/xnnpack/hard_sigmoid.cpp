@@ -19,9 +19,6 @@ namespace ts {
         void HardSigmoid::init() {
             supper::init();
 
-            auto ctx = ctx::get<RuntimeContext>();
-            m_threadpool = ctx->get_xnn_threadpool();
-
             m_alpha = tensor::to_float(get("alpha"));
             m_beta = tensor::to_float(get("beta"));
         }
@@ -57,12 +54,18 @@ namespace ts {
             float min_limits = -std::numeric_limits<float>::infinity();
             float max_limits = +std::numeric_limits<float>::infinity();
             if (m_mul_op == nullptr) {
+                auto ctx = ctx::get<RuntimeContext>();
+                m_threadpool = ctx->get_xnn_threadpool();
+
                 m_status = xnn_create_multiply_nd_f32(min_limits, max_limits, 0, &m_mul_op);
                 TS_CHECK_EQ(m_status, xnn_status_success);
                 m_shared_mul_op.reset(m_mul_op, xnn_delete_operator);
                 m_mul_op = m_shared_mul_op.get();
             }
             if (m_add_op == nullptr) {
+                auto ctx = ctx::get<RuntimeContext>();
+                m_threadpool = ctx->get_xnn_threadpool();
+
                 m_status = xnn_create_add_nd_f32(min, max, 0, &m_add_op);
                 TS_CHECK_EQ(m_status, xnn_status_success);
                 m_shared_add_op.reset(m_add_op, xnn_delete_operator);

@@ -15,10 +15,8 @@ namespace ts {
 
         void ReLUMax::init() {
             supper::init();
-            m_max = tensor::to_float(get(name::max));
 
-            auto ctx = ctx::get<RuntimeContext>();
-            m_threadpool = ctx->get_xnn_threadpool();
+            m_max = tensor::to_float(get(name::max));
         }
 
         int ReLUMax::infer(Stack &stack, std::vector<Tensor::Prototype> &output) {
@@ -48,6 +46,9 @@ namespace ts {
             size_t output_stride = channels;
 
             if (m_op == nullptr) {
+                auto ctx = ctx::get<RuntimeContext>();
+                m_threadpool = ctx->get_xnn_threadpool();
+
                 float min = 0;
                 float max = m_max;
                 m_status = xnn_create_clamp_nc_f32(channels, input_stride, output_stride, min, max, 0, &m_op);

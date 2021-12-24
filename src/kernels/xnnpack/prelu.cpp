@@ -15,11 +15,7 @@ namespace ts {
         }
 
         void PReLU::init() {
-            // supper::init();
-            // m_status = xnn_initialize(nullptr);
-            // TS_CHECK(m_status == xnn_status_success);
-            auto ctx = ctx::get<RuntimeContext>();
-            m_threadpool = ctx->get_xnn_threadpool();
+            supper::init();
 
             m_dim = tensor::to_int(this->get(name::dim));
             TS_AUTO_CHECK(m_dim >= 0);
@@ -81,6 +77,9 @@ namespace ts {
             size_t output_stride = channels;
 
             if (m_op == nullptr) {
+                auto ctx = ctx::get<RuntimeContext>();
+                m_threadpool = ctx->get_xnn_threadpool();
+
                 m_status = xnn_create_prelu_nc_f32(channels, input_stride, output_stride, slope.data<float>(), 0, &m_op);
                 TS_CHECK(m_status == xnn_status_success);
                 m_shared_op.reset(m_op, xnn_delete_operator);

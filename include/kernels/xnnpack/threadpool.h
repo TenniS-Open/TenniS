@@ -21,13 +21,21 @@ namespace ts {
                 return m_threadpool;
             }
 
+            pthreadpool_t reset_thread_pool(int new_size) {
+                if (m_threadpool) {
+                    pthreadpool_destroy(m_threadpool);
+                    m_threadpool = pthreadpool_create(new_size);
+                }
+                return m_threadpool;
+            }
+
             XnnThreadPool(XnnThreadPool const& threadpool) = delete;
             XnnThreadPool &operator=(XnnThreadPool const& threadpool) = delete;
 
         private:
             explicit XnnThreadPool(int size);
             ~XnnThreadPool();
-            pthreadpool_t m_threadpool;
+            pthreadpool_t m_threadpool = nullptr;
         };
 
     }

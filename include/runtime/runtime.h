@@ -52,7 +52,7 @@ namespace ts {
         static SyncMemoryController::shared DynamicMemory();
 #ifdef TS_USE_XNNPACK
         pthreadpool_t get_xnn_threadpool() {
-            return m_xnn_thread_pool;
+            return m_ptr_xnn_thread_pool->get_thread_pool();
         }
 #endif
     private:
@@ -63,7 +63,7 @@ namespace ts {
 
         ThreadPool::shared m_thread_pool;
 #ifdef TS_USE_XNNPACK
-        pthreadpool_t m_xnn_thread_pool;
+        xnn::XnnThreadPool* m_ptr_xnn_thread_pool;
 #endif
         SyncMemoryController::shared m_flow;
         SyncMemoryController::shared m_dynamic;

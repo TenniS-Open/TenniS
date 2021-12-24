@@ -42,8 +42,6 @@ namespace ts {
 
         void DepthwiseConv2D::init() {
             supper::init();
-            auto ctx = ctx::get<RuntimeContext>();
-            m_threadpool = ctx->get_xnn_threadpool();
 
             if (has("bias")) m_bias = get("bias");
             if (has("value_max")) m_value_max = tensor::to_float(get("value_max"));
@@ -173,6 +171,9 @@ namespace ts {
             TS_CHECK(padding_value == 0);
 
             if (m_op == nullptr) {
+                auto ctx = ctx::get<RuntimeContext>();
+                m_threadpool = ctx->get_xnn_threadpool();
+
                 size_t groups = x.size(3);
                 size_t group_input_channels = x.size(3) / groups;
                 size_t group_output_channels = out.size(3) / groups;

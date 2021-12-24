@@ -13,9 +13,6 @@ namespace ts {
 
         void ReLU::init() {
             supper::init();
-
-            auto ctx = ctx::get<RuntimeContext>();
-            m_threadpool = ctx->get_xnn_threadpool();
         }
 
         int ReLU::infer(Stack &stack, std::vector<Tensor::Prototype> &output) {
@@ -46,6 +43,9 @@ namespace ts {
             size_t output_stride = channels;
 
             if (m_op == nullptr) {
+                auto ctx = ctx::get<RuntimeContext>();
+                m_threadpool = ctx->get_xnn_threadpool();
+
                 float min = 0.f;
                 float max = std::numeric_limits<float>::infinity();
                 m_status = xnn_create_clamp_nc_f32(channels, input_stride, output_stride, min, max, 0, &m_op);

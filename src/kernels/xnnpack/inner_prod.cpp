@@ -19,9 +19,6 @@ namespace ts {
 
         void InnerProd::init() {
             supper::init();
-
-            auto ctx = ctx::get<RuntimeContext>();
-            m_threadpool = ctx->get_xnn_threadpool();
         }
 
         int InnerProd::infer(ts::Stack &stack, std::vector<Tensor::Prototype> &output) {
@@ -58,6 +55,9 @@ namespace ts {
             size_t out_stride = out_channels;
 
             if (m_op == nullptr) {
+                auto ctx = ctx::get<RuntimeContext>();
+                m_threadpool = ctx->get_xnn_threadpool();
+
                 float min = -std::numeric_limits<float>::infinity();
                 float max = std::numeric_limits<float>::infinity();
                 m_status = xnn_create_fully_connected_nc_f32(in_channels, out_channels, in_stride, out_stride,

@@ -10,11 +10,7 @@
 namespace ts {
     namespace xnn {
         void Ceil::init() {
-            // supper::init();
-            // m_status = xnn_initialize(nullptr);
-            // TS_CHECK(m_status == xnn_status_success);
-            auto ctx = ctx::get<RuntimeContext>();
-            m_threadpool = ctx->get_xnn_threadpool();
+             supper::init();
         }
 
         int Ceil::infer(Stack &stack, std::vector<Tensor::Prototype> &output) {
@@ -47,6 +43,9 @@ namespace ts {
             size_t output_stride = channels;
 
             if (m_op == nullptr) {
+                auto ctx = ctx::get<RuntimeContext>();
+                m_threadpool = ctx->get_xnn_threadpool();
+
                 m_status = xnn_create_ceiling_nc_f32(channels, input_stride, output_stride, 0, &m_op);
                 TS_CHECK(m_status == xnn_status_success);
                 m_shared_op.reset(m_op, xnn_delete_operator);

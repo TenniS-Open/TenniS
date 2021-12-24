@@ -15,9 +15,6 @@ namespace ts {
         void GlobalPooling2D::init() {
             supper::init();
 
-            auto ctx = ctx::get<RuntimeContext>();
-            m_threadpool = ctx->get_xnn_threadpool();
-
             auto format = tensor::to_string(get(name::format));
             m_type = static_cast<Pooling2DType>(tensor::to_int(get(name::type)));
 
@@ -80,6 +77,9 @@ namespace ts {
                 size_t input_stride = channels;
                 size_t output_stride = channels;
                 if (m_op == nullptr) {
+                    auto ctx = ctx::get<RuntimeContext>();
+                    m_threadpool = ctx->get_xnn_threadpool();
+
                     float min = -std::numeric_limits<float>::infinity();
                     float max = std::numeric_limits<float>::infinity();
                     m_status = xnn_create_global_average_pooling_nwc_f32(channels, input_stride, output_stride, min, max, 0, &m_op);
