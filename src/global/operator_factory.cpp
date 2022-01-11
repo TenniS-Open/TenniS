@@ -61,8 +61,13 @@ namespace ts {
                                                  const std::string &operator_name, bool strict) {
         // step 1: check in strict mode
 #ifdef TS_USE_XNNPACK
-        auto creator = OperatorCreator::Query(ts::XNNPACK, operator_name);
-        if (creator == nullptr) creator = OperatorCreator::Query(device_type, operator_name);
+        OperatorCreator::function creator = nullptr;
+        if (strict) {
+            creator = OperatorCreator::Query(device_type, operator_name);
+        } else {
+            if (device_type == ts::CPU)
+                creator = OperatorCreator::Query(ts::XNNPACK, operator_name);
+        }
 #else
 
         auto creator = OperatorCreator::Query(device_type, operator_name);
