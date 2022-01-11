@@ -92,6 +92,8 @@ namespace ts {
                 "tanh",
                 name::layer::to_float(),
                 name::layer::flatten(),
+                // following ops using pthreadpool replace omp
+                name::layer::transpose()
 
         };
 
