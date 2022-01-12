@@ -99,7 +99,6 @@ namespace ts {
                 NC3HWToNHWC3_kernel_context<T> kernel_context{
                         src_at, dst_at, width, channel, channel_offset
                 };
-                auto pool_ctx = ctx::get<XnnThreadPool>();
                 pthreadpool_parallelize_1d(pool,
                                            (pthreadpool_task_1d_t) NC3HWToNHWC3_kernel<T>,
                                            (void **) &kernel_context, height, 0);
@@ -159,7 +158,6 @@ namespace ts {
                 NHWC3ToNC3HW_kernel_context<T> kernel_context {
                     src_at, dst_at, h_offset, width, channel, channel_offset
                 };
-                auto pool_ctx = ctx::get<XnnThreadPool>();
                 pthreadpool_parallelize_1d(pool,
                                            (pthreadpool_task_1d_t) NHWC3ToNC3HW_kernel<T>,
                                            (void**)&kernel_context, height, 0);
@@ -204,7 +202,6 @@ namespace ts {
                 NHWC3ToNC3HW_kernel_context<float> kernel_context {
                     src_at, dst_at, h_offset, width, channel, channel_offset
                 };
-                auto pool_ctx = ctx::get<XnnThreadPool>();
                 pthreadpool_parallelize_1d(pool,
                                            (pthreadpool_task_1d_t)NHWC3ToNC3HW_simd_kernel<float>,
                                            (void**)&kernel_context, height, 0);
