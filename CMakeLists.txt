@@ -181,6 +181,19 @@ set(TENNIS_ARCHIVES common cpu) # in kernels and ops
 # Ordinary
 # Ordinary with chipset result
 
+if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -s SIDE_MODULE=1")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s SIDE_MODULE=1")
+    if(TS_USE_SIMD)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msimd128")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msimd128")
+    endif()
+    if(TS_USE_OPENMP)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -s USE_PTHREADS=1")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s USE_PTHREADS=1")
+    endif()
+endif()
+
 set(third_libraries)
 
 if (TS_USE_OPENCV)
@@ -200,11 +213,16 @@ else ()
 endif ()
 
 if (TS_USE_OPENMP)
-    add_definitions(-DTS_USE_OPENMP)
-    message(STATUS "[Optional] Use OpenMP: [ON]")
+    if (NOT TS_USE_XNNPACK)
+        add_definitions(-DTS_USE_OPENMP)
+        message(STATUS "[Optional] Use OpenMP: [ON]")
 
-    include(use_openmp)
-    list(APPEND third_libraries ${OPENMP_LIBRARY})
+        include(use_openmp)
+        list(APPEND third_libraries ${OPENMP_LIBRARY})
+    else()
+        message(STATUS "[Optional] Use OpenMP: [ON]")
+        message(STATUS "[Important] Have used pthreadpool to replace OpenMP")
+    endif()
 else ()
     list(APPEND third_libraries)
     message(STATUS "[Optional] Use OpenMP: [OFF]")
