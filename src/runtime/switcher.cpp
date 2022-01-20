@@ -16,7 +16,7 @@ const std::string tennis_dll_name = "tennis";
 const std::string tennis_avx_fma_dll = "tennis_haswell.dll";
 const std::string tennis_avx_dll = "tennis_sandy_bridge.dll";
 const std::string tennis_sse_dll = "tennis_pentium.dll";
-#elif TS_PLATFORM_OS_LINUX
+#elif TS_PLATFORM_OS_LINUX || __EMSCRIPTEN__
 const std::string tennis_avx_fma_dll = "libtennis_haswell.so";
 const std::string tennis_avx_dll = "libtennis_sandy_bridge.so";
 const std::string tennis_sse_dll = "libtennis_pentium.so";

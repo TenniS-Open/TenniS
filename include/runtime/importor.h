@@ -24,7 +24,7 @@
 #define GET_FUC_ADDRESS GetProcAddress
 #define GET_LAST_ERROR GetLastError
 #define FREE_LIBRARY FreeLibrary
-#elif TS_PLATFORM_OS_LINUX
+#elif TS_PLATFORM_OS_LINUX || __EMSCRIPTEN__
 #include <dlfcn.h>
 #define Handle void*
 #define LOAD_LIBRARY(x) dlopen(x,RTLD_LAZY)

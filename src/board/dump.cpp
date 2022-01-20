@@ -25,7 +25,7 @@
 
 #include <sys/stat.h>
 
-#elif TS_PLATFORM_OS_LINUX || TS_PLATFORM_OS_MAC || TS_PLATFORM_OS_IOS
+#elif TS_PLATFORM_OS_LINUX || TS_PLATFORM_OS_MAC || TS_PLATFORM_OS_IOS || __EMSCRIPTEN__
 
 #include <unistd.h>
 #include <stdarg.h>

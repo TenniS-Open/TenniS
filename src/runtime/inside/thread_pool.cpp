@@ -51,6 +51,7 @@ namespace ts {
         }
     }
 
+#ifndef __EMSCRIPTEN__
     ThreadPool::ThreadPool(size_t pool_size)
             : thread_pool(pool_size) {
         for (int i = 0; i < static_cast<int>(pool_size); ++i) {
@@ -58,6 +59,9 @@ namespace ts {
             running_core.push_back(i);   // push all cartridge into chest
         }
     }
+#else
+    ThreadPool::ThreadPool(size_t) : thread_pool(0) {}
+#endif
 
     ThreadPool::~ThreadPool() {
         for (int i = 0; i < static_cast<int>(thread_pool.size()); ++i) {
