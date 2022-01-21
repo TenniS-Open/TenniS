@@ -53,7 +53,7 @@ set(TS_CUDA_ARCH "" CACHE STRING "List arch, like: 60,61,62. Empty for all arch.
 
 # Options of optimizations
 option(TS_USE_CBLAS "[Optional] Use CBLAS" OFF) # [discarded]
-option(TS_USE_OPENMP "[Optional] Use OpenMP" OFF) # [discarded]
+option(TS_USE_OPENMP "[Optional] Use OpenMP" ON)
 option(TS_USE_SIMD "[Optional] Use SIMD" ON)
 option(TS_USE_XNNPACK "[Optional] Use XNNPACK" ON)
 option(TS_DYNAMIC_INSTRUCTION "[Optional] Dynamic support for different instruction sets" OFF)
