@@ -93,6 +93,7 @@ namespace ts {
                 name::layer::to_float(),
                 name::layer::flatten(),
                 // following ops using pthreadpool replace omp
+                "erf",
                 name::layer::transpose()
 
         };
