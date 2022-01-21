@@ -95,6 +95,7 @@ namespace ts {
                 // following ops using pthreadpool replace omp
                 "erf",
                 "softplus",
+                name::layer::exp(),
                 name::layer::transpose()
 
         };
