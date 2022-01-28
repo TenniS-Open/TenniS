@@ -75,6 +75,7 @@ namespace ts {
                 name::layer::relu_max(),
                 name::layer::global_pooling2d(),
                 "hard_sigmoid",
+                "pixel_shuffle",
         };
 
         static std::unordered_set<std::string> xnn_route_op = {
@@ -92,7 +93,7 @@ namespace ts {
                 "tanh",
                 name::layer::to_float(),
                 name::layer::flatten(),
-                // following ops using pthreadpool replace omp
+                // following route ops using pthreadpool replace omp
                 "erf",
                 "softplus",
                 name::layer::exp(),
