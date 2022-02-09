@@ -15,7 +15,7 @@ if(${CMAKE_VERSION} VERSION_GREATER 3.11)
     include(FetchContent)
     FetchContent_Declare(
         xnnpack
-        GIT_REPOSITORY https://lvsen@gitlab.seetatech.com/lvsen/XNNPACK.git
+        GIT_REPOSITORY https://gitlab.seetatech.com/TenniS/XNNPACK
         GIT_TAG tennis
     )
 
@@ -41,7 +41,7 @@ else()
     include(ExternalProject)
 
     set(XNNPACK_ROOT        ${CMAKE_BINARY_DIR}/xnnpack)
-    set(XNNPACK_GIT_URL     https://lvsen@gitlab.seetatech.com/lvsen/XNNPACK.git)
+    set(XNNPACK_GIT_URL     https://gitlab.seetatech.com/TenniS/XNNPACK)
     set(XNNPACK_GIT_TAG     tennis)
     set(XNNPACK_CONFIGURE   mkdir ${XNNPACK_ROOT}/src/xnnpack/build && cd ${XNNPACK_ROOT}/src/xnnpack/build && ${CMAKE_COMMAND} -G ${CMAKE_GENERATOR} ..)
     set(XNNPACK_MAKE        cd ${XNNPACK_ROOT}/src/xnnpack/build && ${CMAKE_COMMAND} --build . -- -j4)
