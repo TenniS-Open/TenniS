@@ -19,4 +19,5 @@
 *.out
 # project files
 /.idea
-
+**/build.**/
+**/bin/
