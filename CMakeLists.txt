@@ -214,6 +214,7 @@ elseif (APPLE)
 elseif (UNIX)
     list(APPEND third_libraries pthread)
     list(APPEND third_libraries m)
+    list(APPEND third_libraries ${CMAKE_DL_LIBS})
 else ()
 endif ()
 

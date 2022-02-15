@@ -24,9 +24,10 @@ cmake "$HOME/.." \
 -DTS_USE_OPENMP=OFF \
 -DTS_USE_SIMD=OFF \
 -DTS_ON_HASWELL=OFF \
--DTS_DYNAMIC_INSTRUCTION=ON \
--DTS_ON_ARM=ON
+-DTS_DYNAMIC_INSTRUCTION=OFF \
+-DTS_ON_ARM=ON \
+-DCMAKE_TOOLCHAIN_FILE=/home/fy/SeetaFace6Open/TenniS/CMakeLists-ubuntu-x86-to-arm64-cross-compile.txt
 
-make VERBOSE=1
+make -j6 VERBOSE=1
 
 make install
