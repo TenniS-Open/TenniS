@@ -1,5 +1,7 @@
 # TenniS
 
+[![License](https://img.shields.io/badge/license-BSD-blue.svg)](LICENSE)
+
 <div align="divcss5">
 <img src="./logo/TenniS-H.png" width="640"/>
 </div>
