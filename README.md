@@ -8,8 +8,6 @@
 
 > TenniS: Tensor based Edge Neural Network Inference System 
 
-[![build status](https://gitlab.seetatech.com/TenniS/TenniS/badges/master/build.svg)](https://gitlab.seetatech.com/TenniS/TenniS/commits/master)
-
 ## Compilation(on Linux)
 
 The default installation DIR is ` ${PROJECT_BINARY_DIR}/../build`,
