@@ -9,6 +9,8 @@
 
 #include "utils/ctxmgr_lite_support.h"
 
+#include <compiler/argparse.h>
+
 namespace ts {
     DeviceContext::~DeviceContext() {
         this->finalize();
@@ -23,6 +25,14 @@ namespace ts {
         if (m_device_admin != nullptr) {
             m_device_admin(&this->handle, computing_device.id(), DeviceAdmin::INITIALIZATION);
         }
+    }
+
+
+    void DeviceContext::initialize_v2(ComputingDevice origin_device) {
+        this->origin_device = origin_device;
+
+        ArgParser parser;
+        initialize(ComputingDevice(parser.map_device(origin_device.type().std()), origin_device.id()));
     }
 
     void DeviceContext::finalize() {

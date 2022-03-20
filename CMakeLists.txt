@@ -432,11 +432,14 @@ else (IOS)
 endif (IOS)
 
 if (TS_BUILD_FRAMEWORK)
+    if ("${IOS_DEPLOYMENT_TARGET}" STREQUAL "") 
+        set(IOS_DEPLOYMENT_TARGET "9")
+    endif()
     set_target_properties(${PROJECT_NAME}_LIB PROPERTIES
             FRAMEWORK TRUE
             FRAMEWORK_VERSION A
             MACOSX_FRAMEWORK_IDENTIFIER com.seetatech.sdk.TenniS
-            # MACOSX_FRAMEWORK_INFO_PLIST Info.plist
+            MACOSX_FRAMEWORK_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Info.plist.in"
             # "current version" in semantic format in Mach-O binary file
             VERSION ${TS_VERSION}
             # "compatibility version" in semantic format in Mach-O binary file

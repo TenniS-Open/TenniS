@@ -51,7 +51,13 @@ namespace ts {
         }
     }
 
-    Program::shared Program::Compile(const Module::shared &module, const ComputingDevice &device, const std::string &options) {
+    Program::shared Program::Compile(const Module::shared &module, const ComputingDevice &origin_device, const std::string &options) {
+        ArgParser parser;
+        parser.add({"--filter", "-flt"}, {"--no-filter", "-no-flt"}, false);
+        parser.parse(options);
+
+        auto device = ComputingDevice(parser.map_device(origin_device.type().std()), origin_device.id());
+
         Program::shared program(new Program(device));
         // translate module
         auto translated_module = Module::Translate(module, device, options);
@@ -80,9 +86,6 @@ namespace ts {
             inst = std::make_shared<DataSegmentInstruction>(data_sagment_inst->data_index() + data_sagment_base);
         }
 
-        ArgParser parser;
-        parser.add({"--filter", "-flt"}, {"--no-filter", "-no-flt"}, false);
-        parser.parse(options);
         auto do_filter = parser.get("--filter");
 
         for (auto &data : block.data_segment) {
