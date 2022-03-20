@@ -112,10 +112,10 @@ variables:
     - sed -i s@/archive.ubuntu.com/@/mirrors.aliyun.com/@g /etc/apt/sources.list
     - (apt update || echo "[WARNNING] Some thing wrong, but ignored!")
     - apt-get install -y git cmake wget unzip libncurses5
-    - export ANDROID_NDK_VERSION=r16b
+    - export ANDROID_NDK_VERSION=r23b
     - export ANDROID_NDK_HOST=linux
     - export ANDROID_NDK_ARCH=x86_64
-    - export ANDROID_NDK_ZIP=android-ndk-$ANDROID_NDK_VERSION-$ANDROID_NDK_HOST-$ANDROID_NDK_ARCH.zip
+    - export ANDROID_NDK_ZIP=android-ndk-$ANDROID_NDK_VERSION-$ANDROID_NDK_HOST.zip
     - export ANDROID_NDK=`pwd`/android-ndk/android-ndk-$ANDROID_NDK_VERSION
     - if [ ! -d android-ndk ]; then mkdir android-ndk; fi
     - pushd android-ndk
@@ -287,6 +287,30 @@ variables:
        -DTS_USE_NEON=ON 
        -DTS_USE_FAST_MATH=ON 
        -DTS_ON_ARM=ON'
+    - cmake --build . --target install -- -j $THREADS
+    - popd
+    - mkdir build_x86
+    - pushd build_x86
+    - 'cmake .. -DCMAKE_INSTALL_PREFIX=$ARTIFACTS 
+       -DCMAKE_BUILD_TYPE=Release 
+       -DCMAKE_TOOLCHAIN_FILE=${ANDROID_NDK}/build/cmake/android.toolchain.cmake 
+       -DANDROID_ABI="x86" 
+       -DANDROID_PLATFORM=android-$ANDROID_PLATFORM 
+       -DANDROID_STL=c++_static 
+       -DPLATFORM="x86" 
+       -DTS_ON_PENTIUM=ON'
+    - cmake --build . --target install -- -j $THREADS
+    - popd
+    - mkdir build_x64
+    - pushd build_x64
+    - 'cmake .. -DCMAKE_INSTALL_PREFIX=$ARTIFACTS 
+       -DCMAKE_BUILD_TYPE=Release 
+       -DCMAKE_TOOLCHAIN_FILE=${ANDROID_NDK}/build/cmake/android.toolchain.cmake 
+       -DANDROID_ABI="x86_64" 
+       -DANDROID_PLATFORM=android-$ANDROID_PLATFORM 
+       -DANDROID_STL=c++_static 
+       -DPLATFORM="x86_64" 
+       -DTS_ON_PENTIUM=ON'
     - cmake --build . --target install -- -j $THREADS
     - popd
 
