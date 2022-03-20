@@ -35,6 +35,11 @@ namespace ts {
     ArgParser::ArgParser() {
         m_map_device.insert(std::make_pair("", "cpu"));
         m_map_device.insert(std::make_pair("cuda", "gpu"));
+
+#ifdef TS_USE_XNNPACK
+        m_map_device.insert(std::make_pair("cpu", "xnn"));
+#endif
+
     }
 
     void ts::ArgParser::add(const std::vector<std::string> &arg, const std::vector<std::string> &neg_arg,
