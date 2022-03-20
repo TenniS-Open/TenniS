@@ -274,7 +274,7 @@ endif()
 
 if (TS_USE_XNNPACK)
     message(STATUS "[Optional] Use XNNPACK: [ON]")
-    list(APPEND TENNIS_ARCHIVES xnnpack)
+    set(TS_EXTRA_KERNELS "xnnpack,${TS_EXTRA_KERNELS}")
     add_definitions(-DTS_USE_XNNPACK)
 
 #    include(use_xnnpack)
@@ -288,7 +288,11 @@ else()
     string(REPLACE "," ";" EXTRA_ARCHIVE_LIST ${TS_EXTRA_KERNELS})
 
     foreach (archive ${EXTRA_ARCHIVE_LIST})
-        string(STRIP ${archive} archive)
+        string(STRIP "${archive}" archive)
+        if ("${archive}" STREQUAL "")
+            continue()
+        endif()
+        
         list(APPEND TENNIS_ARCHIVES ${archive})
 
         if (EXISTS ${SOLUTION_DIR}/cmake/use_${archive}.cmake)
