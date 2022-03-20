@@ -12,6 +12,8 @@
 namespace ts {
     class ArgParser {
     public:
+        ArgParser();
+
         void add(const std::vector<std::string> &arg, const std::vector<std::string> &neg_arg, bool default_value = false);
         void parse(const std::string &args);
 
@@ -24,10 +26,14 @@ namespace ts {
          */
         bool set(const std::string &arg);
 
+        std::string map_device(const std::string &device);
+
     private:
         std::map<std::string, std::string> m_true_arg_names;
         std::map<std::string, std::string> m_false_arg_names;
         std::map<std::string, bool> m_arg_value;
+
+        std::map<std::string, std::string> m_map_device;
     };
 }
 

@@ -30,6 +30,13 @@ namespace ts {
         void initialize(ComputingDevice computing_device);
         void finalize();
 
+        /**
+         * initialize_v2 using device map
+         * only work in Workbench, which using origin device as well
+         * @param computing_device
+         */
+        void initialize_v2(ComputingDevice origin_device);
+
         void active();
         void synchronize();
 
@@ -47,6 +54,7 @@ namespace ts {
          */
         DeviceHandle *handle = nullptr;
 
+        ComputingDevice origin_device;
         ComputingDevice computing_device;
         MemoryDevice memory_device;
 
