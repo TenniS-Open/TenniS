@@ -4,9 +4,39 @@
 
 #include <compiler/argparse.h>
 
+#include <regex>
+
 #include <utils/log.h>
 
 namespace ts {
+    static std::string stand1(const std::string &str) {
+        static std::regex regex(R"(^\s*(\S*)\s*$)");
+        std::smatch match;
+        std::string cvt;
+        if(std::regex_match(str, match, regex)) {
+            cvt = match[1];
+        } else {
+            cvt = str;
+        }
+        std::transform(cvt.begin(), cvt.end(), cvt.begin(), std::towlower);
+        return cvt;
+    }
+
+    static std::string stand2(const std::string &str) {
+        static std::regex regex(R"(^[_-]*([^_-]*)[_-]*$)");
+        std::smatch match;
+        if(std::regex_match(str, match, regex)) {
+            return match[1];
+        } else {
+            return str;
+        }
+    }
+
+    ArgParser::ArgParser() {
+        m_map_device.insert(std::make_pair("", "cpu"));
+        m_map_device.insert(std::make_pair("cuda", "gpu"));
+    }
+
     void ts::ArgParser::add(const std::vector<std::string> &arg, const std::vector<std::string> &neg_arg,
                             bool default_value) {
         if (arg.empty()) {
@@ -50,10 +80,31 @@ namespace ts {
     }
 
     void ArgParser::parse(const std::string &args) {
+        static std::regex regex_map(R"(^-[vV]:([^:]*):([^:]*)$)");
+
         auto params = Split(args, " \t\r\n");
+        std::smatch match_v;
         for (auto &param : params) {
             if (param.empty()) continue;
+            // check if it's device map
+            if(std::regex_match(param, match_v, regex_map)) {
+                this->m_map_device[stand1(match_v[1])] = stand1(match_v[2]);
+                continue;
+            }
+            // is param setting
             set(param);
+        }
+    }
+
+    std::string ArgParser::map_device(const std::string &device) {
+        auto stand_device = stand1(device);
+        while (true) {
+            auto it = this->m_map_device.find(stand_device);
+            if (it != this->m_map_device.end()) {
+                stand_device = it->second;
+            } else {
+                return stand2(stand_device);
+            }
         }
     }
 }

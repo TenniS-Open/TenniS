@@ -105,8 +105,7 @@ namespace ts {
 
     Workbench::Workbench(const ComputingDevice &device) {
         //check_cpu_features();
-
-        this->m_device_context.initialize(device);
+        this->m_device_context.initialize_v2(device);
         auto &memory_device = this->m_device_context.memory_device;
 
         this->m_static_memory = DynamicSyncMemoryController::Make(memory_device, true);
@@ -120,7 +119,7 @@ namespace ts {
 
         this->m_switch_controller = std::make_shared<SwitchControll>();
         if(!check_cpu_features()){
-            m_switch_controller->auto_switch(device);
+            m_switch_controller->auto_switch(this->m_device_context.computing_device);
         }
     }
 
@@ -557,7 +556,7 @@ namespace ts {
         /**
          * do compile, from module to program
          */
-        return Program::Compile(module, this->device().computing_device);
+        return Program::Compile(module, this->device().origin_device);
     }
 
     void Workbench::setup_runtime() {
@@ -572,7 +571,7 @@ namespace ts {
 
     Program::shared Workbench::compile(const Module::shared &module, const std::string &options) {
         BindWorkbenchRuntime _bind_runtime(*this);
-        return Program::Compile(module, this->device().computing_device, options);
+        return Program::Compile(module, this->device().origin_device, options);
     }
 
     Workbench::shared
