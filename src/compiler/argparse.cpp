@@ -37,7 +37,7 @@ namespace ts {
         m_map_device.insert(std::make_pair("cuda", "gpu"));
 
 #ifdef TS_USE_XNNPACK
-        m_map_device.insert(std::make_pair("cpu", "xnn"));
+        m_map_device.insert(std::make_pair("cpu", "xnnpack"));
 #endif
 
     }
