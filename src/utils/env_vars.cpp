@@ -7,7 +7,7 @@
 #else
     #include "Windows.h"
 #endif
-#elif TS_PLATFORM_OS_LINUX || TS_PLATFORM_OS_ANDROID
+#else
     #include <cstdlib>
 #endif
 
@@ -17,7 +17,7 @@ namespace ts {
         char buffer[MAX_PATH];
         DWORD code = GetEnvironmentVariable(envName.c_str(), buffer, MAX_PATH);
         return code == 0 ? std::string("") : std::string(buffer);
-#elif TS_PLATFORM_OS_LINUX || TS_PLATFORM_OS_ANDROID || __EMSCRIPTEN__
+#else
         char* buffer = nullptr;
         buffer = std::getenv(envName.c_str());
         return buffer == nullptr ? std::string("") : std::string(buffer);
