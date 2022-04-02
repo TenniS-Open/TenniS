@@ -56,9 +56,10 @@ def start_select(selections):
 
 def do_select(selections, tip, default=None):
     print("-" * SPACE)
+    N = len(selections)
 
     if default is None:
-        default = " ".join(map(str, range(1, len(selections) + 1)))
+        default = " ".join(map(str, range(1, N + 1)))
 
     chosen_set = re.findall(r"\d+", default)
     chosen_set = list(map(int, chosen_set))
@@ -69,9 +70,33 @@ def do_select(selections, tip, default=None):
     if not chosen:
         chosen = default
     chosen = re.findall(r"\d+", chosen)
-    chosen = list(map(int, chosen))
-    chosen = [i for i in chosen if 0 < i <= len(selections)]
-
+    split = []
+    for num in chosen:
+        # check each number if in [1, N]
+        i = int(num)
+        if i < 1:
+            continue
+        if i <= N:
+            split.append(i)
+            continue
+        # split number, like 456 to [4, 5, 6]
+        while num:
+            for n in range(1, N + 1):
+                n += 1
+                if n > N:
+                    split.append(int(num))
+                    num = ''
+                    break
+                elif int(num[:n]) > N:
+                    n -= 1
+                    split.append(int(num[:n]))
+                    num = num[n:]
+                    break
+    chosen = []
+    for i in split:
+        if 0 < i <= N and i not in chosen:
+            chosen.append(i)
+    print("Chosen:", chosen)
     return chosen
 
 
