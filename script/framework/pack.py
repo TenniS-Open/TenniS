@@ -160,7 +160,7 @@ def main():
     while True:
         selection = do_select(using_lipo_info, "Choose frameworks to pack")
         if len(selection) < 1:
-            sys.stderr.write("[ERROR] Must chose at least one framework, but got {}\n".format(template))
+            sys.stderr.write("[ERROR] Must chose at least one framework, but got {}\n".format(selection))
             continue
         break
     while True:
