@@ -3,7 +3,7 @@
 # ANDROID_ABI can be armeabi-v7a arm64-v8a x86 x86_64
 
 export ANDROID_PLATFORM=19
-export ANDROID_ABI="armebi-v7a"
+export ANDROID_ABI="armeabi-v7a"
 
 # check if set ndk home
 if [ -z ${ANDROID_NDK} ]; then
