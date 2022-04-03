@@ -5,6 +5,9 @@
 export ANDROID_PLATFORM=19
 export ANDROID_ABI="x86_64"
 
+# Notice: Android Studio default simulator does not support and SIMD(x86)
+# Open TS_ON_PENTIUM, TS_ON_SANDYBRIDGE or TS_ON_HASWELL manually on high performance simulator.
+
 # check if set ndk home
 if [ -z ${ANDROID_NDK} ]; then
     echo "[ERROR] The environment variable ANDROID_NDK must be set."
@@ -21,7 +24,7 @@ cmake "$PROJECT" \
 "$@" \
 -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" \
 -DCMAKE_BUILD_TYPE=Release \
--DTS_ON_PENTIUM=ON \
+-DTS_ON_PENTIUM=OFF \
 -DPLATFORM="$ANDROID_ABI" \
 -DANDROID_ABI="$ANDROID_ABI" \
 -DANDROID_PLATFORM=android-$ANDROID_PLATFORM \
