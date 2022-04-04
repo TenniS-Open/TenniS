@@ -6,6 +6,19 @@
 #include "utils/log.h"
 
 namespace ts{
+#if TS_PLATFORM_OS_IOS
+    bool Importor::load(const std::string &) {
+        return false;
+    }
+
+    void Importor::unload() {
+    }
+
+    void* Importor::get_fuc_address(const std::string &) {
+        TS_LOG_ERROR << "IOS: dlopen, dlsym are not recommended" << eject;
+        return nullptr;
+    }
+#else
     bool Importor::load(const std::string& dll_name){
         m_handle = LOAD_LIBRARY(dll_name.c_str());
         if(m_handle == nullptr){
@@ -29,6 +42,7 @@ namespace ts{
         }
         return (void*)GET_FUC_ADDRESS(m_handle, fuc_name.c_str());
     }
+#endif
 }
 
 
