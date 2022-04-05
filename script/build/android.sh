@@ -9,6 +9,8 @@ SCRIPTS=(
 )
 BRANCHS=(master master master master)
 
+THREADS=$(nproc 2>/dev/null || sysctl -n hw.ncpu)
+
 export GIT=git
 export CMAKE=cmake
 
@@ -29,6 +31,8 @@ HOME=$(cd `dirname $0`; pwd)
 PROJECT="$HOME/../.."
 
 SCRIPT_ROOT="$PROJECT/script/cmake"
+
+echo "[INFO] Using $THREADS thread(s)"
 
 N=${#SCRIPTS[@]}
 for ((i=0; i<"$N"; i++)) do
