@@ -14,6 +14,10 @@ def parse():
                         help='path contains several frameworks')
     parser.add_argument('output', type=str, default=".", nargs='?',
                         help='path to write output framework')
+    parser.add_argument('-s', '--slient', action="store_true",
+                        help='if run command in slient')
+    parser.add_argument('-p', '--pack', type=str,
+                        help='default pack selection')
     args = parser.parse_args()
     return args
 
@@ -54,7 +58,7 @@ def start_select(selections):
         print(number + selection)
 
 
-def do_select(selections, tip, default=None):
+def do_select(selections, tip, default=None, slient=False):
     print("-" * SPACE)
     N = len(selections)
 
@@ -64,7 +68,7 @@ def do_select(selections, tip, default=None):
     chosen_set = re.findall(r"\d+", default)
     chosen_set = list(map(int, chosen_set))
 
-    chosen = input("{} (default {}): ".format(tip, chosen_set))
+    chosen = input("{} (default {}): ".format(tip, chosen_set)) if not slient else default
 
     chosen = chosen.strip()
     if not chosen:
@@ -146,6 +150,8 @@ def main():
 
     framework_root = args.framework
     output_path = args.output
+    slient = bool(args.slient)
+    default_selection = args.pack
 
     # 1. List all frameworks
 
@@ -162,6 +168,9 @@ def main():
         target = framework_names[0]
     else:
         start_select(framework_names)
+        if slient:
+            sys.stderr.write("[ERROR] Can not pack multi frameworks with --slient\n")
+            exit()
         while True:
             selection = do_select(framework_names, "Choose one framework to pack", "1")
             if len(selection) != 1:
@@ -183,13 +192,13 @@ def main():
 
     start_select(using_lipo_info)
     while True:
-        selection = do_select(using_lipo_info, "Choose frameworks to pack")
+        selection = do_select(using_lipo_info, "Choose frameworks to pack", default=default_selection, slient=slient)
         if len(selection) < 1:
             sys.stderr.write("[ERROR] Must chose at least one framework, but got {}\n".format(selection))
             continue
         break
     while True:
-        template = do_select(using_lipo_info, "Choose one framework to be template", "{}".format(selection[0]))
+        template = do_select(using_lipo_info, "Choose one framework to be template", "{}".format(selection[0]), slient=slient)
         if len(template) != 1:
             sys.stderr.write("[ERROR] Must choose one template, but got {}\n".format(template))
             continue
