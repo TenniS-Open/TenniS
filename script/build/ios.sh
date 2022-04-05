@@ -8,6 +8,8 @@ SCRIPTS=(
 )
 BRANCHS=(master master master)
 
+THREADS=$(nproc 2>/dev/null || sysctl -n hw.ncpu)
+
 export GIT=git
 export CMAKE=cmake
 export PYTHON=python3
@@ -45,7 +47,8 @@ fi
 rm -rf "$TMP"
 mkdir -p "$TMP"
 
-echo "[INFO] build tmp: $TMP"
+echo "[INFO] Using $THREADS thread(s)"
+echo "[INFO] Framworks temporary folder: $TMP"
 
 N=${#SCRIPTS[@]}
 for ((i=0; i<"$N"; i++)) do
