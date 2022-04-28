@@ -225,5 +225,5 @@ namespace ts {
 using namespace ts;
 using namespace xnn;
 #ifdef TS_USE_XNNPACK
-TS_REGISTER_CONVERTER_OPTION(CPU, XnnpackConverter)
+TS_REGISTER_CONVERTER_OPTION(XNNPACK, XnnpackConverter)
 #endif
