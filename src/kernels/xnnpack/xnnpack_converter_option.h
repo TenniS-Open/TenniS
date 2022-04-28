@@ -45,7 +45,7 @@ namespace ts {
                 name::layer::conv2d(),  // 2D convolution
                 name::layer::depthwise_conv2d(),
 //            name::layer::transpose_conv2d(), // 2D Deconvolution
-//                name::layer::pooling2d(), // 2D average pooling and 2D max pooling
+                name::layer::pooling2d(), // 2D average pooling and 2D max pooling
                 name::layer::conv2d_v2(),
 
 //            name::layer::resize2d(), // only bilinear resize, others using cpu-op
