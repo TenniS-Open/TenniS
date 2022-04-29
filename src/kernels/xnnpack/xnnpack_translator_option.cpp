@@ -137,37 +137,37 @@ bool ts::XnnpackTranslatorOption::translate(const ComputingDevice &device, const
 
     translated_node = bubble::bubble(node.bubble());
 
-//    if (op_name == name::layer::concat() && !node->has("#translated")) {
-//        bool need_translation = false;
-//        // prior nodes layout whether nhwc
-//        for (auto &node_in : node.inputs()) {
-//            auto node_in_op_name = node_in->op();
-//            if (node_in_op_name.find(xnn_op_prefix) != std::string::npos) {
-//                node_in_op_name = node_in_op_name.substr(xnn_op_prefix.length(), node_in_op_name.length());
-//            }
-//            if (xnn::xnn_support_op.find(node_in_op_name) != xnn::xnn_support_op.end() ||
-//                (xnn::xnn_route_op.find(node_in_op_name) != xnn::xnn_route_op.end() && node_in_op_name != name::layer::concat())) {
-//                need_translation = true;
-//            }
-//        }
-//
-//        if (need_translation) {
-//            int old_dim = tensor::to_int(translated_node->get(name::dim));
-//            int new_dim = old_dim;
-//            old_dim = old_dim < 0 ? old_dim + 4 : old_dim;
-//            switch (old_dim) {
-//                case 0: new_dim = 0; break;
-//                case 1: new_dim = 3; break;
-//                case 2: new_dim = 1; break;
-//                case 3: new_dim = 2; break;
-//                default: new_dim = old_dim; break;
-//            }
-//            translated_node->set("#translated", tensor::from({true}));
-//            translated_node->set(name::dim, tensor::from({new_dim}));
-//            Node::Link(translated_node, node.inputs());
-//            return true;
-//        }
-//    }
+   if (op_name == name::layer::concat() && !node->has("#translated")) {
+       bool need_translation = false;
+       // prior nodes layout whether nhwc
+       for (auto &node_in : node.inputs()) {
+           auto node_in_op_name = node_in->op();
+           if (node_in_op_name.find(xnn_op_prefix) != std::string::npos) {
+               node_in_op_name = node_in_op_name.substr(xnn_op_prefix.length(), node_in_op_name.length());
+           }
+           if (xnn::xnn_support_op.find(node_in_op_name) != xnn::xnn_support_op.end() ||
+               (xnn::xnn_route_op.find(node_in_op_name) != xnn::xnn_route_op.end() && node_in_op_name != name::layer::concat())) {
+               need_translation = true;
+           }
+       }
+
+       if (need_translation) {
+           int old_dim = tensor::to_int(translated_node->get(name::dim));
+           int new_dim = old_dim;
+           old_dim = old_dim < 0 ? old_dim + 4 : old_dim;
+           switch (old_dim) {
+               case 0: new_dim = 0; break;
+               case 1: new_dim = 3; break;
+               case 2: new_dim = 1; break;
+               case 3: new_dim = 2; break;
+               default: new_dim = old_dim; break;
+           }
+           translated_node->set("#translated", tensor::from({true}));
+           translated_node->set(name::dim, tensor::from({new_dim}));
+           Node::Link(translated_node, node.inputs());
+           return true;
+       }
+   }
 
     if (op_name == xnn_op_prefix + name::layer::global_pooling2d()) {
         translated_node->set(name::format, tensor::from(name::NHWC));
