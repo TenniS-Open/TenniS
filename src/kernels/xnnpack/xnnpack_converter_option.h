@@ -45,11 +45,11 @@ namespace ts {
                 name::layer::conv2d(),  // 2D convolution
                 name::layer::depthwise_conv2d(),
 //            name::layer::transpose_conv2d(), // 2D Deconvolution
-//                name::layer::pooling2d(), // 2D average pooling and 2D max pooling
+                name::layer::pooling2d(), // 2D average pooling and 2D max pooling
                 name::layer::conv2d_v2(),
 
 //            name::layer::resize2d(), // only bilinear resize, others using cpu-op
-//                name::layer::sample2d(),
+                name::layer::sample2d(),
 
                 name::layer::add(),
                 name::layer::sub(), // Subtract
@@ -87,7 +87,7 @@ namespace ts {
                 Bubble::Const,
                 name::layer::copy(), // Copy, TenniS using shallow copy
                 name::layer::cast(),
-//                name::layer::concat(),
+                name::layer::concat(),
                 // TODO: add element-wise activation
                 "softplus",
                 "tanh",
