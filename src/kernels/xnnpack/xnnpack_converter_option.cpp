@@ -139,6 +139,7 @@ namespace ts {
                 }
             };
 
+            // TODO: optimize tranpose operator insert method. errors may raise in now version.
             for (auto &node_iter: cloned_nodes) {
                 Node node = node_iter.first;
 
@@ -214,6 +215,7 @@ namespace ts {
 //            splitter.only_max_graph = true;
 
             auto module = getSplitModuleBySplitter(outputs, inputs, splitter, rule);
+            // TODO: Do not use Module::Translate, use translator's tranlate directly.
             auto translated_module = Module::Translate(module, CPU, "--xnnpack");
             // which xnn backend do not support, use pack optimization
             translated_module = Module::Translate(translated_module, CPU, "--pack");
