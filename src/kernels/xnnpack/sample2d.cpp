@@ -8,7 +8,7 @@
 #include "utils/log.h"
 #include "backend/common_structure.h"
 #include "core/device_context.h"
-#include <bits/stdint-intn.h>
+#include <cstdint>
 
 namespace ts {
     namespace xnn {
