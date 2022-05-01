@@ -1,8 +1,8 @@
-cmake_minimum_required(VERSION 2.7)
+cmake_minimum_required(VERSION 3.1)
 project(tennis)
 
 # set tennis version
-set(TS_VERSION "1.0.2")
+set(TS_VERSION "1.3.0")
 
 set(TARGET "SHARED" CACHE STRING "STATIC or SHARED" FORCE)
 add_definitions(-DBUILDING_TENNIS)
