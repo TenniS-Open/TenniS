@@ -29,7 +29,7 @@ namespace ts {
 
             auto x = stack[0].view(memory_device);
 
-            auto out = *stack.push(output_protos[0], memory_device);
+            auto out = *stack.push(x.proto(), memory_device);
 
             abs(x, out);
 
