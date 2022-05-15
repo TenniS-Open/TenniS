@@ -23,7 +23,7 @@ namespace ts {
         int Abs::run(Stack &stack) {
             TS_AUTO_CHECK(stack.size() == 1);
             std::vector<Tensor::Prototype> output_protos;
-            infer(stack, output_protos);
+            // infer(stack, output_protos);
 
             auto memory_device = running_memory_device();
 

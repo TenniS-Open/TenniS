@@ -158,7 +158,6 @@ namespace ts {
             float min = -std::numeric_limits<float>::infinity();
             float max = std::numeric_limits<float>::infinity();
             if (m_type == Pooling2DType::AVG) {
-                TS_LOG_INFO << "enter average pooling2d at " << this->name();
                 if (m_op == nullptr) {
                     auto ctx = ctx::get<RuntimeContext>();
                     m_threadpool = ctx->get_xnn_threadpool();
