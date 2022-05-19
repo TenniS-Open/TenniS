@@ -10,7 +10,6 @@
 namespace ts {
     namespace base {
         TileV2::TileV2() {
-            field(name::repeats, REQUIRED);
         }
 
         struct Repeats {
