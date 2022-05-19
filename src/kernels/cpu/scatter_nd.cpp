@@ -6,15 +6,18 @@
 namespace ts {
     namespace cpu {
         void ScatterND::scatter(const Tensor &data, const Tensor &indices, Tensor &updates, Tensor &out) {
-            std::memcpy(out.data<float>(), data.data<float>(), data.count() * sizeof(float));
+            auto bytes = type_bytes(data.dtype());
+
+            std::memcpy(out.data(), data.data(), data.count() * bytes);
 
             auto update_indices = indices.sizes();
 
             for (int i = 0; i < update_indices[0]; ++i) {
                 int offset = updates.slice(i).count();
+                auto block = offset * bytes;
                 int out_idx = indices.data<int>(i);
-                std::memcpy(out.data<float>() + out_idx * offset,
-                            updates.data<float>() + i * offset, offset * sizeof(float));
+                std::memcpy(out.data<uint8_t>() + out_idx * block,
+                            updates.data<uint8_t>() + i * block, block);
             }
         }
     }
