@@ -3,6 +3,7 @@
 //
 
 #include "backend/base/base_tile.h"
+#include "backend/base/base_tile_v2.h"
 #include "runtime/stack.h"
 #include "global/operator_factory.h"
 
@@ -67,34 +68,43 @@ namespace ts {
                        count, in_data, out_data, gpu_in_shape, gpu_out_shape);
         }
 
+        static void do_tile(Operator *op, const Tensor &x, const std::vector<int32_t> &repeats, Tensor &out) {
+            DTYPE dtype = out.dtype();
+            switch (dtype) {
+#define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
+        case DTYPE: { gpu_tile_compute_run<TYPE>(x, repeats, out); break; }
+                DECLARE_COMPUTE_RUN(INT8, int8_t);
+                DECLARE_COMPUTE_RUN(UINT8, uint8_t);
+                DECLARE_COMPUTE_RUN(INT16, int16_t);
+                DECLARE_COMPUTE_RUN(UINT16, uint16_t);
+                DECLARE_COMPUTE_RUN(INT32, int32_t);
+                DECLARE_COMPUTE_RUN(UINT32, uint32_t);
+                DECLARE_COMPUTE_RUN(INT64, int64_t);
+                DECLARE_COMPUTE_RUN(UINT64, uint64_t);
+#ifdef TS_USE_CUDA_FP16
+                DECLARE_COMPUTE_RUN(FLOAT16, half);
+#endif
+                DECLARE_COMPUTE_RUN(FLOAT32, float);
+                DECLARE_COMPUTE_RUN(FLOAT64, double);
+#undef DECLARE_COMPUTE_RUN
+                default: {
+                    TS_LOG_ERROR << op->op() << " not support data type(" << dtype << "): " << type_str(dtype) << eject;
+                    break;
+                }
+            }
+        }
 
         class Tile : public OperatorOnGPU<base::Tile> {
         public:
             void tile(const Tensor &x, const std::vector<int32_t> &repeats, Tensor &out) final {
+                do_tile(this, x, repeats, out);
+            }
+        };
 
-                DTYPE dtype = out.dtype();
-                switch (dtype) {
-#define DECLARE_COMPUTE_RUN(DTYPE, TYPE) \
-        case DTYPE: { gpu_tile_compute_run<TYPE>(x, repeats, out); break; }
-                    DECLARE_COMPUTE_RUN(INT8, int8_t);
-                    DECLARE_COMPUTE_RUN(UINT8, uint8_t);
-                    DECLARE_COMPUTE_RUN(INT16, int16_t);
-                    DECLARE_COMPUTE_RUN(UINT16, uint16_t);
-                    DECLARE_COMPUTE_RUN(INT32, int32_t);
-                    DECLARE_COMPUTE_RUN(UINT32, uint32_t);
-                    DECLARE_COMPUTE_RUN(INT64, int64_t);
-                    DECLARE_COMPUTE_RUN(UINT64, uint64_t);
-#ifdef TS_USE_CUDA_FP16
-                    DECLARE_COMPUTE_RUN(FLOAT16, half);
-#endif
-                    DECLARE_COMPUTE_RUN(FLOAT32, float);
-                    DECLARE_COMPUTE_RUN(FLOAT64, double);
-#undef DECLARE_COMPUTE_RUN
-                    default: {
-                        TS_LOG_ERROR << this->op() << " not support data type(" << dtype << "): " << type_str(dtype) << eject;
-                        break;
-                    }
-                }
+        class TileV2 : public OperatorOnGPU<base::TileV2> {
+        public:
+            void tile(const Tensor &x, const std::vector<int32_t> &repeats, Tensor &out) final {
+                do_tile(this, x, repeats, out);
             }
         };
     }
@@ -103,6 +113,8 @@ namespace ts {
 using namespace ts;
 using namespace gpu;
 TS_REGISTER_OPERATOR(Tile, GPU, name::layer::tile())
+TS_REGISTER_OPERATOR(TileV2, GPU, "tile_v2")
 #ifdef TS_USE_CUDA_FP16
 TS_REGISTER_FP16_OPERATOR(Tile, ts::GPU, name::layer::tile())
+TS_REGISTER_FP16_OPERATOR(TileV2, ts::GPU, "tile_v2")
 #endif
