@@ -186,7 +186,8 @@ namespace ts {
                                                              dilation.width, groups, group_input_channels,
                                                              group_output_channels,
                                                              input_channel_stride, output_channel_stride,
-                                                             w.data<float>(), m_bias.data<float>(), m_value_min, m_value_max, XNN_FLAG_DEPTHWISE_CONVOLUTION, &m_op);
+                                                             w.data<float>(), has("bias") ? m_bias.data<float>() : nullptr,
+                                                             m_value_min, m_value_max, XNN_FLAG_DEPTHWISE_CONVOLUTION, &m_op);
                 TS_CHECK_EQ(m_status, xnn_status_success);
                 m_shared_op.reset(m_op, xnn_delete_operator);
                 m_op = m_shared_op.get();

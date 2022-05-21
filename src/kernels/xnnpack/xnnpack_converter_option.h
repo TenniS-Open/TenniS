@@ -46,6 +46,8 @@ namespace ts {
                 name::layer::depthwise_conv2d(),
 //            name::layer::transpose_conv2d(), // 2D Deconvolution
                 name::layer::pooling2d(), // 2D average pooling and 2D max pooling
+                name::layer::pooling2d_v2(),
+                name::layer::onnx_pooling2d_padding(),
                 name::layer::conv2d_v2(),
 
 //            name::layer::resize2d(), // only bilinear resize, others using cpu-op
@@ -92,7 +94,7 @@ namespace ts {
                 "softplus",
                 "tanh",
                 name::layer::to_float(),
-                name::layer::flatten(),
+                // name::layer::flatten(),
                 // following route ops using pthreadpool replace omp
                 "erf",
                 "softplus",
