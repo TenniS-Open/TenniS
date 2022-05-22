@@ -25,7 +25,7 @@ namespace ts {
             field(name::dilation, OPTIONAL);
             field(name::typo::dialations, OPTIONAL);
             field(name::kernel_packed, OPTIONAL, tensor::from<bool>(false));
-            field("bias", OPTIONAL, tensor::from(0.0f));
+            field("bias", OPTIONAL);
             field("groups", OPTIONAL, tensor::from(1));
             field("value_max", OPTIONAL);
             field("value_min", OPTIONAL);
