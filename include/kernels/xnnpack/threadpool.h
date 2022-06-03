@@ -12,11 +12,9 @@ namespace ts {
     namespace xnn {
         class XnnThreadPool : public SetupContext<XnnThreadPool> {
         public:
-            static XnnThreadPool &set_thread_number(int size) {
-                static XnnThreadPool pool(size);
-                return pool;
-            }
-
+            explicit XnnThreadPool(int size);
+            ~XnnThreadPool();
+  
             pthreadpool_t get_thread_pool() {
                 return m_threadpool;
             }
@@ -33,8 +31,6 @@ namespace ts {
             XnnThreadPool &operator=(XnnThreadPool const& threadpool) = delete;
 
         private:
-            explicit XnnThreadPool(int size);
-            ~XnnThreadPool();
             pthreadpool_t m_threadpool = nullptr;
         };
 
