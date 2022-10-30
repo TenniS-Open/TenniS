@@ -128,7 +128,7 @@ namespace ts {
                              << " Error(" << ret << "): " << get_rknn_error_str(ret) << "." << eject;
             }
             TS_LOG_INFO << this->op() << " [RKNN] api_version:" << sdk_version.api_version
-                        << ",drive_version:" << sdk_version.drv_version;
+                        << ", driver_version:" << sdk_version.drv_version;
 
             rknn_input_output_num in_out_num;
             ret = m_rknn->query(m_ctx, RKNN_QUERY_IN_OUT_NUM, &in_out_num, sizeof(in_out_num));
@@ -210,6 +210,54 @@ namespace ts {
                         TS_LOG_ERROR << this->op()
                                      << " output data format dismatch, query rknn data format is not nhwc." << eject;
                     }
+                }
+            }
+
+            for (int i = 0; i < m_input_num; ++i) {
+                auto &attr = m_in_attrs[i];
+                uint32_t h, w;
+                if (attr.fmt == RKNN_TENSOR_NHWC) {
+                    h = attr.dims[1];
+                    w = attr.dims[2];
+                } else if (attr.fmt == RKNN_TENSOR_NCHW) {
+                    h = attr.dims[2];
+                    w = attr.dims[3];
+                } else {
+                    continue;
+                }
+                auto h_stride = attr.h_stride;
+                auto w_stride = attr.w_stride;
+                if ((h_stride != 0 && h_stride != h) || (w_stride != 0 && w_stride != w)) {
+                    TS_LOG_ERROR << "Unsupported input(" << i << ") format("
+                                 << get_rknn_format_string(attr.fmt) << "): "
+                                 << shape_string(attr.dims, attr.n_dims)
+                                 << " stride[h, w]=["
+                                 << attr.h_stride << ", " << attr.w_stride << "]"
+                                 << " type=" << type_str(get_ts_type_from_rknn(attr.type));
+                }
+            }
+
+            for (int i = 0; i < m_out_num; ++i) {
+                auto &attr = m_out_attrs[i];
+                uint32_t h, w;
+                if (attr.fmt == RKNN_TENSOR_NHWC) {
+                    h = attr.dims[1];
+                    w = attr.dims[2];
+                } else if (attr.fmt == RKNN_TENSOR_NCHW) {
+                    h = attr.dims[2];
+                    w = attr.dims[3];
+                } else {
+                    continue;
+                }
+                auto h_stride = attr.h_stride;
+                auto w_stride = attr.w_stride;
+                if ((h_stride != 0 && h_stride != h) || (w_stride != 0 && w_stride != w)) {
+                    TS_LOG_ERROR << "Unsupported output(" << i << ") format("
+                                 << get_rknn_format_string(attr.fmt) << "): "
+                                 << shape_string(attr.dims, attr.n_dims)
+                                 << " stride[h, w]=["
+                                 << attr.h_stride << ", " << attr.w_stride << "]"
+                                 << " type=" << type_str(get_ts_type_from_rknn(attr.type));
                 }
             }
 
