@@ -1,5 +1,30 @@
+option(RKNN_BUILTIN "If use static link librknnrt.so" OFF)
+
+set(RKNN_HOME /Users/levalup/Workspace/Development/XTRain/rknn/rknpu2 CACHE STRING "RKNN SDK Home")
+set(RKNN_TARGET RK3588 CACHE STRING "[RK3588, RK356X]")
+set(RKNN_PLATFORM Android CACHE STRING "[Android, Linux]")
+set(RKNN_ARCH arm64-v8a CACHE STRING "[arm64-v8a, armeabi-v7a] for android and [aarch64, armhf] for linux")
 
 if (UNIX)
     list(APPEND third_libraries dl)
+endif ()
+
+set(RKNN_SDK_HOME "${RKNN_HOME}/runtime/${RKNN_TARGET}/${RKNN_PLATFORM}/librknn_api")
+set(RKNN_SDK_INCLUDE "${RKNN_SDK_HOME}/include")
+set(RKNN_SDK_LIB_DIR "${RKNN_SDK_HOME}/${RKNN_ARCH}")
+set(RKNN_SDK_LIB_RUNTIME "${RKNN_SDK_LIB_DIR}/librknnrt.so")
+
+if (RKNN_BUILTIN)
+    message(STATUS "[Important] Using builtin rknn library at: ${RKNN_HOME}")
+    message(STATUS "[Important] RKNN_TARGET: ${RKNN_TARGET}")
+    message(STATUS "[Important] RKNN_PLATFORM: ${RKNN_PLATFORM}")
+    message(STATUS "[Important] RKNN_ARCH: ${RKNN_ARCH}")
+    add_definitions(-DRKNN_BUILTIN=1)
+    include_directories("${RKNN_SDK_INCLUDE}")
+    # link_directories("${RKNN_SDK_LIB_DIR}")
+    # link_libraries(rknnrt)
+    link_libraries("${RKNN_SDK_LIB_RUNTIME}")
+else ()
+    message(STATUS "[Important] Using dynamic loading rknn library.")
 endif ()
 
