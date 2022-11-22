@@ -3,6 +3,7 @@
 class RknnDll {
 public:
     RknnDll();
+    ~RknnDll();
 
     decltype(rknn_init) *init = nullptr;
     decltype(rknn_dup_context) *dup_context = nullptr;
