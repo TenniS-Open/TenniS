@@ -9,8 +9,16 @@ elseif (IOS)
     message(FATAL_ERROR "IOS not supported OpenMP")
 elseif (APPLE)
     # For the libomp installed by brew
-    include_directories("/usr/local/opt/libomp/include")
-    link_directories("/usr/local/opt/libomp/lib")
+    if (EXISTS "/usr/local/opt/libomp/lib")
+        include_directories("/usr/local/opt/libomp/include")
+        link_directories("/usr/local/opt/libomp/lib")
+    endif ()
+
+    # For other version brew
+    if (EXISTS "/opt/homebrew/lib")
+        include_directories("/opt/homebrew/include")
+        link_directories("/opt/homebrew/lib")
+    endif ()
 
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Xpreprocessor -fopenmp")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Xpreprocessor -fopenmp")
