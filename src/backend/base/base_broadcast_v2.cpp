@@ -17,6 +17,16 @@ namespace ts {
             shape.insert(shape.begin(), ones.begin(), ones.end());
         }
 
+        static inline void front_append_ones(Shape &shape, size_t count) {
+            Shape ones(count, 1);
+            shape.insert(shape.begin(), ones.begin(), ones.end());
+        }
+
+        static inline void front_append_ones(std::vector<int> &shape, size_t count) {
+            std::vector<int> ones(count, 1);
+            shape.insert(shape.begin(), ones.begin(), ones.end());
+        }
+
         void BroadcastV2::init() {
             supper::init();
         }
@@ -27,8 +37,25 @@ namespace ts {
             auto &x = stack[0];
             auto &shape = stack[1];
 
+            auto x_shape = x.sizes().std();
+            auto y_shape = tensor::array::to_int(shape);
+            if (x_shape.size() < y_shape.size()) {
+                front_append_ones(x_shape, y_shape.size() - x_shape.size());
+            } else if (x_shape.size() != y_shape.size()) {
+                front_append_ones(y_shape, x_shape.size() - y_shape.size());
+            }
+            auto z_shape = std::vector<int>();
+            auto N = x_shape.size();
+            for (decltype(N) i = 0; i < N; ++i) {
+                if (x_shape[i] != 1 && y_shape[i] != 1 && x_shape[i] != y_shape[i]) {
+                    z_shape.push_back(1);
+                } else {
+                    z_shape.push_back(std::max(x_shape[i], y_shape[i]));
+                }
+            }
+
             output.resize(1);
-            output[0] = Tensor::Prototype(x.dtype(), tensor::array::to_int(shape));
+            output[0] = Tensor::Prototype(x.dtype(), z_shape);
 
             return 1;
         }
@@ -98,15 +125,19 @@ namespace ts {
 
             auto x_shape = x.sizes();
             auto out_shape = Shape(tensor::array::to_int(shape));
+            Shape target;
 
-            bool do_broadcast = broadcast(x_shape, out_shape);
+            bool do_broadcast = broadcast(x_shape, out_shape, target);
+            if (out_shape.size() < target.size()) {
+                front_append_ones(out_shape, target.size() - out_shape.size());
+            }
 
             if (!do_broadcast) {
-                stack.push(x.reshape(out_shape));
+                stack.push(x.reshape(target));
                 return 1;
             }
 
-            auto out_proto = Tensor::Prototype(x.dtype(), out_shape);
+            auto out_proto = Tensor::Prototype(x.dtype(), target);
 
             auto memory_device = running_memory_device();
 
@@ -115,16 +146,16 @@ namespace ts {
 
             {
                 auto y_shape = out_shape;
-                if (reduce_shape(y_shape, x_shape, out_shape)) {
+                if (reduce_shape(y_shape, x_shape, target)) {
                     x = x.reshape(x_shape);
-                    out = out.reshape(out_shape);
+                    out = out.reshape(target);
                 }
             }
 
             int dim;
             if (is_scalar(x_shape)) {
                 broadcast_with_scalar(x, out);
-            } else if (is_bias(out_shape, x_shape, dim)) {
+            } else if (is_bias(target, x_shape, dim)) {
                 broad_with_bias(x, out, dim);
             } else {
                 broadcast(x, out);
@@ -144,19 +175,24 @@ namespace ts {
             return false;
         }
 
-        bool BroadcastV2::broadcast(Shape &x, const Shape &shape) {
-            if (x.size() > shape.size()) {
-                TS_LOG_ERROR << "Can not broadcast " << to_string(x) << " to " << to_string(shape) << eject;
+        bool BroadcastV2::broadcast(Shape &x, const Shape &shape, Shape &output) {
+            auto y = shape;
+            if (x.size() < y.size()) {
+                front_append_ones(x, int(y.size() - x.size()));
+            } else if (x.size() != y.size()) {
+                front_append_ones(y, int(x.size() - y.size()));
             }
-            if (x.size() < shape.size()) {
-                front_append_ones(x, int(shape.size() - x.size()));
+            if (x == y) {
+                output = y;
+                return false;
             }
-            if (x == shape) return false;
             auto N = x.size();
+            output.clear();
             for (size_t i = 0; i < N; ++i) {
-                if (x[i] != shape[i] && x[i] != 1) {
+                if (x[i] != y[i] && x[i] != 1 && y[i] != 1) {
                     TS_LOG_ERROR << "Can not broadcast " << to_string(x) << " to " << to_string(shape) << eject;
                 }
+                output.push_back(std::max(x[i], y[i]));
             }
             return true;
         }

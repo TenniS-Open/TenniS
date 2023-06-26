@@ -54,7 +54,7 @@ namespace ts {
             auto memory_device = running_memory_device();
             auto x = stack[0].view(memory_device);
 
-            auto indices = stack[1].view(memory_device);
+            auto indices = tensor::cast(INT32, stack[1]).view(memory_device);
             TS_AUTO_CHECK(indices.dtype() == INT32);
             auto output_proto = infer_gather(stack[0], indices);
 

@@ -4,6 +4,8 @@
 
 #include <compiler/argparse.h>
 
+#include <cctype>
+#include <cwctype>
 #include <regex>
 
 #include <utils/log.h>

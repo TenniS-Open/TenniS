@@ -2,19 +2,17 @@
 // Created by kier on 2019/3/6.
 //
 
-#include <backend/base/base_gather.h>
-
-#include "backend/base/base_gather.h"
+#include "backend/base/base_gather_elements.h"
 #include "backend/name.h"
 #include "core/tensor_builder.h"
 
 namespace ts {
     namespace base {
-        Gather::Gather() {
+        GatherElements::GatherElements() {
             field(name::axis, OPTIONAL, tensor::from<int32_t>(0));
         }
 
-        void Gather::init() {
+        void GatherElements::init() {
             supper::init();
 
             m_axis = tensor::to_int(get(name::axis));
@@ -26,24 +24,14 @@ namespace ts {
             TS_AUTO_CHECK(x.dims() >= 1);
             TS_AUTO_CHECK(axis >= -dims && axis < dims);
 
-            if (axis < 0) axis = int(x.dims()) + axis;
-
-            auto output_shape = x.sizes();
-
-            output_shape.erase(output_shape.begin() + axis);
-
-            auto &indices_shape = indices.sizes();
-
-            output_shape.insert(output_shape.begin() + axis, indices_shape.begin(), indices_shape.end());
-
-            return Tensor::Prototype(x.dtype(), std::move(output_shape));
+            return Tensor::Prototype(x.dtype(), indices.sizes());
         }
 
-        int Gather::infer(Stack &stack, std::vector<Tensor::Prototype> &output) {
+        int GatherElements::infer(Stack &stack, std::vector<Tensor::Prototype> &output) {
             TS_AUTO_CHECK(stack.size() == 2);
 
             auto &x = stack[0];
-            auto indices =  tensor::cast(INT32, stack[1]);
+            auto indices =  stack[1];
 
             output.resize(1);
             output[0] = infer_gather(x, indices, m_axis);
@@ -51,7 +39,7 @@ namespace ts {
             return 1;
         }
 
-        int Gather::run(Stack &stack) {
+        int GatherElements::run(Stack &stack) {
             TS_AUTO_CHECK(stack.size() == 2);
 
             auto indices =  tensor::cast(INT32, stack[1]);
@@ -61,11 +49,12 @@ namespace ts {
             auto x = stack[0].view(memory_device);
 
             auto& indices_viewed = indices;
-            for (int i = 0; i < indices_viewed.count(); ++i) {
-
-                indices_viewed.data<int32_t>()[i] = indices_viewed.data<int32_t>()[i] < 0 ?
-                                                    indices_viewed.data<int32_t>()[i] + x.size(m_axis) :
-                                                    indices_viewed.data<int32_t>()[i];
+            auto N = indices_viewed.count();
+            auto indices_data = indices_viewed.data<int32_t>();
+            auto indices_limit = x.size(m_axis);
+            for (int i = 0; i < N; ++i) {
+                auto v = indices_data[i];
+                indices_data[i] = v < 0 ? v + indices_limit : v;
             }
             indices_viewed = indices_viewed.view(memory_device);
 

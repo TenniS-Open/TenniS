@@ -110,6 +110,8 @@ namespace ts {
          * @return
          */
         static bool is_bias(Shape &lhs_shape, Shape &rhs_shape, int &dim);
+
+        Operator::shared caster;
     };
 
     DTYPE upcast_dtype(Operator *op, Tensor &lhs, Tensor &rhs);

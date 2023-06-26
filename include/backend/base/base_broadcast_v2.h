@@ -48,7 +48,7 @@ namespace ts {
              */
             virtual void broadcast_with_scalar(const Tensor &x, Tensor &out);
 
-            static bool broadcast(Shape &x, const Shape &shape);
+            static bool broadcast(Shape &x, const Shape &shape, Shape &output);
 
             /**
              * return if is an scalar, also seen as count == 1

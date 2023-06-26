@@ -8,6 +8,9 @@
 #include "runtime/stack.h"
 #include <numeric>
 #include "core/tensor_builder.h"
+#include "global/operator_factory.h"
+#include "utils/ctxmgr_lite.h"
+#include "core/device_context.h"
 
 namespace ts {
     static inline void front_append_ones(Shape &shape, int count) {
@@ -64,6 +67,10 @@ namespace ts {
 
     void ElementWiseReduce::init() {
         supper::init();
+
+        auto &context = ctx::ref<DeviceContext>();
+        caster = OperatorCreator::Create(context.computing_device.type(),
+                                         "_cast", false);
     }
 
     bool uncorr_cast_dtype(DTYPE type) {
@@ -164,8 +171,22 @@ namespace ts {
 
         auto memory_device = running_memory_device();
 
-        lhs = lhs.view(memory_device).reshape(lhs_shape);    // do sync, and set default data to given device
-        rhs = rhs.view(memory_device).reshape(rhs_shape);
+        auto dtype = output[0].dtype();
+        stack.push(0);
+        if (lhs.dtype() != dtype) {
+            caster->set("dtype", tensor::build(INT32, int(dtype)));
+            caster->init();
+            RunOperator(caster, stack, 1);
+        }
+        stack.push(1);
+        if (rhs.dtype() != dtype) {
+            caster->set("dtype", tensor::build(INT32, int(dtype)));
+            caster->init();
+            RunOperator(caster, stack, 1);
+        }
+
+        lhs = stack.index(2)->view(memory_device).reshape(lhs_shape);    // do sync, and set default data to given device
+        rhs = stack.index(3)->view(memory_device).reshape(rhs_shape);
         auto out = *stack.push(output[0], memory_device);
 
         if (reduce_shape(lhs_shape, rhs_shape, out_shape)) {
