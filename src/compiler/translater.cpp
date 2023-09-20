@@ -82,16 +82,22 @@ namespace ts {
         std::unordered_map<Node, Node> ready_map;
 
         auto output_nodes = new_module->outputs();
-        for (auto & node : output_nodes)
+        auto intput_nodes = new_module->inputs();
+        for (auto &node : output_nodes)
         {
             auto translated_node = translate_node(node, ready_map, m_device, options, m_params, true);
             traslated_nodes.emplace_back(translated_node);
+        }
+        std::vector<Node> translated_inputs;
+        for (auto &node : intput_nodes) {
+            translated_inputs.push_back(translate_node(node, ready_map, m_device, options, m_params, true));
         }
 
         //std::cout << "+++++++++++++++++ translated graph ++++++++++++++++++++++" << std::endl;
         //plot_graph(std::cout, traslated_nodes);
 
         new_module = Module::Load(temp_graph, traslated_nodes);
+        new_module->sort_inputs(translated_inputs);
         return new_module;
     }
 
