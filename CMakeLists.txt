@@ -144,7 +144,7 @@ endif()
 
 install(CODE "MESSAGE(\"Installing into ${CMAKE_INSTALL_PREFIX}\")")
 
-set(LOCAL_OUTPUT_DIR ${PROJECT_SOURCE_DIR})
+set(LOCAL_OUTPUT_DIR ${PROJECT_BINARY_DIR})
 
 if (LOCAL_OUTPUT_DIR)
     set(EXECUTABLE_OUTPUT_PATH ${LOCAL_OUTPUT_DIR}/${ENV_RUNTIME_DIR})
@@ -437,10 +437,10 @@ if(TS_DYNAMIC_INSTRUCTION)
 endif()
 
 install(FILES ${SOLUTION_DIR}/cmake/FindTenniS.cmake
-        DESTINATION cmake)
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/SeetaFace6")
 
 install(FILES ${SOLUTION_DIR}/cmake/FindTenniS.cmake
-        DESTINATION cmake
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/SeetaFace6"
         RENAME TenniSConfig.cmake)
 
 # project files for clion
