@@ -47,12 +47,20 @@ else(TS_CUDA_ARCH)
        set(CUDA_ARCH "${CUDA_ARCH} -gencode arch=compute_75,code=sm_75")
    endif()
    if (${CUDA_VERSION} VERSION_GREATER "10.999")
-       message(STATUS "    CUDA: support Ampere in part in 8.0")
+       message(STATUS "    CUDA: support Ampere in 8.0")
        set(CUDA_ARCH "${CUDA_ARCH} -gencode arch=compute_80,code=sm_80")
    endif()
-   if (${CUDA_VERSION} VERSION_GREATER "11.0")  # for 11.1 - 11.4
-       message(STATUS "    CUDA: support Ampere fully in 8.6")
+   if (${CUDA_VERSION} VERSION_GREATER "11.0")  # for 11.1 - 11.7
+       message(STATUS "    CUDA: support Ampere in 8.6")
        set(CUDA_ARCH "${CUDA_ARCH} -gencode arch=compute_86,code=sm_86")
+   endif()
+   if (${CUDA_VERSION} VERSION_GREATER "11.7")  # for >= 11.8
+       message(STATUS "    CUDA: support Ada in 8.9")
+       set(CUDA_ARCH "${CUDA_ARCH} -gencode arch=compute_89,code=sm_89")
+   endif()
+   if (${CUDA_VERSION} VERSION_GREATER "11.999")  # for >= 12.0
+       message(STATUS "    CUDA: support Hopper in 9.0")
+       set(CUDA_ARCH "${CUDA_ARCH} -gencode arch=compute_90,code=sm_90")
    endif()
 endif(TS_CUDA_ARCH)
 
