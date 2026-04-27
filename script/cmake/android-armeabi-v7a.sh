@@ -2,7 +2,7 @@
 
 # ANDROID_ABI can be armeabi-v7a arm64-v8a x86 x86_64
 
-export ANDROID_PLATFORM=19
+export ANDROID_PLATFORM=35
 export ANDROID_ABI="armeabi-v7a"
 
 # check if set ndk home
@@ -21,10 +21,12 @@ cmake "$PROJECT" \
 "$@" \
 -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" \
 -DCMAKE_BUILD_TYPE=Release \
+-DTS_USE_OPENMP=ON \
+-DTS_USE_SIMD=OFF \
 -DTS_ON_ARM=ON \
 -DTS_ON_ARMV7=ON \
 -DTS_USE_NEON=ON \
--DTS_USE_FAST_MATH=ON \
+-DTS_USE_FAST_MATH=OFF \
 -DPLATFORM="$ANDROID_ABI" \
 -DANDROID_ABI="$ANDROID_ABI" \
 -DANDROID_PLATFORM=android-$ANDROID_PLATFORM \

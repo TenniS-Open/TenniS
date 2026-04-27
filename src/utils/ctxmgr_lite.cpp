@@ -2,8 +2,15 @@
 // Created by kier on 2019-04-14.
 //
 
-#include "utils/ctxmgr_lite.h"
 #include "utils/platform.h"
+
+#if TS_PLATFORM_CC_GCC
+extern "C" {
+#include <cxxabi.h>
+}
+#endif
+
+#include "utils/ctxmgr_lite.h"
 
 #include <sstream>
 
@@ -37,7 +44,6 @@ namespace ts {
     }
 
 #if TS_PLATFORM_CC_GCC
-#include <cxxabi.h>
     static ::std::string classname_gcc(const ::std::string &name) {
         size_t size = 0;
         int status = 0;
@@ -64,4 +70,3 @@ namespace ts {
 #endif
     }
 }
-

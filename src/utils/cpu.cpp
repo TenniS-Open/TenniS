@@ -139,17 +139,17 @@ namespace ts{
     static bool set_sched_affinity(const std::vector<int> cpu_ids)
     {
 #if TS_PLATFORM_OS_ANDROID
-        #define CPU_SETSIZE 1024
+        #define TS_CPU_SETSIZE 1024
         #define __NCPUBITS  (8 * sizeof (unsigned long))
         typedef struct
         {
-            unsigned long __bits[CPU_SETSIZE / __NCPUBITS];
+            unsigned long __bits[TS_CPU_SETSIZE / __NCPUBITS];
         } cpu_set_t;
 
-        #define CPU_SET(cpu, cpusetp) \
+        #define TS_CPU_SET(cpu, cpusetp) \
         ((cpusetp)->__bits[(cpu)/__NCPUBITS] |= (1UL << ((cpu) % __NCPUBITS)))
 
-        #define CPU_ZERO(cpusetp) \
+        #define TS_CPU_ZERO(cpusetp) \
         memset((cpusetp), 0, sizeof(cpu_set_t))
 
         // set affinity for thread
@@ -164,10 +164,10 @@ namespace ts{
         #endif
 
         cpu_set_t mask;
-        CPU_ZERO(&mask);
+        TS_CPU_ZERO(&mask);
         for (int i=0; i<cpu_ids.size(); i++)
         {
-            CPU_SET(cpu_ids[i], &mask);
+            TS_CPU_SET(cpu_ids[i], &mask);
         }
         //TS_LOG_ERROR << "syscall begin: ";
         int syscallret = syscall(__NR_sched_setaffinity, pid, sizeof(mask), &mask);

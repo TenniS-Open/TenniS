@@ -318,6 +318,9 @@ ts_add_library(${PROJECT_NAME}_LIB ${TARGET} ${INCLUDE_FILES} ${SRC_INCLUDE_FILE
 target_link_libraries(${PROJECT_NAME}_LIB ${third_libraries})
 set_target_properties(${PROJECT_NAME}_LIB PROPERTIES OUTPUT_NAME ${PROJECT_NAME}${ENV_SUFFIX})
 
+# include(strip)
+# STRIP_LIBRARY(${PROJECT_NAME}_LIB)
+
 if (TS_USE_SIMD)
     message(STATUS "[Optional] Use SIMD: [ON]")
     add_definitions(-DTS_USE_SIMD)
@@ -479,4 +482,3 @@ endforeach ()
 else (TS_BUILD_TOOLS)
     message(STATUS "[Important] Build tools: [OFF]")
 endif (TS_BUILD_TOOLS)
-

@@ -2,7 +2,7 @@
 
 # ANDROID_ABI can be armeabi-v7a arm64-v8a x86 x86_64
 
-export ANDROID_PLATFORM=19
+export ANDROID_PLATFORM=35
 export ANDROID_ABI="x86_64"
 
 # Notice: Android Studio default simulator does not support and SIMD(x86)
