@@ -13,42 +13,42 @@
 
 set(TenniS_NAME "tennis" CACHE STRING "The TenniS library name")
 set(TenniS_VERSION "" CACHE STRING "The TenniS library version")
-set(TenniS_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/../")
+set(TenniS_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/../../../")
 #message(STATUS "SEETANET_HOME: " $ENV{SEETANET_HOME})
 message(STATUS "TenniS default module path: ${TenniS_MODULE_PATH}" )
-message(STATUS "TenniS_ROOT_DIR: ${TenniS_ROOT_DIR}")
+message(STATUS "TenniS_DIR: ${TenniS_DIR}")
 	
 if(BUILD_ANDROID)
-	# if(TenniS_ROOT_DIR STREQUAL "")
-		# message(SEND_ERROR "Set the path to TenniS root folder in the system variable TenniS_ROOT_DIR ")
+	# if(TenniS_DIR STREQUAL "")
+		# message(SEND_ERROR "Set the path to TenniS root folder in the system variable TenniS_DIR ")
 	# endif()
 	set(TenniS_INCLUDE_DIR "${TenniS_MODULE_PATH}include")
 	file(GLOB_RECURSE INCLUDE_FILE
 		${TenniS_INCLUDE_DIR}/api/tennis.h)
 	if("${INCLUDE_FILE}" STREQUAL "")
-		set(TenniS_INCLUDE_DIR "${TenniS_ROOT_DIR}/include")
+		set(TenniS_INCLUDE_DIR "${TenniS_DIR}/include")
 	endif()
 	message(STATUS "TenniS include dir : ${TenniS_INCLUDE_DIR}")
 	file(GLOB TenniS_LIBRARY_DEBUG
 		${TenniS_MODULE_PATH}${ENV_LIBRARY_DIR}/*${TenniS_NAME}*.so)
 	if("${TenniS_LIBRARY_DEBUG}" STREQUAL "")
 		file(GLOB TenniS_LIBRARY_DEBUG
-		${TenniS_ROOT_DIR}/${ENV_LIBRARY_DIR}/*${TenniS_NAME}*.so)
+		${TenniS_DIR}/${ENV_LIBRARY_DIR}/*${TenniS_NAME}*.so)
 	endif()
 	file(GLOB TenniS_LIBRARY_RELEASE
 		${TenniS_MODULE_PATH}${ENV_LIBRARY_DIR}/*${TenniS_NAME}*.so)
 	if("${TenniS_LIBRARY_RELEASE}" STREQUAL "")
 		file(GLOB TenniS_LIBRARY_RELEASE
-		${TenniS_ROOT_DIR}/${ENV_LIBRARY_DIR}/*${TenniS_NAME}*.so)
+		${TenniS_DIR}/${ENV_LIBRARY_DIR}/*${TenniS_NAME}*.so)
 	endif()
 else()
 	find_path(TenniS_INCLUDE_DIR
 	  NAMES
 		api/tennis.h
 	  PATHS
-		${TenniS_ROOT_DIR}
+		${TenniS_DIR}
 		${TenniS_MODULE_PATH}
-		ENV TenniS_ROOT_DIR
+		ENV TenniS_DIR
 		usr
 		usr/local
 	  PATH_SUFFIXES
@@ -62,9 +62,9 @@ else()
 	  NAMES 
 		${TenniS_NAME}${TenniS_VERSION}
 	  PATHS
-		${TenniS_ROOT_DIR}
+		${TenniS_DIR}
 		${TenniS_MODULE_PATH}
-		ENV TenniS_ROOT_DIR
+		ENV TenniS_DIR
 		usr
 		usr/local
 	  PATH_SUFFIXES
@@ -74,9 +74,9 @@ else()
 	  NAMES 
 		${TenniS_NAME}${TenniS_VERSION}
 	  PATHS
-		${TenniS_ROOT_DIR}
+		${TenniS_DIR}
 		${TenniS_MODULE_PATH}
-		ENV TenniS_ROOT_DIR
+		ENV TenniS_DIR
 		usr
 		usr/local
 	  PATH_SUFFIXES
@@ -97,7 +97,7 @@ FIND_PACKAGE_HANDLE_STANDARD_ARGS(${TenniS_NAME}
 		TenniS_INCLUDE_DIR
 		TenniS_LIBRARY
 	FAIL_MESSAGE
-		"Could not find TenniS! Try to set the path to TenniS root folder in the system variable TenniS_ROOT_DIR"
+		"Could not find TenniS! Try to set the path to TenniS root folder in the system variable TenniS_DIR"
 )
 
 if(TENNIS_FOUND)
