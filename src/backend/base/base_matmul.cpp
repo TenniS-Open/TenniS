@@ -31,7 +31,17 @@ namespace ts {
             auto a = stack[0];
             auto b = stack[1];
 
-            if (b.dims() > 2) {
+            auto dim4 = false;
+            if (b.dims() == 4) {
+                auto one = a.size(0) * a.size(1) * b.size(0) * b.size(1);
+                if (!one) {
+                    TS_LOG_ERROR << "Input of MatMal could be [1, 1, ?, k] and [1, 1, k, ?], but got "
+                        << a.dims() << " " << b.dims() << eject;
+                }
+                dim4 = true;
+                a = a.reshape({a.size(2), a.size(3)});
+                b = b.reshape({b.size(2), b.size(3)});
+            } else if (b.dims() > 2) {
                 TS_LOG_ERROR << "Dimension of b in MatMal must less than 2, but got " << b.dims() << eject;
             }
 
@@ -43,6 +53,11 @@ namespace ts {
                 Shape output_shape = a.sizes();
                 output_shape[a.dims() - 1] = b.sizes()[1];
                 outputs[0] = Tensor(a.dtype(), output_shape).proto();
+            }
+
+            if (dim4) {
+                auto p = outputs[0];
+                outputs[0] = Tensor(p.dtype(), {1, 1, p.size(0), p.size(1)}).proto();
             }
 
             return 1;
@@ -59,8 +74,19 @@ namespace ts {
             auto a = stack[0].view(memory_device);
             auto b = stack[1].view(memory_device);
 
+            auto dim4 = a.dims() == 4 && b.dims() == 4;
+            if (dim4) {
+                a = a.reshape({a.size(2), a.size(3)});
+                b = b.reshape({b.size(2), b.size(3)});
+            }
+
             Tensor out;
             matmul_compute(stack, a, b, out);
+
+            if (dim4) {
+                out = out.reshape({1, 1, out.size(0), out.size(1)});
+            }
+
             stack.push(out);
 
             return 1;
