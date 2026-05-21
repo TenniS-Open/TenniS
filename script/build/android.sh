@@ -3,9 +3,9 @@
 # setting
 SCRIPTS=(
     "android-arm64-v8a.sh"
-    "android-armeabi-v7a.sh"
+    # "android-armeabi-v7a.sh"
     "android-x86_64.sh"
-    "android-x86.sh"
+    # "android-x86.sh"
 )
 BRANCHS=(master master master master)
 
@@ -79,4 +79,3 @@ for ((i=0; i<"$N"; i++)) do
 done
 
 echo "[SUCCEED] $INSTALL"
-

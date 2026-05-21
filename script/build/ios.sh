@@ -3,7 +3,7 @@
 # setting
 SCRIPTS=(
     "ios-arm64.sh"
-    "ios-armv7.sh"
+    # "ios-armv7.sh"
     "ios-x86_64.sh"
 )
 BRANCHS=(master master master)
@@ -105,4 +105,3 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "[SUCCEED] $INSTALL"
-

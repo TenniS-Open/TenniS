@@ -6,7 +6,7 @@ export TARGET=10
 export ENABLE_BITCODE=0
 export PLATFORM=SIMULATOR64
 
-export ARCH="i386;x86_64"
+export ARCH="x86_64"
 export TAG=master
 
 HOME=$(cd `dirname $0`; pwd)
@@ -25,4 +25,3 @@ cmake "$PROJECT" \
 -DIOS_PLATFORM=$PLATFORM \
 -DENABLE_BITCODE=$ENABLE_BITCODE \
 -DIOS_ARCH="$ARCH"
-
