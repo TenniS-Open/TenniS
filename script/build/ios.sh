@@ -78,7 +78,8 @@ for ((i=0; i<"$N"; i++)) do
     # do cmake
     echo "[INFO] cmake ..."
     pushd "$P" > /dev/null
-    $SHELL "${SCRIPT_ROOT}/$S" -DCMAKE_INSTALL_PREFIX="$TMP/$T"
+    $SHELL "${SCRIPT_ROOT}/$S" -DCMAKE_INSTALL_PREFIX="$TMP/$T" \
+      -G "Unix Makefiles" -DCMAKE_MAKE_PROGRAM=make
     if [ $? -ne 0 ]; then
         echo "[ERROR] cmake build porjcet filed in $S"
         exit $?
